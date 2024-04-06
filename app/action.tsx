@@ -31,7 +31,6 @@ async function submit(formData?: FormData, skip?: boolean) {
   // Add the user message to the state
   if (content) {
     const message = { role: 'user', content }
-    console.log('Message content', content, aiState.get())
     messages.push(message as ExperimentalMessage)
     aiState.update([...(aiState.get() as any), message])
   }
@@ -42,7 +41,6 @@ async function submit(formData?: FormData, skip?: boolean) {
     let action: any = { object: { next: 'proceed' } }
     // If the user skips the task, we proceed to the search
     if (!skip) action = await taskManager(messages)
-    console.log('Next Action: ', action)
 
     if (action.object.next === 'inquire') {
       // Generate inquiry
