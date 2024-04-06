@@ -16,8 +16,9 @@ An AI-powered answer engine with a generative UI.
 - Text streaming / Generative UI: [Vercel AI SDK](https://sdk.vercel.ai/docs)
 - Generative Model: [OpenAI](https://openai.com/)
 - Search API: [Tavily AI](https://tavily.com/)
-- CSS framework: [Tailwind CSS](https://tailwindcss.com/)
 - Component library: [shadcn/ui](https://ui.shadcn.com/)
+- Headless component primitives: [Radix UI](https://www.radix-ui.com/)
+- Styling: [Tailwind CSS](https://tailwindcss.com/)
 
 ## 🚀 Quickstart
 
