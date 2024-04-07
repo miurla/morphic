@@ -133,15 +133,15 @@ export const Copilot: React.FC<CopilotProps> = ({
                 className="flex items-center space-x-1.5 mb-2"
               >
                 <Checkbox
-                  id={option?.name}
-                  name={option?.name}
+                  id={option?.value}
+                  name={option?.value}
                   onCheckedChange={() =>
                     handleOptionChange(option?.label as string)
                   }
                 />
                 <label
                   className="text-sm whitespace-nowrap pr-4"
-                  htmlFor={option?.name}
+                  htmlFor={option?.value}
                 >
                   {option?.label}
                 </label>

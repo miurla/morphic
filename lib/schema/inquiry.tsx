@@ -5,7 +5,7 @@ export const inquirySchema = z.object({
   inquiry: z.string().describe(''),
   options: z.array(
     z.object({
-      name: z.string(),
+      value: z.string(),
       label: z.string()
     })
   ),

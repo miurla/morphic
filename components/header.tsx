@@ -12,7 +12,7 @@ export const Header: React.FC = () => {
       <div className="p-2">
         <a href="/">
           <IconLogo className={cn('w-5 h-5')} />
-          <span className="sr-only">Metamorphic</span>
+          <span className="sr-only">Morphic</span>
         </a>
       </div>
       <ModeToggle />
