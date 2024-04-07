@@ -18,7 +18,6 @@ export async function querySuggestor(
 
   await experimental_streamObject({
     model: openai.chat('gpt-4-turbo-preview'),
-    maxTokens: 2500,
     system: `You are tasked as a professional web researcher to generate queries that delve deeper into the subject based on the initial query and its search results. Your goal is to formulate three related questions.
     For example, given the query: "Starship's third test flight key milestones",
     Your output should look like:

@@ -103,6 +103,9 @@ export async function researcher(
       case 'tool-result':
         toolResponses.push(delta)
         break
+      case 'error':
+        fullResponse += `\nError occurred while executing the tool`
+        break
     }
   }
   messages.push({

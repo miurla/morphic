@@ -13,14 +13,10 @@ import { IconLogo } from './ui/icons'
 import { cn } from '@/lib/utils'
 
 export type CopilotProps = {
-  initialQuery?: string
   inquiry?: PartialInquiry
 }
 
-export const Copilot: React.FC<CopilotProps> = ({
-  initialQuery,
-  inquiry
-}: CopilotProps) => {
+export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
   const [completed, setCompleted] = useState(false)
   const [query, setQuery] = useState('')
   const [skipped, setSkipped] = useState(false)
@@ -57,7 +53,7 @@ export const Copilot: React.FC<CopilotProps> = ({
     const selectedOptions = Object.entries(checkedOptions)
       .filter(([, checked]) => checked)
       .map(([option]) => option)
-    return [initialQuery, ...selectedOptions, query].filter(Boolean).join(', ')
+    return [...selectedOptions, query].filter(Boolean).join(', ')
   }
 
   useEffect(() => {

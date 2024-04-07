@@ -19,6 +19,7 @@ import {
   CarouselPrevious
 } from '@/components/ui/carousel'
 import { useEffect, useState } from 'react'
+import { PlusCircle } from 'lucide-react'
 
 interface SearchResultsImageSectionProps {
   images: string[]
@@ -80,6 +81,11 @@ export const SearchResultsImageSection: React.FC<
                   )}
                 </CardContent>
               </Card>
+              {index === 3 && images.length > 4 && (
+                <div className="absolute inset-0 bg-black/30 rounded-md flex items-center justify-center text-white/80 text-sm">
+                  <PlusCircle size={24} />
+                </div>
+              )}
             </div>
           </DialogTrigger>
           <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-auto">

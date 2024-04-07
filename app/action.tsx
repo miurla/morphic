@@ -44,7 +44,7 @@ async function submit(formData?: FormData, skip?: boolean) {
 
     if (action.object.next === 'inquire') {
       // Generate inquiry
-      const inquiry = await inquire(uiStream, messages, userInput)
+      const inquiry = await inquire(uiStream, messages)
 
       uiStream.done()
       isGenerating.done()

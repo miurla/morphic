@@ -10,8 +10,8 @@ export function BotMessage({
 }) {
   const [data, error, pending] = useStreamableValue(content)
 
-  // Currently, sometimes error occurs after finishing the stream. So, comment out this line.
-  // if (error) return <div>Error</div>
+  // Currently, sometimes error occurs after finishing the stream.
+  if (error) return <div>Error</div>
 
   return (
     <MemoizedReactMarkdown className="prose-sm prose-neutral prose-a:text-accent-foreground/50">

@@ -6,16 +6,14 @@ import { PartialInquiry, inquirySchema } from '@/lib/schema/inquiry'
 
 export async function inquire(
   uiStream: ReturnType<typeof createStreamableUI>,
-  messages: ExperimentalMessage[],
-  query?: string
+  messages: ExperimentalMessage[]
 ) {
   const objectStream = createStreamableValue<PartialInquiry>()
-  uiStream.update(<Copilot initialQuery={query} inquiry={objectStream.value} />)
+  uiStream.update(<Copilot inquiry={objectStream.value} />)
 
   let finalInquiry: PartialInquiry = {}
   await experimental_streamObject({
     model: openai.chat('gpt-4-turbo-preview'),
-    maxTokens: 2500,
     system: `You are a professional web researcher tasked with deepening your understanding of the user's input through further inquiries.
     Only ask additional questions if absolutely necessary after receiving an initial response from the user.
     Structure your inquiry as follows:
