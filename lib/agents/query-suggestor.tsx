@@ -1,6 +1,6 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import { ExperimentalMessage, experimental_streamObject } from 'ai'
-import { PartialRelated, relatedSchema } from '@/app/schema/related'
+import { PartialRelated, relatedSchema } from '@/lib/schema/related'
 import { Section } from '@/components/section'
 import SearchRelated from '@/components/search-related'
 import { openai } from 'ai/openai'

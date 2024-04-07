@@ -2,7 +2,7 @@ import { openai } from 'ai/openai'
 import { Copilot } from '@/components/copilot'
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import { ExperimentalMessage, experimental_streamObject } from 'ai'
-import { PartialInquiry, inquirySchema } from '@/app/schema/inquiry'
+import { PartialInquiry, inquirySchema } from '@/lib/schema/inquiry'
 
 export async function inquire(
   uiStream: ReturnType<typeof createStreamableUI>,

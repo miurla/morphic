@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { PartialInquiry } from '@/app/schema/inquiry'
+import { PartialInquiry } from '@/lib/schema/inquiry'
 import { Input } from './ui/input'
 import { Checkbox } from './ui/checkbox'
 import { Button } from './ui/button'

@@ -9,7 +9,7 @@ import { ExperimentalMessage } from 'ai'
 import { Spinner } from '@/components/ui/spinner'
 import { Section } from '@/components/section'
 import { FollowupPanel } from '@/components/followup-panel'
-import { inquire, researcher, taskManager, querySuggestor } from '@/app/agents'
+import { inquire, researcher, taskManager, querySuggestor } from '@/lib/agents'
 
 async function submit(formData?: FormData, skip?: boolean) {
   'use server'

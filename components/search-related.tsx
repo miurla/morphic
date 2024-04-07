@@ -6,7 +6,7 @@ import { ArrowRight } from 'lucide-react'
 import { useActions, useStreamableValue, useUIState } from 'ai/rsc'
 import { AI } from '@/app/action'
 import { UserMessage } from './user-message'
-import { PartialRelated } from '@/app/schema/related'
+import { PartialRelated } from '@/lib/schema/related'
 
 export interface SearchRelatedProps {
   relatedQueries: PartialRelated

@@ -5,7 +5,7 @@ import {
   ToolResultPart,
   experimental_streamText
 } from 'ai'
-import { searchSchema } from '@/app/schema/search'
+import { searchSchema } from '@/lib/schema/search'
 import { Section } from '@/components/section'
 import { openai } from 'ai/openai'
 import { ToolBadge } from '@/components/tool-badge'
