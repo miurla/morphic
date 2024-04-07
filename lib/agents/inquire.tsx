@@ -20,7 +20,7 @@ export async function inquire(
     Only ask additional questions if absolutely necessary after receiving an initial response from the user.
     Structure your inquiry as follows:
     e.g., {
-      "inquiry": "What specific information are you seeking about Rivian?",
+      "question": "What specific information are you seeking about Rivian?",
       "options": [
         {"value": "history", "label": "History"},
         {"value": "products", "label": "Products"},

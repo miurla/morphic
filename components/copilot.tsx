@@ -122,7 +122,7 @@ export const Copilot: React.FC<CopilotProps> = ({
             className={cn('w-4 h-4 flex-shrink-0', { 'animate-spin': pending })}
           />
           <p className="text-lg text-foreground text-semibold ml-2">
-            {data?.inquiry}
+            {data?.question}
           </p>
         </div>
         <form onSubmit={onFormSubmit}>
