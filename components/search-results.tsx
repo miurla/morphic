@@ -24,7 +24,7 @@ export function SearchResults({ results }: SearchResultsProps) {
   return (
     <div className="flex flex-wrap">
       {displayedResults.map((result: any, index: any) => (
-        <div className="w-1/4 p-1" key={index}>
+        <div className="w-1/2 md:w-1/4 p-1" key={index}>
           <Link href={result.url} passHref target="_blank">
             <Card className="flex-1">
               <CardContent className="p-2">
@@ -51,7 +51,7 @@ export function SearchResults({ results }: SearchResultsProps) {
         </div>
       ))}
       {!showAllResults && additionalResultsCount > 0 && (
-        <div className="w-1/4 p-1">
+        <div className="w-1/2 md:w-1/4 p-1">
           <Card className="flex-1 flex h-full items-center justify-center">
             <CardContent className="p-2">
               <Button

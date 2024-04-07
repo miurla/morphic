@@ -59,12 +59,12 @@ export const SearchResultsImageSection: React.FC<
   }
 
   return (
-    <div className="flex space-x-2">
+    <div className="flex flex-wrap gap-2">
       {images.slice(0, 4).map((image: any, index: number) => (
         <Dialog key={index}>
           <DialogTrigger asChild>
             <div
-              className="w-1/4 aspect-video cursor-pointer relative"
+              className="w-[calc(50%-0.5rem)] md:w-[calc(25%-0.5rem)] aspect-video cursor-pointer relative"
               onClick={() => setSelectedIndex(index)}
             >
               <Card className="flex-1 h-full">
@@ -80,11 +80,6 @@ export const SearchResultsImageSection: React.FC<
                   )}
                 </CardContent>
               </Card>
-              {/* {index === 3 && images.length > 4 && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-md flex items-center justify-center text-white/80 text-sm">
-                  View more
-                </div>
-              )} */}
             </div>
           </DialogTrigger>
           <DialogContent className="sm:max-w-3xl">

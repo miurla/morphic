@@ -50,7 +50,7 @@ async function submit(formData?: FormData, skip?: boolean) {
       isGenerating.done()
       aiState.done([
         ...aiState.get(),
-        { role: 'assistant', content: `inquiry: ${inquiry?.inquiry}` }
+        { role: 'assistant', content: `inquiry: ${inquiry?.question}` }
       ])
       return
     }
