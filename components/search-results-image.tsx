@@ -82,13 +82,16 @@ export const SearchResultsImageSection: React.FC<
               </Card>
             </div>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-3xl">
+          <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-auto">
             <DialogHeader>
               <DialogTitle>Search Images</DialogTitle>
               <DialogDescription className="text-sm">{query}</DialogDescription>
             </DialogHeader>
             <div className="py-4">
-              <Carousel setApi={setApi} className="w-full bg-muted">
+              <Carousel
+                setApi={setApi}
+                className="w-full bg-muted max-h-[60vh]"
+              >
                 <CarouselContent>
                   {images.map((img, idx) => (
                     <CarouselItem key={idx}>
@@ -96,7 +99,7 @@ export const SearchResultsImageSection: React.FC<
                         <img
                           src={img}
                           alt={`Image ${idx + 1}`}
-                          className="h-auto w-full object-contain"
+                          className="h-auto w-full object-contain max-h-[60vh]"
                         />
                       </div>
                     </CarouselItem>
