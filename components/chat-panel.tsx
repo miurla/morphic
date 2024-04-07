@@ -53,13 +53,9 @@ export function ChatPanel() {
 
   // Clear messages
   const handleClear = () => {
-    // refresh the page
-    // currently, streamable ui is buggy, so we need to refresh the page to clear the state
-    window.location.reload()
-
-    //   setIsButtonPressed(true);
-    //   setMessages([]);
-    //   setAiMessages([]);
+    setIsButtonPressed(true)
+    setMessages([])
+    setAiMessages([])
   }
 
   useEffect(() => {
