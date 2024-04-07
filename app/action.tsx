@@ -63,6 +63,7 @@ async function submit(formData?: FormData, skip?: boolean) {
       const { fullResponse } = await researcher(uiStream, streamText, messages)
       answer = fullResponse
     }
+    streamText.done()
 
     // Generate related queries
     await querySuggestor(uiStream, messages)
