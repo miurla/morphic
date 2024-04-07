@@ -23,13 +23,21 @@ export async function researcher(
   const searchAPI: 'tavily' | 'exa' = 'tavily'
 
   let fullResponse = ''
+  const answerSection = (
+    <Section title="Answer">
+      <BotMessage content={streamText.value} />
+    </Section>
+  )
+
   const result = await experimental_streamText({
     model: openai.chat('gpt-4-turbo-preview'),
     maxTokens: 2500,
-    system: `As a professional web researcher, you possess the ability to search the web for any information.
-      Utilize the search results to offer additional assistance or information as needed.
-      Include a key image in your response if one is relevant. Respond to the user's query accordingly.
-      `,
+    system: `As a professional search expert, you possess the ability to search for any information on the web. 
+    For each user query, utilize the search results to their fullest potential to provide additional information and assistance in your response.
+    If there are any key images relevant to your answer, be sure to include them as well.
+    Aim to directly address the user's question, augmenting your response with insights gleaned from the search results.
+    Whenever quoting or referencing information from a specific URL, always cite the source URL explicitly.
+    `,
     messages,
     tools: {
       search: {
@@ -75,11 +83,7 @@ export async function researcher(
             </Section>
           )
 
-          uiStream.append(
-            <Section title="Answer">
-              <BotMessage content={streamText.value} />
-            </Section>
-          )
+          uiStream.append(answerSection)
 
           return searchResult
         }
@@ -93,6 +97,12 @@ export async function researcher(
     switch (delta.type) {
       case 'text-delta':
         if (delta.textDelta) {
+          // If the first text delata is available, add a ui section
+          if (fullResponse.length === 0 && delta.textDelta.length > 0) {
+            // Update the UI
+            uiStream.update(answerSection)
+          }
+
           fullResponse += delta.textDelta
           streamText.update(fullResponse)
         }

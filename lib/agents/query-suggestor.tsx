@@ -18,16 +18,20 @@ export async function querySuggestor(
 
   await experimental_streamObject({
     model: openai.chat('gpt-4-turbo-preview'),
-    system: `You are tasked as a professional web researcher to generate queries that delve deeper into the subject based on the initial query and its search results. Your goal is to formulate three related questions.
-    For example, given the query: "Starship's third test flight key milestones",
-    Your output should look like:
+    system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
+
+    For instance, if the original query was "Starship's third test flight key milestones", your output should follow this format:
+
     "{
       "related": [
-        "Key milestones achieved during Starship's third test flight",
-        "Reason for Starship's failure during the third test flight",
-        "Future plans for Starship following the third test flight"
+        "What were the primary objectives achieved during Starship's third test flight?",
+        "What factors contributed to the ultimate outcome of Starship's third test flight?",
+        "How will the results of the third test flight influence SpaceX's future development plans for Starship?"
       ]
-    }"`,
+    }"
+
+    Aim to create queries that progressively delve into more specific aspects, implications, or adjacent topics related to the initial query. The goal is to anticipate the user's potential information needs and guide them towards a more comprehensive understanding of the subject matter.
+    `,
     messages,
     schema: relatedSchema
   })
