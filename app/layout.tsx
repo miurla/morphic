@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter as FontSans } from 'next/font/google'
 import { AI } from './action'
 import './globals.css'
@@ -12,9 +12,27 @@ const fontSans = FontSans({
   variable: '--font-sans'
 })
 
+const title = 'Morphic'
+const description =
+  'A fully open-source AI-powered answer engine with a generative UI.'
+
 export const metadata: Metadata = {
-  title: 'Morphic - AI powered answer engine',
-  description: 'An AI-powered answer engine with a generative UI.'
+  title,
+  description,
+  openGraph: {
+    title,
+    description
+  },
+  twitter: {
+    title,
+    description,
+    card: 'summary_large_image',
+    creator: '@miiura'
+  }
+}
+
+export const viewport: Viewport = {
+  minimumScale: 1
 }
 
 export default function RootLayout({
