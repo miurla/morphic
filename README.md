@@ -61,8 +61,10 @@ bun dev
 
 You can now visit http://localhost:3000.
 
-## 🌐 Deploy
+### Host Your Live Version:
 
-Host your own live version of Morphic with Vercel.
+To make Morphic publicly accessible, you can deploy it on a hosting platform like Vercel. Vercel offers a streamlined deployment process, and you can initiate it by following their instructions (typically involving connecting your GitHub account and configuring your project settings).
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY)
+
+
