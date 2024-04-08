@@ -1,6 +1,6 @@
 # Morphic
 
-An AI-powered answer engine with a generative UI.
+A fully open-source AI-powered answer engine with a generative UI. Built with vercel AI SDK
 
 ![capture](/public/capture-240404_blk.png)
 
@@ -37,7 +37,7 @@ cd morphic
 bun i
 ```
 
-### 3. Fill out secrets
+### 3. Change file name
 
 ```
 cp .env.local.example .env.local
