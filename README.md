@@ -1,8 +1,8 @@
-# Morphic Search
+# Morphic
 
 An AI-powered answer engine with a generative UI.
 
-![capture](/public/capture-240404.png)
+![capture](/public/capture-240404_blk.png)
 
 ## 🔍 Overview
 
