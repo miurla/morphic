@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useState, useRef } from 'react'
 import type { AI } from '@/app/action'
 import { useUIState, useActions, useAIState } from 'ai/rsc'
@@ -5,7 +7,7 @@ import { cn } from '@/lib/utils'
 import { UserMessage } from './user-message'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
-import { ArrowRight, Plus, Square } from 'lucide-react'
+import { ArrowRight, Plus } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
 
 export function ChatPanel() {

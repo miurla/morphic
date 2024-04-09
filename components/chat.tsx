@@ -1,5 +1,3 @@
-'use client'
-
 import { ChatPanel } from './chat-panel'
 import { ChatMessages } from './chat-messages'
 

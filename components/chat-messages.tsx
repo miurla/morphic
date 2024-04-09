@@ -1,3 +1,5 @@
+'use client'
+
 import { useUIState } from 'ai/rsc'
 import type { AI } from '@/app/action'
 
