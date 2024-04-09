@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react'
 
 const exampleMessages = [
   {
-    heading: 'Why is Nvidia growing rapidly?',
+    heading: 'Can you give Backlink Oppurtunity',
     message: 'Why is Nvidia growing rapidly?'
   },
   {
