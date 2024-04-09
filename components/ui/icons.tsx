@@ -9,7 +9,7 @@ function IconLogo({ className, ...props }: React.ComponentProps<'svg'>) {
     viewBox="0 0 1214.334 203"
     role="img"
     xmlns="http://www.w3.org/2000/svg"
-    className="h-4 w-4"
+    className="h-8 w-20"
   >
     <g id="_60cd9b27102e0b68dc476cf9_White_logo" data-name="60cd9b27102e0b68dc476cf9_White logo" transform="translate(0 -2)">
       <g id="Group_1" data-name="Group 1">

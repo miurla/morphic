@@ -3,12 +3,12 @@ import { ArrowRight } from 'lucide-react'
 
 const exampleMessages = [
   {
-    heading: 'Can you give Backlink Oppurtunity',
-    message: 'Why is Nvidia growing rapidly?'
+    heading: 'Can you analyse meta title, description and search intend for the keyword: "email marketing?',
+    message: 'Can you analyse meta title, description and search intend for the keyword: "email marketing'
   },
   {
-    heading: 'Is the Apple Vision Pro worth buying?',
-    message: 'Is the Apple Vision Pro worth buying?'
+    heading: 'Can you find best backlink oppourtunies for my website?',
+    message: 'Can you find best backlink oppourtunies for my website?'
   },
   {
     heading: 'How does the Vercel AI SDK work?',
