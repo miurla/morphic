@@ -12,9 +12,9 @@ const fontSans = FontSans({
   variable: '--font-sans'
 })
 
-const title = 'Morphic'
+const title = 'SEOmator AI-Powered SEO Agent'
 const description =
-  'A fully open-source AI-powered answer engine with a generative UI.'
+  'Experience the future of SEO with SEOmator, your AI-powered SEO agent. Boost your websites visibility, improve rankings, and drive more organic traffic.'
 
 export const metadata: Metadata = {
   title,
