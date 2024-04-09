@@ -7,6 +7,8 @@ import { ThemeProvider } from '@/components/theme-provider'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 
+export const maxDuration = 60
+
 const fontSans = FontSans({
   subsets: ['latin'],
   variable: '--font-sans'
