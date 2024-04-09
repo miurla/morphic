@@ -11,12 +11,12 @@ const exampleMessages = [
     message: 'Can you find best backlink oppourtunies for my website?'
   },
   {
-    heading: 'How does the Vercel AI SDK work?',
-    message: 'How does the Vercel AI SDK work?'
+    heading: 'Can you help my to find long tail keyword about email marketing?',
+    message: 'Can you help my to find long tail keyword about email marketing?'
   },
   {
-    heading: 'Tesla vs Rivian',
-    message: 'Tesla vs Rivian'
+    heading: 'Can you create a SEO strategy plan for my niche website?',
+    message: 'Can you create a SEO strategy plan for my niche website?'
   }
 ]
 export function EmptyScreen({
