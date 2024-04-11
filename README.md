@@ -46,8 +46,10 @@ cp .env.local.example .env.local
 Your .env.local file should look like this:
 
 ```
-# Used to set the base URL path for OpenAI API requests.The default value is https://api.openai.com/v1
-OPENAI_API_BASE=
+# Used to set the base URL path for OpenAI API requests.
+# If you need to set a BASE URL, uncomment and set the following:
+# OPENAI_API_BASE=
+
 # OpenAI API key retrieved here: https://platform.openai.com/api-keys
 OPENAI_API_KEY=[YOUR_OPENAI_API_KEY]
 
@@ -67,4 +69,4 @@ You can now visit http://localhost:3000.
 
 Host your own live version of Morphic with Vercel.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_BASE,OPENAI_API_KEY,TAVILY_API_KEY)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY)
