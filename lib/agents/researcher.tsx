@@ -14,6 +14,7 @@ import { SearchResults } from '@/components/search-results'
 import { BotMessage } from '@/components/message'
 import Exa from 'exa-js'
 import { SearchResultsImageSection } from '@/components/search-results-image'
+import { Card } from '@/components/ui/card'
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -29,6 +30,7 @@ export async function researcher(
   const searchAPI: 'tavily' | 'exa' = 'tavily'
 
   let fullResponse = ''
+  let hasError = false
   const answerSection = (
     <Section title="Answer">
       <BotMessage content={streamText.value} />
@@ -70,10 +72,29 @@ export async function researcher(
             </Section>
           )
 
-          const searchResult =
-            searchAPI === 'tavily'
-              ? await tavilySearch(query, max_results, search_depth)
-              : await exaSearch(query)
+          // Tavily API requires a minimum of 5 characters in the query
+          const filledQuery =
+            query.length < 5 ? query + ' '.repeat(5 - query.length) : query
+          let searchResult
+          try {
+            searchResult =
+              searchAPI === 'tavily'
+                ? await tavilySearch(filledQuery, max_results, search_depth)
+                : await exaSearch(query)
+          } catch (error) {
+            console.error('Search API error:', error)
+            hasError = true
+          }
+
+          if (hasError) {
+            fullResponse += `\nAn error occurred while searching for "${query}.`
+            uiStream.update(
+              <Card className="p-4 mt-2 text-sm">
+                {`An error occurred while searching for "${query}".`}
+              </Card>
+            )
+            return searchResult
+          }
 
           uiStream.update(
             <Section title="Images">
@@ -120,6 +141,7 @@ export async function researcher(
         toolResponses.push(delta)
         break
       case 'error':
+        hasError = true
         fullResponse += `\nError occurred while executing the tool`
         break
     }
@@ -134,7 +156,7 @@ export async function researcher(
     messages.push({ role: 'tool', content: toolResponses })
   }
 
-  return { result, fullResponse }
+  return { result, fullResponse, hasError }
 }
 
 async function tavilySearch(
