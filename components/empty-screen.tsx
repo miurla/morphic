@@ -1,51 +1,81 @@
-import { Button } from '@/components/ui/button'
-import { ArrowRight } from 'lucide-react'
+import React, { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
+import axios from 'axios';
+import { OpenAI } from 'ai/openai';
 
-const exampleMessages = [
-  {
-    heading: 'Why is Nvidia growing rapidly?',
-    message: 'Why is Nvidia growing rapidly?'
-  },
-  {
-    heading: 'Is the Apple Vision Pro worth buying?',
-    message: 'Is the Apple Vision Pro worth buying?'
-  },
-  {
-    heading: 'How does the Vercel AI SDK work?',
-    message: 'How does the Vercel AI SDK work?'
-  },
-  {
-    heading: 'Tesla vs Rivian',
-    message: 'Tesla vs Rivian'
-  }
-]
 export function EmptyScreen({
   submitMessage,
   className
 }: {
-  submitMessage: (message: string) => void
+  submitMessage: (message: string) => void,
   className?: string
 }) {
+  const [newsData, setNewsData] = useState<any[]>([]);
+  const [error, setError] = useState<null | string>(null);
+  const openai = new OpenAI({
+    apiKey: process.env.REACT_APP_OPENAI_API_KEY,
+  });
+
+  useEffect(() => {
+    axios
+      .get('https://newsdata.io/api/1/news', {
+        params: {
+          apikey: process.env.REACT_APP_NEWSDATA_API_KEY,
+          language: 'en',
+        },
+      })
+      .then(async (response) => {
+        const newsArticles = response.data;
+        const summarisedNews = await Promise.all(
+          newsArticles.map(async (article) => {
+            const gptResponse = await openai.complete({
+              engine: 'text-davinci-003',
+              prompt: article.description,
+              max_tokens: 60,
+            });
+            return {
+              title: article.title,
+              link: article.link,
+              description: gptResponse.choices[0].text.strip(),
+            };
+          })
+        );
+        setNewsData(summarisedNews);
+      })
+      .catch((error) => {
+        setError(error.toString());
+      });
+  }, []);
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  if (newsData.length === 0) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className={`mx-auto w-full transition-all ${className}`}>
       <div className="bg-background p-2">
         <div className="mt-4 flex flex-col items-start space-y-2 mb-4">
-          {exampleMessages.map((message, index) => (
+          {newsData.map((news, index) => (
             <Button
               key={index}
               variant="link"
               className="h-auto p-0 text-base"
-              name={message.message}
+              name={news.description}
               onClick={async () => {
-                submitMessage(message.message)
+                submitMessage(news.description);
               }}
             >
               <ArrowRight size={16} className="mr-2 text-muted-foreground" />
-              {message.heading}
+              {news.title}
             </Button>
           ))}
         </div>
       </div>
     </div>
-  )
+  );
 }
