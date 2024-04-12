@@ -57,23 +57,31 @@ async function submit(formData?: FormData, skip?: boolean) {
 
     //  Generate the answer
     let answer = ''
+    let errorOccurred = false
     const streamText = createStreamableValue<string>()
     while (answer.length === 0) {
       // Search the web and generate the answer
-      const { fullResponse } = await researcher(uiStream, streamText, messages)
+      const { fullResponse, hasError } = await researcher(
+        uiStream,
+        streamText,
+        messages
+      )
       answer = fullResponse
+      errorOccurred = hasError
     }
     streamText.done()
 
-    // Generate related queries
-    await querySuggestor(uiStream, messages)
+    if (!errorOccurred) {
+      // Generate related queries
+      await querySuggestor(uiStream, messages)
 
-    // Add follow-up panel
-    uiStream.append(
-      <Section title="Follow-up">
-        <FollowupPanel />
-      </Section>
-    )
+      // Add follow-up panel
+      uiStream.append(
+        <Section title="Follow-up">
+          <FollowupPanel />
+        </Section>
+      )
+    }
 
     isGenerating.done(false)
     uiStream.done()
