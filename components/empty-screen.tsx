@@ -30,7 +30,7 @@ export function EmptyScreen({
         const summarisedNews = await Promise.all(
           newsArticles.map(async (article) => {
             const gptResponse = await openai.complete({
-              engine: 'text-davinci-003',
+              engine: 'gpt-3.5-turbo',
               prompt: article.description,
               max_tokens: 60,
             });
