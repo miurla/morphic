@@ -50,6 +50,10 @@ Your .env.local file should look like this:
 # If you need to set a BASE URL, uncomment and set the following:
 # OPENAI_API_BASE=
 
+# Used to set the model for OpenAI API requests.
+# If not set, the default is gpt-4-turbo.
+# OPENAI_API_MODEL='gpt-4-turbo'
+
 # OpenAI API key retrieved here: https://platform.openai.com/api-keys
 OPENAI_API_KEY=[YOUR_OPENAI_API_KEY]
 
