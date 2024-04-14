@@ -40,7 +40,7 @@ async function submit(formData?: FormData, skip?: boolean) {
 
     let action: any = { object: { next: 'proceed' } }
     // If the user skips the task, we proceed to the search
-    if (!skip) action = await taskManager(messages)
+    if (!skip) action = (await taskManager(messages)) ?? action
 
     if (action.object.next === 'inquire') {
       // Generate inquiry
