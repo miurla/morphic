@@ -36,7 +36,7 @@ export async function querySuggestor(
     }"
 
     Aim to create queries that progressively delve into more specific aspects, implications, or adjacent topics related to the initial query. The goal is to anticipate the user's potential information needs and guide them towards a more comprehensive understanding of the subject matter.
-    `,
+    Please match the language of the response to the user's language.`,
     messages,
     schema: relatedSchema
   })
