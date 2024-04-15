@@ -40,7 +40,7 @@ async function submit(formData?: FormData, skip?: boolean) {
 
     let action: any = { object: { next: 'proceed' } }
     // If the user skips the task, we proceed to the search
-    if (!skip) action = (await taskManager(messages)) ?? action
+    if (!skip) action = await taskManager(messages)
 
     if (action.object.next === 'inquire') {
       // Generate inquiry
@@ -57,31 +57,23 @@ async function submit(formData?: FormData, skip?: boolean) {
 
     //  Generate the answer
     let answer = ''
-    let errorOccurred = false
     const streamText = createStreamableValue<string>()
     while (answer.length === 0) {
       // Search the web and generate the answer
-      const { fullResponse, hasError } = await researcher(
-        uiStream,
-        streamText,
-        messages
-      )
+      const { fullResponse } = await researcher(uiStream, streamText, messages)
       answer = fullResponse
-      errorOccurred = hasError
     }
     streamText.done()
 
-    if (!errorOccurred) {
-      // Generate related queries
-      await querySuggestor(uiStream, messages)
+    // Generate related queries
+    await querySuggestor(uiStream, messages)
 
-      // Add follow-up panel
-      uiStream.append(
-        <Section title="Follow-up">
-          <FollowupPanel />
-        </Section>
-      )
-    }
+    // Add follow-up panel
+    uiStream.append(
+      <Section title="Follow-up">
+        <FollowupPanel />
+      </Section>
+    )
 
     isGenerating.done(false)
     uiStream.done()
