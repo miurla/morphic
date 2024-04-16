@@ -26,7 +26,7 @@
     "embla-carousel-react": "^8.0.0",
     "exa-js": "^1.0.12",
     "lucide-react": "^0.363.0",
-    "next": "v14.2.0-canary.60",
+    "next": "latest",
     "next-themes": "^0.3.0",
     "react": "^18",
     "react-dom": "^18",
