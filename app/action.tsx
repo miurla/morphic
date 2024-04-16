@@ -19,6 +19,8 @@ async function submit(formData?: FormData, skip?: boolean) {
   const isGenerating = createStreamableValue(true)
 
   const messages: ExperimentalMessage[] = aiState.get() as any
+  // Limit the number of messages to 14
+  messages.splice(0, Math.max(messages.length - 14, 0))
   // Get the user input from the form data
   const userInput = skip
     ? `{"action": "skip"}`
