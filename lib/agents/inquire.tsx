@@ -1,4 +1,4 @@
-import { OpenAI } from 'ai/openai'
+import { OpenAI } from '@ai-sdk/openai'
 import { Copilot } from '@/components/copilot'
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import { ExperimentalMessage, experimental_streamObject } from 'ai'

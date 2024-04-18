@@ -7,7 +7,7 @@ import {
 } from 'ai'
 import { searchSchema } from '@/lib/schema/search'
 import { Section } from '@/components/section'
-import { OpenAI } from 'ai/openai'
+import { OpenAI } from '@ai-sdk/openai'
 import { ToolBadge } from '@/components/tool-badge'
 import { SearchSkeleton } from '@/components/search-skeleton'
 import { SearchResults } from '@/components/search-results'
