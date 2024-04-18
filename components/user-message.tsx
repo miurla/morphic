@@ -11,7 +11,7 @@ export const UserMessage: React.FC<UserMessageProps> = ({
   isFirstMessage
 }) => {
   return (
-    <div className={cn({ 'pt-4': !isFirstMessage })}>
+    <div className={cn({ 'mt-4': !isFirstMessage })}>
       <div className="text-xl">{message}</div>
     </div>
   )
