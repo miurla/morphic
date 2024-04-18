@@ -1,5 +1,5 @@
 import { ExperimentalMessage, experimental_generateObject } from 'ai'
-import { OpenAI } from 'ai/openai'
+import { OpenAI } from '@ai-sdk/openai'
 import { nextActionSchema } from '../schema/next-action'
 
 // Decide whether inquiry is required for the user input
