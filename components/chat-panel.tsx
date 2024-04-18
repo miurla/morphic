@@ -38,7 +38,6 @@ export function ChatPanel() {
       ...currentMessages,
       {
         id: Date.now(),
-        isGenerating: false,
         component: <UserMessage message={input} />
       }
     ])
