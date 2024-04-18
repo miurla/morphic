@@ -61,6 +61,8 @@ OPENAI_API_KEY=[YOUR_OPENAI_API_KEY]
 TAVILY_API_KEY=[YOUR_TAVILY_API_KEY]
 ```
 
+**Note: This project focuses on Generative UI and requires complex output from LLMs. Currently, it's assumed that the official OpenAI models will be used. Although it is possible to set up other models, if you use an OpenAI-compatible model, please do so at your own risk.**
+
 ### 4. Run app locally
 
 ```
