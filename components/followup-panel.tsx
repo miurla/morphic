@@ -7,8 +7,7 @@ import { useActions, useUIState } from 'ai/rsc'
 import type { AI } from '@/app/action'
 import { UserMessage } from './user-message'
 import { ArrowRight } from 'lucide-react'
-
-export function FollowupPanel() {
+export function FollowupPanel({ className }: { className?: string }) {
   const [input, setInput] = useState('')
   const { submit } = useActions<typeof AI>()
   const [, setMessages] = useUIState<typeof AI>()
@@ -36,7 +35,7 @@ export function FollowupPanel() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="relative flex items-center space-x-1"
+      className={`relative flex items-center space-x-1 ${className}`}
     >
       <Input
         type="text"
