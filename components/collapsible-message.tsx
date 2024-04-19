@@ -9,7 +9,6 @@ import { ChevronDown } from 'lucide-react'
 import { StreamableValue, useStreamableValue } from 'ai/rsc'
 import { cn } from '@/lib/utils'
 import { Separator } from './ui/separator'
-import { FollowupPanel } from './followup-panel'
 
 interface CollapsibleMessageProps {
   message: {
@@ -67,12 +66,7 @@ export const CollapsibleMessage: React.FC<CollapsibleMessageProps> = ({
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>{message.component}</CollapsibleContent>
-      {!open &&
-        (isLastMessage ? (
-          <FollowupPanel className="mt-4" />
-        ) : (
-          <Separator className="my-2 bg-muted" />
-        ))}
+      {!open && <Separator className="my-2 bg-muted" />}
     </Collapsible>
   )
 }
