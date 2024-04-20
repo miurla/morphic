@@ -19,7 +19,8 @@ import { Card } from '@/components/ui/card'
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
   streamText: ReturnType<typeof createStreamableValue<string>>,
-  messages: ExperimentalMessage[]
+  messages: ExperimentalMessage[],
+  useSpecificModel?: boolean
 ) {
   const openai = new OpenAI({
     baseUrl: process.env.OPENAI_API_BASE, // optional base URL for proxies etc.
@@ -110,7 +111,10 @@ export async function researcher(
             </Section>
           )
 
-          uiStream.append(answerSection)
+          // Append the answer section if the specific model is not used
+          if (!useSpecificModel) {
+            uiStream.append(answerSection)
+          }
 
           return searchResult
         }
@@ -156,7 +160,7 @@ export async function researcher(
     messages.push({ role: 'tool', content: toolResponses })
   }
 
-  return { result, fullResponse, hasError }
+  return { result, fullResponse, hasError, toolResponses }
 }
 
 async function tavilySearch(

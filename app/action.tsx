@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Section } from '@/components/section'
 import { FollowupPanel } from '@/components/followup-panel'
 import { inquire, researcher, taskManager, querySuggestor } from '@/lib/agents'
+import { writer } from '@/lib/agents/writer'
 
 async function submit(formData?: FormData, skip?: boolean) {
   'use server'
@@ -20,8 +21,10 @@ async function submit(formData?: FormData, skip?: boolean) {
   const isCollapsed = createStreamableValue(false)
 
   const messages: ExperimentalMessage[] = aiState.get() as any
-  // Limit the number of messages to 10
-  messages.splice(0, Math.max(messages.length - 10, 0))
+  const useSpecificAPI = process.env.USE_SPECIFIC_API_FOR_WRITER === 'true'
+  const maxMessages = useSpecificAPI ? 5 : 10
+  // Limit the number of messages to the maximum
+  messages.splice(0, Math.max(messages.length - maxMessages, 0))
   // Get the user input from the form data
   const userInput = skip
     ? `{"action": "skip"}`
@@ -64,19 +67,41 @@ async function submit(formData?: FormData, skip?: boolean) {
 
     //  Generate the answer
     let answer = ''
+    let toolOutputs = []
     let errorOccurred = false
     const streamText = createStreamableValue<string>()
-    while (answer.length === 0) {
+
+    // If useSpecificAPI is enabled, only function calls will be made
+    // If not using a tool, this model generates the answer
+    while (
+      useSpecificAPI
+        ? toolOutputs.length === 0 && answer.length === 0
+        : answer.length === 0
+    ) {
       // Search the web and generate the answer
-      const { fullResponse, hasError } = await researcher(
+      const { fullResponse, hasError, toolResponses } = await researcher(
         uiStream,
         streamText,
-        messages
+        messages,
+        useSpecificAPI
       )
       answer = fullResponse
+      toolOutputs = toolResponses
       errorOccurred = hasError
     }
-    streamText.done()
+
+    // If useSpecificAPI is enabled, generate the answer using the specific model
+    if (useSpecificAPI && answer.length === 0) {
+      // modify the messages to be used by the specific model
+      const modifiedMessages = messages.map(msg =>
+        msg.role === 'tool'
+          ? { ...msg, role: 'assistant', content: JSON.stringify(msg.content) }
+          : msg
+      ) as ExperimentalMessage[]
+      answer = await writer(uiStream, streamText, modifiedMessages)
+    } else {
+      streamText.done()
+    }
 
     if (!errorOccurred) {
       // Generate related queries
