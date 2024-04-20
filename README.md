@@ -9,6 +9,7 @@ An AI-powered answer engine with a generative UI.
 - 🧱 [Stack](#-stack)
 - 🚀 [Quickstart](#-quickstart)
 - 🌐 [Deploy](#-deploy)
+- ✅ [Verified models](#-vertified-models)
 
 ## 🧱 Stack
 
@@ -59,9 +60,15 @@ OPENAI_API_KEY=[YOUR_OPENAI_API_KEY]
 
 # Tavily API Key retrieved here: https://app.tavily.com/home
 TAVILY_API_KEY=[YOUR_TAVILY_API_KEY]
+
+# Only writers can set a specific model. It must be compatible with the OpenAI API.
+# USE_SPECIFIC_API_FOR_WRITER=true
+# SPECIFIC_API_BASE=
+# SPECIFIC_API_KEY=
+# SPECIFIC_API_MODEL=
 ```
 
-**Note: This project focuses on Generative UI and requires complex output from LLMs. Currently, it's assumed that the official OpenAI models will be used. Although it is possible to set up other models, if you use an OpenAI-compatible model, please do so at your own risk.**
+**Note: This project focuses on Generative UI and requires complex output from LLMs. Currently, it's assumed that the official OpenAI models will be used. Although it's possible to set up other models, if you use an OpenAI-compatible model, but we don't guarantee that it'll work. **
 
 ### 4. Run app locally
 
@@ -76,3 +83,11 @@ You can now visit http://localhost:3000.
 Host your own live version of Morphic with Vercel.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY)
+
+## ✅ Verified models
+
+List of verified models that can be specified to writers.
+
+- [Groq](https://console.groq.com/docs/models)
+  - LLaMA3 8b
+  - LLaMA3 70b
