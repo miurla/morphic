@@ -76,3 +76,7 @@ You can now visit http://localhost:3000.
 Host your own live version of Morphic with Vercel.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY)
+
+Alternatively, you can one-click deploy Morphic at RepoCloud.
+
+[![Deploy with RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploymd.svg)](https://repocloud.io/details/?app_id=263)
