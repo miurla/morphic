@@ -9,7 +9,7 @@ An AI-powered answer engine with a generative UI.
 - 🧱 [Stack](#-stack)
 - 🚀 [Quickstart](#-quickstart)
 - 🌐 [Deploy](#-deploy)
-- ✅ [Verified models](#-vertified-models)
+- ✅ [Verified models](#-verified-models)
 
 ## 🧱 Stack
 
