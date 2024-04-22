@@ -65,11 +65,11 @@ export function ChatPanel() {
   // If there are messages and the new button has not been pressed, display the new Button
   if (messages.length > 0 && !isButtonPressed) {
     return (
-      <div className="fixed bottom-2 md:bottom-8 left-0 right-0 flex justify-center items-center mx-auto">
+      <div className="fixed bottom-2 md:bottom-8 left-0 right-0 flex justify-center items-center mx-auto pointer-events-none">
         <Button
           type="button"
           variant={'secondary'}
-          className="rounded-full bg-secondary/80 group transition-all hover:scale-105"
+          className="rounded-full bg-secondary/80 group transition-all hover:scale-105 pointer-events-auto"
           onClick={() => handleClear()}
         >
           <span className="text-sm mr-2 group-hover:block hidden animate-in fade-in duration-300">
