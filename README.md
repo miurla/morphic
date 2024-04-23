@@ -1,8 +1,12 @@
 # Morphic
 
-An AI-powered answer engine with a generative UI.
+An AI-powered search engine with a generative UI.
 
 ![capture](/public/capture-240404_blk.png)
+
+### Note
+
+Please note that there are differences between this repository and the official website [morphic.sh](morphic.sh). The official website is a fork of this repository with additional features such as authentication, which are necessary for providing the service online. The core source code of Morphic resides in this repository, and it's designed to be easily built and deployed. When using Morphic, please keep in mind the different roles of the repository and the website.
 
 ## 🔍 Overview
 
@@ -68,7 +72,7 @@ TAVILY_API_KEY=[YOUR_TAVILY_API_KEY]
 # SPECIFIC_API_MODEL=
 ```
 
-**Note: This project focuses on Generative UI and requires complex output from LLMs. Currently, it's assumed that the official OpenAI models will be used. Although it's possible to set up other models, if you use an OpenAI-compatible model, but we don't guarantee that it'll work. **
+_Note: This project focuses on Generative UI and requires complex output from LLMs. Currently, it's assumed that the official OpenAI models will be used. Although it's possible to set up other models, if you use an OpenAI-compatible model, but we don't guarantee that it'll work._
 
 ### 4. Run app locally
 
