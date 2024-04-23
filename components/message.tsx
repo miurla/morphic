@@ -3,6 +3,7 @@
 import { StreamableValue, useStreamableValue } from 'ai/rsc'
 import { MemoizedReactMarkdown } from './ui/markdown'
 import rehypeExternalLinks from 'rehype-external-links'
+import remarkGfm from 'remark-gfm'
 
 export function BotMessage({
   content
@@ -16,7 +17,7 @@ export function BotMessage({
 
   return (
     <MemoizedReactMarkdown
-      rehypePlugins={[[rehypeExternalLinks, { target: '_blank' }]]}
+      rehypePlugins={[[rehypeExternalLinks, { target: '_blank' }, remarkGfm]]}
       className="prose-sm prose-neutral prose-a:text-accent-foreground/50"
     >
       {data}
