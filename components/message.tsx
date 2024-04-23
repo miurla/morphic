@@ -17,7 +17,8 @@ export function BotMessage({
 
   return (
     <MemoizedReactMarkdown
-      rehypePlugins={[[rehypeExternalLinks, { target: '_blank' }, remarkGfm]]}
+      rehypePlugins={[[rehypeExternalLinks, { target: '_blank' }]]}
+      remarkPlugins={[remarkGfm]}
       className="prose-sm prose-neutral prose-a:text-accent-foreground/50"
     >
       {data}
