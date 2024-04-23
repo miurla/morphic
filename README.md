@@ -15,6 +15,16 @@ Please note that there are differences between this repository and the official 
 - 🌐 [Deploy](#-deploy)
 - ✅ [Verified models](#-verified-models)
 
+### 🚗 Roadmap [WIP]
+
+- [x] Enable specifying the model to use (only writer agent)
+- [ ] Implement chat history functionality
+- [ ] Develop features for sharing results
+- [ ] Add video support for search functionality
+- [ ] Implement Retrieval-Augmented Generation (RAG) support
+- [ ] Introduce tool support for enhanced productivity
+- [ ] Expand Generative UI capabilities
+
 ## 🧱 Stack
 
 - App framework: [Next.js](https://nextjs.org/)
