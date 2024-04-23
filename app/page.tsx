@@ -1,5 +1,3 @@
-'use client'
-
 import { Chat } from '@/components/chat'
 
 export const runtime = 'edge'
