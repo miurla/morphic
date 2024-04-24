@@ -95,11 +95,6 @@ export async function researcher(
 
           streamResults.done(JSON.stringify(searchResult))
 
-          // Append the answer section if the specific model is not used
-          if (!useSpecificModel) {
-            uiStream.append(answerSection)
-          }
-
           return searchResult
         }
       }
@@ -126,6 +121,10 @@ export async function researcher(
         toolCalls.push(delta)
         break
       case 'tool-result':
+        // Append the answer section if the specific model is not used
+        if (!useSpecificModel && toolResponses.length === 0) {
+          uiStream.append(answerSection)
+        }
         toolResponses.push(delta)
         break
       case 'error':
