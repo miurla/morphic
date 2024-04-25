@@ -42,8 +42,6 @@ async function submit(formData?: FormData, skip?: boolean) {
   }
 
   async function processEvents() {
-    uiStream.update(<Spinner />)
-
     let action: any = { object: { next: 'proceed' } }
     // If the user skips the task, we proceed to the search
     if (!skip) action = (await taskManager(messages)) ?? action
@@ -70,6 +68,7 @@ async function submit(formData?: FormData, skip?: boolean) {
     let toolOutputs = []
     let errorOccurred = false
     const streamText = createStreamableValue<string>()
+    uiStream.update(<Spinner />)
 
     // If useSpecificAPI is enabled, only function calls will be made
     // If not using a tool, this model generates the answer
