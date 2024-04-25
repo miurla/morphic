@@ -94,9 +94,21 @@ You can now visit http://localhost:3000.
 
 ## 🌐 Deploy
 
-Host your own live version of Morphic with Vercel.
+Host your own live version of Morphic with Vercel or Cloudflare Pages.
+
+### Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY)
+
+### Cloudflare Pages
+
+1. Fork the repo to your GitHub.
+2. Create a Cloudflare Pages project.
+3. Select `Morphic` repo and `Next.js` preset.
+4. Set `OPENAI_API_KEY` and `TAVILY_API_KEY` env vars.
+5. Save and deploy.
+6. Cancel deployment, go to `Settings` -> `Functions` -> `Compatibility flags`, add `nodejs_compat` to preview and production.
+7. Redeploy.
 
 ## ✅ Verified models
 
