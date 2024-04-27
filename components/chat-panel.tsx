@@ -81,14 +81,12 @@ export function ChatPanel() {
     )
   }
 
-  // Condition 1 and 3: If there are no messages or the button is pressed, display the form
-  const formPositionClass =
-    messages.length === 0
-      ? 'fixed bottom-8 left-0 right-0 top-10 mx-auto h-screen flex flex-col items-center justify-center'
-      : 'fixed bottom-8-ml-6'
   return (
-    <div className={formPositionClass}>
-      {/* <IconKuroko className="w-6 h-6 mb-4" /> */}
+    <div
+      className={
+        'fixed bottom-8 left-0 right-0 top-10 mx-auto h-screen flex flex-col items-center justify-center'
+      }
+    >
       <form onSubmit={handleSubmit} className="max-w-2xl w-full px-6">
         <div className="relative flex items-center w-full">
           <Input
