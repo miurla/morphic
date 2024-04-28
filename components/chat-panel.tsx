@@ -7,6 +7,7 @@ import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { ArrowRight, Plus, Square } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
+import Textarea from 'react-textarea-autosize'
 
 export function ChatPanel() {
   const [input, setInput] = useState('')
@@ -14,7 +15,7 @@ export function ChatPanel() {
   const [aiMessages, setAiMessages] = useAIState<typeof AI>()
   const { submit } = useActions<typeof AI>()
   const [isButtonPressed, setIsButtonPressed] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   // Focus on input when button is pressed
   useEffect(() => {
@@ -89,16 +90,44 @@ export function ChatPanel() {
     >
       <form onSubmit={handleSubmit} className="max-w-2xl w-full px-6">
         <div className="relative flex items-center w-full">
-          <Input
+          <Textarea
             ref={inputRef}
-            type="text"
             name="input"
+            rows={1}
+            tabIndex={0}
             placeholder="Ask a question..."
+            spellCheck={false}
             value={input}
-            className="pl-4 pr-10 h-12 rounded-full bg-muted"
+            className="leading-5 resize-none pl-8 sm:pl-10 pr-14 h-12 rounded-full bg-muted flex min-h-[70px] w-full border border-input py-6 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             onChange={e => {
               setInput(e.target.value)
               setShowEmptyScreen(e.target.value.length === 0)
+            }}
+            onKeyDown={e => {
+              // Enter should submit the form
+              if (e.key === 'Enter' && !e.shiftKey) {
+                // Prevent the default action to avoid adding a new line
+                e.preventDefault()
+                const textarea = e.target as HTMLTextAreaElement
+                textarea.form?.requestSubmit()
+              }
+            }}
+            onHeightChange={height => {
+              // Ensure inputRef.current is defined
+              if (!inputRef.current) return
+
+              // The initial height and left padding is 70px and 2rem
+              const initialHeight = 70
+              // The initial border radius is 32px
+              const initialBorder = 32
+              // The height is incremented by multiples of 20px
+              const multiple = (height - initialHeight) / 20
+
+              // Decrease the border radius by 4px for each 20px height increase
+              const newBorder = initialBorder - 4 * multiple
+              // The lowest border radius will be 8px
+              inputRef.current.style.borderRadius =
+                Math.max(8, newBorder) + 'px'
             }}
             onFocus={() => setShowEmptyScreen(true)}
             onBlur={() => setShowEmptyScreen(false)}
