@@ -7,37 +7,45 @@ import {
 } from 'ai'
 import { searchSchema } from '@/lib/schema/search'
 import { Section } from '@/components/section'
-import { openai } from 'ai/openai'
-import { ToolBadge } from '@/components/tool-badge'
-import { SearchSkeleton } from '@/components/search-skeleton'
-import { SearchResults } from '@/components/search-results'
+import { OpenAI } from '@ai-sdk/openai'
 import { BotMessage } from '@/components/message'
 import Exa from 'exa-js'
-import { SearchResultsImageSection } from '@/components/search-results-image'
+import { Card } from '@/components/ui/card'
+import { SearchResults } from '../types'
+import { SearchSection } from '@/components/search-section'
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
   streamText: ReturnType<typeof createStreamableValue<string>>,
-  messages: ExperimentalMessage[]
+  messages: ExperimentalMessage[],
+  useSpecificModel?: boolean
 ) {
+  const openai = new OpenAI({
+    baseUrl: process.env.OPENAI_API_BASE, // optional base URL for proxies etc.
+    apiKey: process.env.OPENAI_API_KEY, // optional API key, default to env property OPENAI_API_KEY
+    organization: '' // optional organization
+  })
+
   const searchAPI: 'tavily' | 'exa' = 'tavily'
 
   let fullResponse = ''
+  let hasError = false
   const answerSection = (
     <Section title="Answer">
       <BotMessage content={streamText.value} />
     </Section>
   )
 
+  let isFirstToolResponse = true
   const result = await experimental_streamText({
-    model: openai.chat('gpt-4-turbo-preview'),
+    model: openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4-turbo'),
     maxTokens: 2500,
     system: `As a professional search expert, you possess the ability to search for any information on the web. 
     For each user query, utilize the search results to their fullest potential to provide additional information and assistance in your response.
     If there are any images relevant to your answer, be sure to include them as well.
     Aim to directly address the user's question, augmenting your response with insights gleaned from the search results.
     Whenever quoting or referencing information from a specific URL, always cite the source URL explicitly.
-    `,
+    Please match the language of the response to the user's language.`,
     messages,
     tools: {
       search: {
@@ -52,38 +60,40 @@ export async function researcher(
           max_results: number
           search_depth: 'basic' | 'advanced'
         }) => {
-          uiStream.update(
-            <Section>
-              <ToolBadge tool="search">{`${query}`}</ToolBadge>
-            </Section>
-          )
+          // If this is the first tool response, remove spinner
+          if (isFirstToolResponse) {
+            isFirstToolResponse = false
+            uiStream.update(null)
+          }
+          // Append the search section
+          const streamResults = createStreamableValue<string>()
+          uiStream.append(<SearchSection result={streamResults.value} />)
 
-          uiStream.append(
-            <Section>
-              <SearchSkeleton />
-            </Section>
-          )
+          // Tavily API requires a minimum of 5 characters in the query
+          const filledQuery =
+            query.length < 5 ? query + ' '.repeat(5 - query.length) : query
+          let searchResult
+          try {
+            searchResult =
+              searchAPI === 'tavily'
+                ? await tavilySearch(filledQuery, max_results, search_depth)
+                : await exaSearch(query)
+          } catch (error) {
+            console.error('Search API error:', error)
+            hasError = true
+          }
 
-          const searchResult =
-            searchAPI === 'tavily'
-              ? await tavilySearch(query, max_results, search_depth)
-              : await exaSearch(query)
+          if (hasError) {
+            fullResponse += `\nAn error occurred while searching for "${query}.`
+            uiStream.update(
+              <Card className="p-4 mt-2 text-sm">
+                {`An error occurred while searching for "${query}".`}
+              </Card>
+            )
+            return searchResult
+          }
 
-          uiStream.update(
-            <Section title="Images">
-              <SearchResultsImageSection
-                images={searchResult.images}
-                query={searchResult.query}
-              />
-            </Section>
-          )
-          uiStream.append(
-            <Section title="Sources">
-              <SearchResults results={searchResult.results} />
-            </Section>
-          )
-
-          uiStream.append(answerSection)
+          streamResults.done(JSON.stringify(searchResult))
 
           return searchResult
         }
@@ -111,9 +121,14 @@ export async function researcher(
         toolCalls.push(delta)
         break
       case 'tool-result':
+        // Append the answer section if the specific model is not used
+        if (!useSpecificModel && toolResponses.length === 0) {
+          uiStream.append(answerSection)
+        }
         toolResponses.push(delta)
         break
       case 'error':
+        hasError = true
         fullResponse += `\nError occurred while executing the tool`
         break
     }
@@ -128,7 +143,7 @@ export async function researcher(
     messages.push({ role: 'tool', content: toolResponses })
   }
 
-  return { result, fullResponse }
+  return { result, fullResponse, hasError, toolResponses }
 }
 
 async function tavilySearch(

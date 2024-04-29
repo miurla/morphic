@@ -17,6 +17,7 @@ const description =
   'A fully open-source AI-powered answer engine with a generative UI.'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://morphic.sh'),
   title,
   description,
   openGraph: {
@@ -32,7 +33,10 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  minimumScale: 1
+  width: 'device-width',
+  initialScale: 1,
+  minimumScale: 1,
+  maximumScale: 1
 }
 
 export default function RootLayout({

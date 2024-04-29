@@ -40,7 +40,6 @@ export function ChatPanel() {
       ...currentMessages,
       {
         id: Date.now(),
-        isGenerating: false,
         component: <UserMessage message={input} />
       }
     ])
@@ -68,11 +67,11 @@ export function ChatPanel() {
   // If there are messages and the new button has not been pressed, display the new Button
   if (messages.length > 0 && !isButtonPressed) {
     return (
-      <div className="fixed bottom-2 md:bottom-8 left-0 right-0 flex justify-center items-center mx-auto">
+      <div className="fixed bottom-2 md:bottom-8 left-0 right-0 flex justify-center items-center mx-auto pointer-events-none">
         <Button
           type="button"
           variant={'secondary'}
-          className="rounded-full bg-secondary/80 group transition-all hover:scale-105"
+          className="rounded-full bg-secondary/80 group transition-all hover:scale-105 pointer-events-auto"
           onClick={() => handleClear()}
         >
           <span className="text-sm mr-2 group-hover:block hidden animate-in fade-in duration-300">
@@ -84,14 +83,12 @@ export function ChatPanel() {
     )
   }
 
-  // Condition 1 and 3: If there are no messages or the button is pressed, display the form
-  const formPositionClass =
-    messages.length === 0
-      ? 'fixed bottom-8 left-0 right-0 top-10 mx-auto h-screen flex flex-col items-center justify-center'
-      : 'fixed bottom-8-ml-6'
   return (
-    <div className={formPositionClass}>
-      {/* <IconKuroko className="w-6 h-6 mb-4" /> */}
+    <div
+      className={
+        'fixed bottom-8 left-0 right-0 top-10 mx-auto h-screen flex flex-col items-center justify-center'
+      }
+    >
       <form onSubmit={handleSubmit} className="max-w-2xl w-full px-6">
         <div className="relative flex items-center w-full">
           <Input
