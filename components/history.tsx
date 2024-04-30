@@ -27,7 +27,7 @@ export function History({ location }: HistoryProps) {
           {location === 'header' ? <Menu /> : <ChevronLeft size={16} />}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-64">
+      <SheetContent className="w-64 rounded-tl-lg rounded-bl-lg">
         <SheetHeader>
           <SheetTitle>Search history</SheetTitle>
         </SheetHeader>

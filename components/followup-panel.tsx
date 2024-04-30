@@ -10,7 +10,7 @@ import { ArrowRight } from 'lucide-react'
 
 export function FollowupPanel() {
   const [input, setInput] = useState('')
-  const { submit } = useActions<typeof AI>()
+  const { submit } = useActions()
   const [, setMessages] = useUIState<typeof AI>()
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {

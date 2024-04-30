@@ -8,7 +8,7 @@ import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { ArrowRight, Check, FastForward, Sparkles } from 'lucide-react'
 import { useActions, useStreamableValue, useUIState } from 'ai/rsc'
-import { AI } from '@/app/action'
+import type { AI } from '@/app/action'
 import { IconLogo } from './ui/icons'
 import { cn } from '@/lib/utils'
 
@@ -25,8 +25,8 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
     [key: string]: boolean
   }>({})
   const [isButtonDisabled, setIsButtonDisabled] = useState(true)
-  const [messages, setMessages] = useUIState<typeof AI>()
-  const { submit } = useActions<typeof AI>()
+  const [, setMessages] = useUIState<typeof AI>()
+  const { submit } = useActions()
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value)
@@ -73,8 +73,8 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
       ? undefined
       : new FormData(e.target as HTMLFormElement)
 
-    const responseMessage = await submit(formData, skip)
-    setMessages(currentMessages => [...currentMessages, responseMessage])
+    const response = await submit(formData, skip)
+    setMessages(currentMessages => [...currentMessages, response])
   }
 
   const handleSkip = (e: React.MouseEvent<HTMLButtonElement>) => {

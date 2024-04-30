@@ -3,15 +3,16 @@ import type { AI } from '@/app/action'
 import { CollapsibleMessage } from './collapsible-message'
 
 export function ChatMessages() {
-  const [messages, setMessages] = useUIState<typeof AI>()
+  const [messages] = useUIState<typeof AI>()
 
   return (
     <>
       {messages.map(
         (message: {
-          id: number
+          id: string
           component: React.ReactNode
           isCollapsed?: StreamableValue<boolean>
+          isGenerating?: StreamableValue<boolean>
         }) => (
           <CollapsibleMessage
             key={message.id}

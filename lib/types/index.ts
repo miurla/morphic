@@ -1,5 +1,3 @@
-import { Message } from 'ai'
-
 export type SearchResults = {
   images: string[]
   results: SearchResultItem[]
@@ -18,6 +16,14 @@ export interface Chat extends Record<string, any> {
   createdAt: Date
   userId: string
   path: string
-  messages: Message[]
+  messages: AIMessage[]
   sharePath?: string
+}
+
+export type AIMessage = {
+  role: 'user' | 'assistant' | 'system' | 'function' | 'data' | 'tool'
+  content: string
+  id: string
+  name?: string
+  type?: 'answer' | 'related' | 'skip' | 'selection' | 'input' | 'tool'
 }

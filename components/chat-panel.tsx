@@ -7,12 +7,13 @@ import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { ArrowRight, Plus, Square } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
+import { nanoid } from 'ai'
 
 export function ChatPanel() {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useUIState<typeof AI>()
   const [aiMessages, setAiMessages] = useAIState<typeof AI>()
-  const { submit } = useActions<typeof AI>()
+  const { submit } = useActions()
   const [isButtonPressed, setIsButtonPressed] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
@@ -37,24 +38,25 @@ export function ChatPanel() {
     setMessages(currentMessages => [
       ...currentMessages,
       {
-        id: Date.now(),
+        id: nanoid(),
         component: <UserMessage message={input} />
       }
     ])
+
+    console.log('ai: ', aiMessages)
 
     // Submit and get response message
     const formData = new FormData(e.currentTarget)
     const responseMessage = await submit(formData)
     setMessages(currentMessages => [...currentMessages, responseMessage as any])
-
-    setInput('')
+    console.log('responseMessage', responseMessage)
   }
 
   // Clear messages
   const handleClear = () => {
     setIsButtonPressed(true)
-    setMessages([])
-    setAiMessages([])
+    // setMessages([])
+    // setAiMessages(null)
   }
 
   useEffect(() => {

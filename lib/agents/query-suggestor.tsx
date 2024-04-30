@@ -4,6 +4,7 @@ import { PartialRelated, relatedSchema } from '@/lib/schema/related'
 import { Section } from '@/components/section'
 import SearchRelated from '@/components/search-related'
 import { OpenAI } from '@ai-sdk/openai'
+import { PartialInquiry } from '../schema/inquiry'
 
 export async function querySuggestor(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -21,6 +22,7 @@ export async function querySuggestor(
     </Section>
   )
 
+  let finalRelatedQueries: PartialRelated = {}
   await experimental_streamObject({
     model: openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4-turbo'),
     system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
@@ -43,9 +45,12 @@ export async function querySuggestor(
     .then(async result => {
       for await (const obj of result.partialObjectStream) {
         objectStream.update(obj)
+        finalRelatedQueries = obj
       }
     })
     .finally(() => {
       objectStream.done()
     })
+
+  return finalRelatedQueries
 }

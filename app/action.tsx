@@ -1,16 +1,18 @@
 import {
-  StreamableValue,
   createAI,
   createStreamableUI,
   createStreamableValue,
   getMutableAIState
 } from 'ai/rsc'
-import { ExperimentalMessage } from 'ai'
+import { ExperimentalMessage, nanoid, ToolResultPart } from 'ai'
 import { Spinner } from '@/components/ui/spinner'
 import { Section } from '@/components/section'
 import { FollowupPanel } from '@/components/followup-panel'
 import { inquire, researcher, taskManager, querySuggestor } from '@/lib/agents'
 import { writer } from '@/lib/agents/writer'
+import { saveChat } from '@/lib/actions/chat'
+import { Chat } from '@/lib/types'
+import { AIMessage } from '@/lib/types'
 
 async function submit(formData?: FormData, skip?: boolean) {
   'use server'
@@ -19,8 +21,10 @@ async function submit(formData?: FormData, skip?: boolean) {
   const uiStream = createStreamableUI()
   const isGenerating = createStreamableValue(true)
   const isCollapsed = createStreamableValue(false)
+  const messages: ExperimentalMessage[] = aiState.get().messages as any[]
 
-  const messages: ExperimentalMessage[] = aiState.get() as any
+  console.log('submit', aiState.get())
+
   const useSpecificAPI = process.env.USE_SPECIFIC_API_FOR_WRITER === 'true'
   const maxMessages = useSpecificAPI ? 5 : 10
   // Limit the number of messages to the maximum
@@ -34,11 +38,25 @@ async function submit(formData?: FormData, skip?: boolean) {
     : formData
     ? JSON.stringify(Object.fromEntries(formData))
     : null
+  const type = skip ? 'skip' : userInput ? 'input' : 'selection'
   // Add the user message to the state
   if (content) {
-    const message = { role: 'user', content }
-    messages.push(message as ExperimentalMessage)
-    aiState.update([...(aiState.get() as any), message])
+    aiState.update({
+      ...aiState.get(),
+      messages: [
+        ...aiState.get().messages,
+        {
+          id: 'hello',
+          role: 'user',
+          content,
+          type
+        }
+      ]
+    })
+    messages.push({
+      role: 'user',
+      content
+    })
   }
 
   async function processEvents() {
@@ -48,15 +66,11 @@ async function submit(formData?: FormData, skip?: boolean) {
 
     if (action.object.next === 'inquire') {
       // Generate inquiry
-      const inquiry = await inquire(uiStream, messages)
+      await inquire(uiStream, messages)
 
       uiStream.done()
       isGenerating.done()
       isCollapsed.done(false)
-      aiState.done([
-        ...aiState.get(),
-        { role: 'assistant', content: `inquiry: ${inquiry?.question}` }
-      ])
       return
     }
 
@@ -65,7 +79,7 @@ async function submit(formData?: FormData, skip?: boolean) {
 
     //  Generate the answer
     let answer = ''
-    let toolOutputs = []
+    let toolOutputs: ToolResultPart[] = []
     let errorOccurred = false
     const streamText = createStreamableValue<string>()
     uiStream.update(<Spinner />)
@@ -87,14 +101,28 @@ async function submit(formData?: FormData, skip?: boolean) {
       answer = fullResponse
       toolOutputs = toolResponses
       errorOccurred = hasError
+
+      // if (toolOutputs.length > 0) {
+      //   toolOutputs.map(output => {
+      //     aiState.update({
+      //       ...aiState.get(),
+      //       messages: []
+      //     })
+      //   })
+      // }
     }
 
     // If useSpecificAPI is enabled, generate the answer using the specific model
     if (useSpecificAPI && answer.length === 0) {
       // modify the messages to be used by the specific model
-      const modifiedMessages = messages.map(msg =>
-        msg.role === 'tool'
-          ? { ...msg, role: 'assistant', content: JSON.stringify(msg.content) }
+      const modifiedMessages = aiState.get().messages.map(msg =>
+        msg.role === 'function'
+          ? {
+              ...msg,
+              role: 'assistant',
+              content: JSON.stringify(msg.content),
+              type: 'tool'
+            }
           : msg
       ) as ExperimentalMessage[]
       answer = await writer(uiStream, streamText, modifiedMessages)
@@ -102,9 +130,25 @@ async function submit(formData?: FormData, skip?: boolean) {
       streamText.done()
     }
 
+    // aiState.update({
+    //   ...aiState.get(),
+    //   messages: []
+    // })
+
     if (!errorOccurred) {
       // Generate related queries
-      await querySuggestor(uiStream, messages)
+      const relatedQueries = await querySuggestor(uiStream, messages)
+      // aiState.update({
+      //   ...aiState.get(),
+      //   messages: [
+      //     {
+      //       id: nanoid(),
+      //       role: 'assistant',
+      //       content: JSON.stringify(relatedQueries),
+      //       type: 'related'
+      //     }
+      //   ]
+      // })
 
       // Add follow-up panel
       uiStream.append(
@@ -116,42 +160,105 @@ async function submit(formData?: FormData, skip?: boolean) {
 
     isGenerating.done(false)
     uiStream.done()
-    aiState.done([...aiState.get(), { role: 'assistant', content: answer }])
+    aiState.done(aiState.get())
+
+    console.log('aiState', aiState.get())
   }
 
   processEvents()
 
   return {
-    id: Date.now(),
+    id: nanoid(),
     isGenerating: isGenerating.value,
     component: uiStream.value,
     isCollapsed: isCollapsed.value
   }
 }
 
-// Define the initial state of the AI. It can be any JSON object.
-const initialAIState: {
-  role: 'user' | 'assistant' | 'system' | 'function' | 'tool'
-  content: string
-  id?: string
-  name?: string
-}[] = []
+export type AIState = {
+  messages: AIMessage[]
+  chatId: string
+}
 
-// The initial UI state that the client will keep track of, which contains the message IDs and their UI nodes.
-const initialUIState: {
-  id: number
-  isGenerating?: StreamableValue<boolean>
-  isCollapsed?: StreamableValue<boolean>
+export type UIState = {
+  id: string
   component: React.ReactNode
-}[] = []
+  isGenerating?: boolean
+  isCollapsed?: boolean
+}[]
+
+const initialAIState: AIState = {
+  chatId: nanoid(),
+  messages: []
+}
+
+const initialUIState: UIState = []
 
 // AI is a provider you wrap your application with so you can access AI and UI state in your components.
-export const AI = createAI({
+export const AI = createAI<AIState, UIState>({
   actions: {
     submit
   },
-  // Each state can be any shape of object, but for chat applications
-  // it makes sense to have an array of messages. Or you may prefer something like { id: number, messages: Message[] }
   initialUIState,
   initialAIState
+  // unstable_onGetUIState: async () => {
+  //   'use server'
+
+  //   const aiState = getAIState()
+  //   if (aiState) {
+  //     const uiState = getUIStateFromAIState(aiState)
+  //     return uiState
+  //   } else {
+  //     return
+  //   }
+  //   return []
+  // },
+  // unstable_onSetAIState: async ({ state, done }) => {
+  //   'use server'
+
+  //   const { chatId, messages } = state
+  //   const createdAt = new Date()
+  //   const userId = 'anonymous'
+  //   const path = `/search/${chatId}`
+  //   const title =
+  //     JSON.parse(messages[0].content)?.input?.substring(0, 100) || 'Untitled'
+  //   const chat: Chat = { id: chatId, createdAt, userId, path, title, messages }
+  //   await saveChat(chat)
+  // }
 })
+
+export const getUIStateFromAIState = (aiState: Chat) => {
+  return {
+    id: aiState.chatId,
+    component: <div></div>
+  }
+  // return aiState.messages
+  // .filter(message => message.role !== 'system')
+  // .map((message, index) => ({
+  // id: `${aiState.chatId}-${index}`,
+  // display:
+  //   message.role === 'function' ? (
+  //     message.name === 'listStocks' ? (
+  //       <BotCard>
+  //         <Stocks props={JSON.parse(message.content)} />
+  //       </BotCard>
+  //     ) : message.name === 'showStockPrice' ? (
+  //       <BotCard>
+  //         <Stock props={JSON.parse(message.content)} />
+  //       </BotCard>
+  //     ) : message.name === 'showStockPurchase' ? (
+  //       <BotCard>
+  //         <Purchase props={JSON.parse(message.content)} />
+  //       </BotCard>
+  //     ) : message.name === 'getEvents' ? (
+  //       <BotCard>
+  //         <Events props={JSON.parse(message.content)} />
+  //       </BotCard>
+  //     ) : null
+  //   ) : message.role === 'user' ? (
+  //     <UserMessage>{message.content}</UserMessage>
+  //   ) : (
+  //     <BotMessage content={message.content} />
+  //   )
+  // }))
+}

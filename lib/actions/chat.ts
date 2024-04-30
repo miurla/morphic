@@ -31,7 +31,7 @@ export async function getChats(userId?: string | null) {
   }
 }
 
-export async function getChat(id: string, userId: string = 'morphic') {
+export async function getChat(id: string, userId: string = 'anonymous') {
   const chat = await redis.hgetall<Chat>(`chat:${id}`)
 
   if (!chat) {
@@ -68,7 +68,7 @@ export async function shareChat(id: string) {
   return payload
 }
 
-export async function saveChat(chat: Chat, userId: string = 'morphic') {
+export async function saveChat(chat: Chat, userId: string = 'anonymous') {
   const pipeline = redis.pipeline()
   pipeline.hmset(`chat:${chat.id}`, chat)
   pipeline.zadd(`user:chat:${chat.userId}`, {

@@ -15,7 +15,7 @@ export interface SearchRelatedProps {
 export const SearchRelated: React.FC<SearchRelatedProps> = ({
   relatedQueries
 }) => {
-  const { submit } = useActions<typeof AI>()
+  const { submit } = useActions()
   const [, setMessages] = useUIState<typeof AI>()
   const [data, error, pending] =
     useStreamableValue<PartialRelated>(relatedQueries)
