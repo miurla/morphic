@@ -5,9 +5,10 @@ import { AvatarImage, Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { CardContent, Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { IShopifyProduct } from '@/lib/types/index'
 
 export interface SearchResultsProps {
-  results: { title: string; url: string; content: string }[]
+  results: IShopifyProduct[]
 }
 
 export function SearchResults({ results }: SearchResultsProps) {
@@ -23,13 +24,13 @@ export function SearchResults({ results }: SearchResultsProps) {
 
   return (
     <div className="flex flex-wrap">
-      {displayedResults.map((result: any, index: any) => (
+      {displayedResults.map((result: IShopifyProduct, index: any) => (
         <div className="w-1/2 md:w-1/4 p-1" key={index}>
-          <Link href={result.url} passHref target="_blank">
+          <Link href={`https://botdoodle.com/`} passHref target="_blank">
             <Card className="flex-1">
               <CardContent className="p-2">
-                <p className="text-xs line-clamp-2">{result.content}</p>
-                <div className="mt-2 flex items-center space-x-2">
+                <p className="text-xs line-clamp-2">{result.description}</p>
+                {/* <div className="mt-2 flex items-center space-x-2">
                   <Avatar className="h-4 w-4">
                     <AvatarImage
                       src={`https://www.google.com/s2/favicons?domain=${
@@ -44,7 +45,7 @@ export function SearchResults({ results }: SearchResultsProps) {
                   <div className="text-xs opacity-60 truncate">
                     {new URL(result.url).hostname}
                   </div>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
           </Link>

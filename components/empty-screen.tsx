@@ -3,20 +3,20 @@ import { ArrowRight } from 'lucide-react'
 
 const exampleMessages = [
   {
-    heading: 'Why is Nvidia growing rapidly?',
-    message: 'Why is Nvidia growing rapidly?'
+    heading: 'Panasonic 40 inch TV',
+    message: 'Panasonic 40 inch TV'
   },
   {
-    heading: 'Is the Apple Vision Pro worth buying?',
-    message: 'Is the Apple Vision Pro worth buying?'
+    heading: 'Sony TV with Plasma Display',
+    message: 'Sony TV with Plasma Display'
   },
   {
-    heading: 'How does the Vercel AI SDK work?',
-    message: 'How does the Vercel AI SDK work?'
+    heading: 'TVs sold by Bot Doodle',
+    message: 'TVs sold by Bot Doodle'
   },
   {
-    heading: 'Tesla vs Rivian',
-    message: 'Tesla vs Rivian'
+    heading: 'Wireless TVs',
+    message: 'Wireless TVs'
   }
 ]
 export function EmptyScreen({

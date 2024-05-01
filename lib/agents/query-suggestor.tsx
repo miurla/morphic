@@ -23,19 +23,19 @@ export async function querySuggestor(
 
   await experimental_streamObject({
     model: openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4-turbo'),
-    system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
+    system: `As a Shopify search bot, your task is to generate a set of three queries to suggest similar products, building upon the initial query and the information uncovered in its search results.
 
-    For instance, if the original query was "Starship's third test flight key milestones", your output should follow this format:
+    For instance, if the original query was "Sony 40 inch TV with Plasma Display", your output should follow this format:
 
     "{
       "related": [
-        "What were the primary objectives achieved during Starship's third test flight?",
-        "What factors contributed to the ultimate outcome of Starship's third test flight?",
-        "How will the results of the third test flight influence SpaceX's future development plans for Starship?"
+        "Panasonic 50 inch 4K Plasma",
+        "Panasonic 50 inch 720p LED",
+        "Sony 40 inch 720p OLED"
       ]
     }"
 
-    Aim to create queries that progressively delve into more specific aspects, implications, or adjacent topics related to the initial query. The goal is to anticipate the user's potential information needs and guide them towards a more comprehensive understanding of the subject matter.
+    Aim to create queries that let user explore similar or alternate products related to the initial query. The goal is to provide user best product suggestions and guide them towards purchasing it.
     Please match the language of the response to the user's language.`,
     messages,
     schema: relatedSchema

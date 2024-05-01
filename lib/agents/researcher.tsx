@@ -13,7 +13,15 @@ import Exa from 'exa-js'
 import { Card } from '@/components/ui/card'
 import { SearchResults } from '../types'
 import { SearchSection } from '@/components/search-section'
+import { IShopifyProduct } from '../types/index'
 
+interface IShopifySearchPayload {
+  title_query: string
+  tags_query: string
+  vendor_query: string
+}
+
+// https://sdk.vercel.ai/docs/ai-core/stream-text
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
   streamText: ReturnType<typeof createStreamableValue<string>>,
@@ -37,29 +45,26 @@ export async function researcher(
   )
 
   let isFirstToolResponse = true
+  console.log(messages)
   const result = await experimental_streamText({
     model: openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4-turbo'),
     maxTokens: 2500,
-    system: `As a professional search expert, you possess the ability to search for any information on the web. 
-    For each user query, utilize the search results to their fullest potential to provide additional information and assistance in your response.
-    If there are any images relevant to your answer, be sure to include them as well.
-    Aim to directly address the user's question, augmenting your response with insights gleaned from the search results.
-    Whenever quoting or referencing information from a specific URL, always cite the source URL explicitly.
-    Please match the language of the response to the user's language.`,
+    system: `You are a Shopify Search bot, you have the expertise to browse and curate product selections from Shopify stores using available tools.
+    For each user query, leverage the product catalog to provide tailored recommendations and insights.
+    Utilize the search results to assemble a list of relevant products that best address the user's needs.
+    If there are any product images or descriptions pertinent to your response, ensure they are included for visual reference.
+    Aim to directly address the user's search query by presenting a curated selection of Shopify products.
+    Whenever referencing specific products or details from a Shopify store, include clear attributions and links to the respective product pages.
+    Please ensure that the language of your response aligns with the user's preferred language for effective communication`,
     messages,
     tools: {
-      search: {
-        description: 'Search the web for information',
+      shopifySearchTool: {
+        description:
+          'Search the Shopify store for product suggestions passing user query as input',
         parameters: searchSchema,
-        execute: async ({
-          query,
-          max_results,
-          search_depth
-        }: {
-          query: string
-          max_results: number
-          search_depth: 'basic' | 'advanced'
-        }) => {
+        execute: async (payload: IShopifySearchPayload) => {
+          console.log('shopifySearchTool called')
+          console.log(payload)
           // If this is the first tool response, remove spinner
           if (isFirstToolResponse) {
             isFirstToolResponse = false
@@ -69,25 +74,23 @@ export async function researcher(
           const streamResults = createStreamableValue<string>()
           uiStream.append(<SearchSection result={streamResults.value} />)
 
-          // Tavily API requires a minimum of 5 characters in the query
-          const filledQuery =
-            query.length < 5 ? query + ' '.repeat(5 - query.length) : query
           let searchResult
           try {
-            searchResult =
-              searchAPI === 'tavily'
-                ? await tavilySearch(filledQuery, max_results, search_depth)
-                : await exaSearch(query)
+            searchResult = await shopifyStoreSearch(payload)
           } catch (error) {
             console.error('Search API error:', error)
             hasError = true
           }
 
           if (hasError) {
-            fullResponse += `\nAn error occurred while searching for "${query}.`
+            fullResponse += `\nAn error occurred while searching for "${payload.title.join(
+              ','
+            )}.`
             uiStream.update(
               <Card className="p-4 mt-2 text-sm">
-                {`An error occurred while searching for "${query}".`}
+                {`An error occurred while searching for "${payload.title.join(
+                  ','
+                )}".`}
               </Card>
             )
             return searchResult
@@ -144,6 +147,99 @@ export async function researcher(
   }
 
   return { result, fullResponse, hasError, toolResponses }
+}
+
+async function shopifyStoreSearch(payload: IShopifySearchPayload): Promise<{
+  results: Partial<IShopifyProduct>[]
+}> {
+  console.log(payload)
+  const url = 'https://5919f3-2.myshopify.com/api/2024-04/graphql.json'
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Shopify-Storefront-Access-Token': `${process.env.STOREFRONT_TOKEN}`
+  }
+  let storefrontSearchQuery = ''
+  const titleArr = payload.title_query.split(',')
+  const tagsArr = payload.tags_query.split(',')
+  if (titleArr.length) {
+    storefrontSearchQuery += '('
+    titleArr.forEach((title, index) => {
+      storefrontSearchQuery += `title:${title.trim()}`
+      if (index < titleArr.length - 1) {
+        storefrontSearchQuery += ' OR '
+      }
+    })
+    storefrontSearchQuery += ')'
+  }
+  /*if (tagsArr.length) {
+    storefrontSearchQuery += '('
+    tagsArr.forEach((tag, index) => {
+      storefrontSearchQuery += `tag:${tag}`
+      if (index < tagsArr.length - 1) {
+        storefrontSearchQuery += ' AND '
+      }
+    })
+    storefrontSearchQuery += ')'
+  }*/
+  console.log(storefrontSearchQuery)
+  const query = `
+  query {
+    products(first: 10, query: "${storefrontSearchQuery}") {
+      edges {
+        node {
+          id
+          title
+          description
+          vendor
+          productType
+          tags
+          priceRange {
+            minVariantPrice {
+              amount
+            }
+            maxVariantPrice {
+              amount
+            }
+          }
+          images(first: 1) {
+            edges {
+                node {
+                    src
+                }
+            }
+          }
+          variants(first: 10) {
+            edges {
+              node {
+                id
+                title
+                price {
+                  amount
+                }
+                selectedOptions {
+                  name
+                  value
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ query })
+  })
+  const data = await response.json()
+  console.log(data)
+  return {
+    results: data?.data?.products?.edges?.map(item => {
+      return item.node
+    })
+  }
 }
 
 async function tavilySearch(

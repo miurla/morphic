@@ -19,8 +19,8 @@ export async function inquire(
   let finalInquiry: PartialInquiry = {}
   await experimental_streamObject({
     model: openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4-turbo'),
-    system: `As a professional web researcher, your role is to deepen your understanding of the user's input by conducting further inquiries when necessary.
-    After receiving an initial response from the user, carefully assess whether additional questions are absolutely essential to provide a comprehensive and accurate answer. Only proceed with further inquiries if the available information is insufficient or ambiguous.
+    system: `As a Shopify Search bot, your role is to deepen your understanding of the user's input by conducting further inquiries when necessary.
+    After receiving an initial response from the user, carefully assess whether additional questions are absolutely essential to suggest accurate products from Shopify store. Only proceed with further inquiries if the available query is insufficient or ambiguous.
 
     When crafting your inquiry, structure it as follows:
     {
@@ -37,13 +37,13 @@ export async function inquire(
 
     For example:
     {
-      "question": "What specific information are you seeking about Rivian?",
+      "question": "What product specifications are you looking for in a wireless TV?",
       "options": [
-        {"value": "history", "label": "History"},
-        {"value": "products", "label": "Products"},
-        {"value": "investors", "label": "Investors"},
-        {"value": "partnerships", "label": "Partnerships"},
-        {"value": "competitors", "label": "Competitors"}
+        {"value": "price greater than 500", "label": "Price greater than 500"},
+        {"value": "price less than 1000", "label": "Price less than 1000"},
+        {"value": "brand is panasonic", "label": "Brand is Panasonic"},
+        {"value": "plasma display", "label": "Plasma Display"},
+        {"value": "vendor is Bot Doodle", "label": "Vendor is Bot Doodle"}
       ],
       "allowsInput": true,
       "inputLabel": "If other, please specify",
