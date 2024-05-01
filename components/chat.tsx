@@ -27,7 +27,7 @@ export function Chat({ id }: ChatProps) {
       console.log('refresh')
       router.refresh()
     }
-  }, [aiState, router])
+  }, [aiState, messages, router])
 
   return (
     <div className="px-8 sm:px-12 pt-6 md:pt-8 pb-14 md:pb-24 max-w-3xl mx-auto flex flex-col space-y-3 md:space-y-4">

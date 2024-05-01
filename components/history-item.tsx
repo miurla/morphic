@@ -1,37 +1,41 @@
+'use client'
+
 import React from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Chat } from '@/lib/types'
+import { cn } from '@/lib/utils'
 
 type HistoryItemProps = {
   chat: Chat
 }
 
-const formatDateWithTime = (dateString: string) => {
-  const date = new Date(dateString)
+const formatDateWithTime = (date: Date | string) => {
+  const parsedDate = new Date(date)
   const now = new Date()
   const yesterday = new Date()
   yesterday.setDate(yesterday.getDate() - 1)
 
   if (
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear()
+    parsedDate.getDate() === now.getDate() &&
+    parsedDate.getMonth() === now.getMonth() &&
+    parsedDate.getFullYear() === now.getFullYear()
   ) {
-    return `Today, ${date.getHours()}:${date
+    return `Today, ${parsedDate.getHours()}:${parsedDate
       .getMinutes()
       .toString()
       .padStart(2, '0')}`
   } else if (
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear()
+    parsedDate.getDate() === yesterday.getDate() &&
+    parsedDate.getMonth() === yesterday.getMonth() &&
+    parsedDate.getFullYear() === yesterday.getFullYear()
   ) {
-    return `Yesterday, ${date.getHours()}:${date
+    return `Yesterday, ${parsedDate.getHours()}:${parsedDate
       .getMinutes()
       .toString()
       .padStart(2, '0')}`
   } else {
-    return date.toLocaleString('en-US', {
+    return parsedDate.toLocaleString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -42,16 +46,22 @@ const formatDateWithTime = (dateString: string) => {
 }
 
 const HistoryItem: React.FC<HistoryItemProps> = ({ chat }) => {
+  const pathname = usePathname()
+  const isActive = pathname === chat.path
+
   return (
     <Link
       href={chat.path}
-      className="flex flex-col hover:bg-muted cursor-pointer p-2 rounded"
+      className={cn(
+        'flex flex-col hover:bg-muted cursor-pointer p-2 rounded',
+        isActive ? 'bg-muted/50' : ''
+      )}
     >
       <div className="text-xs font-medium truncate select-none">
         {chat.title}
       </div>
       <div className="text-xs text-muted-foreground">
-        {formatDateWithTime(chat.createdAt as string)}
+        {formatDateWithTime(chat.createdAt)}
       </div>
     </Link>
   )

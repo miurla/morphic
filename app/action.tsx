@@ -197,6 +197,12 @@ async function submit(formData?: FormData, skip?: boolean) {
             role: 'assistant',
             content: JSON.stringify(relatedQueries),
             type: 'related'
+          },
+          {
+            id: groupeId,
+            role: 'assistant',
+            content: 'followup',
+            type: 'followup'
           }
         ]
       })
@@ -337,20 +343,36 @@ export const getUIStateFromAIState = (aiState: Chat) => {
                 </Section>
               )
             }
-        }
-      case 'tool':
-        const toolOutput = JSON.parse(content)
-        const isCollapsed = createStreamableValue()
-        isCollapsed.done(true)
-        const searchResults = createStreamableValue()
-        searchResults.done(JSON.stringify(toolOutput))
-        switch (name) {
-          case 'search':
+          case 'followup':
             return {
               id,
-              component: <SearchSection result={searchResults.value} />,
-              isCollapsed: isCollapsed.value
+              component: (
+                <Section title="Follow-up" className="pb-8">
+                  <FollowupPanel />
+                </Section>
+              )
             }
+        }
+      case 'tool':
+        try {
+          const toolOutput = JSON.parse(content)
+          const isCollapsed = createStreamableValue()
+          isCollapsed.done(true)
+          const searchResults = createStreamableValue()
+          searchResults.done(JSON.stringify(toolOutput))
+          switch (name) {
+            case 'search':
+              return {
+                id,
+                component: <SearchSection result={searchResults.value} />,
+                isCollapsed: isCollapsed.value
+              }
+          }
+        } catch (error) {
+          return {
+            id,
+            component: null
+          }
         }
       default:
         return {

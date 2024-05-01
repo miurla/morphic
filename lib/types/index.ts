@@ -33,4 +33,5 @@ export type AIMessage = {
     | 'input'
     | 'input_related'
     | 'tool'
+    | 'followup'
 }
