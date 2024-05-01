@@ -33,6 +33,9 @@ async function submit(formData?: FormData, skip?: boolean) {
     ...(aiState.get().messages as any[])
   ].filter(message => message.role !== 'tool')
 
+  // goupeiId is used to group the messages for collapse
+  const groupeId = nanoid()
+
   console.log('submit', aiState.get())
 
   const useSpecificAPI = process.env.USE_SPECIFIC_API_FOR_WRITER === 'true'
@@ -139,7 +142,7 @@ async function submit(formData?: FormData, skip?: boolean) {
             messages: [
               ...aiState.get().messages,
               {
-                id: nanoid(),
+                id: groupeId,
                 role: 'tool',
                 content: JSON.stringify(output.result),
                 name: output.toolName,
@@ -174,7 +177,7 @@ async function submit(formData?: FormData, skip?: boolean) {
       messages: [
         ...aiState.get().messages,
         {
-          id: nanoid(),
+          id: groupeId,
           role: 'assistant',
           content: answer,
           type: 'answer'
@@ -190,7 +193,7 @@ async function submit(formData?: FormData, skip?: boolean) {
         messages: [
           ...aiState.get().messages,
           {
-            id: nanoid(),
+            id: groupeId,
             role: 'assistant',
             content: JSON.stringify(relatedQueries),
             type: 'related'
@@ -275,7 +278,6 @@ export const AI = createAI<AIState, UIState>({
 })
 
 export const getUIStateFromAIState = (aiState: Chat) => {
-  const groupedId = nanoid()
   return aiState.messages.map(message => {
     const { role, content, id, type, name } = message
 
@@ -306,7 +308,7 @@ export const getUIStateFromAIState = (aiState: Chat) => {
               id,
               component: (
                 <Section>
-                  <Copilot inquiry={inquiry.value} initialCompleted={true} />
+                  <Copilot inquiry={inquiry.value} />
                 </Section>
               )
             }
@@ -317,7 +319,7 @@ export const getUIStateFromAIState = (aiState: Chat) => {
         switch (type) {
           case 'answer':
             return {
-              id: groupedId,
+              id,
               component: (
                 <Section title="Answer">
                   <BotMessage content={answer.value} />
@@ -328,7 +330,7 @@ export const getUIStateFromAIState = (aiState: Chat) => {
             const relatedQueries = createStreamableValue()
             relatedQueries.done(JSON.parse(content))
             return {
-              id: groupedId,
+              id,
               component: (
                 <Section title="Related" separator={true}>
                   <SearchRelated relatedQueries={relatedQueries.value} />
@@ -345,7 +347,7 @@ export const getUIStateFromAIState = (aiState: Chat) => {
         switch (name) {
           case 'search':
             return {
-              id: groupedId,
+              id,
               component: <SearchSection result={searchResults.value} />,
               isCollapsed: isCollapsed.value
             }
