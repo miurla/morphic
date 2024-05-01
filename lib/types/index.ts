@@ -25,5 +25,12 @@ export type AIMessage = {
   content: string
   id: string
   name?: string
-  type?: 'answer' | 'related' | 'skip' | 'selection' | 'input' | 'tool'
+  type?:
+    | 'answer'
+    | 'related'
+    | 'skip'
+    | 'inquiry'
+    | 'input'
+    | 'input_related'
+    | 'tool'
 }

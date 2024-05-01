@@ -5,11 +5,7 @@ import { MemoizedReactMarkdown } from './ui/markdown'
 import rehypeExternalLinks from 'rehype-external-links'
 import remarkGfm from 'remark-gfm'
 
-export function BotMessage({
-  content
-}: {
-  content: string | StreamableValue<string>
-}) {
+export function BotMessage({ content }: { content: StreamableValue<string> }) {
   const [data, error, pending] = useStreamableValue(content)
 
   // Currently, sometimes error occurs after finishing the stream.

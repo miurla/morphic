@@ -22,7 +22,9 @@ export function History({ location }: HistoryProps) {
         <Button
           variant="ghost"
           size="icon"
-          className={cn({ 'rounded-full': location === 'sidebar' })}
+          className={cn({
+            'rounded-full text-foreground/30': location === 'sidebar'
+          })}
         >
           {location === 'header' ? <Menu /> : <ChevronLeft size={16} />}
         </Button>

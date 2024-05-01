@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
-import type { AI } from '@/app/action'
+import { useRouter } from 'next/navigation'
+import type { AI, UIState } from '@/app/action'
 import { useUIState, useActions, useAIState } from 'ai/rsc'
 import { cn } from '@/lib/utils'
 import { UserMessage } from './user-message'
@@ -9,14 +10,19 @@ import { ArrowRight, Plus, Square } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
 import { nanoid } from 'ai'
 
-export function ChatPanel() {
+interface ChatPanelProps {
+  messages: UIState
+}
+
+export function ChatPanel({ messages }: ChatPanelProps) {
   const [input, setInput] = useState('')
-  const [messages, setMessages] = useUIState<typeof AI>()
+  const [, setMessages] = useUIState<typeof AI>()
   const [aiMessages, setAiMessages] = useAIState<typeof AI>()
   const { submit } = useActions()
   const [isButtonPressed, setIsButtonPressed] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
+  const router = useRouter()
   // Focus on input when button is pressed
   useEffect(() => {
     if (isButtonPressed) {
@@ -54,9 +60,7 @@ export function ChatPanel() {
 
   // Clear messages
   const handleClear = () => {
-    setIsButtonPressed(true)
-    // setMessages([])
-    // setAiMessages(null)
+    router.push('/new')
   }
 
   useEffect(() => {
