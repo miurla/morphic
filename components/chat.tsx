@@ -23,11 +23,11 @@ export function Chat({ id }: ChatProps) {
   }, [id, path, messages])
 
   useEffect(() => {
-    const messagesLength = aiState.messages?.length
-    if (messagesLength === 2) {
+    if (aiState.messages.length > 2) {
+      console.log('refresh')
       router.refresh()
     }
-  }, [aiState.messages, router])
+  }, [aiState, router])
 
   return (
     <div className="px-8 sm:px-12 pt-6 md:pt-8 pb-14 md:pb-24 max-w-3xl mx-auto flex flex-col space-y-3 md:space-y-4">

@@ -1,7 +1,6 @@
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger
@@ -10,12 +9,15 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeft, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import HistoryItem from './history-item'
+import { Chat } from '@/lib/types'
+import { History as HistoryIcon } from 'lucide-react'
 
 type HistoryProps = {
   location: 'sidebar' | 'header'
+  chats: Chat[]
 }
 
-export function History({ location }: HistoryProps) {
+export function History({ location, chats }: HistoryProps) {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -29,15 +31,23 @@ export function History({ location }: HistoryProps) {
           {location === 'header' ? <Menu /> : <ChevronLeft size={16} />}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-64 rounded-tl-lg rounded-bl-lg">
+      <SheetContent className="w-64 rounded-tl-xl rounded-bl-xl">
         <SheetHeader>
-          <SheetTitle>Search history</SheetTitle>
+          <SheetTitle className="flex items-center gap-1 text-base mb-2">
+            <HistoryIcon size={16} />
+            History
+          </SheetTitle>
         </SheetHeader>
-        <div className="py-2 overflow-y-auto">
-          <HistoryItem
-            query="Why is NVIDIA growing rapidly? hoge fuga piyo"
-            date="2024-01-01"
-          />
+        <div className="pb-6 overflow-y-auto h-full">
+          {!chats?.length ? (
+            <div className="text-foreground/30 text-sm text-center py-4">
+              No history yet
+            </div>
+          ) : (
+            chats?.map((chat: Chat) => (
+              <HistoryItem key={chat.id} chat={chat} />
+            ))
+          )}
         </div>
       </SheetContent>
     </Sheet>
