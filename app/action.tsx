@@ -11,6 +11,7 @@ import { Section } from '@/components/section'
 import { FollowupPanel } from '@/components/followup-panel'
 import { inquire, researcher, taskManager, querySuggestor } from '@/lib/agents'
 import { writer } from '@/lib/agents/writer'
+import { formatToolMessages } from '@/lib/utils'
 
 async function submit(formData?: FormData, skip?: boolean) {
   'use server'
@@ -114,9 +115,15 @@ async function submit(formData?: FormData, skip?: boolean) {
       )
     }
 
+    const formattedToolMessages = formatToolMessages(messages)
+
     isGenerating.done(false)
     uiStream.done()
-    aiState.done([...aiState.get(), { role: 'assistant', content: answer }])
+    aiState.done([
+      ...aiState.get(),
+      ...formattedToolMessages,
+      { role: 'assistant', content: answer }
+    ])
   }
 
   processEvents()
@@ -130,12 +137,7 @@ async function submit(formData?: FormData, skip?: boolean) {
 }
 
 // Define the initial state of the AI. It can be any JSON object.
-const initialAIState: {
-  role: 'user' | 'assistant' | 'system' | 'function' | 'tool'
-  content: string
-  id?: string
-  name?: string
-}[] = []
+const initialAIState: ExperimentalMessage[] = []
 
 // The initial UI state that the client will keep track of, which contains the message IDs and their UI nodes.
 const initialUIState: {
