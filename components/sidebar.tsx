@@ -8,7 +8,7 @@ const loadChats = cache(async (userId?: string) => {
 
 export async function Sidebar() {
   const chats = await loadChats('anonymous')
-  console.log('chats loaded')
+  console.log('history loaded')
   return (
     <div className="h-screen p-2 fixed top-0 right-0 flex-col justify-center pb-24 hidden sm:flex">
       <History location="sidebar" chats={chats} />

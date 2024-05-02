@@ -31,7 +31,14 @@ async function submit(formData?: FormData, skip?: boolean) {
   // Get the messages from the state, filter out the tool messages
   const messages: ExperimentalMessage[] = [
     ...(aiState.get().messages as any[])
-  ].filter(message => message.role !== 'tool')
+  ].filter(
+    message =>
+      message.role !== 'tool' &&
+      message.type !== undefined &&
+      message.type !== 'followup' &&
+      message.type !== 'related' &&
+      message.type !== 'inquiry'
+  )
 
   // goupeiId is used to group the messages for collapse
   const groupeId = nanoid()
@@ -269,13 +276,23 @@ export const AI = createAI<AIState, UIState>({
     const title =
       JSON.parse(messages[0].content)?.input?.substring(0, 100) || 'Untitled'
 
+    // Add an 'end' message at the end to determine if the history needs to be reloaded
+    const updatedMessages: AIMessage[] = [
+      ...messages,
+      {
+        id: nanoid(),
+        role: 'assistant',
+        content: `end`
+      }
+    ]
+
     const chat: Chat = {
       id: chatId,
       createdAt,
       userId,
       path,
       title,
-      messages
+      messages: updatedMessages
     }
     await saveChat(chat)
   }
@@ -288,8 +305,6 @@ export const getUIStateFromAIState = (aiState: Chat) => {
 
       if (!type) return null
 
-      console.log(role, type)
-
       switch (role) {
         case 'user':
           switch (type) {
@@ -297,7 +312,6 @@ export const getUIStateFromAIState = (aiState: Chat) => {
             case 'input_related':
               const json = JSON.parse(content)
               const value = type === 'input' ? json.input : json.related_query
-              console.log(json, value)
               return {
                 id,
                 component: (
