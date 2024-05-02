@@ -269,23 +269,13 @@ export const AI = createAI<AIState, UIState>({
     const title =
       JSON.parse(messages[0].content)?.input?.substring(0, 100) || 'Untitled'
 
-    // Add an end message to the chat, to prevent excessive refreshes
-    const modifiedMessages = [
-      ...messages,
-      {
-        id: nanoid(),
-        role: 'assistant',
-        content: 'end'
-      } as AIMessage
-    ]
-
     const chat: Chat = {
       id: chatId,
       createdAt,
       userId,
       path,
       title,
-      messages: modifiedMessages
+      messages
     }
     await saveChat(chat)
   }
