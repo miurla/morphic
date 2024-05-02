@@ -1,10 +1,15 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from './ui/button'
 import { ArrowRight } from 'lucide-react'
-import { useActions, useStreamableValue, useUIState } from 'ai/rsc'
-import { AI } from '@/app/action'
+import {
+  useActions,
+  useStreamableValue,
+  useUIState,
+  readStreamableValue
+} from 'ai/rsc'
+import { AI } from '@/app/actions'
 import { UserMessage } from './user-message'
 import { PartialRelated } from '@/lib/schema/related'
 
@@ -15,7 +20,7 @@ export interface SearchRelatedProps {
 export const SearchRelated: React.FC<SearchRelatedProps> = ({
   relatedQueries
 }) => {
-  const { submit } = useActions<typeof AI>()
+  const { submit } = useActions()
   const [, setMessages] = useUIState<typeof AI>()
   const [data, error, pending] =
     useStreamableValue<PartialRelated>(relatedQueries)

@@ -11,3 +11,5 @@ export const relatedSchema = z.object({
     .length(3)
 })
 export type PartialRelated = DeepPartial<typeof relatedSchema>
+
+export type Related = z.infer<typeof relatedSchema>
