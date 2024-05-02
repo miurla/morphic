@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { AI, UIState } from '@/app/action'
-import { useUIState, useActions, useAIState } from 'ai/rsc'
+import { useUIState, useActions } from 'ai/rsc'
 import { cn } from '@/lib/utils'
 import { UserMessage } from './user-message'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
-import { ArrowRight, Plus, Square } from 'lucide-react'
+import { ArrowRight, Plus } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
 import { nanoid } from 'ai'
 
@@ -17,7 +17,6 @@ interface ChatPanelProps {
 export function ChatPanel({ messages }: ChatPanelProps) {
   const [input, setInput] = useState('')
   const [, setMessages] = useUIState<typeof AI>()
-  const [aiMessages, setAiMessages] = useAIState<typeof AI>()
   const { submit } = useActions()
   const [isButtonPressed, setIsButtonPressed] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -49,13 +48,10 @@ export function ChatPanel({ messages }: ChatPanelProps) {
       }
     ])
 
-    console.log('ai: ', aiMessages)
-
     // Submit and get response message
     const formData = new FormData(e.currentTarget)
     const responseMessage = await submit(formData)
     setMessages(currentMessages => [...currentMessages, responseMessage as any])
-    console.log('responseMessage', responseMessage)
   }
 
   // Clear messages

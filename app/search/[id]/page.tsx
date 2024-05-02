@@ -22,8 +22,6 @@ export default async function SearchPage({ params }: SearchPageProps) {
   const userId = 'anonymous'
   const chat = await getChat(params.id, userId)
 
-  console.log(chat)
-
   if (!chat) {
     redirect('/')
   }

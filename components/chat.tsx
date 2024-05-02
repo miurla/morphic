@@ -23,8 +23,7 @@ export function Chat({ id }: ChatProps) {
   }, [id, path, messages])
 
   useEffect(() => {
-    if (aiState.messages.length > 2) {
-      console.log('refresh')
+    if (aiState.messages[aiState.messages.length - 1]?.type === 'followup') {
       router.refresh()
     }
   }, [aiState, messages, router])

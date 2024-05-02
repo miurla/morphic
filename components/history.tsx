@@ -33,8 +33,8 @@ export function History({ location, chats }: HistoryProps) {
       </SheetTrigger>
       <SheetContent className="w-64 rounded-tl-xl rounded-bl-xl">
         <SheetHeader>
-          <SheetTitle className="flex items-center gap-1 text-base mb-2">
-            <HistoryIcon size={16} />
+          <SheetTitle className="flex items-center gap-1 text-sm font-normal mb-2">
+            <HistoryIcon size={14} />
             History
           </SheetTitle>
         </SheetHeader>

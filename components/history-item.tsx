@@ -53,8 +53,8 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ chat }) => {
     <Link
       href={chat.path}
       className={cn(
-        'flex flex-col hover:bg-muted cursor-pointer p-2 rounded',
-        isActive ? 'bg-muted/50' : ''
+        'flex flex-col hover:bg-muted cursor-pointer p-2 rounded border',
+        isActive ? 'bg-muted/70 border-border' : 'border-transparent'
       )}
     >
       <div className="text-xs font-medium truncate select-none">

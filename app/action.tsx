@@ -19,7 +19,7 @@ import { UserMessage } from '@/components/user-message'
 import { BotMessage } from '@/components/message'
 import { SearchSection } from '@/components/search-section'
 import SearchRelated from '@/components/search-related'
-import { Copilot } from '@/components/copilot'
+import { CopilotDisplay } from '@/components/copilot-display'
 
 async function submit(formData?: FormData, skip?: boolean) {
   'use server'
@@ -93,7 +93,7 @@ async function submit(formData?: FormData, skip?: boolean) {
       uiStream.done()
       isGenerating.done()
       isCollapsed.done(false)
-      aiState.update({
+      aiState.done({
         ...aiState.get(),
         messages: [
           ...aiState.get().messages,
@@ -278,107 +278,121 @@ export const AI = createAI<AIState, UIState>({
     const path = `/search/${chatId}`
     const title =
       JSON.parse(messages[0].content)?.input?.substring(0, 100) || 'Untitled'
-    const chat: Chat = { id: chatId, createdAt, userId, path, title, messages }
+
+    // Add an end message to the chat, to prevent excessive refreshes
+    const modifiedMessages = [
+      ...messages,
+      {
+        id: nanoid(),
+        role: 'assistant',
+        content: 'end'
+      } as AIMessage
+    ]
+
+    const chat: Chat = {
+      id: chatId,
+      createdAt,
+      userId,
+      path,
+      title,
+      messages: modifiedMessages
+    }
     await saveChat(chat)
   }
 })
 
 export const getUIStateFromAIState = (aiState: Chat) => {
-  return aiState.messages.map(message => {
-    const { role, content, id, type, name } = message
+  return aiState.messages
+    .map(message => {
+      const { role, content, id, type, name } = message
 
-    if (!type)
-      return {
-        id,
-        component: null
-      }
+      if (!type) return null
 
-    switch (role) {
-      case 'user':
-        switch (type) {
-          case 'input' || 'input_related':
-            const json = JSON.parse(content)
-            const value = type === 'input' ? json.input : json.related_query
-            return {
-              id,
-              component: (
-                <Section>
-                  <UserMessage message={value} />
-                </Section>
-              )
-            }
-          case 'inquiry':
-            const inquiry = createStreamableValue()
-            inquiry.done(content)
-            return {
-              id,
-              component: (
-                <Section>
-                  <Copilot inquiry={inquiry.value} />
-                </Section>
-              )
-            }
-        }
-      case 'assistant':
-        const answer = createStreamableValue()
-        answer.done(content)
-        switch (type) {
-          case 'answer':
-            return {
-              id,
-              component: (
-                <Section title="Answer">
-                  <BotMessage content={answer.value} />
-                </Section>
-              )
-            }
-          case 'related':
-            const relatedQueries = createStreamableValue()
-            relatedQueries.done(JSON.parse(content))
-            return {
-              id,
-              component: (
-                <Section title="Related" separator={true}>
-                  <SearchRelated relatedQueries={relatedQueries.value} />
-                </Section>
-              )
-            }
-          case 'followup':
-            return {
-              id,
-              component: (
-                <Section title="Follow-up" className="pb-8">
-                  <FollowupPanel />
-                </Section>
-              )
-            }
-        }
-      case 'tool':
-        try {
-          const toolOutput = JSON.parse(content)
-          const isCollapsed = createStreamableValue()
-          isCollapsed.done(true)
-          const searchResults = createStreamableValue()
-          searchResults.done(JSON.stringify(toolOutput))
-          switch (name) {
-            case 'search':
+      switch (role) {
+        case 'user':
+          switch (type) {
+            case 'input' || 'input_related':
+              const json = JSON.parse(content)
+              const value = type === 'input' ? json.input : json.related_query
               return {
                 id,
-                component: <SearchSection result={searchResults.value} />,
-                isCollapsed: isCollapsed.value
+                component: (
+                  <Section>
+                    <UserMessage message={value} />
+                  </Section>
+                )
+              }
+            case 'inquiry':
+              return {
+                id,
+                component: (
+                  <Section>
+                    <CopilotDisplay content={content} />
+                  </Section>
+                )
               }
           }
-        } catch (error) {
+        case 'assistant':
+          const answer = createStreamableValue()
+          answer.done(content)
+          switch (type) {
+            case 'answer':
+              return {
+                id,
+                component: (
+                  <Section title="Answer">
+                    <BotMessage content={answer.value} />
+                  </Section>
+                )
+              }
+            case 'related':
+              const relatedQueries = createStreamableValue()
+              relatedQueries.done(JSON.parse(content))
+              return {
+                id,
+                component: (
+                  <Section title="Related" separator={true}>
+                    <SearchRelated relatedQueries={relatedQueries.value} />
+                  </Section>
+                )
+              }
+            case 'followup':
+              return {
+                id,
+                component: (
+                  <Section title="Follow-up" className="pb-8">
+                    <FollowupPanel />
+                  </Section>
+                )
+              }
+          }
+        case 'tool':
+          try {
+            const toolOutput = JSON.parse(content)
+            const isCollapsed = createStreamableValue()
+            isCollapsed.done(true)
+            const searchResults = createStreamableValue()
+            searchResults.done(JSON.stringify(toolOutput))
+            switch (name) {
+              case 'search':
+                return {
+                  id,
+                  component: <SearchSection result={searchResults.value} />,
+                  isCollapsed: isCollapsed.value
+                }
+            }
+          } catch (error) {
+            return {
+              id,
+              component: null
+            }
+          }
+        default:
           return {
             id,
             component: null
           }
-        }
-      default:
-        return {
-          id,
-          component: null
-        }
-    }
-  })
+      }
+    })
+    .filter(message => message !== null) as UIState
 }

@@ -1,6 +1,5 @@
 'use server'
 
-import { redirect } from 'next/navigation'
 import { type Chat } from '@/lib/types'
 import { Redis } from '@upstash/redis'
 
