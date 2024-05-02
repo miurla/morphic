@@ -1,6 +1,6 @@
 import { Chat } from '@/components/chat'
 import { nanoid } from 'ai'
-import { AI } from './action'
+import { AI } from './actions'
 
 export const runtime = 'edge'
 

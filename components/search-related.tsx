@@ -9,7 +9,7 @@ import {
   useUIState,
   readStreamableValue
 } from 'ai/rsc'
-import { AI } from '@/app/action'
+import { AI } from '@/app/actions'
 import { UserMessage } from './user-message'
 import { PartialRelated } from '@/lib/schema/related'
 
