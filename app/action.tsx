@@ -36,8 +36,6 @@ async function submit(formData?: FormData, skip?: boolean) {
   // goupeiId is used to group the messages for collapse
   const groupeId = nanoid()
 
-  console.log('submit', aiState.get())
-
   const useSpecificAPI = process.env.USE_SPECIFIC_API_FOR_WRITER === 'true'
   const maxMessages = useSpecificAPI ? 5 : 10
   // Limit the number of messages to the maximum
@@ -59,8 +57,6 @@ async function submit(formData?: FormData, skip?: boolean) {
     : formData?.has('related_query')
     ? 'input_related'
     : 'inquiry'
-
-  console.log('content', content)
 
   // Add the user message to the state
   if (content) {
@@ -172,26 +168,30 @@ async function submit(formData?: FormData, skip?: boolean) {
       streamText.done()
     }
 
-    aiState.update({
-      ...aiState.get(),
-      messages: [
-        ...aiState.get().messages,
-        {
-          id: groupeId,
-          role: 'assistant',
-          content: answer,
-          type: 'answer'
-        }
-      ]
-    })
-
     if (!errorOccurred) {
       // Generate related queries
       const relatedQueries = await querySuggestor(uiStream, messages)
-      aiState.update({
+      // Add follow-up panel
+      uiStream.append(
+        <Section title="Follow-up">
+          <FollowupPanel />
+        </Section>
+      )
+
+      // Add the answer, related queries, and follow-up panel to the state
+      // Wait for 1 second before adding the answer to the state
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      aiState.done({
         ...aiState.get(),
         messages: [
           ...aiState.get().messages,
+          {
+            id: groupeId,
+            role: 'assistant',
+            content: answer,
+            type: 'answer'
+          },
           {
             id: groupeId,
             role: 'assistant',
@@ -206,20 +206,10 @@ async function submit(formData?: FormData, skip?: boolean) {
           }
         ]
       })
-
-      // Add follow-up panel
-      uiStream.append(
-        <Section title="Follow-up">
-          <FollowupPanel />
-        </Section>
-      )
     }
 
     isGenerating.done(false)
     uiStream.done()
-    aiState.done(aiState.get())
-
-    console.log('aiState', aiState.get().chatId)
   }
 
   processEvents()

@@ -24,9 +24,12 @@ export function Chat({ id }: ChatProps) {
 
   useEffect(() => {
     if (aiState.messages[aiState.messages.length - 1]?.type === 'followup') {
-      router.refresh()
+      // Refresh the page after 1 second to chat history updates
+      setTimeout(() => {
+        router.refresh()
+      }, 1000)
     }
-  }, [aiState, messages, router])
+  }, [aiState, router])
 
   return (
     <div className="px-8 sm:px-12 pt-6 md:pt-8 pb-14 md:pb-24 max-w-3xl mx-auto flex flex-col space-y-3 md:space-y-4">

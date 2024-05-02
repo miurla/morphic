@@ -40,16 +40,19 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
   return (
     <>
       {groupedMessagesArray.map(
-        (groupedMessage: {
-          id: string
-          components: React.ReactNode[]
-          isCollapsed?: StreamableValue<boolean>
-        }) => (
+        (
+          groupedMessage: {
+            id: string
+            components: React.ReactNode[]
+            isCollapsed?: StreamableValue<boolean>
+          },
+          index
+        ) => (
           <CollapsibleMessage
-            key={groupedMessage.id}
+            key={`${groupedMessage.id}`}
             message={{
               id: groupedMessage.id,
-              component: <>{groupedMessage.components}</>,
+              component: <div key={index}>{groupedMessage.components}</div>,
               isCollapsed: groupedMessage.isCollapsed
             }}
             isLastMessage={

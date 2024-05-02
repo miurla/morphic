@@ -4,7 +4,6 @@ import { PartialRelated, relatedSchema } from '@/lib/schema/related'
 import { Section } from '@/components/section'
 import SearchRelated from '@/components/search-related'
 import { OpenAI } from '@ai-sdk/openai'
-import { PartialInquiry } from '../schema/inquiry'
 
 export async function querySuggestor(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -44,11 +43,14 @@ export async function querySuggestor(
   })
     .then(async result => {
       for await (const obj of result.partialObjectStream) {
-        objectStream.update(obj)
-        finalRelatedQueries = obj
+        if (obj.items) {
+          objectStream.update(obj)
+          finalRelatedQueries = obj
+        }
       }
     })
     .finally(() => {
+      console.log('done', finalRelatedQueries)
       objectStream.done()
     })
 
