@@ -288,12 +288,16 @@ export const getUIStateFromAIState = (aiState: Chat) => {
 
       if (!type) return null
 
+      console.log(role, type)
+
       switch (role) {
         case 'user':
           switch (type) {
-            case 'input' || 'input_related':
+            case 'input':
+            case 'input_related':
               const json = JSON.parse(content)
               const value = type === 'input' ? json.input : json.related_query
+              console.log(json, value)
               return {
                 id,
                 component: (
