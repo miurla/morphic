@@ -50,7 +50,6 @@ export async function querySuggestor(
       }
     })
     .finally(() => {
-      console.log('done', finalRelatedQueries)
       objectStream.done()
     })
 
