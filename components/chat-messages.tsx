@@ -52,7 +52,9 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
             key={`${groupedMessage.id}`}
             message={{
               id: groupedMessage.id,
-              component: <div key={index}>{groupedMessage.components}</div>,
+              component: groupedMessage.components.map((component, i) => (
+                <div key={`${groupedMessage.id}-${i}`}>{component}</div>
+              )),
               isCollapsed: groupedMessage.isCollapsed
             }}
             isLastMessage={

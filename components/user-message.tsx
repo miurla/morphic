@@ -1,17 +1,12 @@
-import { cn } from '@/lib/utils'
 import React from 'react'
 
 type UserMessageProps = {
   message: string
-  isFirstMessage?: boolean
 }
 
-export const UserMessage: React.FC<UserMessageProps> = ({
-  message,
-  isFirstMessage
-}) => {
+export const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
   return (
-    <div className={cn({ 'mt-4': !isFirstMessage })}>
+    <div className="mt-6">
       <div className="text-xl">{message}</div>
     </div>
   )

@@ -56,7 +56,7 @@ export function ChatPanel({ messages }: ChatPanelProps) {
 
   // Clear messages
   const handleClear = () => {
-    router.push('/new')
+    router.push('/')
   }
 
   useEffect(() => {

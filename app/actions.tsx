@@ -34,10 +34,9 @@ async function submit(formData?: FormData, skip?: boolean) {
   ].filter(
     message =>
       message.role !== 'tool' &&
-      message.type !== undefined &&
       message.type !== 'followup' &&
       message.type !== 'related' &&
-      message.type !== 'inquiry'
+      message.content !== 'end'
   )
 
   // goupeiId is used to group the messages for collapse
@@ -187,7 +186,7 @@ async function submit(formData?: FormData, skip?: boolean) {
 
       // Add the answer, related queries, and follow-up panel to the state
       // Wait for 1 second before adding the answer to the state
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => setTimeout(resolve, 500))
 
       aiState.done({
         ...aiState.get(),
@@ -274,8 +273,10 @@ export const AI = createAI<AIState, UIState>({
     const userId = 'anonymous'
     const path = `/search/${chatId}`
     const title =
-      JSON.parse(messages[0].content)?.input?.substring(0, 100) || 'Untitled'
-
+      messages.length > 0
+        ? JSON.parse(messages[0].content)?.input?.substring(0, 100) ||
+          'Untitled'
+        : 'Untitled'
     // Add an 'end' message at the end to determine if the history needs to be reloaded
     const updatedMessages: AIMessage[] = [
       ...messages,
@@ -314,20 +315,12 @@ export const getUIStateFromAIState = (aiState: Chat) => {
               const value = type === 'input' ? json.input : json.related_query
               return {
                 id,
-                component: (
-                  <Section>
-                    <UserMessage message={value} />
-                  </Section>
-                )
+                component: <UserMessage message={value} />
               }
             case 'inquiry':
               return {
                 id,
-                component: (
-                  <Section>
-                    <CopilotDisplay content={content} />
-                  </Section>
-                )
+                component: <CopilotDisplay content={content} />
               }
           }
         case 'assistant':
