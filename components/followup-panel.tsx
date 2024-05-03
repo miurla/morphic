@@ -20,7 +20,7 @@ export function FollowupPanel() {
     const userMessage = {
       id: Date.now(),
       isGenerating: false,
-      component: <UserMessage message={input} isFirstMessage={false} />
+      component: <UserMessage message={input} />
     }
 
     const responseMessage = await submit(formData)

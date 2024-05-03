@@ -40,7 +40,7 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
 
     const userMessage = {
       id: Date.now(),
-      component: <UserMessage message={query} isFirstMessage={false} />
+      component: <UserMessage message={query} />
     }
 
     const responseMessage = await submit(formData)
