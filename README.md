@@ -18,10 +18,10 @@ Please note that there are differences between this repository and the official 
 ### 🚗 Roadmap [WIP]
 
 - [x] Enable specifying the model to use (only writer agent)
-- [ ] Implement chat history functionality
+- [x] Implement search history functionality
 - [ ] Develop features for sharing results
 - [ ] Add video support for search functionality
-- [ ] Implement Retrieval-Augmented Generation (RAG) support
+- [ ] Implement RAG support
 - [ ] Introduce tool support for enhanced productivity
 - [ ] Expand Generative UI capabilities
 
@@ -31,6 +31,7 @@ Please note that there are differences between this repository and the official 
 - Text streaming / Generative UI: [Vercel AI SDK](https://sdk.vercel.ai/docs)
 - Generative Model: [OpenAI](https://openai.com/)
 - Search API: [Tavily AI](https://tavily.com/)
+- Serverless Database: [Upstash](https://upstash.com/)
 - Component library: [shadcn/ui](https://ui.shadcn.com/)
 - Headless component primitives: [Radix UI](https://www.radix-ui.com/)
 - Styling: [Tailwind CSS](https://tailwindcss.com/)
@@ -49,10 +50,14 @@ git clone git@github.com:[YOUR_GITHUB_ACCOUNT]/morphic.git
 
 ```
 cd morphic
-bun i
+bun install
 ```
 
-### 3. Fill out secrets
+### 3. Setting up Upstash Redis
+
+Follow the guide below to set up Upstash Redis. Create a database and obtain `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Refer to the [Upstash guide](https://upstash.com/blog/rag-chatbot-upstash#setting-up-upstash-redis) for instructions on how to proceed.
+
+### 4. Fill out secrets
 
 ```
 cp .env.local.example .env.local
@@ -61,30 +66,20 @@ cp .env.local.example .env.local
 Your .env.local file should look like this:
 
 ```
-# Used to set the base URL path for OpenAI API requests.
-# If you need to set a BASE URL, uncomment and set the following:
-# OPENAI_API_BASE=
-
-# Used to set the model for OpenAI API requests.
-# If not set, the default is gpt-4-turbo.
-# OPENAI_API_MODEL='gpt-4-turbo'
-
 # OpenAI API key retrieved here: https://platform.openai.com/api-keys
-OPENAI_API_KEY=[YOUR_OPENAI_API_KEY]
+OPENAI_API_KEY=
 
 # Tavily API Key retrieved here: https://app.tavily.com/home
-TAVILY_API_KEY=[YOUR_TAVILY_API_KEY]
+TAVILY_API_KEY=
 
-# Only writers can set a specific model. It must be compatible with the OpenAI API.
-# USE_SPECIFIC_API_FOR_WRITER=true
-# SPECIFIC_API_BASE=
-# SPECIFIC_API_KEY=
-# SPECIFIC_API_MODEL=
+# Upstash Redis URL and Token retrieved here: https://console.upstash.com/redis
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
 ```
 
 _Note: This project focuses on Generative UI and requires complex output from LLMs. Currently, it's assumed that the official OpenAI models will be used. Although it's possible to set up other models, if you use an OpenAI-compatible model, but we don't guarantee that it'll work._
 
-### 4. Run app locally
+### 5. Run app locally
 
 ```
 bun dev
@@ -98,7 +93,7 @@ Host your own live version of Morphic with Vercel or Cloudflare Pages.
 
 ### Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN)
 
 ### Cloudflare Pages
 
