@@ -12,7 +12,7 @@ import { Separator } from './ui/separator'
 
 interface CollapsibleMessageProps {
   message: {
-    id: number
+    id: string
     isCollapsed?: StreamableValue<boolean>
     component: React.ReactNode
   }
