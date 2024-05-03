@@ -175,19 +175,6 @@ async function submit(formData?: FormData, skip?: boolean) {
     }
 
     if (!errorOccurred) {
-      aiState.update({
-        ...aiState.get(),
-        messages: [
-          ...aiState.get().messages,
-          {
-            id: groupeId,
-            role: 'assistant',
-            content: answer,
-            type: 'answer'
-          }
-        ]
-      })
-
       // Generate related queries
       const relatedQueries = await querySuggestor(uiStream, messages)
       // Add follow-up panel
@@ -197,10 +184,20 @@ async function submit(formData?: FormData, skip?: boolean) {
         </Section>
       )
 
-      aiState.update({
+      // Add the answer, related queries, and follow-up panel to the state
+      // Wait for 0.5 second before adding the answer to the state
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      aiState.done({
         ...aiState.get(),
         messages: [
           ...aiState.get().messages,
+          {
+            id: groupeId,
+            role: 'assistant',
+            content: answer,
+            type: 'answer'
+          },
           {
             id: groupeId,
             role: 'assistant',
@@ -219,7 +216,6 @@ async function submit(formData?: FormData, skip?: boolean) {
 
     isGenerating.done(false)
     uiStream.done()
-    aiState.done(aiState.get())
   }
 
   processEvents()
