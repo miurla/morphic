@@ -41,33 +41,6 @@ export async function getChat(id: string, userId: string = 'anonymous') {
   return chat
 }
 
-export async function getSharedChat(id: string) {
-  const chat = await redis.hgetall<Chat>(`chat:${id}`)
-
-  if (!chat || !chat.sharedPath) {
-    return null
-  }
-
-  return chat
-}
-
-export async function shareChat(id: string) {
-  const chat = await redis.hgetall<Chat>(`chat:${id}`)
-
-  if (!chat) {
-    return null
-  }
-
-  const payload = {
-    ...chat,
-    sharedPath: `/share/${chat.id}`
-  }
-
-  await redis.hmset(`chat:${id}`, payload)
-
-  return payload
-}
-
 export async function saveChat(chat: Chat, userId: string = 'anonymous') {
   const pipeline = redis.pipeline()
   pipeline.hmset(`chat:${chat.id}`, chat)

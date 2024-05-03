@@ -36,7 +36,7 @@ async function submit(formData?: FormData, skip?: boolean) {
       message.role !== 'tool' &&
       message.type !== 'followup' &&
       message.type !== 'related' &&
-      message.content !== 'end'
+      message.type !== 'end'
   )
 
   // goupeiId is used to group the messages for collapse
@@ -175,6 +175,19 @@ async function submit(formData?: FormData, skip?: boolean) {
     }
 
     if (!errorOccurred) {
+      aiState.update({
+        ...aiState.get(),
+        messages: [
+          ...aiState.get().messages,
+          {
+            id: groupeId,
+            role: 'assistant',
+            content: answer,
+            type: 'answer'
+          }
+        ]
+      })
+
       // Generate related queries
       const relatedQueries = await querySuggestor(uiStream, messages)
       // Add follow-up panel
@@ -184,20 +197,10 @@ async function submit(formData?: FormData, skip?: boolean) {
         </Section>
       )
 
-      // Add the answer, related queries, and follow-up panel to the state
-      // Wait for 1 second before adding the answer to the state
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      aiState.done({
+      aiState.update({
         ...aiState.get(),
         messages: [
           ...aiState.get().messages,
-          {
-            id: groupeId,
-            role: 'assistant',
-            content: answer,
-            type: 'answer'
-          },
           {
             id: groupeId,
             role: 'assistant',
@@ -216,6 +219,7 @@ async function submit(formData?: FormData, skip?: boolean) {
 
     isGenerating.done(false)
     uiStream.done()
+    aiState.done(aiState.get())
   }
 
   processEvents()
@@ -283,7 +287,8 @@ export const AI = createAI<AIState, UIState>({
       {
         id: nanoid(),
         role: 'assistant',
-        content: `end`
+        content: `end`,
+        type: 'end'
       }
     ]
 
@@ -304,7 +309,7 @@ export const getUIStateFromAIState = (aiState: Chat) => {
     .map(message => {
       const { role, content, id, type, name } = message
 
-      if (!type) return null
+      if (!type || type === 'end') return null
 
       switch (role) {
         case 'user':
