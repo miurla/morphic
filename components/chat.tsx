@@ -23,12 +23,9 @@ export function Chat({ id }: ChatProps) {
   }, [id, path, messages])
 
   useEffect(() => {
-    console.log('aiState', aiState.messages[aiState.messages.length - 1]?.type)
     if (aiState.messages[aiState.messages.length - 1]?.type === 'followup') {
       // Refresh the page to chat history updates
-      setTimeout(() => {
-        router.refresh()
-      }, 1000)
+      router.refresh()
     }
   }, [aiState, router])
 
