@@ -1,6 +1,6 @@
-# Morphic
+# Xinyuan_ai
 
-An AI-powered search engine with a generative UI.
+An AI-powered search engine with a generative UI. Heavily inspired by [Morphic](https://github.com/miurla/morphic).
 
 ![capture](/public/capture-240404_blk.png)
 
