@@ -14,24 +14,24 @@ export type SearchSectionProps = {
 
 export function SearchSection({ result }: SearchSectionProps) {
   const [data, error, pending] = useStreamableValue(result)
-  const results: TypeSearchResults = data ? JSON.parse(data) : undefined
+  const searchResults: TypeSearchResults = data ? JSON.parse(data) : undefined
   return (
     <div>
       {!pending && data ? (
         <>
           <Section size="sm" className="pt-2 pb-0">
-            <ToolBadge tool="search">{`${results.query}`}</ToolBadge>
+            <ToolBadge tool="search">{`${searchResults.query}`}</ToolBadge>
           </Section>
-          {results.images && results.images.length > 0 && (
+          {searchResults.images && searchResults.images.length > 0 && (
             <Section title="Images">
               <SearchResultsImageSection
-                images={results.images}
-                query={results.query}
+                images={searchResults.images}
+                query={searchResults.query}
               />
             </Section>
           )}
           <Section title="Results">
-            <SearchResults results={results.results} />
+            <SearchResults results={searchResults.results} />
           </Section>
         </>
       ) : (
