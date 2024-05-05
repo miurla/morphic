@@ -7,17 +7,25 @@ const exampleMessages = [
     message: 'Why is Nvidia growing rapidly?'
   },
   {
-    heading: 'Is the Apple Vision Pro worth buying?',
-    message: 'Is the Apple Vision Pro worth buying?'
+    heading: '国有企业转让资产，交易价款是否允许分期支付？',
+    message: '国有企业转让资产，交易价款是否允许分期支付？'
   },
   {
-    heading: 'How does the Vercel AI SDK work?',
-    message: 'How does the Vercel AI SDK work?'
+    heading: '个体工商户如何享受个人所得税减半征税政策？',
+    message: '个体工商户如何享受个人所得税减半征税政策？'
   },
   {
-    heading: 'Tesla vs Rivian',
-    message: 'Tesla vs Rivian'
+    heading: '高新技术企业进口关税优惠政策具体内容',
+    message: '高新技术企业进口关税优惠政策具体内容'
   }
+  // {
+  //   heading: '小米汽车是否值得购买?',
+  //   message: '小米汽车是否值得购买?'
+  // },
+  // {
+  //   heading: '通用人工智能(AGI)有可能实现吗？',
+  //   message: '通用人工智能(AGI)有可能实现吗？'
+  // }
 ]
 export function EmptyScreen({
   submitMessage,

@@ -1,13 +1,19 @@
 import React from 'react'
-import Link from 'next/link'
-import { SiDiscord, SiGithub, SiTwitter } from 'react-icons/si'
-import { Button } from './ui/button'
+// import Link from 'next/link'
+// import { SiDiscord, SiGithub, SiTwitter } from 'react-icons/si'
+// import { Button } from './ui/button'
 
 const Footer: React.FC = () => {
   return (
-    <footer className="w-fit p-1 md:p-2 fixed bottom-0 right-0">
-      <div className="flex justify-end">
-        <Button
+    // <footer className="w-fit p-1 md:p-2 fixed bottom-0 right-0">
+    <footer className="fixed bottom-4 left-0 right-0 mx-auto flex flex-col items-center justify-center">
+      <div className="flex items-center text-muted-foreground/50">
+        ©{new Date().getFullYear()}
+        <span className="pl-1">txz.tech</span>
+        {/* <Link href="https://txz.tech" target="_blank" className="pl-1">
+          txz.tech
+        </Link> */}
+        {/* <Button
           variant={'ghost'}
           size={'icon'}
           className="text-muted-foreground/50"
@@ -15,8 +21,8 @@ const Footer: React.FC = () => {
           <Link href="https://discord.gg/zRxaseCuGq" target="_blank">
             <SiDiscord size={18} />
           </Link>
-        </Button>
-        <Button
+        </Button> */}
+        {/* <Button
           variant={'ghost'}
           size={'icon'}
           className="text-muted-foreground/50"
@@ -33,7 +39,7 @@ const Footer: React.FC = () => {
           <Link href="https://git.new/morphic" target="_blank">
             <SiGithub size={18} />
           </Link>
-        </Button>
+        </Button> */}
       </div>
     </footer>
   )
