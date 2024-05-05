@@ -268,6 +268,11 @@ export const AI = createAI<AIState, UIState>({
   unstable_onSetAIState: async ({ state, done }) => {
     'use server'
 
+    // Check if there is any message of type 'answer' in the state messages
+    if (!state.messages.some(e => e.type === 'answer')) {
+      return
+    }
+
     const { chatId, messages } = state
     const createdAt = new Date()
     const userId = 'anonymous'
