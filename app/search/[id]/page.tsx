@@ -14,9 +14,9 @@ export interface SearchPageProps {
 export async function generateMetadata({ params }: SearchPageProps) {
   const chat = await getChat(params.id, 'anonymous')
   const chatTitle = chat?.title.toString().slice(0, 50)
-  const title = chatTitle || '信源AI助手 - 对动态、复杂、高维数据进行智能分析'
+  const title = chatTitle || '信源AI助手 - 动态、复杂、高维数据的智能分析'
   const description = chatTitle
-    ? '信源AI助手 - 对动态、复杂、高维数据进行智能分析'
+    ? '信源AI助手 - 动态、复杂、高维数据的智能分析'
     : '基于先进的数据+AI一体化引擎，赋能企业对运营生产动态的实时监控与掌握，实现生产经营的降本增益！'
   return {
     title,
