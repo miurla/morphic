@@ -3,8 +3,8 @@ import { ArrowRight } from 'lucide-react'
 
 const exampleMessages = [
   {
-    heading: 'Why is Nvidia growing rapidly?',
-    message: 'Why is Nvidia growing rapidly?'
+    heading: "What's new with the iPad Pro?",
+    message: "What's new with the iPad Pro?"
   },
   {
     heading: '国有企业转让资产，交易价款是否允许分期支付？',
