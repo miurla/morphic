@@ -47,7 +47,7 @@ export function History({ location, chats }: HistoryProps) {
             </div>
           ) : (
             chats?.map((chat: Chat) => (
-              <HistoryItem key={chat.id} chat={chat} />
+              chat && <HistoryItem key={chat.id} chat={chat} />
             ))
           )}
         </div>
