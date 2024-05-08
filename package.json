@@ -12,6 +12,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.7",
     "@ai-sdk/openai": "^0.0.2",
+    "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-checkbox": "^1.0.4",
     "@radix-ui/react-collapsible": "^1.0.3",
@@ -40,6 +41,7 @@
     "react-textarea-autosize": "^8.5.3",
     "rehype-external-links": "^3.0.0",
     "remark-gfm": "^4.0.0",
+    "sonner": "^1.4.41",
     "tailwind-merge": "^2.2.2",
     "tailwindcss-animate": "^1.0.7"
   },

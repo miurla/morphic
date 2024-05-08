@@ -1,6 +1,7 @@
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger
@@ -11,6 +12,7 @@ import { cn } from '@/lib/utils'
 import HistoryItem from './history-item'
 import { Chat } from '@/lib/types'
 import { History as HistoryIcon } from 'lucide-react'
+import { ClearHistory } from './clear-history'
 
 type HistoryProps = {
   location: 'sidebar' | 'header'
@@ -38,10 +40,10 @@ export function History({ location, chats }: HistoryProps) {
             History
           </SheetTitle>
         </SheetHeader>
-        <div className="pb-6 overflow-y-auto h-full">
+        <div className="my-2 overflow-y-auto h-[calc(100vh-7.5rem)]">
           {!chats?.length ? (
             <div className="text-foreground/30 text-sm text-center py-4">
-              No history yet
+              No search history
             </div>
           ) : (
             chats?.map((chat: Chat) => (
@@ -49,6 +51,9 @@ export function History({ location, chats }: HistoryProps) {
             ))
           )}
         </div>
+        <SheetFooter>
+          <ClearHistory empty={!chats?.length} />
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   )

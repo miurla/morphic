@@ -1,5 +1,7 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { type Chat } from '@/lib/types'
 import { Redis } from '@upstash/redis'
 
@@ -39,6 +41,26 @@ export async function getChat(id: string, userId: string = 'anonymous') {
   }
 
   return chat
+}
+
+export async function clearChats(
+  userId: string = 'anonymous'
+): Promise<{ error?: string }> {
+  const chats: string[] = await redis.zrange(`user:chat:${userId}`, 0, -1)
+  if (!chats.length) {
+    return { error: 'No chats to clear' }
+  }
+  const pipeline = redis.pipeline()
+
+  for (const chat of chats) {
+    pipeline.del(chat)
+    pipeline.zrem(`user:chat:${userId}`, chat)
+  }
+
+  await pipeline.exec()
+
+  revalidatePath('/')
+  redirect('/')
 }
 
 export async function saveChat(chat: Chat, userId: string = 'anonymous') {
