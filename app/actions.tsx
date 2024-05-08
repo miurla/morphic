@@ -87,7 +87,10 @@ async function submit(formData?: FormData, skip?: boolean) {
   async function processEvents() {
     let action: any = { object: { next: 'proceed' } }
     // If the user skips the task, we proceed to the search
-    if (!skip) action = (await taskManager(messages)) ?? action
+    if (!skip) {
+      uiStream.update(<span className='flex items-center'><Spinner /><span className='ml-2'>Analysis..</span></span>)
+      action = (await taskManager(messages)) ?? action
+    }
 
     if (action.object.next === 'inquire') {
       // Generate inquiry
@@ -117,7 +120,7 @@ async function submit(formData?: FormData, skip?: boolean) {
     let toolOutputs: ToolResultPart[] = []
     let errorOccurred = false
     const streamText = createStreamableValue<string>()
-    uiStream.update(<Spinner />)
+    uiStream.update(<span className='flex items-center'><Spinner /><span className='ml-2'>Generating..</span></span>)
 
     // If useSpecificAPI is enabled, only function calls will be made
     // If not using a tool, this model generates the answer
