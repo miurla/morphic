@@ -36,7 +36,7 @@ export function ClearHistory({ empty }: ClearHistoryProps) {
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete your
-            history.
+            history and remove your data from our servers.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -56,7 +56,7 @@ export function ClearHistory({ empty }: ClearHistoryProps) {
               })
             }}
           >
-            {isPending ? <Spinner /> : 'Delete'}
+            {isPending ? <Spinner /> : 'Clear'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
