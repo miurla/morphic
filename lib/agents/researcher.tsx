@@ -11,7 +11,6 @@ import { OpenAI } from '@ai-sdk/openai'
 import { BotMessage } from '@/components/message'
 import Exa from 'exa-js'
 import { Card } from '@/components/ui/card'
-import { SearchResults } from '../types'
 import { SearchSection } from '@/components/search-section'
 
 export async function researcher(
