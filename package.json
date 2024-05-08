@@ -41,6 +41,7 @@
     "react-textarea-autosize": "^8.5.3",
     "rehype-external-links": "^3.0.0",
     "remark-gfm": "^4.0.0",
+    "sonner": "^1.4.41",
     "tailwind-merge": "^2.2.2",
     "tailwindcss-animate": "^1.0.7"
   },

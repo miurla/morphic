@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 import HistoryItem from './history-item'
 import { Chat } from '@/lib/types'
 import { History as HistoryIcon } from 'lucide-react'
-import { ClearHistoryButton } from './clear-history-button'
+import { ClearHistory } from './clear-history'
 
 type HistoryProps = {
   location: 'sidebar' | 'header'
@@ -52,7 +52,7 @@ export function History({ location, chats }: HistoryProps) {
           )}
         </div>
         <SheetFooter>
-          <ClearHistoryButton />
+          <ClearHistory empty={!chats?.length} />
         </SheetFooter>
       </SheetContent>
     </Sheet>
