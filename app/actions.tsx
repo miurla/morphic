@@ -6,7 +6,7 @@ import {
   getAIState,
   getMutableAIState
 } from 'ai/rsc'
-import { ExperimentalMessage, nanoid, ToolResultPart } from 'ai'
+import { CoreMessage, nanoid, ToolResultPart } from 'ai'
 import { Spinner } from '@/components/ui/spinner'
 import { Section } from '@/components/section'
 import { FollowupPanel } from '@/components/followup-panel'
@@ -29,9 +29,7 @@ async function submit(formData?: FormData, skip?: boolean) {
   const isGenerating = createStreamableValue(true)
   const isCollapsed = createStreamableValue(false)
   // Get the messages from the state, filter out the tool messages
-  const messages: ExperimentalMessage[] = [
-    ...(aiState.get().messages as any[])
-  ].filter(
+  const messages: CoreMessage[] = [...(aiState.get().messages as any[])].filter(
     message =>
       message.role !== 'tool' &&
       message.type !== 'followup' &&
@@ -168,7 +166,7 @@ async function submit(formData?: FormData, skip?: boolean) {
               type: 'tool'
             }
           : msg
-      ) as ExperimentalMessage[]
+      ) as CoreMessage[]
       answer = await writer(uiStream, streamText, modifiedMessages)
     } else {
       streamText.done()
@@ -254,7 +252,7 @@ export const AI = createAI<AIState, UIState>({
   },
   initialUIState,
   initialAIState,
-  unstable_onGetUIState: async () => {
+  onGetUIState: async () => {
     'use server'
 
     const aiState = getAIState()
@@ -265,7 +263,7 @@ export const AI = createAI<AIState, UIState>({
       return
     }
   },
-  unstable_onSetAIState: async ({ state, done }) => {
+  onSetAIState: async ({ state, done }) => {
     'use server'
 
     // Check if there is any message of type 'answer' in the state messages

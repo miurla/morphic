@@ -1,9 +1,9 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import {
-  ExperimentalMessage,
+  CoreMessage,
   ToolCallPart,
   ToolResultPart,
-  experimental_streamText
+  streamText as nonexperimental_streamText
 } from 'ai'
 import { searchSchema } from '@/lib/schema/search'
 import { Section } from '@/components/section'
@@ -16,7 +16,7 @@ import { SearchSection } from '@/components/search-section'
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
   streamText: ReturnType<typeof createStreamableValue<string>>,
-  messages: ExperimentalMessage[],
+  messages: CoreMessage[],
   useSpecificModel?: boolean
 ) {
   const openai = new OpenAI({
@@ -36,7 +36,7 @@ export async function researcher(
   )
 
   let isFirstToolResponse = true
-  const result = await experimental_streamText({
+  const result = await nonexperimental_streamText({
     model: openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4-turbo'),
     maxTokens: 2500,
     system: `As a professional search expert, you possess the ability to search for any information on the web. 
