@@ -1,9 +1,9 @@
-import { ExperimentalMessage, experimental_generateObject } from 'ai'
+import { CoreMessage, experimental_generateObject } from 'ai'
 import { OpenAI } from '@ai-sdk/openai'
 import { nextActionSchema } from '../schema/next-action'
 
 // Decide whether inquiry is required for the user input
-export async function taskManager(messages: ExperimentalMessage[]) {
+export async function taskManager(messages: CoreMessage[]) {
   const openai = new OpenAI({
     baseUrl: process.env.OPENAI_API_BASE, // optional base URL for proxies etc.
     apiKey: process.env.OPENAI_API_KEY, // optional API key, default to env property OPENAI_API_KEY

@@ -1,6 +1,6 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import {
-  ExperimentalMessage,
+  CoreMessage,
   ToolCallPart,
   ToolResultPart,
   experimental_streamText
@@ -16,7 +16,7 @@ import { SearchSection } from '@/components/search-section'
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
   streamText: ReturnType<typeof createStreamableValue<string>>,
-  messages: ExperimentalMessage[],
+  messages: CoreMessage[],
   useSpecificModel?: boolean
 ) {
   const openai = new OpenAI({
