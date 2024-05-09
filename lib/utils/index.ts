@@ -19,7 +19,7 @@ export function formatToolMessages(messages: ExperimentalMessage[]) {
     message => message.role === 'user'
   )
 
-  // Get the tool call message
+  // Find the message that contains a tool call part
   const toolCallMessage = messages.slice(lastUserMessageIndex).find(message => {
     return (
       message.role === 'assistant' &&
@@ -28,19 +28,19 @@ export function formatToolMessages(messages: ExperimentalMessage[]) {
     )
   })
 
-  // Extract the tool call message content
-  const toolCallContent = Array.isArray(toolCallMessage?.content)
-    ? (toolCallMessage.content.find(
+  // Extract the tool call message contents
+  const toolCallContents = Array.isArray(toolCallMessage?.content)
+    ? (toolCallMessage.content.filter(
         content => content.type == 'tool-call'
-      ) as ToolCallPart)
+      ) as ToolCallPart[])
     : null
 
   // Construct the properly formatted tool call message
   const formattedToolCallMessage: ExperimentalAssistantMessage | null =
-    toolCallContent
+    toolCallContents && toolCallContents.length > 0
       ? {
           role: 'assistant',
-          content: [toolCallContent]
+          content: toolCallContents
         }
       : null
 
@@ -49,29 +49,21 @@ export function formatToolMessages(messages: ExperimentalMessage[]) {
     .slice(lastUserMessageIndex)
     .find(message => message.role === 'tool')
 
-  // Extract the tool response message content
-  const toolResponseContent = Array.isArray(toolResponseMessage?.content)
-    ? (toolResponseMessage.content[0] as ToolResultPart)
+  // Extract the tool response message contents
+  const toolResponseContents = Array.isArray(toolResponseMessage?.content)
+    ? (toolResponseMessage.content as ToolResultPart[])
     : null
 
   // Construct the properly formatted tool response message
   const formattedToolResponseMessage: ExperimentalToolMessage | null =
-    toolResponseContent
+    toolResponseContents && toolResponseContents.length > 0
       ? {
           role: 'tool',
-          content: [
-            {
-              toolCallId: toolResponseContent.toolCallId,
-              type: 'tool-result',
-              toolName: toolResponseContent.toolName,
-              result: [toolResponseContent.result]
-            }
-          ]
+          content: toolResponseContents
         }
       : null
 
-  // Both tool call and tool response messages must be exsist because
-  // the OpenAI api expects both
+  // Both tool call and response messages must be present for the OpenAI api to work
   if (!formattedToolCallMessage || !formattedToolResponseMessage) {
     return []
   }
