@@ -4,7 +4,7 @@ import React from 'react'
 import { Button } from './ui/button'
 import { ArrowRight } from 'lucide-react'
 import { useActions, useStreamableValue, useUIState } from 'ai/rsc'
-import { AI } from '@/app/action'
+import { AI } from '@/app/actions'
 import { UserMessage } from './user-message'
 import { PartialRelated } from '@/lib/schema/related'
 

@@ -1,5 +1,5 @@
 import { StreamableValue, useUIState } from 'ai/rsc'
-import type { AI } from '@/app/action'
+import type { AI } from '@/app/actions'
 import { CollapsibleMessage } from './collapsible-message'
 
 export function ChatMessages() {

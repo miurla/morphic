@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import type { AI } from '@/app/action'
+import type { AI } from '@/app/actions'
 import { useUIState, useActions, useAIState } from 'ai/rsc'
 import { cn } from '@/lib/utils'
 import { UserMessage } from './user-message'

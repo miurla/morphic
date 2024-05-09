@@ -8,7 +8,7 @@ import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { ArrowRight, Check, FastForward, Sparkles } from 'lucide-react'
 import { useActions, useStreamableValue, useUIState } from 'ai/rsc'
-import { AI } from '@/app/action'
+import { AI } from '@/app/actions'
 import { IconLogo } from './ui/icons'
 import { cn } from '@/lib/utils'
 
