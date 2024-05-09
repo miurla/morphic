@@ -252,7 +252,7 @@ export const AI = createAI<AIState, UIState>({
   },
   initialUIState,
   initialAIState,
-  unstable_onGetUIState: async () => {
+  onGetUIState: async () => {
     'use server'
 
     const aiState = getAIState()
@@ -263,7 +263,7 @@ export const AI = createAI<AIState, UIState>({
       return
     }
   },
-  unstable_onSetAIState: async ({ state, done }) => {
+  onSetAIState: async ({ state, done }) => {
     'use server'
 
     // Check if there is any message of type 'answer' in the state messages
