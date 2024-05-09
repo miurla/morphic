@@ -1,4 +1,4 @@
-import { CoreMessage, experimental_generateObject } from 'ai'
+import { CoreMessage, generateObject } from 'ai'
 import { OpenAI } from '@ai-sdk/openai'
 import { nextActionSchema } from '../schema/next-action'
 
@@ -11,7 +11,7 @@ export async function taskManager(messages: CoreMessage[]) {
   })
 
   try {
-    const result = await experimental_generateObject({
+    const result = await generateObject({
       model: openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4-turbo'),
       system: `As a professional web researcher, your primary objective is to fully comprehend the user's query, conduct thorough web searches to gather the necessary information, and provide an appropriate response.
     To achieve this, you must first analyze the user's input and determine the optimal course of action. You have two options at your disposal:

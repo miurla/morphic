@@ -1,6 +1,6 @@
 import { OpenAI } from '@ai-sdk/openai'
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
-import { CoreMessage, experimental_streamText } from 'ai'
+import { CoreMessage, streamText as nonexperimental_streamText } from 'ai'
 import { Section } from '@/components/section'
 import { BotMessage } from '@/components/message'
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -30,7 +30,7 @@ export async function writer(
   )
   uiStream.append(answerSection)
 
-  await experimental_streamText({
+  await nonexperimental_streamText({
     model:
       process.env.SPECIFIC_PROVIDER === 'anthropic'
         ? anthropic!(
