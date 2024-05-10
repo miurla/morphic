@@ -1,6 +1,6 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { Chat } from '@/components/chat'
-import { getChat } from '@/lib/actions/chat'
+import { getSharedChat } from '@/lib/actions/chat'
 import { AI } from '@/app/actions'
 
 export const maxDuration = 60
@@ -12,21 +12,21 @@ export interface SharePageProps {
 }
 
 export async function generateMetadata({ params }: SharePageProps) {
-  const chat = await getChat(params.id, 'anonymous')
+  const chat = await getSharedChat(params.id)
+
+  if (!chat || !chat.sharePath) {
+    return notFound()
+  }
+
   return {
     title: chat?.title.toString().slice(0, 50) || 'Search'
   }
 }
 
 export default async function SharePage({ params }: SharePageProps) {
-  const userId = 'anonymous'
-  const chat = await getChat(params.id, userId)
+  const chat = await getSharedChat(params.id)
 
-  if (!chat) {
-    redirect('/')
-  }
-
-  if (chat?.userId !== userId) {
+  if (!chat || !chat.sharePath) {
     notFound()
   }
 

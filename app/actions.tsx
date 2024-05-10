@@ -229,6 +229,7 @@ async function submit(formData?: FormData, skip?: boolean) {
 export type AIState = {
   messages: AIMessage[]
   chatId: string
+  isShareable?: boolean
 }
 
 export type UIState = {
@@ -304,11 +305,19 @@ export const AI = createAI<AIState, UIState>({
 })
 
 export const getUIStateFromAIState = (aiState: Chat) => {
+  const chatId = aiState.chatId
+  const isShareable = aiState.isShareable
   return aiState.messages
-    .map(message => {
+    .map((message, index) => {
       const { role, content, id, type, name } = message
 
-      if (!type || type === 'end') return null
+      if (
+        !type ||
+        type === 'end' ||
+        (!isShareable && type === 'related') ||
+        (!isShareable && type === 'followup')
+      )
+        return null
 
       switch (role) {
         case 'user':
@@ -319,7 +328,13 @@ export const getUIStateFromAIState = (aiState: Chat) => {
               const value = type === 'input' ? json.input : json.related_query
               return {
                 id,
-                component: <UserMessage message={value} />
+                component: (
+                  <UserMessage
+                    message={value}
+                    chatId={chatId}
+                    showShare={index === 0 && isShareable}
+                  />
+                )
               }
             case 'inquiry':
               return {

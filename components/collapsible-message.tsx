@@ -58,6 +58,7 @@ export const CollapsibleMessage: React.FC<CollapsibleMessageProps> = ({
             className={cn('-mt-3 rounded-full')}
           >
             <ChevronDown
+              size={14}
               className={cn(
                 open ? 'rotate-180' : 'rotate-0',
                 'h-4 w-4 transition-all'
