@@ -1,0 +1,12 @@
+# This is a Docker Compose file for setting up the morphic-stack environment.
+
+name: morphic-stack
+services:
+  morphic:
+    build:
+      context: . # The build context is the current directory
+      dockerfile: Dockerfile
+    command: bun dev # Use `bun dev -H 0.0.0.0` to listen on all interfaces
+    env_file: .env.local # Load environment variables
+    ports:
+      - "3000:3000" # Maps port 3000 on the host to port 3000 in the container.
