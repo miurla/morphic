@@ -31,7 +31,13 @@ export default async function SharePage({ params }: SharePageProps) {
   }
 
   return (
-    <AI initialAIState={{ chatId: chat.id, messages: chat.messages }}>
+    <AI
+      initialAIState={{
+        chatId: chat.id,
+        messages: chat.messages,
+        isSharePage: true
+      }}
+    >
       <Chat id={params.id} />
     </AI>
   )

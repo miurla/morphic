@@ -34,8 +34,7 @@ export default async function SearchPage({ params }: SearchPageProps) {
     <AI
       initialAIState={{
         chatId: chat.id,
-        messages: chat.messages,
-        isShareable: true
+        messages: chat.messages
       }}
     >
       <Chat id={params.id} />
