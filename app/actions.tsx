@@ -229,6 +229,7 @@ async function submit(formData?: FormData, skip?: boolean) {
 export type AIState = {
   messages: AIMessage[]
   chatId: string
+  isSharePage?: boolean
 }
 
 export type UIState = {
@@ -304,11 +305,19 @@ export const AI = createAI<AIState, UIState>({
 })
 
 export const getUIStateFromAIState = (aiState: Chat) => {
+  const chatId = aiState.chatId
+  const isSharePage = aiState.isSharePage
   return aiState.messages
-    .map(message => {
+    .map((message, index) => {
       const { role, content, id, type, name } = message
 
-      if (!type || type === 'end') return null
+      if (
+        !type ||
+        type === 'end' ||
+        (isSharePage && type === 'related') ||
+        (isSharePage && type === 'followup')
+      )
+        return null
 
       switch (role) {
         case 'user':
@@ -319,7 +328,13 @@ export const getUIStateFromAIState = (aiState: Chat) => {
               const value = type === 'input' ? json.input : json.related_query
               return {
                 id,
-                component: <UserMessage message={value} />
+                component: (
+                  <UserMessage
+                    message={value}
+                    chatId={chatId}
+                    showShare={index === 0 && !isSharePage}
+                  />
+                )
               }
             case 'inquiry':
               return {
