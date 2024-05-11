@@ -3,8 +3,6 @@ import { Chat } from '@/components/chat'
 import { getSharedChat } from '@/lib/actions/chat'
 import { AI } from '@/app/actions'
 
-export const maxDuration = 60
-
 export interface SharePageProps {
   params: {
     id: string
