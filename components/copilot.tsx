@@ -113,10 +113,7 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
   } else {
     return (
       <Card className="p-4 rounded-lg w-full mx-auto">
-        <div className="flex items-center mb-4">
-          <IconLogo
-            className={cn('w-4 h-4 flex-shrink-0', { 'animate-spin': pending })}
-          />
+        <div className="mb-4">
           <p className="text-lg text-foreground text-semibold ml-2">
             {data?.question}
           </p>
