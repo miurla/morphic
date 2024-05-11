@@ -42,6 +42,7 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
       const url = new URL(result.sharePath, window.location.origin)
       copyToClipboard(url.toString())
       toast.success('Link copied to clipboard')
+      setOpen(false)
     })
   }
 
