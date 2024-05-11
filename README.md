@@ -19,7 +19,7 @@ Please note that there are differences between this repository and the official 
 
 - [x] Enable specifying the model to use (only writer agent)
 - [x] Implement search history functionality
-- [ ] Develop features for sharing results
+- [x] Develop features for sharing results
 - [ ] Add video support for search functionality
 - [ ] Implement RAG support
 - [ ] Introduce tool support for enhanced productivity
