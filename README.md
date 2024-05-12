@@ -105,6 +105,8 @@ Host your own live version of Morphic with Vercel or Cloudflare Pages.
 6. Cancel deployment, go to `Settings` -> `Functions` -> `Compatibility flags`, add `nodejs_compat` to preview and production.
 7. Redeploy.
 
+**The build error needs to be fixed: [issue](https://github.com/miurla/morphic/issues/114)**
+
 ## ✅ Verified models
 
 List of verified models that can be specified to writers.
