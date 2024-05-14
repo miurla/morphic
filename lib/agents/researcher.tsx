@@ -31,6 +31,7 @@ export async function researcher(
   )
 
   let isFirstToolResponse = true
+  const currentDate = new Date().toLocaleString();
   const result = await nonexperimental_streamText({
     model: openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4o'),
     maxTokens: 2500,
@@ -40,7 +41,7 @@ export async function researcher(
     If there are any images relevant to your answer, be sure to include them as well.
     Aim to directly address the user's question, augmenting your response with insights gleaned from the search results.
     Whenever quoting or referencing information from a specific URL, always cite the source URL explicitly.
-    Please match the language of the response to the user's language.`,
+    Please match the language of the response to the user's language. Current date and time: ${currentDate}`,
     messages,
     tools: getTools({
       uiStream,
