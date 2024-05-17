@@ -1,22 +1,15 @@
-import { createStreamableUI, createStreamableValue } from 'ai/rsc'
+import { createStreamableValue } from 'ai/rsc'
 import Exa from 'exa-js'
 import { searchSchema } from '@/lib/schema/search'
 import { Card } from '@/components/ui/card'
 import { SearchSection } from '@/components/search-section'
-
-interface searchToolProps {
-  uiStream: ReturnType<typeof createStreamableUI>
-  fullResponse: string
-  hasError: boolean
-  isFirstToolResponse: boolean
-}
+import { ToolsProps } from '.'
 
 export const searchTool = ({
   uiStream,
   fullResponse,
-  hasError,
   isFirstToolResponse
-}: searchToolProps) => ({
+}: ToolsProps) => ({
   description: 'Search the web for information',
   parameters: searchSchema,
   execute: async ({
@@ -28,6 +21,7 @@ export const searchTool = ({
     max_results: number
     search_depth: 'basic' | 'advanced'
   }) => {
+    let hasError = false
     // If this is the first tool response, remove spinner
     if (isFirstToolResponse) {
       isFirstToolResponse = false

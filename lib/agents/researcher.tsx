@@ -31,7 +31,7 @@ export async function researcher(
   )
 
   let isFirstToolResponse = true
-  const currentDate = new Date().toLocaleString();
+  const currentDate = new Date().toLocaleString()
   const result = await nonexperimental_streamText({
     model: openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4o'),
     maxTokens: 2500,
@@ -46,7 +46,6 @@ export async function researcher(
     tools: getTools({
       uiStream,
       fullResponse,
-      hasError,
       isFirstToolResponse
     })
   })
@@ -73,8 +72,11 @@ export async function researcher(
         break
       case 'tool-result':
         // Append the answer section if the specific model is not used
-        if (!useSpecificModel && toolResponses.length === 0) {
+        if (!useSpecificModel && toolResponses.length === 0 && delta.result) {
           uiStream.append(answerSection)
+        }
+        if (!delta.result) {
+          hasError = true
         }
         toolResponses.push(delta)
         break

@@ -20,6 +20,7 @@ import { BotMessage } from '@/components/message'
 import { SearchSection } from '@/components/search-section'
 import SearchRelated from '@/components/search-related'
 import { CopilotDisplay } from '@/components/copilot-display'
+import RetrieveSection from '@/components/retrieve-section'
 
 async function submit(formData?: FormData, skip?: boolean) {
   'use server'
@@ -122,7 +123,7 @@ async function submit(formData?: FormData, skip?: boolean) {
     while (
       useSpecificAPI
         ? toolOutputs.length === 0 && answer.length === 0
-        : answer.length === 0
+        : answer.length === 0 && !errorOccurred
     ) {
       // Search the web and generate the answer
       const { fullResponse, hasError, toolResponses } = await researcher(
@@ -389,6 +390,12 @@ export const getUIStateFromAIState = (aiState: Chat) => {
                 return {
                   id,
                   component: <SearchSection result={searchResults.value} />,
+                  isCollapsed: isCollapsed.value
+                }
+              case 'retrieve':
+                return {
+                  id,
+                  component: <RetrieveSection data={toolOutput} />,
                   isCollapsed: isCollapsed.value
                 }
             }
