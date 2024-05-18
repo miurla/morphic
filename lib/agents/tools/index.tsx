@@ -18,11 +18,8 @@ export const getTools = ({
       uiStream,
       fullResponse,
       isFirstToolResponse
-    })
-  }
-
-  if (process.env.EXA_API_KEY) {
-    tools.retrieve = retrieveTool({
+    }),
+    retrieve: retrieveTool({
       uiStream,
       fullResponse,
       isFirstToolResponse
