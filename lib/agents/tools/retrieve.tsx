@@ -6,9 +6,6 @@ import { SearchResults as SearchResultsType } from '@/lib/types'
 import Exa from 'exa-js'
 import RetrieveSection from '@/components/retrieve-section'
 
-const apiKey = process.env.EXA_API_KEY
-const exa = new Exa(apiKey)
-
 export const retrieveTool = ({
   uiStream,
   fullResponse,
@@ -18,6 +15,9 @@ export const retrieveTool = ({
   parameters: retrieveSchema,
   execute: async ({ urls }: { urls: string[] }) => {
     let hasError = false
+    const apiKey = process.env.EXA_API_KEY
+    const exa = new Exa(apiKey)
+
     // If this is the first tool response, remove spinner
     if (isFirstToolResponse) {
       isFirstToolResponse = false
