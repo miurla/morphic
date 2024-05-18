@@ -1,23 +1,33 @@
-import { searchTool } from './search'
 import { createStreamableUI } from 'ai/rsc'
+import { retrieveTool } from './retrieve'
+import { searchTool } from './search'
 
-interface GetToolsProps {
+export interface ToolsProps {
   uiStream: ReturnType<typeof createStreamableUI>
   fullResponse: string
-  hasError: boolean
   isFirstToolResponse: boolean
 }
 
 export const getTools = ({
   uiStream,
   fullResponse,
-  hasError,
   isFirstToolResponse
-}: GetToolsProps) => ({
-  search: searchTool({
-    uiStream,
-    fullResponse,
-    hasError,
-    isFirstToolResponse
-  })
-})
+}: ToolsProps) => {
+  const tools: any = {
+    search: searchTool({
+      uiStream,
+      fullResponse,
+      isFirstToolResponse
+    })
+  }
+
+  if (process.env.EXA_API_KEY) {
+    tools.retrieve = retrieveTool({
+      uiStream,
+      fullResponse,
+      isFirstToolResponse
+    })
+  }
+
+  return tools
+}
