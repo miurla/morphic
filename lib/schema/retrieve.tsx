@@ -2,7 +2,7 @@ import { DeepPartial } from 'ai'
 import { z } from 'zod'
 
 export const retrieveSchema = z.object({
-  urls: z.array(z.string().url()).describe('The urls to retrieve')
+  url: z.string().url().describe('The url to retrieve')
 })
 
 export type PartialInquiry = DeepPartial<typeof retrieveSchema>
