@@ -6,9 +6,9 @@ import {
   streamText as nonexperimental_streamText
 } from 'ai'
 import { Section } from '@/components/section'
-import { OpenAI } from '@ai-sdk/openai'
 import { BotMessage } from '@/components/message'
 import { getTools } from './tools'
+import { getModel } from '../utils'
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -16,12 +16,6 @@ export async function researcher(
   messages: CoreMessage[],
   useSpecificModel?: boolean
 ) {
-  const openai = new OpenAI({
-    baseUrl: process.env.OPENAI_API_BASE, // optional base URL for proxies etc.
-    apiKey: process.env.OPENAI_API_KEY, // optional API key, default to env property OPENAI_API_KEY
-    organization: '' // optional organization
-  })
-
   let fullResponse = ''
   let hasError = false
   const answerSection = (
@@ -33,7 +27,7 @@ export async function researcher(
   let isFirstToolResponse = true
   const currentDate = new Date().toLocaleString()
   const result = await nonexperimental_streamText({
-    model: openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4o'),
+    model: getModel(),
     maxTokens: 2500,
     system: `As a professional search expert, you possess the ability to search for any information on the web.
     or any information on the web.

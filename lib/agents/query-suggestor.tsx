@@ -3,17 +3,12 @@ import { CoreMessage, streamObject } from 'ai'
 import { PartialRelated, relatedSchema } from '@/lib/schema/related'
 import { Section } from '@/components/section'
 import SearchRelated from '@/components/search-related'
-import { OpenAI } from '@ai-sdk/openai'
+import { getModel } from '../utils'
 
 export async function querySuggestor(
   uiStream: ReturnType<typeof createStreamableUI>,
   messages: CoreMessage[]
 ) {
-  const openai = new OpenAI({
-    baseUrl: process.env.OPENAI_API_BASE, // optional base URL for proxies etc.
-    apiKey: process.env.OPENAI_API_KEY, // optional API key, default to env property OPENAI_API_KEY
-    organization: '' // optional organization
-  })
   const objectStream = createStreamableValue<PartialRelated>()
   uiStream.append(
     <Section title="Related" separator={true}>
@@ -23,7 +18,7 @@ export async function querySuggestor(
 
   let finalRelatedQueries: PartialRelated = {}
   await streamObject({
-    model: openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4o'),
+    model: getModel(),
     system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
 
     For instance, if the original query was "Starship's third test flight key milestones", your output should follow this format:
