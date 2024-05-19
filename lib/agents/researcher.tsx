@@ -41,6 +41,7 @@ export async function researcher(
     If there are any images relevant to your answer, be sure to include them as well.
     Aim to directly address the user's question, augmenting your response with insights gleaned from the search results.
     Whenever quoting or referencing information from a specific URL, always cite the source URL explicitly.
+    The retrieve tool can only be used with URLs provided by the user. URLs from search results cannot be used.
     Please match the language of the response to the user's language. Current date and time: ${currentDate}`,
     messages,
     tools: getTools({
