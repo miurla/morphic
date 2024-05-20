@@ -40,10 +40,14 @@ export async function researcher(
     messages,
     tools: getTools({
       uiStream,
-      fullResponse,
-      isFirstToolResponse
+      fullResponse
     })
   })
+
+  if (isFirstToolResponse) {
+    isFirstToolResponse = false
+    uiStream.update(null)
+  }
 
   // Process the response
   const toolCalls: ToolCallPart[] = []

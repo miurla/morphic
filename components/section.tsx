@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils'
 import {
   BookCheck,
+  Film,
   Image,
   MessageCircleMore,
   Newspaper,
@@ -32,6 +33,9 @@ export const Section: React.FC<SectionProps> = ({
     case 'Images':
       // eslint-disable-next-line jsx-a11y/alt-text
       icon = <Image size={18} className="mr-2" />
+      break
+    case 'Videos':
+      icon = <Film size={18} className="mr-2" />
       break
     case 'Sources':
       icon = <Newspaper size={18} className="mr-2" />

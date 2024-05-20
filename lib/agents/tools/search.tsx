@@ -3,13 +3,9 @@ import Exa from 'exa-js'
 import { searchSchema } from '@/lib/schema/search'
 import { Card } from '@/components/ui/card'
 import { SearchSection } from '@/components/search-section'
-import { ToolsProps } from '.'
+import { ToolProps } from '.'
 
-export const searchTool = ({
-  uiStream,
-  fullResponse,
-  isFirstToolResponse
-}: ToolsProps) => ({
+export const searchTool = ({ uiStream, fullResponse }: ToolProps) => ({
   description: 'Search the web for information',
   parameters: searchSchema,
   execute: async ({
@@ -22,11 +18,6 @@ export const searchTool = ({
     search_depth: 'basic' | 'advanced'
   }) => {
     let hasError = false
-    // If this is the first tool response, remove spinner
-    if (isFirstToolResponse) {
-      isFirstToolResponse = false
-      uiStream.update(null)
-    }
     // Append the search section
     const streamResults = createStreamableValue<string>()
     uiStream.append(<SearchSection result={streamResults.value} />)
