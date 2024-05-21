@@ -24,7 +24,6 @@ export async function researcher(
     </Section>
   )
 
-  let isFirstToolResponse = true
   const currentDate = new Date().toLocaleString()
   const result = await nonexperimental_streamText({
     model: getModel(),
@@ -44,10 +43,8 @@ export async function researcher(
     })
   })
 
-  if (isFirstToolResponse) {
-    isFirstToolResponse = false
-    uiStream.update(null)
-  }
+  // Remove the spinner
+  uiStream.update(null)
 
   // Process the response
   const toolCalls: ToolCallPart[] = []
