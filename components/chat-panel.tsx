@@ -115,7 +115,7 @@ export function ChatPanel({ messages }: ChatPanelProps) {
                 !e.nativeEvent.isComposing
               ) {
                 // Prevent the default action to avoid adding a new line
-                if (input.length === 0) {
+                if (input.trim().length === 0) {
                   e.preventDefault()
                   return
                 }
