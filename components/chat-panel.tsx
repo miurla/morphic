@@ -6,7 +6,6 @@ import type { AI, UIState } from '@/app/actions'
 import { useUIState, useActions } from 'ai/rsc'
 import { cn } from '@/lib/utils'
 import { UserMessage } from './user-message'
-import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { ArrowRight, Plus } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
@@ -116,6 +115,10 @@ export function ChatPanel({ messages }: ChatPanelProps) {
                 !e.nativeEvent.isComposing
               ) {
                 // Prevent the default action to avoid adding a new line
+                if (input.trim().length === 0) {
+                  e.preventDefault()
+                  return
+                }
                 e.preventDefault()
                 const textarea = e.target as HTMLTextAreaElement
                 textarea.form?.requestSubmit()
