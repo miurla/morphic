@@ -28,7 +28,8 @@ export const retrieveTool = ({
       const response = await fetch(`https://r.jina.ai/${url}`, {
         method: 'GET',
         headers: {
-          Accept: 'application/json'
+          Accept: 'application/json',
+          'X-With-Generated-Alt': 'true'
         }
       })
       const json = await response.json()
