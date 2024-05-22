@@ -6,7 +6,6 @@ import type { AI, UIState } from '@/app/actions'
 import { useUIState, useActions } from 'ai/rsc'
 import { cn } from '@/lib/utils'
 import { UserMessage } from './user-message'
-import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { ArrowRight, Plus } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
@@ -35,6 +34,9 @@ export function ChatPanel({ messages }: ChatPanelProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    // Do not submit if input is empty
+    if (input.length === 0) return
 
     // Clear messages if button is pressed
     if (isButtonPressed) {
