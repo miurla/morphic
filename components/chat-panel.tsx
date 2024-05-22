@@ -35,9 +35,6 @@ export function ChatPanel({ messages }: ChatPanelProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    // Do not submit if input is empty
-    if (input.length === 0) return
-
     // Clear messages if button is pressed
     if (isButtonPressed) {
       handleClear()
@@ -118,6 +115,10 @@ export function ChatPanel({ messages }: ChatPanelProps) {
                 !e.nativeEvent.isComposing
               ) {
                 // Prevent the default action to avoid adding a new line
+                if (input.length === 0) {
+                  e.preventDefault()
+                  return
+                }
                 e.preventDefault()
                 const textarea = e.target as HTMLTextAreaElement
                 textarea.form?.requestSubmit()
