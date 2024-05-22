@@ -128,7 +128,7 @@ export function VideoSearchResults({ results }: VideoSearchResultsProps) {
                 className="w-full bg-muted max-h-[60vh]"
               >
                 <CarouselContent>
-                  {results.videos.map((video, idx) => {
+                  {videos.map((video, idx) => {
                     const videoId = video.link.split('v=')[1]
                     return (
                       <CarouselItem key={idx}>
