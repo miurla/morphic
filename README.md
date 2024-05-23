@@ -93,7 +93,7 @@ Host your own live version of Morphic with Vercel or Cloudflare Pages.
 
 ### Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Flacanzi%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN)
 
 ### Cloudflare Pages
 
@@ -105,7 +105,7 @@ Host your own live version of Morphic with Vercel or Cloudflare Pages.
 6. Cancel deployment, go to `Settings` -> `Functions` -> `Compatibility flags`, add `nodejs_compat` to preview and production.
 7. Redeploy.
 
-**The build error needs to be fixed: [issue](https://github.com/miurla/morphic/issues/114)**
+**The build error needs to be fixed: [issue](https://github.com/lacanzi/morphic/issues/114)**
 
 ## ✅ Verified models
 
