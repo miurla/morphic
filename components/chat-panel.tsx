@@ -6,7 +6,6 @@ import type { AI, UIState } from '@/app/actions'
 import { useUIState, useActions } from 'ai/rsc'
 import { cn } from '@/lib/utils'
 import { UserMessage } from './user-message'
-import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { ArrowRight, Plus } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
@@ -21,26 +20,12 @@ export function ChatPanel({ messages }: ChatPanelProps) {
   const [input, setInput] = useState('')
   const [, setMessages] = useUIState<typeof AI>()
   const { submit } = useActions()
-  const [isButtonPressed, setIsButtonPressed] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const router = useRouter()
-  // Focus on input when button is pressed
-  useEffect(() => {
-    if (isButtonPressed) {
-      inputRef.current?.focus()
-      setIsButtonPressed(false)
-    }
-  }, [isButtonPressed])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-
-    // Clear messages if button is pressed
-    if (isButtonPressed) {
-      handleClear()
-      setIsButtonPressed(false)
-    }
 
     // Add user message to UI state
     setMessages(currentMessages => [
@@ -68,7 +53,7 @@ export function ChatPanel({ messages }: ChatPanelProps) {
   }, [])
 
   // If there are messages and the new button has not been pressed, display the new Button
-  if (messages.length > 0 && !isButtonPressed) {
+  if (messages.length > 0) {
     return (
       <div className="fixed bottom-2 md:bottom-8 left-0 right-0 flex justify-center items-center mx-auto pointer-events-none">
         <Button
