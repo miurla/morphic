@@ -14,16 +14,34 @@ export function BotMessage({ content }: { content: StreamableValue<string> }) {
   // Currently, sometimes error occurs after finishing the stream.
   if (error) return <div>Error</div>
 
-  //modify the content to render LaTeX equations
+  // Check if the content contains LaTeX patterns
+  const containsLaTeX = /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/.test(data || '')
+
+  // Modify the content to render LaTeX equations if LaTeX patterns are found
   const processedData = preprocessLaTeX(data || '')
+
+  if (containsLaTeX) {
+    return (
+      <MemoizedReactMarkdown
+        rehypePlugins={[
+          [rehypeExternalLinks, { target: '_blank' }],
+          rehypeKatex
+        ]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        className="prose-sm prose-neutral prose-a:text-accent-foreground/50"
+      >
+        {processedData}
+      </MemoizedReactMarkdown>
+    )
+  }
 
   return (
     <MemoizedReactMarkdown
-      rehypePlugins={[[rehypeExternalLinks, { target: '_blank' }], rehypeKatex]}
-      remarkPlugins={[remarkGfm, remarkMath]}
+      rehypePlugins={[[rehypeExternalLinks, { target: '_blank' }]]}
+      remarkPlugins={[remarkGfm]}
       className="prose-sm prose-neutral prose-a:text-accent-foreground/50"
     >
-      {processedData}
+      {data || ''}
     </MemoizedReactMarkdown>
   )
 }
