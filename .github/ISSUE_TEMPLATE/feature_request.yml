@@ -1,54 +1,29 @@
-name: Feature request
-description: Suggest an idea for this project
-title: ''
+name: ✨ Feature Request
+description: Propose a new feature for Morphic.
 labels: []
-assignees: []
 body:
   - type: markdown
     attributes:
       value: |
-        **Is your feature request related to a problem? Please describe.**
-        A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+        This template is to propose new features for Morphic. Please fill out the following information to help us understand your feature request.
   - type: textarea
-    id: problem-description
     attributes:
-      label: Problem Description
-      description: A clear and concise description of what the problem is.
-      placeholder: Describe the problem here
+      label: Feature Description
+      description: A detailed description of the feature you are proposing for Morphic. Include any relevant technical details.
+      placeholder: |
+        Feature description...
     validations:
       required: true
-  - type: markdown
-    attributes:
-      value: |
-        **Describe the solution you'd like**
-        A clear and concise description of what you want to happen.
   - type: textarea
-    id: solution-description
     attributes:
-      label: Solution Description
-      description: A clear and concise description of what you want to happen.
-      placeholder: Describe the solution here
-    validations:
-      required: true
-  - type: markdown
-    attributes:
-      value: |
-        **Describe alternatives you've considered**
-        A clear and concise description of any alternative solutions or features you've considered.
+      label: Use Case
+      description: Provide a use case where this feature would be beneficial
+      placeholder: |
+        Use case...
   - type: textarea
-    id: alternatives-description
     attributes:
-      label: Alternatives Description
-      description: A clear and concise description of any alternative solutions or features you've considered.
-      placeholder: Describe alternatives here
-  - type: markdown
-    attributes:
-      value: |
-        **Additional context**
-        Add any other context or screenshots about the feature request here.
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: Additional Context
-      description: Add any other context or screenshots about the feature request here.
-      placeholder: Add any other context here
+      label: Additional context
+      description: |
+        Any extra information that might help us understand your feature request.
+      placeholder: |
+        Additional context...
