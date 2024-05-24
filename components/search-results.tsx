@@ -5,10 +5,9 @@ import { AvatarImage, Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { CardContent, Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { SearchResultItem } from '@/lib/types'
 
 export interface SearchResultsProps {
-  results: SearchResultItem[]
+  results: { title: string; url: string; content: string; author?: string }[]
 }
 
 export function SearchResults({ results }: SearchResultsProps) {

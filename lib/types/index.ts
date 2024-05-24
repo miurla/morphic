@@ -21,7 +21,6 @@ export type SearchResultItem = {
   title: string
   url: string
   content: string
-  author?: string
 }
 
 export type ExaSearchResultItem = {
