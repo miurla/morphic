@@ -39,7 +39,7 @@ export function ChatPanel({ messages }: ChatPanelProps) {
     // Submit and get response message
     const formData = new FormData(e.currentTarget)
     const responseMessage = await submit(formData)
-    setMessages(currentMessages => [...currentMessages, responseMessage as any])
+    setMessages(currentMessages => [...currentMessages, responseMessage])
   }
 
   // Clear messages

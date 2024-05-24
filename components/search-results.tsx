@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
 export interface SearchResultsProps {
-  results: { title: string; url: string; content: string }[]
+  results: { title: string; url: string; content: string; author?: string }[]
 }
 
 export function SearchResults({ results }: SearchResultsProps) {
@@ -23,7 +23,7 @@ export function SearchResults({ results }: SearchResultsProps) {
 
   return (
     <div className="flex flex-wrap">
-      {displayedResults.map((result: any, index: any) => (
+      {displayedResults.map((result, index) => (
         <div className="w-1/2 md:w-1/4 p-1" key={index}>
           <Link href={result.url} passHref target="_blank">
             <Card className="flex-1">

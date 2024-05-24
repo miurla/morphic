@@ -31,13 +31,18 @@ async function submit(formData?: FormData, skip?: boolean) {
   const isGenerating = createStreamableValue(true)
   const isCollapsed = createStreamableValue(false)
   // Get the messages from the state, filter out the tool messages
-  const messages: CoreMessage[] = [...(aiState.get().messages as any[])].filter(
-    message =>
-      message.role !== 'tool' &&
-      message.type !== 'followup' &&
-      message.type !== 'related' &&
-      message.type !== 'end'
-  )
+  const messages: CoreMessage[] = [...aiState.get().messages]
+    .filter(
+      message =>
+        message.role !== 'tool' &&
+        message.type !== 'followup' &&
+        message.type !== 'related' &&
+        message.type !== 'end'
+    )
+    .map(message => {
+      const { role, content } = message
+      return { role, content } as CoreMessage
+    })
 
   // goupeiId is used to group the messages for collapse
   const groupeId = nanoid()
@@ -85,7 +90,7 @@ async function submit(formData?: FormData, skip?: boolean) {
   }
 
   async function processEvents() {
-    let action: any = { object: { next: 'proceed' } }
+    let action = { object: { next: 'proceed' } }
     // If the user skips the task, we proceed to the search
     if (!skip) action = (await taskManager(messages)) ?? action
 
