@@ -20,6 +20,8 @@ body:
       description: Provide a use case where this feature would be beneficial
       placeholder: |
         Use case...
+    validations:
+      required: true
   - type: textarea
     attributes:
       label: Additional context

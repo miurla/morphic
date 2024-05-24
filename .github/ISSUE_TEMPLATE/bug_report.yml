@@ -15,13 +15,13 @@ body:
       label: Current Behavior
       description: A concise description of what you're experiencing.
     validations:
-      required: false
+      required: true
   - type: textarea
     attributes:
       label: Expected Behavior
       description: A concise description of what you expected to happen.
     validations:
-      required: false
+      required: true
   - type: textarea
     attributes:
       label: Steps To Reproduce
@@ -32,22 +32,19 @@ body:
         1. Run '...'
         1. See error...
     validations:
-      required: false
+      required: true
   - type: textarea
     attributes:
       label: Environment
       description: |
         examples:
-          - **OS**: Ubuntu 20.04
-          - **Node**: 13.14.0
-          - **npm**: 7.6.3
+          - Browser: Chrome 52.0.2743.116
       value: |
         - OS:
-        - Node:
-        - npm:
+        - Browser:
       render: markdown
     validations:
-      required: false
+      required: true
   - type: textarea
     attributes:
       label: Anything else?
