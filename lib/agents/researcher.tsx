@@ -41,7 +41,16 @@ export async function researcher(
       uiStream,
       fullResponse
     })
+  }).catch(err => {
+    hasError = true
+    fullResponse = 'Error: ' + err.message
+    streamText.update(fullResponse)
   })
+
+  // If the result is not available, return an error response
+  if (!result) {
+    return { result, fullResponse, hasError, toolResponses: [] }
+  }
 
   // Remove the spinner
   uiStream.update(null)
@@ -77,6 +86,7 @@ export async function researcher(
         toolResponses.push(delta)
         break
       case 'error':
+        console.log('Error: ' + delta.error)
         hasError = true
         fullResponse += `\nError occurred while executing the tool`
         break

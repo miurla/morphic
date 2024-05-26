@@ -10,6 +10,7 @@ export async function writer(
   messages: CoreMessage[]
 ) {
   let fullResponse = ''
+  let hasError = false
   const answerSection = (
     <Section title="Answer">
       <BotMessage content={streamText.value} />
@@ -42,9 +43,14 @@ export async function writer(
         }
       }
     })
+    .catch(err => {
+      hasError = true
+      fullResponse = 'Error: ' + err.message
+      streamText.update(fullResponse)
+    })
     .finally(() => {
       streamText.done()
     })
 
-  return fullResponse
+  return { response: fullResponse, hasError }
 }

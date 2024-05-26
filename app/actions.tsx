@@ -142,6 +142,8 @@ async function submit(formData?: FormData, skip?: boolean) {
       toolOutputs = toolResponses
       errorOccurred = hasError
 
+      console.log('response: ' + fullResponse, 'error: ' + hasError)
+
       if (toolOutputs.length > 0) {
         toolOutputs.map(output => {
           aiState.update({
@@ -175,7 +177,13 @@ async function submit(formData?: FormData, skip?: boolean) {
           : msg
       ) as CoreMessage[]
       const latestMessages = modifiedMessages.slice(maxMessages * -1)
-      answer = await writer(uiStream, streamText, latestMessages)
+      const { response, hasError } = await writer(
+        uiStream,
+        streamText,
+        latestMessages
+      )
+      answer = response
+      errorOccurred = hasError
     } else {
       streamText.done()
     }
