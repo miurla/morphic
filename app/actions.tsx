@@ -142,8 +142,6 @@ async function submit(formData?: FormData, skip?: boolean) {
       toolOutputs = toolResponses
       errorOccurred = hasError
 
-      console.log('response: ' + fullResponse, 'error: ' + hasError)
-
       if (toolOutputs.length > 0) {
         toolOutputs.map(output => {
           aiState.update({
