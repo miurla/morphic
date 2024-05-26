@@ -26,6 +26,10 @@ export const retrieveTool = ({ uiStream, fullResponse }: ToolProps) => ({
       if (!json.data || json.data.length === 0) {
         hasError = true
       } else {
+        // Limit the content to 5000 characters
+        if (json.data.content.length > 5000) {
+          json.data.content = json.data.content.slice(0, 5000)
+        }
         results = {
           results: [
             {

@@ -175,7 +175,13 @@ async function submit(formData?: FormData, skip?: boolean) {
           : msg
       ) as CoreMessage[]
       const latestMessages = modifiedMessages.slice(maxMessages * -1)
-      answer = await writer(uiStream, streamText, latestMessages)
+      const { response, hasError } = await writer(
+        uiStream,
+        streamText,
+        latestMessages
+      )
+      answer = response
+      errorOccurred = hasError
     } else {
       streamText.done()
     }
