@@ -5,9 +5,10 @@ import { AvatarImage, Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { CardContent, Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { SearchResultItem } from '@/lib/types'
 
 export interface SearchResultsProps {
-  results: { title: string; url: string; content: string }[]
+  results: SearchResultItem[]
 }
 
 export function SearchResults({ results }: SearchResultsProps) {
@@ -23,7 +24,7 @@ export function SearchResults({ results }: SearchResultsProps) {
 
   return (
     <div className="flex flex-wrap">
-      {displayedResults.map((result: any, index: any) => (
+      {displayedResults.map((result, index) => (
         <div className="w-1/2 md:w-1/4 p-1" key={index}>
           <Link href={result.url} passHref target="_blank">
             <Card className="flex-1">
@@ -37,7 +38,7 @@ export function SearchResults({ results }: SearchResultsProps) {
                       src={`https://www.google.com/s2/favicons?domain=${
                         new URL(result.url).hostname
                       }`}
-                      alt={result.author}
+                      alt={new URL(result.url).hostname}
                     />
                     <AvatarFallback>
                       {new URL(result.url).hostname[0]}

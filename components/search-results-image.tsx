@@ -61,7 +61,7 @@ export const SearchResultsImageSection: React.FC<
 
   return (
     <div className="flex flex-wrap gap-2">
-      {images.slice(0, 4).map((image: any, index: number) => (
+      {images.slice(0, 4).map((image, index) => (
         <Dialog key={index}>
           <DialogTrigger asChild>
             <div

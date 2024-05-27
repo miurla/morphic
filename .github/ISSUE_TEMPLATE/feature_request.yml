@@ -1,0 +1,31 @@
+name: ✨ Feature Request
+description: Propose a new feature for Morphic.
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is to propose new features for Morphic. Please fill out the following information to help us understand your feature request.
+  - type: textarea
+    attributes:
+      label: Feature Description
+      description: A detailed description of the feature you are proposing for Morphic. Include any relevant technical details.
+      placeholder: |
+        Feature description...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Use Case
+      description: Provide a use case where this feature would be beneficial
+      placeholder: |
+        Use case...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: |
+        Any extra information that might help us understand your feature request.
+      placeholder: |
+        Additional context...
