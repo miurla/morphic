@@ -1,10 +1,5 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
-import {
-  CoreMessage,
-  ToolCallPart,
-  ToolResultPart,
-  streamText as nonexperimental_streamText
-} from 'ai'
+import { CoreMessage, ToolCallPart, ToolResultPart, streamText } from 'ai'
 import { Section } from '@/components/section'
 import { BotMessage } from '@/components/message'
 import { getTools } from './tools'
@@ -12,7 +7,7 @@ import { getModel } from '../utils'
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
-  streamText: ReturnType<typeof createStreamableValue<string>>,
+  streamableText: ReturnType<typeof createStreamableValue<string>>,
   messages: CoreMessage[],
   useSpecificModel?: boolean
 ) {
@@ -20,12 +15,12 @@ export async function researcher(
   let hasError = false
   const answerSection = (
     <Section title="Answer">
-      <BotMessage content={streamText.value} />
+      <BotMessage content={streamableText.value} />
     </Section>
   )
 
   const currentDate = new Date().toLocaleString()
-  const result = await nonexperimental_streamText({
+  const result = await streamText({
     model: getModel(),
     maxTokens: 2500,
     system: `As a professional search expert, you possess the ability to search for any information on the web.
@@ -44,7 +39,7 @@ export async function researcher(
   }).catch(err => {
     hasError = true
     fullResponse = 'Error: ' + err.message
-    streamText.update(fullResponse)
+    streamableText.update(fullResponse)
   })
 
   // If the result is not available, return an error response
@@ -69,7 +64,7 @@ export async function researcher(
           }
 
           fullResponse += delta.textDelta
-          streamText.update(fullResponse)
+          streamableText.update(fullResponse)
         }
         break
       case 'tool-call':

@@ -272,7 +272,7 @@ export const AI = createAI<AIState, UIState>({
 
     const aiState = getAIState()
     if (aiState) {
-      const uiState = getUIStateFromAIState(aiState)
+      const uiState = getUIStateFromAIState(aiState as Chat)
       return uiState
     } else {
       return
