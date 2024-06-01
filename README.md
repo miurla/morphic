@@ -23,7 +23,8 @@ Please note that there are differences between this repository and the official 
 - [x] Develop features for sharing results
 - [x] Implement functionality to get answers from specified URL
 - [x] Add video support for search functionality
-- [x] Support Google Generative AI Provider ([Note](https://github.com/miurla/morphic/issues/192))
+- [x] Support Google Generative AI Provider ([※](https://github.com/miurla/morphic/issues/192))
+- [x] [Use as a search engine](#-search-engine)
 
 ## 🧱 Stack
 
