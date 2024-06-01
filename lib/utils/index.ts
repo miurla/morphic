@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { OpenAI } from '@ai-sdk/openai'
-import { createGoogleGenerativeAI } from '@ai-sdk/google'
+import { google } from '@ai-sdk/google'
 import { AIMessage } from '../types'
 import { CoreMessage } from 'ai'
 
@@ -11,7 +11,6 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getModel() {
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    const google = createGoogleGenerativeAI()
     return google('models/gemini-1.5-pro-latest')
   }
 
