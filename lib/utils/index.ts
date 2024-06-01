@@ -10,7 +10,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getModel() {
-  // Currently does not work with Google or Anthropic
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     const google = createGoogleGenerativeAI()
     return google('models/gemini-1.5-pro-latest')
