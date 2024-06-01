@@ -40,8 +40,7 @@ export async function researcher(
     tools: getTools({
       uiStream,
       fullResponse
-    }),
-    toolChoice: 'required'
+    })
   }).catch(err => {
     hasError = true
     fullResponse = 'Error: ' + err.message
