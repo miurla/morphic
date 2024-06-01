@@ -17,7 +17,7 @@ export default function Page({
 
   return (
     <AI initialAIState={{ chatId: id, messages: [] }}>
-      <Chat id={id} />
+      <Chat id={id} query={searchParams.q} />
     </AI>
   )
 }

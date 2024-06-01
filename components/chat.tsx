@@ -8,13 +8,12 @@ import { useUIState, useAIState } from 'ai/rsc'
 
 type ChatProps = {
   id?: string
+  query?: string
 }
 
-export function Chat({ id }: ChatProps) {
+export function Chat({ id, query }: ChatProps) {
   const router = useRouter()
   const path = usePathname()
-  const searchParams = useSearchParams()
-  const query = searchParams.get('q') || undefined
   const [messages] = useUIState()
   const [aiState] = useAIState()
 
@@ -25,7 +24,7 @@ export function Chat({ id }: ChatProps) {
     ) {
       window.history.replaceState({}, '', `/search/${id}`)
     }
-  }, [id, path, messages, query, searchParams])
+  }, [id, path, messages, query])
 
   useEffect(() => {
     if (aiState.messages[aiState.messages.length - 1]?.type === 'followup') {
