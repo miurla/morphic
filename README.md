@@ -15,14 +15,14 @@ Please note that there are differences between this repository and the official 
 - 🌐 [Deploy](#-deploy)
 - ✅ [Verified models](#-verified-models)
 
-### 🚗 Roadmap [WIP]
+### 🚗 Roadmap
 
-- [x] Enable specifying the model to use (only writer agent)
+- [x] Enable specifying the model to use ([only writer agent](https://github.com/miurla/morphic/pull/58))
 - [x] Implement search history functionality
 - [x] Develop features for sharing results
 - [x] Implement functionality to get answers from specified URL
 - [x] Add video support for search functionality
-- [ ] Implement RAG support
+- [x] Support Google Generative AI Provider ([Note](https://github.com/miurla/morphic/issues/192))
 
 ## 🧱 Stack
 

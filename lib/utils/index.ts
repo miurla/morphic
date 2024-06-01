@@ -2,7 +2,8 @@ import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { OpenAI } from '@ai-sdk/openai'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { createAnthropic } from '@ai-sdk/anthropic'
+import { AIMessage } from '../types'
+import { CoreMessage } from 'ai'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -10,15 +11,10 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getModel() {
   // Currently does not work with Google or Anthropic
-  // if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-  //   const google = createGoogleGenerativeAI()
-  //   return google('models/gemini-1.5-pro-latest')
-  // }
-
-  // if (process.env.ANTHROPIC_API_KEY) {
-  //   const anthropic = createAnthropic()
-  //   return anthropic('claude-3-haiku-20240307')
-  // }
+  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    const google = createGoogleGenerativeAI()
+    return google('models/gemini-1.5-pro-latest')
+  }
 
   const openai = new OpenAI({
     baseUrl: process.env.OPENAI_API_BASE, // optional base URL for proxies etc.
@@ -26,4 +22,25 @@ export function getModel() {
     organization: '' // optional organization
   })
   return openai.chat(process.env.OPENAI_API_MODEL || 'gpt-4o')
+}
+
+/**
+ * Takes an array of AIMessage and modifies each message where the role is 'tool'.
+ * Changes the role to 'assistant' and converts the content to a JSON string.
+ * Returns the modified messages as an array of CoreMessage.
+ *
+ * @param aiMessages - Array of AIMessage
+ * @returns modifiedMessages - Array of modified messages
+ */
+export function transformToolMessages(aiMessages: AIMessage[]): CoreMessage[] {
+  return aiMessages.map(message =>
+    message.role === 'tool'
+      ? {
+          ...message,
+          role: 'assistant',
+          content: JSON.stringify(message.content),
+          type: 'tool'
+        }
+      : message
+  ) as CoreMessage[]
 }
