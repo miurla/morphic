@@ -129,7 +129,16 @@ This will allow you to use Morphic as your default search engine in the browser.
 
 ## ✅ Verified models
 
-List of verified models that can be specified to writers.
+List of models applicable to all:
+
+- OpenAI
+  - gpt-4o
+  - gpt-4-turbo
+  - gpt-3.5-turbo
+- Google
+  - Gemini 1.5 pro [※](https://github.com/miurla/morphic/issues/192)
+
+List of verified models that can be specified to writers:
 
 - [Groq](https://console.groq.com/docs/models)
   - LLaMA3 8b
