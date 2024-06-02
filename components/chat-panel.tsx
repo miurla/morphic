@@ -14,33 +14,53 @@ import { nanoid } from 'ai'
 
 interface ChatPanelProps {
   messages: UIState
+  query?: string
 }
 
-export function ChatPanel({ messages }: ChatPanelProps) {
+export function ChatPanel({ messages, query }: ChatPanelProps) {
   const [input, setInput] = useState('')
+  const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const [, setMessages] = useUIState<typeof AI>()
   const { submit } = useActions()
-  const inputRef = useRef<HTMLTextAreaElement>(null)
-  const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const router = useRouter()
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const isFirstRender = useRef(true) // For development environment
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  async function handleQuerySubmit(query: string, formData?: FormData) {
+    setInput(query)
 
     // Add user message to UI state
     setMessages(currentMessages => [
       ...currentMessages,
       {
         id: nanoid(),
-        component: <UserMessage message={input} />
+        component: <UserMessage message={query} />
       }
     ])
 
     // Submit and get response message
-    const formData = new FormData(e.currentTarget)
-    const responseMessage = await submit(formData)
+    const data = formData || new FormData()
+    if (!formData) {
+      data.append('input', query)
+    }
+    const responseMessage = await submit(data)
     setMessages(currentMessages => [...currentMessages, responseMessage])
   }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    await handleQuerySubmit(input, formData)
+  }
+
+  // if query is not empty, submit the query
+  useEffect(() => {
+    if (isFirstRender.current && query && query.trim().length > 0) {
+      handleQuerySubmit(query)
+      isFirstRender.current = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query])
 
   // Clear messages
   const handleClear = () => {
@@ -69,6 +89,10 @@ export function ChatPanel({ messages }: ChatPanelProps) {
         </Button>
       </div>
     )
+  }
+
+  if (query && query.trim().length > 0) {
+    return null
   }
 
   return (

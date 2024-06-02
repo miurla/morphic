@@ -22,6 +22,7 @@ import SearchRelated from '@/components/search-related'
 import { CopilotDisplay } from '@/components/copilot-display'
 import RetrieveSection from '@/components/retrieve-section'
 import { VideoSearchSection } from '@/components/video-search-section'
+import { transformToolMessages } from '@/lib/utils'
 
 async function submit(formData?: FormData, skip?: boolean) {
   'use server'
@@ -164,16 +165,7 @@ async function submit(formData?: FormData, skip?: boolean) {
     // If useSpecificAPI is enabled, generate the answer using the specific model
     if (useSpecificAPI && answer.length === 0) {
       // modify the messages to be used by the specific model
-      const modifiedMessages = aiState.get().messages.map(msg =>
-        msg.role === 'tool'
-          ? {
-              ...msg,
-              role: 'assistant',
-              content: JSON.stringify(msg.content),
-              type: 'tool'
-            }
-          : msg
-      ) as CoreMessage[]
+      const modifiedMessages = transformToolMessages(aiState.get().messages)
       const latestMessages = modifiedMessages.slice(maxMessages * -1)
       const { response, hasError } = await writer(
         uiStream,
@@ -187,20 +179,14 @@ async function submit(formData?: FormData, skip?: boolean) {
     }
 
     if (!errorOccurred) {
-      // Generate related queries
-      const relatedQueries = await querySuggestor(uiStream, messages)
-      // Add follow-up panel
-      uiStream.append(
-        <Section title="Follow-up">
-          <FollowupPanel />
-        </Section>
-      )
+      const useGoogleProvider = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+      let processedMessages = messages
+      // If using Google provider, we need to modify the messages
+      if (useGoogleProvider) {
+        processedMessages = transformToolMessages(aiState.get().messages)
+      }
 
-      // Add the answer, related queries, and follow-up panel to the state
-      // Wait for 0.5 second before adding the answer to the state
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      aiState.done({
+      aiState.update({
         ...aiState.get(),
         messages: [
           ...aiState.get().messages,
@@ -209,7 +195,23 @@ async function submit(formData?: FormData, skip?: boolean) {
             role: 'assistant',
             content: answer,
             type: 'answer'
-          },
+          }
+        ]
+      })
+
+      // Generate related queries
+      const relatedQueries = await querySuggestor(uiStream, processedMessages)
+      // Add follow-up panel
+      uiStream.append(
+        <Section title="Follow-up">
+          <FollowupPanel />
+        </Section>
+      )
+
+      aiState.done({
+        ...aiState.get(),
+        messages: [
+          ...aiState.get().messages,
           {
             id: groupeId,
             role: 'assistant',
@@ -272,7 +274,7 @@ export const AI = createAI<AIState, UIState>({
 
     const aiState = getAIState()
     if (aiState) {
-      const uiState = getUIStateFromAIState(aiState)
+      const uiState = getUIStateFromAIState(aiState as Chat)
       return uiState
     } else {
       return
