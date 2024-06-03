@@ -3,7 +3,7 @@ import { CoreMessage, ToolCallPart, ToolResultPart, streamText } from 'ai'
 import { Section } from '@/components/section'
 import { BotMessage } from '@/components/message'
 import { getTools } from './tools'
-import { getModel } from '../utils'
+import { getModel, transformToolMessages } from '../utils'
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -19,6 +19,15 @@ export async function researcher(
     </Section>
   )
 
+  // Transform the messages if using Ollama provider
+  let processedMessages = messages
+  const useOllamaProvider = !!(
+    process.env.OLLAMA_MODEL && process.env.OLLAMA_BASE_URL
+  )
+  if (useOllamaProvider) {
+    processedMessages = transformToolMessages(messages)
+  }
+
   const currentDate = new Date().toLocaleString()
   const result = await streamText({
     model: getModel(),
@@ -31,7 +40,7 @@ export async function researcher(
     Whenever quoting or referencing information from a specific URL, always cite the source URL explicitly.
     The retrieve tool can only be used with URLs provided by the user. URLs from search results cannot be used.
     Please match the language of the response to the user's language. Current date and time: ${currentDate}`,
-    messages,
+    messages: processedMessages,
     tools: getTools({
       uiStream,
       fullResponse
