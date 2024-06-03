@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { AI, UIState } from '@/app/actions'
-import { useUIState, useActions } from 'ai/rsc'
+import { useUIState, useActions, useAIState } from 'ai/rsc'
 import { cn } from '@/lib/utils'
 import { UserMessage } from './user-message'
 import { Button } from './ui/button'
@@ -11,6 +11,7 @@ import { ArrowRight, Plus } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
 import Textarea from 'react-textarea-autosize'
 import { nanoid } from 'ai'
+import { useAppState } from '@/lib/utils/app-state'
 
 interface ChatPanelProps {
   messages: UIState
@@ -21,6 +22,8 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
   const [input, setInput] = useState('')
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const [, setMessages] = useUIState<typeof AI>()
+  const [aiMessage] = useAIState<typeof AI>()
+  const { isGenerating, setIsGenerating } = useAppState()
   const { submit } = useActions()
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -28,6 +31,7 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
 
   async function handleQuerySubmit(query: string, formData?: FormData) {
     setInput(query)
+    setIsGenerating(true)
 
     // Add user message to UI state
     setMessages(currentMessages => [
@@ -62,8 +66,16 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
+  useEffect(() => {
+    const lastMessage = aiMessage.messages.slice(-1)[0]
+    if (lastMessage?.type === 'followup') {
+      setIsGenerating(false)
+    }
+  }, [aiMessage, setIsGenerating])
+
   // Clear messages
   const handleClear = () => {
+    setIsGenerating(false)
     router.push('/')
   }
 
