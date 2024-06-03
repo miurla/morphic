@@ -27,10 +27,12 @@ export async function researcher(
   if (useOllamaProvider) {
     processedMessages = transformToolMessages(messages)
   }
+  const includeToolResponses = messages.some(message => message.role === 'tool')
+  const useSubModel = useOllamaProvider && includeToolResponses
 
   const currentDate = new Date().toLocaleString()
   const result = await streamText({
-    model: getModel(),
+    model: getModel(useSubModel),
     maxTokens: 2500,
     system: `As a professional search expert, you possess the ability to search for any information on the web.
     or any information on the web.
