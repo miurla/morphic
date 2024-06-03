@@ -1,8 +1,7 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import { CoreMessage, streamText } from 'ai'
-import { Section } from '@/components/section'
-import { BotMessage } from '@/components/message'
 import { OpenAI } from '@ai-sdk/openai'
+import { AnswerSection } from '@/components/answer-section'
 
 export async function writer(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -11,11 +10,7 @@ export async function writer(
 ) {
   let fullResponse = ''
   let hasError = false
-  const answerSection = (
-    <Section title="Answer">
-      <BotMessage content={streamableText.value} />
-    </Section>
-  )
+  const answerSection = <AnswerSection result={streamableText.value} />
   uiStream.append(answerSection)
 
   const openai = new OpenAI({

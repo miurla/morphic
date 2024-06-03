@@ -16,13 +16,13 @@ import { saveChat } from '@/lib/actions/chat'
 import { Chat } from '@/lib/types'
 import { AIMessage } from '@/lib/types'
 import { UserMessage } from '@/components/user-message'
-import { BotMessage } from '@/components/message'
 import { SearchSection } from '@/components/search-section'
 import SearchRelated from '@/components/search-related'
 import { CopilotDisplay } from '@/components/copilot-display'
 import RetrieveSection from '@/components/retrieve-section'
 import { VideoSearchSection } from '@/components/video-search-section'
 import { transformToolMessages } from '@/lib/utils'
+import { AnswerSection } from '@/components/answer-section'
 
 async function submit(formData?: FormData, skip?: boolean) {
   'use server'
@@ -365,11 +365,7 @@ export const getUIStateFromAIState = (aiState: Chat) => {
             case 'answer':
               return {
                 id,
-                component: (
-                  <Section title="Answer">
-                    <BotMessage content={answer.value} />
-                  </Section>
-                )
+                component: <AnswerSection result={answer.value} />
               }
             case 'related':
               const relatedQueries = createStreamableValue()

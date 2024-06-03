@@ -1,9 +1,8 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import { CoreMessage, ToolCallPart, ToolResultPart, streamText } from 'ai'
-import { Section } from '@/components/section'
-import { BotMessage } from '@/components/message'
 import { getTools } from './tools'
 import { getModel } from '../utils'
+import { AnswerSection } from '@/components/answer-section'
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -13,12 +12,7 @@ export async function researcher(
 ) {
   let fullResponse = ''
   let hasError = false
-  const answerSection = (
-    <Section title="Answer">
-      <BotMessage content={streamableText.value} />
-    </Section>
-  )
-
+  const answerSection = <AnswerSection result={streamableText.value} />
   const currentDate = new Date().toLocaleString()
   const result = await streamText({
     model: getModel(),
