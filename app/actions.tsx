@@ -165,7 +165,7 @@ async function submit(formData?: FormData, skip?: boolean) {
     // If useSpecificAPI is enabled, generate the answer using the specific model
     if (useSpecificAPI && answer.length === 0) {
       // modify the messages to be used by the specific model
-      const modifiedMessages = transformToolMessages(aiState.get().messages)
+      const modifiedMessages = transformToolMessages(messages)
       const latestMessages = modifiedMessages.slice(maxMessages * -1)
       const { response, hasError } = await writer(
         uiStream,
@@ -183,7 +183,7 @@ async function submit(formData?: FormData, skip?: boolean) {
       let processedMessages = messages
       // If using Google provider, we need to modify the messages
       if (useGoogleProvider) {
-        processedMessages = transformToolMessages(aiState.get().messages)
+        processedMessages = transformToolMessages(messages)
       }
 
       aiState.update({
