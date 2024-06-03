@@ -30,8 +30,8 @@ export function getModel() {
  * @param aiMessages - Array of AIMessage
  * @returns modifiedMessages - Array of modified messages
  */
-export function transformToolMessages(aiMessages: AIMessage[]): CoreMessage[] {
-  return aiMessages.map(message =>
+export function transformToolMessages(messages: CoreMessage[]): CoreMessage[] {
+  return messages.map(message =>
     message.role === 'tool'
       ? {
           ...message,
