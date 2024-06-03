@@ -7,6 +7,7 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { Sidebar } from '@/components/sidebar'
 import { Toaster } from '@/components/ui/sonner'
+import { AppStateProvider } from '@/lib/utils/app-state'
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -54,11 +55,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Header />
-          {children}
-          <Sidebar />
-          <Footer />
-          <Toaster />
+          <AppStateProvider>
+            <Header />
+            {children}
+            <Sidebar />
+            <Footer />
+            <Toaster />
+          </AppStateProvider>
         </ThemeProvider>
       </body>
     </html>
