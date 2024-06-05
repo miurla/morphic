@@ -1,20 +1,20 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { Button } from './ui/button'
 import { ArrowRight } from 'lucide-react'
 import {
+  StreamableValue,
   useActions,
   useStreamableValue,
-  useUIState,
-  readStreamableValue
+  useUIState
 } from 'ai/rsc'
 import { AI } from '@/app/actions'
 import { UserMessage } from './user-message'
 import { PartialRelated } from '@/lib/schema/related'
 
 export interface SearchRelatedProps {
-  relatedQueries: PartialRelated
+  relatedQueries: StreamableValue<PartialRelated>
 }
 
 export const SearchRelated: React.FC<SearchRelatedProps> = ({
@@ -22,8 +22,7 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
 }) => {
   const { submit } = useActions()
   const [, setMessages] = useUIState<typeof AI>()
-  const [data, error, pending] =
-    useStreamableValue<PartialRelated>(relatedQueries)
+  const [data, error, pending] = useStreamableValue(relatedQueries)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
