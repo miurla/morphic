@@ -1,6 +1,6 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import { CoreMessage, streamText } from 'ai'
-import { OpenAI } from '@ai-sdk/openai'
+import { createOpenAI } from '@ai-sdk/openai'
 import { AnswerSection } from '@/components/answer-section'
 
 export async function writer(
@@ -13,7 +13,7 @@ export async function writer(
   const answerSection = <AnswerSection result={streamableText.value} />
   uiStream.append(answerSection)
 
-  const openai = new OpenAI({
+  const openai = createOpenAI({
     baseUrl: process.env.SPECIFIC_API_BASE,
     apiKey: process.env.SPECIFIC_API_KEY,
     organization: '' // optional organization
