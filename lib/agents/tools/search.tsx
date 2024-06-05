@@ -38,12 +38,9 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) => ({
     }
 
     if (hasError) {
-      fullResponse += `\nAn error occurred while searching for "${query}.`
-      uiStream.update(
-        <Card className="p-4 mt-2 text-sm">
-          {`An error occurred while searching for "${query}".`}
-        </Card>
-      )
+      fullResponse = `An error occurred while searching for "${query}.`
+      uiStream.update(null)
+      streamResults.done()
       return searchResult
     }
 
