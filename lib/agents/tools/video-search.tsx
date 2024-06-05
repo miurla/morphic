@@ -1,6 +1,5 @@
 import { createStreamableValue } from 'ai/rsc'
 import { searchSchema } from '@/lib/schema/search'
-import { Card } from '@/components/ui/card'
 import { ToolProps } from '.'
 import { VideoSearchSection } from '@/components/video-search-section'
 
@@ -34,12 +33,9 @@ export const videoSearchTool = ({ uiStream, fullResponse }: ToolProps) => ({
     }
 
     if (hasError) {
-      fullResponse += `\nAn error occurred while searching for videos with "${query}.`
-      uiStream.update(
-        <Card className="p-4 mt-2 text-sm">
-          {`An error occurred while searching for videos with "${query}".`}
-        </Card>
-      )
+      fullResponse = `An error occurred while searching for videos with "${query}.`
+      uiStream.update(null)
+      streamResults.done()
       return searchResult
     }
 
