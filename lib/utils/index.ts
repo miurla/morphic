@@ -1,8 +1,7 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { OpenAI } from '@ai-sdk/openai'
+import { createOpenAI } from '@ai-sdk/openai'
 import { google } from '@ai-sdk/google'
-import { AIMessage } from '../types'
 import { CoreMessage } from 'ai'
 
 export function cn(...inputs: ClassValue[]) {
@@ -14,7 +13,7 @@ export function getModel() {
     return google('models/gemini-1.5-pro-latest')
   }
 
-  const openai = new OpenAI({
+  const openai = createOpenAI({
     baseUrl: process.env.OPENAI_API_BASE, // optional base URL for proxies etc.
     apiKey: process.env.OPENAI_API_KEY, // optional API key, default to env property OPENAI_API_KEY
     organization: '' // optional organization
