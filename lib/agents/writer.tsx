@@ -43,9 +43,6 @@ export async function writer(
       fullResponse = 'Error: ' + err.message
       streamableText.update(fullResponse)
     })
-    .finally(() => {
-      streamableText.done()
-    })
 
   return { response: fullResponse, hasError }
 }
