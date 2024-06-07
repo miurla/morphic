@@ -191,6 +191,7 @@ async function submit(
         processedMessages = transformToolMessages(messages)
       }
 
+      streamText.done()
       aiState.update({
         ...aiState.get(),
         messages: [
