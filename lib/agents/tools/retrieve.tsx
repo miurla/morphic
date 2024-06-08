@@ -1,6 +1,5 @@
 import { retrieveSchema } from '@/lib/schema/retrieve'
 import { ToolProps } from '.'
-import { Card } from '@/components/ui/card'
 import { SearchSkeleton } from '@/components/search-skeleton'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 import RetrieveSection from '@/components/retrieve-section'
@@ -45,22 +44,11 @@ export const retrieveTool = ({ uiStream, fullResponse }: ToolProps) => ({
     } catch (error) {
       hasError = true
       console.error('Retrieve API error:', error)
-
-      fullResponse += `\n${error} "${url}".`
-
-      uiStream.update(
-        <Card className="p-4 mt-2 text-sm">{`${error} "${url}".`}</Card>
-      )
-      return results
     }
 
     if (hasError || !results) {
-      fullResponse += `\nAn error occurred while retrieving "${url}".`
-      uiStream.update(
-        <Card className="p-4 mt-2 text-sm">
-          {`An error occurred while retrieving "${url}".This webiste may not be supported.`}
-        </Card>
-      )
+      fullResponse = `An error occurred while retrieving "${url}".`
+      uiStream.update(null)
       return results
     }
 

@@ -16,23 +16,30 @@ import { saveChat } from '@/lib/actions/chat'
 import { Chat } from '@/lib/types'
 import { AIMessage } from '@/lib/types'
 import { UserMessage } from '@/components/user-message'
-import { BotMessage } from '@/components/message'
 import { SearchSection } from '@/components/search-section'
 import SearchRelated from '@/components/search-related'
 import { CopilotDisplay } from '@/components/copilot-display'
 import RetrieveSection from '@/components/retrieve-section'
 import { VideoSearchSection } from '@/components/video-search-section'
 import { transformToolMessages } from '@/lib/utils'
+import { AnswerSection } from '@/components/answer-section'
+import { ErrorCard } from '@/components/error-card'
 
-async function submit(formData?: FormData, skip?: boolean) {
+async function submit(
+  formData?: FormData,
+  skip?: boolean,
+  retryMessages?: AIMessage[]
+) {
   'use server'
 
   const aiState = getMutableAIState<typeof AI>()
   const uiStream = createStreamableUI()
   const isGenerating = createStreamableValue(true)
   const isCollapsed = createStreamableValue(false)
+
+  const aiMessages = [...(retryMessages ?? aiState.get().messages)]
   // Get the messages from the state, filter out the tool messages
-  const messages: CoreMessage[] = [...aiState.get().messages]
+  const messages: CoreMessage[] = aiMessages
     .filter(
       message =>
         message.role !== 'tool' &&
@@ -166,7 +173,7 @@ async function submit(formData?: FormData, skip?: boolean) {
     }
 
     // If useSpecificAPI is enabled, generate the answer using the specific model
-    if (useSpecificAPI && answer.length === 0) {
+    if (useSpecificAPI && answer.length === 0 && !errorOccurred) {
       // modify the messages to be used by the specific model
       const modifiedMessages = transformToolMessages(messages)
       const latestMessages = modifiedMessages.slice(maxMessages * -1)
@@ -177,8 +184,6 @@ async function submit(formData?: FormData, skip?: boolean) {
       )
       answer = response
       errorOccurred = hasError
-    } else {
-      streamText.done()
     }
 
     if (!errorOccurred) {
@@ -195,6 +200,7 @@ async function submit(formData?: FormData, skip?: boolean) {
         processedMessages = [{ role: 'assistant', content: answer }]
       }
 
+      streamText.done()
       aiState.update({
         ...aiState.get(),
         messages: [
@@ -235,6 +241,14 @@ async function submit(formData?: FormData, skip?: boolean) {
           }
         ]
       })
+    } else {
+      aiState.done(aiState.get())
+      streamText.done()
+      uiStream.append(
+        <ErrorCard
+          errorMessage={answer || 'An error occurred. Please try again.'}
+        />
+      )
     }
 
     isGenerating.done(false)
@@ -374,11 +388,7 @@ export const getUIStateFromAIState = (aiState: Chat) => {
             case 'answer':
               return {
                 id,
-                component: (
-                  <Section title="Answer">
-                    <BotMessage content={answer.value} />
-                  </Section>
-                )
+                component: <AnswerSection result={answer.value} />
               }
             case 'related':
               const relatedQueries = createStreamableValue()
