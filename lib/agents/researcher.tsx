@@ -1,7 +1,7 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import { CoreMessage, ToolCallPart, ToolResultPart, streamText } from 'ai'
 import { getTools } from './tools'
-import { getModel } from '../utils'
+import { getModel, transformToolMessages } from '../utils'
 import { AnswerSection } from '@/components/answer-section'
 
 export async function researcher(
@@ -12,10 +12,22 @@ export async function researcher(
 ) {
   let fullResponse = ''
   let hasError = false
+
+  // Transform the messages if using Ollama provider
+  let processedMessages = messages
+  const useOllamaProvider = !!(
+    process.env.OLLAMA_MODEL && process.env.OLLAMA_BASE_URL
+  )
+  if (useOllamaProvider) {
+    processedMessages = transformToolMessages(messages)
+  }
+  const includeToolResponses = messages.some(message => message.role === 'tool')
+  const useSubModel = useOllamaProvider && includeToolResponses
+
   const answerSection = <AnswerSection result={streamableText.value} />
   const currentDate = new Date().toLocaleString()
   const result = await streamText({
-    model: getModel(),
+    model: getModel(useSubModel),
     maxTokens: 2500,
     system: `As a professional search expert, you possess the ability to search for any information on the web.
     or any information on the web.
@@ -25,7 +37,7 @@ export async function researcher(
     Whenever quoting or referencing information from a specific URL, always cite the source URL explicitly.
     The retrieve tool can only be used with URLs provided by the user. URLs from search results cannot be used.
     Please match the language of the response to the user's language. Current date and time: ${currentDate}`,
-    messages,
+    messages: processedMessages,
     tools: getTools({
       uiStream,
       fullResponse
