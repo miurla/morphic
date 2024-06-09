@@ -38,7 +38,8 @@ export async function querySuggestor(
   })
     .then(async result => {
       for await (const obj of result.partialObjectStream) {
-        if (obj.items) {
+        // @ts-ignore
+        if (obj && obj.items) {
           objectStream.update(obj)
           finalRelatedQueries = obj
         }

@@ -53,8 +53,8 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
   return (
     <form onSubmit={handleSubmit} className="flex flex-wrap">
       {data?.items
-        ?.filter(item => item?.query !== '')
-        .map((item, index) => (
+        ?.filter((item: any) => item?.query !== '')
+        .map((item: any, index: number) => (
           <div className="flex items-start w-full" key={index}>
             <ArrowRight className="h-4 w-4 mr-2 mt-1 flex-shrink-0 text-accent-foreground/50" />
             <Button

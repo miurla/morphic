@@ -101,7 +101,7 @@ async function submit(
   }
 
   async function processEvents() {
-    let action = { object: { next: 'proceed' } }
+    let action: any = { object: { next: 'proceed' } }
     // If the user skips the task, we proceed to the search
     if (!skip) action = (await taskManager(messages)) ?? action
 
