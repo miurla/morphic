@@ -56,7 +56,10 @@ async function submit(
   const groupeId = nanoid()
 
   const useSpecificAPI = process.env.USE_SPECIFIC_API_FOR_WRITER === 'true'
-  const maxMessages = useSpecificAPI ? 5 : 10
+  const useOllamaProvider = !!(
+    process.env.OLLAMA_MODEL && process.env.OLLAMA_BASE_URL
+  )
+  const maxMessages = useSpecificAPI ? 5 : useOllamaProvider ? 1 : 10
   // Limit the number of messages to the maximum
   messages.splice(0, Math.max(messages.length - maxMessages, 0))
   // Get the user input from the form data
@@ -185,10 +188,16 @@ async function submit(
 
     if (!errorOccurred) {
       const useGoogleProvider = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+      const useOllamaProvider = !!(
+        process.env.OLLAMA_MODEL && process.env.OLLAMA_BASE_URL
+      )
       let processedMessages = messages
       // If using Google provider, we need to modify the messages
       if (useGoogleProvider) {
         processedMessages = transformToolMessages(messages)
+      }
+      if (useOllamaProvider) {
+        processedMessages = [{ role: 'assistant', content: answer }]
       }
 
       streamText.done()
