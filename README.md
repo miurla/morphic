@@ -25,6 +25,7 @@ Please note that there are differences between this repository and the official 
 - [x] Add video support for search functionality
 - [x] Support Google Generative AI Provider ([※](https://github.com/miurla/morphic/issues/192))
 - [x] [Use as a search engine](#-search-engine)
+- [x] Unstable: Support Ollama Provider ([※](https://github.com/miurla/morphic/issues/215))
 
 ## 🧱 Stack
 
@@ -130,7 +131,7 @@ This will allow you to use Morphic as your default search engine in the browser.
 
 ## ✅ Verified models
 
-List of models applicable to all:
+### List of models applicable to all:
 
 - OpenAI
   - gpt-4o
@@ -138,8 +139,10 @@ List of models applicable to all:
   - gpt-3.5-turbo
 - Google
   - Gemini 1.5 pro [※](https://github.com/miurla/morphic/issues/192)
+- Ollama (Unstable)
+  - mistral/openherms & Phi3/llama3 [※](https://github.com/miurla/morphic/issues/215)
 
-List of verified models that can be specified to writers:
+### List of verified models that can be specified to writers:
 
 - [Groq](https://console.groq.com/docs/models)
   - LLaMA3 8b
