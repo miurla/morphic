@@ -140,7 +140,7 @@ This will allow you to use Morphic as your default search engine in the browser.
 - Google
   - Gemini 1.5 pro [※](https://github.com/miurla/morphic/issues/192)
 - Ollama (Unstable)
-  - mistral/openherms & Phi3/llama3 [※](https://github.com/miurla/morphic/issues/215)
+  - mistral/openhermes & Phi3/llama3 [※](https://github.com/miurla/morphic/issues/215)
 
 ### List of verified models that can be specified to writers:
 
