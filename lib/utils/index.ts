@@ -16,13 +16,14 @@ export function getModel(useSubModel = false) {
   const openaiApiBase = process.env.OPENAI_API_BASE
   const openaiApiKey = process.env.OPENAI_API_KEY
   let openaiApiModel = process.env.OPENAI_API_MODEL || 'gpt-4o'
+  const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
 
-  if (!(ollamaBaseUrl && ollamaModel) && !(openaiApiBase && openaiApiKey)) {
-    throw new Error('Missing environment variables for Ollama and OpenAI')
+  if (!(ollamaBaseUrl && ollamaModel) && !openaiApiKey && !googleApiKey) {
+    throw new Error(
+      'Missing environment variables for Ollama, OpenAI, or Google'
+    )
   }
-
   // Ollama
-
   if (ollamaBaseUrl && ollamaModel) {
     const ollama = createOllama({ baseURL: ollamaBaseUrl })
 
@@ -40,8 +41,8 @@ export function getModel(useSubModel = false) {
   // Fallback to OpenAI instead
 
   const openai = createOpenAI({
-    baseUrl: process.env.OPENAI_API_BASE, // optional base URL for proxies etc.
-    apiKey: process.env.OPENAI_API_KEY, // optional API key, default to env property OPENAI_API_KEY
+    baseUrl: openaiApiBase, // optional base URL for proxies etc.
+    apiKey: openaiApiKey, // optional API key, default to env property OPENAI_API_KEY
     organization: '' // optional organization
   })
 
