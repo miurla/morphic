@@ -10,22 +10,27 @@ Please note that there are differences between this repository and the official 
 
 ## 🗂️ Overview
 
+- 🛠 [Features](#-features)
 - 🧱 [Stack](#-stack)
 - 🚀 [Quickstart](#-quickstart)
 - 🌐 [Deploy](#-deploy)
 - 🔎 [Search Engine](#-search-engine)
 - ✅ [Verified models](#-verified-models)
 
-### 🚗 Roadmap
+## 🛠 Features
 
-- [x] Enable specifying the model to use ([only writer agent](https://github.com/miurla/morphic/pull/58))
-- [x] Implement search history functionality
-- [x] Develop features for sharing results
-- [x] Implement functionality to get answers from specified URL
-- [x] Add video support for search functionality
-- [x] Support Google Generative AI Provider ([※](https://github.com/miurla/morphic/issues/192))
-- [x] [Use as a search engine](#-search-engine)
-- [x] Unstable: Support Ollama Provider ([※](https://github.com/miurla/morphic/issues/215))
+- Search and answer using GenerativeUI
+- Understand user's questions
+- Search history functionality
+- Share search results ([Optional](https://github.com/miurla/morphic/blob/main/.env.local.example))
+- Video search support ([Optional](https://github.com/miurla/morphic/blob/main/.env.local.example))
+- Get answers from specified URLs
+- Use as a search engine [※](#-search-engine)
+- Support for providers other than OpenAI
+  - Google Generative AI Provider support [※](https://github.com/miurla/morphic/issues/192)
+  - Ollama Provider support ([Unstable](https://github.com/miurla/morphic/issues/215))
+- Specify the model to generate answers
+  - Groq API support [※](https://github.com/miurla/morphic/pull/58)
 
 ## 🧱 Stack
 
