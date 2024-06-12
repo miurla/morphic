@@ -3,8 +3,8 @@ import { ArrowRight } from 'lucide-react'
 
 const exampleMessages = [
   {
-    heading: "What's new with the iPad Pro?",
-    message: "What's new with the iPad Pro?"
+    heading: 'What is Apple Intelligence?',
+    message: 'What is Apple Intelligence?'
   },
   {
     heading: 'Why is Nvidia growing rapidly?',
