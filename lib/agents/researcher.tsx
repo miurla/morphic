@@ -36,6 +36,7 @@ export async function researcher(
     Aim to directly address the user's question, augmenting your response with insights gleaned from the search results.
     Whenever quoting or referencing information from a specific URL, always cite the source URL explicitly.
     The retrieve tool can only be used with URLs provided by the user. URLs from search results cannot be used.
+    If it is a domain or a site name instead of a URL, specify it in the include_domains of the search tool.
     Please match the language of the response to the user's language. Current date and time: ${currentDate}`,
     messages: processedMessages,
     tools: getTools({
