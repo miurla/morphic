@@ -41,7 +41,7 @@ export function getModel(useSubModel = false) {
   // Fallback to OpenAI instead
 
   const openai = createOpenAI({
-    baseUrl: openaiApiBase, // optional base URL for proxies etc.
+    baseURL: openaiApiBase, // optional base URL for proxies etc.
     apiKey: openaiApiKey, // optional API key, default to env property OPENAI_API_KEY
     organization: '' // optional organization
   })
