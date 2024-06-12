@@ -21,6 +21,11 @@ export function SearchResults({ results }: SearchResultsProps) {
 
   const displayedResults = showAllResults ? results : results.slice(0, 3)
   const additionalResultsCount = results.length > 3 ? results.length - 3 : 0
+  const displayUrlName = (url: string) => {
+    const hostname = new URL(url).hostname
+    const parts = hostname.split('.')
+    return parts.length > 2 ? parts.slice(1, -1).join('.') : parts[0]
+  }
 
   return (
     <div className="flex flex-wrap">
@@ -32,7 +37,7 @@ export function SearchResults({ results }: SearchResultsProps) {
                 <p className="text-xs line-clamp-2">
                   {result.title || result.content}
                 </p>
-                <div className="mt-2 flex items-center space-x-2">
+                <div className="mt-2 flex items-center space-x-1">
                   <Avatar className="h-4 w-4">
                     <AvatarImage
                       src={`https://www.google.com/s2/favicons?domain=${
@@ -45,7 +50,7 @@ export function SearchResults({ results }: SearchResultsProps) {
                     </AvatarFallback>
                   </Avatar>
                   <div className="text-xs opacity-60 truncate">
-                    {new URL(result.url).hostname}
+                    {`${displayUrlName(result.url)} - ${index + 1}`}
                   </div>
                 </div>
               </CardContent>
