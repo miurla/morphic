@@ -14,7 +14,7 @@ export async function writer(
   uiStream.append(answerSection)
 
   const openai = createOpenAI({
-    baseUrl: process.env.SPECIFIC_API_BASE,
+    baseURL: process.env.SPECIFIC_API_BASE,
     apiKey: process.env.SPECIFIC_API_KEY,
     organization: '' // optional organization
   })
