@@ -118,7 +118,8 @@ async function submit(
           {
             id: nanoid(),
             role: 'assistant',
-            content: `inquiry: ${inquiry?.question}`
+            content: `inquiry: ${inquiry?.question}`,
+            type: 'inquiry'
           }
         ]
       })

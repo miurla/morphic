@@ -68,7 +68,7 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
 
   useEffect(() => {
     const lastMessage = aiMessage.messages.slice(-1)[0]
-    if (lastMessage?.type === 'followup') {
+    if (lastMessage?.type === 'followup' || lastMessage?.type === 'inquiry') {
       setIsGenerating(false)
     }
   }, [aiMessage, setIsGenerating])

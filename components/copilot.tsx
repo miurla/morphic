@@ -15,6 +15,7 @@ import {
 } from 'ai/rsc'
 import type { AI } from '@/app/actions'
 import { IconLogo } from './ui/icons'
+import { useAppState } from '@/lib/utils/app-state'
 
 export type CopilotProps = {
   inquiry?: StreamableValue<PartialInquiry>
@@ -31,6 +32,7 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(true)
   const [, setMessages] = useUIState<typeof AI>()
   const { submit } = useActions()
+  const { setIsGenerating } = useAppState()
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value)
@@ -70,6 +72,7 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
     skip?: boolean
   ) => {
     e.preventDefault()
+    setIsGenerating(true)
     setCompleted(true)
     setSkipped(skip || false)
 
