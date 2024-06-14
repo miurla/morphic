@@ -28,29 +28,31 @@ export const Section: React.FC<SectionProps> = ({
   title,
   separator = false
 }) => {
+  const iconSize = 16
+  const iconClassName = 'mr-1.5 text-muted-foreground'
   let icon: React.ReactNode
   switch (title) {
     case 'Images':
       // eslint-disable-next-line jsx-a11y/alt-text
-      icon = <Image size={18} className="mr-2" />
+      icon = <Image size={iconSize} className={iconClassName} />
       break
     case 'Videos':
-      icon = <Film size={18} className="mr-2" />
+      icon = <Film size={iconSize} className={iconClassName} />
       break
     case 'Sources':
-      icon = <Newspaper size={18} className="mr-2" />
+      icon = <Newspaper size={iconSize} className={iconClassName} />
       break
     case 'Answer':
-      icon = <BookCheck size={18} className="mr-2" />
+      icon = <BookCheck size={iconSize} className={iconClassName} />
       break
     case 'Related':
-      icon = <Repeat2 size={18} className="mr-2" />
+      icon = <Repeat2 size={iconSize} className={iconClassName} />
       break
     case 'Follow-up':
-      icon = <MessageCircleMore size={18} className="mr-2" />
+      icon = <MessageCircleMore size={iconSize} className={iconClassName} />
       break
     default:
-      icon = <Search size={18} className="mr-2" />
+      icon = <Search size={iconSize} className={iconClassName} />
   }
 
   return (
@@ -63,7 +65,7 @@ export const Section: React.FC<SectionProps> = ({
         )}
       >
         {title && (
-          <h2 className="flex items-center text-lg leading-none py-2">
+          <h2 className="flex items-center leading-none py-2">
             {icon}
             {title}
           </h2>
