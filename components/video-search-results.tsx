@@ -85,9 +85,13 @@ export function VideoSearchResults({ results }: VideoSearchResultsProps) {
                     src={result.imageUrl}
                     alt={result.title}
                     className="w-full aspect-video mb-2"
-                    onError={e =>
-                      (e.currentTarget.src = '/images/placeholder-image.png')
-                    }
+                    onError={e => {
+                      if (
+                        e.currentTarget.src !== '/images/placeholder-image.png'
+                      ) {
+                        e.currentTarget.src = '/images/placeholder-image.png'
+                      }
+                    }}
                   />
                   <p className="text-xs line-clamp-2">{result.title}</p>
                   <div className="mt-2 flex items-center space-x-2">

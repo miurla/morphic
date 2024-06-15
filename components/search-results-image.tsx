@@ -75,9 +75,14 @@ export const SearchResultsImageSection: React.FC<
                       src={image}
                       alt={`Image ${index + 1}`}
                       className="h-full w-full object-cover"
-                      onError={e =>
-                        (e.currentTarget.src = '/images/placeholder-image.png')
-                      }
+                      onError={e => {
+                        if (
+                          e.currentTarget.src !==
+                          '/images/placeholder-image.png'
+                        ) {
+                          e.currentTarget.src = '/images/placeholder-image.png'
+                        }
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full bg-muted animate-pulse" />
@@ -109,10 +114,15 @@ export const SearchResultsImageSection: React.FC<
                           src={img}
                           alt={`Image ${idx + 1}`}
                           className="h-auto w-full object-contain max-h-[60vh]"
-                          onError={e =>
-                            (e.currentTarget.src =
-                              '/images/placeholder-image.png')
-                          }
+                          onError={e => {
+                            if (
+                              e.currentTarget.src !==
+                              '/images/placeholder-image.png'
+                            ) {
+                              e.currentTarget.src =
+                                '/images/placeholder-image.png'
+                            }
+                          }}
                         />
                       </div>
                     </CarouselItem>
