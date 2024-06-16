@@ -1,5 +1,5 @@
 import { Chat } from '@/components/chat'
-import { nanoid } from 'ai'
+import { generateId } from 'ai'
 import { AI } from '@/app/actions'
 import { redirect } from 'next/navigation'
 
@@ -13,7 +13,7 @@ export default function Page({
   if (!searchParams.q) {
     redirect('/')
   }
-  const id = nanoid()
+  const id = generateId()
 
   return (
     <AI initialAIState={{ chatId: id, messages: [] }}>
