@@ -10,7 +10,7 @@ import { Button } from './ui/button'
 import { ArrowRight, Plus } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
 import Textarea from 'react-textarea-autosize'
-import { nanoid } from 'ai'
+import { generateId } from 'ai'
 import { useAppState } from '@/lib/utils/app-state'
 
 interface ChatPanelProps {
@@ -37,7 +37,7 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
     setMessages(currentMessages => [
       ...currentMessages,
       {
-        id: nanoid(),
+        id: generateId(),
         component: <UserMessage message={query} />
       }
     ])
