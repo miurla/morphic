@@ -22,7 +22,7 @@ import { saveChat } from "@/lib/actions/chat";
 import { inquire, querySuggestor, researcher, taskManager } from "@/lib/agents";
 import { writer } from "@/lib/agents/writer";
 import { AIMessage, Chat } from "@/lib/types";
-import { transformToolMessages } from "@/lib/utils";
+import { transformToolMessages } from "@/lib/utils/get-model";
 
 async function submit(
   formData?: FormData,
