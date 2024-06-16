@@ -33,6 +33,7 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
   const [, setMessages] = useUIState<typeof AI>()
   const { submit } = useActions()
   const { setIsGenerating } = useAppState()
+  const [object, setObject] = useState<PartialInquiry>()
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value)
@@ -66,6 +67,11 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
     checkIfButtonShouldBeEnabled()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
+
+  useEffect(() => {
+    if (!data) return
+    setObject(data)
+  }, [data])
 
   const onFormSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
@@ -122,12 +128,12 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
       <Card className="p-4 rounded-lg w-full mx-auto">
         <div className="mb-4">
           <p className="text-lg text-foreground text-semibold ml-2">
-            {data?.question}
+            {object?.question}
           </p>
         </div>
         <form onSubmit={onFormSubmit}>
           <div className="flex flex-wrap justify-start mb-4">
-            {data?.options?.map((option, index) => (
+            {object?.options?.map((option, index) => (
               <div
                 key={`option-${index}`}
                 className="flex items-center space-x-1.5 mb-2"
@@ -148,17 +154,17 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
               </div>
             ))}
           </div>
-          {data?.allowsInput && (
+          {object?.allowsInput && (
             <div className="mb-6 flex flex-col space-y-2 text-sm">
               <label className="text-muted-foreground" htmlFor="query">
-                {data?.inputLabel}
+                {object?.inputLabel}
               </label>
               <Input
                 type="text"
                 name="additional_query"
                 className="w-full"
                 id="query"
-                placeholder={data?.inputPlaceholder}
+                placeholder={object?.inputPlaceholder}
                 value={query}
                 onChange={handleInputChange}
               />
