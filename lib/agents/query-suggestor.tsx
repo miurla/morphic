@@ -3,7 +3,7 @@ import { createStreamableUI, createStreamableValue } from "ai/rsc";
 import SearchRelated from "@/components/search-related";
 import { Section } from "@/components/section";
 import { PartialRelated, relatedSchema } from "@/lib/schema/related";
-import { getModel } from "../utils";
+import { getModel } from "@/lib/utils/get-model";
 
 export async function querySuggestor(
   uiStream: ReturnType<typeof createStreamableUI>,

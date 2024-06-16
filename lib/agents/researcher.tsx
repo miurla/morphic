@@ -1,7 +1,7 @@
 import { CoreMessage, streamText, ToolCallPart, ToolResultPart } from "ai";
 import { createStreamableUI, createStreamableValue } from "ai/rsc";
 import { AnswerSection } from "@/components/answer-section";
-import { getModel, transformToolMessages } from "../utils";
+import { getModel, transformToolMessages } from "@/lib/utils/get-model";
 import { getTools } from "./tools";
 
 export async function researcher(

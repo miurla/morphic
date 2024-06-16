@@ -2,7 +2,7 @@ import { CoreMessage, streamObject } from "ai";
 import { createStreamableUI, createStreamableValue } from "ai/rsc";
 import { Copilot } from "@/components/copilot";
 import { inquirySchema, PartialInquiry } from "@/lib/schema/inquiry";
-import { getModel } from "../utils";
+import { getModel } from "@/lib/utils/get-model";
 
 export async function inquire(
   uiStream: ReturnType<typeof createStreamableUI>,
