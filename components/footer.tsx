@@ -1,15 +1,14 @@
-import React from 'react'
-import Link from 'next/link'
-import { SiDiscord, SiGithub, SiTwitter } from 'react-icons/si'
-import { Button } from './ui/button'
+import Link from "next/link";
+import { SiDiscord, SiGithub, SiTwitter } from "react-icons/si";
+import { Button } from "@/components/ui/button";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="w-fit p-1 md:p-2 fixed bottom-0 right-0">
+    <footer className="fixed bottom-0 right-0 w-fit p-1 md:p-2">
       <div className="flex justify-end">
         <Button
-          variant={'ghost'}
-          size={'icon'}
+          variant={"ghost"}
+          size={"icon"}
           className="text-muted-foreground/50"
         >
           <Link href="https://discord.gg/zRxaseCuGq" target="_blank">
@@ -17,8 +16,8 @@ const Footer: React.FC = () => {
           </Link>
         </Button>
         <Button
-          variant={'ghost'}
-          size={'icon'}
+          variant={"ghost"}
+          size={"icon"}
           className="text-muted-foreground/50"
         >
           <Link href="https://twitter.com/morphic_ai" target="_blank">
@@ -26,8 +25,8 @@ const Footer: React.FC = () => {
           </Link>
         </Button>
         <Button
-          variant={'ghost'}
-          size={'icon'}
+          variant={"ghost"}
+          size={"icon"}
           className="text-muted-foreground/50"
         >
           <Link href="https://git.new/morphic" target="_blank">
@@ -36,7 +35,7 @@ const Footer: React.FC = () => {
         </Button>
       </div>
     </footer>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;

@@ -1,67 +1,67 @@
-'use client'
+"use client";
 
-import { useState, useTransition } from 'react'
-import { Button } from './ui/button'
-import { Share } from 'lucide-react'
+import { useState, useTransition } from "react";
+import { Share } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogTitle,
   DialogTrigger,
-  DialogDescription,
-  DialogTitle
-} from './ui/dialog'
-import { shareChat } from '@/lib/actions/chat'
-import { toast } from 'sonner'
-import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
-import { Spinner } from './ui/spinner'
+} from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { shareChat } from "@/lib/actions/chat";
+import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 
 interface ChatShareProps {
-  chatId: string
-  className?: string
+  chatId: string;
+  className?: string;
 }
 
 export function ChatShare({ chatId, className }: ChatShareProps) {
-  const [open, setOpen] = useState(false)
-  const [pending, startTransition] = useTransition()
-  const { copyToClipboard } = useCopyToClipboard({ timeout: 1000 })
-  const [shareUrl, setShareUrl] = useState('')
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const { copyToClipboard } = useCopyToClipboard({ timeout: 1000 });
+  const [shareUrl, setShareUrl] = useState("");
 
   const handleShare = async () => {
     startTransition(() => {
-      setOpen(true)
-    })
-    const result = await shareChat(chatId)
+      setOpen(true);
+    });
+    const result = await shareChat(chatId);
     if (!result) {
-      toast.error('Failed to share chat')
-      return
+      toast.error("Failed to share chat");
+      return;
     }
 
     if (!result.sharePath) {
-      toast.error('Could not copy link to clipboard')
-      return
+      toast.error("Could not copy link to clipboard");
+      return;
     }
 
-    const url = new URL(result.sharePath, window.location.href)
-    setShareUrl(url.toString())
-  }
+    const url = new URL(result.sharePath, window.location.href);
+    setShareUrl(url.toString());
+  };
 
   const handleCopy = () => {
     if (shareUrl) {
-      copyToClipboard(shareUrl)
-      toast.success('Link copied to clipboard')
-      setOpen(false)
+      copyToClipboard(shareUrl);
+      toast.success("Link copied to clipboard");
+      setOpen(false);
     } else {
-      toast.error('No link to copy')
+      toast.error("No link to copy");
     }
-  }
+  };
 
   return (
     <div className={className}>
       <Dialog
         open={open}
-        onOpenChange={open => setOpen(open)}
+        onOpenChange={(open) => setOpen(open)}
         aria-labelledby="share-dialog-title"
         aria-describedby="share-dialog-description"
       >
@@ -69,7 +69,7 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
           <Button
             className="rounded-full"
             size="icon"
-            variant={'ghost'}
+            variant={"ghost"}
             onClick={() => setOpen(true)}
           >
             <Share size={14} />
@@ -85,17 +85,17 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
           <DialogFooter className="items-center">
             {!shareUrl && (
               <Button onClick={handleShare} disabled={pending} size="sm">
-                {pending ? <Spinner /> : 'Get link'}
+                {pending ? <Spinner /> : "Get link"}
               </Button>
             )}
             {shareUrl && (
               <Button onClick={handleCopy} disabled={pending} size="sm">
-                {'Copy link'}
+                {"Copy link"}
               </Button>
             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

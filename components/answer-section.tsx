@@ -1,23 +1,23 @@
-'use client'
+"use client";
 
-import { Skeleton } from '@/components/ui/skeleton'
-import { Section } from './section'
-import { StreamableValue, useStreamableValue } from 'ai/rsc'
-import { BotMessage } from './message'
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
+import { StreamableValue, useStreamableValue } from "ai/rsc";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BotMessage } from "./message";
+import { Section } from "./section";
 
 export type AnswerSectionProps = {
-  result?: StreamableValue<string>
-}
+  result?: StreamableValue<string>;
+};
 
 export function AnswerSection({ result }: AnswerSectionProps) {
-  const [data, error, pending] = useStreamableValue(result)
-  const [content, setContent] = useState<string>('')
+  const [data, error, pending] = useStreamableValue(result);
+  const [content, setContent] = useState<string>("");
 
   useEffect(() => {
-    if (!data) return
-    setContent(data)
-  }, [data])
+    if (!data) return;
+    setContent(data);
+  }, [data]);
 
   return (
     <div>
@@ -28,9 +28,9 @@ export function AnswerSection({ result }: AnswerSectionProps) {
       ) : (
         <div className="flex flex-col gap-2 py-2">
           <Skeleton className="h-6 w-48" />
-          <Skeleton className="w-full h-6" />
+          <Skeleton className="h-6 w-full" />
         </div>
       )}
     </div>
-  )
+  );
 }

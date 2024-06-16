@@ -1,10 +1,9 @@
-import React from 'react'
-import { Section } from '@/components/section'
-import { SearchResults } from '@/components/search-results'
-import { SearchResults as SearchResultsType } from '@/lib/types'
+import { SearchResults } from "@/components/search-results";
+import { Section } from "@/components/section";
+import { SearchResults as SearchResultsType } from "@/lib/types";
 
 interface RetrieveSectionProps {
-  data: SearchResultsType
+  data: SearchResultsType;
 }
 
 const RetrieveSection: React.FC<RetrieveSectionProps> = ({ data }) => {
@@ -12,7 +11,7 @@ const RetrieveSection: React.FC<RetrieveSectionProps> = ({ data }) => {
     <Section title="Sources">
       <SearchResults results={data.results} />
     </Section>
-  )
-}
+  );
+};
 
-export default RetrieveSection
+export default RetrieveSection;

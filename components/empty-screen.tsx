@@ -1,35 +1,35 @@
-import { Button } from '@/components/ui/button'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const exampleMessages = [
   {
-    heading: 'What is Apple Intelligence?',
-    message: 'What is Apple Intelligence?'
+    heading: "What is Apple Intelligence?",
+    message: "What is Apple Intelligence?",
   },
   {
-    heading: 'Why is Nvidia growing rapidly?',
-    message: 'Why is Nvidia growing rapidly?'
+    heading: "Why is Nvidia growing rapidly?",
+    message: "Why is Nvidia growing rapidly?",
   },
   {
-    heading: 'How does the Vercel AI SDK work?',
-    message: 'How does the Vercel AI SDK work?'
+    heading: "How does the Vercel AI SDK work?",
+    message: "How does the Vercel AI SDK work?",
   },
   {
-    heading: 'Tesla vs Rivian',
-    message: 'Tesla vs Rivian'
-  }
-]
+    heading: "Tesla vs Rivian",
+    message: "Tesla vs Rivian",
+  },
+];
 export function EmptyScreen({
   submitMessage,
-  className
+  className,
 }: {
-  submitMessage: (message: string) => void
-  className?: string
+  submitMessage: (message: string) => void;
+  className?: string;
 }) {
   return (
     <div className={`mx-auto w-full transition-all ${className}`}>
       <div className="bg-background p-2">
-        <div className="mt-4 flex flex-col items-start space-y-2 mb-4">
+        <div className="mb-4 mt-4 flex flex-col items-start space-y-2">
           {exampleMessages.map((message, index) => (
             <Button
               key={index}
@@ -37,7 +37,7 @@ export function EmptyScreen({
               className="h-auto p-0 text-base"
               name={message.message}
               onClick={async () => {
-                submitMessage(message.message)
+                submitMessage(message.message);
               }}
             >
               <ArrowRight size={16} className="mr-2 text-muted-foreground" />
@@ -47,5 +47,5 @@ export function EmptyScreen({
         </div>
       </div>
     </div>
-  )
+  );
 }

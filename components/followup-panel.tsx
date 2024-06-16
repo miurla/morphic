@@ -1,37 +1,37 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { useActions, useUIState } from 'ai/rsc'
-import type { AI } from '@/app/actions'
-import { UserMessage } from './user-message'
-import { ArrowRight } from 'lucide-react'
+import { useState } from "react";
+import { useActions, useUIState } from "ai/rsc";
+import { ArrowRight } from "lucide-react";
+import type { AI } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { UserMessage } from "./user-message";
 
 export function FollowupPanel() {
-  const [input, setInput] = useState('')
-  const { submit } = useActions()
-  const [, setMessages] = useUIState<typeof AI>()
+  const [input, setInput] = useState("");
+  const { submit } = useActions();
+  const [, setMessages] = useUIState<typeof AI>();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget as HTMLFormElement)
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget as HTMLFormElement);
 
     const userMessage = {
       id: Date.now(),
       isGenerating: false,
-      component: <UserMessage message={input} />
-    }
+      component: <UserMessage message={input} />,
+    };
 
-    const responseMessage = await submit(formData)
-    setMessages(currentMessages => [
+    const responseMessage = await submit(formData);
+    setMessages((currentMessages) => [
       ...currentMessages,
       userMessage,
-      responseMessage
-    ])
+      responseMessage,
+    ]);
 
-    setInput('')
-  }
+    setInput("");
+  };
 
   return (
     <form
@@ -43,18 +43,18 @@ export function FollowupPanel() {
         name="input"
         placeholder="Ask a follow-up question..."
         value={input}
-        className="pr-14 h-12"
-        onChange={e => setInput(e.target.value)}
+        className="h-12 pr-14"
+        onChange={(e) => setInput(e.target.value)}
       />
       <Button
         type="submit"
-        size={'icon'}
+        size={"icon"}
         disabled={input.length === 0}
-        variant={'ghost'}
+        variant={"ghost"}
         className="absolute right-1"
       >
         <ArrowRight size={20} />
       </Button>
     </form>
-  )
+  );
 }

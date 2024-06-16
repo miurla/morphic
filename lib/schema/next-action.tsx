@@ -1,8 +1,8 @@
-import { DeepPartial } from 'ai'
-import { z } from 'zod'
+import { DeepPartial } from "ai";
+import { z } from "zod";
 
 export const nextActionSchema = z.object({
-  next: z.enum(['inquire', 'proceed']) // "generate_ui"
-})
+  next: z.enum(["inquire", "proceed"]), // "generate_ui"
+});
 
-export type NextAction = DeepPartial<typeof nextActionSchema>
+export type NextAction = DeepPartial<typeof nextActionSchema>;

@@ -1,142 +1,142 @@
-'use client'
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import { PartialInquiry } from '@/lib/schema/inquiry'
-import { Input } from './ui/input'
-import { Checkbox } from './ui/checkbox'
-import { Button } from './ui/button'
-import { Card } from './ui/card'
-import { ArrowRight, Check, FastForward, Sparkles } from 'lucide-react'
+import { useEffect, useState } from "react";
 import {
   StreamableValue,
   useActions,
   useStreamableValue,
-  useUIState
-} from 'ai/rsc'
-import type { AI } from '@/app/actions'
-import { IconLogo } from './ui/icons'
-import { useAppState } from '@/lib/utils/app-state'
+  useUIState,
+} from "ai/rsc";
+import { ArrowRight, Check, FastForward, Sparkles } from "lucide-react";
+import type { AI } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { IconLogo } from "@/components/ui/icons";
+import { Input } from "@/components/ui/input";
+import { PartialInquiry } from "@/lib/schema/inquiry";
+import { useAppState } from "@/lib/utils/app-state";
 
 export type CopilotProps = {
-  inquiry?: StreamableValue<PartialInquiry>
-}
+  inquiry?: StreamableValue<PartialInquiry>;
+};
 
 export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
-  const [completed, setCompleted] = useState(false)
-  const [query, setQuery] = useState('')
-  const [skipped, setSkipped] = useState(false)
-  const [data, error, pending] = useStreamableValue<PartialInquiry>(inquiry)
+  const [completed, setCompleted] = useState(false);
+  const [query, setQuery] = useState("");
+  const [skipped, setSkipped] = useState(false);
+  const [data, error, pending] = useStreamableValue<PartialInquiry>(inquiry);
   const [checkedOptions, setCheckedOptions] = useState<{
-    [key: string]: boolean
-  }>({})
-  const [isButtonDisabled, setIsButtonDisabled] = useState(true)
-  const [, setMessages] = useUIState<typeof AI>()
-  const { submit } = useActions()
-  const { setIsGenerating } = useAppState()
-  const [object, setObject] = useState<PartialInquiry>()
+    [key: string]: boolean;
+  }>({});
+  const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+  const [, setMessages] = useUIState<typeof AI>();
+  const { submit } = useActions();
+  const { setIsGenerating } = useAppState();
+  const [object, setObject] = useState<PartialInquiry>();
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(event.target.value)
-    checkIfButtonShouldBeEnabled()
-  }
+    setQuery(event.target.value);
+    checkIfButtonShouldBeEnabled();
+  };
 
   const handleOptionChange = (selectedOption: string) => {
     const updatedCheckedOptions = {
       ...checkedOptions,
-      [selectedOption]: !checkedOptions[selectedOption]
-    }
-    setCheckedOptions(updatedCheckedOptions)
-    checkIfButtonShouldBeEnabled(updatedCheckedOptions)
-  }
+      [selectedOption]: !checkedOptions[selectedOption],
+    };
+    setCheckedOptions(updatedCheckedOptions);
+    checkIfButtonShouldBeEnabled(updatedCheckedOptions);
+  };
 
   const checkIfButtonShouldBeEnabled = (currentOptions = checkedOptions) => {
     const anyCheckboxChecked = Object.values(currentOptions).some(
-      checked => checked
-    )
-    setIsButtonDisabled(!(anyCheckboxChecked || query))
-  }
+      (checked) => checked,
+    );
+    setIsButtonDisabled(!(anyCheckboxChecked || query));
+  };
 
   const updatedQuery = () => {
     const selectedOptions = Object.entries(checkedOptions)
       .filter(([, checked]) => checked)
-      .map(([option]) => option)
-    return [...selectedOptions, query].filter(Boolean).join(', ')
-  }
+      .map(([option]) => option);
+    return [...selectedOptions, query].filter(Boolean).join(", ");
+  };
 
   useEffect(() => {
-    checkIfButtonShouldBeEnabled()
+    checkIfButtonShouldBeEnabled();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query])
+  }, [query]);
 
   useEffect(() => {
-    if (!data) return
-    setObject(data)
-  }, [data])
+    if (!data) return;
+    setObject(data);
+  }, [data]);
 
   const onFormSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
-    skip?: boolean
+    skip?: boolean,
   ) => {
-    e.preventDefault()
-    setIsGenerating(true)
-    setCompleted(true)
-    setSkipped(skip || false)
+    e.preventDefault();
+    setIsGenerating(true);
+    setCompleted(true);
+    setSkipped(skip || false);
 
     const formData = skip
       ? undefined
-      : new FormData(e.target as HTMLFormElement)
+      : new FormData(e.target as HTMLFormElement);
 
-    const response = await submit(formData, skip)
-    setMessages(currentMessages => [...currentMessages, response])
-  }
+    const response = await submit(formData, skip);
+    setMessages((currentMessages) => [...currentMessages, response]);
+  };
 
   const handleSkip = (e: React.MouseEvent<HTMLButtonElement>) => {
-    onFormSubmit(e as unknown as React.FormEvent<HTMLFormElement>, true)
-  }
+    onFormSubmit(e as unknown as React.FormEvent<HTMLFormElement>, true);
+  };
 
   if (error) {
     return (
-      <Card className="p-4 w-full flex justify-between items-center">
+      <Card className="flex w-full items-center justify-between p-4">
         <div className="flex items-center space-x-2">
-          <Sparkles className="w-4 h-4" />
-          <h5 className="text-muted-foreground text-xs truncate">
+          <Sparkles className="h-4 w-4" />
+          <h5 className="truncate text-xs text-muted-foreground">
             {`error: ${error}`}
           </h5>
         </div>
       </Card>
-    )
+    );
   }
 
   if (skipped) {
-    return null
+    return null;
   }
 
   if (completed) {
     return (
-      <Card className="p-3 md:p-4 w-full flex justify-between items-center">
-        <div className="flex items-center space-x-2 flex-1 min-w-0">
-          <IconLogo className="w-4 h-4 flex-shrink-0" />
-          <h5 className="text-muted-foreground text-xs truncate">
+      <Card className="flex w-full items-center justify-between p-3 md:p-4">
+        <div className="flex min-w-0 flex-1 items-center space-x-2">
+          <IconLogo className="h-4 w-4 flex-shrink-0" />
+          <h5 className="truncate text-xs text-muted-foreground">
             {updatedQuery()}
           </h5>
         </div>
-        <Check size={16} className="text-green-500 w-4 h-4" />
+        <Check size={16} className="h-4 w-4 text-green-500" />
       </Card>
-    )
+    );
   } else {
     return (
-      <Card className="p-4 rounded-lg w-full mx-auto">
+      <Card className="mx-auto w-full rounded-lg p-4">
         <div className="mb-4">
-          <p className="text-lg text-foreground text-semibold ml-2">
+          <p className="text-semibold ml-2 text-lg text-foreground">
             {object?.question}
           </p>
         </div>
         <form onSubmit={onFormSubmit}>
-          <div className="flex flex-wrap justify-start mb-4">
+          <div className="mb-4 flex flex-wrap justify-start">
             {object?.options?.map((option, index) => (
               <div
                 key={`option-${index}`}
-                className="flex items-center space-x-1.5 mb-2"
+                className="mb-2 flex items-center space-x-1.5"
               >
                 <Checkbox
                   id={option?.value}
@@ -146,7 +146,7 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
                   }
                 />
                 <label
-                  className="text-sm whitespace-nowrap pr-4"
+                  className="whitespace-nowrap pr-4 text-sm"
                   htmlFor={option?.value}
                 >
                   {option?.label}
@@ -187,6 +187,6 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
           </div>
         </form>
       </Card>
-    )
+    );
   }
-}
+};

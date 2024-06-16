@@ -1,30 +1,28 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { Check } from 'lucide-react'
-import { Card } from './ui/card'
-import { IconLogo } from './ui/icons'
+import { Check } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 interface CopilotDisplayProps {
-  content: string
+  content: string;
 }
 
 export function CopilotDisplay({ content }: CopilotDisplayProps) {
   try {
-    const json = JSON.parse(content)
-    const formDataEntries = Object.entries(json)
+    const json = JSON.parse(content);
+    const formDataEntries = Object.entries(json);
     const query = formDataEntries
-      .filter(([key, value]) => value === 'on' || key === 'additional_query')
-      .map(([key, value]) => (key === 'additional_query' ? value : key))
-      .join(', ')
+      .filter(([key, value]) => value === "on" || key === "additional_query")
+      .map(([key, value]) => (key === "additional_query" ? value : key))
+      .join(", ");
 
     return (
-      <Card className="p-3 md:p-4 w-full flex justify-between items-center">
-        <h5 className="text-muted-foreground text-xs truncate">{query}</h5>
-        <Check size={16} className="text-green-500 w-4 h-4" />
+      <Card className="flex w-full items-center justify-between p-3 md:p-4">
+        <h5 className="truncate text-xs text-muted-foreground">{query}</h5>
+        <Check size={16} className="h-4 w-4 text-green-500" />
       </Card>
-    )
+    );
   } catch (error) {
-    return null
+    return null;
   }
 }

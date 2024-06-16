@@ -1,9 +1,9 @@
-import HistoryContainer from './history-container'
+import HistoryContainer from "./history-container";
 
 export async function Sidebar() {
   return (
-    <div className="h-screen p-2 fixed top-0 right-0 flex-col justify-center pb-24 hidden sm:flex">
+    <div className="fixed right-0 top-0 hidden h-screen flex-col justify-center p-2 pb-24 sm:flex">
       <HistoryContainer location="sidebar" />
     </div>
-  )
+  );
 }

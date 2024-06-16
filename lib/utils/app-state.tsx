@@ -1,29 +1,29 @@
-'use client'
+"use client";
 
-import { createContext, useState, ReactNode, useContext } from 'react'
+import { createContext, ReactNode, useContext, useState } from "react";
 
 const AppStateContext = createContext<
   | {
-      isGenerating: boolean
-      setIsGenerating: (value: boolean) => void
+      isGenerating: boolean;
+      setIsGenerating: (value: boolean) => void;
     }
   | undefined
->(undefined)
+>(undefined);
 
 export const AppStateProvider = ({ children }: { children: ReactNode }) => {
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false);
 
   return (
     <AppStateContext.Provider value={{ isGenerating, setIsGenerating }}>
       {children}
     </AppStateContext.Provider>
-  )
-}
+  );
+};
 
 export const useAppState = () => {
-  const context = useContext(AppStateContext)
+  const context = useContext(AppStateContext);
   if (!context) {
-    throw new Error('useAppState must be used within an AppStateProvider')
+    throw new Error("useAppState must be used within an AppStateProvider");
   }
-  return context
-}
+  return context;
+};

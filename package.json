@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "format": "prettier --write . --ignore-unknown",
     "update-deps": "bunx npm-check-updates --root --format group -i"
   },
   "dependencies": {
@@ -48,6 +49,7 @@
     "tailwind-merge": "2.3.0"
   },
   "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.2.1",
     "@tailwindcss/typography": "0.5.13",
     "@types/node": "20.14.2",
     "@types/react": "^18.3.3",

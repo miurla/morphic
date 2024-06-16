@@ -1,22 +1,22 @@
-import { createStreamableUI, createStreamableValue } from 'ai/rsc'
-import { CoreMessage, streamObject } from 'ai'
-import { PartialRelated, relatedSchema } from '@/lib/schema/related'
-import { Section } from '@/components/section'
-import SearchRelated from '@/components/search-related'
-import { getModel } from '../utils'
+import { CoreMessage, streamObject } from "ai";
+import { createStreamableUI, createStreamableValue } from "ai/rsc";
+import SearchRelated from "@/components/search-related";
+import { Section } from "@/components/section";
+import { PartialRelated, relatedSchema } from "@/lib/schema/related";
+import { getModel } from "../utils";
 
 export async function querySuggestor(
   uiStream: ReturnType<typeof createStreamableUI>,
-  messages: CoreMessage[]
+  messages: CoreMessage[],
 ) {
-  const objectStream = createStreamableValue<PartialRelated>()
+  const objectStream = createStreamableValue<PartialRelated>();
   uiStream.append(
     <Section title="Related" separator={true}>
       <SearchRelated relatedQueries={objectStream.value} />
-    </Section>
-  )
+    </Section>,
+  );
 
-  let finalRelatedQueries: PartialRelated = {}
+  let finalRelatedQueries: PartialRelated = {};
   await streamObject({
     model: getModel(),
     system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
@@ -34,19 +34,19 @@ export async function querySuggestor(
     Aim to create queries that progressively delve into more specific aspects, implications, or adjacent topics related to the initial query. The goal is to anticipate the user's potential information needs and guide them towards a more comprehensive understanding of the subject matter.
     Please match the language of the response to the user's language.`,
     messages,
-    schema: relatedSchema
+    schema: relatedSchema,
   })
-    .then(async result => {
+    .then(async (result) => {
       for await (const obj of result.partialObjectStream) {
         if (obj.items) {
-          objectStream.update(obj)
-          finalRelatedQueries = obj
+          objectStream.update(obj);
+          finalRelatedQueries = obj;
         }
       }
     })
     .finally(() => {
-      objectStream.done()
-    })
+      objectStream.done();
+    });
 
-  return finalRelatedQueries
+  return finalRelatedQueries;
 }

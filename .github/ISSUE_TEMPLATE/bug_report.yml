@@ -1,7 +1,7 @@
 name: 🐞 Bug
 description: File a bug/issue
-title: '[BUG] <title>'
-labels: ['Bug', 'Needs Triage']
+title: "[BUG] <title>"
+labels: ["Bug", "Needs Triage"]
 body:
   - type: checkboxes
     attributes:

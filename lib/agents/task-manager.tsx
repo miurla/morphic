@@ -1,6 +1,6 @@
-import { CoreMessage, generateObject } from 'ai'
-import { nextActionSchema } from '../schema/next-action'
-import { getModel } from '../utils'
+import { CoreMessage, generateObject } from "ai";
+import { nextActionSchema } from "../schema/next-action";
+import { getModel } from "../utils";
 
 // Decide whether inquiry is required for the user input
 export async function taskManager(messages: CoreMessage[]) {
@@ -17,12 +17,12 @@ export async function taskManager(messages: CoreMessage[]) {
     Make your choice wisely to ensure that you fulfill your mission as a web researcher effectively and deliver the most valuable assistance to the user.
     `,
       messages,
-      schema: nextActionSchema
-    })
+      schema: nextActionSchema,
+    });
 
-    return result
+    return result;
   } catch (error) {
-    console.error(error)
-    return null
+    console.error(error);
+    return null;
   }
 }

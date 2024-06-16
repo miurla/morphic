@@ -1,41 +1,41 @@
-import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-import { createOllama } from 'ollama-ai-provider'
-import { createOpenAI } from '@ai-sdk/openai'
-import { google } from '@ai-sdk/google'
-import { CoreMessage } from 'ai'
+import { google } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
+import { CoreMessage } from "ai";
+import { clsx, type ClassValue } from "clsx";
+import { createOllama } from "ollama-ai-provider";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export function getModel(useSubModel = false) {
-  const ollamaBaseUrl = process.env.OLLAMA_BASE_URL + '/api'
-  const ollamaModel = process.env.OLLAMA_MODEL
-  const ollamaSubModel = process.env.OLLAMA_SUB_MODEL
-  const openaiApiBase = process.env.OPENAI_API_BASE
-  const openaiApiKey = process.env.OPENAI_API_KEY
-  let openaiApiModel = process.env.OPENAI_API_MODEL || 'gpt-4o'
-  const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+  const ollamaBaseUrl = process.env.OLLAMA_BASE_URL + "/api";
+  const ollamaModel = process.env.OLLAMA_MODEL;
+  const ollamaSubModel = process.env.OLLAMA_SUB_MODEL;
+  const openaiApiBase = process.env.OPENAI_API_BASE;
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  let openaiApiModel = process.env.OPENAI_API_MODEL || "gpt-4o";
+  const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
   if (!(ollamaBaseUrl && ollamaModel) && !openaiApiKey && !googleApiKey) {
     throw new Error(
-      'Missing environment variables for Ollama, OpenAI, or Google'
-    )
+      "Missing environment variables for Ollama, OpenAI, or Google",
+    );
   }
   // Ollama
   if (ollamaBaseUrl && ollamaModel) {
-    const ollama = createOllama({ baseURL: ollamaBaseUrl })
+    const ollama = createOllama({ baseURL: ollamaBaseUrl });
 
     if (useSubModel && ollamaSubModel) {
-      return ollama(ollamaSubModel)
+      return ollama(ollamaSubModel);
     }
 
-    return ollama(ollamaModel)
+    return ollama(ollamaModel);
   }
 
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    return google('models/gemini-1.5-pro-latest')
+    return google("models/gemini-1.5-pro-latest");
   }
 
   // Fallback to OpenAI instead
@@ -43,10 +43,10 @@ export function getModel(useSubModel = false) {
   const openai = createOpenAI({
     baseURL: openaiApiBase, // optional base URL for proxies etc.
     apiKey: openaiApiKey, // optional API key, default to env property OPENAI_API_KEY
-    organization: '' // optional organization
-  })
+    organization: "", // optional organization
+  });
 
-  return openai.chat(openaiApiModel)
+  return openai.chat(openaiApiModel);
 }
 
 /**
@@ -58,14 +58,14 @@ export function getModel(useSubModel = false) {
  * @returns modifiedMessages - Array of modified messages
  */
 export function transformToolMessages(messages: CoreMessage[]): CoreMessage[] {
-  return messages.map(message =>
-    message.role === 'tool'
+  return messages.map((message) =>
+    message.role === "tool"
       ? {
           ...message,
-          role: 'assistant',
+          role: "assistant",
           content: JSON.stringify(message.content),
-          type: 'tool'
+          type: "tool",
         }
-      : message
-  ) as CoreMessage[]
+      : message,
+  ) as CoreMessage[];
 }

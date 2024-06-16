@@ -1,17 +1,17 @@
-import { Copilot } from '@/components/copilot'
-import { createStreamableUI, createStreamableValue } from 'ai/rsc'
-import { CoreMessage, streamObject } from 'ai'
-import { PartialInquiry, inquirySchema } from '@/lib/schema/inquiry'
-import { getModel } from '../utils'
+import { CoreMessage, streamObject } from "ai";
+import { createStreamableUI, createStreamableValue } from "ai/rsc";
+import { Copilot } from "@/components/copilot";
+import { inquirySchema, PartialInquiry } from "@/lib/schema/inquiry";
+import { getModel } from "../utils";
 
 export async function inquire(
   uiStream: ReturnType<typeof createStreamableUI>,
-  messages: CoreMessage[]
+  messages: CoreMessage[],
 ) {
-  const objectStream = createStreamableValue<PartialInquiry>()
-  uiStream.update(<Copilot inquiry={objectStream.value} />)
+  const objectStream = createStreamableValue<PartialInquiry>();
+  uiStream.update(<Copilot inquiry={objectStream.value} />);
 
-  let finalInquiry: PartialInquiry = {}
+  let finalInquiry: PartialInquiry = {};
   await streamObject({
     model: getModel(),
     system: `As a professional web researcher, your role is to deepen your understanding of the user's input by conducting further inquiries when necessary.
@@ -50,19 +50,19 @@ export async function inquire(
     Please match the language of the response to the user's language.
     `,
     messages,
-    schema: inquirySchema
+    schema: inquirySchema,
   })
-    .then(async result => {
+    .then(async (result) => {
       for await (const obj of result.partialObjectStream) {
         if (obj) {
-          objectStream.update(obj)
-          finalInquiry = obj
+          objectStream.update(obj);
+          finalInquiry = obj;
         }
       }
     })
     .finally(() => {
-      objectStream.done()
-    })
+      objectStream.done();
+    });
 
-  return finalInquiry
+  return finalInquiry;
 }
