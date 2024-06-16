@@ -93,7 +93,7 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
       <div className="pointer-events-none fixed bottom-2 left-0 right-0 mx-auto flex items-center justify-center md:bottom-8">
         <Button
           type="button"
-          variant={"secondary"}
+          variant="secondary"
           className="group pointer-events-auto rounded-full bg-secondary/80 transition-all hover:scale-105"
           onClick={() => handleClear()}
           disabled={isGenerating}
@@ -172,8 +172,8 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
           />
           <Button
             type="submit"
-            size={"icon"}
-            variant={"ghost"}
+            size="icon"
+            variant="ghost"
             className="absolute right-2 top-1/2 -translate-y-1/2 transform"
             disabled={input.length === 0}
           >

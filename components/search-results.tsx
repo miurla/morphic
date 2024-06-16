@@ -63,7 +63,7 @@ export function SearchResults({ results }: SearchResultsProps) {
           <Card className="flex h-full flex-1 items-center justify-center">
             <CardContent className="p-2">
               <Button
-                variant={"link"}
+                variant="link"
                 className="text-muted-foreground"
                 onClick={handleViewMore}
               >

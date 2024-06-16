@@ -48,9 +48,9 @@ export function FollowupPanel() {
       />
       <Button
         type="submit"
-        size={"icon"}
+        size="icon"
         disabled={input.length === 0}
-        variant={"ghost"}
+        variant="ghost"
         className="absolute right-1"
       >
         <ArrowRight size={20} />

@@ -7,8 +7,8 @@ const Footer: React.FC = () => {
     <footer className="fixed bottom-0 right-0 w-fit p-1 md:p-2">
       <div className="flex justify-end">
         <Button
-          variant={"ghost"}
-          size={"icon"}
+          variant="ghost"
+          size="icon"
           className="text-muted-foreground/50"
         >
           <Link href="https://discord.gg/zRxaseCuGq" target="_blank">
@@ -16,8 +16,8 @@ const Footer: React.FC = () => {
           </Link>
         </Button>
         <Button
-          variant={"ghost"}
-          size={"icon"}
+          variant="ghost"
+          size="icon"
           className="text-muted-foreground/50"
         >
           <Link href="https://twitter.com/morphic_ai" target="_blank">
@@ -25,8 +25,8 @@ const Footer: React.FC = () => {
           </Link>
         </Button>
         <Button
-          variant={"ghost"}
-          size={"icon"}
+          variant="ghost"
+          size="icon"
           className="text-muted-foreground/50"
         >
           <Link href="https://git.new/morphic" target="_blank">

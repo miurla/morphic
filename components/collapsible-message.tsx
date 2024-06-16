@@ -52,11 +52,7 @@ export const CollapsibleMessage: React.FC<CollapsibleMessageProps> = ({
             !isCollapsed ? "hidden" : "",
           )}
         >
-          <Button
-            variant="ghost"
-            size={"icon"}
-            className={cn("-mt-3 rounded-full")}
-          >
+          <Button variant="ghost" size="icon" className="-mt-3 rounded-full">
             <ChevronDown
               size={14}
               className={cn(

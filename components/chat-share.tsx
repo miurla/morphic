@@ -69,7 +69,7 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
           <Button
             className="rounded-full"
             size="icon"
-            variant={"ghost"}
+            variant="ghost"
             onClick={() => setOpen(true)}
           >
             <Share size={14} />

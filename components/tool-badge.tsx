@@ -17,7 +17,7 @@ export const ToolBadge: React.FC<ToolBadgeProps> = ({
   };
 
   return (
-    <Badge className={className} variant={"secondary"}>
+    <Badge className={className} variant="secondary">
       {icon[tool]}
       <span className="ml-1">{children}</span>
     </Badge>
