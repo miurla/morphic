@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { nanoid } from "ai";
+import { generateId } from "ai";
 import { useActions, useAIState, useUIState } from "ai/rsc";
 import { ArrowRight, Plus } from "lucide-react";
 import Textarea from "react-textarea-autosize";
@@ -37,7 +37,7 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
     setMessages((currentMessages) => [
       ...currentMessages,
       {
-        id: nanoid(),
+        id: generateId(),
         component: <UserMessage message={query} />,
       },
     ]);

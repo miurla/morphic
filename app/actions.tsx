@@ -1,4 +1,4 @@
-import { CoreMessage, nanoid, ToolResultPart } from "ai";
+import { CoreMessage, generateId, ToolResultPart } from "ai";
 import {
   createAI,
   createStreamableUI,
@@ -52,7 +52,7 @@ async function submit(
     });
 
   // goupeiId is used to group the messages for collapse
-  const groupeId = nanoid();
+  const groupeId = generateId();
 
   const useSpecificAPI = process.env.USE_SPECIFIC_API_FOR_WRITER === "true";
   const useOllamaProvider = !!(
@@ -86,7 +86,7 @@ async function submit(
       messages: [
         ...aiState.get().messages,
         {
-          id: nanoid(),
+          id: generateId(),
           role: "user",
           content,
           type,
@@ -115,7 +115,7 @@ async function submit(
         messages: [
           ...aiState.get().messages,
           {
-            id: nanoid(),
+            id: generateId(),
             role: "assistant",
             content: `inquiry: ${inquiry?.question}`,
             type: "inquiry",
@@ -258,7 +258,7 @@ async function submit(
   processEvents();
 
   return {
-    id: nanoid(),
+    id: generateId(),
     isGenerating: isGenerating.value,
     component: uiStream.value,
     isCollapsed: isCollapsed.value,
@@ -279,7 +279,7 @@ export type UIState = {
 }[];
 
 const initialAIState: AIState = {
-  chatId: nanoid(),
+  chatId: generateId(),
   messages: [],
 };
 
@@ -324,7 +324,7 @@ export const AI = createAI<AIState, UIState>({
     const updatedMessages: AIMessage[] = [
       ...messages,
       {
-        id: nanoid(),
+        id: generateId(),
         role: "assistant",
         content: `end`,
         type: "end",
