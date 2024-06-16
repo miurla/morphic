@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from './ui/button'
 import { ArrowRight } from 'lucide-react'
 import {
@@ -23,6 +23,12 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
   const { submit } = useActions()
   const [, setMessages] = useUIState<typeof AI>()
   const [data, error, pending] = useStreamableValue(relatedQueries)
+  const [related, setRelated] = useState<PartialRelated>()
+
+  useEffect(() => {
+    if (!data) return
+    setRelated(data)
+  }, [data])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -52,7 +58,7 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-wrap">
-      {data?.items
+      {related?.items
         ?.filter(item => item?.query !== '')
         .map((item, index) => (
           <div className="flex items-start w-full" key={index}>
