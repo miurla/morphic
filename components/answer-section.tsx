@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Section } from './section'
 import { StreamableValue, useStreamableValue } from 'ai/rsc'
 import { BotMessage } from './message'
+import { useEffect, useState } from 'react'
 
 export type AnswerSectionProps = {
   result?: StreamableValue<string>
@@ -11,11 +12,18 @@ export type AnswerSectionProps = {
 
 export function AnswerSection({ result }: AnswerSectionProps) {
   const [data, error, pending] = useStreamableValue(result)
+  const [content, setContent] = useState<string>('')
+
+  useEffect(() => {
+    if (!data) return
+    setContent(data)
+  }, [data])
+
   return (
     <div>
-      {data && data.length > 0 ? (
+      {content.length > 0 ? (
         <Section title="Answer">
-          <BotMessage content={data} />
+          <BotMessage content={content} />
         </Section>
       ) : (
         <div className="flex flex-col gap-2 py-2">
