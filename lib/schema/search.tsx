@@ -1,4 +1,3 @@
-import { DeepPartial } from "ai";
 import { z } from "zod";
 
 export const searchSchema = z.object({
@@ -20,5 +19,3 @@ export const searchSchema = z.object({
       "A list of domains to specifically exclude from the search results. Default is None, which doesn't exclude any domains.",
     ),
 });
-
-export type PartialInquiry = DeepPartial<typeof searchSchema>;

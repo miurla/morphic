@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SearchResultItem } from "@/lib/types";
 
-export interface SearchResultsProps {
+interface SearchResultsProps {
   results: SearchResultItem[];
 }
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SiDiscord, SiGithub, SiTwitter } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 
-const Footer: React.FC = () => {
+export const Footer: React.FC = () => {
   return (
     <footer className="fixed bottom-0 right-0 w-fit p-1 md:p-2">
       <div className="flex justify-end">
@@ -37,5 +37,3 @@ const Footer: React.FC = () => {
     </footer>
   );
 };
-
-export default Footer;

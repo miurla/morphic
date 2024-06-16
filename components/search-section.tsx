@@ -8,7 +8,7 @@ import { SearchSkeleton } from "./search-skeleton";
 import { Section } from "./section";
 import { ToolBadge } from "./tool-badge";
 
-export type SearchSectionProps = {
+type SearchSectionProps = {
   result?: StreamableValue<string>;
   includeDomains?: string[];
 };

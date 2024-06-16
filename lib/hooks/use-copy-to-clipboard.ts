@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export interface useCopyToClipboardProps {
+interface useCopyToClipboardProps {
   timeout?: number;
 }
 

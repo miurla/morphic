@@ -2,7 +2,7 @@ import { cache } from "react";
 import { getChats } from "@/lib/actions/chat";
 import { Chat } from "@/lib/types";
 import { ClearHistory } from "./clear-history";
-import HistoryItem from "./history-item";
+import { HistoryItem } from "./history-item";
 
 type HistoryListProps = {
   userId?: string;

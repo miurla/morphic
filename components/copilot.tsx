@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { PartialInquiry } from "@/lib/schema/inquiry";
 import { useAppState } from "@/lib/utils/app-state";
 
-export type CopilotProps = {
+type CopilotProps = {
   inquiry?: StreamableValue<PartialInquiry>;
 };
 

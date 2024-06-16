@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { PartialRelated } from "@/lib/schema/related";
 import { UserMessage } from "./user-message";
 
-export interface SearchRelatedProps {
+interface SearchRelatedProps {
   relatedQueries: StreamableValue<PartialRelated>;
 }
 
@@ -77,5 +77,3 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
     </form>
   );
 };
-
-export default SearchRelated;

@@ -7,7 +7,7 @@ import { Section } from "./section";
 import { ToolBadge } from "./tool-badge";
 import { VideoSearchResults } from "./video-search-results";
 
-export type VideoSearchSectionProps = {
+type VideoSearchSectionProps = {
   result?: StreamableValue<string>;
 };
 

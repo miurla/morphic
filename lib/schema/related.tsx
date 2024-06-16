@@ -1,4 +1,4 @@
-import { DeepPartial } from "ai";
+import type { DeepPartial } from "ai";
 import { z } from "zod";
 
 export const relatedSchema = z.object({
@@ -10,6 +10,5 @@ export const relatedSchema = z.object({
     )
     .length(3),
 });
-export type PartialRelated = DeepPartial<typeof relatedSchema>;
 
-export type Related = z.infer<typeof relatedSchema>;
+export type PartialRelated = DeepPartial<typeof relatedSchema>;

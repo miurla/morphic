@@ -47,7 +47,7 @@ const formatDateWithTime = (date: Date | string) => {
   }
 };
 
-const HistoryItem: React.FC<HistoryItemProps> = ({ chat }) => {
+export const HistoryItem: React.FC<HistoryItemProps> = ({ chat }) => {
   const pathname = usePathname();
   const isActive = pathname === chat.path;
 
@@ -68,5 +68,3 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ chat }) => {
     </Link>
   );
 };
-
-export default HistoryItem;

@@ -1,5 +1,5 @@
 import { tool } from "ai";
-import RetrieveSection from "@/components/retrieve-section";
+import { RetrieveSection } from "@/components/retrieve-section";
 import { SearchSkeleton } from "@/components/search-skeleton";
 import { retrieveSchema } from "@/lib/schema/retrieve";
 import type { SearchResults as SearchResultsType } from "@/lib/types";

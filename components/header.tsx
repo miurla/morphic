@@ -1,5 +1,5 @@
 import { IconLogo } from "@/components/ui/icons";
-import HistoryContainer from "./history-container";
+import { HistoryContainer } from "./history-container";
 import { ModeToggle } from "./mode-toggle";
 
 export const Header: React.FC = async () => {
@@ -18,5 +18,3 @@ export const Header: React.FC = async () => {
     </header>
   );
 };
-
-export default Header;

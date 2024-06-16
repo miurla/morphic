@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { SerperSearchResultItem, SerperSearchResults } from "@/lib/types";
 
-export interface VideoSearchResultsProps {
+interface VideoSearchResultsProps {
   results: SerperSearchResults;
 }
 

@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BotMessage } from "./message";
 import { Section } from "./section";
 
-export type AnswerSectionProps = {
+type AnswerSectionProps = {
   result?: StreamableValue<string>;
 };
 
