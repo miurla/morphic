@@ -22,7 +22,7 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
   const [input, setInput] = useState('')
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const [, setMessages] = useUIState<typeof AI>()
-  const [aiMessage] = useAIState<typeof AI>()
+  const [aiMessage, setAIMessage] = useAIState<typeof AI>()
   const { isGenerating, setIsGenerating } = useAppState()
   const { submit } = useActions()
   const router = useRouter()
@@ -77,6 +77,7 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
   const handleClear = () => {
     setIsGenerating(false)
     setMessages([])
+    setAIMessage({ messages: [], chatId: '' })
     setInput('')
     router.push('/')
   }
