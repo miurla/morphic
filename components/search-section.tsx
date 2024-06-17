@@ -1,6 +1,6 @@
 "use client";
 
-import { StreamableValue, useStreamableValue } from "ai/rsc";
+import { useStreamableValue, type StreamableValue } from "ai/rsc";
 import type { SearchResults as TypeSearchResults } from "@/lib/types";
 import { SearchResults } from "./search-results";
 import { SearchResultsImageSection } from "./search-results-image";

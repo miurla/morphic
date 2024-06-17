@@ -1,6 +1,6 @@
 import { google } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
-import { CoreMessage } from "ai";
+import type { CoreMessage } from "ai";
 import { createOllama } from "ollama-ai-provider";
 
 export function getModel(useSubModel = false) {

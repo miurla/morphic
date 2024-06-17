@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import {
-  StreamableValue,
   useActions,
   useStreamableValue,
   useUIState,
+  type StreamableValue,
 } from "ai/rsc";
 import { ArrowRight } from "lucide-react";
 import { AI } from "@/app/actions";
 import { Button } from "@/components/ui/button";
-import { PartialRelated } from "@/lib/schema/related";
+import type { PartialRelated } from "@/lib/schema/related";
 import { UserMessage } from "./user-message";
 
 interface SearchRelatedProps {

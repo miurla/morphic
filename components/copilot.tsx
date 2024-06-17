@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import {
-  StreamableValue,
   useActions,
   useStreamableValue,
   useUIState,
+  type StreamableValue,
 } from "ai/rsc";
 import { ArrowRight, Check, FastForward, Sparkles } from "lucide-react";
 import type { AI } from "@/app/actions";
@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { IconLogo } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
-import { PartialInquiry } from "@/lib/schema/inquiry";
+import type { PartialInquiry } from "@/lib/schema/inquiry";
 import { useAppState } from "@/lib/utils/app-state";
 
 type CopilotProps = {

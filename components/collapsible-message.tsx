@@ -6,7 +6,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@radix-ui/react-collapsible";
-import { StreamableValue, useStreamableValue } from "ai/rsc";
+import { useStreamableValue, type StreamableValue } from "ai/rsc";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

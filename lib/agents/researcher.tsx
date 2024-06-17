@@ -1,4 +1,9 @@
-import { CoreMessage, streamText, ToolCallPart, ToolResultPart } from "ai";
+import {
+  streamText,
+  type CoreMessage,
+  type ToolCallPart,
+  type ToolResultPart,
+} from "ai";
 import { createStreamableUI, createStreamableValue } from "ai/rsc";
 import { AnswerSection } from "@/components/answer-section";
 import { AnswerSectionGenerated } from "@/components/answer-section-generated";

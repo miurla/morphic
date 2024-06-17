@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Redis } from "@upstash/redis";
-import { type Chat } from "@/lib/types";
+import type { Chat } from "@/lib/types";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || "",

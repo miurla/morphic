@@ -1,11 +1,11 @@
-import { CoreMessage, generateId, ToolResultPart } from "ai";
+import { generateId, type CoreMessage, type ToolResultPart } from "ai";
 import {
   createAI,
   createStreamableUI,
   createStreamableValue,
   getAIState,
   getMutableAIState,
-  StreamableValue,
+  type StreamableValue,
 } from "ai/rsc";
 import { AnswerSection } from "@/components/answer-section";
 import { CopilotDisplay } from "@/components/copilot-display";
@@ -21,7 +21,7 @@ import { VideoSearchSection } from "@/components/video-search-section";
 import { saveChat } from "@/lib/actions/chat";
 import { inquire, querySuggestor, researcher, taskManager } from "@/lib/agents";
 import { writer } from "@/lib/agents/writer";
-import { AIMessage, Chat } from "@/lib/types";
+import type { AIMessage, Chat } from "@/lib/types";
 import { transformToolMessages } from "@/lib/utils/get-model";
 
 async function submit(

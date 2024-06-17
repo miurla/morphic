@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { CoreMessage, streamText } from "ai";
+import { streamText, type CoreMessage } from "ai";
 import { createStreamableUI, createStreamableValue } from "ai/rsc";
 import { AnswerSection } from "@/components/answer-section";
 import { AnswerSectionGenerated } from "@/components/answer-section-generated";

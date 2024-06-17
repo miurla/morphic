@@ -1,8 +1,8 @@
-import { CoreMessage, streamObject } from "ai";
+import { streamObject, type CoreMessage } from "ai";
 import { createStreamableUI, createStreamableValue } from "ai/rsc";
 import { SearchRelated } from "@/components/search-related";
 import { Section } from "@/components/section";
-import { PartialRelated, relatedSchema } from "@/lib/schema/related";
+import { relatedSchema, type PartialRelated } from "@/lib/schema/related";
 import { getModel } from "@/lib/utils/get-model";
 
 export async function querySuggestor(

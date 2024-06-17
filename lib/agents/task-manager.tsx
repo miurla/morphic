@@ -1,4 +1,4 @@
-import { CoreMessage, generateObject } from "ai";
+import { generateObject, type CoreMessage } from "ai";
 import { nextActionSchema } from "@/lib/schema/next-action";
 import { getModel } from "@/lib/utils/get-model";
 

@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { SerperSearchResultItem, SerperSearchResults } from "@/lib/types";
+import type { SerperSearchResultItem, SerperSearchResults } from "@/lib/types";
 
 interface VideoSearchResultsProps {
   results: SerperSearchResults;

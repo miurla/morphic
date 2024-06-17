@@ -1,6 +1,6 @@
 "use client";
 
-import { StreamableValue } from "ai/rsc";
+import type { StreamableValue } from "ai/rsc";
 import type { UIState } from "@/app/actions";
 import { CollapsibleMessage } from "./collapsible-message";
 
