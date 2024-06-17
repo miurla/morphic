@@ -1,6 +1,7 @@
 import { CoreMessage, streamText, ToolCallPart, ToolResultPart } from "ai";
 import { createStreamableUI, createStreamableValue } from "ai/rsc";
 import { AnswerSection } from "@/components/answer-section";
+import { AnswerSectionGenerated } from "@/components/answer-section-generated";
 import { getModel, transformToolMessages } from "@/lib/utils/get-model";
 import { getTools } from "./tools";
 
@@ -46,6 +47,13 @@ export async function researcher(
       uiStream,
       fullResponse,
     }),
+    onFinish: (event) => {
+      // If the response is generated, update the generated answer section
+      // There is a bug where a new instance of the answer section is displayed once when the next section is added
+      if (event.text.length > 0) {
+        uiStream.update(<AnswerSectionGenerated result={event.text} />);
+      }
+    },
   }).catch((err) => {
     hasError = true;
     fullResponse = "Error: " + err.message;
