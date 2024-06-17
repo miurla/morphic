@@ -3,14 +3,8 @@ import { searchTool } from "./search";
 import type { ToolProps } from "./types";
 import { videoSearchTool } from "./video-search";
 
-interface Tools {
-  retrieve: ReturnType<typeof retrieveTool>;
-  search: ReturnType<typeof searchTool>;
-  videoSearch?: ReturnType<typeof videoSearchTool>;
-}
-
 export const getTools = ({ uiStream, fullResponse }: ToolProps) => {
-  const tools: Tools = {
+  const tools: any = {
     search: searchTool({ uiStream, fullResponse }),
     retrieve: retrieveTool({ uiStream, fullResponse }),
   };
