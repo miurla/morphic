@@ -12,8 +12,8 @@
     "update-deps": "bunx npm-check-updates --root --format group -i"
   },
   "dependencies": {
-    "@ai-sdk/google": "0.0.21",
-    "@ai-sdk/openai": "0.0.29",
+    "@ai-sdk/google": "0.0.22",
+    "@ai-sdk/openai": "0.0.30",
     "@radix-ui/react-alert-dialog": "1.0.5",
     "@radix-ui/react-avatar": "1.0.4",
     "@radix-ui/react-checkbox": "1.0.4",
