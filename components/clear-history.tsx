@@ -17,9 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { clearChats } from "@/lib/actions/chat";
 
-type ClearHistoryProps = {
+interface ClearHistoryProps {
   empty: boolean;
-};
+}
 
 export function ClearHistory({ empty }: ClearHistoryProps) {
   const [open, setOpen] = useState(false);

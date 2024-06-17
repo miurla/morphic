@@ -1,38 +1,38 @@
-export type SearchResults = {
+export interface SearchResults {
   images: string[];
   results: SearchResultItem[];
   query: string;
-};
+}
 
-export type ExaSearchResults = {
+export interface ExaSearchResults {
   results: ExaSearchResultItem[];
-};
+}
 
-export type SerperSearchResults = {
+export interface SerperSearchResults {
   searchParameters: {
     q: string;
     type: string;
     engine: string;
   };
   videos: SerperSearchResultItem[];
-};
+}
 
-export type SearchResultItem = {
+export interface SearchResultItem {
   title: string;
   url: string;
   content: string;
-};
+}
 
-export type ExaSearchResultItem = {
+export interface ExaSearchResultItem {
   score: number;
   title: string;
   id: string;
   url: string;
   publishedDate: Date;
   author: string;
-};
+}
 
-export type SerperSearchResultItem = {
+export interface SerperSearchResultItem {
   title: string;
   link: string;
   snippet: string;
@@ -42,7 +42,7 @@ export type SerperSearchResultItem = {
   channel: string;
   date: string;
   position: number;
-};
+}
 
 export interface Chat extends Record<string, any> {
   id: string;
@@ -54,7 +54,7 @@ export interface Chat extends Record<string, any> {
   sharePath?: string;
 }
 
-export type AIMessage = {
+export interface AIMessage {
   role: "user" | "assistant" | "system" | "function" | "data" | "tool";
   content: string;
   id: string;
@@ -69,4 +69,4 @@ export type AIMessage = {
     | "tool"
     | "followup"
     | "end";
-};
+}

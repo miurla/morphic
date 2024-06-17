@@ -8,9 +8,9 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import type { AIMessage } from "@/lib/types";
 
-type ErrorCardProps = {
+interface ErrorCardProps {
   errorMessage: string;
-};
+}
 
 export const ErrorCard: React.FC<ErrorCardProps> = ({ errorMessage }) => {
   const [messages, setMessages] = useUIState<typeof AI>();

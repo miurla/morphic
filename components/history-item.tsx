@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import type { Chat } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type HistoryItemProps = {
+interface HistoryItemProps {
   chat: Chat;
-};
+}
 
 const formatDateWithTime = (date: Date | string) => {
   const parsedDate = new Date(date);

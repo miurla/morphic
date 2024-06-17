@@ -15,10 +15,10 @@ import { cn } from "@/lib/utils";
 import { useAppState } from "@/lib/utils/app-state";
 import { HistorySkeleton } from "./history-skelton";
 
-type HistoryProps = {
+interface HistoryProps {
   location: "sidebar" | "header";
   children?: React.ReactNode;
-};
+}
 
 export function History({ location, children }: HistoryProps) {
   const router = useRouter();

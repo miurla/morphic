@@ -4,9 +4,9 @@ import type { Chat } from "@/lib/types";
 import { ClearHistory } from "./clear-history";
 import { HistoryItem } from "./history-item";
 
-type HistoryListProps = {
+interface HistoryListProps {
   userId?: string;
-};
+}
 
 const loadChats = cache(async (userId?: string) => {
   return await getChats(userId);

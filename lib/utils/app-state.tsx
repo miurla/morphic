@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 
 const AppStateContext = createContext<
   | {
@@ -10,7 +10,11 @@ const AppStateContext = createContext<
   | undefined
 >(undefined);
 
-export const AppStateProvider = ({ children }: { children: ReactNode }) => {
+export const AppStateProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [isGenerating, setIsGenerating] = useState(false);
 
   return (

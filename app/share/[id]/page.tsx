@@ -3,7 +3,7 @@ import { AI } from "@/app/actions";
 import { Chat } from "@/components/chat";
 import { getSharedChat } from "@/lib/actions/chat";
 
-export interface SharePageProps {
+interface SharePageProps {
   params: {
     id: string;
   };

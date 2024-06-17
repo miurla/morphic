@@ -6,10 +6,10 @@ import { useUIState } from "ai/rsc";
 import { ChatMessages } from "./chat-messages";
 import { ChatPanel } from "./chat-panel";
 
-type ChatProps = {
+interface ChatProps {
   id?: string;
   query?: string;
-};
+}
 
 export function Chat({ id, query }: ChatProps) {
   const path = usePathname();

@@ -1,10 +1,10 @@
 import { ChatShare } from "./chat-share";
 
-type UserMessageProps = {
+interface UserMessageProps {
   message: string;
   chatId?: string;
   showShare?: boolean;
-};
+}
 
 export const UserMessage: React.FC<UserMessageProps> = ({
   message,

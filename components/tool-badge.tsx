@@ -1,11 +1,11 @@
 import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-type ToolBadgeProps = {
+interface ToolBadgeProps {
   tool: string;
   children: React.ReactNode;
   className?: string;
-};
+}
 
 export const ToolBadge: React.FC<ToolBadgeProps> = ({
   tool,

@@ -7,9 +7,9 @@ import { Section } from "./section";
 import { ToolBadge } from "./tool-badge";
 import { VideoSearchResults } from "./video-search-results";
 
-type VideoSearchSectionProps = {
+interface VideoSearchSectionProps {
   result?: StreamableValue<string>;
-};
+}
 
 export function VideoSearchSection({ result }: VideoSearchSectionProps) {
   const [data, error, pending] = useStreamableValue(result);

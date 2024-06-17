@@ -1,9 +1,9 @@
 import { History } from "./history";
 import { HistoryList } from "./history-list";
 
-type HistoryContainerProps = {
+interface HistoryContainerProps {
   location: "sidebar" | "header";
-};
+}
 
 export const HistoryContainer: React.FC<HistoryContainerProps> = async ({
   location,

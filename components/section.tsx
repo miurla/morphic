@@ -12,13 +12,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-type SectionProps = {
+interface SectionProps {
   children: React.ReactNode;
   className?: string;
   size?: "sm" | "md" | "lg";
   title?: string;
   separator?: boolean;
-};
+}
 
 export const Section: React.FC<SectionProps> = ({
   children,

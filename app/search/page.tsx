@@ -5,11 +5,13 @@ import { Chat } from "@/components/chat";
 
 export const maxDuration = 60;
 
-export default function Page({
-  searchParams,
-}: {
-  searchParams: { q: string };
-}) {
+interface SearchPageProps {
+  searchParams: {
+    q: string;
+  };
+}
+
+export default function SearchPage({ searchParams }: SearchPageProps) {
   if (!searchParams.q) {
     redirect("/");
   }

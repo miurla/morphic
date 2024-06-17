@@ -5,20 +5,20 @@ import { getChat } from "@/lib/actions/chat";
 
 export const maxDuration = 60;
 
-export interface SearchPageProps {
+interface SearchIdPageProps {
   params: {
     id: string;
   };
 }
 
-export async function generateMetadata({ params }: SearchPageProps) {
+export async function generateMetadata({ params }: SearchIdPageProps) {
   const chat = await getChat(params.id, "anonymous");
   return {
     title: chat?.title.toString().slice(0, 50) || "Search",
   };
 }
 
-export default async function SearchPage({ params }: SearchPageProps) {
+export default async function SearchIdPage({ params }: SearchPageProps) {
   const userId = "anonymous";
   const chat = await getChat(params.id, userId);
 

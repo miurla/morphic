@@ -19,13 +19,13 @@ const exampleMessages = [
     message: "Tesla vs Rivian",
   },
 ];
-export function EmptyScreen({
-  submitMessage,
-  className,
-}: {
+
+interface EmptyScreenProps {
   submitMessage: (message: string) => void;
   className?: string;
-}) {
+}
+
+export function EmptyScreen({ submitMessage, className }: EmptyScreenProps) {
   return (
     <div className={`mx-auto w-full transition-all ${className}`}>
       <div className="bg-background p-2">

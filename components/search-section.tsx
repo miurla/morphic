@@ -8,10 +8,10 @@ import { SearchSkeleton } from "./search-skeleton";
 import { Section } from "./section";
 import { ToolBadge } from "./tool-badge";
 
-type SearchSectionProps = {
+interface SearchSectionProps {
   result?: StreamableValue<string>;
   includeDomains?: string[];
-};
+}
 
 export function SearchSection({ result, includeDomains }: SearchSectionProps) {
   const [data, error, pending] = useStreamableValue(result);
