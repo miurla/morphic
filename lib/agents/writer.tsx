@@ -2,6 +2,7 @@ import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import { CoreMessage, streamText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { AnswerSection } from '@/components/answer-section'
+import { AnswerSectionGenerated } from '@/components/answer-section-generated'
 
 export async function writer(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -28,7 +29,12 @@ export async function writer(
     Link format: [link text](url)
     Image format: ![alt text](url)
     `,
-    messages
+    messages,
+    onFinish: event => {
+      // If the response is generated, update the generated answer section
+      // There is a bug where a new instance of the answer section is displayed once when the next section is added
+      uiStream.update(<AnswerSectionGenerated result={event.text} />)
+    }
   })
     .then(async result => {
       for await (const text of result.textStream) {
