@@ -1,10 +1,11 @@
+import { tool } from 'ai'
 import { createStreamableValue } from 'ai/rsc'
 import Exa from 'exa-js'
 import { searchSchema } from '@/lib/schema/search'
 import { SearchSection } from '@/components/search-section'
 import { ToolProps } from '.'
 
-export const searchTool = ({ uiStream, fullResponse }: ToolProps) => ({
+export const searchTool = ({ uiStream, fullResponse }: ToolProps) => tool({
   description: 'Search the web for information',
   parameters: searchSchema,
   execute: async ({
@@ -13,12 +14,6 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) => ({
     search_depth,
     include_domains,
     exclude_domains
-  }: {
-    query: string
-    max_results: number
-    search_depth: 'basic' | 'advanced'
-    include_domains: string[]
-    exclude_domains: string[]
   }) => {
     let hasError = false
     // Append the search section
