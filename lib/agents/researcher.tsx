@@ -44,14 +44,7 @@ export async function researcher(
     tools: getTools({
       uiStream,
       fullResponse
-    }),
-    onFinish: event => {
-      // If the response is generated, update the generated answer section
-      // There is a bug where a new instance of the answer section is displayed once when the next section is added
-      if (event.text.length > 0) {
-        uiStream.update(<AnswerSectionGenerated result={event.text} />)
-      }
-    }
+    })
   }).catch(err => {
     hasError = true
     fullResponse = 'Error: ' + err.message
@@ -63,9 +56,6 @@ export async function researcher(
     return { result, fullResponse, hasError, toolResponses: [] }
   }
 
-  // Remove the spinner
-  uiStream.update(null)
-
   // Process the response
   const toolCalls: ToolCallPart[] = []
   const toolResponses: ToolResultPart[] = []
@@ -73,12 +63,6 @@ export async function researcher(
     switch (delta.type) {
       case 'text-delta':
         if (delta.textDelta) {
-          // If the first text delta is available, add a UI section
-          if (fullResponse.length === 0 && delta.textDelta.length > 0) {
-            // Update the UI
-            uiStream.update(answerSection)
-          }
-
           fullResponse += delta.textDelta
           streamableText.update(fullResponse)
         }
