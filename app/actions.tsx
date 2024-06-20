@@ -134,7 +134,6 @@ async function submit(
     let toolOutputs: ToolResultPart[] = []
     let errorOccurred = false
     const streamText = createStreamableValue<string>()
-    uiStream.update(<Spinner />)
 
     // If useSpecificAPI is enabled, only function calls will be made
     // If not using a tool, this model generates the answer
