@@ -3,6 +3,7 @@ import { twMerge } from 'tailwind-merge'
 import { createOllama } from 'ollama-ai-provider'
 import { createOpenAI } from '@ai-sdk/openai'
 import { google } from '@ai-sdk/google'
+import { anthropic } from '@ai-sdk/anthropic'
 import { CoreMessage } from 'ai'
 
 export function cn(...inputs: ClassValue[]) {
@@ -17,10 +18,16 @@ export function getModel(useSubModel = false) {
   const openaiApiKey = process.env.OPENAI_API_KEY
   let openaiApiModel = process.env.OPENAI_API_MODEL || 'gpt-4o'
   const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+  const anthropicApiKey = process.env.ANTHROPIC_API_KEY
 
-  if (!(ollamaBaseUrl && ollamaModel) && !openaiApiKey && !googleApiKey) {
+  if (
+    !(ollamaBaseUrl && ollamaModel) &&
+    !openaiApiKey &&
+    !googleApiKey &&
+    !anthropicApiKey
+  ) {
     throw new Error(
-      'Missing environment variables for Ollama, OpenAI, or Google'
+      'Missing environment variables for Ollama, OpenAI, Google or Anthropic'
     )
   }
   // Ollama
@@ -34,8 +41,12 @@ export function getModel(useSubModel = false) {
     return ollama(ollamaModel)
   }
 
-  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+  if (googleApiKey) {
     return google('models/gemini-1.5-pro-latest')
+  }
+
+  if (anthropicApiKey) {
+    return anthropic('claude-3-5-sonnet-20240620')
   }
 
   // Fallback to OpenAI instead

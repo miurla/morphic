@@ -1,7 +1,6 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import { CoreMessage, streamObject } from 'ai'
 import { PartialRelated, relatedSchema } from '@/lib/schema/related'
-import { Section } from '@/components/section'
 import SearchRelated from '@/components/search-related'
 import { getModel } from '../utils'
 
@@ -10,11 +9,14 @@ export async function querySuggestor(
   messages: CoreMessage[]
 ) {
   const objectStream = createStreamableValue<PartialRelated>()
-  uiStream.append(
-    <Section title="Related" separator={true}>
-      <SearchRelated relatedQueries={objectStream.value} />
-    </Section>
-  )
+  uiStream.append(<SearchRelated relatedQueries={objectStream.value} />)
+
+  const lastMessages = messages.slice(-1).map(message => {
+    return {
+      ...message,
+      role: 'user'
+    }
+  }) as CoreMessage[]
 
   let finalRelatedQueries: PartialRelated = {}
   await streamObject({
@@ -33,7 +35,7 @@ export async function querySuggestor(
 
     Aim to create queries that progressively delve into more specific aspects, implications, or adjacent topics related to the initial query. The goal is to anticipate the user's potential information needs and guide them towards a more comprehensive understanding of the subject matter.
     Please match the language of the response to the user's language.`,
-    messages,
+    messages: lastMessages,
     schema: relatedSchema
   })
     .then(async result => {

@@ -6,12 +6,12 @@ import { AnswerSectionGenerated } from '@/components/answer-section-generated'
 
 export async function writer(
   uiStream: ReturnType<typeof createStreamableUI>,
-  streamableText: ReturnType<typeof createStreamableValue<string>>,
   messages: CoreMessage[]
 ) {
   let fullResponse = ''
   let hasError = false
-  const answerSection = <AnswerSection result={streamableText.value} />
+  const streamableAnswer = createStreamableValue<string>('')
+  const answerSection = <AnswerSection result={streamableAnswer.value} />
   uiStream.append(answerSection)
 
   const openai = createOpenAI({
@@ -31,23 +31,22 @@ export async function writer(
     `,
     messages,
     onFinish: event => {
-      // If the response is generated, update the generated answer section
-      // There is a bug where a new instance of the answer section is displayed once when the next section is added
-      uiStream.update(<AnswerSectionGenerated result={event.text} />)
+      fullResponse = event.text
+      streamableAnswer.done(event.text)
     }
   })
     .then(async result => {
       for await (const text of result.textStream) {
         if (text) {
           fullResponse += text
-          streamableText.update(fullResponse)
+          streamableAnswer.update(fullResponse)
         }
       }
     })
     .catch(err => {
       hasError = true
       fullResponse = 'Error: ' + err.message
-      streamableText.update(fullResponse)
+      streamableAnswer.update(fullResponse)
     })
 
   return { response: fullResponse, hasError }
