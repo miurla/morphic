@@ -402,9 +402,7 @@ export const getUIStateFromAIState = (aiState: Chat) => {
               return {
                 id,
                 component: (
-                  <Section title="Related" separator={true}>
-                    <SearchRelated relatedQueries={relatedQueries.value} />
-                  </Section>
+                  <SearchRelated relatedQueries={relatedQueries.value} />
                 )
               }
             case 'followup':
