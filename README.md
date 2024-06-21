@@ -26,8 +26,9 @@ An AI-powered search engine with a generative UI.
 - Get answers from specified URLs
 - Use as a search engine [※](#-search-engine)
 - Support for providers other than OpenAI
-  - Google Generative AI Provider support [※](https://github.com/miurla/morphic/issues/192)
-  - Ollama Provider support ([Unstable](https://github.com/miurla/morphic/issues/215))
+  - Google Generative AI Provider [※](https://github.com/miurla/morphic/issues/192)
+  - Anthropic Provider [※](https://github.com/miurla/morphic/pull/239)
+  - Ollama Provider ([Unstable](https://github.com/miurla/morphic/issues/215))
 - Specify the model to generate answers
   - Groq API support [※](https://github.com/miurla/morphic/pull/58)
 
