@@ -24,6 +24,7 @@ import { VideoSearchSection } from '@/components/video-search-section'
 import { transformToolMessages } from '@/lib/utils'
 import { AnswerSection } from '@/components/answer-section'
 import { ErrorCard } from '@/components/error-card'
+import { use } from 'react'
 
 async function submit(
   formData?: FormData,
@@ -101,6 +102,9 @@ async function submit(
   }
 
   async function processEvents() {
+    // Show the spinner
+    uiStream.append(<Spinner />)
+
     let action = { object: { next: 'proceed' } }
     // If the user skips the task, we proceed to the search
     if (!skip) action = (await taskManager(messages)) ?? action
@@ -131,24 +135,26 @@ async function submit(
 
     //  Generate the answer
     let answer = ''
+    let stopReason = ''
     let toolOutputs: ToolResultPart[] = []
     let errorOccurred = false
+
     const streamText = createStreamableValue<string>()
+    uiStream.update(
+      <AnswerSection result={streamText.value} hasHeader={false} />
+    )
 
     // If useSpecificAPI is enabled, only function calls will be made
     // If not using a tool, this model generates the answer
     while (
       useSpecificAPI
-        ? toolOutputs.length === 0 && answer.length === 0
-        : answer.length === 0 && !errorOccurred
+        ? toolOutputs.length === 0 && answer.length === 0 && !errorOccurred
+        : stopReason !== 'stop' && !errorOccurred
     ) {
       // Search the web and generate the answer
-      const { fullResponse, hasError, toolResponses } = await researcher(
-        uiStream,
-        streamText,
-        messages,
-        useSpecificAPI
-      )
+      const { fullResponse, hasError, toolResponses, finishReason } =
+        await researcher(uiStream, streamText, messages)
+      stopReason = finishReason || ''
       answer = fullResponse
       toolOutputs = toolResponses
       errorOccurred = hasError
@@ -177,13 +183,13 @@ async function submit(
       // modify the messages to be used by the specific model
       const modifiedMessages = transformToolMessages(messages)
       const latestMessages = modifiedMessages.slice(maxMessages * -1)
-      const { response, hasError } = await writer(
-        uiStream,
-        streamText,
-        latestMessages
-      )
+      const { response, hasError } = await writer(uiStream, latestMessages)
       answer = response
       errorOccurred = hasError
+      messages.push({
+        role: 'assistant',
+        content: answer
+      })
     }
 
     if (!errorOccurred) {

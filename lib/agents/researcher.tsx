@@ -3,16 +3,15 @@ import { CoreMessage, ToolCallPart, ToolResultPart, streamText } from 'ai'
 import { getTools } from './tools'
 import { getModel, transformToolMessages } from '../utils'
 import { AnswerSection } from '@/components/answer-section'
-import { AnswerSectionGenerated } from '@/components/answer-section-generated'
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
   streamableText: ReturnType<typeof createStreamableValue<string>>,
-  messages: CoreMessage[],
-  useSpecificModel?: boolean
+  messages: CoreMessage[]
 ) {
   let fullResponse = ''
   let hasError = false
+  let finishReason = ''
 
   // Transform the messages if using Ollama provider
   let processedMessages = messages
@@ -25,7 +24,9 @@ export async function researcher(
   const includeToolResponses = messages.some(message => message.role === 'tool')
   const useSubModel = useOllamaProvider && includeToolResponses
 
-  const answerSection = <AnswerSection result={streamableText.value} />
+  const streambleAnswer = createStreamableValue<string>('')
+  const answerSection = <AnswerSection result={streambleAnswer.value} />
+
   const currentDate = new Date().toLocaleString()
   const result = await streamText({
     model: getModel(useSubModel),
@@ -39,12 +40,18 @@ export async function researcher(
     The number must always match the order of the search results.
     The retrieve tool can only be used with URLs provided by the user. URLs from search results cannot be used.
     If it is a domain instead of a URL, specify it in the include_domains of the search tool.
-    Please match the language of the response to the user's language. Current date and time: ${currentDate}`,
+    Please match the language of the response to the user's language. Current date and time: ${currentDate}
+    `,
     messages: processedMessages,
     tools: getTools({
       uiStream,
       fullResponse
-    })
+    }),
+    onFinish: async event => {
+      finishReason = event.finishReason
+      fullResponse = event.text
+      streambleAnswer.done()
+    }
   }).catch(err => {
     hasError = true
     fullResponse = 'Error: ' + err.message
@@ -56,6 +63,11 @@ export async function researcher(
     return { result, fullResponse, hasError, toolResponses: [] }
   }
 
+  const hasToolResult = messages.some(message => message.role === 'tool')
+  if (hasToolResult) {
+    uiStream.append(answerSection)
+  }
+
   // Process the response
   const toolCalls: ToolCallPart[] = []
   const toolResponses: ToolResultPart[] = []
@@ -64,17 +76,17 @@ export async function researcher(
       case 'text-delta':
         if (delta.textDelta) {
           fullResponse += delta.textDelta
-          streamableText.update(fullResponse)
+          if (hasToolResult) {
+            streambleAnswer.update(fullResponse)
+          } else {
+            streamableText.update(fullResponse)
+          }
         }
         break
       case 'tool-call':
         toolCalls.push(delta)
         break
       case 'tool-result':
-        // Append the answer section if the specific model is not used
-        if (!useSpecificModel && toolResponses.length === 0 && delta.result) {
-          uiStream.append(answerSection)
-        }
         if (!delta.result) {
           hasError = true
         }
@@ -97,5 +109,5 @@ export async function researcher(
     messages.push({ role: 'tool', content: toolResponses })
   }
 
-  return { result, fullResponse, hasError, toolResponses }
+  return { result, fullResponse, hasError, toolResponses, finishReason }
 }

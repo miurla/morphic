@@ -8,9 +8,13 @@ import { useEffect, useState } from 'react'
 
 export type AnswerSectionProps = {
   result?: StreamableValue<string>
+  hasHeader?: boolean
 }
 
-export function AnswerSection({ result }: AnswerSectionProps) {
+export function AnswerSection({
+  result,
+  hasHeader = true
+}: AnswerSectionProps) {
   const [data, error, pending] = useStreamableValue(result)
   const [content, setContent] = useState<string>('')
 
@@ -22,7 +26,7 @@ export function AnswerSection({ result }: AnswerSectionProps) {
   return (
     <div>
       {content.length > 0 ? (
-        <Section title="Answer">
+        <Section title={hasHeader ? 'Answer' : undefined}>
           <BotMessage content={content} />
         </Section>
       ) : (
