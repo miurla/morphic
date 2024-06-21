@@ -46,7 +46,8 @@
     "remark-math": "^6.0.0",
     "sonner": "^1.4.41",
     "tailwind-merge": "^2.2.2",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "typescript": "^5",

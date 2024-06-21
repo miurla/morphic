@@ -1,13 +1,14 @@
+import { tool } from 'ai'
 import { createStreamableValue } from 'ai/rsc'
 import { searchSchema } from '@/lib/schema/search'
 import { ToolProps } from '.'
 import { VideoSearchSection } from '@/components/video-search-section'
 
 // Start Generation Here
-export const videoSearchTool = ({ uiStream, fullResponse }: ToolProps) => ({
+export const videoSearchTool = ({ uiStream, fullResponse }: ToolProps) => tool({
   description: 'Search for videos from YouTube',
   parameters: searchSchema,
-  execute: async ({ query }: { query: string }) => {
+  execute: async ({ query }) => {
     let hasError = false
     // Append the search section
     const streamResults = createStreamableValue<string>()

@@ -1,13 +1,14 @@
+import { tool } from 'ai'
 import { retrieveSchema } from '@/lib/schema/retrieve'
 import { ToolProps } from '.'
 import { SearchSkeleton } from '@/components/search-skeleton'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 import RetrieveSection from '@/components/retrieve-section'
 
-export const retrieveTool = ({ uiStream, fullResponse }: ToolProps) => ({
+export const retrieveTool = ({ uiStream, fullResponse }: ToolProps) => tool({
   description: 'Retrieve content from the web',
   parameters: retrieveSchema,
-  execute: async ({ url }: { url: string }) => {
+  execute: async ({ url }) => {
     let hasError = false
     // Append the search section
     uiStream.append(<SearchSkeleton />)
