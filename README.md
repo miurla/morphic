@@ -1,141 +1,142 @@
 # Morphic
 
-An AI-powered search engine with a generative UI.
+Vyhledávač poháněný umělou inteligencí s generativním uživatelským rozhraním.
 
 ![capture](/public/capture-240404_blk.png)
 
-> [!NOTE]
-> Please note that there are differences between this repository and the official website [morphic.sh](https://morphic.sh). The official website is a fork of this repository with additional features such as authentication, which are necessary for providing the service online. The core source code of Morphic resides in this repository, and it's designed to be easily built and deployed.
+> [!POZNÁMKA]
+> Upozorňujeme, že mezi tímto úložištěm a oficiálními webovými stránkami [morphic.sh](https://morphic.sh) existují rozdíly. Oficiální webová stránka je forkem tohoto úložiště s dalšími funkcemi, jako je ověřování, které jsou nezbytné pro poskytování služby online. Jádro zdrojového kódu služby Morphic se nachází v tomto úložišti a je navrženo tak, aby se dalo snadno sestavit a nasadit.
 
-## 🗂️ Overview
 
-- 🛠 [Features](#-features)
-- 🧱 [Stack](#-stack)
-- 🚀 [Quickstart](#-quickstart)
+## 🗂️ Přehled
+
+- 🛠 [Funkce](#-features)
+- 🧱 [Zásobník](#-zásobník)
+- 🚀 [Quickstart](#-rychlý start)
 - 🌐 [Deploy](#-deploy)
 - 🔎 [Search Engine](#-search-engine)
-- ✅ [Verified models](#-verified-models)
+- ✅ [Ověřené modely](#-verified-models)
 
-## 🛠 Features
+## 🛠 Funkce
 
-- Search and answer using GenerativeUI
-- Understand user's questions
-- Search history functionality
-- Share search results ([Optional](https://github.com/miurla/morphic/blob/main/.env.local.example))
-- Video search support ([Optional](https://github.com/miurla/morphic/blob/main/.env.local.example))
-- Get answers from specified URLs
-- Use as a search engine [※](#-search-engine)
-- Support for providers other than OpenAI
-  - Google Generative AI Provider support [※](https://github.com/miurla/morphic/issues/192)
-  - Ollama Provider support ([Unstable](https://github.com/miurla/morphic/issues/215))
-- Specify the model to generate answers
-  - Groq API support [※](https://github.com/miurla/morphic/pull/58)
+- Vyhledávání a odpovídání pomocí GenerativeUI
+- Porozumění otázkám uživatele
+- Funkce historie vyhledávání
+- Sdílení výsledků vyhledávání ([Volitelné](https://github.com/miurla/morphic/blob/main/.env.local.example)).
+- Podpora vyhledávání videí ([Volitelné](https://github.com/miurla/morphic/blob/main/.env.local.example))
+- Získávání odpovědí ze zadaných adres URL
+- Použití jako vyhledávač [※](#-search-engine)
+- Podpora jiných poskytovatelů než OpenAI
+  - Podpora poskytovatele generativní umělé inteligence Google [※](https://github.com/miurla/morphic/issues/192)
+  - Podpora poskytovatele Ollama ([Unstable](https://github.com/miurla/morphic/issues/215)).
+- Zadání modelu pro generování odpovědí
+  - Podpora rozhraní Groq API [※](https://github.com/miurla/morphic/pull/58)
 
-## 🧱 Stack
+## 🧱 Zásobník
 
-- App framework: [Next.js](https://nextjs.org/)
-- Text streaming / Generative UI: [Vercel AI SDK](https://sdk.vercel.ai/docs)
-- Generative Model: [OpenAI](https://openai.com/)
-- Search API: [Tavily AI](https://tavily.com/) / [Serper](https://serper.dev)
-- Reader API: [Jina AI](https://jina.ai/)
-- Serverless Database: [Upstash](https://upstash.com/)
-- Component library: [shadcn/ui](https://ui.shadcn.com/)
-- Headless component primitives: [Radix UI](https://www.radix-ui.com/)
-- Styling: [Tailwind CSS](https://tailwindcss.com/)
+- Rámec aplikace: [Next.js](https://nextjs.org/)
+- Streamování textu / generativní uživatelské rozhraní: [Vercel AI SDK](https://sdk.vercel.ai/docs)
+- Generativní model: [OpenAI](https://openai.com/)
+- Vyhledávací rozhraní API: [Tavily AI](https://tavily.com/) / [Serper](https://serper.dev)
+- Rozhraní API pro čtení: [Jina AI](https://jina.ai/)
+- Databáze bez serveru: [Upstash](https://upstash.com/)
+- Knihovna komponent: [shadcn/ui](https://ui.shadcn.com/)
+- Primitiva bezhlavých komponent: [Radix UI](https://www.radix-ui.com/)
+- Stylování: [Tailwind CSS](https://tailwindcss.com/)
 
-## 🚀 Quickstart
+## 🚀 Rychlý start
 
 ### 1. Fork and Clone repo
 
-Fork the repo to your Github account, then run the following command to clone the repo:
+Forkněte repozitář na svůj účet Github a poté spusťte následující příkaz pro klonování repozitáře:
 
 ```
 git clone git@github.com:[YOUR_GITHUB_ACCOUNT]/morphic.git
 ```
 
-### 2. Install dependencies
+### 2. Nainstalujte závislosti
 
 ```
 cd morphic
 bun install
 ```
 
-### 3. Setting up Upstash Redis
+### 3. Nastavení Upstash Redis
 
-Follow the guide below to set up Upstash Redis. Create a database and obtain `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Refer to the [Upstash guide](https://upstash.com/blog/rag-chatbot-upstash#setting-up-upstash-redis) for instructions on how to proceed.
+Podle níže uvedeného návodu nastavte Upstash Redis. Vytvořte databázi a získejte `UPSTASH_REDIS_REST_URL` a `UPSTASH_REDIS_REST_TOKEN`. Pokyny k dalšímu postupu naleznete v příručce [Upstash guide](https://upstash.com/blog/rag-chatbot-upstash#setting-up-upstash-redis).
 
-### 4. Fill out secrets
+### 4. Vyplňte tajemství
 
 ```
 cp .env.local.example .env.local
 ```
 
-Your .env.local file should look like this:
+Váš soubor .env.local by měl vypadat takto:
 
 ```
-# OpenAI API key retrieved here: https://platform.openai.com/api-keys
+# OpenAI API klíč získaný zde: https://platform.openai.com/api-keys
 OPENAI_API_KEY=
 
-# Tavily API Key retrieved here: https://app.tavily.com/home
+# Tavily API Key načtený zde: https://app.tavily.com/home
 TAVILY_API_KEY=
 
-# Upstash Redis URL and Token retrieved here: https://console.upstash.com/redis
+# URL a token Upstash Redis načtené zde: https://console.upstash.com/redis
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
 ```
 
-_Note: This project focuses on Generative UI and requires complex output from LLMs. Currently, it's assumed that the official OpenAI models will be used. Although it's possible to set up other models, if you use an OpenAI-compatible model, but we don't guarantee that it'll work._
+_Poznámka: Tento projekt se zaměřuje na generativní uživatelské rozhraní a vyžaduje komplexní výstup z LLM. V současné době se předpokládá, že budou použity oficiální modely OpenAI. Je sice možné nastavit i jiné modely, pokud použijete model kompatibilní s OpenAI, ale nezaručujeme, že to bude fungovat._``
 
-### 5. Run app locally
+### 5. Spusťte aplikaci lokálně
 
 ```
 bun dev
 ```
 
-You can now visit http://localhost:3000.
+Nyní můžete navštívit stránku http://localhost:3000.
 
 ## 🌐 Deploy
 
-Host your own live version of Morphic with Vercel or Cloudflare Pages.
+Hostujte vlastní živou verzi Morphic pomocí Vercel nebo Cloudflare Pages.
 
-### Vercel
+#### Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN)
+[![Deploy s Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN)
 
 ### Cloudflare Pages
 
-1. Fork the repo to your GitHub.
-2. Create a Cloudflare Pages project.
-3. Select `Morphic` repo and `Next.js` preset.
-4. Set `OPENAI_API_KEY` and `TAVILY_API_KEY` env vars.
-5. Save and deploy.
-6. Cancel deployment, go to `Settings` -> `Functions` -> `Compatibility flags`, add `nodejs_compat` to preview and production.
-7. Redeploy.
+1. Rozšiřte repozitář na svůj GitHub.
+2. Vytvořte projekt Cloudflare Pages.
+3. Vyberte repo `Morphic` a předvolbu `Next.js`.
+4. Nastavte proměnné env `OPENAI_API_KEY` a `TAVILY_API_KEY`.
+5. Uložte a nasaďte.
+6. Zrušte nasazení, přejděte do `Nastavení` -> `Funkce` -> `Příznaky kompatibility`, přidejte `nodejs_compat` do náhledu a produkce.
+7. Znovu nasaďte.
 
-**The build error needs to be fixed: [issue](https://github.com/miurla/morphic/issues/114)**
+**Je třeba opravit chybu sestavení: [issue](https://github.com/miurla/morphic/issues/114)**.
 
-## 🔎 Search Engine
+## 🔎 Vyhledávač
 
-### Setting up the Search Engine in Your Browser
+### Nastavení vyhledávače v prohlížeči
 
-If you want to use Morphic as a search engine in your browser, follow these steps:
+Pokud chcete používat Morphic jako vyhledávač v prohlížeči, postupujte podle následujících kroků:
 
-1. Open your browser settings.
-2. Navigate to the search engine settings section.
-3. Select "Manage search engines and site search".
-4. Under "Site search", click on "Add".
-5. Fill in the fields as follows:
-   - **Search engine**: Morphic
-   - **Shortcut**: morphic
-   - **URL with %s in place of query**: `https://morphic.sh/search?q=%s`
-6. Click "Add" to save the new search engine.
-7. Find "Morphic" in the list of site search, click on the three dots next to it, and select "Make default".
+1. Otevřete nastavení prohlížeče.
+2. Přejděte do části nastavení vyhledávače.
+3. Vyberte možnost "Spravovat vyhledávače a vyhledávání na webu".
+4. V části "Vyhledávání na webu" klikněte na tlačítko "Přidat".
+5. Vyplňte následující pole:
+   - **Vyhledávač**: Vyhledávač: Morphic
+   - **Zkratka**: morphic
+   - **URL s %s na místě dotazu**: `https://morphic.sh/search?q=%s`
+6. Kliknutím na tlačítko "Add" (Přidat) uložte nový vyhledávač.
+7. Najděte v seznamu vyhledávačů stránek "Morphic", klikněte na tři tečky vedle něj a vyberte možnost "Make default".
 
-This will allow you to use Morphic as your default search engine in the browser.
+To vám umožní používat Morphic jako výchozí vyhledávač v prohlížeči.
 
-## ✅ Verified models
+## ✅ Ověřené modely
 
-### List of models applicable to all:
+#### Seznam modelů použitelných pro všechny:
 
 - OpenAI
   - gpt-4o
@@ -143,11 +144,11 @@ This will allow you to use Morphic as your default search engine in the browser.
   - gpt-3.5-turbo
 - Google
   - Gemini 1.5 pro [※](https://github.com/miurla/morphic/issues/192)
-- Ollama (Unstable)
-  - mistral/openhermes & Phi3/llama3 [※](https://github.com/miurla/morphic/issues/215)
+- Ollama (nestabilní)
+  - Mistral/openhermes & Phi3/llama3 [※](https://github.com/miurla/morphic/issues/215)
 
-### List of verified models that can be specified to writers:
+### Seznam ověřených modelů, které lze zadat zapisovatelům:
 
 - [Groq](https://console.groq.com/docs/models)
   - LLaMA3 8b
-  - LLaMA3 70b
+  - LLaMA3 70b Přeloženo pomocí www.DeepL.com/Translator (bezplatná verze)
