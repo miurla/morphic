@@ -67,13 +67,13 @@ export function EmptyScreen({
             <Button
               key={index}
               variant="link"
-              className="h-auto p-0 text-base"
+              className="h-auto p-0 text-sm md:text-base text-left text-wrap"
               name={message.message}
               onClick={async () => {
                 submitMessage(message.message)
               }}
             >
-              <ArrowRight size={16} className="mr-2 text-muted-foreground" />
+              <ArrowRight size={16} className="mr-1 md:mr-2 text-muted-foreground" />
               {message.heading}
             </Button>
           ))}
