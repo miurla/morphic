@@ -62,6 +62,25 @@ export async function clearChats(
   revalidatePath('/')
   redirect('/')
 }
+export async function ClearSession(
+  id: string,
+  userId: string = 'anonymous'
+): Promise<{ error?: string }> {
+  const chatKey = `chat:${id}`;
+  const chat = await redis.hgetall<Chat>(chatKey);
+
+  if (!chat || chat.userId !== userId) {
+    return { error: 'Chat not found or unauthorized to delete' };
+  }
+
+  const pipeline = redis.pipeline();
+  pipeline.del(chatKey);
+  pipeline.zrem(`user:chat:${userId}`, chatKey);
+  await pipeline.exec();
+
+  revalidatePath('/');
+  redirect('/');
+}
 
 export async function saveChat(chat: Chat, userId: string = 'anonymous') {
   const pipeline = redis.pipeline()
