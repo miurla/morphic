@@ -1,16 +1,19 @@
 import React from 'react'
 import { ChatShare } from './chat-share'
+import { ClearChat } from './clear-session'
 
 type UserMessageProps = {
   message: string
   chatId?: string
   showShare?: boolean
+  showDelete?: boolean
 }
 
 export const UserMessage: React.FC<UserMessageProps> = ({
   message,
   chatId,
-  showShare = false
+  showShare = false,
+  showDelete = false
 }) => {
   const enableShare = process.env.ENABLE_SHARE === 'true'
   return (
