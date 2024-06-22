@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 const exampleMessages = [
   {
@@ -17,6 +18,22 @@ const exampleMessages = [
   {
     heading: 'Tesla vs Rivian',
     message: 'Tesla vs Rivian'
+  },
+  {
+    heading: 'What is Claude 3.5 sonnet?',
+    message: 'What is Claude 3.5 sonnet?'
+  },
+  {
+    heading: 'What is the Benefits of Remote Work?',
+    message: 'What is the Benefits of Remote Work?'
+  },
+  {
+    heading: 'How does AI in Healthcare?',
+    message: 'How does AI in Healthcare?'
+  },
+  {
+    heading: 'What are the latest advancements in Robotics?',
+    message: 'What are the latest advancements in Robotics?'
   }
 ]
 export function EmptyScreen({
@@ -26,11 +43,27 @@ export function EmptyScreen({
   submitMessage: (message: string) => void
   className?: string
 }) {
+  const [displayMessages, setDisplayMessages] = useState(
+    exampleMessages.slice(0, 4)
+  )
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDisplayMessages(prev => {
+        const startIndex = exampleMessages.indexOf(prev[0]) + 4
+        if (startIndex >= exampleMessages.length)
+          return exampleMessages.slice(0, 4)
+        return exampleMessages.slice(startIndex, startIndex + 4)
+      })
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <div className={`mx-auto w-full transition-all ${className}`}>
       <div className="bg-background p-2">
         <div className="mt-4 flex flex-col items-start space-y-2 mb-4">
-          {exampleMessages.map((message, index) => (
+          {displayMessages.map((message, index) => (
             <Button
               key={index}
               variant="link"
