@@ -16,10 +16,7 @@ export function Chat({ id, query }: ChatProps) {
   const [messages] = useUIState()
 
   useEffect(() => {
-    if (
-      (!path.includes('search') && messages.length === 1) ||
-      (path.includes('/search') && query && messages.length === 1)
-    ) {
+    if (!path.includes('search') && messages.length === 1) {
       window.history.replaceState({}, '', `/search/${id}`)
     }
   }, [id, path, messages, query])

@@ -28,7 +28,6 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
   const [related, setRelated] = useState<PartialRelated>()
 
   useEffect(() => {
-    console.log('data', data)
     if (!data) return
     setRelated(data)
   }, [data])
