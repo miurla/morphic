@@ -140,9 +140,16 @@ async function submit(
     let errorOccurred = false
 
     const streamText = createStreamableValue<string>()
-    uiStream.update(
-      <AnswerSection result={streamText.value} hasHeader={false} />
-    )
+
+    // If ANTHROPIC_API_KEY is set, update the UI with the answer
+    // If not, update the UI with a div
+    if (process.env.ANTHROPIC_API_KEY) {
+      uiStream.update(
+        <AnswerSection result={streamText.value} hasHeader={false} />
+      )
+    } else {
+      uiStream.update(<div />)
+    }
 
     // If useSpecificAPI is enabled, only function calls will be made
     // If not using a tool, this model generates the answer
