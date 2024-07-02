@@ -115,7 +115,6 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
     return (
       <Card className="p-3 md:p-4 w-full flex justify-between items-center">
         <div className="flex items-center space-x-2 flex-1 min-w-0">
-          <IconLogo className="w-4 h-4 flex-shrink-0" />
           <h5 className="text-muted-foreground text-xs truncate">
             {updatedQuery()}
           </h5>

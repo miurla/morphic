@@ -14,7 +14,10 @@ export function CopilotDisplay({ content }: CopilotDisplayProps) {
     const json = JSON.parse(content)
     const formDataEntries = Object.entries(json)
     const query = formDataEntries
-      .filter(([key, value]) => value === 'on' || key === 'additional_query')
+      .filter(
+        ([key, value]) =>
+          value === 'on' || (key === 'additional_query' && value !== '')
+      )
       .map(([key, value]) => (key === 'additional_query' ? value : key))
       .join(', ')
 
