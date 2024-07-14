@@ -156,7 +156,7 @@ async function submit(
     while (
       useSpecificAPI
         ? toolOutputs.length === 0 && answer.length === 0 && !errorOccurred
-        : stopReason !== 'stop' && !errorOccurred
+        : (stopReason !== 'stop' || answer.length === 0) && !errorOccurred
     ) {
       // Search the web and generate the answer
       const { fullResponse, hasError, toolResponses, finishReason } =
