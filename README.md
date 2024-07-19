@@ -140,10 +140,11 @@ This will allow you to use Morphic as your default search engine in the browser.
 
 - OpenAI
   - gpt-4o
+  - gpt-4o-mini
   - gpt-4-turbo
   - gpt-3.5-turbo
 - Google
-  - Gemini 1.5 pro
+  - Gemini 1.5 pro (Unstable)
 - Anthropic
   - Claude 3.5 Sonnet
 - Ollama (Unstable)
