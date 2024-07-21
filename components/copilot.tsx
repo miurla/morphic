@@ -14,7 +14,6 @@ import {
   useUIState
 } from 'ai/rsc'
 import type { AI } from '@/app/actions'
-import { IconLogo } from './ui/icons'
 import { useAppState } from '@/lib/utils/app-state'
 
 export type CopilotProps = {
@@ -32,7 +31,7 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(true)
   const [, setMessages] = useUIState<typeof AI>()
   const { submit } = useActions()
-  const { setIsGenerating } = useAppState()
+  const { isGenerating, setIsGenerating } = useAppState()
   const [object, setObject] = useState<PartialInquiry>()
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,6 +77,9 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
     skip?: boolean
   ) => {
     e.preventDefault()
+
+    if (isGenerating) return
+
     setIsGenerating(true)
     setCompleted(true)
     setSkipped(skip || false)
@@ -174,7 +176,7 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
               type="button"
               variant="outline"
               onClick={handleSkip}
-              disabled={pending}
+              disabled={pending || isGenerating}
             >
               <FastForward size={16} className="mr-1" />
               Skip
