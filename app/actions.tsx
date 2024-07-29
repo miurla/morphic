@@ -24,7 +24,6 @@ import { VideoSearchSection } from '@/components/video-search-section'
 import { transformToolMessages } from '@/lib/utils'
 import { AnswerSection } from '@/components/answer-section'
 import { ErrorCard } from '@/components/error-card'
-import { use } from 'react'
 
 async function submit(
   formData?: FormData,
@@ -53,8 +52,8 @@ async function submit(
       return { role, content } as CoreMessage
     })
 
-  // goupeiId is used to group the messages for collapse
-  const groupeId = generateId()
+  // groupId is used to group the messages for collapse
+  const groupId = generateId()
 
   const useSpecificAPI = process.env.USE_SPECIFIC_API_FOR_WRITER === 'true'
   const useOllamaProvider = !!(
@@ -173,7 +172,7 @@ async function submit(
             messages: [
               ...aiState.get().messages,
               {
-                id: groupeId,
+                id: groupId,
                 role: 'tool',
                 content: JSON.stringify(output.result),
                 name: output.toolName,
@@ -219,7 +218,7 @@ async function submit(
         messages: [
           ...aiState.get().messages,
           {
-            id: groupeId,
+            id: groupId,
             role: 'assistant',
             content: answer,
             type: 'answer'
@@ -241,13 +240,13 @@ async function submit(
         messages: [
           ...aiState.get().messages,
           {
-            id: groupeId,
+            id: groupId,
             role: 'assistant',
             content: JSON.stringify(relatedQueries),
             type: 'related'
           },
           {
-            id: groupeId,
+            id: groupId,
             role: 'assistant',
             content: 'followup',
             type: 'followup'
