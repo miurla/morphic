@@ -14,7 +14,7 @@ import { ChevronLeft, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { History as HistoryIcon } from 'lucide-react'
 import { Suspense } from 'react'
-import { HistorySkeleton } from './history-skelton'
+import { HistorySkeleton } from './history-skeleton'
 import { useAppState } from '@/lib/utils/app-state'
 
 type HistoryProps = {
