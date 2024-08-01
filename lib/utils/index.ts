@@ -19,16 +19,33 @@ export function getModel(useSubModel = false) {
   let openaiApiModel = process.env.OPENAI_API_MODEL || 'gpt-4o'
   const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY
+  // [nc]
+  const specificApiKey = process.env.USE_SPECIFIC_API_FOR_WRITER && process.env.SPECIFIC_API_KEY
 
   if (
     !(ollamaBaseUrl && ollamaModel) &&
     !openaiApiKey &&
     !googleApiKey &&
-    !anthropicApiKey
+    !anthropicApiKey &&
+    !specificApiKey // [nc]
   ) {
     throw new Error(
       'Missing environment variables for Ollama, OpenAI, Google or Anthropic'
     )
+  }
+  // [nc] mainly for groq
+  if (specificApiKey) {
+    const specificApiBase = process.env.SPECIFIC_API_BASE
+    // morphic uses function call. so the model must support this feature. the current model supporting this feature in groq are:
+    // llama3-groq-70b-8192-tool-use-preview, llama3-groq-8b-8192-tool-use-preview
+    const specialApiModel = process.env.SPECIFIC_API_MODEL || 'llama3-groq-70b-8192-tool-use-preview'
+    const openai = createOpenAI({
+      baseURL: specificApiBase, // optional base URL for proxies etc.
+      apiKey: specificApiKey, // optional API key, default to env property OPENAI_API_KEY
+      organization: '' // optional organization
+    })
+    // console.log(`specialApiModel: ${specialApiModel}`)
+    return openai.chat(specialApiModel)
   }
   // Ollama
   if (ollamaBaseUrl && ollamaModel) {
