@@ -4,60 +4,63 @@ import Exa from 'exa-js'
 import { searchSchema } from '@/lib/schema/search'
 import { SearchSection } from '@/components/search-section'
 import { ToolProps } from '.'
+import { sanitizeUrl } from '@/lib/utils'
+import { SearchResults } from '@/lib/types'
 
-export const searchTool = ({ uiStream, fullResponse }: ToolProps) => tool({
-  description: 'Search the web for information',
-  parameters: searchSchema,
-  execute: async ({
-    query,
-    max_results,
-    search_depth,
-    include_domains,
-    exclude_domains
-  }) => {
-    let hasError = false
-    // Append the search section
-    const streamResults = createStreamableValue<string>()
-    uiStream.update(
-      <SearchSection
-        result={streamResults.value}
-        includeDomains={include_domains}
-      />
-    )
+export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
+  tool({
+    description: 'Search the web for information',
+    parameters: searchSchema,
+    execute: async ({
+      query,
+      max_results,
+      search_depth,
+      include_domains,
+      exclude_domains
+    }) => {
+      let hasError = false
+      // Append the search section
+      const streamResults = createStreamableValue<string>()
+      uiStream.update(
+        <SearchSection
+          result={streamResults.value}
+          includeDomains={include_domains}
+        />
+      )
 
-    // Tavily API requires a minimum of 5 characters in the query
-    const filledQuery =
-      query.length < 5 ? query + ' '.repeat(5 - query.length) : query
-    let searchResult
-    const searchAPI: 'tavily' | 'exa' = 'tavily'
-    try {
-      searchResult =
-        searchAPI === 'tavily'
-          ? await tavilySearch(
-              filledQuery,
-              max_results,
-              search_depth,
-              include_domains,
-              exclude_domains
-            )
-          : await exaSearch(query)
-    } catch (error) {
-      console.error('Search API error:', error)
-      hasError = true
-    }
+      // Tavily API requires a minimum of 5 characters in the query
+      const filledQuery =
+        query.length < 5 ? query + ' '.repeat(5 - query.length) : query
+      let searchResult
+      const searchAPI: 'tavily' | 'exa' = 'tavily'
+      try {
+        searchResult =
+          searchAPI === 'tavily'
+            ? await tavilySearch(
+                filledQuery,
+                max_results,
+                search_depth,
+                include_domains,
+                exclude_domains
+              )
+            : await exaSearch(query)
+      } catch (error) {
+        console.error('Search API error:', error)
+        hasError = true
+      }
 
-    if (hasError) {
-      fullResponse = `An error occurred while searching for "${query}.`
-      uiStream.update(null)
-      streamResults.done()
+      if (hasError) {
+        fullResponse = `An error occurred while searching for "${query}.`
+        uiStream.update(null)
+        streamResults.done()
+        return searchResult
+      }
+
+      streamResults.done(JSON.stringify(searchResult))
+
       return searchResult
     }
-
-    streamResults.done(JSON.stringify(searchResult))
-
-    return searchResult
-  }
-})
+  })
 
 async function tavilySearch(
   query: string,
@@ -88,8 +91,14 @@ async function tavilySearch(
     throw new Error(`Error: ${response.status}`)
   }
 
+  // sanitize the image urls
   const data = await response.json()
-  return data
+  const sanitizedData: SearchResults = {
+    ...data,
+    images: data.images.map((url: any) => sanitizeUrl(url))
+  }
+
+  return sanitizedData
 }
 
 async function exaSearch(
