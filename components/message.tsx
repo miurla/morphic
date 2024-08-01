@@ -22,7 +22,7 @@ export function BotMessage({ content }: { content: string }) {
       <MemoizedReactMarkdown
         rehypePlugins={[
           [rehypeExternalLinks, { target: '_blank' }],
-          [rehypeKatex as any, { throwOnError: false, strict: false }]
+          [rehypeKatex]
         ]}
         remarkPlugins={[remarkGfm, remarkMath]}
         className="prose-sm prose-neutral prose-a:text-accent-foreground/50"
