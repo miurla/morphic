@@ -20,6 +20,12 @@ export function getModel(useSubModel = false) {
   const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY
 
+  if (process.env.NODE_ENV === 'development') {
+    const ollamaToolsModel = process.env.OLLAMA_TOOLS_MODEL || ''
+    const ollama = createOllama()
+    return ollama(ollamaToolsModel)
+  }
+
   if (
     !(ollamaBaseUrl && ollamaModel) &&
     !openaiApiKey &&
