@@ -1,7 +1,7 @@
 'use client'
 
 import { SearchResults } from './search-results'
-import { SearchSkeleton } from './search-skeleton'
+import { DefaultSkeleton } from './default-skeleton'
 import { SearchResultsImageSection } from './search-results-image'
 import { Section } from './section'
 import { ToolBadge } from './tool-badge'
@@ -39,9 +39,7 @@ export function SearchSection({ result, includeDomains }: SearchSectionProps) {
           </Section>
         </>
       ) : (
-        <Section className="pt-2 pb-0">
-          <SearchSkeleton />
-        </Section>
+        <DefaultSkeleton />
       )}
     </div>
   )
