@@ -5,7 +5,7 @@ services:
   morphic:
     build:
       context: . # The build context is the current directory
-      dockerfile: Dockerfile.test
+      dockerfile: Dockerfile
     command: bun dev # Use `bun dev -H 0.0.0.0` to listen on all interfaces
     env_file: .env.local # Load environment variables
     ports:
