@@ -1,6 +1,6 @@
 'use client'
 
-import { SearchSkeleton } from './search-skeleton'
+import { DefaultSkeleton } from './default-skeleton'
 import { Section } from './section'
 import type { SerperSearchResults } from '@/lib/types'
 import { StreamableValue, useStreamableValue } from 'ai/rsc'
@@ -27,7 +27,7 @@ export function VideoSearchSection({ result }: VideoSearchSectionProps) {
         </>
       ) : (
         <Section className="pt-2 pb-0">
-          <SearchSkeleton />
+          <DefaultSkeleton />
         </Section>
       )}
     </div>
