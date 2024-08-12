@@ -83,6 +83,18 @@ TAVILY_API_KEY=
 # Upstash Redis URL and Token retrieved here: https://console.upstash.com/redis
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
+
+## Redis Configuration
+
+This application supports both Upstash Redis and local Redis. To use local Redis:
+
+1. Set `USE_LOCAL_REDIS=true` in your `.env.local` file.
+2. Optionally, set `LOCAL_REDIS_URL` if your local Redis is not running on the default `localhost:6379` or `redis://redis:6379` if you're using docker compose.
+
+To use Upstash Redis:
+
+1. Set `USE_LOCAL_REDIS=false` or leave it unset in your `.env.local` file.
+2. Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` with your Upstash credentials.
 ```
 
 _Note: This project focuses on Generative UI and requires complex output from LLMs. Currently, it's assumed that the official OpenAI models will be used. Although it's possible to set up other models, if you use an OpenAI-compatible model, but we don't guarantee that it'll work._
@@ -157,3 +169,4 @@ This will allow you to use Morphic as your default search engine in the browser.
   - LLaMA3.1 70B
   - LLaMA3 8b
   - LLaMA3 70b
+

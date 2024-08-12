@@ -358,7 +358,13 @@ export const AI = createAI<AIState, UIState>({
 export const getUIStateFromAIState = (aiState: Chat) => {
   const chatId = aiState.chatId
   const isSharePage = aiState.isSharePage
-  return aiState.messages
+
+    // Ensure messages is an array of plain objects
+    const messages = Array.isArray(aiState.messages) 
+    ? aiState.messages.map(msg => ({...msg})) 
+    : [];
+
+  return messages
     .map((message, index) => {
       const { role, content, id, type, name } = message
 
