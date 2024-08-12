@@ -3,100 +3,116 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { AI, UIState } from '@/app/actions'
-import { useUIState, useActions, useAIState } from 'ai/rsc'
+import { useUIState, useActions } from 'ai/rsc'
 import { cn } from '@/lib/utils'
 import { UserMessage } from './user-message'
 import { Button } from './ui/button'
-import { ArrowRight, Plus } from 'lucide-react'
+import { ArrowRight, Plus, Paperclip } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
 import Textarea from 'react-textarea-autosize'
-import { generateId } from 'ai'
-import { useAppState } from '@/lib/utils/app-state'
+import { nanoid } from 'ai'
+import AnimatedShinyText from '@/components/magicui/animated-shiny-text'
+import { aiUseChatAdapter } from "@upstash/rag-chat/nextjs";
+import { embedData } from '@/lib/actions/chat'
+
 
 interface ChatPanelProps {
   messages: UIState
-  query?: string
 }
 
-export function ChatPanel({ messages, query }: ChatPanelProps) {
+export function ChatPanel({ messages }: ChatPanelProps) {
   const [input, setInput] = useState('')
-  const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const [, setMessages] = useUIState<typeof AI>()
-  const [aiMessage, setAIMessage] = useAIState<typeof AI>()
-  const { isGenerating, setIsGenerating } = useAppState()
   const { submit } = useActions()
-  const router = useRouter()
+  const [isButtonPressed, setIsButtonPressed] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const isFirstRender = useRef(true) // For development environment
+  const [showEmptyScreen, setShowEmptyScreen] = useState(false)
+  const router = useRouter()
+  const [showDropdown, setShowDropdown] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
-  async function handleQuerySubmit(query: string, formData?: FormData) {
-    setInput(query)
-    setIsGenerating(true)
-
-    // Add user message to UI state
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: generateId(),
-        component: <UserMessage message={query} />
-      }
-    ])
-
-    // Submit and get response message
-    const data = formData || new FormData()
-    if (!formData) {
-      data.append('input', query)
+  useEffect(() => {
+    if (isButtonPressed) {
+      inputRef.current?.focus()
+      setIsButtonPressed(false)
     }
-    const responseMessage = await submit(data)
-    setMessages(currentMessages => [...currentMessages, responseMessage])
-  }
+  }, [isButtonPressed])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    if (isButtonPressed) {
+      handleClear()
+      setIsButtonPressed(false)
+    }
+
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        component: <UserMessage message={input} />
+      }
+    ])
+
     const formData = new FormData(e.currentTarget)
-    await handleQuerySubmit(input, formData)
+    const responseMessage = await submit(formData)
+    setMessages(currentMessages => [...currentMessages, responseMessage as any])
   }
 
-  // if query is not empty, submit the query
-  useEffect(() => {
-    if (isFirstRender.current && query && query.trim().length > 0) {
-      handleQuerySubmit(query)
-      isFirstRender.current = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query])
-
-  useEffect(() => {
-    const lastMessage = aiMessage.messages.slice(-1)[0]
-    if (lastMessage?.type === 'followup' || lastMessage?.type === 'inquiry') {
-      setIsGenerating(false)
-    }
-  }, [aiMessage, setIsGenerating])
-
-  // Clear messages
   const handleClear = () => {
-    setIsGenerating(false)
-    setMessages([])
-    setAIMessage({ messages: [], chatId: '' })
-    setInput('')
     router.push('/')
+    window.location.reload()
   }
 
   useEffect(() => {
-    // focus on input when the page loads
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  useEffect(() => {
     inputRef.current?.focus()
   }, [])
 
-  // If there are messages and the new button has not been pressed, display the new Button
-  if (messages.length > 0) {
+  const handleOption1Click = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+      embedData(fileInputRef.current.value);
+    }
+  }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        localStorage.setItem('uploadedFile', reader.result as string)
+        alert('File content stored in local storage')
+      }
+      reader.readAsText(file)
+    }
+  }
+
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown)
+  }
+
+  if (messages.length > 0 && !isButtonPressed) {
     return (
-      <div className="fixed bottom-2 md:bottom-8 left-0 right-0 flex justify-center items-center mx-auto pointer-events-none">
+      <div className="fixed bottom-2 md:bottom-8 left-2 flex justify-start items-center mx-auto pointer-events-none">
         <Button
           type="button"
           variant={'secondary'}
           className="rounded-full bg-secondary/80 group transition-all hover:scale-105 pointer-events-auto"
           onClick={() => handleClear()}
-          disabled={isGenerating}
         >
           <span className="text-sm mr-2 group-hover:block hidden animate-in fade-in duration-300">
             New
@@ -107,78 +123,93 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
     )
   }
 
-  if (query && query.trim().length > 0) {
-    return null
-  }
-
   return (
-    <div
-      className={
-        'fixed bottom-8 left-0 right-0 top-10 mx-auto h-screen flex flex-col items-center justify-center'
+    <div className="fixed top-10 left-2 bottom-8 w-1/2 flex flex-col items-start justify-center">
+      <form onSubmit={handleSubmit} className="max-w-full w-full px-6">
+      <div className="relative flex items-center w-full">
+  <Textarea
+    ref={inputRef}
+    name="input"
+    rows={1}
+    maxRows={5}
+    tabIndex={0}
+    placeholder="explore"
+    spellCheck={false}
+    value={input}
+    className="resize-none w-full min-h-12 rounded-fill bg-muted border border-input pl-4 pr-20 pt-3 pb-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    onChange={e => {
+      setInput(e.target.value);
+      setShowEmptyScreen(e.target.value.length === 0);
+    }}
+    onKeyDown={e => {
+      if (
+        e.key === 'Enter' &&
+        !e.shiftKey &&
+        !e.nativeEvent.isComposing
+      ) {
+        if (input.trim().length === 0) {
+          e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+        const textarea = e.target as HTMLTextAreaElement;
+        textarea.form?.requestSubmit();
       }
+    }}
+    onHeightChange={height => {
+      if (!inputRef.current) return;
+
+      const initialHeight = 70;
+      const initialBorder = 32;
+      const multiple = (height - initialHeight) / 20;
+
+      const newBorder = initialBorder - 4 * multiple;
+      inputRef.current.style.borderRadius =
+        Math.max(8, newBorder) + 'px';
+    }}
+    onFocus={() => setShowEmptyScreen(true)}
+    onBlur={() => setShowEmptyScreen(false)}
+  />
+  
+  <div className="absolute right-2 flex items-center">
+    <Button
+      type="button"
+      variant={'ghost'}
+      size={'icon'}
+      className="mr-2"
+      
+      onClick={toggleDropdown}
     >
-      <form onSubmit={handleSubmit} className="max-w-2xl w-full px-6">
-        <div className="relative flex items-center w-full">
-          <Textarea
-            ref={inputRef}
-            name="input"
-            rows={1}
-            maxRows={5}
-            tabIndex={0}
-            placeholder="Ask a question..."
-            spellCheck={false}
-            value={input}
-            className="resize-none w-full min-h-12 rounded-fill bg-muted border border-input pl-4 pr-10 pt-3 pb-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'"
-            onChange={e => {
-              setInput(e.target.value)
-              setShowEmptyScreen(e.target.value.length === 0)
-            }}
-            onKeyDown={e => {
-              // Enter should submit the form
-              if (
-                e.key === 'Enter' &&
-                !e.shiftKey &&
-                !e.nativeEvent.isComposing
-              ) {
-                // Prevent the default action to avoid adding a new line
-                if (input.trim().length === 0) {
-                  e.preventDefault()
-                  return
-                }
-                e.preventDefault()
-                const textarea = e.target as HTMLTextAreaElement
-                textarea.form?.requestSubmit()
-              }
-            }}
-            onHeightChange={height => {
-              // Ensure inputRef.current is defined
-              if (!inputRef.current) return
+      <Paperclip size={20} />
+    </Button>
 
-              // The initial height and left padding is 70px and 2rem
-              const initialHeight = 70
-              // The initial border radius is 32px
-              const initialBorder = 32
-              // The height is incremented by multiples of 20px
-              const multiple = (height - initialHeight) / 20
+    {showDropdown && (
+      <div className="absolute top-10 right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <div ref={dropdownRef} className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+          <button onClick={handleOption1Click} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left" role="menuitem">
+            Documents
+          </button>
+          <button onClick={() => alert('Function not implemented.')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left" role="menuitem">
+            Images
+          </button>
+        </div>
+      </div>
+    )}
 
-              // Decrease the border radius by 4px for each 20px height increase
-              const newBorder = initialBorder - 4 * multiple
-              // The lowest border radius will be 8px
-              inputRef.current.style.borderRadius =
-                Math.max(8, newBorder) + 'px'
-            }}
-            onFocus={() => setShowEmptyScreen(true)}
-            onBlur={() => setShowEmptyScreen(false)}
-          />
-          <Button
-            type="submit"
-            size={'icon'}
-            variant={'ghost'}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2"
-            disabled={input.length === 0}
-          >
-            <ArrowRight size={20} />
-          </Button>
+    <Button
+      type="submit"
+      size={'icon'}
+      variant={'ghost'}
+      className=""
+      disabled={input.length === 0}
+    >
+      <ArrowRight size={20} />
+    </Button>
+  </div>
+</div>
+
+        <div className="text-xs text-gray-500 mt-2">
+          Beta: Responses may contain innacuracies. 
         </div>
         <EmptyScreen
           submitMessage={message => {
@@ -187,6 +218,14 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
           className={cn(showEmptyScreen ? 'visible' : 'invisible')}
         />
       </form>
+
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
     </div>
   )
 }
