@@ -31,6 +31,7 @@ An AI-powered search engine with a generative UI.
   - Ollama Provider ([Unstable](https://github.com/miurla/morphic/issues/215))
 - Specify the model to generate answers
   - Groq API support [※](https://github.com/miurla/morphic/pull/58)
+- Local Redis support
 
 ## 🧱 Stack
 
@@ -39,7 +40,7 @@ An AI-powered search engine with a generative UI.
 - Generative Model: [OpenAI](https://openai.com/)
 - Search API: [Tavily AI](https://tavily.com/) / [Serper](https://serper.dev)
 - Reader API: [Jina AI](https://jina.ai/)
-- Serverless Database: [Upstash](https://upstash.com/)
+- Database (Serverless/Local): [Upstash](https://upstash.com/) / [Redis](https://redis.io/)
 - Component library: [shadcn/ui](https://ui.shadcn.com/)
 - Headless component primitives: [Radix UI](https://www.radix-ui.com/)
 - Styling: [Tailwind CSS](https://tailwindcss.com/)
@@ -65,6 +66,8 @@ bun install
 
 Follow the guide below to set up Upstash Redis. Create a database and obtain `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Refer to the [Upstash guide](https://upstash.com/blog/rag-chatbot-upstash#setting-up-upstash-redis) for instructions on how to proceed.
 
+If you intend to use a local Redis, you can skip this step.
+
 ### 4. Fill out secrets
 
 ```
@@ -83,17 +86,37 @@ TAVILY_API_KEY=
 # Upstash Redis URL and Token retrieved here: https://console.upstash.com/redis
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
-```
 
-_Note: This project focuses on Generative UI and requires complex output from LLMs. Currently, it's assumed that the official OpenAI models will be used. Although it's possible to set up other models, if you use an OpenAI-compatible model, but we don't guarantee that it'll work._
+## Redis Configuration
+
+This application supports both Upstash Redis and local Redis. To use local Redis:
+
+1. Set `USE_LOCAL_REDIS=true` in your `.env.local` file.
+2. Optionally, set `LOCAL_REDIS_URL` if your local Redis is not running on the default `localhost:6379` or `redis://redis:6379` if you're using docker compose.
+
+To use Upstash Redis:
+
+1. Set `USE_LOCAL_REDIS=false` or leave it unset in your `.env.local` file.
+2. Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` with your Upstash credentials.
+```
 
 ### 5. Run app locally
 
-```
-bun dev
-```
+#### Using Bun
 
-You can now visit http://localhost:3000.
+To run the application locally using Bun, execute the following command:
+
+`bun dev`
+
+You can now visit http://localhost:3000 in your web browser.
+
+#### Using Docker
+
+To run the application using Docker, use the following command:
+
+`docker compose up -d`
+
+This will start the application in detached mode. You can access it at http://localhost:3000.
 
 ## 🌐 Deploy
 
