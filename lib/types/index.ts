@@ -1,8 +1,8 @@
 export type SearchResults = {
   images: SearchResultImage[]
   results: SearchResultItem[]
-  query: string
   number_of_results?: number
+  query: string
 }
 
 // If enabled the include_images_description is true, the images will be an array of { url: string, description: string }
@@ -12,7 +12,8 @@ export type SearchResultImage =
   | {
       url: string
       description: string
-    }
+      number_of_results?: number
+}
 
 
 export type ExaSearchResults = {
