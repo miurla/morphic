@@ -5,7 +5,7 @@ import { searchSchema } from '@/lib/schema/search'
 import { SearchSection } from '@/components/search-section'
 import { ToolProps } from '.'
 import { sanitizeUrl } from '@/lib/utils'
-import { SearchResults, SearchResultItem, SearchXNGResponse, SearchXNGResult } from '@/lib/types'
+import { SearchResultImage, SearchResults, SearchResultItem, SearchXNGResponse, SearchXNGResult } from '@/lib/types'
 
 export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
   tool({
@@ -28,7 +28,7 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
         />
       )
 
-      // Ensure minimum query length for all APIs
+      // Tavily API requires a minimum of 5 characters in the query
       const filledQuery =
         query.length < 5 ? query + ' '.repeat(5 - query.length) : query
       let searchResult: SearchResults
@@ -72,7 +72,7 @@ async function tavilySearch(
   if (!apiKey) {
     throw new Error('TAVILY_API_KEY is not set in the environment variables')
   }
-
+  const includeImageDescriptions = true
   const response = await fetch('https://api.tavily.com/search', {
     method: 'POST',
     headers: {
@@ -84,6 +84,7 @@ async function tavilySearch(
       max_results: Math.max(maxResults, 5),
       search_depth: searchDepth,
       include_images: true,
+      include_image_descriptions: includeImageDescriptions,
       include_answers: true,
       include_domains: includeDomains,
       exclude_domains: excludeDomains
@@ -95,9 +96,25 @@ async function tavilySearch(
   }
 
   const data = await response.json()
+  const processedImages = includeImageDescriptions
+    ? data.images
+      .map(({ url, description }: { url: string; description: string }) => ({
+        url: sanitizeUrl(url),
+        description
+      }))
+      .filter(
+        (
+          image: SearchResultImage
+        ): image is { url: string; description: string } =>
+          typeof image === 'object' &&
+          image.description !== undefined &&
+          image.description !== ''
+      )
+    : data.images.map((url: string) => sanitizeUrl(url))
+  
   return {
     ...data,
-    images: data.images.map((url: string) => sanitizeUrl(url))
+    images: processedImages
   }
 }
 
@@ -175,7 +192,6 @@ async function searchXNGSearch(
     }
 
     const data: SearchXNGResponse = await response.json()
-    //console.log('SearchXNG API response:', JSON.stringify(data, null, 2))
 
     // Separate general results and image results
     const generalResults = data.results.filter(result => !result.img_src)

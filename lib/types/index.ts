@@ -1,9 +1,19 @@
 export type SearchResults = {
-  images: string[]
+  images: SearchResultImage[]
   results: SearchResultItem[]
   query: string
   number_of_results?: number
 }
+
+// If enabled the include_images_description is true, the images will be an array of { url: string, description: string }
+// Otherwise, the images will be an array of strings
+export type SearchResultImage =
+  | string
+  | {
+      url: string
+      description: string
+    }
+
 
 export type ExaSearchResults = {
   results: ExaSearchResultItem[]
