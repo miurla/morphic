@@ -5,7 +5,7 @@ import { searchSchema } from '@/lib/schema/search'
 import { SearchSection } from '@/components/search-section'
 import { ToolProps } from '.'
 import { sanitizeUrl } from '@/lib/utils'
-import { SearchResults } from '@/lib/types'
+import { SearchResultImage, SearchResults } from '@/lib/types'
 
 export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
   tool({
@@ -70,6 +70,7 @@ async function tavilySearch(
   excludeDomains: string[] = []
 ): Promise<any> {
   const apiKey = process.env.TAVILY_API_KEY
+  const includeImageDescriptions = true
   const response = await fetch('https://api.tavily.com/search', {
     method: 'POST',
     headers: {
@@ -81,6 +82,7 @@ async function tavilySearch(
       max_results: maxResults < 5 ? 5 : maxResults,
       search_depth: searchDepth,
       include_images: true,
+      include_image_descriptions: includeImageDescriptions,
       include_answers: true,
       include_domains: includeDomains,
       exclude_domains: excludeDomains
@@ -91,14 +93,30 @@ async function tavilySearch(
     throw new Error(`Error: ${response.status}`)
   }
 
-  // sanitize the image urls
   const data = await response.json()
-  const sanitizedData: SearchResults = {
+
+  const processedImages = includeImageDescriptions
+    ? data.images
+        .map(({ url, description }: { url: string; description: string }) => ({
+          url: sanitizeUrl(url),
+          description
+        }))
+        .filter(
+          (
+            image: SearchResultImage
+          ): image is { url: string; description: string } =>
+            typeof image === 'object' &&
+            image.description !== undefined &&
+            image.description !== ''
+        )
+    : data.images.map((url: string) => sanitizeUrl(url))
+
+  const convertedData: SearchResults = {
     ...data,
-    images: data.images.map((url: any) => sanitizeUrl(url))
+    images: processedImages
   }
 
-  return sanitizedData
+  return convertedData
 }
 
 async function exaSearch(
