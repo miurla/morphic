@@ -12,6 +12,7 @@ services:
       - "3000:3000" # Maps port 3000 on the host to port 3000 in the container.
     depends_on:
       - redis
+      - searchxng
 
   redis:
     image: redis:alpine
@@ -21,5 +22,16 @@ services:
       - redis_data:/data
     command: redis-server --appendonly yes
 
+  searchxng:
+    image: searxng/searxng
+    ports:
+      - "${SEARXNG_PORT:-8080}:8080"
+    env_file: .env.local # can remove if you want to use env variables or in settings.yml
+    volumes:
+      - ./searxng-limiter.toml:/etc/searxng/limiter.toml
+      - ./searxng-settings.yml:/etc/searxng/settings.yml
+      - searchxng_data:/data
+
 volumes:
   redis_data:
+  searchxng_data:

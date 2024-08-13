@@ -2,6 +2,7 @@ export type SearchResults = {
   images: string[]
   results: SearchResultItem[]
   query: string
+  number_of_results?: number
 }
 
 export type ExaSearchResults = {
@@ -69,4 +70,17 @@ export type AIMessage = {
     | 'tool'
     | 'followup'
     | 'end'
+}
+
+export interface SearchXNGResult {
+  title: string;
+  url: string;
+  content: string;
+  img_src?: string;
+}
+
+export interface SearchXNGResponse {
+  query: string;
+  number_of_results: number;
+  results: SearchXNGResult[];
 }
