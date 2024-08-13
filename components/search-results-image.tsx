@@ -20,9 +20,10 @@ import {
 } from '@/components/ui/carousel'
 import { useEffect, useState } from 'react'
 import { PlusCircle } from 'lucide-react'
+import { SearchResultImage } from '@/lib/types'
 
 interface SearchResultsImageSectionProps {
-  images: string[]
+  images: SearchResultImage[]
   query?: string
 }
 
@@ -59,9 +60,21 @@ export const SearchResultsImageSection: React.FC<
     return <div className="text-muted-foreground">No images found</div>
   }
 
+  // If enabled the include_images_description is true, the images will be an array of { url: string, description: string }
+  // Otherwise, the images will be an array of strings
+  let convertedImages: { url: string; description: string }[] = []
+  if (typeof images[0] === 'string') {
+    convertedImages = (images as string[]).map(image => ({
+      url: image,
+      description: ''
+    }))
+  } else {
+    convertedImages = images as { url: string; description: string }[]
+  }
+
   return (
     <div className="flex flex-wrap gap-2">
-      {images.slice(0, 4).map((image, index) => (
+      {convertedImages.slice(0, 4).map((image, index) => (
         <Dialog key={index}>
           <DialogTrigger asChild>
             <div
@@ -72,7 +85,7 @@ export const SearchResultsImageSection: React.FC<
                 <CardContent className="p-2 h-full w-full">
                   {image ? (
                     <img
-                      src={image}
+                      src={image.url}
                       alt={`Image ${index + 1}`}
                       className="h-full w-full object-cover"
                       onError={e =>
@@ -102,11 +115,11 @@ export const SearchResultsImageSection: React.FC<
                 className="w-full bg-muted max-h-[60vh]"
               >
                 <CarouselContent>
-                  {images.map((img, idx) => (
+                  {convertedImages.map((img, idx) => (
                     <CarouselItem key={idx}>
                       <div className="p-1 flex items-center justify-center h-full">
                         <img
-                          src={img}
+                          src={img.url}
                           alt={`Image ${idx + 1}`}
                           className="h-auto w-full object-contain max-h-[60vh]"
                           onError={e =>
