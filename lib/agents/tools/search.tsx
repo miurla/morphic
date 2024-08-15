@@ -9,8 +9,8 @@ import {
   SearchResultImage,
   SearchResults,
   SearchResultItem,
-  SearchXNGResponse,
-  SearchXNGResult
+  SearXNGResponse,
+  SearXNGResult
 } from '@/lib/types'
 
 export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
@@ -39,7 +39,7 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
         query.length < 5 ? query + ' '.repeat(5 - query.length) : query
       let searchResult: SearchResults
       const searchAPI =
-        (process.env.SEARCH_API as 'tavily' | 'exa' | 'searchxng') || 'tavily'
+        (process.env.SEARCH_API as 'tavily' | 'exa' | 'searxng') || 'tavily'
       console.log(`Using search API: ${searchAPI}`)
 
       try {
@@ -47,7 +47,7 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
           ? tavilySearch
           : searchAPI === 'exa'
           ? exaSearch
-          : searchXNGSearch)(
+          : searxngSearch)(
           filledQuery,
           max_results,
           search_depth,
@@ -168,16 +168,16 @@ async function exaSearch(
   }
 }
 
-async function searchXNGSearch(
+async function searxngSearch(
   query: string,
   maxResults: number = 10,
   _searchDepth: string,
   includeDomains: string[] = [], //keep for future use
   excludeDomains: string[] = [] //keep for future use
 ): Promise<SearchResults> {
-  const apiUrl = process.env.SEARCHXNG_API_URL
+  const apiUrl = process.env.SEARXNG_API_URL
   if (!apiUrl) {
-    throw new Error('SEARCHXNG_API_URL is not set in the environment variables')
+    throw new Error('SEARXNG_API_URL is not set in the environment variables')
   }
 
   try {
@@ -188,7 +188,7 @@ async function searchXNGSearch(
     // Enable both general and image results
     url.searchParams.append('categories', 'general,images')
 
-    // Fetch results from SearchXNG
+    // Fetch results from SearXNG
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
@@ -198,13 +198,13 @@ async function searchXNGSearch(
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error(`SearchXNG API error (${response.status}):`, errorText)
+      console.error(`SearXNG API error (${response.status}):`, errorText)
       throw new Error(
-        `SearchXNG API error: ${response.status} ${response.statusText} - ${errorText}`
+        `SearXNG API error: ${response.status} ${response.statusText} - ${errorText}`
       )
     }
 
-    const data: SearchXNGResponse = await response.json()
+    const data: SearXNGResponse = await response.json()
 
     // Separate general results and image results, and limit to maxResults
     const generalResults = data.results
@@ -217,7 +217,7 @@ async function searchXNGSearch(
     // Format the results to match the expected SearchResults structure
     return {
       results: generalResults.map(
-        (result: SearchXNGResult): SearchResultItem => ({
+        (result: SearXNGResult): SearchResultItem => ({
           title: result.title,
           url: result.url,
           content: result.content
@@ -233,7 +233,7 @@ async function searchXNGSearch(
       number_of_results: data.number_of_results
     }
   } catch (error) {
-    console.error('SearchXNG API error:', error)
+    console.error('SearXNG API error:', error)
     throw error
   }
 }
