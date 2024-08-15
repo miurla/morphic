@@ -164,7 +164,7 @@ Morphic now supports SearchXNG as an alternative search backend. To use SearchXN
 1. Ensure you have Docker and Docker Compose installed on your system.
 2. In your `.env.local` file, set the following variables:
 
-   - SEARCHXNG_API_URL=http://redis:8080
+   - SEARCHXNG_API_URL=http://localhost:8080  # Replace with your local SearchXNG API URL or docker http://searchxng:8080
    - SEARXNG_SECRET=your_secret_key_here
    - SEARXNG_PORT=8080
    - SEARXNG_IMAGE_PROXY=true

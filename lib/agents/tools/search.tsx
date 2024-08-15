@@ -5,7 +5,13 @@ import { searchSchema } from '@/lib/schema/search'
 import { SearchSection } from '@/components/search-section'
 import { ToolProps } from '.'
 import { sanitizeUrl } from '@/lib/utils'
-import { SearchResultImage, SearchResults, SearchResultItem, SearchXNGResponse, SearchXNGResult } from '@/lib/types'
+import {
+  SearchResultImage,
+  SearchResults,
+  SearchResultItem,
+  SearchXNGResponse,
+  SearchXNGResult
+} from '@/lib/types'
 
 export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
   tool({
@@ -32,21 +38,31 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
       const filledQuery =
         query.length < 5 ? query + ' '.repeat(5 - query.length) : query
       let searchResult: SearchResults
-      const searchAPI = (process.env.SEARCH_API as 'tavily' | 'exa' | 'searchxng') || 'tavily'
+      const searchAPI =
+        (process.env.SEARCH_API as 'tavily' | 'exa' | 'searchxng') || 'tavily'
       console.log(`Using search API: ${searchAPI}`)
 
       try {
-        searchResult = await (
-          searchAPI === 'tavily'
-            ? tavilySearch
-            : searchAPI === 'exa'
-            ? exaSearch
-            : searchXNGSearch
-        )(filledQuery, max_results, search_depth, include_domains, exclude_domains)
+        searchResult = await (searchAPI === 'tavily'
+          ? tavilySearch
+          : searchAPI === 'exa'
+          ? exaSearch
+          : searchXNGSearch)(
+          filledQuery,
+          max_results,
+          search_depth,
+          include_domains,
+          exclude_domains
+        )
       } catch (error) {
         console.error('Search API error:', error)
         hasError = true
-        searchResult = { results: [], query: filledQuery, images: [], number_of_results: 0 }
+        searchResult = {
+          results: [],
+          query: filledQuery,
+          images: [],
+          number_of_results: 0
+        }
       }
 
       if (hasError) {
@@ -92,26 +108,28 @@ async function tavilySearch(
   })
 
   if (!response.ok) {
-    throw new Error(`Tavily API error: ${response.status} ${response.statusText}`)
+    throw new Error(
+      `Tavily API error: ${response.status} ${response.statusText}`
+    )
   }
 
   const data = await response.json()
   const processedImages = includeImageDescriptions
     ? data.images
-      .map(({ url, description }: { url: string; description: string }) => ({
-        url: sanitizeUrl(url),
-        description
-      }))
-      .filter(
-        (
-          image: SearchResultImage
-        ): image is { url: string; description: string } =>
-          typeof image === 'object' &&
-          image.description !== undefined &&
-          image.description !== ''
-      )
+        .map(({ url, description }: { url: string; description: string }) => ({
+          url: sanitizeUrl(url),
+          description
+        }))
+        .filter(
+          (
+            image: SearchResultImage
+          ): image is { url: string; description: string } =>
+            typeof image === 'object' &&
+            image.description !== undefined &&
+            image.description !== ''
+        )
     : data.images.map((url: string) => sanitizeUrl(url))
-  
+
   return {
     ...data,
     images: processedImages
@@ -154,8 +172,8 @@ async function searchXNGSearch(
   query: string,
   maxResults: number = 10,
   _searchDepth: string,
-  includeDomains: string[] = [],
-  excludeDomains: string[] = []
+  includeDomains: string[] = [], //keep for future use
+  excludeDomains: string[] = [] //keep for future use
 ): Promise<SearchResults> {
   const apiUrl = process.env.SEARCHXNG_API_URL
   if (!apiUrl) {
@@ -167,50 +185,51 @@ async function searchXNGSearch(
     const url = new URL(`${apiUrl}/search`)
     url.searchParams.append('q', query)
     url.searchParams.append('format', 'json')
-    url.searchParams.append('max_results', maxResults.toString())
     // Enable both general and image results
     url.searchParams.append('categories', 'general,images')
-    // Add domain filters if specified
-    if (includeDomains.length > 0) {
-      url.searchParams.append('include_domains', includeDomains.join(','))
-    }
-    if (excludeDomains.length > 0) {
-      url.searchParams.append('exclude_domains', excludeDomains.join(','))
-    }
+
     // Fetch results from SearchXNG
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
+        Accept: 'application/json'
       }
     })
 
     if (!response.ok) {
       const errorText = await response.text()
       console.error(`SearchXNG API error (${response.status}):`, errorText)
-      throw new Error(`SearchXNG API error: ${response.status} ${response.statusText} - ${errorText}`)
+      throw new Error(
+        `SearchXNG API error: ${response.status} ${response.statusText} - ${errorText}`
+      )
     }
 
     const data: SearchXNGResponse = await response.json()
 
-    // Separate general results and image results
-    const generalResults = data.results.filter(result => !result.img_src)
-    const imageResults = data.results.filter(result => result.img_src)
-    
+    // Separate general results and image results, and limit to maxResults
+    const generalResults = data.results
+      .filter(result => !result.img_src)
+      .slice(0, maxResults)
+    const imageResults = data.results
+      .filter(result => result.img_src)
+      .slice(0, maxResults)
+
     // Format the results to match the expected SearchResults structure
     return {
-      results: generalResults.map((result: SearchXNGResult): SearchResultItem => ({
-        title: result.title,
-        url: result.url,
-        content: result.content
-      })),
+      results: generalResults.map(
+        (result: SearchXNGResult): SearchResultItem => ({
+          title: result.title,
+          url: result.url,
+          content: result.content
+        })
+      ),
       query: data.query,
-      images: imageResults.map(result => {
-        const imgSrc = result.img_src || '';
-        // If image_proxy is disabled, img_src should always be a full URL
-        // If it's enabled, it might be a relative URL
-        return imgSrc.startsWith('http') ? imgSrc : `${apiUrl}${imgSrc}`
-      }).filter(Boolean), // Remove any empty strings
+      images: imageResults
+        .map(result => {
+          const imgSrc = result.img_src || ''
+          return imgSrc.startsWith('http') ? imgSrc : `${apiUrl}${imgSrc}`
+        })
+        .filter(Boolean),
       number_of_results: data.number_of_results
     }
   } catch (error) {
