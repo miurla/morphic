@@ -39,7 +39,7 @@ An AI-powered search engine with a generative UI.
 - App framework: [Next.js](https://nextjs.org/)
 - Text streaming / Generative UI: [Vercel AI SDK](https://sdk.vercel.ai/docs)
 - Generative Model: [OpenAI](https://openai.com/)
-- Search API: [Tavily AI](https://tavily.com/) / [Serper](https://serper.dev) / [SearchXNG](https://docs.searxng.org/)
+- Search API: [Tavily AI](https://tavily.com/) / [Serper](https://serper.dev) / [SearXNG](https://docs.searxng.org/)
 - Reader API: [Jina AI](https://jina.ai/)
 - Database (Serverless/Local): [Upstash](https://upstash.com/) / [Redis](https://redis.io/)
 - Component library: [shadcn/ui](https://ui.shadcn.com/)
@@ -158,40 +158,39 @@ If you want to use Morphic as a search engine in your browser, follow these step
 
 This will allow you to use Morphic as your default search engine in the browser.
 
-### Using SearchXNG as an Alternative Search Backend
+### Using SearXNG as an Alternative Search Backend
 
-Morphic now supports SearchXNG as an alternative search backend. To use SearchXNG:
+Morphic now supports SearXNG as an alternative search backend. To use SearXNG:
 
 1. Ensure you have Docker and Docker Compose installed on your system.
 2. In your `.env.local` file, set the following variables:
 
-   - SEARCHXNG_API_URL=http://localhost:8080 # Replace with your local SearchXNG API URL or docker http://searchxng:8080
+   - SEARXNG_API_URL=http://localhost:8080 # Replace with your local SearXNG API URL or docker http://searxng:8080
    - SEARXNG_SECRET=your_secret_key_here
    - SEARXNG_PORT=8080
    - SEARXNG_IMAGE_PROXY=true
-   - SEARCH_API=searchxng
+   - SEARCH_API=searxng
    - SEARXNG_LIMITER=false # can be enabled to limit the number of requests per IP
-   - SEARCH_API=searchxng
 
 3. Two configuration files are provided in the root directory:
 
-- `searxng-settings.yml`: This file contains the main configuration for SearchXNG, including engine settings and server options.
-- `searxng-limiter.toml`: This file configures the rate limiting and bot detection features of SearchXNG.
+- `searxng-settings.yml`: This file contains the main configuration for SearXNG, including engine settings and server options.
+- `searxng-limiter.toml`: This file configures the rate limiting and bot detection features of SearXNG.
 
-4. Run `docker-compose up` to start the Morphic stack with SearchXNG included.
-5. SearchXNG will be available at `http://localhost:8080` and Morphic will use it as the search backend.
+4. Run `docker-compose up` to start the Morphic stack with SearXNG included.
+5. SearXNG will be available at `http://localhost:8080` and Morphic will use it as the search backend.
 
-#### Customizing SearchXNG
+#### Customizing SearXNG
 
 - You can modify `searxng-settings.yml` to enable/disable specific search engines, change UI settings, or adjust server options.
-- The `searxng-limiter.toml` file allows you to configure rate limiting and bot detection. This is useful if you're exposing SearchXNG directly to the internet.
-- If you prefer not to use external configuration files, you can set these options using environment variables in the `docker-compose.yml` file or directly in the SearchXNG container.
+- The `searxng-limiter.toml` file allows you to configure rate limiting and bot detection. This is useful if you're exposing SearXNG directly to the internet.
+- If you prefer not to use external configuration files, you can set these options using environment variables in the `docker-compose.yml` file or directly in the SearXNG container.
 
 #### Advanced Configuration
 
-- To disable the limiter entirely, set `LIMITER=false` in the SearchXNG service environment variables.
+- To disable the limiter entirely, set `LIMITER=false` in the SearXNG service environment variables.
 - For production use, consider adjusting the `SEARXNG_SECRET_KEY` to a secure, randomly generated value.
-- The `SEARXNG_IMAGE_PROXY` option allows SearchXNG to proxy image results, enhancing privacy. Set to `true` to enable this feature.
+- The `SEARXNG_IMAGE_PROXY` option allows SearXNG to proxy image results, enhancing privacy. Set to `true` to enable this feature.
 
 #### Troubleshooting
 

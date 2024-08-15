@@ -13,8 +13,7 @@ export type SearchResultImage =
       url: string
       description: string
       number_of_results?: number
-}
-
+    }
 
 export type ExaSearchResults = {
   results: ExaSearchResultItem[]
@@ -83,15 +82,15 @@ export type AIMessage = {
     | 'end'
 }
 
-export interface SearchXNGResult {
-  title: string;
-  url: string;
-  content: string;
-  img_src?: string;
+export interface SearXNGResult {
+  title: string
+  url: string
+  content: string
+  img_src?: string
 }
 
-export interface SearchXNGResponse {
-  query: string;
-  number_of_results: number;
-  results: SearchXNGResult[];
+export interface SearXNGResponse {
+  query: string
+  number_of_results: number
+  results: SearXNGResult[]
 }
