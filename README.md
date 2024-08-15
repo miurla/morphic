@@ -32,6 +32,7 @@ An AI-powered search engine with a generative UI.
 - Specify the model to generate answers
   - Groq API support [※](https://github.com/miurla/morphic/pull/58)
 - Local Redis support
+- Local Saerch API support (SearXNG)
 
 ## 🧱 Stack
 
@@ -164,15 +165,16 @@ Morphic now supports SearchXNG as an alternative search backend. To use SearchXN
 1. Ensure you have Docker and Docker Compose installed on your system.
 2. In your `.env.local` file, set the following variables:
 
-   - SEARCHXNG_API_URL=http://localhost:8080  # Replace with your local SearchXNG API URL or docker http://searchxng:8080
+   - SEARCHXNG_API_URL=http://localhost:8080 # Replace with your local SearchXNG API URL or docker http://searchxng:8080
    - SEARXNG_SECRET=your_secret_key_here
    - SEARXNG_PORT=8080
    - SEARXNG_IMAGE_PROXY=true
    - SEARCH_API=searchxng
-   - SEARXNG_LIMITER=false # can be enabled to limit the number of requests per IP     
+   - SEARXNG_LIMITER=false # can be enabled to limit the number of requests per IP
    - SEARCH_API=searchxng
 
 3. Two configuration files are provided in the root directory:
+
 - `searxng-settings.yml`: This file contains the main configuration for SearchXNG, including engine settings and server options.
 - `searxng-limiter.toml`: This file configures the rate limiting and bot detection features of SearchXNG.
 
@@ -181,19 +183,19 @@ Morphic now supports SearchXNG as an alternative search backend. To use SearchXN
 
 #### Customizing SearchXNG
 
-* You can modify `searxng-settings.yml` to enable/disable specific search engines, change UI settings, or adjust server options.
-* The `searxng-limiter.toml` file allows you to configure rate limiting and bot detection. This is useful if you're exposing SearchXNG directly to the internet.
-* If you prefer not to use external configuration files, you can set these options using environment variables in the `docker-compose.yml` file or directly in the SearchXNG container.
+- You can modify `searxng-settings.yml` to enable/disable specific search engines, change UI settings, or adjust server options.
+- The `searxng-limiter.toml` file allows you to configure rate limiting and bot detection. This is useful if you're exposing SearchXNG directly to the internet.
+- If you prefer not to use external configuration files, you can set these options using environment variables in the `docker-compose.yml` file or directly in the SearchXNG container.
 
 #### Advanced Configuration
 
-* To disable the limiter entirely, set `LIMITER=false` in the SearchXNG service environment variables.
-* For production use, consider adjusting the `SEARXNG_SECRET_KEY` to a secure, randomly generated value.
-* The `SEARXNG_IMAGE_PROXY` option allows SearchXNG to proxy image results, enhancing privacy. Set to `true` to enable this feature.
+- To disable the limiter entirely, set `LIMITER=false` in the SearchXNG service environment variables.
+- For production use, consider adjusting the `SEARXNG_SECRET_KEY` to a secure, randomly generated value.
+- The `SEARXNG_IMAGE_PROXY` option allows SearchXNG to proxy image results, enhancing privacy. Set to `true` to enable this feature.
 
 #### Troubleshooting
 
-* If you encounter issues with specific search engines (e.g., Wikidata), you can disable them in `searxng-settings.yml`:
+- If you encounter issues with specific search engines (e.g., Wikidata), you can disable them in `searxng-settings.yml`:
 
 ```yaml
 engines:
@@ -201,7 +203,7 @@ engines:
     disabled: true
 ```
 
-* refer to https://docs.searxng.org/admin/settings/settings.html#settings-yml
+- refer to https://docs.searxng.org/admin/settings/settings.html#settings-yml
 
 ## ✅ Verified models
 
