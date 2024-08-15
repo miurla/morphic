@@ -32,7 +32,7 @@ An AI-powered search engine with a generative UI.
 - Specify the model to generate answers
   - Groq API support [※](https://github.com/miurla/morphic/pull/58)
 - Local Redis support
-- Local Saerch API support (SearXNG)
+- SearXNG Search API support
 
 ## 🧱 Stack
 
