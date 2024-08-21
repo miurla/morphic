@@ -32,7 +32,9 @@ An AI-powered search engine with a generative UI.
 - Specify the model to generate answers
   - Groq API support [※](https://github.com/miurla/morphic/pull/58)
 - Local Redis support
-- SearXNG Search API support
+- SearXNG Search API support with customizable depth (basic or advanced)
+- Configurable search depth (basic or advanced)
+- SearXNG Search API support with customizable depth
 
 ## 🧱 Stack
 
@@ -99,6 +101,18 @@ To use Upstash Redis:
 
 1. Set `USE_LOCAL_REDIS=false` or leave it unset in your `.env.local` file.
 2. Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` with your Upstash credentials.
+
+# SearXNG Configuration
+SEARXNG_API_URL=http://localhost:8080  # Replace with your local SearXNG API URL or docker http://searxng:8080
+SEARCH_API=tavily  #  use searxng, tavily or exa
+SEARXNG_SECRET="" # generate a secret key e.g. openssl rand -base64 32
+SEARXNG_PORT=8080 # default port
+SEARXNG_BIND_ADDRESS=0.0.0.0 # default address
+SEARXNG_IMAGE_PROXY=true # enable image proxy
+SEARXNG_LIMITER=false # can be enabled to limit the number of requests per IP address
+SEARXNG_DEFAULT_DEPTH=basic # Set to 'basic' or 'advanced', only affects SearXNG searches
+SEARXNG_MAX_RESULTS=50 # Maximum number of results to return from SearXNG
+
 ```
 
 ### 5. Run app locally
@@ -171,6 +185,8 @@ Morphic now supports SearXNG as an alternative search backend. To use SearXNG:
    - SEARXNG_IMAGE_PROXY=true
    - SEARCH_API=searxng
    - SEARXNG_LIMITER=false # can be enabled to limit the number of requests per IP
+   - SEARXNG_DEFAULT_DEPTH=basic # Set to 'basic' or 'advanced'
+   - SEARXNG_MAX_RESULTS=50 # Maximum number of results to return from SearXNG
 
 3. Two configuration files are provided in the root directory:
 
@@ -191,6 +207,7 @@ Morphic now supports SearXNG as an alternative search backend. To use SearXNG:
 - To disable the limiter entirely, set `LIMITER=false` in the SearXNG service environment variables.
 - For production use, consider adjusting the `SEARXNG_SECRET_KEY` to a secure, randomly generated value.
 - The `SEARXNG_IMAGE_PROXY` option allows SearXNG to proxy image results, enhancing privacy. Set to `true` to enable this feature.
+- Set `SEARXNG_DEFAULT_DEPTH` to 'basic' or 'advanced' to control the default search depth.
 
 #### Troubleshooting
 

@@ -40,20 +40,52 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
       let searchResult: SearchResults
       const searchAPI =
         (process.env.SEARCH_API as 'tavily' | 'exa' | 'searxng') || 'tavily'
-      console.log(`Using search API: ${searchAPI}`)
+
+     
+      const effectiveSearchDepth =
+        searchAPI === 'searxng' &&
+        process.env.SEARXNG_DEFAULT_DEPTH === 'advanced'
+          ? 'advanced'
+          : search_depth || 'basic'
+
+      console.log(
+        `Using search API: ${searchAPI}, Search Depth: ${effectiveSearchDepth}`
+      )
 
       try {
-        searchResult = await (searchAPI === 'tavily'
-          ? tavilySearch
-          : searchAPI === 'exa'
-          ? exaSearch
-          : searxngSearch)(
-          filledQuery,
-          max_results,
-          search_depth,
-          include_domains,
-          exclude_domains
-        )
+        if (searchAPI === 'searxng' && effectiveSearchDepth === 'advanced') {
+          // API route for advanced SearXNG search
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+          const response = await fetch(`${baseUrl}/api/advanced-search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: filledQuery,
+              maxResults: max_results,
+              searchDepth: effectiveSearchDepth,
+              includeDomains: include_domains,
+              excludeDomains: exclude_domains
+            })
+          })
+          if (!response.ok) {
+            throw new Error(
+              `Advanced search API error: ${response.status} ${response.statusText}`
+            )
+          }
+          searchResult = await response.json()
+        } else {
+          searchResult = await (searchAPI === 'tavily'
+            ? tavilySearch
+            : searchAPI === 'exa'
+            ? exaSearch
+            : searxngSearch)(
+            filledQuery,
+            max_results,
+            effectiveSearchDepth,
+            include_domains,
+            exclude_domains
+          )
+        }
       } catch (error) {
         console.error('Search API error:', error)
         hasError = true
@@ -171,9 +203,9 @@ async function exaSearch(
 async function searxngSearch(
   query: string,
   maxResults: number = 10,
-  _searchDepth: string,
-  includeDomains: string[] = [], //keep for future use
-  excludeDomains: string[] = [] //keep for future use
+  searchDepth: string,
+  includeDomains: string[] = [],
+  excludeDomains: string[] = []
 ): Promise<SearchResults> {
   const apiUrl = process.env.SEARXNG_API_URL
   if (!apiUrl) {
@@ -185,8 +217,18 @@ async function searxngSearch(
     const url = new URL(`${apiUrl}/search`)
     url.searchParams.append('q', query)
     url.searchParams.append('format', 'json')
-    // Enable both general and image results
     url.searchParams.append('categories', 'general,images')
+
+    // Apply search depth settings
+    if (searchDepth === 'advanced') {
+      url.searchParams.append('time_range', '')
+      url.searchParams.append('safesearch', '0')
+      url.searchParams.append('engines', 'google,bing,duckduckgo,wikipedia')
+    } else {
+      url.searchParams.append('time_range', 'year')
+      url.searchParams.append('safesearch', '1')
+      url.searchParams.append('engines', 'google,bing')
+    }
 
     // Fetch results from SearXNG
     const response = await fetch(url.toString(), {
