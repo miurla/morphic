@@ -88,14 +88,14 @@ async function advancedSearchXNGSearch(
     if (searchDepth === 'advanced') {
       const crawledResults = await Promise.all(
         generalResults
-          .slice(0, maxResults * 3)
+          .slice(0, maxResults * 4)
           .map(result => crawlPage(result, query))
       )
       generalResults = crawledResults
         .filter(result => result !== null && isQualityContent(result.content))
         .map(result => result as SearXNGResult)
 
-      const MIN_RELEVANCE_SCORE = 10 // Adjust this value as needed
+      const MIN_RELEVANCE_SCORE = 10
       generalResults = generalResults
         .map(result => ({
           ...result,
@@ -142,13 +142,13 @@ async function crawlPage(
   try {
     const html = await fetchHtmlWithTimeout(result.url, 20000)
 
-    // Create a virtual console to suppress JSDOM warnings
+    // virtual console to suppress JSDOM warnings
     const virtualConsole = new VirtualConsole()
     virtualConsole.on('error', () => {
-      // Ignore errors
+    
     })
     virtualConsole.on('warn', () => {
-      // Ignore warnings
+      
     })
 
     const dom = new JSDOM(html, {
@@ -461,7 +461,6 @@ function timeout(ms: number, message: string): Promise<never> {
   })
 }
 
-// Add this new function to check content quality
 function isQualityContent(text: string): boolean {
   const words = text.split(/\s+/).length
   const sentences = text.split(/[.!?]+/).length
