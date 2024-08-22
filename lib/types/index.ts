@@ -87,10 +87,23 @@ export interface SearXNGResult {
   url: string
   content: string
   img_src?: string
+  publishedDate?: string
+  score?: number
 }
 
 export interface SearXNGResponse {
   query: string
   number_of_results: number
   results: SearXNGResult[]
+}
+
+// Add a new type for SearXNG image results
+export type SearXNGImageResult = string
+
+// Add a new type for SearXNG search results
+export type SearXNGSearchResults = {
+  images: SearXNGImageResult[]
+  results: SearchResultItem[]
+  number_of_results?: number
+  query: string
 }

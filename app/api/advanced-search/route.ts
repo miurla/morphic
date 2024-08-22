@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import http from 'http'
 import https from 'https'
-import { parse } from 'node-html-parser'
+import { JSDOM } from 'jsdom'
 import {
-  SearchResults,
+  SearXNGSearchResults,
   SearXNGResponse,
   SearXNGResult,
   SearchResultItem
@@ -38,13 +38,16 @@ async function advancedSearchXNGSearch(
   searchDepth: 'basic' | 'advanced' = 'advanced',
   includeDomains: string[] = [],
   excludeDomains: string[] = []
-): Promise<SearchResults> {
+): Promise<SearXNGSearchResults> {
   const apiUrl = process.env.SEARXNG_API_URL
   if (!apiUrl) {
     throw new Error('SEARXNG_API_URL is not set in the environment variables')
   }
 
-  const maxAllowedResults = parseInt(process.env.SEARXNG_MAX_RESULTS || '50', 10)
+  const maxAllowedResults = parseInt(
+    process.env.SEARXNG_MAX_RESULTS || '50',
+    10
+  )
   maxResults = Math.min(maxResults, maxAllowedResults)
 
   try {
@@ -84,7 +87,9 @@ async function advancedSearchXNGSearch(
 
     if (searchDepth === 'advanced') {
       const crawledResults = await Promise.allSettled(
-        generalResults.slice(0, maxResults).map(result => crawlPage(result))
+        generalResults
+          .slice(0, maxResults * 2)
+          .map(result => crawlPage(result, query))
       )
       generalResults = crawledResults
         .filter(
@@ -92,6 +97,15 @@ async function advancedSearchXNGSearch(
             result.status === 'fulfilled' && result.value !== null
         )
         .map(result => result.value)
+
+      // Score and sort results based on relevance
+      generalResults = generalResults
+        .map(result => ({
+          ...result,
+          score: calculateRelevanceScore(result, query)
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, maxResults)
     }
 
     generalResults = generalResults.slice(0, maxResults)
@@ -123,21 +137,138 @@ async function advancedSearchXNGSearch(
   }
 }
 
-async function crawlPage(result: SearXNGResult): Promise<SearXNGResult | null> {
+async function crawlPage(
+  result: SearXNGResult,
+  query: string
+): Promise<SearXNGResult | null> {
   try {
-    const html = await fetchHtmlWithTimeout(result.url, 10000) // 10 second timeout
-    const root = parse(html)
-    const body = root.querySelector('body')
-    if (body) {
-      const text = body.textContent.replace(/\s+/g, ' ').trim()
-      const extractedText = text.substring(0, 2000)
-      result.content = `${result.content}\n\nAdditional content:\n${extractedText}`
+    const html = await fetchHtmlWithTimeout(result.url, 15000) // Increased timeout to 15 seconds
+    const dom = new JSDOM(html)
+    const document = dom.window.document
+
+    // Remove script, style, and nav elements
+    document
+      .querySelectorAll('script, style, nav')
+      .forEach((el: Element) => el.remove())
+
+    // Extract main content
+    const mainContent =
+      document.querySelector('main') ||
+      document.querySelector('article') ||
+      document.body
+
+    if (mainContent) {
+      // Extract text from paragraphs, headings, list items, and tables
+      const contentElements = mainContent.querySelectorAll(
+        'p, h1, h2, h3, h4, h5, h6, li, td, th'
+      )
+      let extractedText = Array.from(contentElements)
+        .map(el => el.textContent?.trim())
+        .filter(Boolean)
+        .join('\n\n')
+
+      // Extract metadata
+      const metaDescription =
+        document
+          .querySelector('meta[name="description"]')
+          ?.getAttribute('content') || ''
+      const metaKeywords =
+        document
+          .querySelector('meta[name="keywords"]')
+          ?.getAttribute('content') || ''
+
+      // Combine metadata with extracted text
+      extractedText = `${result.title}\n\n${metaDescription}\n\n${metaKeywords}\n\n${extractedText}`
+
+      // Limit the extracted text to 5000 characters
+      extractedText = extractedText.substring(0, 5000)
+
+      // Highlight query terms in the content
+      const highlightedContent = highlightQueryTerms(extractedText, query)
+
+      result.content = highlightedContent
     }
+
     return result
   } catch (error) {
     console.error(`Error crawling ${result.url}:`, error)
     return null
   }
+}
+
+function highlightQueryTerms(content: string, query: string): string {
+  const terms = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(term => term.length > 2)
+    .map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) // Escape special characters
+  let highlightedContent = content
+
+  terms.forEach(term => {
+    const regex = new RegExp(`\\b${term}\\b`, 'gi')
+    highlightedContent = highlightedContent.replace(
+      regex,
+      match => `<mark>${match}</mark>`
+    )
+  })
+
+  return highlightedContent
+}
+
+function calculateRelevanceScore(result: SearXNGResult, query: string): number {
+  const lowercaseContent = result.content.toLowerCase()
+  const lowercaseQuery = query.toLowerCase()
+  const queryWords = lowercaseQuery
+    .split(/\s+/)
+    .filter(word => word.length > 2)
+    .map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) // Escape special characters
+
+  let score = 0
+
+  // Check for exact phrase match
+  if (lowercaseContent.includes(lowercaseQuery)) {
+    score += 20
+  }
+
+  // Check for individual word matches
+  queryWords.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'g')
+    const wordCount = (lowercaseContent.match(regex) || []).length
+    score += wordCount * 2
+  })
+
+  // Boost score for matches in the title
+  const lowercaseTitle = result.title.toLowerCase()
+  if (lowercaseTitle.includes(lowercaseQuery)) {
+    score += 10
+  }
+
+  queryWords.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'g')
+    if (lowercaseTitle.match(regex)) {
+      score += 5
+    }
+  })
+
+  // Boost score for recent content (if available)
+  if (result.publishedDate) {
+    const publishDate = new Date(result.publishedDate)
+    const now = new Date()
+    const daysSincePublished =
+      (now.getTime() - publishDate.getTime()) / (1000 * 3600 * 24)
+    if (daysSincePublished < 30) {
+      score += 10
+    } else if (daysSincePublished < 90) {
+      score += 5
+    }
+  }
+
+  // Penalize very short content
+  if (result.content.length < 100) {
+    score -= 5
+  }
+
+  return score
 }
 
 const httpAgent = new http.Agent({ keepAlive: true })

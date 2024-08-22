@@ -32,6 +32,7 @@
     "clsx": "^2.1.0",
     "embla-carousel-react": "^8.0.0",
     "exa-js": "^1.0.12",
+    "jsdom": "^22.1.0",
     "katex": "^0.16.10",
     "lucide-react": "^0.363.0",
     "next": "^14.2.3",
@@ -54,6 +55,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
