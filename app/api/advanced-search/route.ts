@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     )
     return NextResponse.json(results)
   } catch (error) {
-    console.error('Advanced search error:', error)
+    //console.error('Advanced search error:', error)
     return NextResponse.json(
       { message: 'Internal Server Error' },
       { status: 500 }
@@ -143,7 +143,10 @@ async function crawlPage(
 ): Promise<SearXNGResult | null> {
   try {
     const html = await fetchHtmlWithTimeout(result.url, 20000) // Increased timeout to 20 seconds
-    const dom = new JSDOM(html)
+    const dom = new JSDOM(html, {
+      runScripts: 'outside-only',
+      resources: 'usable'
+    })
     const document = dom.window.document
 
     // Remove script, style, nav, header, and footer elements
@@ -203,7 +206,7 @@ async function crawlPage(
 
     return result
   } catch (error) {
-    console.error(`Error crawling ${result.url}:`, error)
+    //console.error(`Error crawling ${result.url}:`, error)
     return null
   }
 }
@@ -228,7 +231,7 @@ function highlightQueryTerms(content: string, query: string): string {
 
     return highlightedContent
   } catch (error) {
-    console.error('Error in highlightQueryTerms:', error)
+    //console.error('Error in highlightQueryTerms:', error)
     return content // Return original content if highlighting fails
   }
 }
@@ -297,7 +300,7 @@ function calculateRelevanceScore(result: SearXNGResult, query: string): number {
 
     return score
   } catch (error) {
-    console.error('Error in calculateRelevanceScore:', error)
+    //console.error('Error in calculateRelevanceScore:', error)
     return 0 // Return 0 if scoring fails
   }
 }
@@ -332,7 +335,11 @@ function extractPublicationDate(document: Document): Date | null {
 }
 
 const httpAgent = new http.Agent({ keepAlive: true })
-const httpsAgent = new https.Agent({ keepAlive: true })
+const httpsAgent = new https.Agent({
+  keepAlive: true,
+  rejectUnauthorized: true // change to false if you want to ignore SSL certificate errors 
+                           //but use this with caution.
+})
 
 async function fetchJsonWithRetry(url: string, retries: number): Promise<any> {
   for (let i = 0; i < retries; i++) {
@@ -404,12 +411,15 @@ function fetchHtml(url: string): Promise<string> {
       })
       res.on('end', () => resolve(data))
     })
-    request.on('error', reject)
+    request.on('error', error => {
+      console.error(`Error fetching ${url}:`, error)
+      reject(error)
+    })
     request.on('timeout', () => {
       request.destroy()
-      reject(new Error('Request timed out'))
+      reject(new Error(`Request timed out for ${url}`))
     })
-    request.setTimeout(5000) // 5 second timeout
+    request.setTimeout(10000) // 10 second timeout
   })
 }
 
