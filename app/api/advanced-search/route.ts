@@ -88,7 +88,7 @@ async function advancedSearchXNGSearch(
     if (searchDepth === 'advanced') {
       const crawledResults = await Promise.allSettled(
         generalResults
-          .slice(0, maxResults * 2)
+          .slice(0, maxResults * 3) // Increase the number of results to crawl
           .map(result => crawlPage(result, query))
       )
       generalResults = crawledResults
@@ -142,13 +142,13 @@ async function crawlPage(
   query: string
 ): Promise<SearXNGResult | null> {
   try {
-    const html = await fetchHtmlWithTimeout(result.url, 15000) // Increased timeout to 15 seconds
+    const html = await fetchHtmlWithTimeout(result.url, 20000) // Increased timeout to 20 seconds
     const dom = new JSDOM(html)
     const document = dom.window.document
 
-    // Remove script, style, and nav elements
+    // Remove script, style, nav, header, and footer elements
     document
-      .querySelectorAll('script, style, nav')
+      .querySelectorAll('script, style, nav, header, footer')
       .forEach((el: Element) => el.remove())
 
     // Extract main content
@@ -160,7 +160,7 @@ async function crawlPage(
     if (mainContent) {
       // Extract text from paragraphs, headings, list items, and tables
       const contentElements = mainContent.querySelectorAll(
-        'p, h1, h2, h3, h4, h5, h6, li, td, th'
+        'p, h1, h2, h3, h4, h5, h6, li, td, th, blockquote, pre, code'
       )
       let extractedText = Array.from(contentElements)
         .map(el => el.textContent?.trim())
@@ -176,17 +176,29 @@ async function crawlPage(
         document
           .querySelector('meta[name="keywords"]')
           ?.getAttribute('content') || ''
+      const ogTitle =
+        document
+          .querySelector('meta[property="og:title"]')
+          ?.getAttribute('content') || ''
+      const ogDescription =
+        document
+          .querySelector('meta[property="og:description"]')
+          ?.getAttribute('content') || ''
 
       // Combine metadata with extracted text
-      extractedText = `${result.title}\n\n${metaDescription}\n\n${metaKeywords}\n\n${extractedText}`
+      extractedText = `${result.title}\n\n${ogTitle}\n\n${metaDescription}\n\n${ogDescription}\n\n${metaKeywords}\n\n${extractedText}`
 
-      // Limit the extracted text to 5000 characters
-      extractedText = extractedText.substring(0, 5000)
+      // Limit the extracted text to 10000 characters
+      extractedText = extractedText.substring(0, 10000)
 
       // Highlight query terms in the content
-      const highlightedContent = highlightQueryTerms(extractedText, query)
+      result.content = highlightQueryTerms(extractedText, query)
 
-      result.content = highlightedContent
+      // Extract publication date
+      const publishedDate = extractPublicationDate(document)
+      if (publishedDate) {
+        result.publishedDate = publishedDate.toISOString()
+      }
     }
 
     return result
@@ -197,78 +209,126 @@ async function crawlPage(
 }
 
 function highlightQueryTerms(content: string, query: string): string {
-  const terms = query
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(term => term.length > 2)
-    .map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) // Escape special characters
-  let highlightedContent = content
+  try {
+    const terms = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(term => term.length > 2)
+      .map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) // Escape special characters
 
-  terms.forEach(term => {
-    const regex = new RegExp(`\\b${term}\\b`, 'gi')
-    highlightedContent = highlightedContent.replace(
-      regex,
-      match => `<mark>${match}</mark>`
-    )
-  })
+    let highlightedContent = content
 
-  return highlightedContent
+    terms.forEach(term => {
+      const regex = new RegExp(`\\b${term}\\b`, 'gi')
+      highlightedContent = highlightedContent.replace(
+        regex,
+        match => `<mark>${match}</mark>`
+      )
+    })
+
+    return highlightedContent
+  } catch (error) {
+    console.error('Error in highlightQueryTerms:', error)
+    return content // Return original content if highlighting fails
+  }
 }
 
 function calculateRelevanceScore(result: SearXNGResult, query: string): number {
-  const lowercaseContent = result.content.toLowerCase()
-  const lowercaseQuery = query.toLowerCase()
-  const queryWords = lowercaseQuery
-    .split(/\s+/)
-    .filter(word => word.length > 2)
-    .map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) // Escape special characters
+  try {
+    const lowercaseContent = result.content.toLowerCase()
+    const lowercaseQuery = query.toLowerCase()
+    const queryWords = lowercaseQuery
+      .split(/\s+/)
+      .filter(word => word.length > 2)
+      .map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) // Escape special characters
 
-  let score = 0
+    let score = 0
 
-  // Check for exact phrase match
-  if (lowercaseContent.includes(lowercaseQuery)) {
-    score += 20
-  }
+    // Check for exact phrase match
+    if (lowercaseContent.includes(lowercaseQuery)) {
+      score += 30
+    }
 
-  // Check for individual word matches
-  queryWords.forEach(word => {
-    const regex = new RegExp(`\\b${word}\\b`, 'g')
-    const wordCount = (lowercaseContent.match(regex) || []).length
-    score += wordCount * 2
-  })
+    // Check for individual word matches
+    queryWords.forEach(word => {
+      const regex = new RegExp(`\\b${word}\\b`, 'g')
+      const wordCount = (lowercaseContent.match(regex) || []).length
+      score += wordCount * 3
+    })
 
-  // Boost score for matches in the title
-  const lowercaseTitle = result.title.toLowerCase()
-  if (lowercaseTitle.includes(lowercaseQuery)) {
-    score += 10
-  }
+    // Boost score for matches in the title
+    const lowercaseTitle = result.title.toLowerCase()
+    if (lowercaseTitle.includes(lowercaseQuery)) {
+      score += 20
+    }
 
-  queryWords.forEach(word => {
-    const regex = new RegExp(`\\b${word}\\b`, 'g')
-    if (lowercaseTitle.match(regex)) {
+    queryWords.forEach(word => {
+      const regex = new RegExp(`\\b${word}\\b`, 'g')
+      if (lowercaseTitle.match(regex)) {
+        score += 10
+      }
+    })
+
+    // Boost score for recent content (if available)
+    if (result.publishedDate) {
+      const publishDate = new Date(result.publishedDate)
+      const now = new Date()
+      const daysSincePublished =
+        (now.getTime() - publishDate.getTime()) / (1000 * 3600 * 24)
+      if (daysSincePublished < 30) {
+        score += 15
+      } else if (daysSincePublished < 90) {
+        score += 10
+      } else if (daysSincePublished < 365) {
+        score += 5
+      }
+    }
+
+    // Penalize very short content
+    if (result.content.length < 200) {
+      score -= 10
+    } else if (result.content.length > 1000) {
       score += 5
     }
-  })
 
-  // Boost score for recent content (if available)
-  if (result.publishedDate) {
-    const publishDate = new Date(result.publishedDate)
-    const now = new Date()
-    const daysSincePublished =
-      (now.getTime() - publishDate.getTime()) / (1000 * 3600 * 24)
-    if (daysSincePublished < 30) {
-      score += 10
-    } else if (daysSincePublished < 90) {
-      score += 5
+    // Boost score for content with more highlighted terms
+    const highlightCount = (result.content.match(/<mark>/g) || []).length
+    score += highlightCount * 2
+
+    return score
+  } catch (error) {
+    console.error('Error in calculateRelevanceScore:', error)
+    return 0 // Return 0 if scoring fails
+  }
+}
+
+function extractPublicationDate(document: Document): Date | null {
+  const dateSelectors = [
+    'meta[name="article:published_time"]',
+    'meta[property="article:published_time"]',
+    'meta[name="publication-date"]',
+    'meta[name="date"]',
+    'time[datetime]',
+    'time[pubdate]'
+  ]
+
+  for (const selector of dateSelectors) {
+    const element = document.querySelector(selector)
+    if (element) {
+      const dateStr =
+        element.getAttribute('content') ||
+        element.getAttribute('datetime') ||
+        element.getAttribute('pubdate')
+      if (dateStr) {
+        const date = new Date(dateStr)
+        if (!isNaN(date.getTime())) {
+          return date
+        }
+      }
     }
   }
 
-  // Penalize very short content
-  if (result.content.length < 100) {
-    score -= 5
-  }
-
-  return score
+  return null
 }
 
 const httpAgent = new http.Agent({ keepAlive: true })
