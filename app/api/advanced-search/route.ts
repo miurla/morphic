@@ -86,24 +86,22 @@ async function advancedSearchXNGSearch(
     }
 
     if (searchDepth === 'advanced') {
-      const crawledResults = await Promise.allSettled(
+      const crawledResults = await Promise.all(
         generalResults
-          .slice(0, maxResults * 3) // Increase the number of results to crawl
+          .slice(0, maxResults * 3)
           .map(result => crawlPage(result, query))
       )
       generalResults = crawledResults
-        .filter(
-          (result): result is PromiseFulfilledResult<SearXNGResult> =>
-            result.status === 'fulfilled' && result.value !== null
-        )
-        .map(result => result.value)
+        .filter(result => result !== null && isQualityContent(result.content))
+        .map(result => result as SearXNGResult)
 
-      // Score and sort results based on relevance
+      const MIN_RELEVANCE_SCORE = 10 // Adjust this value as needed
       generalResults = generalResults
         .map(result => ({
           ...result,
           score: calculateRelevanceScore(result, query)
         }))
+        .filter(result => result.score >= MIN_RELEVANCE_SCORE)
         .sort((a, b) => b.score - a.score)
         .slice(0, maxResults)
     }
@@ -140,9 +138,9 @@ async function advancedSearchXNGSearch(
 async function crawlPage(
   result: SearXNGResult,
   query: string
-): Promise<SearXNGResult | null> {
+): Promise<SearXNGResult> {
   try {
-    const html = await fetchHtmlWithTimeout(result.url, 20000) // Increased timeout to 20 seconds
+    const html = await fetchHtmlWithTimeout(result.url, 20000)
 
     // Create a virtual console to suppress JSDOM warnings
     const virtualConsole = new VirtualConsole()
@@ -165,21 +163,33 @@ async function crawlPage(
       .querySelectorAll('script, style, nav, header, footer')
       .forEach((el: Element) => el.remove())
 
-    // Extract main content
     const mainContent =
       document.querySelector('main') ||
       document.querySelector('article') ||
+      document.querySelector('.content') ||
+      document.querySelector('#content') ||
       document.body
 
     if (mainContent) {
-      // Extract text from paragraphs, headings, list items, and tables
-      const contentElements = mainContent.querySelectorAll(
-        'p, h1, h2, h3, h4, h5, h6, li, td, th, blockquote, pre, code'
-      )
-      let extractedText = Array.from(contentElements)
+      // Prioritize specific content elements
+      const priorityElements = mainContent.querySelectorAll('h1, h2, h3, p')
+      let extractedText = Array.from(priorityElements)
         .map(el => el.textContent?.trim())
         .filter(Boolean)
         .join('\n\n')
+
+      // If not enough content, fall back to other elements
+      if (extractedText.length < 500) {
+        const contentElements = mainContent.querySelectorAll(
+          'h4, h5, h6, li, td, th, blockquote, pre, code'
+        )
+        extractedText +=
+          '\n\n' +
+          Array.from(contentElements)
+            .map(el => el.textContent?.trim())
+            .filter(Boolean)
+            .join('\n\n')
+      }
 
       // Extract metadata
       const metaDescription =
@@ -218,7 +228,10 @@ async function crawlPage(
     return result
   } catch (error) {
     console.error(`Error crawling ${result.url}:`, error)
-    return null
+    return {
+      ...result,
+      content: result.content || 'Content unavailable due to crawling error.'
+    }
   }
 }
 
@@ -393,10 +406,16 @@ async function fetchHtmlWithTimeout(
   url: string,
   timeoutMs: number
 ): Promise<string> {
-  return Promise.race([
-    fetchHtml(url),
-    timeout(timeoutMs, `Fetching ${url} timed out after ${timeoutMs}ms`)
-  ])
+  try {
+    return await Promise.race([
+      fetchHtml(url),
+      timeout(timeoutMs, `Fetching ${url} timed out after ${timeoutMs}ms`)
+    ])
+  } catch (error) {
+    console.error(`Error fetching ${url}:`, error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return `<html><body>Error fetching content: ${errorMessage}</body></html>`
+  }
 }
 
 function fetchHtml(url: string): Promise<string> {
@@ -423,7 +442,7 @@ function fetchHtml(url: string): Promise<string> {
       res.on('end', () => resolve(data))
     })
     request.on('error', error => {
-      //console.error(`Error fetching ${url}:`, error)
+      console.error(`Error fetching ${url}:`, error)
       reject(error)
     })
     request.on('timeout', () => {
@@ -440,4 +459,20 @@ function timeout(ms: number, message: string): Promise<never> {
       reject(new Error(message))
     }, ms)
   })
+}
+
+// Add this new function to check content quality
+function isQualityContent(text: string): boolean {
+  const words = text.split(/\s+/).length
+  const sentences = text.split(/[.!?]+/).length
+  const avgWordsPerSentence = words / sentences
+
+  return (
+    words > 50 &&
+    sentences > 3 &&
+    avgWordsPerSentence > 5 &&
+    avgWordsPerSentence < 30 &&
+    !text.includes('Content unavailable due to crawling error') &&
+    !text.includes('Error fetching content:')
+  )
 }
