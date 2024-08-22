@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import http from 'http'
 import https from 'https'
-import { JSDOM } from 'jsdom'
+import { JSDOM, VirtualConsole } from 'jsdom'
 import {
   SearXNGSearchResults,
   SearXNGResponse,
@@ -143,9 +143,20 @@ async function crawlPage(
 ): Promise<SearXNGResult | null> {
   try {
     const html = await fetchHtmlWithTimeout(result.url, 20000) // Increased timeout to 20 seconds
+
+    // Create a virtual console to suppress JSDOM warnings
+    const virtualConsole = new VirtualConsole()
+    virtualConsole.on('error', () => {
+      // Ignore errors
+    })
+    virtualConsole.on('warn', () => {
+      // Ignore warnings
+    })
+
     const dom = new JSDOM(html, {
       runScripts: 'outside-only',
-      resources: 'usable'
+      resources: 'usable',
+      virtualConsole
     })
     const document = dom.window.document
 
@@ -206,7 +217,7 @@ async function crawlPage(
 
     return result
   } catch (error) {
-    //console.error(`Error crawling ${result.url}:`, error)
+    console.error(`Error crawling ${result.url}:`, error)
     return null
   }
 }
@@ -337,8 +348,8 @@ function extractPublicationDate(document: Document): Date | null {
 const httpAgent = new http.Agent({ keepAlive: true })
 const httpsAgent = new https.Agent({
   keepAlive: true,
-  rejectUnauthorized: true // change to false if you want to ignore SSL certificate errors 
-                           //but use this with caution.
+  rejectUnauthorized: true // change to false if you want to ignore SSL certificate errors
+  //but use this with caution.
 })
 
 async function fetchJsonWithRetry(url: string, retries: number): Promise<any> {
@@ -412,7 +423,7 @@ function fetchHtml(url: string): Promise<string> {
       res.on('end', () => resolve(data))
     })
     request.on('error', error => {
-      console.error(`Error fetching ${url}:`, error)
+      //console.error(`Error fetching ${url}:`, error)
       reject(error)
     })
     request.on('timeout', () => {
