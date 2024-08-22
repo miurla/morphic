@@ -14,19 +14,32 @@ export async function POST(request: Request) {
   const { query, maxResults, searchDepth, includeDomains, excludeDomains } =
     await request.json()
 
+  const SEARXNG_MAX_RESULTS = parseInt(
+    process.env.SEARXNG_MAX_RESULTS || '50',
+    10
+  )
+  const SEARXNG_DEFAULT_DEPTH = process.env.SEARXNG_DEFAULT_DEPTH || 'basic'
+
   try {
     const results = await advancedSearchXNGSearch(
       query,
-      maxResults,
-      searchDepth,
+      Math.min(maxResults, SEARXNG_MAX_RESULTS),
+      searchDepth || SEARXNG_DEFAULT_DEPTH,
       includeDomains,
       excludeDomains
     )
     return NextResponse.json(results)
   } catch (error) {
-    //console.error('Advanced search error:', error)
+    console.error('Advanced search error:', error)
     return NextResponse.json(
-      { message: 'Internal Server Error' },
+      {
+        message: 'Internal Server Error',
+        error: error instanceof Error ? error.message : String(error),
+        query: query,
+        results: [],
+        images: [],
+        number_of_results: 0
+      },
       { status: 500 }
     )
   }
@@ -44,32 +57,44 @@ async function advancedSearchXNGSearch(
     throw new Error('SEARXNG_API_URL is not set in the environment variables')
   }
 
-  const maxAllowedResults = parseInt(
-    process.env.SEARXNG_MAX_RESULTS || '50',
+  const SEARXNG_ENGINES =
+    process.env.SEARXNG_ENGINES || 'google,bing,duckduckgo,wikipedia'
+  const SEARXNG_TIME_RANGE = process.env.SEARXNG_TIME_RANGE || 'None'
+  const SEARXNG_SAFESEARCH = process.env.SEARXNG_SAFESEARCH || '0'
+  const SEARXNG_CRAWL_MULTIPLIER = parseInt(
+    process.env.SEARXNG_CRAWL_MULTIPLIER || '4',
     10
   )
-  maxResults = Math.min(maxResults, maxAllowedResults)
 
   try {
     const url = new URL(`${apiUrl}/search`)
     url.searchParams.append('q', query)
     url.searchParams.append('format', 'json')
     url.searchParams.append('categories', 'general,images')
-    url.searchParams.append('time_range', '')
-    url.searchParams.append('safesearch', '0')
-    url.searchParams.append('engines', 'google,bing,duckduckgo,wikipedia')
+
+    // Add time_range if it's not 'None'
+    if (SEARXNG_TIME_RANGE !== 'None') {
+      url.searchParams.append('time_range', SEARXNG_TIME_RANGE)
+    }
+
+    url.searchParams.append('safesearch', SEARXNG_SAFESEARCH)
+    url.searchParams.append('engines', SEARXNG_ENGINES)
 
     const resultsPerPage = 10
     const pageno = Math.ceil(maxResults / resultsPerPage)
     url.searchParams.append('pageno', String(pageno))
 
-    // Note: includeDomains and excludeDomains are not used in the API call
-    // but can be used for post-processing if needed
+    console.log('SearXNG API URL:', url.toString()) // Log the full URL for debugging
 
     const data: SearXNGResponse = await fetchJsonWithRetry(url.toString(), 3)
 
+    if (!data || !Array.isArray(data.results)) {
+      console.error('Invalid response from SearXNG:', data)
+      throw new Error('Invalid response from SearXNG')
+    }
+
     let generalResults = data.results.filter(
-      (result: SearXNGResult) => !result.img_src
+      (result: SearXNGResult) => result && !result.img_src
     )
 
     // Apply domain filtering manually
@@ -88,7 +113,7 @@ async function advancedSearchXNGSearch(
     if (searchDepth === 'advanced') {
       const crawledResults = await Promise.all(
         generalResults
-          .slice(0, maxResults * 4)
+          .slice(0, maxResults * SEARXNG_CRAWL_MULTIPLIER)
           .map(result => crawlPage(result, query))
       )
       generalResults = crawledResults
@@ -108,30 +133,35 @@ async function advancedSearchXNGSearch(
 
     generalResults = generalResults.slice(0, maxResults)
 
-    const imageResults = data.results
-      .filter((result: SearXNGResult) => result.img_src)
+    const imageResults = (data.results || [])
+      .filter((result: SearXNGResult) => result && result.img_src)
       .slice(0, maxResults)
 
     return {
       results: generalResults.map(
         (result: SearXNGResult): SearchResultItem => ({
-          title: result.title,
-          url: result.url,
-          content: result.content
+          title: result.title || '',
+          url: result.url || '',
+          content: result.content || ''
         })
       ),
-      query: data.query,
+      query: data.query || query,
       images: imageResults
         .map((result: SearXNGResult) => {
           const imgSrc = result.img_src || ''
           return imgSrc.startsWith('http') ? imgSrc : `${apiUrl}${imgSrc}`
         })
         .filter(Boolean),
-      number_of_results: data.number_of_results
+      number_of_results: data.number_of_results || generalResults.length
     }
   } catch (error) {
     console.error('SearchXNG API error:', error)
-    throw error
+    return {
+      results: [],
+      query: query,
+      images: [],
+      number_of_results: 0
+    }
   }
 }
 
@@ -144,12 +174,8 @@ async function crawlPage(
 
     // virtual console to suppress JSDOM warnings
     const virtualConsole = new VirtualConsole()
-    virtualConsole.on('error', () => {
-    
-    })
-    virtualConsole.on('warn', () => {
-      
-    })
+    virtualConsole.on('error', () => {})
+    virtualConsole.on('warn', () => {})
 
     const dom = new JSDOM(html, {
       runScripts: 'outside-only',
@@ -442,12 +468,13 @@ function fetchHtml(url: string): Promise<string> {
       res.on('end', () => resolve(data))
     })
     request.on('error', error => {
-      console.error(`Error fetching ${url}:`, error)
+      //console.error(`Error fetching ${url}:`, error)
       reject(error)
     })
     request.on('timeout', () => {
       request.destroy()
-      reject(new Error(`Request timed out for ${url}`))
+      //reject(new Error(`Request timed out for ${url}`))
+      resolve('')
     })
     request.setTimeout(10000) // 10 second timeout
   })
