@@ -10,14 +10,20 @@ import {
 } from '@/lib/types'
 import { Agent } from 'http'
 
+/**
+ * Maximum number of results to fetch from SearXNG.
+ * Increasing this value can improve result quality but may impact performance.
+ * In advanced search mode, this is multiplied by SEARXNG_CRAWL_MULTIPLIER for initial fetching.
+ */
+const SEARXNG_MAX_RESULTS = Math.max(
+  10,
+  Math.min(100, parseInt(process.env.SEARXNG_MAX_RESULTS || '50', 10))
+)
+
 export async function POST(request: Request) {
   const { query, maxResults, searchDepth, includeDomains, excludeDomains } =
     await request.json()
 
-  const SEARXNG_MAX_RESULTS = parseInt(
-    process.env.SEARXNG_MAX_RESULTS || '50',
-    10
-  )
   const SEARXNG_DEFAULT_DEPTH = process.env.SEARXNG_DEFAULT_DEPTH || 'basic'
 
   try {
