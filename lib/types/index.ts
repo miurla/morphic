@@ -97,10 +97,10 @@ export interface SearXNGResponse {
   results: SearXNGResult[]
 }
 
-// Add a new type for SearXNG image results
+
 export type SearXNGImageResult = string
 
-// Add a new type for SearXNG search results
+
 export type SearXNGSearchResults = {
   images: SearXNGImageResult[]
   results: SearchResultItem[]
