@@ -90,7 +90,7 @@ async function advancedSearchXNGSearch(
     const pageno = Math.ceil(maxResults / resultsPerPage)
     url.searchParams.append('pageno', String(pageno))
 
-    console.log('SearXNG API URL:', url.toString()) // Log the full URL for debugging
+    //console.log('SearXNG API URL:', url.toString()) // Log the full URL for debugging
 
     const data: SearXNGResponse = await fetchJsonWithRetry(url.toString(), 3)
 
