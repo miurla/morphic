@@ -92,11 +92,21 @@ async function advancedSearchXNGSearch(
 
     //console.log('SearXNG API URL:', url.toString()) // Log the full URL for debugging
 
-    const data: SearXNGResponse = await fetchJsonWithRetry(url.toString(), 3)
+    const data:
+      | SearXNGResponse
+      | { error: string; status: number; data: string } =
+      await fetchJsonWithRetry(url.toString(), 3)
+
+    if ('error' in data) {
+      console.error('Invalid response from SearXNG:', data)
+      throw new Error(
+        `Invalid response from SearXNG: ${data.error}. Status: ${data.status}. Data: ${data.data}`
+      )
+    }
 
     if (!data || !Array.isArray(data.results)) {
-      console.error('Invalid response from SearXNG:', data)
-      throw new Error('Invalid response from SearXNG')
+      console.error('Invalid response structure from SearXNG:', data)
+      throw new Error('Invalid response structure from SearXNG')
     }
 
     let generalResults = data.results.filter(
@@ -419,7 +429,17 @@ function fetchJson(url: string): Promise<any> {
       })
       res.on('end', () => {
         try {
-          resolve(JSON.parse(data))
+          // Check if the response is JSON
+          if (res.headers['content-type']?.includes('application/json')) {
+            resolve(JSON.parse(data))
+          } else {
+            // If not JSON, return an object with the raw data and status
+            resolve({
+              error: 'Invalid JSON response',
+              status: res.statusCode,
+              data: data.substring(0, 200) // Include first 200 characters of the response
+            })
+          }
         } catch (e) {
           reject(e)
         }
