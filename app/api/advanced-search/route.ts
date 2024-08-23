@@ -9,6 +9,8 @@ import {
   SearchResultItem
 } from '@/lib/types'
 import { Agent } from 'http'
+import { Redis } from '@upstash/redis'
+import { createClient } from 'redis'
 
 /**
  * Maximum number of results to fetch from SearXNG.
@@ -20,6 +22,78 @@ const SEARXNG_MAX_RESULTS = Math.max(
   Math.min(100, parseInt(process.env.SEARXNG_MAX_RESULTS || '50', 10))
 )
 
+const CACHE_TTL = 3600 // Cache time-to-live in seconds (1 hour)
+
+let redisClient: Redis | ReturnType<typeof createClient> | null = null
+
+// Initialize Redis client based on environment variables
+async function initializeRedisClient() {
+  if (redisClient) return redisClient
+
+  const useLocalRedis = process.env.USE_LOCAL_REDIS === 'true'
+
+  if (useLocalRedis) {
+    const localRedisUrl =
+      process.env.LOCAL_REDIS_URL || 'redis://localhost:6379'
+    redisClient = createClient({ url: localRedisUrl })
+    await redisClient.connect()
+  } else {
+    const upstashRedisRestUrl = process.env.UPSTASH_REDIS_REST_URL
+    const upstashRedisRestToken = process.env.UPSTASH_REDIS_REST_TOKEN
+
+    if (upstashRedisRestUrl && upstashRedisRestToken) {
+      redisClient = new Redis({
+        url: upstashRedisRestUrl,
+        token: upstashRedisRestToken
+      })
+    }
+  }
+
+  return redisClient
+}
+
+// Function to get cached results
+async function getCachedResults(
+  cacheKey: string
+): Promise<SearXNGSearchResults | null> {
+  try {
+    const client = await initializeRedisClient()
+    if (!client) return null
+
+    let cachedData: string | null
+    if (client instanceof Redis) {
+      cachedData = await client.get(cacheKey)
+    } else {
+      cachedData = await client.get(cacheKey)
+    }
+
+    return cachedData ? JSON.parse(cachedData) : null
+  } catch (error) {
+    console.error('Redis cache error:', error)
+    return null
+  }
+}
+
+// Function to set cached results
+async function setCachedResults(
+  cacheKey: string,
+  results: SearXNGSearchResults
+): Promise<void> {
+  try {
+    const client = await initializeRedisClient()
+    if (!client) return
+
+    const serializedResults = JSON.stringify(results)
+    if (client instanceof Redis) {
+      await client.set(cacheKey, serializedResults, { ex: CACHE_TTL })
+    } else {
+      await client.set(cacheKey, serializedResults, { EX: CACHE_TTL })
+    }
+  } catch (error) {
+    console.error('Redis cache error:', error)
+  }
+}
+
 export async function POST(request: Request) {
   const { query, maxResults, searchDepth, includeDomains, excludeDomains } =
     await request.json()
@@ -27,13 +101,28 @@ export async function POST(request: Request) {
   const SEARXNG_DEFAULT_DEPTH = process.env.SEARXNG_DEFAULT_DEPTH || 'basic'
 
   try {
+    const cacheKey = `search:${query}:${maxResults}:${searchDepth}:${
+      Array.isArray(includeDomains) ? includeDomains.join(',') : ''
+    }:${Array.isArray(excludeDomains) ? excludeDomains.join(',') : ''}`
+
+    // Try to get cached results
+    const cachedResults = await getCachedResults(cacheKey)
+    if (cachedResults) {
+      return NextResponse.json(cachedResults)
+    }
+
+    // If not cached, perform the search
     const results = await advancedSearchXNGSearch(
       query,
       Math.min(maxResults, SEARXNG_MAX_RESULTS),
       searchDepth || SEARXNG_DEFAULT_DEPTH,
-      includeDomains,
-      excludeDomains
+      Array.isArray(includeDomains) ? includeDomains : [],
+      Array.isArray(excludeDomains) ? excludeDomains : []
     )
+
+    // Cache the results
+    await setCachedResults(cacheKey, results)
+
     return NextResponse.json(results)
   } catch (error) {
     console.error('Advanced search error:', error)
