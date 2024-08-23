@@ -189,7 +189,7 @@ Morphic now supports SearXNG as an alternative search backend with advanced sear
    - SEARXNG_DEFAULT_DEPTH=basic # Set to 'basic' or 'advanced'
    - SEARXNG_MAX_RESULTS=50 # Maximum number of results to return from SearXNG
    - SEARXNG_ENGINES=google,bing,duckduckgo,wikipedia #  can be overriden in searxng config 
-   - SEARXNG_TIME_RANGE= # Time range for search results
+   - SEARXNG_TIME_RANGE=None # Time range for search results
    - SEARXNG_SAFESEARCH=0 # Safe search setting
    - SEARXNG_CRAWL_MULTIPLIER=4 # Multiplier for the number of results to crawl in advanced search
 
