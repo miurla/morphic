@@ -326,7 +326,7 @@ export const AI = createAI<AIState, UIState>({
     const { chatId, messages } = state
     const createdAt = new Date()
     const userId = 'anonymous'
-    const path = `/morphic/search/${chatId}`
+    const path = `/search/${chatId}`
     const title =
       messages.length > 0
         ? JSON.parse(messages[0].content)?.input?.substring(0, 100) ||
