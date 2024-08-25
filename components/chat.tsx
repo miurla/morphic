@@ -17,7 +17,7 @@ export function Chat({ id, query }: ChatProps) {
 
   useEffect(() => {
     if (!path.includes('search') && messages.length === 1) {
-      window.history.replaceState({}, '', `/search/${id}`)
+      window.history.replaceState({}, '', `/morphic/search/${id}`)
     }
   }, [id, path, messages, query])
 
