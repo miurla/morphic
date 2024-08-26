@@ -29,3 +29,7 @@ server:
     X-Download-Options: noopen
     X-Robots-Tag: noindex, nofollow
     Referrer-Policy: no-referrer
+
+search:
+  formats:
+    - json  

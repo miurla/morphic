@@ -32,7 +32,9 @@ An AI-powered search engine with a generative UI.
 - Specify the model to generate answers
   - Groq API support [※](https://github.com/miurla/morphic/pull/58)
 - Local Redis support
-- SearXNG Search API support
+- SearXNG Search API support with customizable depth (basic or advanced)
+- Configurable search depth (basic or advanced)
+- SearXNG Search API support with customizable depth
 
 ## 🧱 Stack
 
@@ -99,6 +101,18 @@ To use Upstash Redis:
 
 1. Set `USE_LOCAL_REDIS=false` or leave it unset in your `.env.local` file.
 2. Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` with your Upstash credentials.
+
+# SearXNG Configuration
+SEARXNG_API_URL=http://localhost:8080  # Replace with your local SearXNG API URL or docker http://searxng:8080
+SEARCH_API=tavily  #  use searxng, tavily or exa
+SEARXNG_SECRET="" # generate a secret key e.g. openssl rand -base64 32
+SEARXNG_PORT=8080 # default port
+SEARXNG_BIND_ADDRESS=0.0.0.0 # default address
+SEARXNG_IMAGE_PROXY=true # enable image proxy
+SEARXNG_LIMITER=false # can be enabled to limit the number of requests per IP address
+SEARXNG_DEFAULT_DEPTH=basic # Set to 'basic' or 'advanced', only affects SearXNG searches
+SEARXNG_MAX_RESULTS=50 # Maximum number of results to return from SearXNG
+
 ```
 
 ### 5. Run app locally
@@ -160,37 +174,50 @@ This will allow you to use Morphic as your default search engine in the browser.
 
 ### Using SearXNG as an Alternative Search Backend
 
-Morphic now supports SearXNG as an alternative search backend. To use SearXNG:
+Morphic now supports SearXNG as an alternative search backend with advanced search capabilities. To use SearXNG:
 
 1. Ensure you have Docker and Docker Compose installed on your system.
 2. In your `.env.local` file, set the following variables:
 
+   - NEXT_PUBLIC_BASE_URL=http://localhost:3000 # Base URL for local development
    - SEARXNG_API_URL=http://localhost:8080 # Replace with your local SearXNG API URL or docker http://searxng:8080
    - SEARXNG_SECRET=your_secret_key_here
    - SEARXNG_PORT=8080
    - SEARXNG_IMAGE_PROXY=true
    - SEARCH_API=searxng
    - SEARXNG_LIMITER=false # can be enabled to limit the number of requests per IP
+   - SEARXNG_DEFAULT_DEPTH=basic # Set to 'basic' or 'advanced'
+   - SEARXNG_MAX_RESULTS=50 # Maximum number of results to return from SearXNG
+   - SEARXNG_ENGINES=google,bing,duckduckgo,wikipedia #  can be overriden in searxng config 
+   - SEARXNG_TIME_RANGE=None # Time range for search results
+   - SEARXNG_SAFESEARCH=0 # Safe search setting
+   - SEARXNG_CRAWL_MULTIPLIER=4 # Multiplier for the number of results to crawl in advanced search
 
 3. Two configuration files are provided in the root directory:
 
-- `searxng-settings.yml`: This file contains the main configuration for SearXNG, including engine settings and server options.
-- `searxng-limiter.toml`: This file configures the rate limiting and bot detection features of SearXNG.
+   - `searxng-settings.yml`: This file contains the main configuration for SearXNG, including engine settings and server options.
+   - `searxng-limiter.toml`: This file configures the rate limiting and bot detection features of SearXNG.
 
 4. Run `docker-compose up` to start the Morphic stack with SearXNG included.
 5. SearXNG will be available at `http://localhost:8080` and Morphic will use it as the search backend.
+
+#### Advanced Search Configuration
+
+- `NEXT_PUBLIC_BASE_URL`: Set this to your local development URL (http://localhost:3000) or your production URL when deploying.
+- `SEARXNG_DEFAULT_DEPTH`: Set to 'basic' or 'advanced' to control the default search depth.
+- `SEARXNG_MAX_RESULTS`: Maximum number of results to return from SearXNG.
+- `SEARXNG_CRAWL_MULTIPLIER`: In advanced search mode, this multiplier determines how many results to crawl. For example, if `SEARXNG_MAX_RESULTS=10` and `SEARXNG_CRAWL_MULTIPLIER=4`, up to 40 results will be crawled before filtering and ranking.
+- `SEARXNG_ENGINES`: Comma-separated list of search engines to use.
+- `SEARXNG_TIME_RANGE`: Time range for search results (e.g., 'day', 'week', 'month', 'year', 'all').
+- `SEARXNG_SAFESEARCH`: Safe search setting (0 for off, 1 for moderate, 2 for strict).
+
+The advanced search feature includes content crawling, relevance scoring, and filtering to provide more accurate and comprehensive results.
 
 #### Customizing SearXNG
 
 - You can modify `searxng-settings.yml` to enable/disable specific search engines, change UI settings, or adjust server options.
 - The `searxng-limiter.toml` file allows you to configure rate limiting and bot detection. This is useful if you're exposing SearXNG directly to the internet.
 - If you prefer not to use external configuration files, you can set these options using environment variables in the `docker-compose.yml` file or directly in the SearXNG container.
-
-#### Advanced Configuration
-
-- To disable the limiter entirely, set `LIMITER=false` in the SearXNG service environment variables.
-- For production use, consider adjusting the `SEARXNG_SECRET_KEY` to a secure, randomly generated value.
-- The `SEARXNG_IMAGE_PROXY` option allows SearXNG to proxy image results, enhancing privacy. Set to `true` to enable this feature.
 
 #### Troubleshooting
 
