@@ -10,6 +10,13 @@ body:
       options:
         - label: I have searched the existing issues
           required: true
+  - type: checkboxes
+    attributes:
+      label: Vercel Runtime Logs
+      description: If this is a Vercel environment issue, have you checked the Vercel Runtime Logs? (https://vercel.com/docs/observability/runtime-logs)
+      options:
+        - label: I have checked the Vercel Runtime Logs for errors (if applicable)
+          required: false
   - type: textarea
     attributes:
       label: Current Behavior
