@@ -141,18 +141,6 @@ Host your own live version of Morphic with Vercel or Cloudflare Pages.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN)
 
-### Cloudflare Pages
-
-1. Fork the repo to your GitHub.
-2. Create a Cloudflare Pages project.
-3. Select `Morphic` repo and `Next.js` preset.
-4. Set `OPENAI_API_KEY` and `TAVILY_API_KEY` env vars.
-5. Save and deploy.
-6. Cancel deployment, go to `Settings` -> `Functions` -> `Compatibility flags`, add `nodejs_compat` to preview and production.
-7. Redeploy.
-
-**The build error needs to be fixed: [issue](https://github.com/miurla/morphic/issues/114)**
-
 ## 🔎 Search Engine
 
 ### Setting up the Search Engine in Your Browser
@@ -188,7 +176,7 @@ Morphic now supports SearXNG as an alternative search backend with advanced sear
    - SEARXNG_LIMITER=false # can be enabled to limit the number of requests per IP
    - SEARXNG_DEFAULT_DEPTH=basic # Set to 'basic' or 'advanced'
    - SEARXNG_MAX_RESULTS=50 # Maximum number of results to return from SearXNG
-   - SEARXNG_ENGINES=google,bing,duckduckgo,wikipedia #  can be overriden in searxng config 
+   - SEARXNG_ENGINES=google,bing,duckduckgo,wikipedia # can be overriden in searxng config
    - SEARXNG_TIME_RANGE=None # Time range for search results
    - SEARXNG_SAFESEARCH=0 # Safe search setting
    - SEARXNG_CRAWL_MULTIPLIER=4 # Multiplier for the number of results to crawl in advanced search
