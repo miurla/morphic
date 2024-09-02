@@ -27,6 +27,7 @@ An AI-powered search engine with a generative UI.
 - Use as a search engine [※](#-search-engine)
 - Support for providers other than OpenAI
   - Google Generative AI Provider
+  - Azure OpenAI Provider [※](https://github.com/miurla/morphic/issues/13)
   - Anthropic Provider [※](https://github.com/miurla/morphic/pull/239)
   - Ollama Provider ([Unstable](https://github.com/miurla/morphic/issues/215))
 - Specify the model to generate answers
