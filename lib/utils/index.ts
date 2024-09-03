@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { createOllama } from 'ollama-ai-provider'
 import { createOpenAI } from '@ai-sdk/openai'
+import { createAzure } from '@ai-sdk/azure';
 import { google } from '@ai-sdk/google'
 import { anthropic } from '@ai-sdk/anthropic'
 import { CoreMessage } from 'ai'
@@ -17,6 +18,9 @@ export function getModel(useSubModel = false) {
   const openaiApiBase = process.env.OPENAI_API_BASE
   const openaiApiKey = process.env.OPENAI_API_KEY
   let openaiApiModel = process.env.OPENAI_API_MODEL || 'gpt-4o'
+  const azureResourceName = process.env.AZURE_RESOURCE_NAME
+  const azureApiKey = process.env.AZURE_API_KEY
+  let azureDeploymentName = process.env.AZURE_DEPLOYMENT_NAME || 'gpt-4o'
   const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY
 
@@ -27,7 +31,7 @@ export function getModel(useSubModel = false) {
     !anthropicApiKey
   ) {
     throw new Error(
-      'Missing environment variables for Ollama, OpenAI, Google or Anthropic'
+      'Missing environment variables for Ollama, OpenAI, Azure OpenAI, Google or Anthropic'
     )
   }
   // Ollama
@@ -49,8 +53,16 @@ export function getModel(useSubModel = false) {
     return anthropic('claude-3-5-sonnet-20240620')
   }
 
-  // Fallback to OpenAI instead
+  if (azureApiKey && azureResourceName) {
+    const azure = createAzure({
+      apiKey: azureApiKey,
+      resourceName: azureResourceName
+    })
 
+    return azure.chat(azureDeploymentName)
+  }
+
+  // Fallback to OpenAI instead
   const openai = createOpenAI({
     baseURL: openaiApiBase, // optional base URL for proxies etc.
     apiKey: openaiApiKey, // optional API key, default to env property OPENAI_API_KEY
