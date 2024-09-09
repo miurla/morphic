@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { createOllama } from 'ollama-ai-provider'
 import { createOpenAI } from '@ai-sdk/openai'
-import { createAzure } from '@ai-sdk/azure';
+import { createAzure } from '@ai-sdk/azure'
 import { google } from '@ai-sdk/google'
 import { anthropic } from '@ai-sdk/anthropic'
 import { CoreMessage } from 'ai'
@@ -28,7 +28,8 @@ export function getModel(useSubModel = false) {
     !(ollamaBaseUrl && ollamaModel) &&
     !openaiApiKey &&
     !googleApiKey &&
-    !anthropicApiKey
+    !anthropicApiKey &&
+    !(azureApiKey && azureResourceName)
   ) {
     throw new Error(
       'Missing environment variables for Ollama, OpenAI, Azure OpenAI, Google or Anthropic'
