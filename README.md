@@ -42,7 +42,7 @@ An AI-powered search engine with a generative UI.
 - App framework: [Next.js](https://nextjs.org/)
 - Text streaming / Generative UI: [Vercel AI SDK](https://sdk.vercel.ai/docs)
 - Generative Model: [OpenAI](https://openai.com/)
-- Search API: [Tavily AI](https://tavily.com/) / [Serper](https://serper.dev) / [SearXNG](https://docs.searxng.org/)
+- Search API: [Tavily AI](https://tavily.com/) / [SearchApi](https://www.searchapi.io/) / [Serper](https://serper.dev) / [SearXNG](https://docs.searxng.org/)
 - Reader API: [Jina AI](https://jina.ai/)
 - Database (Serverless/Local): [Upstash](https://upstash.com/) / [Redis](https://redis.io/)
 - Component library: [shadcn/ui](https://ui.shadcn.com/)
@@ -105,7 +105,7 @@ To use Upstash Redis:
 
 # SearXNG Configuration
 SEARXNG_API_URL=http://localhost:8080  # Replace with your local SearXNG API URL or docker http://searxng:8080
-SEARCH_API=tavily  #  use searxng, tavily or exa
+SEARCH_API=tavily  #  use searchapi, searxng, tavily or exa
 SEARXNG_SECRET="" # generate a secret key e.g. openssl rand -base64 32
 SEARXNG_PORT=8080 # default port
 SEARXNG_BIND_ADDRESS=0.0.0.0 # default address

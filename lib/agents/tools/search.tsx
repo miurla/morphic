@@ -39,9 +39,12 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
         query.length < 5 ? query + ' '.repeat(5 - query.length) : query
       let searchResult: SearchResults
       const searchAPI =
-        (process.env.SEARCH_API as 'tavily' | 'exa' | 'searxng') || 'tavily'
+        (process.env.SEARCH_API as
+          | 'tavily'
+          | 'exa'
+          | 'searxng'
+          | 'searchapi') || 'tavily'
 
-     
       const effectiveSearchDepth =
         searchAPI === 'searxng' &&
         process.env.SEARXNG_DEFAULT_DEPTH === 'advanced'
@@ -78,6 +81,8 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
             ? tavilySearch
             : searchAPI === 'exa'
             ? exaSearch
+            : searchAPI === 'searchapi'
+            ? searchApiSearch
             : searxngSearch)(
             filledQuery,
             max_results,
@@ -197,6 +202,63 @@ async function exaSearch(
     query,
     images: [],
     number_of_results: exaResults.results.length
+  }
+}
+
+async function searchApiSearch(
+  query: string,
+  maxResults: number = 20,
+  searchDepth: string,
+  includeDomains: string[] = [],
+  excludeDomains: string[] = []
+): Promise<SearchResults> {
+  const apiKey = process.env.SEARCHAPI_API_KEY
+  if (!apiKey)
+    throw new Error('SEARCHAPI_API_KEY is not set in the environment variables')
+
+  const engine = process.env.SEARCHAPI_ENGINE || 'google'
+
+  const params = new URLSearchParams({
+    q: query,
+    num: maxResults.toString(),
+    gl: 'US',
+    hl: 'en',
+    engine: engine
+  })
+
+  // Make the GET request with query parameters
+  const response = await fetch(
+    `https://www.searchapi.io/api/v1/search?${params}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'X-SearchApi-Source': 'morphic',
+        'Content-Type': 'application/json'
+      }
+    }
+  )
+
+  if (!response.ok)
+    throw new Error(
+      `SearchApi error: ${response.status} ${response.statusText}`
+    )
+
+  const data = await response.json()
+
+  return {
+    results: data.organic_results.map(
+      (result: any): SearchResultItem => ({
+        title: result.title,
+        url: result.link,
+        content: result.content
+      })
+    ),
+    query: data?.search_information?.query_displayed,
+    images: data.inline_images?.images
+      ?.map((result: any) => result?.original?.link)
+      .filter(Boolean),
+    number_of_results: data.organic_results.size
   }
 }
 
