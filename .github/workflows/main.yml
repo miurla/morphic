@@ -26,7 +26,7 @@ jobs:
       #uses: XueMoMo/Sync-Fork-action@v1.0.6
       uses: aormsby/Fork-Sync-With-Upstream-action@v2.3
       with:
-        upstream_repository: fdarveau/flame
+        upstream_repository: miurla/morphic:main
         upstream_branch: master
         target_branch: master
         #git_pull_rebase_config: true
