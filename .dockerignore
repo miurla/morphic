@@ -35,4 +35,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# unnecessary files
 /data
+/.vscode
+/.github
+
+.git
+.gitignore
+.env.local.example
+
+Dockerfile
+compose.yml
+searxng-*
+start.sh
+README.md
