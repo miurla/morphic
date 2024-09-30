@@ -1,8 +1,15 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
-import { CoreMessage, ToolCallPart, ToolResultPart, streamText } from 'ai'
+import {
+  CoreMessage,
+  ToolCallPart,
+  ToolResultPart,
+  generateText,
+  streamText
+} from 'ai'
 import { getTools } from './tools'
 import { getModel, transformToolMessages } from '../utils'
 import { AnswerSection } from '@/components/answer-section'
+import { Spinner } from '@/components/ui/spinner'
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -111,4 +118,43 @@ export async function researcher(
   }
 
   return { result, fullResponse, hasError, toolResponses, finishReason }
+}
+
+export async function ollamaResearcher(
+  uiStream: ReturnType<typeof createStreamableUI>,
+  messages: CoreMessage[]
+) {
+  const fullResponse = ''
+  const streamableText = createStreamableValue<string>()
+  let toolResults: any[] = []
+
+  const result = await generateText({
+    model: getModel(),
+    system: `As a professional search expert, you possess the ability to search for any information on the web.
+    or any information on the web.
+    For each user query, utilize the search results to their fullest potential to provide additional information and assistance in your response.
+    If there are any images relevant to your answer, be sure to include them as well.
+    Aim to directly address the user's question, augmenting your response with insights gleaned from the search results.
+    `,
+    messages: messages,
+    tools: getTools({
+      uiStream,
+      fullResponse
+    }),
+    maxSteps: 5,
+    onStepFinish: async event => {
+      if (event.stepType === 'initial') {
+        if (event.toolCalls) {
+          uiStream.append(<AnswerSection result={streamableText.value} />)
+          toolResults = event.toolResults
+        } else {
+          uiStream.update(<AnswerSection result={streamableText.value} />)
+        }
+      }
+    }
+  })
+
+  streamableText.done(result.text)
+
+  return { text: result.text, toolResults }
 }
