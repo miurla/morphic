@@ -29,7 +29,7 @@ An AI-powered search engine with a generative UI.
   - Google Generative AI Provider
   - Azure OpenAI Provider [※](https://github.com/miurla/morphic/issues/13)
   - Anthropic Provider [※](https://github.com/miurla/morphic/pull/239)
-  - Ollama Provider [※](https://github.com/miurla/morphic/issues/215))
+  - Ollama Provider [※](https://github.com/miurla/morphic/issues/215#issuecomment-2381902347)
 - Specify the model to generate answers
   - Groq API support [※](https://github.com/miurla/morphic/pull/58)
 - Local Redis support
