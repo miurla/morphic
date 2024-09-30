@@ -102,6 +102,9 @@ export async function workflow(
     </Section>
   )
 
+  uiStream.done()
+  isGenerating.done(false)
+
   aiState.done({
     ...aiState.get(),
     messages: [
