@@ -23,6 +23,8 @@ export function getModel(useSubModel = false) {
   let azureDeploymentName = process.env.AZURE_DEPLOYMENT_NAME || 'gpt-4o'
   const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY
+  const groqApiKey = process.env.GROQ_API_KEY
+  const groqApiModel = process.env.GROQ_API_MODEL
 
   if (
     !(ollamaBaseUrl && ollamaModel) &&
@@ -61,6 +63,15 @@ export function getModel(useSubModel = false) {
     })
 
     return azure.chat(azureDeploymentName)
+  }
+
+  if (groqApiKey && groqApiModel) {
+    const groq = createOpenAI({
+      apiKey: groqApiKey,
+      baseURL: 'https://api.groq.com/openai/v1'
+    })
+
+    return groq.chat(groqApiModel)
   }
 
   // Fallback to OpenAI instead
