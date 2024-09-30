@@ -1,13 +1,7 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
-import {
-  CoreMessage,
-  ToolCallPart,
-  ToolResultPart,
-  generateText,
-  streamText
-} from 'ai'
+import { CoreMessage, generateText, streamText } from 'ai'
 import { getTools } from './tools'
-import { getModel, transformToolMessages } from '../utils'
+import { getModel } from '../utils'
 import { AnswerSection } from '@/components/answer-section'
 
 const SYSTEM_PROMPT = `As a professional search expert, you possess the ability to search for any information on the web.
@@ -17,134 +11,93 @@ Aim to directly address the user's question, augmenting your response with insig
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
-  streamableText: ReturnType<typeof createStreamableValue<string>>,
   messages: CoreMessage[]
 ) {
-  let fullResponse = ''
-  let hasError = false
-  let finishReason = ''
+  try {
+    let fullResponse = ''
+    const streamableText = createStreamableValue<string>()
+    let toolResults: any[] = []
 
-  // Transform the messages if using Ollama provider
-  let processedMessages = messages
-  const useOllamaProvider = !!(
-    process.env.OLLAMA_MODEL && process.env.OLLAMA_BASE_URL
-  )
-  const useAnthropicProvider = !!process.env.ANTHROPIC_API_KEY
-  if (useOllamaProvider) {
-    processedMessages = transformToolMessages(messages)
-  }
-  const includeToolResponses = messages.some(message => message.role === 'tool')
-  const useSubModel = useOllamaProvider && includeToolResponses
-
-  const streamableAnswer = createStreamableValue<string>('')
-  const answerSection = <AnswerSection result={streamableAnswer.value} />
-
-  const currentDate = new Date().toLocaleString()
-  const result = await streamText({
-    model: getModel(useSubModel),
-    maxTokens: 2500,
-    system: `${SYSTEM_PROMPT} Current date and time: ${currentDate}`,
-    messages: processedMessages,
-    tools: getTools({
-      uiStream,
-      fullResponse
-    }),
-    onFinish: async event => {
-      finishReason = event.finishReason
-      fullResponse = event.text
-      streamableAnswer.done()
-    }
-  }).catch(err => {
-    hasError = true
-    fullResponse = 'Error: ' + err.message
-    streamableText.update(fullResponse)
-  })
-
-  // If the result is not available, return an error response
-  if (!result) {
-    return { result, fullResponse, hasError, toolResponses: [] }
-  }
-
-  const hasToolResult = messages.some(message => message.role === 'tool')
-  if (!useAnthropicProvider || hasToolResult) {
-    uiStream.append(answerSection)
-  }
-
-  // Process the response
-  const toolCalls: ToolCallPart[] = []
-  const toolResponses: ToolResultPart[] = []
-  for await (const delta of result.fullStream) {
-    switch (delta.type) {
-      case 'text-delta':
-        if (delta.textDelta) {
-          fullResponse += delta.textDelta
-          if (useAnthropicProvider && !hasToolResult) {
-            streamableText.update(fullResponse)
+    const currentDate = new Date().toLocaleString()
+    const result = await streamText({
+      model: getModel(),
+      system: `${SYSTEM_PROMPT} Current date and time: ${currentDate}`,
+      messages: messages,
+      tools: getTools({
+        uiStream,
+        fullResponse
+      }),
+      maxSteps: 5,
+      onStepFinish: async event => {
+        if (event.stepType === 'initial') {
+          if (event.toolCalls && event.toolCalls.length > 0) {
+            uiStream.append(<AnswerSection result={streamableText.value} />)
+            toolResults = event.toolResults
           } else {
-            streamableAnswer.update(fullResponse)
+            uiStream.update(<AnswerSection result={streamableText.value} />)
           }
         }
-        break
-      case 'tool-call':
-        toolCalls.push(delta)
-        break
-      case 'tool-result':
-        if (!delta.result) {
-          hasError = true
-        }
-        toolResponses.push(delta)
-        break
-      case 'error':
-        console.log('Error: ' + delta.error)
-        hasError = true
-        fullResponse += `\nError occurred while executing the tool`
-        break
+      }
+    })
+
+    for await (const delta of result.fullStream) {
+      if (delta.type === 'text-delta' && delta.textDelta) {
+        fullResponse += delta.textDelta
+        streamableText.update(fullResponse)
+      }
+    }
+
+    streamableText.done(fullResponse)
+
+    return { text: fullResponse, toolResults }
+  } catch (error) {
+    console.error('Error in researcher:', error)
+    return {
+      text: 'An error has occurred. Please try again.',
+      toolResults: []
     }
   }
-  messages.push({
-    role: 'assistant',
-    content: [{ type: 'text', text: fullResponse }, ...toolCalls]
-  })
-
-  if (toolResponses.length > 0) {
-    // Add tool responses to the messages
-    messages.push({ role: 'tool', content: toolResponses })
-  }
-
-  return { result, fullResponse, hasError, toolResponses, finishReason }
 }
 
-export async function ollamaResearcher(
+export async function researcherWithOllama(
   uiStream: ReturnType<typeof createStreamableUI>,
   messages: CoreMessage[]
 ) {
-  const fullResponse = ''
-  const streamableText = createStreamableValue<string>()
-  let toolResults: any[] = []
+  try {
+    const fullResponse = ''
+    const streamableText = createStreamableValue<string>()
+    let toolResults: any[] = []
 
-  const currentDate = new Date().toLocaleString()
-  const result = await generateText({
-    model: getModel(),
-    system: `${SYSTEM_PROMPT} Current date and time: ${currentDate}`,
-    messages: messages,
-    tools: getTools({
-      uiStream,
-      fullResponse
-    }),
-    maxSteps: 5,
-    onStepFinish: async event => {
-      if (event.stepType === 'initial') {
-        if (event.toolCalls) {
-          uiStream.append(<AnswerSection result={streamableText.value} />)
-          toolResults = event.toolResults
-        } else {
-          uiStream.update(<AnswerSection result={streamableText.value} />)
+    const currentDate = new Date().toLocaleString()
+    const result = await generateText({
+      model: getModel(),
+      system: `${SYSTEM_PROMPT} Current date and time: ${currentDate}`,
+      messages: messages,
+      tools: getTools({
+        uiStream,
+        fullResponse
+      }),
+      maxSteps: 5,
+      onStepFinish: async event => {
+        if (event.stepType === 'initial') {
+          if (event.toolCalls) {
+            uiStream.append(<AnswerSection result={streamableText.value} />)
+            toolResults = event.toolResults
+          } else {
+            uiStream.update(<AnswerSection result={streamableText.value} />)
+          }
         }
       }
+    })
+
+    streamableText.done(result.text)
+
+    return { text: result.text, toolResults }
+  } catch (error) {
+    console.error('Error in researcherWithOllama:', error)
+    return {
+      text: 'An error has occurred. Please try again.',
+      toolResults: []
     }
-  })
-
-  streamableText.done(result.text)
-
-  return { text: result.text, toolResults }
+  }
 }

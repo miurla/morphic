@@ -21,6 +21,8 @@ import { VideoSearchSection } from '@/components/video-search-section'
 import { AnswerSection } from '@/components/answer-section'
 import { workflow } from '@/lib/actions/workflow'
 
+const MAX_MESSAGES = 6
+
 async function submit(
   formData?: FormData,
   skip?: boolean,
@@ -48,13 +50,8 @@ async function submit(
       return { role, content } as CoreMessage
     })
 
-  const useSpecificAPI = process.env.USE_SPECIFIC_API_FOR_WRITER === 'true'
-  const useOllamaProvider = !!(
-    process.env.OLLAMA_MODEL && process.env.OLLAMA_BASE_URL
-  )
-  const maxMessages = useSpecificAPI ? 5 : useOllamaProvider ? 1 : 10
   // Limit the number of messages to the maximum
-  messages.splice(0, Math.max(messages.length - maxMessages, 0))
+  messages.splice(0, Math.max(messages.length - MAX_MESSAGES, 0))
   // Get the user input from the form data
   const userInput = skip
     ? `{"action": "skip"}`
