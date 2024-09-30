@@ -70,7 +70,7 @@ export async function workflow(
     messages: [
       ...aiState.get().messages,
       ...toolResults.map((toolResult: any) => ({
-        id: generateId(),
+        id,
         role: 'tool',
         content: JSON.stringify(toolResult.result),
         name: toolResult.toolName,
@@ -107,13 +107,13 @@ export async function workflow(
     messages: [
       ...aiState.get().messages,
       {
-        id: generateId(),
+        id,
         role: 'assistant',
         content: JSON.stringify(relatedQueries),
         type: 'related'
       },
       {
-        id: generateId(),
+        id,
         role: 'assistant',
         content: 'followup',
         type: 'followup'
