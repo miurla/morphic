@@ -81,7 +81,7 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
             : searxngSearch)(
             filledQuery,
             max_results,
-            effectiveSearchDepth,
+            effectiveSearchDepth === 'advanced' ? 'advanced' : 'basic',
             include_domains,
             exclude_domains
           )
