@@ -11,12 +11,12 @@ const exampleMessages = [
     message: 'Why is Nvidia growing rapidly?'
   },
   {
-    heading: 'How does the Vercel AI SDK work?',
-    message: 'How does the Vercel AI SDK work?'
-  },
-  {
     heading: 'Tesla vs Rivian',
     message: 'Tesla vs Rivian'
+  },
+  {
+    heading: 'Summary: https://arxiv.org/pdf/2407.16833',
+    message: 'Summary: https://arxiv.org/pdf/2407.16833'
   }
 ]
 export function EmptyScreen({
