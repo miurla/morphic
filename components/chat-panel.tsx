@@ -29,6 +29,19 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isFirstRender = useRef(true) // For development environment
 
+  const [isComposing, setIsComposing] = useState(false) // Composition state
+  const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
+
+  const handleCompositionStart = () => setIsComposing(true);
+
+  const handleCompositionEnd = () => {
+    setIsComposing(false);
+    setEnterDisabled(true);
+    setTimeout(() => {
+      setEnterDisabled(false);
+    }, 300);
+  };
+
   async function handleQuerySubmit(query: string, formData?: FormData) {
     setInput(query)
     setIsGenerating(true)
@@ -125,6 +138,8 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
             rows={1}
             maxRows={5}
             tabIndex={0}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
             placeholder="Ask a question..."
             spellCheck={false}
             value={input}
@@ -134,11 +149,12 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
               setShowEmptyScreen(e.target.value.length === 0)
             }}
             onKeyDown={e => {
-              // Enter should submit the form
+              // Enter should submit the form, but disable it right after IME input confirmation
               if (
                 e.key === 'Enter' &&
                 !e.shiftKey &&
-                !e.nativeEvent.isComposing
+                !isComposing && // Not in composition
+                !enterDisabled // Not within the delay after confirmation
               ) {
                 // Prevent the default action to avoid adding a new line
                 if (input.trim().length === 0) {
