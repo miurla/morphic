@@ -3,6 +3,7 @@ import { ModeToggle } from './mode-toggle'
 import { IconLogo } from './ui/icons'
 import { cn } from '@/lib/utils'
 import HistoryContainer from './history-container'
+import TopRightMenu from './ui/top-right-menu'
 
 export const Header: React.FC = async () => {
   return (
@@ -16,6 +17,7 @@ export const Header: React.FC = async () => {
       <div className="flex gap-0.5">
         <ModeToggle />
         <HistoryContainer location="header" />
+        <TopRightMenu />
       </div>
     </header>
   )

@@ -6,13 +6,17 @@ export type RedisConfig = {
   upstashRedisRestUrl?: string
   upstashRedisRestToken?: string
   localRedisUrl?: string
+  localRedisUsername?: string
+  localRedisPassword?: string
 }
 
 export const redisConfig: RedisConfig = {
   useLocalRedis: process.env.USE_LOCAL_REDIS === 'true',
   upstashRedisRestUrl: process.env.UPSTASH_REDIS_REST_URL,
   upstashRedisRestToken: process.env.UPSTASH_REDIS_REST_TOKEN,
-  localRedisUrl: process.env.LOCAL_REDIS_URL || 'redis://localhost:6379'
+  localRedisUrl: process.env.LOCAL_REDIS_URL || 'redis://localhost:6379',
+  localRedisUsername: process.env.LOCAL_REDIS_USERNAME,
+  localRedisPassword: process.env.LOCAL_REDIS_PASSWORD
 }
 
 let localRedisClient: RedisClientType | null = null
@@ -108,6 +112,24 @@ export class RedisWrapper {
       return
     } else {
       await (this.client as RedisClientType).quit()
+    }
+  }
+
+  // Add these new methods
+  async get(key: string): Promise<string | null> {
+    if (this.client instanceof Redis) {
+      return this.client.get(key)
+    } else {
+      return (this.client as RedisClientType).get(key)
+    }
+  }
+
+  async set(key: string, value: string): Promise<string | null> {
+    if (this.client instanceof Redis) {
+      const result = await this.client.set(key, value)
+      return result === 'OK' ? 'OK' : null
+    } else {
+      return (this.client as RedisClientType).set(key, value)
     }
   }
 }
@@ -208,10 +230,13 @@ export async function getRedisClient(): Promise<RedisWrapper> {
 
   if (redisConfig.useLocalRedis) {
     if (!localRedisClient) {
-      const localRedisUrl =
-        redisConfig.localRedisUrl || 'redis://localhost:6379'
+      const localRedisUrl = redisConfig.localRedisUrl || 'redis://localhost:6379'
       try {
-        localRedisClient = createClient({ url: localRedisUrl })
+        localRedisClient = createClient({
+          url: localRedisUrl,
+          username: redisConfig.localRedisUsername,
+          password: redisConfig.localRedisPassword
+        })
         await localRedisClient.connect()
       } catch (error) {
         if (error instanceof Error) {

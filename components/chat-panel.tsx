@@ -12,6 +12,7 @@ import { EmptyScreen } from './empty-screen'
 import Textarea from 'react-textarea-autosize'
 import { generateId } from 'ai'
 import { useAppState } from '@/lib/utils/app-state'
+import { useChatHistory } from '@/lib/utils/chat-history-context'
 
 interface ChatPanelProps {
   messages: UIState
@@ -19,6 +20,7 @@ interface ChatPanelProps {
 }
 
 export function ChatPanel({ messages, query }: ChatPanelProps) {
+  const { chatHistoryEnabled } = useChatHistory()
   const [input, setInput] = useState('')
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const [, setMessages] = useUIState<typeof AI>()
@@ -46,7 +48,7 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
     setInput(query)
     setIsGenerating(true)
 
-    // Add user message to UI state
+    // Always add user message to UI state
     setMessages(currentMessages => [
       ...currentMessages,
       {
@@ -61,6 +63,8 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
       data.append('input', query)
     }
     const responseMessage = await submit(data)
+    
+    // Always update UI with response message
     setMessages(currentMessages => [...currentMessages, responseMessage])
   }
 
@@ -89,8 +93,10 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
   // Clear messages
   const handleClear = () => {
     setIsGenerating(false)
-    setMessages([])
-    setAIMessage({ messages: [], chatId: '' })
+    if (chatHistoryEnabled) {
+      setMessages([])
+      setAIMessage({ messages: [], chatId: '' })
+    }
     setInput('')
     router.push('/')
   }

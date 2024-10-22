@@ -9,7 +9,7 @@ import {
 import { CoreMessage, generateId } from 'ai'
 import { Section } from '@/components/section'
 import { FollowupPanel } from '@/components/followup-panel'
-import { saveChat } from '@/lib/actions/chat'
+import { saveChat, getChats } from '@/lib/actions/chat'
 import { Chat } from '@/lib/types'
 import { AIMessage } from '@/lib/types'
 import { UserMessage } from '@/components/user-message'
@@ -20,6 +20,7 @@ import RetrieveSection from '@/components/retrieve-section'
 import { VideoSearchSection } from '@/components/video-search-section'
 import { AnswerSection } from '@/components/answer-section'
 import { workflow } from '@/lib/actions/workflow'
+import { getRedisClient } from '@/lib/redis/config'
 
 const MAX_MESSAGES = 6
 
@@ -34,6 +35,11 @@ async function submit(
   const uiStream = createStreamableUI()
   const isGenerating = createStreamableValue(true)
   const isCollapsed = createStreamableValue(false)
+
+  const redis = await getRedisClient()
+  const chatHistoryEnabled = await redis.get(
+    'user:anonymous:chatHistoryEnabled'
+  )
 
   const aiMessages = [...(retryMessages ?? aiState.get().messages)]
   // Get the messages from the state, filter out the tool messages
@@ -70,8 +76,16 @@ async function submit(
     ? 'input_related'
     : 'inquiry'
 
-  // Add the user message to the state
-  if (content) {
+  // Always add the user message to the messages array if content is not null
+  if (content !== null) {
+    messages.push({
+      role: 'user',
+      content
+    })
+  }
+
+  // Only update aiState if chat history is enabled and content is not null
+  if (chatHistoryEnabled !== 'false' && content !== null) {
     aiState.update({
       ...aiState.get(),
       messages: [
@@ -83,10 +97,6 @@ async function submit(
           type
         }
       ]
-    })
-    messages.push({
-      role: 'user',
-      content
     })
   }
 
@@ -147,8 +157,16 @@ export const AI = createAI<AIState, UIState>({
   onSetAIState: async ({ state, done }) => {
     'use server'
 
+    const redis = await getRedisClient()
+    const chatHistoryEnabled = await redis.get(
+      'user:anonymous:chatHistoryEnabled'
+    )
+
     // Check if there is any message of type 'answer' in the state messages
-    if (!state.messages.some(e => e.type === 'answer')) {
+    if (
+      !state.messages.some(e => e.type === 'answer') ||
+      chatHistoryEnabled === 'false'
+    ) {
       return
     }
 
