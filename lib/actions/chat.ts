@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { type Chat } from '@/lib/types'
 import { getRedisClient, RedisWrapper } from '@/lib/redis/config'
+import { getStorageProvider } from '@/lib/storage'
 
 async function getRedis(): Promise<RedisWrapper> {
   return await getRedisClient()
@@ -197,11 +198,11 @@ export async function updateChatHistorySetting(userId: string, enabled: boolean)
 
 export async function getChatHistorySetting(userId: string): Promise<boolean> {
   try {
-    const redis = await getRedis()
-    const value = await redis.get(`user:${userId}:chatHistoryEnabled`)
+    const storage = await getStorageProvider()
+    const value = await storage.get(`user:${userId}:chatHistoryEnabled`)
     return value === 'true'
   } catch (error) {
     console.error('Error getting chat history setting:', error)
-    return true // Default to true if there's an error
+    return true
   }
 }

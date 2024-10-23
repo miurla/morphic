@@ -35,6 +35,9 @@ An AI-powered search engine with a generative UI.
 - SearXNG Search API support with customizable depth (basic or advanced)
 - Configurable search depth (basic or advanced)
 - SearXNG Search API support with customizable depth
+- Configurable chat history with toggle functionality
+- Flexible storage options (Redis or LocalStorage)
+- User-controlled chat history persistence
 
 ## 🧱 Stack
 
@@ -237,3 +240,28 @@ engines:
 - Groq
   - llama3-groq-8b-8192-tool-use-preview
   - llama3-groq-70b-8192-tool-use-preview
+
+## Storage Configuration
+
+This application supports two storage methods for chat history:
+
+1. **Redis Storage (Default)**
+   - Persistent server-side storage
+   - Set `STORAGE_PROVIDER=redis` in your `.env.local` file
+   - Configure either Upstash Redis or local Redis instance
+   - Supports cross-device access to chat history
+
+2. **Browser Storage**
+   - Uses browser's localStorage
+   - Set `STORAGE_PROVIDER=local` in your `.env.local` file
+   - Data persists in browser until cleared
+   - Storage is limited to browser/device
+   - Useful for development and testing
+
+The application will automatically fall back to browser storage (localStorage) if Redis is unavailable.
+
+**Note**: Browser storage means chat history is:
+- Stored in the user's browser
+- Limited to the device being used
+- Cleared if browser data is cleared
+- Not shared across devices or browsers
