@@ -27,7 +27,7 @@ export const searchTool = ({ uiStream, fullResponse }: ToolProps) =>
       let hasError = false
       // Append the search section
       const streamResults = createStreamableValue<string>()
-      uiStream.update(
+      uiStream.append(
         <SearchSection
           result={streamResults.value}
           includeDomains={include_domains}
