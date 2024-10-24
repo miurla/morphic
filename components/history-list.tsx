@@ -60,7 +60,8 @@ export function HistoryList({ userId, chatHistoryEnabled }: HistoryListProps) {
           )
         )}
       </div>
-      <div className="mt-auto">
+
+      <div className="sticky bottom-0 bg-background py-2">
         <ClearHistory empty={!chats?.length} onCleared={refreshList} />
       </div>
     </div>
