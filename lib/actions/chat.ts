@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { type Chat } from '@/lib/types'
 import { getRedisClient, RedisWrapper } from '@/lib/redis/config'
+import { getStorageProvider } from '@/lib/storage'
 
 async function getRedis(): Promise<RedisWrapper> {
   return await getRedisClient()
@@ -16,6 +17,12 @@ export async function getChats(userId?: string | null) {
 
   try {
     const redis = await getRedis()
+    const chatHistoryEnabled = await redis.get(`user:${userId}:chatHistoryEnabled`)
+
+    if (chatHistoryEnabled === 'false') {
+      return []
+    }
+
     const chats = await redis.zrange(`user:chat:${userId}`, 0, -1, {
       rev: true
     })
@@ -53,12 +60,19 @@ export async function getChats(userId?: string | null) {
         return plainChat as Chat
       })
   } catch (error) {
+    console.error('Error fetching chats:', error)
     return []
   }
 }
 
 export async function getChat(id: string, userId: string = 'anonymous') {
   const redis = await getRedis()
+  const chatHistoryEnabled = await redis.get(`user:${userId}:chatHistoryEnabled`)
+
+  if (chatHistoryEnabled === 'false') {
+    return null
+  }
+
   const chat = await redis.hgetall<Chat>(`chat:${id}`)
 
   if (!chat) {
@@ -86,6 +100,12 @@ export async function clearChats(
   userId: string = 'anonymous'
 ): Promise<{ error?: string }> {
   const redis = await getRedis()
+  const chatHistoryEnabled = await redis.get(`user:${userId}:chatHistoryEnabled`)
+
+  if (chatHistoryEnabled === 'false') {
+    return { error: 'Chat history is disabled' }
+  }
+
   const chats = await redis.zrange(`user:chat:${userId}`, 0, -1)
   if (!chats.length) {
     return { error: 'No chats to clear' }
@@ -98,14 +118,19 @@ export async function clearChats(
   }
 
   await pipeline.exec()
-
   revalidatePath('/')
-  redirect('/')
+  return {}
 }
 
 export async function saveChat(chat: Chat, userId: string = 'anonymous') {
   try {
     const redis = await getRedis()
+    const chatHistoryEnabled = await redis.get(`user:${userId}:chatHistoryEnabled`)
+
+    if (chatHistoryEnabled === 'false') {
+      return null
+    }
+
     const pipeline = redis.pipeline()
 
     const chatToSave = {
@@ -120,6 +145,7 @@ export async function saveChat(chat: Chat, userId: string = 'anonymous') {
 
     return results
   } catch (error) {
+    console.error('Error saving chat:', error)
     throw error
   }
 }
@@ -137,6 +163,12 @@ export async function getSharedChat(id: string) {
 
 export async function shareChat(id: string, userId: string = 'anonymous') {
   const redis = await getRedis()
+  const chatHistoryEnabled = await redis.get(`user:${userId}:chatHistoryEnabled`)
+
+  if (chatHistoryEnabled === 'false') {
+    return null
+  }
+
   const chat = await redis.hgetall<Chat>(`chat:${id}`)
 
   if (!chat || chat.userId !== userId) {
@@ -151,4 +183,26 @@ export async function shareChat(id: string, userId: string = 'anonymous') {
   await redis.hmset(`chat:${id}`, payload)
 
   return payload
+}
+
+export async function updateChatHistorySetting(userId: string, enabled: boolean) {
+  try {
+    const redis = await getRedis()
+    const result = await redis.set(`user:${userId}:chatHistoryEnabled`, enabled.toString())
+    return result === 'OK'
+  } catch (error) {
+    console.error('Error updating chat history setting:', error)
+    return false
+  }
+}
+
+export async function getChatHistorySetting(userId: string): Promise<boolean> {
+  try {
+    const storage = await getStorageProvider()
+    const value = await storage.get(`user:${userId}:chatHistoryEnabled`)
+    return value === 'true'
+  } catch (error) {
+    console.error('Error getting chat history setting:', error)
+    return true
+  }
 }
