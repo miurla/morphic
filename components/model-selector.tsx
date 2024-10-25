@@ -14,11 +14,10 @@ import { Model, models } from '@/lib/types/models'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 
 interface ModelSelectorProps {
-  selectedModel: string
-  onModelChange: (modelId: string) => void
+  selectedModel: Model
+  onModelChange: (model: Model) => void
 }
 
-// Group models by provider
 function groupModelsByProvider(models: Model[]) {
   return models.reduce((groups, model) => {
     const provider = model.provider
@@ -34,22 +33,25 @@ export function ModelSelector({
   selectedModel: initialModel,
   onModelChange
 }: ModelSelectorProps) {
-  const [selectedModel, setSelectedModel] = useLocalStorage(
+  const [selectedModel, setSelectedModel] = useLocalStorage<Model>(
     'selectedModel',
     initialModel
   )
   const groupedModels = groupModelsByProvider(models)
 
   const handleModelChange = (modelId: string) => {
-    setSelectedModel(modelId)
-    onModelChange(modelId)
+    const selectedModelData = models.find(model => model.id === modelId)
+    if (selectedModelData) {
+      setSelectedModel(selectedModelData)
+      onModelChange(selectedModelData)
+    }
   }
 
   return (
     <div className="absolute -top-8 left-2">
       <Select
         name="model"
-        value={selectedModel}
+        value={selectedModel.id}
         onValueChange={handleModelChange}
       >
         <SelectTrigger className="mr-2 h-7 text-xs border-none shadow-none focus:ring-0">

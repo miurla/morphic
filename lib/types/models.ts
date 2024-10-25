@@ -19,7 +19,7 @@ export const models: Model[] = [
     providerId: 'openai'
   },
   {
-    id: 'claude-3.5-sonnet',
+    id: 'claude-3-5-sonnet-latest',
     name: 'Claude 3.5 Sonnet',
     provider: 'Anthropic',
     providerId: 'anthropic'

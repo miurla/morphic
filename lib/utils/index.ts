@@ -11,10 +11,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function getModel(useSubModel = false) {
+export function getModel(model: string) {
   const ollamaBaseUrl = process.env.OLLAMA_BASE_URL + '/api'
   const ollamaModel = process.env.OLLAMA_MODEL
-  const ollamaSubModel = process.env.OLLAMA_SUB_MODEL
   const openaiApiBase = process.env.OPENAI_API_BASE
   const openaiApiKey = process.env.OPENAI_API_KEY
   let openaiApiModel = process.env.OPENAI_API_MODEL || 'gpt-4o'
@@ -40,11 +39,6 @@ export function getModel(useSubModel = false) {
   // Ollama
   if (ollamaBaseUrl && ollamaModel) {
     const ollama = createOllama({ baseURL: ollamaBaseUrl })
-
-    if (useSubModel && ollamaSubModel) {
-      return ollama(ollamaSubModel)
-    }
-
     return ollama(ollamaModel)
   }
 

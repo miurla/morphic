@@ -13,19 +13,21 @@ import Textarea from 'react-textarea-autosize'
 import { generateId } from 'ai'
 import { useAppState } from '@/lib/utils/app-state'
 import { ModelSelector } from './model-selector'
+import { Model, models } from '@/lib/types/models'
+import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 
 interface ChatPanelProps {
   messages: UIState
   query?: string
-  onModelChange?: (modelId: string) => void
-  defaultModel?: string
+  onModelChange?: (model: Model) => void
+  defaultModel?: Model
 }
 
 export function ChatPanel({
   messages,
   query,
   onModelChange,
-  defaultModel
+  defaultModel = models[0]
 }: ChatPanelProps) {
   const [input, setInput] = useState('')
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
@@ -36,7 +38,12 @@ export function ChatPanel({
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isFirstRender = useRef(true) // For development environment
-  const [selectedModel, setSelectedModel] = useState(defaultModel || 'gpt-4')
+
+  // Use localStorage for selectedModel
+  const [selectedModel, setSelectedModel] = useLocalStorage<Model>(
+    'selectedModel',
+    defaultModel
+  )
 
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
@@ -64,11 +71,24 @@ export function ChatPanel({
       }
     ])
 
-    // Submit and get response message
+    // Use existing formData or create new one
     const data = formData || new FormData()
+
+    // Add or update the model information
+    const modelString = `${selectedModel.providerId}:${selectedModel.id}`
+    data.set('model', modelString)
+
+    // Add or update the input query if not already present
     if (!formData) {
-      data.append('input', query)
+      data.set('input', query)
     }
+
+    console.log('Submitting data:', {
+      model: modelString,
+      input: data.get('input'),
+      formDataEntries: Object.fromEntries(data)
+    })
+
     const responseMessage = await submit(data)
     setMessages(currentMessages => [...currentMessages, responseMessage])
   }
@@ -76,7 +96,11 @@ export function ChatPanel({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    await handleQuerySubmit(input, formData)
+    try {
+      await handleQuerySubmit(input, formData)
+    } catch (error) {
+      console.error('Error submitting form:', error)
+    }
   }
 
   // if query is not empty, submit the query
@@ -143,9 +167,9 @@ export function ChatPanel({
         <div className="relative flex items-center w-full">
           <ModelSelector
             selectedModel={selectedModel}
-            onModelChange={modelId => {
-              setSelectedModel(modelId)
-              onModelChange?.(modelId)
+            onModelChange={model => {
+              setSelectedModel(model)
+              onModelChange?.(model)
             }}
           />
           <Textarea
