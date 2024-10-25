@@ -1,10 +1,9 @@
+import { experimental_createProviderRegistry as createProviderRegistry } from 'ai'
 import { openai, createOpenAI } from '@ai-sdk/openai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { experimental_createProviderRegistry as createProviderRegistry } from 'ai'
 import { google } from '@ai-sdk/google'
-import { createOllama } from 'ollama-ai-provider'
 import { createAzure } from '@ai-sdk/azure'
-import { Model } from '../types/models'
+import { ollama } from 'ollama-ai-provider'
 
 export const registry = createProviderRegistry({
   openai,
@@ -14,9 +13,7 @@ export const registry = createProviderRegistry({
     apiKey: process.env.GROQ_API_KEY,
     baseURL: 'https://api.groq.com/openai/v1'
   }),
-  ollama: createOllama({
-    baseURL: process.env.OLLAMA_BASE_URL
-  }),
+  ollama,
   azure: createAzure({
     apiKey: process.env.AZURE_API_KEY,
     resourceName: process.env.AZURE_RESOURCE_NAME
@@ -33,6 +30,14 @@ export function isProviderEnabled(providerId: string): boolean {
       return !!process.env.OPENAI_API_KEY
     case 'anthropic':
       return !!process.env.ANTHROPIC_API_KEY
+    case 'google':
+      return !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
+    case 'groq':
+      return !!process.env.GROQ_API_KEY
+    case 'ollama':
+      return true
+    case 'azure':
+      return !!process.env.AZURE_API_KEY && !!process.env.AZURE_RESOURCE_NAME
     default:
       return false
   }

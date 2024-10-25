@@ -74,8 +74,7 @@ async function submit(
   // Get the model from the form data (e.g., openai:gpt-4o-mini)
   const model = (formData?.get('model') as string) || 'openai:gpt-4o-mini'
   const providerId = model.split(':')[0]
-  const modelId = model.split(':')[1]
-  console.log('model', model, providerId, modelId)
+  console.log(`Using model: ${model}`)
   // Check if provider is enabled
   if (!isProviderEnabled(providerId)) {
     throw new Error(
