@@ -57,7 +57,7 @@ export function ModelSelector({
         <SelectTrigger className="mr-2 h-7 text-xs border-none shadow-none focus:ring-0">
           <SelectValue placeholder="Select model" />
         </SelectTrigger>
-        <SelectContent className="max-h-[200px] overflow-y-auto">
+        <SelectContent className="max-h-[300px] overflow-y-auto">
           {Object.entries(groupedModels).map(([provider, models]) => (
             <SelectGroup key={provider}>
               <SelectLabel className="text-xs sticky top-0 bg-background z-10">
