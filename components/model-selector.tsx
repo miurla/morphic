@@ -11,11 +11,11 @@ import {
 } from './ui/select'
 import Image from 'next/image'
 import { Model, models } from '@/lib/types/models'
-import { useLocalStorage } from '@/lib/hooks/use-local-storage'
+import { createModelIdentifier } from '@/lib/utils/model'
 
 interface ModelSelectorProps {
-  selectedModel: Model
-  onModelChange: (model: Model) => void
+  selectedModelIdentifier: string
+  onModelChange: (identifier: string) => void
 }
 
 function groupModelsByProvider(models: Model[]) {
@@ -30,28 +30,20 @@ function groupModelsByProvider(models: Model[]) {
 }
 
 export function ModelSelector({
-  selectedModel: initialModel,
+  selectedModelIdentifier,
   onModelChange
 }: ModelSelectorProps) {
-  const [selectedModel, setSelectedModel] = useLocalStorage<Model>(
-    'selectedModel',
-    initialModel
-  )
-  const groupedModels = groupModelsByProvider(models)
-
-  const handleModelChange = (modelId: string) => {
-    const selectedModelData = models.find(model => model.id === modelId)
-    if (selectedModelData) {
-      setSelectedModel(selectedModelData)
-      onModelChange(selectedModelData)
-    }
+  const handleModelChange = (identifier: string) => {
+    onModelChange(identifier)
   }
+
+  const groupedModels = groupModelsByProvider(models)
 
   return (
     <div className="absolute -top-8 left-2">
       <Select
         name="model"
-        value={selectedModel.id}
+        value={selectedModelIdentifier}
         onValueChange={handleModelChange}
       >
         <SelectTrigger className="mr-2 h-7 text-xs border-none shadow-none focus:ring-0">
@@ -64,14 +56,18 @@ export function ModelSelector({
                 {provider}
               </SelectLabel>
               {models.map(model => (
-                <SelectItem key={model.id} value={model.id} className="py-2">
+                <SelectItem
+                  key={createModelIdentifier(model)}
+                  value={createModelIdentifier(model)}
+                  className="py-2"
+                >
                   <div className="flex items-center space-x-1">
                     <Image
                       src={`/providers/logos/${model.providerId}.svg`}
                       alt={model.provider}
                       width={18}
                       height={18}
-                      className="bg-white rounded-sm border"
+                      className="bg-white rounded-full border"
                     />
                     <span className="text-xs font-medium">{model.name}</span>
                   </div>

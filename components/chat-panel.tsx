@@ -13,22 +13,17 @@ import Textarea from 'react-textarea-autosize'
 import { generateId } from 'ai'
 import { useAppState } from '@/lib/utils/app-state'
 import { ModelSelector } from './model-selector'
-import { Model, models } from '@/lib/types/models'
+import { models } from '@/lib/types/models'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
+import { getDefaultModelIdentifier } from '@/lib/utils/model'
 
 interface ChatPanelProps {
   messages: UIState
   query?: string
-  onModelChange?: (model: Model) => void
-  defaultModel?: Model
+  onModelChange?: (identifier: string) => void
 }
 
-export function ChatPanel({
-  messages,
-  query,
-  onModelChange,
-  defaultModel = models[0]
-}: ChatPanelProps) {
+export function ChatPanel({ messages, query, onModelChange }: ChatPanelProps) {
   const [input, setInput] = useState('')
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const [, setMessages] = useUIState<typeof AI>()
@@ -39,11 +34,8 @@ export function ChatPanel({
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isFirstRender = useRef(true) // For development environment
 
-  // Use localStorage for selectedModel
-  const [selectedModel, setSelectedModel] = useLocalStorage<Model>(
-    'selectedModel',
-    defaultModel
-  )
+  const [selectedModelIdentifier, setSelectedModelIdentifier] =
+    useLocalStorage<string>('selectedModel', getDefaultModelIdentifier(models))
 
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
@@ -75,19 +67,13 @@ export function ChatPanel({
     const data = formData || new FormData()
 
     // Add or update the model information
-    const modelString = selectedModel.id
+    const modelString = selectedModelIdentifier
     data.set('model', modelString)
 
     // Add or update the input query if not already present
     if (!formData) {
       data.set('input', query)
     }
-
-    console.log('Submitting data:', {
-      model: modelString,
-      input: data.get('input'),
-      formDataEntries: Object.fromEntries(data)
-    })
 
     const responseMessage = await submit(data)
     setMessages(currentMessages => [...currentMessages, responseMessage])
@@ -166,10 +152,10 @@ export function ChatPanel({
       <form onSubmit={handleSubmit} className="max-w-2xl w-full px-6">
         <div className="relative flex items-center w-full">
           <ModelSelector
-            selectedModel={selectedModel}
-            onModelChange={model => {
-              setSelectedModel(model)
-              onModelChange?.(model)
+            selectedModelIdentifier={selectedModelIdentifier}
+            onModelChange={identifier => {
+              setSelectedModelIdentifier(identifier)
+              onModelChange?.(identifier)
             }}
           />
           <Textarea
