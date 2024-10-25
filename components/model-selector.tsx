@@ -65,12 +65,13 @@ export function ModelSelector({
               </SelectLabel>
               {models.map(model => (
                 <SelectItem key={model.id} value={model.id} className="py-2">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1">
                     <Image
                       src={`/providers/logos/${model.providerId}.svg`}
                       alt={model.provider}
-                      width={14}
-                      height={14}
+                      width={18}
+                      height={18}
+                      className="bg-white rounded-sm border"
                     />
                     <span className="text-xs font-medium">{model.name}</span>
                   </div>

@@ -75,7 +75,7 @@ export function ChatPanel({
     const data = formData || new FormData()
 
     // Add or update the model information
-    const modelString = `${selectedModel.providerId}:${selectedModel.id}`
+    const modelString = selectedModel.id
     data.set('model', modelString)
 
     // Add or update the input query if not already present
