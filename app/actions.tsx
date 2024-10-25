@@ -36,11 +36,6 @@ async function submit(
   const isGenerating = createStreamableValue(true)
   const isCollapsed = createStreamableValue(false)
 
-  const redis = await getRedisClient()
-  const chatHistoryEnabled = await redis.get(
-    'user:anonymous:chatHistoryEnabled'
-  )
-
   const aiMessages = [...(retryMessages ?? aiState.get().messages)]
   // Get the messages from the state, filter out the tool messages
   const messages: CoreMessage[] = aiMessages
@@ -76,16 +71,8 @@ async function submit(
     ? 'input_related'
     : 'inquiry'
 
-  // Always add the user message to the messages array if content is not null
-  if (content !== null) {
-    messages.push({
-      role: 'user',
-      content
-    })
-  }
-
-  // Only update aiState if chat history is enabled and content is not null
-  if (chatHistoryEnabled !== 'false' && content !== null) {
+  // Always update AIState if content exists
+  if (content) {
     aiState.update({
       ...aiState.get(),
       messages: [
@@ -97,6 +84,10 @@ async function submit(
           type
         }
       ]
+    })
+    messages.push({
+      role: 'user',
+      content
     })
   }
 
@@ -157,19 +148,16 @@ export const AI = createAI<AIState, UIState>({
   onSetAIState: async ({ state, done }) => {
     'use server'
 
+    // Get chat history setting first
     const redis = await getRedisClient()
-    const chatHistoryEnabled = await redis.get(
-      'user:anonymous:chatHistoryEnabled'
-    )
+    const chatHistoryEnabled = await redis.get('user:anonymous:chatHistoryEnabled')
 
-    // Check if there is any message of type 'answer' in the state messages
-    if (
-      !state.messages.some(e => e.type === 'answer') ||
-      chatHistoryEnabled === 'false'
-    ) {
+    // Exit early if chat history is disabled or no answer messages
+    if (chatHistoryEnabled === 'false' || !state.messages.some(e => e.type === 'answer')) {
       return
     }
 
+    // Only proceed with storage operations if chat history is enabled
     const { chatId, messages } = state
     const createdAt = new Date()
     const userId = 'anonymous'
@@ -179,7 +167,7 @@ export const AI = createAI<AIState, UIState>({
         ? JSON.parse(messages[0].content)?.input?.substring(0, 100) ||
           'Untitled'
         : 'Untitled'
-    // Add an 'end' message at the end to determine if the history needs to be reloaded
+
     const updatedMessages: AIMessage[] = [
       ...messages,
       {

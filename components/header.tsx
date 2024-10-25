@@ -6,6 +6,9 @@ import HistoryContainer from './history-container'
 import TopRightMenu from './ui/top-right-menu'
 
 export const Header: React.FC = async () => {
+  // Get storage provider setting from environment
+  const storageProvider = process.env.STORAGE_PROVIDER || 'redis'
+
   return (
     <header className="fixed w-full p-1 md:p-2 flex justify-between items-center z-10 backdrop-blur md:backdrop-blur-none bg-background/80 md:bg-transparent">
       <div>
@@ -16,8 +19,7 @@ export const Header: React.FC = async () => {
       </div>
       <div className="flex gap-0.5">
         <ModeToggle />
-        <HistoryContainer location="header" />
-        {/* <TopRightMenu /> */} 
+        {storageProvider !== 'none' && <HistoryContainer location="header" />}
       </div>
     </header>
   )

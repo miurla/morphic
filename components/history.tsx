@@ -28,19 +28,17 @@ export function History({ location }: HistoryProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const { isGenerating } = useAppState()
-  const { chatHistoryEnabled, refreshChatHistory } = useChatHistory()
+  const { chatHistoryEnabled, refreshChatHistory, storageAvailable } = useChatHistory()
 
   const onOpenChange = async (open: boolean) => {
-    if (open) {
-      if (chatHistoryEnabled) {
-        startTransition(async () => {
-          try {
-            await refreshChatHistory()
-          } catch (error) {
-            console.error('Failed to refresh chat history:', error)
-          }
-        })
-      }
+    if (open && chatHistoryEnabled && storageAvailable) {
+      startTransition(async () => {
+        try {
+          await refreshChatHistory()
+        } catch (error) {
+          console.error('Failed to refresh chat history:', error)
+        }
+      })
     }
   }
 

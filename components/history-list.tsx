@@ -14,30 +14,33 @@ type HistoryListProps = {
 export function HistoryList({ userId, chatHistoryEnabled }: HistoryListProps) {
   const [chats, setChats] = useState<Chat[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [clearTrigger, setClearTrigger] = useState(0) // Add this to force refresh
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     const loadChats = async () => {
-      if (chatHistoryEnabled) {
-        const fetchedChats = await getChats(userId)
-        setChats(fetchedChats || [])
-      } else {
+      if (!chatHistoryEnabled) {
         setChats([])
+        setIsLoading(false)
+        return
       }
-      setIsLoading(false)
+
+      try {
+        const fetchedChats = await getChats(userId)
+        if (fetchedChats) {
+          setChats(fetchedChats)
+          setError(false)
+        }
+      } catch (error) {
+        console.error('Error fetching chats:', error)
+        setError(true)
+        // Don't clear existing chats on error
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     loadChats()
-  }, [userId, chatHistoryEnabled, clearTrigger]) // Add clearTrigger to dependencies
-
-  // trigger a refresh
-  const refreshList = () => {
-    setClearTrigger(prev => prev + 1)
-  }
-
-  if (isLoading) {
-    return <div>Loading...</div>
-  }
+  }, [userId, chatHistoryEnabled])
 
   if (!chatHistoryEnabled) {
     return (
@@ -45,6 +48,10 @@ export function HistoryList({ userId, chatHistoryEnabled }: HistoryListProps) {
         Chat history is disabled
       </div>
     )
+  }
+
+  if (isLoading && chats.length === 0) {
+    return <div className="text-sm text-center py-4">Loading...</div>
   }
 
   return (
@@ -62,7 +69,7 @@ export function HistoryList({ userId, chatHistoryEnabled }: HistoryListProps) {
       </div>
 
       <div className="sticky bottom-0 bg-background py-2">
-        <ClearHistory empty={!chats?.length} onCleared={refreshList} />
+        <ClearHistory empty={!chats?.length} onCleared={() => setChats([])} />
       </div>
     </div>
   )
