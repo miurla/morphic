@@ -14,6 +14,8 @@ import { UserMessage } from './user-message'
 import { PartialRelated } from '@/lib/schema/related'
 import { Section } from './section'
 import { Skeleton } from './ui/skeleton'
+import { useLocalStorage } from '@/lib/hooks/use-local-storage'
+import { Model, models } from '@/lib/types/models'
 
 export interface SearchRelatedProps {
   relatedQueries: StreamableValue<PartialRelated>
@@ -26,6 +28,7 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
   const [, setMessages] = useUIState<typeof AI>()
   const [data, error, pending] = useStreamableValue(relatedQueries)
   const [related, setRelated] = useState<PartialRelated>()
+  const [selectedModel] = useLocalStorage<Model>('selectedModel', models[0])
 
   useEffect(() => {
     if (!data) return
@@ -36,7 +39,7 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
     event.preventDefault()
     const formData = new FormData(event.currentTarget as HTMLFormElement)
 
-    // // Get the submitter of the form
+    // Get the submitter of the form
     const submitter = (event.nativeEvent as SubmitEvent)
       .submitter as HTMLInputElement
     let query = ''
@@ -44,6 +47,9 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
       formData.append(submitter.name, submitter.value)
       query = submitter.value
     }
+
+    // Add model information to formData
+    formData.set('model', `${selectedModel.providerId}:${selectedModel.id}`)
 
     const userMessage = {
       id: Date.now(),
