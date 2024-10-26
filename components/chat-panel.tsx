@@ -16,6 +16,7 @@ import { ModelSelector } from './model-selector'
 import { models } from '@/lib/types/models'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 import { getDefaultModelId } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface ChatPanelProps {
   messages: UIState
@@ -88,6 +89,9 @@ export function ChatPanel({ messages, query, onModelChange }: ChatPanelProps) {
       await handleQuerySubmit(input, formData)
     } catch (error) {
       console.error('Error submitting form:', error)
+      toast.error('Error: ' + error)
+
+      handleClear()
     }
   }
 
