@@ -78,7 +78,7 @@ async function submit(
   // Check if provider is enabled
   if (!isProviderEnabled(providerId)) {
     throw new Error(
-      `Provider ${providerId} is not available (API key not configured)`
+      `Provider ${providerId} is not available (API key not configured or base URL not set)`
     )
   }
 
