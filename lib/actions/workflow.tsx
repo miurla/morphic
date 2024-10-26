@@ -63,7 +63,7 @@ export async function workflow(
   // Remove the spinner
   uiStream.update(null)
 
-  const useOllama = process.env.OLLAMA_MODEL && process.env.OLLAMA_BASE_URL
+  const useOllama = model.startsWith('ollama')
   // Select the appropriate researcher function based on the environment variables
   const { text, toolResults } = useOllama
     ? await researcherWithOllama(uiStream, messages, model)
