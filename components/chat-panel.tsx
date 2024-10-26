@@ -15,12 +15,12 @@ import { useAppState } from '@/lib/utils/app-state'
 import { ModelSelector } from './model-selector'
 import { models } from '@/lib/types/models'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
-import { getDefaultModelIdentifier } from '@/lib/utils/model'
+import { getDefaultModelId } from '@/lib/utils'
 
 interface ChatPanelProps {
   messages: UIState
   query?: string
-  onModelChange?: (identifier: string) => void
+  onModelChange?: (id: string) => void
 }
 
 export function ChatPanel({ messages, query, onModelChange }: ChatPanelProps) {
@@ -34,8 +34,10 @@ export function ChatPanel({ messages, query, onModelChange }: ChatPanelProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isFirstRender = useRef(true) // For development environment
 
-  const [selectedModelIdentifier, setSelectedModelIdentifier] =
-    useLocalStorage<string>('selectedModel', getDefaultModelIdentifier(models))
+  const [selectedModelId, setSelectedModelId] = useLocalStorage<string>(
+    'selectedModel',
+    getDefaultModelId(models)
+  )
 
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
@@ -67,7 +69,7 @@ export function ChatPanel({ messages, query, onModelChange }: ChatPanelProps) {
     const data = formData || new FormData()
 
     // Add or update the model information
-    const modelString = selectedModelIdentifier
+    const modelString = selectedModelId
     data.set('model', modelString)
 
     // Add or update the input query if not already present
@@ -152,10 +154,10 @@ export function ChatPanel({ messages, query, onModelChange }: ChatPanelProps) {
       <form onSubmit={handleSubmit} className="max-w-2xl w-full px-6">
         <div className="relative flex items-center w-full">
           <ModelSelector
-            selectedModelIdentifier={selectedModelIdentifier}
-            onModelChange={identifier => {
-              setSelectedModelIdentifier(identifier)
-              onModelChange?.(identifier)
+            selectedModelId={selectedModelId}
+            onModelChange={id => {
+              setSelectedModelId(id)
+              onModelChange?.(id)
             }}
           />
           <Textarea

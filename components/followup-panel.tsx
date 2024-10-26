@@ -10,7 +10,7 @@ import { ArrowRight } from 'lucide-react'
 import { useAppState } from '@/lib/utils/app-state'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 import { models } from '@/lib/types/models'
-import { getDefaultModelIdentifier } from '@/lib/utils/model'
+import { getDefaultModelId } from '@/lib/utils'
 
 export function FollowupPanel() {
   const [input, setInput] = useState('')
@@ -18,9 +18,9 @@ export function FollowupPanel() {
   const [, setMessages] = useUIState<typeof AI>()
   const { isGenerating, setIsGenerating } = useAppState()
 
-  const [selectedModelIdentifier] = useLocalStorage<string>(
+  const [selectedModelId] = useLocalStorage<string>(
     'selectedModel',
-    getDefaultModelIdentifier(models)
+    getDefaultModelId(models)
   )
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -33,7 +33,7 @@ export function FollowupPanel() {
 
     const formData = new FormData(event.currentTarget as HTMLFormElement)
     // Add model information to formData
-    formData.set('model', selectedModelIdentifier)
+    formData.set('model', selectedModelId)
 
     const userMessage = {
       id: Date.now(),

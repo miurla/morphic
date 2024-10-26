@@ -11,11 +11,11 @@ import {
 } from './ui/select'
 import Image from 'next/image'
 import { Model, models } from '@/lib/types/models'
-import { createModelIdentifier } from '@/lib/utils/model'
+import { createModelId } from '@/lib/utils'
 
 interface ModelSelectorProps {
-  selectedModelIdentifier: string
-  onModelChange: (identifier: string) => void
+  selectedModelId: string
+  onModelChange: (id: string) => void
 }
 
 function groupModelsByProvider(models: Model[]) {
@@ -30,11 +30,11 @@ function groupModelsByProvider(models: Model[]) {
 }
 
 export function ModelSelector({
-  selectedModelIdentifier,
+  selectedModelId,
   onModelChange
 }: ModelSelectorProps) {
-  const handleModelChange = (identifier: string) => {
-    onModelChange(identifier)
+  const handleModelChange = (id: string) => {
+    onModelChange(id)
   }
 
   const groupedModels = groupModelsByProvider(models)
@@ -43,7 +43,7 @@ export function ModelSelector({
     <div className="absolute -top-8 left-2">
       <Select
         name="model"
-        value={selectedModelIdentifier}
+        value={selectedModelId}
         onValueChange={handleModelChange}
       >
         <SelectTrigger className="mr-2 h-7 text-xs border-none shadow-none focus:ring-0">
@@ -57,8 +57,8 @@ export function ModelSelector({
               </SelectLabel>
               {models.map(model => (
                 <SelectItem
-                  key={createModelIdentifier(model)}
-                  value={createModelIdentifier(model)}
+                  key={createModelId(model)}
+                  value={createModelId(model)}
                   className="py-2"
                 >
                   <div className="flex items-center space-x-1">

@@ -17,7 +17,7 @@ import type { AI } from '@/app/actions'
 import { useAppState } from '@/lib/utils/app-state'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 import { models } from '@/lib/types/models'
-import { getDefaultModelIdentifier } from '@/lib/utils/model'
+import { getDefaultModelId } from '@/lib/utils'
 
 export type CopilotProps = {
   inquiry?: StreamableValue<PartialInquiry>
@@ -36,9 +36,9 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
   const { submit } = useActions()
   const { isGenerating, setIsGenerating } = useAppState()
   const [object, setObject] = useState<PartialInquiry>()
-  const [selectedModelIdentifier] = useLocalStorage<string>(
+  const [selectedModelId] = useLocalStorage<string>(
     'selectedModel',
-    getDefaultModelIdentifier(models)
+    getDefaultModelId(models)
   )
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,7 +95,7 @@ export const Copilot: React.FC<CopilotProps> = ({ inquiry }: CopilotProps) => {
     const formData = new FormData()
 
     // Add model information
-    formData.set('model', selectedModelIdentifier)
+    formData.set('model', selectedModelId)
 
     // If not skipping, add form data from the event
     if (!skip) {

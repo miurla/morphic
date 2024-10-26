@@ -16,7 +16,7 @@ import { Section } from './section'
 import { Skeleton } from './ui/skeleton'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 import { models } from '@/lib/types/models'
-import { getDefaultModelIdentifier } from '@/lib/utils/model'
+import { getDefaultModelId } from '@/lib/utils'
 
 export interface SearchRelatedProps {
   relatedQueries: StreamableValue<PartialRelated>
@@ -30,9 +30,9 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
   const [data, error, pending] = useStreamableValue(relatedQueries)
   const [related, setRelated] = useState<PartialRelated>()
 
-  const [selectedModelIdentifier] = useLocalStorage<string>(
+  const [selectedModelId] = useLocalStorage<string>(
     'selectedModel',
-    getDefaultModelIdentifier(models)
+    getDefaultModelId(models)
   )
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export const SearchRelated: React.FC<SearchRelatedProps> = ({
     }
 
     // Add model information to formData
-    formData.set('model', selectedModelIdentifier)
+    formData.set('model', selectedModelId)
 
     const userMessage = {
       id: Date.now(),
