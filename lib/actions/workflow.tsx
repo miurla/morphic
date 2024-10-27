@@ -22,7 +22,8 @@ export async function workflow(
   },
   aiState: any,
   messages: CoreMessage[],
-  skip: boolean
+  skip: boolean,
+  model: string
 ) {
   const { uiStream, isCollapsed, isGenerating } = uiState
   const id = generateId()
@@ -32,11 +33,11 @@ export async function workflow(
 
   let action = { object: { next: 'proceed' } }
   // If the user does not skip the task, run the task manager
-  if (!skip) action = (await taskManager(messages)) ?? action
+  if (!skip) action = (await taskManager(messages, model)) ?? action
 
   if (action.object.next === 'inquire') {
     // Generate inquiry
-    const inquiry = await inquire(uiStream, messages)
+    const inquiry = await inquire(uiStream, messages, model)
     uiStream.done()
     aiState.done({
       ...aiState.get(),
@@ -59,11 +60,14 @@ export async function workflow(
   // Set the collapsed state to true
   isCollapsed.done(true)
 
-  const useOllama = process.env.OLLAMA_MODEL && process.env.OLLAMA_BASE_URL
+  // Remove the spinner
+  uiStream.update(null)
+
+  const useOllama = model.startsWith('ollama')
   // Select the appropriate researcher function based on the environment variables
   const { text, toolResults } = useOllama
-    ? await researcherWithOllama(uiStream, messages)
-    : await researcher(uiStream, messages)
+    ? await researcherWithOllama(uiStream, messages, model)
+    : await researcher(uiStream, messages, model)
 
   aiState.update({
     ...aiState.get(),
@@ -94,7 +98,11 @@ export async function workflow(
   ]
 
   // Generate related queries
-  const relatedQueries = await querySuggestor(uiStream, messagesWithAnswer)
+  const relatedQueries = await querySuggestor(
+    uiStream,
+    messagesWithAnswer,
+    model
+  )
   // Add follow-up panel
   uiStream.append(
     <Section title="Follow-up">

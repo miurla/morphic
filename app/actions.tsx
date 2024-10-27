@@ -20,6 +20,7 @@ import RetrieveSection from '@/components/retrieve-section'
 import { VideoSearchSection } from '@/components/video-search-section'
 import { AnswerSection } from '@/components/answer-section'
 import { workflow } from '@/lib/actions/workflow'
+import { isProviderEnabled } from '@/lib/utils/registry'
 import { getRedisClient } from '@/lib/redis/config'
 
 const MAX_MESSAGES = 6
@@ -71,6 +72,17 @@ async function submit(
     ? 'input_related'
     : 'inquiry'
 
+  // Get the model from the form data (e.g., openai:gpt-4o-mini)
+  const model = (formData?.get('model') as string) || 'openai:gpt-4o-mini'
+  const providerId = model.split(':')[0]
+  console.log(`Using model: ${model}`)
+  // Check if provider is enabled
+  if (!isProviderEnabled(providerId)) {
+    throw new Error(
+      `Provider ${providerId} is not available (API key not configured or base URL not set)`
+    )
+  }
+
   // Always update AIState if content exists
   if (content) {
     aiState.update({
@@ -96,7 +108,8 @@ async function submit(
     { uiStream, isCollapsed, isGenerating },
     aiState,
     messages,
-    skip ?? false
+    skip ?? false,
+    model
   )
 
   return {

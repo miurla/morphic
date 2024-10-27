@@ -1,7 +1,7 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
 import { CoreMessage, generateText, streamText } from 'ai'
 import { getTools } from './tools'
-import { getModel } from '../utils'
+import { getModel } from '../utils/registry'
 import { AnswerSection } from '@/components/answer-section'
 
 const SYSTEM_PROMPT = `As a professional search expert, you possess the ability to search for any information on the web.
@@ -11,7 +11,8 @@ Aim to directly address the user's question, augmenting your response with insig
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
-  messages: CoreMessage[]
+  messages: CoreMessage[],
+  model: string
 ) {
   try {
     let fullResponse = ''
@@ -20,7 +21,7 @@ export async function researcher(
 
     const currentDate = new Date().toLocaleString()
     const result = await streamText({
-      model: getModel(),
+      model: getModel(model),
       system: `${SYSTEM_PROMPT} Current date and time: ${currentDate}`,
       messages: messages,
       tools: getTools({
@@ -61,7 +62,8 @@ export async function researcher(
 
 export async function researcherWithOllama(
   uiStream: ReturnType<typeof createStreamableUI>,
-  messages: CoreMessage[]
+  messages: CoreMessage[],
+  model: string
 ) {
   try {
     const fullResponse = ''
@@ -70,7 +72,7 @@ export async function researcherWithOllama(
 
     const currentDate = new Date().toLocaleString()
     const result = await generateText({
-      model: getModel(),
+      model: getModel(model),
       system: `${SYSTEM_PROMPT} Current date and time: ${currentDate}`,
       messages: messages,
       tools: getTools({

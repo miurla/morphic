@@ -2,6 +2,9 @@
 
 An AI-powered search engine with a generative UI.
 
+> [!CAUTION]
+> Morphic is built with Vercel AI SDK RSC. AI SDK RSC is [experimental](https://sdk.vercel.ai/docs/getting-started/navigating-the-library#when-to-use-ai-sdk-rsc) and has some limitations. When using it in production, it is recommended to [migrate](https://sdk.vercel.ai/docs/ai-sdk-rsc/migrating-to-ui) to SDK UI.
+
 ![capture](/public/capture-240404_blk.png)
 
 > [!NOTE]
@@ -28,8 +31,8 @@ An AI-powered search engine with a generative UI.
 - Support for providers other than OpenAI
   - Google Generative AI Provider
   - Azure OpenAI Provider [※](https://github.com/miurla/morphic/issues/13)
-  - Anthropic Provider [※](https://github.com/miurla/morphic/pull/239)
-  - Ollama Provider [※](https://github.com/miurla/morphic/issues/215#issuecomment-2381902347)
+  - Anthropic Provider
+  - Ollama Provider
   - Groq Provider
 - Local Redis support
 - SearXNG Search API support with customizable depth (basic or advanced)
