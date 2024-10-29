@@ -19,6 +19,10 @@ export const registry = createProviderRegistry({
   azure: createAzure({
     apiKey: process.env.AZURE_API_KEY,
     resourceName: process.env.AZURE_RESOURCE_NAME
+  }),
+  'openai-compatible': createOpenAI({
+    apiKey: process.env.OPENAI_COMPATIBLE_API_KEY,
+    baseURL: process.env.OPENAI_COMPATIBLE_API_BASE_URL
   })
 })
 
@@ -40,6 +44,12 @@ export function isProviderEnabled(providerId: string): boolean {
       return !!process.env.OLLAMA_BASE_URL
     case 'azure':
       return !!process.env.AZURE_API_KEY && !!process.env.AZURE_RESOURCE_NAME
+    case 'openai-compatible':
+      return (
+        !!process.env.OPENAI_COMPATIBLE_API_KEY &&
+        !!process.env.OPENAI_COMPATIBLE_API_BASE_URL &&
+        !!process.env.NEXT_PUBLIC_OPENAI_COMPATIBLE_MODEL
+      )
     default:
       return false
   }

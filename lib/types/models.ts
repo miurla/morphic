@@ -47,5 +47,11 @@ export const models: Model[] = [
     name: 'GPT-4o',
     provider: 'Azure',
     providerId: 'azure'
+  },
+  {
+    id: process.env.NEXT_PUBLIC_OPENAI_COMPATIBLE_MODEL || 'undefined',
+    name: process.env.NEXT_PUBLIC_OPENAI_COMPATIBLE_MODEL || 'Undefined',
+    provider: 'OpenAI Compatible',
+    providerId: 'openai-compatible'
   }
 ]

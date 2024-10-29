@@ -89,7 +89,7 @@ export function ChatPanel({ messages, query, onModelChange }: ChatPanelProps) {
       await handleQuerySubmit(input, formData)
     } catch (error) {
       console.error('Error submitting form:', error)
-      toast.error('Error: ' + error)
+      toast.error(`${error}`)
 
       handleClear()
     }
