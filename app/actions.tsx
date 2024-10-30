@@ -70,20 +70,34 @@ async function submit(
     : formData?.has('related_query')
     ? 'input_related'
     : 'inquiry'
-
-  // Get the model from the form data (e.g., openai:gpt-4o-mini)
-  const model = (formData?.get('model') as string) || 'openai:gpt-4o-mini'
-  const providerId = model.split(':')[0]
-  console.log(`Using model: ${model}`)
-  // Check if provider is enabled
-  if (!isProviderEnabled(providerId)) {
-    throw new Error(
-      `Provider ${providerId} is not available (API key not configured or base URL not set)`
-    )
-  }
+  
+  const endpointUrl = 'https://chats.mytrip.ai/amalia-assistant/chat';
 
   // Add the user message to the state
   if (content) {
+
+    // Sends request to custom endpoint *
+    const response = await fetch(endpointUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+          message: content,
+          client_id: 'thread_12345',
+          flag: 1,
+      })
+    });
+
+    // Checks the response *
+    if (!response.ok) {
+      throw new Error(`Failed to fetch from endpoint: ${response.statusText}`);
+    }
+
+    // Parse the response from your endpoint
+    const responseData = await response.json();
+
+    // Update aiState with both user and assistant messages
     aiState.update({
       ...aiState.get(),
       messages: [
@@ -93,23 +107,26 @@ async function submit(
           role: 'user',
           content,
           type
+        },
+        {
+          id: generateId(),
+          role: 'assistant',
+          content: responseData.response,
+          type: 'answer'
         }
       ]
-    })
+    });
+
+    // Push both messages to the `messages` array
     messages.push({
       role: 'user',
-      content
-    })
+      content   // User's message content
+    },
+    {
+      role: 'assistant',
+      content: responseData.response    // Amalia's message
+    });
   }
-
-  // Run the agent workflow
-  workflow(
-    { uiStream, isCollapsed, isGenerating },
-    aiState,
-    messages,
-    skip ?? false,
-    model
-  )
 
   return {
     id: generateId(),
