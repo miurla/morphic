@@ -25,6 +25,12 @@ export const models: Model[] = [
     providerId: 'anthropic'
   },
   {
+    id: 'claude-3-5-haiku-20241022',
+    name: 'Claude 3.5 Haiku',
+    provider: 'Anthropic',
+    providerId: 'anthropic'
+  },
+  {
     id: 'gemini-1.5-pro-002',
     name: 'Gemini 1.5 Pro',
     provider: 'Google Generative AI',
