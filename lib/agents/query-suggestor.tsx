@@ -20,7 +20,7 @@ export async function querySuggestor(
   }) as CoreMessage[]
 
   let finalRelatedQueries: PartialRelated = {}
-  await streamObject({
+  const result = await streamObject({
     model: getModel(model),
     system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
 
@@ -31,17 +31,13 @@ export async function querySuggestor(
     messages: lastMessages,
     schema: relatedSchema
   })
-    .then(async result => {
-      for await (const obj of result.partialObjectStream) {
-        if (obj.items) {
-          objectStream.update(obj)
-          finalRelatedQueries = obj
-        }
-      }
-    })
-    .finally(() => {
-      objectStream.done()
-    })
+
+  for await (const obj of result.partialObjectStream) {
+    if (obj.items) {
+      objectStream.update(obj)
+      finalRelatedQueries = obj
+    }
+  }
 
   return finalRelatedQueries
 }
