@@ -13,7 +13,8 @@ export async function inquire(
   uiStream.update(<Copilot inquiry={objectStream.value} />)
 
   let finalInquiry: PartialInquiry = {}
-  await streamObject({
+
+  const result = await streamObject({
     model: getModel(model),
     system: `As a professional web researcher, your role is to deepen your understanding of the user's input by conducting further inquiries when necessary.
     After receiving an initial response from the user, carefully assess whether additional questions are absolutely essential to provide a comprehensive and accurate answer. Only proceed with further inquiries if the available information is insufficient or ambiguous.
@@ -55,17 +56,17 @@ export async function inquire(
     messages,
     schema: inquirySchema
   })
-    .then(async result => {
-      for await (const obj of result.partialObjectStream) {
-        if (obj) {
-          objectStream.update(obj)
-          finalInquiry = obj
-        }
+
+  try {
+    for await (const obj of result.partialObjectStream) {
+      if (obj) {
+        objectStream.update(obj)
+        finalInquiry = obj
       }
-    })
-    .finally(() => {
-      objectStream.done()
-    })
+    }
+  } finally {
+    objectStream.done()
+  }
 
   return finalInquiry
 }
