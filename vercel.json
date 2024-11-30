@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd morphic && next build",
+  "outputDirectory": "morphic/.next",
+  "installCommand": "bun install",
+  "framework": "nextjs"
+}

@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "cd morphic && bun dev",
     "build": "cd morphic && next build",
-    "start": "cd morphic && bun start",
+    "start": "cd morphic && next start",
     "lint": "cd morphic && bun lint"
   }
 }
