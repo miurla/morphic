@@ -49,8 +49,8 @@ export const models: Model[] = [
     providerId: 'ollama'
   },
   {
-    id: 'gpt-4o',
-    name: 'GPT-4o',
+    id: process.env.NEXT_PUBLIC_AZURE_DEPLOYMENT_NAME || 'undefined',
+    name: process.env.NEXT_PUBLIC_AZURE_DEPLOYMENT_NAME || 'Undefined',
     provider: 'Azure',
     providerId: 'azure'
   },
