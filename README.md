@@ -126,7 +126,7 @@ To run the application locally using Bun, execute the following command:
 
 `bun dev`
 
-You can now visit http://localhost:3000 in your web browser.
+You can now visit <http://localhost:3000> in your web browser.
 
 #### Using Docker
 
@@ -134,7 +134,7 @@ To run the application using Docker, use the following command:
 
 `docker compose up -d`
 
-This will start the application in detached mode. You can access it at http://localhost:3000.
+This will start the application in detached mode. You can access it at <http://localhost:3000>.
 
 ## 🌐 Deploy
 
@@ -170,8 +170,8 @@ Morphic now supports SearXNG as an alternative search backend with advanced sear
 1. Ensure you have Docker and Docker Compose installed on your system.
 2. In your `.env.local` file, set the following variables:
 
-   - NEXT_PUBLIC_BASE_URL=http://localhost:3000 # Base URL for local development
-   - SEARXNG_API_URL=http://localhost:8080 # Replace with your local SearXNG API URL or docker http://searxng:8080
+   - NEXT_PUBLIC_BASE_URL=<http://localhost:3000> # Base URL for local development
+   - SEARXNG_API_URL=<http://localhost:8080> # Replace with your local SearXNG API URL or docker <http://searxng:8080>
    - SEARXNG_SECRET=your_secret_key_here
    - SEARXNG_PORT=8080
    - SEARXNG_IMAGE_PROXY=true
@@ -194,7 +194,7 @@ Morphic now supports SearXNG as an alternative search backend with advanced sear
 
 #### Advanced Search Configuration
 
-- `NEXT_PUBLIC_BASE_URL`: Set this to your local development URL (http://localhost:3000) or your production URL when deploying.
+- `NEXT_PUBLIC_BASE_URL`: Set this to your local development URL (<http://localhost:3000>) or your production URL when deploying.
 - `SEARXNG_DEFAULT_DEPTH`: Set to 'basic' or 'advanced' to control the default search depth.
 - `SEARXNG_MAX_RESULTS`: Maximum number of results to return from SearXNG.
 - `SEARXNG_CRAWL_MULTIPLIER`: In advanced search mode, this multiplier determines how many results to crawl. For example, if `SEARXNG_MAX_RESULTS=10` and `SEARXNG_CRAWL_MULTIPLIER=4`, up to 40 results will be crawled before filtering and ranking.
@@ -220,11 +220,11 @@ engines:
     disabled: true
 ```
 
-- refer to https://docs.searxng.org/admin/settings/settings.html#settings-yml
+- refer to <https://docs.searxng.org/admin/settings/settings.html#settings-yml>
 
 ## ✅ Verified models
 
-### List of models applicable to all:
+### List of models applicable to all
 
 - OpenAI
   - gpt-4o
@@ -232,7 +232,8 @@ engines:
   - gpt-4-turbo
   - gpt-3.5-turbo
 - Google
-  - Gemini 1.5 pro (Unstable)
+  - Gemini 1.5 Pro (Unstable)
+  - Gemini 2.0 Flash (Experimental)
 - Anthropic
   - Claude 3.5 Sonnet
 - Ollama
