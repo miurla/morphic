@@ -17,6 +17,7 @@ import { models } from '@/lib/types/models'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 import { getDefaultModelId } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useChatHistory } from '@/lib/utils/chat-history-context'
 
 interface ChatPanelProps {
   messages: UIState
@@ -25,6 +26,7 @@ interface ChatPanelProps {
 }
 
 export function ChatPanel({ messages, query, onModelChange }: ChatPanelProps) {
+  const { chatHistoryEnabled } = useChatHistory()
   const [input, setInput] = useState('')
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const [, setMessages] = useUIState<typeof AI>()
@@ -57,7 +59,7 @@ export function ChatPanel({ messages, query, onModelChange }: ChatPanelProps) {
     setInput(query)
     setIsGenerating(true)
 
-    // Add user message to UI state
+    // Always add user message to UI state
     setMessages(currentMessages => [
       ...currentMessages,
       {
@@ -79,6 +81,8 @@ export function ChatPanel({ messages, query, onModelChange }: ChatPanelProps) {
     }
 
     const responseMessage = await submit(data)
+    
+    // Always update UI with response message
     setMessages(currentMessages => [...currentMessages, responseMessage])
   }
 
@@ -114,9 +118,10 @@ export function ChatPanel({ messages, query, onModelChange }: ChatPanelProps) {
   // Clear messages
   const handleClear = () => {
     setIsGenerating(false)
-    setMessages([])
-    setAIMessage({ messages: [], chatId: '' })
+    // Always clear input and reset UI state when clearing even if chat history is disabled
     setInput('')
+    setMessages([])
+    setAIMessage({ messages: [], chatId: generateId() }) // Reset AIState with new chatId
     router.push('/')
   }
 

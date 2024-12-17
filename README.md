@@ -38,6 +38,9 @@ An AI-powered search engine with a generative UI.
 - SearXNG Search API support with customizable depth (basic or advanced)
 - Configurable search depth (basic or advanced)
 - SearXNG Search API support with customizable depth
+- Configurable chat history with toggle functionality
+- Flexible storage options (Redis or LocalStorage)
+- User-controlled chat history persistence
 
 ## 🧱 Stack
 
@@ -241,3 +244,46 @@ engines:
 - Groq
   - llama3-groq-8b-8192-tool-use-preview
   - llama3-groq-70b-8192-tool-use-preview
+
+
+## Storage Configuration
+
+This application supports two storage configuration options:
+
+1. **Redis Storage (`STORAGE_PROVIDER=redis`)**
+   - Full Redis functionality with optional chat history
+   - Configure either Upstash Redis or local Redis instance:
+     ```env
+     STORAGE_PROVIDER=redis
+     USE_LOCAL_REDIS=true|false
+     LOCAL_REDIS_URL=redis://localhost:6379  # For local Redis
+     # Or for Upstash:
+     UPSTASH_REDIS_REST_URL=your_url
+     UPSTASH_REDIS_REST_TOKEN=your_token
+     ```
+   - Features:
+     - Persistent server-side storage
+     - Chat history can be toggled on/off by users
+     - Cross-device access to chat history
+     - Redis operations maintained for caching even when history is disabled
+
+2. **No Storage (`STORAGE_PROVIDER=none`)**
+   - Completely disables Redis operations
+   - No chat history functionality
+   - No storage or caching operations
+   - Suitable for development or when storage is not needed
+   - Chat history toggle will not be available
+
+### Chat History Control
+
+When Redis storage is enabled (`STORAGE_PROVIDER=redis`):
+- Users can toggle chat history on/off through the UI
+- When enabled: Chats are saved and accessible from the history panel
+- When disabled: Chats are not saved, but Redis remains available for other operations
+- History toggle state persists between sessions
+
+When storage is disabled (`STORAGE_PROVIDER=none`):
+- Chat history is permanently disabled
+- No Redis operations are performed
+- UI shows informational message about storage configuration
+- All chat functionality works without persistence

@@ -6,13 +6,19 @@ export type RedisConfig = {
   upstashRedisRestUrl?: string
   upstashRedisRestToken?: string
   localRedisUrl?: string
+  localRedisUsername?: string
+  localRedisPassword?: string
+  storageProvider: 'redis' | 'none'
 }
 
 export const redisConfig: RedisConfig = {
   useLocalRedis: process.env.USE_LOCAL_REDIS === 'true',
   upstashRedisRestUrl: process.env.UPSTASH_REDIS_REST_URL,
   upstashRedisRestToken: process.env.UPSTASH_REDIS_REST_TOKEN,
-  localRedisUrl: process.env.LOCAL_REDIS_URL || 'redis://localhost:6379'
+  localRedisUrl: process.env.LOCAL_REDIS_URL || 'redis://localhost:6379',
+  localRedisUsername: process.env.LOCAL_REDIS_USERNAME,
+  localRedisPassword: process.env.LOCAL_REDIS_PASSWORD,
+  storageProvider: (process.env.STORAGE_PROVIDER as 'redis' | 'none') || 'redis'
 }
 
 let localRedisClient: RedisClientType | null = null
@@ -20,10 +26,15 @@ let redisWrapper: RedisWrapper | null = null
 
 // Wrapper class for Redis client
 export class RedisWrapper {
-  private client: Redis | RedisClientType
+  private client: Redis | RedisClientType | null
 
-  constructor(client: Redis | RedisClientType) {
+  constructor(client: Redis | RedisClientType | null) {
     this.client = client
+  }
+
+  // Add helper method to check if operations should be skipped
+  public shouldSkipOperation(): boolean {
+    return !this.client || redisConfig.storageProvider === 'none'
   }
 
   async zrange(
@@ -32,42 +43,68 @@ export class RedisWrapper {
     stop: number,
     options?: { rev: boolean }
   ): Promise<string[]> {
-    let result: string[]
-    if (this.client instanceof Redis) {
-      result = await this.client.zrange(key, start, stop, options)
-    } else {
-      const redisClient = this.client as RedisClientType
-      if (options?.rev) {
-        result = await redisClient.zRange(key, start, stop, { REV: true })
+    if (this.shouldSkipOperation()) return []
+    
+    try {
+      let result: string[]
+      if (this.client instanceof Redis) {
+        result = await this.client.zrange(key, start, stop, options)
       } else {
-        result = await redisClient.zRange(key, start, stop)
+        const redisClient = this.client as RedisClientType
+        if (options?.rev) {
+          result = await redisClient.zRange(key, start, stop, { REV: true })
+        } else {
+          result = await redisClient.zRange(key, start, stop)
+        }
       }
+      return result
+    } catch (error) {
+      console.error('Error in zrange operation:', error)
+      return []
     }
-    return result
   }
 
   async hgetall<T extends Record<string, unknown>>(
     key: string
   ): Promise<T | null> {
-    if (this.client instanceof Redis) {
-      return this.client.hgetall(key) as Promise<T | null>
-    } else {
-      const result = await (this.client as RedisClientType).hGetAll(key)
-      return Object.keys(result).length > 0 ? (result as T) : null
+    if (this.shouldSkipOperation()) return null
+    
+    try {
+      if (this.client instanceof Redis) {
+        return this.client.hgetall(key) as Promise<T | null>
+      } else {
+        const result = await (this.client as RedisClientType).hGetAll(key)
+        return Object.keys(result).length > 0 ? (result as T) : null
+      }
+    } catch (error) {
+      console.error('Error in hgetall operation:', error)
+      return null
     }
   }
 
   pipeline() {
+    if (this.shouldSkipOperation()) {
+      // Return a dummy pipeline that does nothing
+      return new DummyPipelineWrapper()
+    }
+    
     return this.client instanceof Redis
       ? new UpstashPipelineWrapper(this.client.pipeline())
       : new LocalPipelineWrapper((this.client as RedisClientType).multi())
   }
 
   async hmset(key: string, value: Record<string, any>): Promise<'OK' | number> {
-    if (this.client instanceof Redis) {
-      return this.client.hmset(key, value)
-    } else {
-      return (this.client as RedisClientType).hSet(key, value)
+    if (this.shouldSkipOperation()) return 0
+    
+    try {
+      if (this.client instanceof Redis) {
+        return this.client.hmset(key, value)
+      } else {
+        return (this.client as RedisClientType).hSet(key, value)
+      }
+    } catch (error) {
+      console.error('Error in hmset operation:', error)
+      return 0
     }
   }
 
@@ -76,29 +113,50 @@ export class RedisWrapper {
     score: number,
     member: string
   ): Promise<number | null> {
-    if (this.client instanceof Redis) {
-      return this.client.zadd(key, { score, member })
-    } else {
-      return (this.client as RedisClientType).zAdd(key, {
-        score,
-        value: member
-      })
+    if (this.shouldSkipOperation()) return 0
+    
+    try {
+      if (this.client instanceof Redis) {
+        return this.client.zadd(key, { score, member })
+      } else {
+        return (this.client as RedisClientType).zAdd(key, {
+          score,
+          value: member
+        })
+      }
+    } catch (error) {
+      console.error('Error in zadd operation:', error)
+      return 0
     }
   }
 
   async del(key: string): Promise<number> {
-    if (this.client instanceof Redis) {
-      return this.client.del(key)
-    } else {
-      return (this.client as RedisClientType).del(key)
+    if (this.shouldSkipOperation()) return 0
+    
+    try {
+      if (this.client instanceof Redis) {
+        return this.client.del(key)
+      } else {
+        return (this.client as RedisClientType).del(key)
+      }
+    } catch (error) {
+      console.error('Error in del operation:', error)
+      return 0
     }
   }
 
   async zrem(key: string, member: string): Promise<number> {
-    if (this.client instanceof Redis) {
-      return this.client.zrem(key, member)
-    } else {
-      return (this.client as RedisClientType).zRem(key, member)
+    if (this.shouldSkipOperation()) return 0
+    
+    try {
+      if (this.client instanceof Redis) {
+        return this.client.zrem(key, member)
+      } else {
+        return (this.client as RedisClientType).zRem(key, member)
+      }
+    } catch (error) {
+      console.error('Error in zrem operation:', error)
+      return 0
     }
   }
 
@@ -108,6 +166,37 @@ export class RedisWrapper {
       return
     } else {
       await (this.client as RedisClientType).quit()
+    }
+  }
+
+  // Added these new methods in a try catch block to catch any errors
+  async get(key: string): Promise<string | null> {
+    
+    if (this.shouldSkipOperation()) {
+      return null
+    }
+
+    try {
+      if (this.client instanceof Redis) {
+        const value = await this.client.get(key)
+        return value ? String(value) : null
+      } else {
+        const value = await (this.client as RedisClientType).get(key)
+        return value
+      }
+    } catch (error) {
+      console.error('Error getting value from Redis:', error)
+      return null
+    }
+  }
+
+  async set(key: string, value: string | boolean): Promise<string | null> {
+    const stringValue = String(value) // Convert boolean to string
+    if (this.client instanceof Redis) {
+      const result = await this.client.set(key, stringValue)
+      return result === 'OK' ? 'OK' : null
+    } else {
+      return (this.client as RedisClientType).set(key, stringValue)
     }
   }
 }
@@ -200,18 +289,36 @@ class LocalPipelineWrapper {
   }
 }
 
+// Add a DummyPipelineWrapper for when storage is disabled
+class DummyPipelineWrapper {
+  hgetall() { return this }
+  del() { return this }
+  zrem() { return this }
+  hmset() { return this }
+  zadd() { return this }
+  async exec() { return [] }
+}
+
 // Function to get a Redis client
 export async function getRedisClient(): Promise<RedisWrapper> {
+  // If storage provider is none, return a wrapper that returns null for all operations
+  if (redisConfig.storageProvider === 'none') {
+    return new RedisWrapper(null)
+  }
+
   if (redisWrapper) {
     return redisWrapper
   }
 
   if (redisConfig.useLocalRedis) {
     if (!localRedisClient) {
-      const localRedisUrl =
-        redisConfig.localRedisUrl || 'redis://localhost:6379'
+      const localRedisUrl = redisConfig.localRedisUrl || 'redis://localhost:6379'
       try {
-        localRedisClient = createClient({ url: localRedisUrl })
+        localRedisClient = createClient({
+          url: localRedisUrl,
+          username: redisConfig.localRedisUsername,
+          password: redisConfig.localRedisPassword
+        })
         await localRedisClient.connect()
       } catch (error) {
         if (error instanceof Error) {

@@ -9,7 +9,7 @@ import {
 import { CoreMessage, generateId } from 'ai'
 import { Section } from '@/components/section'
 import { FollowupPanel } from '@/components/followup-panel'
-import { saveChat } from '@/lib/actions/chat'
+import { saveChat, getChats } from '@/lib/actions/chat'
 import { Chat } from '@/lib/types'
 import { AIMessage } from '@/lib/types'
 import { UserMessage } from '@/components/user-message'
@@ -21,6 +21,7 @@ import { VideoSearchSection } from '@/components/video-search-section'
 import { AnswerSection } from '@/components/answer-section'
 import { workflow } from '@/lib/actions/workflow'
 import { isProviderEnabled } from '@/lib/utils/registry'
+import { getRedisClient } from '@/lib/redis/config'
 
 const MAX_MESSAGES = 6
 
@@ -82,7 +83,7 @@ async function submit(
     )
   }
 
-  // Add the user message to the state
+  // Always update AIState if content exists
   if (content) {
     aiState.update({
       ...aiState.get(),
@@ -160,11 +161,16 @@ export const AI = createAI<AIState, UIState>({
   onSetAIState: async ({ state, done }) => {
     'use server'
 
-    // Check if there is any message of type 'answer' in the state messages
-    if (!state.messages.some(e => e.type === 'answer')) {
+    // Get chat history setting first
+    const redis = await getRedisClient()
+    const chatHistoryEnabled = await redis.get('user:anonymous:chatHistoryEnabled')
+
+    // Exit early if chat history is disabled or no answer messages
+    if (chatHistoryEnabled === 'false' || !state.messages.some(e => e.type === 'answer')) {
       return
     }
 
+    // Only proceed with storage operations if chat history is enabled
     const { chatId, messages } = state
     const createdAt = new Date()
     const userId = 'anonymous'
@@ -174,7 +180,7 @@ export const AI = createAI<AIState, UIState>({
         ? JSON.parse(messages[0].content)?.input?.substring(0, 100) ||
           'Untitled'
         : 'Untitled'
-    // Add an 'end' message at the end to determine if the history needs to be reloaded
+
     const updatedMessages: AIMessage[] = [
       ...messages,
       {

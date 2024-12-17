@@ -14,7 +14,7 @@ const HistoryContainer: React.FC<HistoryContainerProps> = async ({
       className={location === 'header' ? 'block sm:hidden' : 'hidden sm:block'}
     >
       <History location={location}>
-        <HistoryList userId="anonymous" />
+        <HistoryList userId="anonymous" chatHistoryEnabled={false} />
       </History>
     </div>
   )

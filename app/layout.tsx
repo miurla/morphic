@@ -8,6 +8,8 @@ import Footer from '@/components/footer'
 import { Sidebar } from '@/components/sidebar'
 import { Toaster } from '@/components/ui/sonner'
 import { AppStateProvider } from '@/lib/utils/app-state'
+import { ChatHistoryProvider } from '@/lib/utils/chat-history-context'
+import ClientWrapper from '@/components/client-wrapper'
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -56,11 +58,15 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AppStateProvider>
-            <Header />
-            {children}
-            <Sidebar />
-            <Footer />
-            <Toaster />
+            <ClientWrapper>
+              <ChatHistoryProvider>
+                <Header />
+                {children}
+                <Sidebar />
+                <Footer />
+                <Toaster />
+              </ChatHistoryProvider>
+            </ClientWrapper>
           </AppStateProvider>
         </ThemeProvider>
       </body>

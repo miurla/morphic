@@ -16,21 +16,28 @@ import { History as HistoryIcon } from 'lucide-react'
 import { Suspense } from 'react'
 import { HistorySkeleton } from './history-skeleton'
 import { useAppState } from '@/lib/utils/app-state'
+import { useChatHistory } from '@/lib/utils/chat-history-context'
+import { ClientHistoryWrapper } from './client-history-wrapper'
 
 type HistoryProps = {
   location: 'sidebar' | 'header'
   children?: React.ReactNode
 }
 
-export function History({ location, children }: HistoryProps) {
+export function History({ location }: HistoryProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const { isGenerating, setIsGenerating } = useAppState()
+  const { isGenerating } = useAppState()
+  const { chatHistoryEnabled, refreshChatHistory, storageAvailable } = useChatHistory()
 
-  const onOpenChange = (open: boolean) => {
-    if (open) {
-      startTransition(() => {
-        router.refresh()
+  const onOpenChange = async (open: boolean) => {
+    if (open && chatHistoryEnabled && storageAvailable) {
+      startTransition(async () => {
+        try {
+          await refreshChatHistory()
+        } catch (error) {
+          console.error('Failed to refresh chat history:', error)
+        }
       })
     }
   }
@@ -44,7 +51,7 @@ export function History({ location, children }: HistoryProps) {
           className={cn({
             'rounded-full text-foreground/30': location === 'sidebar'
           })}
-          disabled={isGenerating}
+          disabled={isGenerating || isPending}
         >
           {location === 'header' ? <Menu /> : <ChevronLeft size={16} />}
         </Button>
@@ -57,7 +64,7 @@ export function History({ location, children }: HistoryProps) {
           </SheetTitle>
         </SheetHeader>
         <div className="my-2 h-full pb-12 md:pb-10">
-          <Suspense fallback={<HistorySkeleton />}>{children}</Suspense>
+          <ClientHistoryWrapper userId="anonymous" />
         </div>
       </SheetContent>
     </Sheet>
