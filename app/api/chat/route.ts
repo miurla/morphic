@@ -1,5 +1,5 @@
 import { streamText, createDataStreamResponse } from 'ai'
-import { chatResearcher } from '@/lib/agents/chat-researcher'
+import { researcher } from '@/lib/agents/researcher'
 import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
 
 export const maxDuration = 30
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
 
   return createDataStreamResponse({
     execute: dataStream => {
-      const researcherConfig = chatResearcher({
+      const researcherConfig = researcher({
         messages,
         model
       })

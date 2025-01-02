@@ -1,8 +1,8 @@
 import { CoreMessage, streamText } from 'ai'
 import { getModel } from '../utils/registry'
-import { searchTool } from './tools/search'
-import { retrieveTool } from './tools/retrieve'
-import { videoSearchTool } from './tools/video-search'
+import { searchTool } from '../tools/search'
+import { retrieveTool } from '../tools/retrieve'
+import { videoSearchTool } from '../tools/video-search'
 
 const SYSTEM_PROMPT = `You are a helpful AI assistant with access to real-time web search, content retrieval, and video search capabilities.
 When asked a question, you should:
@@ -14,15 +14,15 @@ When asked a question, you should:
 6. If results are not relevant or helpful, rely on your general knowledge
 7. Be concise and direct in your responses`
 
-type ChatResearcherReturn = Parameters<typeof streamText>[0]
+type ResearcherReturn = Parameters<typeof streamText>[0]
 
-export function chatResearcher({
+export function researcher({
   messages,
   model
 }: {
   messages: CoreMessage[]
   model: string
-}): ChatResearcherReturn {
+}): ResearcherReturn {
   try {
     const currentDate = new Date().toLocaleString()
 
