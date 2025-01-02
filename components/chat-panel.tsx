@@ -84,7 +84,7 @@ export function ChatPanel({
       <form
         onSubmit={handleSubmit}
         className={cn(
-          'max-w-2xl w-full mx-auto',
+          'max-w-3xl w-full mx-auto',
           messages.length > 0 ? 'p-4' : 'px-6'
         )}
       >

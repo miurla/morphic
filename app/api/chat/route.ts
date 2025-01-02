@@ -17,25 +17,27 @@ export async function POST(req: Request) {
       const result = streamText({
         ...researcherConfig,
         onFinish: async event => {
-          // Notify the client that related queries are coming
+          // Notify the client that related questions are coming
           dataStream.writeMessageAnnotation({
-            type: 'related-queries',
-            relatedQueries: {
+            type: 'related-questions',
+            relatedQuestions: {
               items: []
-            }
+            },
+            status: 'loading'
           })
 
-          // Generate related queries
+          // Generate related questions
           const responseMessages = event.response.messages
-          const relatedQueries = await generateRelatedQuestions(
+          const relatedQuestions = await generateRelatedQuestions(
             responseMessages,
             model
           )
 
-          // Notify the client with the generated related queries
+          // Notify the client with the generated related questions
           dataStream.writeMessageAnnotation({
-            type: 'related-queries',
-            relatedQueries: relatedQueries.object
+            type: 'related-questions',
+            relatedQuestions: relatedQuestions.object,
+            status: 'done'
           })
         }
       })

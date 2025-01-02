@@ -20,7 +20,8 @@ export function Chat() {
     handleSubmit,
     isLoading,
     setMessages,
-    stop
+    stop,
+    append
   } = useChat({
     body: {
       model: selectedModelId
@@ -28,8 +29,16 @@ export function Chat() {
   })
 
   return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      <ChatMessages messages={messages} />
+    <div className="flex flex-col w-full max-w-3xl py-24 mx-auto stretch">
+      <ChatMessages
+        messages={messages}
+        onQuerySelect={query => {
+          append({
+            role: 'user',
+            content: query
+          })
+        }}
+      />
       <ChatPanel
         input={input}
         handleInputChange={handleInputChange}
