@@ -1,17 +1,17 @@
-import { openai } from '@ai-sdk/openai'
+import { chatResearcher } from '@/lib/agents/chat-researcher'
 import { streamText } from 'ai'
 
-// Allow streaming responses up to 30 seconds
 export const maxDuration = 30
 
 export async function POST(req: Request) {
-  const { messages } = await req.json()
+  const { messages, model } = await req.json()
 
-  const result = streamText({
-    model: openai('gpt-4-turbo'),
-    system: 'You are a helpful assistant.',
-    messages
+  const researcherConfig = await chatResearcher({
+    messages,
+    model
   })
+
+  const result = streamText(researcherConfig)
 
   return result.toDataStreamResponse()
 }
