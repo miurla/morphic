@@ -16,13 +16,13 @@ When asked a question, you should:
 
 type ChatResearcherReturn = Parameters<typeof streamText>[0]
 
-export async function chatResearcher({
+export function chatResearcher({
   messages,
   model
 }: {
   messages: CoreMessage[]
   model: string
-}): Promise<ChatResearcherReturn> {
+}): ChatResearcherReturn {
   try {
     const currentDate = new Date().toLocaleString()
 

@@ -1,4 +1,4 @@
 export * from './task-manager'
 export * from './inquire'
-export * from './query-suggestor'
+export * from './generate-related-questions'
 export * from './researcher'
