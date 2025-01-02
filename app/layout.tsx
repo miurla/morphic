@@ -58,7 +58,7 @@ export default function RootLayout({
           <AppStateProvider>
             <Header />
             {children}
-            <Sidebar />
+            {/* <Sidebar /> */}
             <Footer />
             <Toaster />
           </AppStateProvider>
