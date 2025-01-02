@@ -1,34 +1,30 @@
 'use client'
 
 import { DefaultSkeleton } from './default-skeleton'
-import { Section } from './section'
+import { Section, ToolArgsSection } from './section'
 import type { SerperSearchResults } from '@/lib/types'
-import { StreamableValue, useStreamableValue } from 'ai/rsc'
+import { ToolInvocation } from 'ai'
 import { VideoSearchResults } from './video-search-results'
-import { ToolBadge } from './tool-badge'
 
-export type VideoSearchSectionProps = {
-  result?: StreamableValue<string>
+interface VideoSearchSectionProps {
+  tool: ToolInvocation
 }
 
-export function VideoSearchSection({ result }: VideoSearchSectionProps) {
-  const [data, error, pending] = useStreamableValue(result)
-  const searchResults: SerperSearchResults = data ? JSON.parse(data) : undefined
+export function VideoSearchSection({ tool }: VideoSearchSectionProps) {
+  const isLoading = tool.state === 'call'
+  const searchResults: SerperSearchResults =
+    tool.state === 'result' ? tool.result : undefined
+  const query = tool.args.q as string | undefined
+
   return (
     <div>
-      {!pending && data ? (
-        <>
-          <Section size="sm" className="pt-2 pb-0">
-            <ToolBadge tool="search">{`${searchResults.searchParameters.q}`}</ToolBadge>
-          </Section>
-          <Section title="Videos">
-            <VideoSearchResults results={searchResults} />
-          </Section>
-        </>
-      ) : (
-        <Section className="pt-2 pb-0">
-          <DefaultSkeleton />
+      <ToolArgsSection tool="video_search">{query}</ToolArgsSection>
+      {!isLoading && searchResults ? (
+        <Section title="Videos">
+          <VideoSearchResults results={searchResults} />
         </Section>
+      ) : (
+        <DefaultSkeleton />
       )}
     </div>
   )

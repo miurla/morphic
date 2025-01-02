@@ -1,7 +1,6 @@
 import { Message } from 'ai'
-import { UserMessage } from './user-message'
-import { BotMessage } from './message'
 import RelatedQuestions from './related-questions'
+import { RenderMessage } from './render-message'
 
 interface ChatMessagesProps {
   messages: Message[]
@@ -17,11 +16,7 @@ export function ChatMessages({ messages, onQuerySelect }: ChatMessagesProps) {
     <div className="relative mx-auto px-4 w-full">
       {messages.map(message => (
         <div key={message.id} className="mb-4">
-          {message.role === 'user' ? (
-            <UserMessage message={message.content} />
-          ) : (
-            <BotMessage message={message.content} />
-          )}
+          <RenderMessage message={message} />
           {!message.toolInvocations && message.annotations && (
             <RelatedQuestions
               annotations={message.annotations}

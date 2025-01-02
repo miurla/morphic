@@ -3,41 +3,41 @@
 import { SearchResults } from './search-results'
 import { DefaultSkeleton } from './default-skeleton'
 import { SearchResultsImageSection } from './search-results-image'
-import { Section } from './section'
-import { ToolBadge } from './tool-badge'
+import { Section, ToolArgsSection } from './section'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
-import { StreamableValue, useStreamableValue } from 'ai/rsc'
+import { ToolInvocation } from 'ai'
 
-export type SearchSectionProps = {
-  result?: StreamableValue<string>
-  includeDomains?: string[]
+interface SearchSectionProps {
+  tool: ToolInvocation
 }
 
-export function SearchSection({ result, includeDomains }: SearchSectionProps) {
-  const [data, error, pending] = useStreamableValue(result)
-  const searchResults: TypeSearchResults = data ? JSON.parse(data) : undefined
+export function SearchSection({ tool }: SearchSectionProps) {
+  const isLoading = tool.state === 'call'
+  const searchResults: TypeSearchResults =
+    tool.state === 'result' ? tool.result : undefined
+  const query = tool.args.query as string | undefined
+  const includeDomains = tool.args.includeDomains as string[] | undefined
   const includeDomainsString = includeDomains
     ? ` [${includeDomains.join(', ')}]`
     : ''
+
   return (
     <div>
-      {!pending && data ? (
-        <>
-          <Section size="sm" className="pt-2 pb-0">
-            <ToolBadge tool="search">{`${searchResults.query}${includeDomainsString}`}</ToolBadge>
+      <ToolArgsSection tool="search">{`${query}${includeDomainsString}`}</ToolArgsSection>
+      {searchResults &&
+        searchResults.images &&
+        searchResults.images.length > 0 && (
+          <Section title="Images">
+            <SearchResultsImageSection
+              images={searchResults.images}
+              query={query}
+            />
           </Section>
-          {searchResults.images && searchResults.images.length > 0 && (
-            <Section title="Images">
-              <SearchResultsImageSection
-                images={searchResults.images}
-                query={searchResults.query}
-              />
-            </Section>
-          )}
-          <Section title="Sources">
-            <SearchResults results={searchResults.results} />
-          </Section>
-        </>
+        )}
+      {!isLoading && searchResults.results ? (
+        <Section title="Sources">
+          <SearchResults results={searchResults.results} />
+        </Section>
       ) : (
         <DefaultSkeleton />
       )}

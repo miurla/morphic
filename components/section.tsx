@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import React from 'react'
 import { Separator } from './ui/separator'
+import { ToolBadge } from './tool-badge'
 
 type SectionProps = {
   children: React.ReactNode
@@ -73,5 +74,19 @@ export const Section: React.FC<SectionProps> = ({
         {children}
       </section>
     </>
+  )
+}
+
+export function ToolArgsSection({
+  children,
+  tool
+}: {
+  children: React.ReactNode
+  tool: string
+}) {
+  return (
+    <Section size="sm" className="pt-2 pb-0">
+      <ToolBadge tool={tool}>{children}</ToolBadge>
+    </Section>
   )
 }
