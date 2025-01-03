@@ -6,12 +6,19 @@ import { SearchResultsImageSection } from './search-results-image'
 import { Section, ToolArgsSection } from './section'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import { ToolInvocation } from 'ai'
+import { CollapsibleMessage } from './collapsible-message'
 
 interface SearchSectionProps {
   tool: ToolInvocation
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function SearchSection({ tool }: SearchSectionProps) {
+export function SearchSection({
+  tool,
+  isOpen,
+  onOpenChange
+}: SearchSectionProps) {
   const isLoading = tool.state === 'call'
   const searchResults: TypeSearchResults =
     tool.state === 'result' ? tool.result : undefined
@@ -21,9 +28,18 @@ export function SearchSection({ tool }: SearchSectionProps) {
     ? ` [${includeDomains.join(', ')}]`
     : ''
 
+  const header = (
+    <ToolArgsSection tool="search">{`${query}${includeDomainsString}`}</ToolArgsSection>
+  )
+
   return (
-    <div>
-      <ToolArgsSection tool="search">{`${query}${includeDomainsString}`}</ToolArgsSection>
+    <CollapsibleMessage
+      role="assistant"
+      isCollapsible={true}
+      header={header}
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+    >
       {searchResults &&
         searchResults.images &&
         searchResults.images.length > 0 && (
@@ -41,6 +57,6 @@ export function SearchSection({ tool }: SearchSectionProps) {
       ) : (
         <DefaultSkeleton />
       )}
-    </div>
+    </CollapsibleMessage>
   )
 }

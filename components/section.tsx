@@ -61,7 +61,7 @@ export const Section: React.FC<SectionProps> = ({
       {separator && <Separator className="my-2 bg-primary/10" />}
       <section
         className={cn(
-          ` ${size === 'sm' ? 'py-1' : size === 'lg' ? 'py-4' : 'py-2'}`,
+          ` ${size === 'sm' ? 'py-1' : size === 'lg' ? 'py-4' : 'py-1'}`,
           className
         )}
       >
@@ -85,7 +85,7 @@ export function ToolArgsSection({
   tool: string
 }) {
   return (
-    <Section size="sm" className="pt-2 pb-0">
+    <Section size="sm" className="py-0">
       <ToolBadge tool={tool}>{children}</ToolBadge>
     </Section>
   )

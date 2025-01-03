@@ -5,9 +5,15 @@ import { AnswerSection } from './answer-section'
 
 interface RenderMessageProps {
   message: Message
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function RenderMessage({ message }: RenderMessageProps) {
+export function RenderMessage({
+  message,
+  isOpen,
+  onOpenChange
+}: RenderMessageProps) {
   if (message.role === 'user') {
     return <UserMessage message={message.content} />
   }
@@ -16,11 +22,22 @@ export function RenderMessage({ message }: RenderMessageProps) {
     return (
       <>
         {message.toolInvocations.map(tool => (
-          <ToolSection key={tool.toolCallId} tool={tool} />
+          <ToolSection
+            key={tool.toolCallId}
+            tool={tool}
+            isOpen={isOpen}
+            onOpenChange={onOpenChange}
+          />
         ))}
       </>
     )
   }
 
-  return <AnswerSection content={message.content} />
+  return (
+    <AnswerSection
+      content={message.content}
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+    />
+  )
 }

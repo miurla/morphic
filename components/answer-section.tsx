@@ -1,20 +1,36 @@
 'use client'
 
-import { Section } from './section'
 import { BotMessage } from './message'
 import { DefaultSkeleton } from './default-skeleton'
-import { MessageWithAvatar } from './message-with-avatar'
+import { CollapsibleMessage } from './collapsible-message'
+import { Text } from 'lucide-react'
 
 export type AnswerSectionProps = {
   content: string
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function AnswerSection({ content }: AnswerSectionProps) {
+export function AnswerSection({
+  content,
+  isOpen,
+  onOpenChange
+}: AnswerSectionProps) {
+  const header = (
+    <div className="flex items-center gap-1">
+      <Text size={16} />
+      <div>Answer</div>
+    </div>
+  )
   return (
-    <MessageWithAvatar role="assistant">
-      <Section title="Answer">
-        {content ? <BotMessage message={content} /> : <DefaultSkeleton />}
-      </Section>
-    </MessageWithAvatar>
+    <CollapsibleMessage
+      role="assistant"
+      isCollapsible={true}
+      header={header}
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+    >
+      {content ? <BotMessage message={content} /> : <DefaultSkeleton />}
+    </CollapsibleMessage>
   )
 }
