@@ -35,7 +35,7 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
     {}
   )
 
-  // Convert grouped messages into an array with explicit type
+  // Convert grouped messages into an array with explicit typeee
   const groupedMessagesArray = Object.values(groupedMessages).map(group => ({
     ...group,
     components: group.components as React.ReactNode[]
