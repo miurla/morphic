@@ -27,7 +27,7 @@ export function SearchSection({ tool }: SearchSectionProps) {
       {searchResults &&
         searchResults.images &&
         searchResults.images.length > 0 && (
-          <Section title="Images">
+          <Section>
             <SearchResultsImageSection
               images={searchResults.images}
               query={query}

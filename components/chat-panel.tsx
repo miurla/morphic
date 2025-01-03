@@ -85,7 +85,7 @@ export function ChatPanel({
         onSubmit={handleSubmit}
         className={cn(
           'max-w-3xl w-full mx-auto',
-          messages.length > 0 ? 'p-4' : 'px-6'
+          messages.length > 0 ? 'px-0 py-4' : 'px-6'
         )}
       >
         <div className="relative flex items-center w-full gap-2">

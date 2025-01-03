@@ -6,6 +6,7 @@ import { ChatPanel } from './chat-panel'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 import { models } from '@/lib/types/models'
 import { getDefaultModelId } from '@/lib/utils'
+import { Spinner } from './ui/spinner'
 
 export function Chat() {
   const [selectedModelId, setSelectedModelId] = useLocalStorage<string>(
@@ -29,7 +30,7 @@ export function Chat() {
   })
 
   return (
-    <div className="flex flex-col w-full max-w-3xl py-24 mx-auto stretch">
+    <div className="flex flex-col w-full max-w-3xl pt-10 pb-16 mx-auto stretch">
       <ChatMessages
         messages={messages}
         onQuerySelect={query => {
@@ -38,6 +39,7 @@ export function Chat() {
             content: query
           })
         }}
+        isLoading={isLoading}
       />
       <ChatPanel
         input={input}
