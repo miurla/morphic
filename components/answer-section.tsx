@@ -3,6 +3,7 @@
 import { Section } from './section'
 import { BotMessage } from './message'
 import { DefaultSkeleton } from './default-skeleton'
+import { MessageWithAvatar } from './message-with-avatar'
 
 export type AnswerSectionProps = {
   content: string
@@ -10,10 +11,10 @@ export type AnswerSectionProps = {
 
 export function AnswerSection({ content }: AnswerSectionProps) {
   return (
-    <div>
+    <MessageWithAvatar role="assistant">
       <Section title="Answer">
         {content ? <BotMessage message={content} /> : <DefaultSkeleton />}
       </Section>
-    </div>
+    </MessageWithAvatar>
   )
 }
