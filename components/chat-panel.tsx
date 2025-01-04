@@ -1,20 +1,14 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { UserMessage } from './user-message'
 import { Button } from './ui/button'
 import { ArrowRight, Plus, Square } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
 import Textarea from 'react-textarea-autosize'
-import { generateId, Message } from 'ai'
-import { useAppState } from '@/lib/utils/app-state'
+import { Message } from 'ai'
 import { ModelSelector } from './model-selector'
-import { models } from '@/lib/types/models'
-import { useLocalStorage } from '@/lib/hooks/use-local-storage'
-import { getDefaultModelId } from '@/lib/utils'
-import { toast } from 'sonner'
 
 interface ChatPanelProps {
   input: string
@@ -24,7 +18,6 @@ interface ChatPanelProps {
   messages: Message[]
   setMessages: (messages: Message[]) => void
   query?: string
-  onModelChange?: (id: string) => void
   stop: () => void
 }
 
@@ -36,19 +29,11 @@ export function ChatPanel({
   messages,
   setMessages,
   query,
-  onModelChange,
   stop
 }: ChatPanelProps) {
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
-  const { isGenerating, setIsGenerating } = useAppState()
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const isFirstRender = useRef(true) // For development environment
-
-  const [selectedModelId, setSelectedModelId] = useLocalStorage<string>(
-    'selectedModel',
-    getDefaultModelId(models)
-  )
 
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
