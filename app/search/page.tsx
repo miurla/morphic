@@ -3,12 +3,11 @@ import { redirect } from 'next/navigation'
 
 export const maxDuration = 60
 
-export default function Page({
-  searchParams
-}: {
-  searchParams: { q: string }
+export default async function SearchPage(props: {
+  searchParams: Promise<{ q: string }>
 }) {
-  if (!searchParams.q) {
+  const { q } = await props.searchParams
+  if (!q) {
     redirect('/')
   }
 
