@@ -30,4 +30,10 @@ FROM base
 
 COPY --from=app /app /app
 
+ENV \
+    HOSTNAME="0.0.0.0" \
+    PORT="3000"
+
+EXPOSE 3000/tcp
+
 CMD ["bun", "/app/server.js"]
