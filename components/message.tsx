@@ -8,14 +8,14 @@ import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 import { CodeBlock } from './ui/codeblock'
 
-export function BotMessage({ content }: { content: string }) {
+export function BotMessage({ message }: { message: string }) {
   // Check if the content contains LaTeX patterns
   const containsLaTeX = /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/.test(
-    content || ''
+    message || ''
   )
 
   // Modify the content to render LaTeX equations if LaTeX patterns are found
-  const processedData = preprocessLaTeX(content || '')
+  const processedData = preprocessLaTeX(message || '')
 
   if (containsLaTeX) {
     return (
@@ -70,7 +70,7 @@ export function BotMessage({ content }: { content: string }) {
         }
       }}
     >
-      {content}
+      {message}
     </MemoizedReactMarkdown>
   )
 }

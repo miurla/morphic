@@ -1,26 +1,17 @@
-import { createStreamableUI, createStreamableValue } from 'ai/rsc'
-import { CoreMessage, streamObject } from 'ai'
-import { PartialRelated, relatedSchema } from '@/lib/schema/related'
-import SearchRelated from '@/components/search-related'
+import { CoreMessage, generateObject } from 'ai'
+import { relatedSchema } from '@/lib/schema/related'
 import { getModel } from '../utils/registry'
 
-export async function querySuggestor(
-  uiStream: ReturnType<typeof createStreamableUI>,
+export async function generateRelatedQuestions(
   messages: CoreMessage[],
   model: string
 ) {
-  const objectStream = createStreamableValue<PartialRelated>()
-  uiStream.append(<SearchRelated relatedQueries={objectStream.value} />)
+  const lastMessages = messages.slice(-1).map(message => ({
+    ...message,
+    role: 'user'
+  })) as CoreMessage[]
 
-  const lastMessages = messages.slice(-1).map(message => {
-    return {
-      ...message,
-      role: 'user'
-    }
-  }) as CoreMessage[]
-
-  let finalRelatedQueries: PartialRelated = {}
-  const result = await streamObject({
+  const result = await generateObject({
     model: getModel(model),
     system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
 
@@ -32,12 +23,5 @@ export async function querySuggestor(
     schema: relatedSchema
   })
 
-  for await (const obj of result.partialObjectStream) {
-    if (obj.items) {
-      objectStream.update(obj)
-      finalRelatedQueries = obj
-    }
-  }
-
-  return finalRelatedQueries
+  return result
 }

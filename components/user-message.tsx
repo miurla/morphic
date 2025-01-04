@@ -1,6 +1,6 @@
 import React from 'react'
 import { ChatShare } from './chat-share'
-
+import { CollapsibleMessage } from './collapsible-message'
 type UserMessageProps = {
   message: string
   chatId?: string
@@ -14,9 +14,9 @@ export const UserMessage: React.FC<UserMessageProps> = ({
 }) => {
   const enableShare = process.env.ENABLE_SHARE === 'true'
   return (
-    <div className="flex items-center w-full space-x-1 mt-2 min-h-10">
-      <div className="text-xl flex-1 break-words w-full">{message}</div>
+    <CollapsibleMessage role="user">
+      <div className="flex-1 break-words w-full">{message}</div>
       {enableShare && showShare && chatId && <ChatShare chatId={chatId} />}
-    </div>
+    </CollapsibleMessage>
   )
 }

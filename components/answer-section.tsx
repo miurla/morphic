@@ -1,37 +1,36 @@
 'use client'
 
-import { Section } from './section'
-import { StreamableValue, useStreamableValue } from 'ai/rsc'
 import { BotMessage } from './message'
-import { useEffect, useState } from 'react'
 import { DefaultSkeleton } from './default-skeleton'
+import { CollapsibleMessage } from './collapsible-message'
+import { Text } from 'lucide-react'
 
 export type AnswerSectionProps = {
-  result?: StreamableValue<string>
-  hasHeader?: boolean
+  content: string
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 export function AnswerSection({
-  result,
-  hasHeader = true
+  content,
+  isOpen,
+  onOpenChange
 }: AnswerSectionProps) {
-  const [data, error, pending] = useStreamableValue(result)
-  const [content, setContent] = useState<string>('')
-
-  useEffect(() => {
-    if (!data) return
-    setContent(data)
-  }, [data])
-
-  return (
-    <div>
-      {content.length > 0 ? (
-        <Section title={hasHeader ? 'Answer' : undefined}>
-          <BotMessage content={content} />
-        </Section>
-      ) : (
-        <DefaultSkeleton />
-      )}
+  const header = (
+    <div className="flex items-center gap-1">
+      <Text size={16} />
+      <div>Answer</div>
     </div>
+  )
+  return (
+    <CollapsibleMessage
+      role="assistant"
+      isCollapsible={true}
+      header={header}
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+    >
+      {content ? <BotMessage message={content} /> : <DefaultSkeleton />}
+    </CollapsibleMessage>
   )
 }
