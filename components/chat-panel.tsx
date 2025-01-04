@@ -100,15 +100,7 @@ export function ChatPanel({
               <Plus className="h-4 w-4" />
             </Button>
           )}
-          {messages.length === 0 && (
-            <ModelSelector
-              selectedModelId={selectedModelId}
-              onModelChange={id => {
-                setSelectedModelId(id)
-                onModelChange?.(id)
-              }}
-            />
-          )}
+          {messages.length === 0 && <ModelSelector />}
           <Textarea
             ref={inputRef}
             name="input"

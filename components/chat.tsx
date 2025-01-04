@@ -3,17 +3,8 @@
 import { useChat } from 'ai/react'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
-import { useLocalStorage } from '@/lib/hooks/use-local-storage'
-import { models } from '@/lib/types/models'
-import { getDefaultModelId } from '@/lib/utils'
-import { Spinner } from './ui/spinner'
 
 export function Chat() {
-  const [selectedModelId, setSelectedModelId] = useLocalStorage<string>(
-    'selectedModel',
-    getDefaultModelId(models)
-  )
-
   const {
     messages,
     input,
@@ -23,11 +14,7 @@ export function Chat() {
     setMessages,
     stop,
     append
-  } = useChat({
-    body: {
-      model: selectedModelId
-    }
-  })
+  } = useChat()
 
   return (
     <div className="flex flex-col w-full max-w-3xl pt-10 pb-16 mx-auto stretch">

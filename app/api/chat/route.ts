@@ -1,11 +1,19 @@
 import { streamText, createDataStreamResponse } from 'ai'
 import { researcher } from '@/lib/agents/researcher'
 import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
+import { cookies } from 'next/headers'
 
 export const maxDuration = 30
 
+const DEFAULT_MODEL = 'openai:gpt-4o-mini'
+
 export async function POST(req: Request) {
-  const { messages, model } = await req.json()
+  const { messages } = await req.json()
+
+  // Get the model from the cookie
+  const cookieStore = await cookies()
+  const modelFromCookie = cookieStore.get('selected-model')?.value
+  const model = modelFromCookie || DEFAULT_MODEL
 
   return createDataStreamResponse({
     execute: dataStream => {
