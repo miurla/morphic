@@ -1,15 +1,33 @@
+ARG BUN_VERSION="1.1"
 
-FROM oven/bun:1.1.3-alpine
+FROM oven/bun:${BUN_VERSION}-alpine AS base
 
-RUN apk add --no-cache nodejs npm git
+FROM base AS builder
+
+ENV \
+    DOCKER="true" \
+    NODE_ENV="production"
 
 WORKDIR /app
 
 COPY package.json bun.lockb ./
+
 RUN bun install
 
 COPY . .
 
-RUN bun next telemetry disable
+RUN bun next build
 
-CMD ["bun", "dev", "-H", "0.0.0.0"]
+FROM scratch AS app
+
+WORKDIR /app
+
+COPY --from=builder /app/public /app/public
+COPY --from=builder /app/.next/standalone /app/
+COPY --from=builder /app/.next/static /app/.next/static
+
+FROM base
+
+COPY --from=app /app /app
+
+CMD ["bun", "/app/server.js"]
