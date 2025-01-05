@@ -2,17 +2,22 @@ import { Message } from 'ai'
 import { UserMessage } from './user-message'
 import { ToolSection } from './tool-section'
 import { AnswerSection } from './answer-section'
+import RelatedQuestions from './related-questions'
 
 interface RenderMessageProps {
   message: Message
-  isOpen: boolean
-  onOpenChange: (open: boolean) => void
+  messageId: string
+  getIsOpen: (id: string) => boolean
+  onOpenChange: (id: string, open: boolean) => void
+  onQuerySelect: (query: string) => void
 }
 
 export function RenderMessage({
   message,
-  isOpen,
-  onOpenChange
+  messageId,
+  getIsOpen,
+  onOpenChange,
+  onQuerySelect
 }: RenderMessageProps) {
   if (message.role === 'user') {
     return <UserMessage message={message.content} />
@@ -25,8 +30,8 @@ export function RenderMessage({
           <ToolSection
             key={tool.toolCallId}
             tool={tool}
-            isOpen={isOpen}
-            onOpenChange={onOpenChange}
+            isOpen={getIsOpen(messageId)}
+            onOpenChange={open => onOpenChange(messageId, open)}
           />
         ))}
       </>
@@ -34,10 +39,20 @@ export function RenderMessage({
   }
 
   return (
-    <AnswerSection
-      content={message.content}
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-    />
+    <>
+      <AnswerSection
+        content={message.content}
+        isOpen={getIsOpen(messageId)}
+        onOpenChange={open => onOpenChange(messageId, open)}
+      />
+      {!message.toolInvocations && message.annotations && (
+        <RelatedQuestions
+          annotations={message.annotations}
+          onQuerySelect={onQuerySelect}
+          isOpen={getIsOpen(`${messageId}-related`)}
+          onOpenChange={open => onOpenChange(`${messageId}-related`, open)}
+        />
+      )}
+    </>
   )
 }
