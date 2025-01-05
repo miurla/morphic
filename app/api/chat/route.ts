@@ -1,16 +1,25 @@
-import { streamText, createDataStreamResponse } from 'ai'
+import {
+  streamText,
+  createDataStreamResponse,
+  Message,
+  convertToCoreMessages,
+  generateId,
+  JSONValue,
+  ToolInvocation
+} from 'ai'
 import { researcher } from '@/lib/agents/researcher'
 import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
 import { cookies } from 'next/headers'
+import { getChat, saveChat } from '@/lib/actions/chat'
 
 export const maxDuration = 30
 
 const DEFAULT_MODEL = 'openai:gpt-4o-mini'
 
 export async function POST(req: Request) {
-  const { messages } = await req.json()
+  const { messages, id: chatId } = await req.json()
 
-  // Get the model from the cookie
+  const coreMessages = convertToCoreMessages(messages)
   const cookieStore = await cookies()
   const modelFromCookie = cookieStore.get('selected-model')?.value
   const model = modelFromCookie || DEFAULT_MODEL
@@ -18,34 +27,72 @@ export async function POST(req: Request) {
   return createDataStreamResponse({
     execute: dataStream => {
       const researcherConfig = researcher({
-        messages,
+        messages: coreMessages,
         model
       })
 
+      let toolResults: ToolInvocation[] = []
       const result = streamText({
         ...researcherConfig,
+        onStepFinish(event) {
+          // onFinish's event.toolResults is empty. Use onStepFinish to get the tool results.
+          if (event.stepType === 'initial') {
+            toolResults = event.toolResults
+          }
+        },
         onFinish: async event => {
-          // Notify the client that related questions are coming
-          dataStream.writeMessageAnnotation({
+          const responseMessages = event.response.messages
+
+          let annotation: JSONValue = {
             type: 'related-questions',
-            relatedQuestions: {
+            data: {
               items: []
             },
             status: 'loading'
-          })
+          }
+
+          // Notify related questions loading
+          dataStream.writeMessageAnnotation(annotation)
 
           // Generate related questions
-          const responseMessages = event.response.messages
           const relatedQuestions = await generateRelatedQuestions(
             responseMessages,
             model
           )
 
-          // Notify the client with the generated related questions
-          dataStream.writeMessageAnnotation({
-            type: 'related-questions',
-            relatedQuestions: relatedQuestions.object,
+          // Update the annotation with the related questions
+          annotation = {
+            ...annotation,
+            data: relatedQuestions.object,
             status: 'done'
+          }
+
+          // Send related questions to client
+          dataStream.writeMessageAnnotation(annotation)
+
+          // Create the message to save
+          const generatedMessage: Message = {
+            role: 'assistant',
+            content: event.text,
+            toolInvocations: toolResults,
+            annotations: [annotation],
+            id: generateId()
+          }
+
+          // Get the chat from the database if it exists, otherwise create a new one
+          const savedChat = (await getChat(chatId)) ?? {
+            messages: [],
+            createdAt: new Date(),
+            userId: 'anonymous',
+            path: `/search/${chatId}`,
+            title: messages[0].content,
+            id: chatId
+          }
+
+          // Save chat with complete response and related questions
+          await saveChat({
+            ...savedChat,
+            messages: [...savedChat.messages, generatedMessage]
           })
         }
       })

@@ -16,7 +16,7 @@ export interface RelatedQuestionsProps {
 
 interface RelatedQuestionsAnnotation extends Record<string, JSONValue> {
   type: 'related-questions'
-  relatedQuestions: {
+  data: {
     items: Array<{ query: string }>
   }
   status: 'loading' | 'done'
@@ -48,7 +48,7 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
     </div>
   )
 
-  const relatedQuestions = lastRelatedQuestionsAnnotation?.relatedQuestions
+  const relatedQuestions = lastRelatedQuestionsAnnotation?.data
   if (!relatedQuestions) {
     return (
       <CollapsibleMessage
