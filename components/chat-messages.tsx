@@ -1,5 +1,4 @@
 import { Message } from 'ai'
-import RelatedQuestions from './related-questions'
 import { RenderMessage } from './render-message'
 import { Spinner } from './ui/spinner'
 import { useState, useEffect } from 'react'
@@ -30,37 +29,32 @@ export function ChatMessages({
     messages.length -
     1 -
     [...messages].reverse().findIndex(msg => msg.role === 'user')
+
   const showSpinner = isLoading && messages[messages.length - 1].role === 'user'
+
+  const getIsOpen = (id: string) => {
+    const index = messages.findIndex(msg => msg.id === id.split('-')[0])
+    return openStates[id] ?? index >= lastUserIndex
+  }
+
+  const handleOpenChange = (id: string, open: boolean) => {
+    setOpenStates(prev => ({
+      ...prev,
+      [id]: open
+    }))
+  }
 
   return (
     <div className="relative mx-auto px-4 w-full">
-      {messages.map((message, index) => (
+      {messages.map(message => (
         <div key={message.id} className="mb-4 flex flex-col gap-4">
           <RenderMessage
             message={message}
-            isOpen={openStates[message.id] ?? index >= lastUserIndex}
-            onOpenChange={(open: boolean) => {
-              setOpenStates(prev => ({
-                ...prev,
-                [message.id]: open
-              }))
-            }}
+            messageId={message.id}
+            getIsOpen={getIsOpen}
+            onOpenChange={handleOpenChange}
+            onQuerySelect={onQuerySelect}
           />
-          {!message.toolInvocations && message.annotations && (
-            <RelatedQuestions
-              annotations={message.annotations}
-              onQuerySelect={onQuerySelect}
-              isOpen={
-                openStates[`${message.id}-related`] ?? index >= lastUserIndex
-              }
-              onOpenChange={(open: boolean) => {
-                setOpenStates(prev => ({
-                  ...prev,
-                  [`${message.id}-related`]: open
-                }))
-              }}
-            />
-          )}
         </div>
       ))}
       {showSpinner && <Spinner />}
