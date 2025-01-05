@@ -56,7 +56,7 @@ export default function RootLayout({
         >
           <Header />
           {children}
-          {/* <Sidebar /> */}
+          <Sidebar />
           <Footer />
           <Toaster />
         </ThemeProvider>
