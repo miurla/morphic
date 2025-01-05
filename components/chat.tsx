@@ -4,7 +4,7 @@ import { useChat } from 'ai/react'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
 
-export function Chat() {
+export function Chat({ id }: { id: string }) {
   const {
     messages,
     input,
@@ -14,7 +14,14 @@ export function Chat() {
     setMessages,
     stop,
     append
-  } = useChat()
+  } = useChat({
+    body: {
+      id
+    },
+    onFinish: () => {
+      // window.history.replaceState({}, '', `/search/${id}`)
+    }
+  })
 
   return (
     <div className="flex flex-col w-full max-w-3xl pt-10 pb-16 mx-auto stretch">

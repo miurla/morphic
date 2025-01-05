@@ -29,5 +29,5 @@ export default async function SearchPage(props: {
     notFound()
   }
 
-  return <Chat />
+  return <Chat id={id} />
 }
