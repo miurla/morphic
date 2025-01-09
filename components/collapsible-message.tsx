@@ -6,6 +6,7 @@ import {
 } from './ui/collapsible'
 import { Separator } from './ui/separator'
 import { cn } from '@/lib/utils'
+import { IconLogo } from './ui/icons'
 
 interface CollapsibleMessageProps {
   children: React.ReactNode
@@ -14,6 +15,7 @@ interface CollapsibleMessageProps {
   isOpen?: boolean
   header?: React.ReactNode
   onOpenChange?: (open: boolean) => void
+  showBorder?: boolean
 }
 
 export function CollapsibleMessage({
@@ -22,22 +24,30 @@ export function CollapsibleMessage({
   isCollapsible = false,
   isOpen = true,
   header,
-  onOpenChange
+  onOpenChange,
+  showBorder = true
 }: CollapsibleMessageProps) {
   const content = <div className="py-2 flex-1">{children}</div>
 
   return (
     <div className="flex gap-3">
       <div className="relative flex flex-col items-center">
-        <div className={cn('mt-[10px]', role === 'assistant' && 'pl-4')}>
-          {role === 'user' && (
+        <div className={cn('mt-[10px]', role === 'assistant' && 'mt-4')}>
+          {role === 'user' ? (
             <UserCircle2 size={20} className="text-muted-foreground" />
+          ) : (
+            <IconLogo className="size-5" />
           )}
         </div>
       </div>
 
       {isCollapsible ? (
-        <div className="flex-1 border border-border/50 rounded-2xl p-4">
+        <div
+          className={cn(
+            'flex-1 rounded-2xl p-4',
+            showBorder && 'border border-border/50'
+          )}
+        >
           <Collapsible
             open={isOpen}
             onOpenChange={onOpenChange}
@@ -50,7 +60,7 @@ export function CollapsibleMessage({
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down">
-              <Separator className="my-4" />
+              <Separator className="my-4 border-border/50" />
               {content}
             </CollapsibleContent>
           </Collapsible>
