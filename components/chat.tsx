@@ -26,11 +26,9 @@ export function Chat({
       id
     },
     onFinish: () => {
-      // window.history.replaceState({}, '', `/search/${id}`)
+      window.history.replaceState({}, '', `/search/${id}`)
     }
   })
-
-  console.log(JSON.stringify(messages, null, 2))
 
   return (
     <div className="flex flex-col w-full max-w-3xl pt-10 pb-16 mx-auto stretch">

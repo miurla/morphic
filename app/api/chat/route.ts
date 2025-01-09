@@ -10,6 +10,7 @@ import { generateRelatedQuestions } from '@/lib/agents/generate-related-question
 import { cookies } from 'next/headers'
 import { getChat, saveChat } from '@/lib/actions/chat'
 import { ExtendedCoreMessage } from '@/lib/types'
+import { convertToExtendedCoreMessages } from '@/lib/utils'
 
 export const maxDuration = 30
 
@@ -18,7 +19,11 @@ const DEFAULT_MODEL = 'openai:gpt-4o-mini'
 export async function POST(req: Request) {
   const { messages, id: chatId } = await req.json()
 
+  // streamText requires core messages
   const coreMessages = convertToCoreMessages(messages)
+  // convertToExtendedCoreMessages for saving annotations
+  const extendedCoreMessages = convertToExtendedCoreMessages(messages)
+
   const cookieStore = await cookies()
   const modelFromCookie = cookieStore.get('selected-model')?.value
   const model = modelFromCookie || DEFAULT_MODEL
@@ -30,15 +35,8 @@ export async function POST(req: Request) {
         model
       })
 
-      let toolResults: ToolInvocation[] = []
       const result = streamText({
         ...researcherConfig,
-        onStepFinish(event) {
-          // onFinish's event.toolResults is empty. Use onStepFinish to get the tool results.
-          if (event.stepType === 'initial') {
-            toolResults = event.toolResults
-          }
-        },
         onFinish: async event => {
           const responseMessages = event.response.messages
 
@@ -71,7 +69,7 @@ export async function POST(req: Request) {
 
           // Create the message to save
           const generatedMessages = [
-            ...coreMessages,
+            ...extendedCoreMessages,
             ...responseMessages.slice(0, -1),
             {
               role: 'data',

@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import {
+  convertToCoreMessages,
   CoreMessage,
   CoreToolMessage,
   generateId,
@@ -167,4 +168,28 @@ export function convertToUIMessages(
 
     return chatMessages
   }, [])
+}
+
+export function convertToExtendedCoreMessages(
+  messages: Message[]
+): ExtendedCoreMessage[] {
+  const result: ExtendedCoreMessage[] = []
+
+  for (const message of messages) {
+    // Convert annotations to data messages
+    if (message.annotations && message.annotations.length > 0) {
+      message.annotations.forEach(annotation => {
+        result.push({
+          role: 'data',
+          content: annotation
+        })
+      })
+    }
+
+    // Convert current message
+    const converted = convertToCoreMessages([message])
+    result.push(...converted)
+  }
+
+  return result
 }
