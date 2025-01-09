@@ -1,6 +1,8 @@
 import { notFound, redirect } from 'next/navigation'
 import { Chat } from '@/components/chat'
 import { getChat } from '@/lib/actions/chat'
+import { convertToCoreMessages } from 'ai'
+import { convertToUIMessages } from '@/lib/utils'
 
 export const maxDuration = 60
 
@@ -20,6 +22,8 @@ export default async function SearchPage(props: {
   const userId = 'anonymous'
   const { id } = await props.params
   const chat = await getChat(id, userId)
+  // convertToUIMessages for useChat hook
+  const messages = convertToUIMessages(chat?.messages || [])
 
   if (!chat) {
     redirect('/')
@@ -29,5 +33,7 @@ export default async function SearchPage(props: {
     notFound()
   }
 
-  return <Chat id={id} />
+  console.log(chat)
+
+  return <Chat id={id} savedMessages={messages} />
 }

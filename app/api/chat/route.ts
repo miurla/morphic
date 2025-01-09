@@ -1,9 +1,7 @@
 import {
   streamText,
   createDataStreamResponse,
-  Message,
   convertToCoreMessages,
-  generateId,
   JSONValue,
   ToolInvocation
 } from 'ai'
@@ -11,6 +9,7 @@ import { researcher } from '@/lib/agents/researcher'
 import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
 import { cookies } from 'next/headers'
 import { getChat, saveChat } from '@/lib/actions/chat'
+import { ExtendedCoreMessage } from '@/lib/types'
 
 export const maxDuration = 30
 
@@ -71,13 +70,15 @@ export async function POST(req: Request) {
           dataStream.writeMessageAnnotation(annotation)
 
           // Create the message to save
-          const generatedMessage: Message = {
-            role: 'assistant',
-            content: event.text,
-            toolInvocations: toolResults,
-            annotations: [annotation],
-            id: generateId()
-          }
+          const generatedMessages = [
+            ...coreMessages,
+            ...responseMessages.slice(0, -1),
+            {
+              role: 'data',
+              content: annotation
+            },
+            responseMessages[responseMessages.length - 1]
+          ] as ExtendedCoreMessage[]
 
           // Get the chat from the database if it exists, otherwise create a new one
           const savedChat = (await getChat(chatId)) ?? {
@@ -89,10 +90,12 @@ export async function POST(req: Request) {
             id: chatId
           }
 
+          console.log('generatedMessages', generatedMessages)
+
           // Save chat with complete response and related questions
           await saveChat({
             ...savedChat,
-            messages: [...savedChat.messages, generatedMessage]
+            messages: generatedMessages
           })
         }
       })

@@ -1,10 +1,16 @@
 'use client'
 
-import { useChat } from 'ai/react'
+import { Message, useChat } from 'ai/react'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
 
-export function Chat({ id }: { id: string }) {
+export function Chat({
+  id,
+  savedMessages = []
+}: {
+  id: string
+  savedMessages?: Message[]
+}) {
   const {
     messages,
     input,
@@ -15,6 +21,7 @@ export function Chat({ id }: { id: string }) {
     stop,
     append
   } = useChat({
+    initialMessages: savedMessages,
     body: {
       id
     },
@@ -22,6 +29,8 @@ export function Chat({ id }: { id: string }) {
       // window.history.replaceState({}, '', `/search/${id}`)
     }
   })
+
+  console.log(JSON.stringify(messages, null, 2))
 
   return (
     <div className="flex flex-col w-full max-w-3xl pt-10 pb-16 mx-auto stretch">

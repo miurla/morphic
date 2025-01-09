@@ -50,7 +50,7 @@ export function SearchSection({
             />
           </Section>
         )}
-      {!isLoading && searchResults.results ? (
+      {!isLoading && searchResults?.results ? (
         <Section title="Sources">
           <SearchResults results={searchResults.results} />
         </Section>
