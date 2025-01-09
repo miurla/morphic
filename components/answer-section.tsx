@@ -29,6 +29,7 @@ export function AnswerSection({
       header={header}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
+      showBorder={false}
     >
       {content ? <BotMessage message={content} /> : <DefaultSkeleton />}
     </CollapsibleMessage>

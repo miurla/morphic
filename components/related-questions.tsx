@@ -6,6 +6,7 @@ import { ArrowRight, Repeat2 } from 'lucide-react'
 import { Skeleton } from './ui/skeleton'
 import { JSONValue } from 'ai'
 import { CollapsibleMessage } from './collapsible-message'
+import { useChat } from 'ai/react'
 
 export interface RelatedQuestionsProps {
   annotations: JSONValue[]
@@ -19,7 +20,6 @@ interface RelatedQuestionsAnnotation extends Record<string, JSONValue> {
   data: {
     items: Array<{ query: string }>
   }
-  status: 'loading' | 'done'
 }
 
 export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
@@ -28,18 +28,17 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   isOpen,
   onOpenChange
 }) => {
+  const { isLoading } = useChat({
+    id: 'chat'
+  })
+
   if (!annotations) {
     return null
   }
 
-  const lastRelatedQuestionsAnnotation = annotations.find(
-    (a): a is RelatedQuestionsAnnotation =>
-      a !== null &&
-      typeof a === 'object' &&
-      'type' in a &&
-      a.type === 'related-questions' &&
-      a.status === 'done'
-  )
+  const lastRelatedQuestionsAnnotation = annotations[
+    annotations.length - 1
+  ] as RelatedQuestionsAnnotation
 
   const header = (
     <div className="flex items-center gap-1">
@@ -49,7 +48,11 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   )
 
   const relatedQuestions = lastRelatedQuestionsAnnotation?.data
-  if (!relatedQuestions) {
+  if (!relatedQuestions && !isLoading) {
+    return null
+  }
+
+  if (!relatedQuestions || isLoading) {
     return (
       <CollapsibleMessage
         role="assistant"

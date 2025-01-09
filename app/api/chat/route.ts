@@ -1,9 +1,7 @@
 import {
   streamText,
   createDataStreamResponse,
-  Message,
   convertToCoreMessages,
-  generateId,
   JSONValue,
   ToolInvocation
 } from 'ai'
@@ -11,6 +9,8 @@ import { researcher } from '@/lib/agents/researcher'
 import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
 import { cookies } from 'next/headers'
 import { getChat, saveChat } from '@/lib/actions/chat'
+import { ExtendedCoreMessage } from '@/lib/types'
+import { convertToExtendedCoreMessages } from '@/lib/utils'
 
 export const maxDuration = 30
 
@@ -19,7 +19,11 @@ const DEFAULT_MODEL = 'openai:gpt-4o-mini'
 export async function POST(req: Request) {
   const { messages, id: chatId } = await req.json()
 
+  // streamText requires core messages
   const coreMessages = convertToCoreMessages(messages)
+  // convertToExtendedCoreMessages for saving annotations
+  const extendedCoreMessages = convertToExtendedCoreMessages(messages)
+
   const cookieStore = await cookies()
   const modelFromCookie = cookieStore.get('selected-model')?.value
   const model = modelFromCookie || DEFAULT_MODEL
@@ -31,15 +35,8 @@ export async function POST(req: Request) {
         model
       })
 
-      let toolResults: ToolInvocation[] = []
       const result = streamText({
         ...researcherConfig,
-        onStepFinish(event) {
-          // onFinish's event.toolResults is empty. Use onStepFinish to get the tool results.
-          if (event.stepType === 'initial') {
-            toolResults = event.toolResults
-          }
-        },
         onFinish: async event => {
           const responseMessages = event.response.messages
 
@@ -47,8 +44,7 @@ export async function POST(req: Request) {
             type: 'related-questions',
             data: {
               items: []
-            },
-            status: 'loading'
+            }
           }
 
           // Notify related questions loading
@@ -63,21 +59,22 @@ export async function POST(req: Request) {
           // Update the annotation with the related questions
           annotation = {
             ...annotation,
-            data: relatedQuestions.object,
-            status: 'done'
+            data: relatedQuestions.object
           }
 
           // Send related questions to client
           dataStream.writeMessageAnnotation(annotation)
 
           // Create the message to save
-          const generatedMessage: Message = {
-            role: 'assistant',
-            content: event.text,
-            toolInvocations: toolResults,
-            annotations: [annotation],
-            id: generateId()
-          }
+          const generatedMessages = [
+            ...extendedCoreMessages,
+            ...responseMessages.slice(0, -1),
+            {
+              role: 'data',
+              content: annotation
+            },
+            responseMessages[responseMessages.length - 1]
+          ] as ExtendedCoreMessage[]
 
           // Get the chat from the database if it exists, otherwise create a new one
           const savedChat = (await getChat(chatId)) ?? {
@@ -89,10 +86,12 @@ export async function POST(req: Request) {
             id: chatId
           }
 
+          console.log('generatedMessages', generatedMessages)
+
           // Save chat with complete response and related questions
           await saveChat({
             ...savedChat,
-            messages: [...savedChat.messages, generatedMessage]
+            messages: generatedMessages
           })
         }
       })
