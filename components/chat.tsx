@@ -22,6 +22,7 @@ export function Chat({
     append
   } = useChat({
     initialMessages: savedMessages,
+    id: 'chat',
     body: {
       id
     },

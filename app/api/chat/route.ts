@@ -44,8 +44,7 @@ export async function POST(req: Request) {
             type: 'related-questions',
             data: {
               items: []
-            },
-            status: 'loading'
+            }
           }
 
           // Notify related questions loading
@@ -60,8 +59,7 @@ export async function POST(req: Request) {
           // Update the annotation with the related questions
           annotation = {
             ...annotation,
-            data: relatedQuestions.object,
-            status: 'done'
+            data: relatedQuestions.object
           }
 
           // Send related questions to client

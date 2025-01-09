@@ -7,6 +7,7 @@ import { Section, ToolArgsSection } from './section'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import { ToolInvocation } from 'ai'
 import { CollapsibleMessage } from './collapsible-message'
+import { useChat } from 'ai/react'
 
 interface SearchSectionProps {
   tool: ToolInvocation
@@ -19,7 +20,10 @@ export function SearchSection({
   isOpen,
   onOpenChange
 }: SearchSectionProps) {
-  const isLoading = tool.state === 'call'
+  const { isLoading } = useChat({
+    id: 'chat'
+  })
+  const isToolLoading = tool.state === 'call'
   const searchResults: TypeSearchResults =
     tool.state === 'result' ? tool.result : undefined
   const query = tool.args.query as string | undefined
@@ -50,13 +54,13 @@ export function SearchSection({
             />
           </Section>
         )}
-      {!isLoading && searchResults?.results ? (
+      {isLoading && isToolLoading ? (
+        <DefaultSkeleton />
+      ) : searchResults?.results ? (
         <Section title="Sources">
           <SearchResults results={searchResults.results} />
         </Section>
-      ) : (
-        <DefaultSkeleton />
-      )}
+      ) : null}
     </CollapsibleMessage>
   )
 }
