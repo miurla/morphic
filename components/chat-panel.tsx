@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from './ui/button'
@@ -19,6 +19,7 @@ interface ChatPanelProps {
   setMessages: (messages: Message[]) => void
   query?: string
   stop: () => void
+  append: (message: any) => void
 }
 
 export function ChatPanel({
@@ -29,12 +30,13 @@ export function ChatPanel({
   messages,
   setMessages,
   query,
-  stop
+  stop,
+  append
 }: ChatPanelProps) {
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
-
+  const isFirstRender = useRef(true)
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
 
@@ -53,9 +55,17 @@ export function ChatPanel({
     router.push('/')
   }
 
-  if (query && query.trim().length > 0) {
-    return null
-  }
+  // if query is not empty, submit the query
+  useEffect(() => {
+    if (isFirstRender.current && query && query.trim().length > 0) {
+      append({
+        role: 'user',
+        content: query
+      })
+      isFirstRender.current = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query])
 
   return (
     <div

@@ -13,6 +13,5 @@ export default async function SearchPage(props: {
   }
 
   const id = generateId()
-  return <Chat id={id} />
-  // return <Chat initialInput={searchParams.q} />
+  return <Chat id={id} query={q} />
 }
