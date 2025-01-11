@@ -144,6 +144,24 @@ Host your own live version of Morphic with Vercel or Cloudflare Pages.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN)
 
+### Cloudflare Pages
+
+To deploy the website using Cloudflare Pages, follow these steps:
+
+1. Log in to your Cloudflare account and navigate to the Pages section.
+2. Click on "Create a project" and select the repository you want to deploy.
+3. Configure the build settings:
+   - Build command: `bun build`
+   - Output directory: `out`
+4. Set the environment variables:
+   - `OPENAI_API_KEY`
+   - `TAVILY_API_KEY`
+   - `UPSTASH_REDIS_REST_URL`
+   - `UPSTASH_REDIS_REST_TOKEN`
+5. Click "Save and Deploy" to start the deployment process.
+
+Your website will be live at the URL provided by Cloudflare Pages.
+
 ## 🔎 Search Engine
 
 ### Setting up the Search Engine in Your Browser
