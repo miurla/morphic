@@ -2,8 +2,7 @@ import {
   streamText,
   createDataStreamResponse,
   convertToCoreMessages,
-  JSONValue,
-  ToolInvocation
+  JSONValue
 } from 'ai'
 import { researcher } from '@/lib/agents/researcher'
 import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
@@ -18,6 +17,16 @@ const DEFAULT_MODEL = 'openai:gpt-4o-mini'
 
 export async function POST(req: Request) {
   const { messages, id: chatId } = await req.json()
+  const referer = req.headers.get('referer')
+  const isSharePage = referer?.includes('/share/')
+
+  // Note: Currently, we don't support chat API on share pages
+  if (isSharePage) {
+    return new Response('Chat API is not available on share pages', {
+      status: 403,
+      statusText: 'Forbidden'
+    })
+  }
 
   // streamText requires core messages
   const coreMessages = convertToCoreMessages(messages)

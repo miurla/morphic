@@ -1,7 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { Chat } from '@/components/chat'
 import { getChat } from '@/lib/actions/chat'
-import { convertToCoreMessages } from 'ai'
 import { convertToUIMessages } from '@/lib/utils'
 
 export const maxDuration = 60
@@ -32,8 +31,6 @@ export default async function SearchPage(props: {
   if (chat?.userId !== userId) {
     notFound()
   }
-
-  console.log(chat)
 
   return <Chat id={id} savedMessages={messages} />
 }

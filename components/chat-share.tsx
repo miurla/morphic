@@ -16,6 +16,8 @@ import { shareChat } from '@/lib/actions/chat'
 import { toast } from 'sonner'
 import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { Spinner } from './ui/spinner'
+import { useChat } from 'ai/react'
+import { cn } from '@/lib/utils'
 
 interface ChatShareProps {
   chatId: string
@@ -27,6 +29,9 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
   const [pending, startTransition] = useTransition()
   const { copyToClipboard } = useCopyToClipboard({ timeout: 1000 })
   const [shareUrl, setShareUrl] = useState('')
+  const { isLoading } = useChat({
+    id: 'chat'
+  })
 
   const handleShare = async () => {
     startTransition(() => {
@@ -67,10 +72,11 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
       >
         <DialogTrigger asChild>
           <Button
-            className="rounded-full"
+            className={cn('rounded-full', isLoading && 'hidden')}
             size="icon"
             variant={'ghost'}
             onClick={() => setOpen(true)}
+            disabled={isLoading}
           >
             <Share size={14} />
           </Button>
