@@ -42,6 +42,7 @@ export function Chat({
           })
         }}
         isLoading={isLoading}
+        chatId={id}
       />
       <ChatPanel
         input={input}

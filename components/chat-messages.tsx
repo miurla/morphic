@@ -7,12 +7,14 @@ interface ChatMessagesProps {
   messages: Message[]
   onQuerySelect: (query: string) => void
   isLoading: boolean
+  chatId?: string
 }
 
 export function ChatMessages({
   messages,
   onQuerySelect,
-  isLoading
+  isLoading,
+  chatId
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
 
@@ -54,6 +56,7 @@ export function ChatMessages({
             getIsOpen={getIsOpen}
             onOpenChange={handleOpenChange}
             onQuerySelect={onQuerySelect}
+            chatId={chatId}
           />
         </div>
       ))}

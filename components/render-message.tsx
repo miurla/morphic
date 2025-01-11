@@ -10,6 +10,7 @@ interface RenderMessageProps {
   getIsOpen: (id: string) => boolean
   onOpenChange: (id: string, open: boolean) => void
   onQuerySelect: (query: string) => void
+  chatId?: string
 }
 
 export function RenderMessage({
@@ -17,7 +18,8 @@ export function RenderMessage({
   messageId,
   getIsOpen,
   onOpenChange,
-  onQuerySelect
+  onQuerySelect,
+  chatId
 }: RenderMessageProps) {
   if (message.role === 'user') {
     return <UserMessage message={message.content} />
@@ -44,6 +46,7 @@ export function RenderMessage({
         content={message.content}
         isOpen={getIsOpen(messageId)}
         onOpenChange={open => onOpenChange(messageId, open)}
+        chatId={chatId}
       />
       {!message.toolInvocations && message.annotations && (
         <RelatedQuestions
