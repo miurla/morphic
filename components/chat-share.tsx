@@ -29,12 +29,9 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
   const [pending, startTransition] = useTransition()
   const { copyToClipboard } = useCopyToClipboard({ timeout: 1000 })
   const [shareUrl, setShareUrl] = useState('')
-  const { isLoading, messages } = useChat({
+  const { isLoading } = useChat({
     id: 'chat'
   })
-  const hasMultipleUserMessages =
-    messages.filter(message => message.role === 'user').length >= 2
-  const showShareButton = hasMultipleUserMessages ? true : !isLoading
 
   const handleShare = async () => {
     startTransition(() => {
@@ -75,11 +72,11 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
       >
         <DialogTrigger asChild>
           <Button
-            className={cn('rounded-full', !showShareButton && 'hidden')}
+            className={cn('rounded-full', isLoading && 'hidden')}
             size="icon"
             variant={'ghost'}
             onClick={() => setOpen(true)}
-            disabled={!showShareButton}
+            disabled={isLoading}
           >
             <Share size={14} />
           </Button>
