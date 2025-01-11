@@ -6,10 +6,12 @@ import { ChatPanel } from './chat-panel'
 
 export function Chat({
   id,
-  savedMessages = []
+  savedMessages = [],
+  query
 }: {
   id: string
   savedMessages?: Message[]
+  query?: string
 }) {
   const {
     messages,
@@ -52,6 +54,8 @@ export function Chat({
         messages={messages}
         setMessages={setMessages}
         stop={stop}
+        query={query}
+        append={append}
       />
     </div>
   )
