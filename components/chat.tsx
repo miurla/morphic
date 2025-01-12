@@ -3,6 +3,7 @@
 import { Message, useChat } from 'ai/react'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
+import { toast } from 'sonner'
 
 export function Chat({
   id,
@@ -30,6 +31,9 @@ export function Chat({
     },
     onFinish: () => {
       window.history.replaceState({}, '', `/search/${id}`)
+    },
+    onError: error => {
+      toast.error(`Error in chat: ${error.message}`)
     }
   })
 
