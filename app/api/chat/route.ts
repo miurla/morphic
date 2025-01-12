@@ -1,16 +1,16 @@
-import {
-  streamText,
-  createDataStreamResponse,
-  convertToCoreMessages,
-  JSONValue
-} from 'ai'
-import { researcher } from '@/lib/agents/researcher'
-import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
-import { cookies } from 'next/headers'
 import { getChat, saveChat } from '@/lib/actions/chat'
+import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
+import { researcher } from '@/lib/agents/researcher'
 import { ExtendedCoreMessage } from '@/lib/types'
 import { convertToExtendedCoreMessages } from '@/lib/utils'
 import { isProviderEnabled } from '@/lib/utils/registry'
+import {
+  convertToCoreMessages,
+  createDataStreamResponse,
+  JSONValue,
+  streamText
+} from 'ai'
+import { cookies } from 'next/headers'
 
 export const maxDuration = 30
 
