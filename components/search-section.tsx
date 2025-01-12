@@ -1,13 +1,14 @@
 'use client'
 
-import { SearchResults } from './search-results'
-import { DefaultSkeleton } from './default-skeleton'
-import { SearchResultsImageSection } from './search-results-image'
-import { Section, ToolArgsSection } from './section'
+import { CHAT_ID } from '@/lib/constants'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import { ToolInvocation } from 'ai'
-import { CollapsibleMessage } from './collapsible-message'
 import { useChat } from 'ai/react'
+import { CollapsibleMessage } from './collapsible-message'
+import { DefaultSkeleton } from './default-skeleton'
+import { SearchResults } from './search-results'
+import { SearchResultsImageSection } from './search-results-image'
+import { Section, ToolArgsSection } from './section'
 
 interface SearchSectionProps {
   tool: ToolInvocation
@@ -21,7 +22,7 @@ export function SearchSection({
   onOpenChange
 }: SearchSectionProps) {
   const { isLoading } = useChat({
-    id: 'chat'
+    id: CHAT_ID
   })
   const isToolLoading = tool.state === 'call'
   const searchResults: TypeSearchResults =

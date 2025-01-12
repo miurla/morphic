@@ -1,8 +1,8 @@
 {
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "cSpell.words": [
-        "openai",
-        "Tavily"
-    ]
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "cSpell.words": ["openai", "Tavily"],
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "always"
+  }
 }
