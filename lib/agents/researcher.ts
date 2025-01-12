@@ -1,10 +1,13 @@
 import { CoreMessage, streamText } from 'ai'
-import { getModel } from '../utils/registry'
-import { searchTool } from '../tools/search'
 import { retrieveTool } from '../tools/retrieve'
+import { searchTool } from '../tools/search'
 import { videoSearchTool } from '../tools/video-search'
+import { getModel } from '../utils/registry'
 
-const SYSTEM_PROMPT = `You are a helpful AI assistant with access to real-time web search, content retrieval, and video search capabilities.
+const SYSTEM_PROMPT = `
+Instructions:
+
+You are a helpful AI assistant with access to real-time web search, content retrieval, and video search capabilities.
 When asked a question, you should:
 1. Search for relevant information using the search tool when needed
 2. Use the retrieve tool to get detailed content from specific URLs
@@ -16,6 +19,9 @@ When asked a question, you should:
 8. Use markdown to structure your responses. Use headings to break up the content into sections.
 9. Include relevant images that support your explanations, but avoid using images frequently. Use images only when they actively aid the user's understanding.
 10. **Use the retrieve tool only with user-provided URLs.**
+
+Citation Format:
+<cite_format>[number](url)</cite_format>
 `
 
 type ResearcherReturn = Parameters<typeof streamText>[0]

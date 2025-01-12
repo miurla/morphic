@@ -1,12 +1,13 @@
 'use client'
 
-import { MemoizedReactMarkdown } from './ui/markdown'
+import 'katex/dist/katex.min.css'
 import rehypeExternalLinks from 'rehype-external-links'
+import rehypeKatex from 'rehype-katex'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
-import 'katex/dist/katex.min.css'
+import { Citing } from './custom-link'
 import { CodeBlock } from './ui/codeblock'
+import { MemoizedReactMarkdown } from './ui/markdown'
 
 export function BotMessage({ message }: { message: string }) {
   // Check if the content contains LaTeX patterns
@@ -67,7 +68,8 @@ export function BotMessage({ message }: { message: string }) {
               {...props}
             />
           )
-        }
+        },
+        a: Citing
       }}
     >
       {message}
