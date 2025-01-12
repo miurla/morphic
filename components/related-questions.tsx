@@ -1,12 +1,13 @@
 'use client'
 
-import React from 'react'
-import { Button } from './ui/button'
-import { ArrowRight, Repeat2 } from 'lucide-react'
-import { Skeleton } from './ui/skeleton'
+import { CHAT_ID } from '@/lib/constants'
 import { JSONValue } from 'ai'
-import { CollapsibleMessage } from './collapsible-message'
 import { useChat } from 'ai/react'
+import { ArrowRight, Repeat2 } from 'lucide-react'
+import React from 'react'
+import { CollapsibleMessage } from './collapsible-message'
+import { Button } from './ui/button'
+import { Skeleton } from './ui/skeleton'
 
 export interface RelatedQuestionsProps {
   annotations: JSONValue[]
@@ -29,7 +30,7 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   onOpenChange
 }) => {
   const { isLoading } = useChat({
-    id: 'chat'
+    id: CHAT_ID
   })
 
   if (!annotations) {
