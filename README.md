@@ -2,13 +2,7 @@
 
 An AI-powered search engine with a generative UI.
 
-> [!CAUTION]
-> Morphic is built with Vercel AI SDK RSC. AI SDK RSC is [experimental](https://sdk.vercel.ai/docs/getting-started/navigating-the-library#when-to-use-ai-sdk-rsc) and has some limitations. When using it in production, it is recommended to [migrate](https://sdk.vercel.ai/docs/ai-sdk-rsc/migrating-to-ui) to SDK UI.
-
-![capture](/public/capture-240404_blk.png)
-
-> [!NOTE]
-> Please note that there are differences between this repository and the official website [morphic.sh](https://morphic.sh). The official website is a fork of this repository with additional features such as authentication, which are necessary for providing the service online. The core source code of Morphic resides in this repository, and it's designed to be easily built and deployed.
+![capture](/public/screenshot-2025-01-15.png)
 
 ## 🗂️ Overview
 
@@ -18,38 +12,77 @@ An AI-powered search engine with a generative UI.
 - 🌐 [Deploy](#-deploy)
 - 🔎 [Search Engine](#-search-engine)
 - ✅ [Verified models](#-verified-models)
+- ⚡ [AI SDK Implementation](#-ai-sdk-implementation)
+- 📦 [Open Source vs Cloud Offering](#-open-source-vs-cloud-offering)
 
 ## 🛠 Features
 
-- Search and answer using GenerativeUI
-- Understand user's questions
-- Search history functionality
-- Share search results ([Optional](https://github.com/miurla/morphic/blob/main/.env.local.example))
-- Video search support ([Optional](https://github.com/miurla/morphic/blob/main/.env.local.example))
-- Get answers from specified URLs
-- Use as a search engine [※](#-search-engine)
-- Support for providers other than OpenAI
-  - Google Generative AI Provider
-  - Azure OpenAI Provider [※](https://github.com/miurla/morphic/issues/13)
-  - Anthropic Provider
-  - Ollama Provider
-  - Groq Provider
-- Local Redis support
-- SearXNG Search API support with customizable depth (basic or advanced)
-- Configurable search depth (basic or advanced)
-- SearXNG Search API support with customizable depth
+### Core Features
+
+- AI-powered search with GenerativeUI
+- Natural language question understanding
+- Multiple search providers support (Tavily, SearXNG, Exa)
+- Model selection from UI (switch between available AI models)
+
+### Chat & History
+
+- Chat history functionality (Optional)
+- Share search results (Optional)
+- Redis support (Local/Upstash)
+
+### AI Providers
+
+- OpenAI (Default)
+- Google Generative AI
+- Azure OpenAI
+- Anthropic
+- Ollama
+- Groq
+- OpenAI Compatible
+
+### Search Capabilities
+
+- URL-specific search
+- Video search support (Optional)
+- SearXNG integration with:
+  - Customizable search depth (basic/advanced)
+  - Configurable engines
+  - Adjustable results limit
+  - Safe search options
+  - Custom time range filtering
+
+### Additional Features
+
+- Docker deployment ready
+- Browser search engine integration
 
 ## 🧱 Stack
 
-- App framework: [Next.js](https://nextjs.org/)
-- Text streaming / Generative UI: [Vercel AI SDK](https://sdk.vercel.ai/docs)
-- Generative Model: [OpenAI](https://openai.com/)
-- Search API: [Tavily AI](https://tavily.com/) / [Serper](https://serper.dev) / [SearXNG](https://docs.searxng.org/)
-- Extract API: [Tavily AI](https://tavily.com/) / [Jina AI](https://jina.ai/)
-- Database (Serverless/Local): [Upstash](https://upstash.com/) / [Redis](https://redis.io/)
-- Component library: [shadcn/ui](https://ui.shadcn.com/)
-- Headless component primitives: [Radix UI](https://www.radix-ui.com/)
-- Styling: [Tailwind CSS](https://tailwindcss.com/)
+### Core Framework
+
+- [Next.js](https://nextjs.org/) - App Router, React Server Components
+- [TypeScript](https://www.typescriptlang.org/) - Type safety
+- [Vercel AI SDK](https://sdk.vercel.ai/docs) - Text streaming / Generative UI
+
+### AI & Search
+
+- [OpenAI](https://openai.com/) - Default AI provider (Optional: Google AI, Anthropic, Groq, Ollama, Azure OpenAI)
+- [Tavily AI](https://tavily.com/) - Default search provider
+- Alternative providers:
+  - [SearXNG](https://docs.searxng.org/) - Self-hosted search
+  - [Exa](https://exa.ai/) - Neural search
+
+### Data Storage
+
+- [Upstash](https://upstash.com/) - Serverless Redis
+- [Redis](https://redis.io/) - Local Redis option
+
+### UI & Styling
+
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [shadcn/ui](https://ui.shadcn.com/) - Re-usable components
+- [Radix UI](https://www.radix-ui.com/) - Unstyled, accessible components
+- [Lucide Icons](https://lucide.dev/) - Beautiful & consistent icons
 
 ## 🚀 Quickstart
 
@@ -57,84 +90,48 @@ An AI-powered search engine with a generative UI.
 
 Fork the repo to your Github account, then run the following command to clone the repo:
 
-```
+```bash
 git clone git@github.com:[YOUR_GITHUB_ACCOUNT]/morphic.git
 ```
 
 ### 2. Install dependencies
 
-```
+```bash
 cd morphic
 bun install
 ```
 
-### 3. Setting up Upstash Redis
+### 3. Configure environment variables
 
-Follow the guide below to set up Upstash Redis. Create a database and obtain `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Refer to the [Upstash guide](https://upstash.com/blog/rag-chatbot-upstash#setting-up-upstash-redis) for instructions on how to proceed.
-
-If you intend to use a local Redis, you can skip this step.
-
-### 4. Fill out secrets
-
-```
+```bash
 cp .env.local.example .env.local
 ```
 
-Your .env.local file should look like this:
+Fill in the required environment variables in `.env.local`:
 
-```
-# OpenAI API key retrieved here: https://platform.openai.com/api-keys
-OPENAI_API_KEY=
-
-# Tavily API Key retrieved here: https://app.tavily.com/home
-TAVILY_API_KEY=
-
-# Upstash Redis URL and Token retrieved here: https://console.upstash.com/redis
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-
-## Redis Configuration
-
-This application supports both Upstash Redis and local Redis. To use local Redis:
-
-1. Set `USE_LOCAL_REDIS=true` in your `.env.local` file.
-2. Optionally, set `LOCAL_REDIS_URL` if your local Redis is not running on the default `localhost:6379` or `redis://redis:6379` if you're using docker compose.
-
-To use Upstash Redis:
-
-1. Set `USE_LOCAL_REDIS=false` or leave it unset in your `.env.local` file.
-2. Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` with your Upstash credentials.
-
-# SearXNG Configuration
-SEARXNG_API_URL=http://localhost:8080  # Replace with your local SearXNG API URL or docker http://searxng:8080
-SEARCH_API=tavily  #  use searxng, tavily or exa
-SEARXNG_SECRET="" # generate a secret key e.g. openssl rand -base64 32
-SEARXNG_PORT=8080 # default port
-SEARXNG_BIND_ADDRESS=0.0.0.0 # default address
-SEARXNG_IMAGE_PROXY=true # enable image proxy
-SEARXNG_LIMITER=false # can be enabled to limit the number of requests per IP address
-SEARXNG_DEFAULT_DEPTH=basic # Set to 'basic' or 'advanced', only affects SearXNG searches
-SEARXNG_MAX_RESULTS=50 # Maximum number of results to return from SearXNG
-
+```bash
+# Required
+OPENAI_API_KEY=     # Get from https://platform.openai.com/api-keys
+TAVILY_API_KEY=     # Get from https://app.tavily.com/home
 ```
 
-### 5. Run app locally
+For optional features configuration (Redis, SearXNG, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
+
+### 4. Run app locally
 
 #### Using Bun
 
-To run the application locally using Bun, execute the following command:
-
-`bun dev`
-
-You can now visit <http://localhost:3000> in your web browser.
+```bash
+bun dev
+```
 
 #### Using Docker
 
-To run the application using Docker, use the following command:
+```bash
+docker compose up -d
+```
 
-`docker compose up -d`
-
-This will start the application in detached mode. You can access it at <http://localhost:3000>.
+Visit http://localhost:3000 in your browser.
 
 ## 🌐 Deploy
 
@@ -163,65 +160,6 @@ If you want to use Morphic as a search engine in your browser, follow these step
 
 This will allow you to use Morphic as your default search engine in the browser.
 
-### Using SearXNG as an Alternative Search Backend
-
-Morphic now supports SearXNG as an alternative search backend with advanced search capabilities. To use SearXNG:
-
-1. Ensure you have Docker and Docker Compose installed on your system.
-2. In your `.env.local` file, set the following variables:
-
-   - NEXT_PUBLIC_BASE_URL=<http://localhost:3000> # Base URL for local development
-   - SEARXNG_API_URL=<http://localhost:8080> # Replace with your local SearXNG API URL or docker <http://searxng:8080>
-   - SEARXNG_SECRET=your_secret_key_here
-   - SEARXNG_PORT=8080
-   - SEARXNG_IMAGE_PROXY=true
-   - SEARCH_API=searxng
-   - SEARXNG_LIMITER=false # can be enabled to limit the number of requests per IP
-   - SEARXNG_DEFAULT_DEPTH=basic # Set to 'basic' or 'advanced'
-   - SEARXNG_MAX_RESULTS=50 # Maximum number of results to return from SearXNG
-   - SEARXNG_ENGINES=google,bing,duckduckgo,wikipedia # can be overriden in searxng config
-   - SEARXNG_TIME_RANGE=None # Time range for search results
-   - SEARXNG_SAFESEARCH=0 # Safe search setting
-   - SEARXNG_CRAWL_MULTIPLIER=4 # Multiplier for the number of results to crawl in advanced search
-
-3. Two configuration files are provided in the root directory:
-
-   - `searxng-settings.yml`: This file contains the main configuration for SearXNG, including engine settings and server options.
-   - `searxng-limiter.toml`: This file configures the rate limiting and bot detection features of SearXNG.
-
-4. Run `docker-compose up` to start the Morphic stack with SearXNG included.
-5. SearXNG will be available at `http://localhost:8080` and Morphic will use it as the search backend.
-
-#### Advanced Search Configuration
-
-- `NEXT_PUBLIC_BASE_URL`: Set this to your local development URL (<http://localhost:3000>) or your production URL when deploying.
-- `SEARXNG_DEFAULT_DEPTH`: Set to 'basic' or 'advanced' to control the default search depth.
-- `SEARXNG_MAX_RESULTS`: Maximum number of results to return from SearXNG.
-- `SEARXNG_CRAWL_MULTIPLIER`: In advanced search mode, this multiplier determines how many results to crawl. For example, if `SEARXNG_MAX_RESULTS=10` and `SEARXNG_CRAWL_MULTIPLIER=4`, up to 40 results will be crawled before filtering and ranking.
-- `SEARXNG_ENGINES`: Comma-separated list of search engines to use.
-- `SEARXNG_TIME_RANGE`: Time range for search results (e.g., 'day', 'week', 'month', 'year', 'all').
-- `SEARXNG_SAFESEARCH`: Safe search setting (0 for off, 1 for moderate, 2 for strict).
-
-The advanced search feature includes content crawling, relevance scoring, and filtering to provide more accurate and comprehensive results.
-
-#### Customizing SearXNG
-
-- You can modify `searxng-settings.yml` to enable/disable specific search engines, change UI settings, or adjust server options.
-- The `searxng-limiter.toml` file allows you to configure rate limiting and bot detection. This is useful if you're exposing SearXNG directly to the internet.
-- If you prefer not to use external configuration files, you can set these options using environment variables in the `docker-compose.yml` file or directly in the SearXNG container.
-
-#### Troubleshooting
-
-- If you encounter issues with specific search engines (e.g., Wikidata), you can disable them in `searxng-settings.yml`:
-
-```yaml
-engines:
-  - name: wikidata
-    disabled: true
-```
-
-- refer to <https://docs.searxng.org/admin/settings/settings.html#settings-yml>
-
 ## ✅ Verified models
 
 ### List of models applicable to all
@@ -241,3 +179,25 @@ engines:
 - Groq
   - llama3-groq-8b-8192-tool-use-preview
   - llama3-groq-70b-8192-tool-use-preview
+
+## ⚡ AI SDK Implementation
+
+### Current Version: AI SDK UI
+
+This version of Morphic uses the AI SDK UI implementation, which is recommended for production use. It provides better streaming performance and more reliable client-side UI updates.
+
+### Previous Version: AI SDK RSC (v0.2.34 and earlier)
+
+The React Server Components (RSC) implementation of AI SDK was used in versions up to [v0.2.34](https://github.com/miurla/morphic/releases/tag/v0.2.34) but is now considered experimental and not recommended for production. If you need to reference the RSC implementation, please check the v0.2.34 release tag.
+
+> Note: v0.2.34 was the final version using RSC implementation before migrating to AI SDK UI.
+
+For more information about choosing between AI SDK UI and RSC, see the [official documentation](https://sdk.vercel.ai/docs/getting-started/navigating-the-library#when-to-use-ai-sdk-rsc).
+
+## 📦 Open Source vs Cloud Offering
+
+Morphic is open source software available under the Apache-2.0 license.
+
+To maintain sustainable development and provide cloud-ready features, we offer a hosted version of Morphic alongside our open-source offering. The cloud solution makes Morphic accessible to non-technical users and provides additional features while keeping the core functionality open and available for developers.
+
+For our cloud service, visit [morphic.sh](https://morphic.sh).
