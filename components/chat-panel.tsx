@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Button } from './ui/button'
-import { ArrowRight, Plus, Square } from 'lucide-react'
-import { EmptyScreen } from './empty-screen'
-import Textarea from 'react-textarea-autosize'
 import { Message } from 'ai'
+import { ArrowUp, Plus, Square } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import Textarea from 'react-textarea-autosize'
+import { EmptyScreen } from './empty-screen'
 import { ModelSelector } from './model-selector'
+import { Button } from './ui/button'
 
 interface ChatPanelProps {
   input: string
@@ -72,8 +72,8 @@ export function ChatPanel({
       className={cn(
         'mx-auto w-full',
         messages.length > 0
-          ? 'fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm'
-          : 'fixed bottom-8 left-0 right-0 top-10 flex flex-col items-center justify-center'
+          ? 'fixed bottom-0 left-0 right-0 bg-background'
+          : 'fixed bottom-8 left-0 right-0 top-0 flex flex-col items-center justify-center'
       )}
     >
       <form
@@ -89,10 +89,10 @@ export function ChatPanel({
               variant="ghost"
               size="icon"
               onClick={handleNewChat}
-              className="shrink-0 rounded-full"
+              className="shrink-0 rounded-full group"
               type="button"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="size-4 group-hover:rotate-90 transition-all" />
             </Button>
           )}
           {messages.length === 0 && <ModelSelector />}
@@ -161,7 +161,7 @@ export function ChatPanel({
             disabled={input.length === 0 && !isLoading}
             onClick={isLoading ? stop : undefined}
           >
-            {isLoading ? <Square size={20} /> : <ArrowRight size={20} />}
+            {isLoading ? <Square size={20} /> : <ArrowUp size={20} />}
           </Button>
         </div>
         {messages.length === 0 && (

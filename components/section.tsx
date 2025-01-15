@@ -11,8 +11,9 @@ import {
   Search
 } from 'lucide-react'
 import React from 'react'
-import { Separator } from './ui/separator'
 import { ToolBadge } from './tool-badge'
+import { Badge } from './ui/badge'
+import { Separator } from './ui/separator'
 
 type SectionProps = {
   children: React.ReactNode
@@ -66,10 +67,13 @@ export const Section: React.FC<SectionProps> = ({
         )}
       >
         {title && (
-          <h2 className="flex items-center leading-none py-2">
+          <Badge
+            variant="secondary"
+            className="flex items-center leading-none w-fit my-1"
+          >
             {icon}
             {title}
-          </h2>
+          </Badge>
         )}
         {children}
       </section>
