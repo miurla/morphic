@@ -14,6 +14,7 @@ An AI-powered search engine with a generative UI.
 - ✅ [Verified models](#-verified-models)
 - ⚡ [AI SDK Implementation](#-ai-sdk-implementation)
 - 📦 [Open Source vs Cloud Offering](#-open-source-vs-cloud-offering)
+- 👥 [Contributing](#-contributing)
 
 ## 🛠 Features
 
@@ -201,3 +202,14 @@ Morphic is open source software available under the Apache-2.0 license.
 To maintain sustainable development and provide cloud-ready features, we offer a hosted version of Morphic alongside our open-source offering. The cloud solution makes Morphic accessible to non-technical users and provides additional features while keeping the core functionality open and available for developers.
 
 For our cloud service, visit [morphic.sh](https://morphic.sh).
+
+## 👥 Contributing
+
+We welcome contributions to Morphic! Whether it's bug reports, feature requests, or pull requests, all contributions are appreciated.
+
+Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
+
+- How to submit issues
+- How to submit pull requests
+- Commit message conventions
+- Development setup
