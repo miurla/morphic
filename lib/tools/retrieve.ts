@@ -1,9 +1,6 @@
 import { tool } from 'ai'
 import { retrieveSchema } from '@/lib/schema/retrieve'
-import { ToolProps } from '.'
-import { DefaultSkeleton } from '@/components/default-skeleton'
 import { SearchResults as SearchResultsType } from '@/lib/types'
-import RetrieveSection from '@/components/retrieve-section'
 
 const CONTENT_CHARACTER_LIMIT = 10000
 
@@ -79,32 +76,24 @@ async function fetchTavilyExtractData(
   }
 }
 
-export const retrieveTool = ({ uiStream, fullResponse }: ToolProps) =>
-  tool({
-    description: 'Retrieve content from the web',
-    parameters: retrieveSchema,
-    execute: async ({ url }) => {
-      // Append the search section
-      uiStream.update(<DefaultSkeleton />)
+export const retrieveTool = tool({
+  description: 'Retrieve content from the web',
+  parameters: retrieveSchema,
+  execute: async ({ url }) => {
+    let results: SearchResultsType | null
 
-      let results: SearchResultsType | null
-
-      // Use Jina if the API key is set, otherwise use Tavily
-      const useJina = process.env.JINA_API_KEY
-      if (useJina) {
-        results = await fetchJinaReaderData(url)
-      } else {
-        results = await fetchTavilyExtractData(url)
-      }
-
-      if (!results) {
-        fullResponse = `An error occurred while retrieving "${url}".`
-        uiStream.update(null)
-        return results
-      }
-
-      uiStream.update(<RetrieveSection data={results} />)
-
-      return results
+    // Use Jina if the API key is set, otherwise use Tavily
+    const useJina = process.env.JINA_API_KEY
+    if (useJina) {
+      results = await fetchJinaReaderData(url)
+    } else {
+      results = await fetchTavilyExtractData(url)
     }
-  })
+
+    if (!results) {
+      return null
+    }
+
+    return results
+  }
+})

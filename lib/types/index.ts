@@ -1,3 +1,5 @@
+import { CoreMessage, JSONValue, Message } from 'ai'
+
 export type SearchResults = {
   images: SearchResultImage[]
   results: SearchResultItem[]
@@ -61,8 +63,14 @@ export interface Chat extends Record<string, any> {
   createdAt: Date
   userId: string
   path: string
-  messages: AIMessage[]
+  messages: ExtendedCoreMessage[] // Note: Changed from AIMessage to ExtendedCoreMessage
   sharePath?: string
+}
+
+// ExtendedCoreMessage for saveing annotations
+export type ExtendedCoreMessage = Omit<CoreMessage, 'role' | 'content'> & {
+  role: CoreMessage['role'] | 'data'
+  content: CoreMessage['content'] | JSONValue
 }
 
 export type AIMessage = {

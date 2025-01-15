@@ -1,35 +1,45 @@
 'use client'
 
 import { DefaultSkeleton } from './default-skeleton'
-import { Section } from './section'
+import { Section, ToolArgsSection } from './section'
 import type { SerperSearchResults } from '@/lib/types'
-import { StreamableValue, useStreamableValue } from 'ai/rsc'
+import { ToolInvocation } from 'ai'
 import { VideoSearchResults } from './video-search-results'
-import { ToolBadge } from './tool-badge'
+import { CollapsibleMessage } from './collapsible-message'
 
-export type VideoSearchSectionProps = {
-  result?: StreamableValue<string>
+interface VideoSearchSectionProps {
+  tool: ToolInvocation
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function VideoSearchSection({ result }: VideoSearchSectionProps) {
-  const [data, error, pending] = useStreamableValue(result)
-  const searchResults: SerperSearchResults = data ? JSON.parse(data) : undefined
+export function VideoSearchSection({
+  tool,
+  isOpen,
+  onOpenChange
+}: VideoSearchSectionProps) {
+  const isLoading = tool.state === 'call'
+  const searchResults: SerperSearchResults =
+    tool.state === 'result' ? tool.result : undefined
+  const query = tool.args.q as string | undefined
+
+  const header = <ToolArgsSection tool="video_search">{query}</ToolArgsSection>
+
   return (
-    <div>
-      {!pending && data ? (
-        <>
-          <Section size="sm" className="pt-2 pb-0">
-            <ToolBadge tool="search">{`${searchResults.searchParameters.q}`}</ToolBadge>
-          </Section>
-          <Section title="Videos">
-            <VideoSearchResults results={searchResults} />
-          </Section>
-        </>
-      ) : (
-        <Section className="pt-2 pb-0">
-          <DefaultSkeleton />
+    <CollapsibleMessage
+      role="assistant"
+      isCollapsible={true}
+      header={header}
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+    >
+      {!isLoading && searchResults ? (
+        <Section title="Videos">
+          <VideoSearchResults results={searchResults} />
         </Section>
+      ) : (
+        <DefaultSkeleton />
       )}
-    </div>
+    </CollapsibleMessage>
   )
 }

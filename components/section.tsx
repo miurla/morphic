@@ -11,6 +11,8 @@ import {
   Search
 } from 'lucide-react'
 import React from 'react'
+import { ToolBadge } from './tool-badge'
+import { Badge } from './ui/badge'
 import { Separator } from './ui/separator'
 
 type SectionProps = {
@@ -60,18 +62,35 @@ export const Section: React.FC<SectionProps> = ({
       {separator && <Separator className="my-2 bg-primary/10" />}
       <section
         className={cn(
-          ` ${size === 'sm' ? 'py-1' : size === 'lg' ? 'py-4' : 'py-2'}`,
+          ` ${size === 'sm' ? 'py-1' : size === 'lg' ? 'py-4' : 'py-1'}`,
           className
         )}
       >
         {title && (
-          <h2 className="flex items-center leading-none py-2">
+          <Badge
+            variant="secondary"
+            className="flex items-center leading-none w-fit my-1"
+          >
             {icon}
             {title}
-          </h2>
+          </Badge>
         )}
         {children}
       </section>
     </>
+  )
+}
+
+export function ToolArgsSection({
+  children,
+  tool
+}: {
+  children: React.ReactNode
+  tool: string
+}) {
+  return (
+    <Section size="sm" className="py-0">
+      <ToolBadge tool={tool}>{children}</ToolBadge>
+    </Section>
   )
 }
