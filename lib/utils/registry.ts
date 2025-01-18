@@ -1,8 +1,8 @@
-import { experimental_createProviderRegistry as createProviderRegistry } from 'ai'
-import { openai, createOpenAI } from '@ai-sdk/openai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { google } from '@ai-sdk/google'
 import { createAzure } from '@ai-sdk/azure'
+import { google } from '@ai-sdk/google'
+import { createOpenAI, openai } from '@ai-sdk/openai'
+import { experimental_createProviderRegistry as createProviderRegistry } from 'ai'
 import { createOllama } from 'ollama-ai-provider'
 
 export const registry = createProviderRegistry({
@@ -27,6 +27,17 @@ export const registry = createProviderRegistry({
 })
 
 export function getModel(model: string) {
+  // if ollama provider, set simulateStreaming to true
+  if (model.includes('ollama')) {
+    const modelName = model.split(':')[1]
+    const ollama = createOllama({
+      baseURL: `${process.env.OLLAMA_BASE_URL}/api`
+    })
+    return ollama(modelName, {
+      simulateStreaming: true
+    })
+  }
+
   return registry.languageModel(model)
 }
 
