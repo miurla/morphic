@@ -1,7 +1,7 @@
 import { Message } from 'ai'
+import { useEffect, useState } from 'react'
 import { RenderMessage } from './render-message'
 import { Spinner } from './ui/spinner'
-import { useState, useEffect } from 'react'
 
 interface ChatMessagesProps {
   messages: Message[]
@@ -23,6 +23,7 @@ export function ChatMessages({
     if (lastMessage?.role === 'user') {
       setOpenStates({})
     }
+    console.log(messages)
   }, [messages])
 
   if (!messages.length) return null
@@ -35,7 +36,8 @@ export function ChatMessages({
   const showSpinner = isLoading && messages[messages.length - 1].role === 'user'
 
   const getIsOpen = (id: string) => {
-    const index = messages.findIndex(msg => msg.id === id.split('-')[0])
+    const baseId = id.endsWith('-related') ? id.slice(0, -8) : id
+    const index = messages.findIndex(msg => msg.id === baseId)
     return openStates[id] ?? index >= lastUserIndex
   }
 
