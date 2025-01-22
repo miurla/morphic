@@ -1,4 +1,4 @@
-import { CoreMessage, streamText } from 'ai'
+import { CoreMessage, smoothStream, streamText } from 'ai'
 import { retrieveTool } from '../tools/retrieve'
 import { searchTool } from '../tools/search'
 import { videoSearchTool } from '../tools/video-search'
@@ -45,7 +45,8 @@ export function researcher({
         retrieve: retrieveTool,
         videoSearch: videoSearchTool
       },
-      maxSteps: 5
+      maxSteps: 5,
+      experimental_transform: smoothStream()
     }
   } catch (error) {
     console.error('Error in chatResearcher:', error)

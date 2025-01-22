@@ -49,11 +49,11 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   )
 
   const relatedQuestions = lastRelatedQuestionsAnnotation?.data
-  if (!relatedQuestions && !isLoading) {
+  if ((!relatedQuestions || relatedQuestions.items.length < 3) && !isLoading) {
     return null
   }
 
-  if (!relatedQuestions || isLoading) {
+  if (!relatedQuestions && isLoading) {
     return (
       <CollapsibleMessage
         role="assistant"
