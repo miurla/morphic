@@ -23,7 +23,6 @@ export function ChatMessages({
     if (lastMessage?.role === 'user') {
       setOpenStates({})
     }
-    console.log(messages)
   }, [messages])
 
   if (!messages.length) return null

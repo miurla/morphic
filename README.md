@@ -39,6 +39,7 @@ An AI-powered search engine with a generative UI.
 - Anthropic
 - Ollama
 - Groq
+- DeepSeek
 - OpenAI Compatible
 
 ### Search Capabilities
@@ -180,6 +181,8 @@ This will allow you to use Morphic as your default search engine in the browser.
 - Groq
   - llama3-groq-8b-8192-tool-use-preview
   - llama3-groq-70b-8192-tool-use-preview
+- DeepSeek
+  - DeepSeek v3 (Unstable)[ttps://github.com/vercel/ai/issues/4313#issuecomment-2587891644]
 
 ## ⚡ AI SDK Implementation
 

@@ -153,6 +153,15 @@ AZURE_RESOURCE_NAME=[YOUR_RESOURCE_NAME]
 NEXT_PUBLIC_AZURE_DEPLOYMENT_NAME=[YOUR_DEPLOYMENT_NAME]
 ```
 
+### DeepSeek
+
+Note: Deepseek function calling is currently unstable: https://github.com/vercel/ai/issues/4313#issuecomment-2587891644
+If you want to use Deepseek, remove the comment and add it to the models array: https://github.com/miurla/morphic/blob/main/lib/types/models.ts
+
+```
+# DEEPSEEK_API_KEY=[YOUR_API_KEY]
+```
+
 ## Other Features
 
 ### Share Feature

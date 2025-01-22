@@ -12,6 +12,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.0",
     "@ai-sdk/azure": "^1.1.0",
+    "@ai-sdk/deepseek": "^0.1.0",
     "@ai-sdk/google": "^1.1.0",
     "@ai-sdk/openai": "^1.1.0",
     "@radix-ui/react-alert-dialog": "^1.0.5",
