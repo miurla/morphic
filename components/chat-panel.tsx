@@ -73,7 +73,7 @@ export function ChatPanel({
         'mx-auto w-full',
         messages.length > 0
           ? 'fixed bottom-0 left-0 right-0 bg-background'
-          : 'fixed bottom-8 left-0 right-0 top-0 flex flex-col items-center justify-center'
+          : 'fixed bottom-8 left-0 right-0 top-24 flex flex-col items-center justify-center'
       )}
     >
       <form
