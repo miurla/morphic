@@ -1,8 +1,8 @@
 import { Message } from 'ai'
-import { UserMessage } from './user-message'
-import { ToolSection } from './tool-section'
 import { AnswerSection } from './answer-section'
 import RelatedQuestions from './related-questions'
+import { ToolSection } from './tool-section'
+import { UserMessage } from './user-message'
 
 interface RenderMessageProps {
   message: Message
@@ -42,6 +42,7 @@ export function RenderMessage({
 
   return (
     <>
+      {message.reasoning && <pre>{message.reasoning}</pre>}
       <AnswerSection
         content={message.content}
         isOpen={getIsOpen(messageId)}

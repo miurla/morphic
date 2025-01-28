@@ -2,18 +2,20 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { deepseek } from '@ai-sdk/deepseek'
 import { google } from '@ai-sdk/google'
+import { groq } from '@ai-sdk/groq'
 import { createOpenAI, openai } from '@ai-sdk/openai'
-import { experimental_createProviderRegistry as createProviderRegistry } from 'ai'
+import {
+  experimental_createProviderRegistry as createProviderRegistry,
+  extractReasoningMiddleware,
+  experimental_wrapLanguageModel as wrapLanguageModel
+} from 'ai'
 import { createOllama } from 'ollama-ai-provider'
 
 export const registry = createProviderRegistry({
   openai,
   anthropic,
   google,
-  groq: createOpenAI({
-    apiKey: process.env.GROQ_API_KEY,
-    baseURL: 'https://api.groq.com/openai/v1'
-  }),
+  groq,
   ollama: createOllama({
     baseURL: `${process.env.OLLAMA_BASE_URL}/api`
   }),
@@ -29,14 +31,36 @@ export const registry = createProviderRegistry({
 })
 
 export function getModel(model: string) {
-  // if ollama provider, set simulateStreaming to true
   if (model.includes('ollama')) {
     const modelName = model.split(':')[1]
     const ollama = createOllama({
       baseURL: `${process.env.OLLAMA_BASE_URL}/api`
     })
+
+    // if model is deepseek-r1, add reasoning middleware
+    if (model.includes('deepseek-r1')) {
+      return wrapLanguageModel({
+        model: ollama(modelName),
+        middleware: extractReasoningMiddleware({
+          tagName: 'think'
+        })
+      })
+    }
+
+    // if ollama provider, set simulateStreaming to true
     return ollama(modelName, {
       simulateStreaming: true
+    })
+  }
+
+  // if model is groq and includes deepseek-r1, add reasoning middleware
+  if (model.includes('groq') && model.includes('deepseek-r1')) {
+    const modelName = model.split(':')[1]
+    return wrapLanguageModel({
+      model: groq(modelName),
+      middleware: extractReasoningMiddleware({
+        tagName: 'think'
+      })
     })
   }
 

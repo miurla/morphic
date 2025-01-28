@@ -10,6 +10,7 @@ interface HandleStreamFinishParams {
   model: string
   chatId: string
   dataStream: DataStreamWriter
+  skipRelatedQuestions?: boolean
 }
 
 export async function handleStreamFinish({
@@ -17,7 +18,8 @@ export async function handleStreamFinish({
   originalMessages,
   model,
   chatId,
-  dataStream
+  dataStream,
+  skipRelatedQuestions = false
 }: HandleStreamFinishParams) {
   try {
     const extendedCoreMessages = convertToExtendedCoreMessages(originalMessages)
@@ -29,32 +31,38 @@ export async function handleStreamFinish({
       }
     }
 
-    // Notify related questions loading
-    dataStream.writeMessageAnnotation(annotation)
+    if (!skipRelatedQuestions) {
+      // Notify related questions loading
+      dataStream.writeMessageAnnotation(annotation)
 
-    // Generate related questions
-    const relatedQuestions = await generateRelatedQuestions(
-      responseMessages,
-      model
-    )
+      // Generate related questions
+      const relatedQuestions = await generateRelatedQuestions(
+        responseMessages,
+        model
+      )
 
-    // Update the annotation with the related questions
-    annotation = {
-      ...annotation,
-      data: relatedQuestions.object
+      // Update the annotation with the related questions
+      annotation = {
+        ...annotation,
+        data: relatedQuestions.object
+      }
+
+      // Send related questions to client
+      dataStream.writeMessageAnnotation(annotation)
     }
-
-    // Send related questions to client
-    dataStream.writeMessageAnnotation(annotation)
 
     // Create the message to save
     const generatedMessages = [
       ...extendedCoreMessages,
       ...responseMessages.slice(0, -1),
-      {
-        role: 'data',
-        content: annotation
-      } as ExtendedCoreMessage,
+      ...(skipRelatedQuestions
+        ? []
+        : [
+            {
+              role: 'data',
+              content: annotation
+            } as ExtendedCoreMessage
+          ]),
       responseMessages[responseMessages.length - 1]
     ] as ExtendedCoreMessage[]
 

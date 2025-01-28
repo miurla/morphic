@@ -49,8 +49,14 @@ export const models: Model[] = [
     providerId: 'groq'
   },
   {
-    id: 'qwen2.5',
-    name: 'Qwen 2.5',
+    id: 'deepseek-r1-distill-llama-70b',
+    name: 'DeepSeek R1 Distill Llama 70B',
+    provider: 'Groq',
+    providerId: 'groq'
+  },
+  {
+    id: 'deepseek-r1',
+    name: 'DeepSeek R1',
     provider: 'Ollama',
     providerId: 'ollama'
   },
@@ -62,12 +68,18 @@ export const models: Model[] = [
   },
   // Deepseek function calling is currently unstable: https://github.com/vercel/ai/issues/4313#issuecomment-2587891644
   // If you want to use Deepseek, remove the comment and add it to the models array
-  // {
-  //   id: 'deepseek-chat',
-  //   name: 'DeepSeek v3',
-  //   provider: 'DeepSeek',
-  //   providerId: 'deepseek'
-  // },
+  {
+    id: 'deepseek-chat',
+    name: 'DeepSeek v3',
+    provider: 'DeepSeek',
+    providerId: 'deepseek'
+  },
+  {
+    id: 'deepseek-reasoner',
+    name: 'DeepSeek R1',
+    provider: 'DeepSeek',
+    providerId: 'deepseek'
+  },
   {
     id: process.env.NEXT_PUBLIC_OPENAI_COMPATIBLE_MODEL || 'undefined',
     name: process.env.NEXT_PUBLIC_OPENAI_COMPATIBLE_MODEL || 'Undefined',
