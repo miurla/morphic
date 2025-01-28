@@ -1,5 +1,6 @@
 import { Message } from 'ai'
 import { AnswerSection } from './answer-section'
+import { ReasoningAnswerSection } from './reasoning-answer-section'
 import RelatedQuestions from './related-questions'
 import { ToolSection } from './tool-section'
 import { UserMessage } from './user-message'
@@ -42,13 +43,24 @@ export function RenderMessage({
 
   return (
     <>
-      {message.reasoning && <pre>{message.reasoning}</pre>}
-      <AnswerSection
-        content={message.content}
-        isOpen={getIsOpen(messageId)}
-        onOpenChange={open => onOpenChange(messageId, open)}
-        chatId={chatId}
-      />
+      {message.reasoning ? (
+        <ReasoningAnswerSection
+          content={{
+            reasoning: message.reasoning,
+            answer: message.content
+          }}
+          isOpen={getIsOpen(messageId)}
+          onOpenChange={open => onOpenChange(messageId, open)}
+          chatId={chatId}
+        />
+      ) : (
+        <AnswerSection
+          content={message.content}
+          isOpen={getIsOpen(messageId)}
+          onOpenChange={open => onOpenChange(messageId, open)}
+          chatId={chatId}
+        />
+      )}
       {!message.toolInvocations && message.annotations && (
         <RelatedQuestions
           annotations={message.annotations}
