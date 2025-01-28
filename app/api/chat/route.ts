@@ -33,6 +33,7 @@ export async function POST(req: Request) {
     }
 
     const supportsToolCalling = provider === 'openai'
+    // const supportsToolCalling = true
 
     return supportsToolCalling
       ? createToolCallingStreamResponse({
