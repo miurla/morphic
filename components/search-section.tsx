@@ -34,7 +34,10 @@ export function SearchSection({
     : ''
 
   const header = (
-    <ToolArgsSection tool="search">{`${query}${includeDomainsString}`}</ToolArgsSection>
+    <ToolArgsSection
+      tool="search"
+      number={searchResults?.results?.length}
+    >{`${query}${includeDomainsString}`}</ToolArgsSection>
   )
 
   return (

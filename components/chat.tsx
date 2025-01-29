@@ -24,7 +24,9 @@ export function Chat({
     isLoading,
     setMessages,
     stop,
-    append
+    append,
+    data,
+    setData
   } = useChat({
     initialMessages: savedMessages,
     id: CHAT_ID,
@@ -50,10 +52,17 @@ export function Chat({
     })
   }
 
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setData(undefined) // reset data to clear tool call
+    handleSubmit(e)
+  }
+
   return (
     <div className="flex flex-col w-full max-w-3xl pt-10 pb-20 mx-auto stretch">
       <ChatMessages
         messages={messages}
+        data={data}
         onQuerySelect={onQuerySelect}
         isLoading={isLoading}
         chatId={id}
@@ -61,7 +70,7 @@ export function Chat({
       <ChatPanel
         input={input}
         handleInputChange={handleInputChange}
-        handleSubmit={handleSubmit}
+        handleSubmit={onSubmit}
         isLoading={isLoading}
         messages={messages}
         setMessages={setMessages}

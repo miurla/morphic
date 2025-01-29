@@ -1,10 +1,12 @@
-import { Message } from 'ai'
-import { useEffect, useState } from 'react'
+import { JSONValue, Message } from 'ai'
+import { useEffect, useMemo, useState } from 'react'
 import { RenderMessage } from './render-message'
+import { ToolSection } from './tool-section'
 import { Spinner } from './ui/spinner'
 
 interface ChatMessagesProps {
   messages: Message[]
+  data: JSONValue[] | undefined
   onQuerySelect: (query: string) => void
   isLoading: boolean
   chatId?: string
@@ -12,18 +14,45 @@ interface ChatMessagesProps {
 
 export function ChatMessages({
   messages,
+  data,
   onQuerySelect,
   isLoading,
   chatId
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
+  const manualToolCallId = 'manual-tool-call'
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1]
     if (lastMessage?.role === 'user') {
-      setOpenStates({})
+      setOpenStates({ [manualToolCallId]: true })
     }
   }, [messages])
+
+  // get last tool data for manual tool call
+  const lastToolData = useMemo(() => {
+    if (!data || !Array.isArray(data) || data.length === 0) return null
+
+    const lastItem = data[data.length - 1] as {
+      type: 'tool_call'
+      data: {
+        toolCallId: string
+        state: 'call' | 'result'
+        toolName: string
+        args: string
+      }
+    }
+
+    if (lastItem.type !== 'tool_call') return null
+
+    const toolData = lastItem.data
+    return {
+      state: 'call' as const,
+      toolCallId: toolData.toolCallId,
+      toolName: toolData.toolName,
+      args: toolData.args ? JSON.parse(toolData.args) : undefined
+    }
+  }, [data])
 
   if (!messages.length) return null
 
@@ -32,7 +61,7 @@ export function ChatMessages({
     1 -
     [...messages].reverse().findIndex(msg => msg.role === 'user')
 
-  const showSpinner = isLoading && messages[messages.length - 1].role === 'user'
+  const showLoading = isLoading && messages[messages.length - 1].role === 'user'
 
   const getIsOpen = (id: string) => {
     const baseId = id.endsWith('-related') ? id.slice(0, -8) : id
@@ -46,8 +75,6 @@ export function ChatMessages({
       [id]: open
     }))
   }
-
-  console.log('messages', messages)
 
   return (
     <div className="relative mx-auto px-4 w-full">
@@ -63,7 +90,17 @@ export function ChatMessages({
           />
         </div>
       ))}
-      {showSpinner && <Spinner />}
+      {showLoading &&
+        (lastToolData ? (
+          <ToolSection
+            key={manualToolCallId}
+            tool={lastToolData}
+            isOpen={getIsOpen(manualToolCallId)}
+            onOpenChange={open => handleOpenChange(manualToolCallId, open)}
+          />
+        ) : (
+          <Spinner />
+        ))}
     </div>
   )
 }

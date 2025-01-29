@@ -1,5 +1,7 @@
+import { openai } from '@ai-sdk/openai'
 import {
   convertToCoreMessages,
+  CoreMessage,
   createDataStreamResponse,
   DataStreamWriter,
   generateId,
@@ -21,6 +23,7 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
       try {
         const coreMessages = convertToCoreMessages(config.messages)
         const model = getModel(config.model)
+        const toolCallModel = openai('gpt-4o-mini')
 
         // Convert Zod schema to string representation
         const searchSchemaString = Object.entries(searchSchema.shape)
@@ -33,7 +36,7 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
 
         // Generate tool selection using XML format
         const toolSelectionResponse = await generateText({
-          model,
+          model: toolCallModel,
           system: `You are a helpful assistant that selects appropriate tools and their parameters.
                   Do not include any other text in your response.
                   Respond in XML format with the following structure:
@@ -41,18 +44,18 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
                     <tool>tool_name</tool>
                     <parameters>
                       <query>search query text</query>
-                      <max_results>number</max_results>
+                      <max_results>number - 20 by default</max_results>
                       <search_depth>basic or advanced</search_depth>
                       <include_domains>domain1,domain2</include_domains>
                       <exclude_domains>domain1,domain2</exclude_domains>
                     </parameters>
                   </tool_call>
-                  
+
                   Available tools: search
-                  
+
                   Search parameters:
                   ${searchSchemaString}
-                  
+
                   If you don't need a tool, respond with <tool_call><tool></tool></tool_call>`,
           messages: coreMessages
         })
@@ -67,38 +70,55 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
         )
         console.log('Parsed tool call:', toolCall)
 
-        const toolCallAnnotation = {
-          type: 'tool_call',
-          data: {
-            toolCallId: `call_${generateId()}`,
-            toolName: toolCall.tool,
-            args: JSON.stringify(toolCall.parameters)
+        let toolCallMessages: CoreMessage[] = []
+        if (toolCall && toolCall.tool !== '') {
+          const toolCallAnnotation = {
+            type: 'tool_call',
+            data: {
+              state: 'call',
+              toolCallId: `call_${generateId()}`,
+              toolName: toolCall.tool,
+              args: JSON.stringify(toolCall.parameters)
+            }
           }
+          dataStream.writeData(toolCallAnnotation)
+
+          const searchResults = await search(
+            toolCall.parameters?.query ?? '',
+            toolCall.parameters?.max_results,
+            toolCall.parameters?.search_depth as 'basic' | 'advanced',
+            toolCall.parameters?.include_domains,
+            toolCall.parameters?.exclude_domains
+          )
+
+          const updatedToolCallAnnotation = {
+            ...toolCallAnnotation,
+            data: {
+              ...toolCallAnnotation.data,
+              result: JSON.stringify(searchResults),
+              state: 'result'
+            }
+          }
+          dataStream.writeMessageAnnotation(updatedToolCallAnnotation)
+
+          toolCallMessages = [
+            {
+              role: 'assistant' as const,
+              content: `Tool call result: ${JSON.stringify(searchResults)}`
+            },
+            {
+              role: 'user' as const,
+              content: 'Now answer the user question.'
+            }
+          ]
         }
-        dataStream.writeMessageAnnotation(toolCallAnnotation)
-
-        const searchResults = await search(
-          toolCall.parameters?.query ?? '',
-          toolCall.parameters?.max_results,
-          toolCall.parameters?.search_depth as 'basic' | 'advanced',
-          toolCall.parameters?.include_domains,
-          toolCall.parameters?.exclude_domains
-        )
-
-        dataStream.writeMessageAnnotation({
-          ...toolCallAnnotation,
-          data: {
-            ...toolCallAnnotation.data,
-            result: JSON.stringify(searchResults)
-          }
-        })
 
         // Proceed with the main stream
         const result = streamText({
           model,
           system:
-            'You are a helpful assistant. Use the selected tool and parameters to provide the best response.',
-          messages: coreMessages,
+            'You are a helpful assistant. You received a search results. You must use the search results to answer the user question.',
+          messages: [...coreMessages, ...toolCallMessages],
           experimental_transform: smoothStream({ chunking: 'word' }),
           onFinish: async result => {
             await handleStreamFinish({

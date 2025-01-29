@@ -1,10 +1,13 @@
 'use client'
 
+import { CHAT_ID } from '@/lib/constants'
+import { useChat } from 'ai/react'
 import { Check, Lightbulb, Loader2 } from 'lucide-react'
 import { ChatShare } from './chat-share'
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
 import { BotMessage } from './message'
+import { StatusIndicator } from './ui/status-indicator'
 
 interface ReasoningAnswerContent {
   reasoning: string
@@ -25,22 +28,22 @@ export function ReasoningAnswerSection({
   chatId
 }: ReasoningAnswerSectionProps) {
   const enableShare = process.env.NEXT_PUBLIC_ENABLE_SHARE === 'true'
+  const { isLoading } = useChat({ id: CHAT_ID })
 
   const reasoningHeader = (
     <div className="flex items-center gap-2 w-full">
       <Lightbulb size={16} />
       <div className="w-full flex-1 flex items-center justify-between">
         <span>{content.answer?.length === 0 ? 'Thinking...' : 'Thoughts'}</span>
-        {content.answer?.length === 0 ? (
+        {content.answer?.length === 0 && isLoading ? (
           <Loader2
             size={16}
             className="animate-spin text-muted-foreground/50"
           />
         ) : (
-          <span className="flex items-center gap-1 text-muted-foreground">
-            <Check size={16} className="text-green-500" />
-            <span>{content.reasoning.trim().length} chars</span>
-          </span>
+          <StatusIndicator icon={Check} iconClassName="text-green-500">
+            {content.reasoning.trim().length.toLocaleString()} chars
+          </StatusIndicator>
         )}
       </div>
     </div>
