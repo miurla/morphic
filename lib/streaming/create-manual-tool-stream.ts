@@ -6,12 +6,14 @@ import {
   DataStreamWriter,
   generateId,
   generateText,
+  JSONValue,
   smoothStream,
   streamText
 } from 'ai'
 import { z } from 'zod'
 import { searchSchema } from '../schema/search'
 import { search } from '../tools/search'
+import { ExtendedCoreMessage } from '../types'
 import { getModel } from '../utils/registry'
 import { handleStreamFinish } from './handle-stream-finish'
 import { parseToolCallXml } from './parse-tool-call'
@@ -71,6 +73,8 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
         console.log('Parsed tool call:', toolCall)
 
         let toolCallMessages: CoreMessage[] = []
+        let toolCallDataAnnotation: ExtendedCoreMessage | null = null
+
         if (toolCall && toolCall.tool !== '') {
           const toolCallAnnotation = {
             type: 'tool_call',
@@ -83,28 +87,41 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
           }
           dataStream.writeData(toolCallAnnotation)
 
-          const searchResults = await search(
-            toolCall.parameters?.query ?? '',
-            toolCall.parameters?.max_results,
-            toolCall.parameters?.search_depth as 'basic' | 'advanced',
-            toolCall.parameters?.include_domains,
-            toolCall.parameters?.exclude_domains
-          )
+          let toolCallResult: JSONValue = {}
+          if (toolCall.tool === 'search') {
+            toolCallResult = await search(
+              toolCall.parameters?.query ?? '',
+              toolCall.parameters?.max_results,
+              toolCall.parameters?.search_depth as 'basic' | 'advanced',
+              toolCall.parameters?.include_domains,
+              toolCall.parameters?.exclude_domains
+            )
+          } else {
+            throw new Error('Invalid tool name')
+          }
 
           const updatedToolCallAnnotation = {
             ...toolCallAnnotation,
             data: {
               ...toolCallAnnotation.data,
-              result: JSON.stringify(searchResults),
+              result: JSON.stringify(toolCallResult),
               state: 'result'
             }
           }
           dataStream.writeMessageAnnotation(updatedToolCallAnnotation)
 
+          toolCallDataAnnotation = {
+            role: 'data',
+            content: {
+              type: 'tool_call',
+              data: updatedToolCallAnnotation.data
+            }
+          }
+
           toolCallMessages = [
             {
               role: 'assistant' as const,
-              content: `Tool call result: ${JSON.stringify(searchResults)}`
+              content: `Tool call result: ${JSON.stringify(toolCallResult)}`
             },
             {
               role: 'user' as const,
@@ -119,15 +136,29 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
           system:
             'You are a helpful assistant. You received a search results. You must use the search results to answer the user question.',
           messages: [...coreMessages, ...toolCallMessages],
-          experimental_transform: smoothStream({ chunking: 'word' }),
+          experimental_transform: smoothStream({
+            chunking: 'word'
+          }),
           onFinish: async result => {
+            const annotations: ExtendedCoreMessage[] = [
+              ...(toolCallDataAnnotation ? [toolCallDataAnnotation] : []),
+              {
+                role: 'data',
+                content: {
+                  type: 'reasoning',
+                  data: result.reasoning
+                } as JSONValue
+              }
+            ]
+
             await handleStreamFinish({
               responseMessages: result.response.messages,
               originalMessages: config.messages,
               model: config.model,
               chatId: config.chatId,
               dataStream,
-              skipRelatedQuestions: true
+              skipRelatedQuestions: true,
+              annotations
             })
           }
         })

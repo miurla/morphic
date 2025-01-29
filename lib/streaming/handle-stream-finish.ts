@@ -11,6 +11,7 @@ interface HandleStreamFinishParams {
   chatId: string
   dataStream: DataStreamWriter
   skipRelatedQuestions?: boolean
+  annotations?: ExtendedCoreMessage[]
 }
 
 export async function handleStreamFinish({
@@ -19,21 +20,20 @@ export async function handleStreamFinish({
   model,
   chatId,
   dataStream,
-  skipRelatedQuestions = false
+  skipRelatedQuestions = false,
+  annotations = []
 }: HandleStreamFinishParams) {
   try {
     const extendedCoreMessages = convertToExtendedCoreMessages(originalMessages)
-
-    let annotation: JSONValue = {
-      type: 'related-questions',
-      data: {
-        items: []
-      }
-    }
+    let allAnnotations = [...annotations]
 
     if (!skipRelatedQuestions) {
       // Notify related questions loading
-      dataStream.writeMessageAnnotation(annotation)
+      const relatedQuestionsAnnotation: JSONValue = {
+        type: 'related-questions',
+        data: { items: [] }
+      }
+      dataStream.writeMessageAnnotation(relatedQuestionsAnnotation)
 
       // Generate related questions
       const relatedQuestions = await generateRelatedQuestions(
@@ -41,28 +41,25 @@ export async function handleStreamFinish({
         model
       )
 
-      // Update the annotation with the related questions
-      annotation = {
-        ...annotation,
-        data: relatedQuestions.object
+      // Create and add related questions annotation
+      const updatedRelatedQuestionsAnnotation: ExtendedCoreMessage = {
+        role: 'data',
+        content: {
+          type: 'related-questions',
+          data: relatedQuestions.object
+        } as JSONValue
       }
 
-      // Send related questions to client
-      dataStream.writeMessageAnnotation(annotation)
+      dataStream.writeMessageAnnotation(
+        updatedRelatedQuestionsAnnotation.content as JSONValue
+      )
+      allAnnotations.push(updatedRelatedQuestionsAnnotation)
     }
 
     // Create the message to save
     const generatedMessages = [
       ...extendedCoreMessages,
-      ...responseMessages.slice(0, -1),
-      ...(skipRelatedQuestions
-        ? []
-        : [
-            {
-              role: 'data',
-              content: annotation
-            } as ExtendedCoreMessage
-          ]),
+      ...allAnnotations,
       responseMessages[responseMessages.length - 1]
     ] as ExtendedCoreMessage[]
 
