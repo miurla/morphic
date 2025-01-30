@@ -34,7 +34,6 @@ export function AnswerSection({
         message={content}
         chatId={chatId}
         enableShare={enableShare}
-        className="self-end"
       />
     </div>
   ) : (

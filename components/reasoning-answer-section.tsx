@@ -3,10 +3,10 @@
 import { CHAT_ID } from '@/lib/constants'
 import { useChat } from 'ai/react'
 import { Check, Lightbulb, Loader2 } from 'lucide-react'
-import { ChatShare } from './chat-share'
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
 import { BotMessage } from './message'
+import { MessageActions } from './message-actions'
 import { StatusIndicator } from './ui/status-indicator'
 
 interface ReasoningAnswerContent {
@@ -74,9 +74,11 @@ export function ReasoningAnswerSection({
       >
         <div className="flex flex-col gap-4">
           <BotMessage message={content.answer || ''} />
-          {enableShare && chatId && (
-            <ChatShare chatId={chatId} className="self-end" />
-          )}
+          <MessageActions
+            message={content.answer || ''}
+            chatId={chatId}
+            enableShare={enableShare}
+          />
         </div>
       </CollapsibleMessage>
     </div>

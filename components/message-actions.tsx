@@ -34,7 +34,7 @@ export function MessageActions({
   }
 
   return (
-    <div className={cn('flex items-center gap-0.5', className)}>
+    <div className={cn('flex items-center gap-0.5 self-end', className)}>
       <Button
         variant="ghost"
         size="icon"
