@@ -49,78 +49,74 @@ export function ModelSelector() {
   const selectedModel = models.find(m => createModelId(m) === selectedModelId)
 
   return (
-    <div className="absolute -top-11 left-0">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="text-sm border-none rounded-full shadow-none focus:ring-0"
-          >
-            {selectedModel ? (
-              <div className="flex items-center space-x-1">
-                <Image
-                  src={`/providers/logos/${selectedModel.providerId}.svg`}
-                  alt={selectedModel.provider}
-                  width={18}
-                  height={18}
-                  className="bg-white rounded-full border"
-                />
-                <span className="text-xs font-medium">
-                  {selectedModel.name}
-                </span>
-              </div>
-            ) : (
-              'Select model'
-            )}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-72 p-0" align="start">
-          <Command>
-            <CommandInput placeholder="Search models..." />
-            <CommandList>
-              <CommandEmpty>No model found.</CommandEmpty>
-              {Object.entries(groupedModels).map(([provider, models]) => (
-                <CommandGroup key={provider} heading={provider}>
-                  {models.map(model => {
-                    const modelId = createModelId(model)
-                    return (
-                      <CommandItem
-                        key={modelId}
-                        value={modelId}
-                        onSelect={handleModelSelect}
-                        className="flex justify-between"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <Image
-                            src={`/providers/logos/${model.providerId}.svg`}
-                            alt={model.provider}
-                            width={18}
-                            height={18}
-                            className="bg-white rounded-full border"
-                          />
-                          <span className="text-xs font-medium">
-                            {model.name}
-                          </span>
-                        </div>
-                        <Check
-                          className={`h-4 w-4 ${
-                            selectedModelId === modelId
-                              ? 'opacity-100'
-                              : 'opacity-0'
-                          }`}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="text-sm rounded-full shadow-none focus:ring-0"
+        >
+          {selectedModel ? (
+            <div className="flex items-center space-x-1">
+              <Image
+                src={`/providers/logos/${selectedModel.providerId}.svg`}
+                alt={selectedModel.provider}
+                width={18}
+                height={18}
+                className="bg-white rounded-full border"
+              />
+              <span className="text-xs font-medium">{selectedModel.name}</span>
+            </div>
+          ) : (
+            'Select model'
+          )}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search models..." />
+          <CommandList>
+            <CommandEmpty>No model found.</CommandEmpty>
+            {Object.entries(groupedModels).map(([provider, models]) => (
+              <CommandGroup key={provider} heading={provider}>
+                {models.map(model => {
+                  const modelId = createModelId(model)
+                  return (
+                    <CommandItem
+                      key={modelId}
+                      value={modelId}
+                      onSelect={handleModelSelect}
+                      className="flex justify-between"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Image
+                          src={`/providers/logos/${model.providerId}.svg`}
+                          alt={model.provider}
+                          width={18}
+                          height={18}
+                          className="bg-white rounded-full border"
                         />
-                      </CommandItem>
-                    )
-                  })}
-                </CommandGroup>
-              ))}
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </div>
+                        <span className="text-xs font-medium">
+                          {model.name}
+                        </span>
+                      </div>
+                      <Check
+                        className={`h-4 w-4 ${
+                          selectedModelId === modelId
+                            ? 'opacity-100'
+                            : 'opacity-0'
+                        }`}
+                      />
+                    </CommandItem>
+                  )
+                })}
+              </CommandGroup>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   )
 }

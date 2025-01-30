@@ -9,6 +9,7 @@ import Textarea from 'react-textarea-autosize'
 import { EmptyScreen } from './empty-screen'
 import { ModelSelector } from './model-selector'
 import { Button } from './ui/button'
+import { IconLogo } from './ui/icons'
 
 interface ChatPanelProps {
   input: string
@@ -73,9 +74,14 @@ export function ChatPanel({
         'mx-auto w-full',
         messages.length > 0
           ? 'fixed bottom-0 left-0 right-0 bg-background'
-          : 'fixed bottom-8 left-0 right-0 top-24 flex flex-col items-center justify-center'
+          : 'fixed bottom-8 left-0 right-0 top-6 flex flex-col items-center justify-center'
       )}
     >
+      {messages.length === 0 && (
+        <div className="mb-8">
+          <IconLogo className="size-12 text-muted-foreground" />
+        </div>
+      )}
       <form
         onSubmit={handleSubmit}
         className={cn(
@@ -133,6 +139,7 @@ export function ChatPanel({
                   onClick={handleNewChat}
                   className="shrink-0 rounded-full group"
                   type="button"
+                  disabled={isLoading}
                 >
                   <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
                 </Button>
