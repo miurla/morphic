@@ -7,6 +7,7 @@ import {
 } from 'ai'
 import { manualResearcher } from '../agents/manual-researcher'
 import { ExtendedCoreMessage } from '../types'
+import { getMaxAllowedTokens, truncateMessages } from '../utils/context-window'
 import { handleStreamFinish } from './handle-stream-finish'
 import { executeToolCall } from './tool-execution'
 import { BaseStreamConfig } from './types'
@@ -17,12 +18,16 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
       const { messages, model, chatId } = config
       try {
         const coreMessages = convertToCoreMessages(messages)
+        const truncatedMessages = truncateMessages(
+          coreMessages,
+          getMaxAllowedTokens(model)
+        )
 
         const { toolCallDataAnnotation, toolCallMessages } =
-          await executeToolCall(coreMessages, dataStream)
+          await executeToolCall(truncatedMessages, dataStream)
 
         const researcherConfig = manualResearcher({
-          messages: [...coreMessages, ...toolCallMessages],
+          messages: [...truncatedMessages, ...toolCallMessages],
           model
         })
 
@@ -46,7 +51,7 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
               model,
               chatId,
               dataStream,
-              skipRelatedQuestions: false,
+              skipRelatedQuestions: true,
               annotations
             })
           }

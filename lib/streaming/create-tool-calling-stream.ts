@@ -5,6 +5,7 @@ import {
   DataStreamWriter,
   streamText
 } from 'ai'
+import { getMaxAllowedTokens, truncateMessages } from '../utils/context-window'
 import { handleStreamFinish } from './handle-stream-finish'
 import { BaseStreamConfig } from './types'
 
@@ -15,9 +16,13 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
 
       try {
         const coreMessages = convertToCoreMessages(messages)
+        const truncatedMessages = truncateMessages(
+          coreMessages,
+          getMaxAllowedTokens(model)
+        )
 
         let researcherConfig = await researcher({
-          messages: coreMessages,
+          messages: truncatedMessages,
           model
         })
 
