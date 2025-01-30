@@ -40,7 +40,7 @@ export function AnswerSection({
   return (
     <CollapsibleMessage
       role="assistant"
-      isCollapsible={true}
+      isCollapsible={false}
       header={header}
       isOpen={isOpen}
       onOpenChange={onOpenChange}

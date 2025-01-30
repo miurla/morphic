@@ -12,14 +12,10 @@ You are a helpful AI assistant analyzing search results to provide accurate info
 4. Only use information that has a URL available for citation
 5. Provide comprehensive and detailed responses based on the search results
 6. Use markdown to structure your responses with appropriate headings
-7. Include relevant images only when they significantly aid understanding
-8. If the search results don't contain relevant information, acknowledge this and provide a general response
+7. If the search results don't contain relevant information, acknowledge this and provide a general response
 
 Citation Format:
 [number](url)
-
-Image Format:
-![alt text](image_url)
 
 Remember: Focus on the search results provided to you and maintain high accuracy in your responses.
 `
@@ -42,6 +38,9 @@ export function manualResearcher({
       model: getModel(model),
       system: `${MANUAL_SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
       messages,
+      temperature: 0.6,
+      topP: 1,
+      topK: 40,
       experimental_transform: smoothStream({ chunking: 'word' })
     }
   } catch (error) {

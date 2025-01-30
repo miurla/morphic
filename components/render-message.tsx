@@ -25,7 +25,7 @@ export function RenderMessage({
 }: RenderMessageProps) {
   const relatedQuestions = useMemo(
     () =>
-      message.annotations?.find(
+      message.annotations?.filter(
         annotation => (annotation as any)?.type === 'related-questions'
       ),
     [message.annotations]
@@ -113,14 +113,16 @@ export function RenderMessage({
           chatId={chatId}
         />
       )}
-      {!message.toolInvocations && relatedQuestions && (
-        <RelatedQuestions
-          annotations={relatedQuestions as JSONValue[]}
-          onQuerySelect={onQuerySelect}
-          isOpen={getIsOpen(`${messageId}-related`)}
-          onOpenChange={open => onOpenChange(`${messageId}-related`, open)}
-        />
-      )}
+      {!message.toolInvocations &&
+        relatedQuestions &&
+        relatedQuestions.length > 0 && (
+          <RelatedQuestions
+            annotations={relatedQuestions as JSONValue[]}
+            onQuerySelect={onQuerySelect}
+            isOpen={getIsOpen(`${messageId}-related`)}
+            onOpenChange={open => onOpenChange(`${messageId}-related`, open)}
+          />
+        )}
     </>
   )
 }

@@ -11,12 +11,14 @@ import { BaseStreamConfig } from './types'
 export function createToolCallingStreamResponse(config: BaseStreamConfig) {
   return createDataStreamResponse({
     execute: async (dataStream: DataStreamWriter) => {
+      const { messages, model, chatId } = config
+
       try {
-        const coreMessages = convertToCoreMessages(config.messages)
+        const coreMessages = convertToCoreMessages(messages)
 
         let researcherConfig = await researcher({
           messages: coreMessages,
-          model: config.model
+          model
         })
 
         const result = streamText({
@@ -24,9 +26,9 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           onFinish: async result => {
             await handleStreamFinish({
               responseMessages: result.response.messages,
-              originalMessages: config.messages,
-              model: config.model,
-              chatId: config.chatId,
+              originalMessages: messages,
+              model,
+              chatId,
               dataStream
             })
           }

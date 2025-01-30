@@ -14,15 +14,16 @@ import { BaseStreamConfig } from './types'
 export function createManualToolStreamResponse(config: BaseStreamConfig) {
   return createDataStreamResponse({
     execute: async (dataStream: DataStreamWriter) => {
+      const { messages, model, chatId } = config
       try {
-        const coreMessages = convertToCoreMessages(config.messages)
+        const coreMessages = convertToCoreMessages(messages)
 
         const { toolCallDataAnnotation, toolCallMessages } =
           await executeToolCall(coreMessages, dataStream)
 
         const researcherConfig = manualResearcher({
           messages: [...coreMessages, ...toolCallMessages],
-          model: config.model
+          model
         })
 
         const result = streamText({
@@ -41,9 +42,9 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
 
             await handleStreamFinish({
               responseMessages: result.response.messages,
-              originalMessages: config.messages,
-              model: config.model,
-              chatId: config.chatId,
+              originalMessages: messages,
+              model,
+              chatId,
               dataStream,
               skipRelatedQuestions: true,
               annotations

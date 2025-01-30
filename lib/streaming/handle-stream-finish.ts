@@ -59,8 +59,9 @@ export async function handleStreamFinish({
     // Create the message to save
     const generatedMessages = [
       ...extendedCoreMessages,
-      ...allAnnotations,
-      responseMessages[responseMessages.length - 1]
+      ...responseMessages.slice(0, -1),
+      ...allAnnotations, // Add annotations before the last message
+      ...responseMessages.slice(-1)
     ] as ExtendedCoreMessage[]
 
     // Get the chat from the database if it exists, otherwise create a new one
