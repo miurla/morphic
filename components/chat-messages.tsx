@@ -1,5 +1,5 @@
 import { JSONValue, Message } from 'ai'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { RenderMessage } from './render-message'
 import { ToolSection } from './tool-section'
 import { Spinner } from './ui/spinner'
@@ -21,6 +21,19 @@ export function ChatMessages({
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
+
+  // Add ref for the messages container
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Scroll to bottom function
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'instant' })
+  }
+
+  // Scroll to bottom on mount and when messages change
+  useEffect(() => {
+    scrollToBottom()
+  }, [])
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1]
@@ -101,6 +114,7 @@ export function ChatMessages({
         ) : (
           <Spinner />
         ))}
+      <div ref={messagesEndRef} /> {/* Add empty div as scroll anchor */}
     </div>
   )
 }

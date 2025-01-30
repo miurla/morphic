@@ -17,14 +17,10 @@ When asked a question, you should:
 6. If results are not relevant or helpful, rely on your general knowledge
 7. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question
 8. Use markdown to structure your responses. Use headings to break up the content into sections.
-9. Include relevant images that support your explanations, but avoid using images frequently. Use images only when they actively aid the user's understanding.
-10. **Use the retrieve tool only with user-provided URLs.**
+9. **Use the retrieve tool only with user-provided URLs.**
 
 Citation Format:
 [number](url)
-
-Image Format:
-![alt text](image_url)
 `
 
 type ResearcherReturn = Parameters<typeof streamText>[0]
