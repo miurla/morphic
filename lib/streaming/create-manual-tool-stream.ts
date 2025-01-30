@@ -3,11 +3,10 @@ import {
   createDataStreamResponse,
   DataStreamWriter,
   JSONValue,
-  smoothStream,
   streamText
 } from 'ai'
+import { manualResearcher } from '../agents/manual-researcher'
 import { ExtendedCoreMessage } from '../types'
-import { getModel } from '../utils/registry'
 import { handleStreamFinish } from './handle-stream-finish'
 import { executeToolCall } from './tool-execution'
 import { BaseStreamConfig } from './types'
@@ -17,19 +16,17 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
     execute: async (dataStream: DataStreamWriter) => {
       try {
         const coreMessages = convertToCoreMessages(config.messages)
-        const model = getModel(config.model)
 
         const { toolCallDataAnnotation, toolCallMessages } =
           await executeToolCall(coreMessages, dataStream)
 
-        const result = streamText({
-          model,
-          system:
-            'You are a helpful assistant. You received a search results. You must use the search results to answer the user question.',
+        const researcherConfig = manualResearcher({
           messages: [...coreMessages, ...toolCallMessages],
-          experimental_transform: smoothStream({
-            chunking: 'word'
-          }),
+          model: config.model
+        })
+
+        const result = streamText({
+          ...researcherConfig,
           onFinish: async result => {
             const annotations: ExtendedCoreMessage[] = [
               ...(toolCallDataAnnotation ? [toolCallDataAnnotation] : []),

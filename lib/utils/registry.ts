@@ -109,5 +109,8 @@ export function getToolCallModel(model?: string) {
 export function isToolCallSupported(model?: string) {
   const modelName = model?.split(':')[1]
 
-  return modelName?.includes('deepseek-r1')
+  return (
+    !modelName?.includes('deepseek-r1') &&
+    !modelName?.includes('deepseek-reasoner')
+  )
 }

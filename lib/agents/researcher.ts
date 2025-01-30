@@ -21,7 +21,10 @@ When asked a question, you should:
 10. **Use the retrieve tool only with user-provided URLs.**
 
 Citation Format:
-<cite_format>[number](url)</cite_format>
+[number](url)
+
+Image Format:
+![alt text](image_url)
 `
 
 type ResearcherReturn = Parameters<typeof streamText>[0]
