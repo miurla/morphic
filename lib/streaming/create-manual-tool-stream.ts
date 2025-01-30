@@ -46,7 +46,7 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
                     <tool>tool_name</tool>
                     <parameters>
                       <query>search query text</query>
-                      <max_results>number - 20 by default</max_results>
+                      <max_results>number - 5 by default</max_results>
                       <search_depth>basic or advanced</search_depth>
                       <include_domains>domain1,domain2</include_domains>
                       <exclude_domains>domain1,domain2</exclude_domains>

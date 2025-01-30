@@ -1,5 +1,4 @@
-import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { type Model } from '@/lib/types/models'
 import {
   convertToCoreMessages,
   CoreMessage,
@@ -9,7 +8,8 @@ import {
   Message,
   ToolInvocation
 } from 'ai'
-import { type Model } from '@/lib/types/models'
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 import { ExtendedCoreMessage } from '../types'
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -93,6 +93,7 @@ export function convertToUIMessages(
   messages: Array<ExtendedCoreMessage>
 ): Array<Message> {
   let pendingAnnotations: JSONValue[] = []
+  let pendingReasoning: string | undefined
 
   return messages.reduce((chatMessages: Array<Message>, message) => {
     // Handle tool messages
@@ -112,7 +113,19 @@ export function convertToUIMessages(
         typeof message.content !== 'number' &&
         typeof message.content !== 'boolean'
       ) {
-        pendingAnnotations.push(message.content as JSONValue)
+        const content = message.content as JSONValue
+        if (
+          content &&
+          typeof content === 'object' &&
+          'type' in content &&
+          'data' in content
+        ) {
+          if (content.type === 'reasoning') {
+            pendingReasoning = content.data as string
+          } else {
+            pendingAnnotations.push(content)
+          }
+        }
       }
       return chatMessages
     }
@@ -153,17 +166,21 @@ export function convertToUIMessages(
       role: message.role,
       content: textContent,
       toolInvocations: toolInvocations.length > 0 ? toolInvocations : undefined,
-      // Add pending annotations if this is an assistant message
-      ...(message.role === 'assistant' && pendingAnnotations.length > 0
-        ? { annotations: pendingAnnotations }
-        : {})
+      // Add pending annotations and reasoning if this is an assistant message
+      ...(message.role === 'assistant' && {
+        ...(pendingAnnotations.length > 0 && {
+          annotations: pendingAnnotations
+        }),
+        ...(pendingReasoning && { reasoning: pendingReasoning })
+      })
     }
 
     chatMessages.push(newMessage)
 
-    // Clear pending annotations after adding them
+    // Clear pending data after adding them
     if (message.role === 'assistant') {
       pendingAnnotations = []
+      pendingReasoning = undefined
     }
 
     return chatMessages
@@ -183,6 +200,17 @@ export function convertToExtendedCoreMessages(
           role: 'data',
           content: annotation
         })
+      })
+    }
+
+    // Convert reasoning to data message
+    if (message.reasoning) {
+      result.push({
+        role: 'data',
+        content: {
+          type: 'reasoning',
+          data: message.reasoning
+        } as JSONValue
       })
     }
 
