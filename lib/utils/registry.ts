@@ -93,3 +93,21 @@ export function isProviderEnabled(providerId: string): boolean {
       return false
   }
 }
+
+export function getToolCallModel(model?: string) {
+  const provider = model?.split(':')[0]
+  switch (provider) {
+    case 'groq':
+      return getModel('groq:llama3.3-70b-versatile')
+    case 'deepseek':
+      return getModel('deepseek:deepseek-chat')
+    default:
+      return getModel('openai:gpt-4o-mini')
+  }
+}
+
+export function isToolCallSupported(model?: string) {
+  const modelName = model?.split(':')[1]
+
+  return modelName?.includes('deepseek-r1')
+}

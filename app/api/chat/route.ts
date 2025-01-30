@@ -1,6 +1,6 @@
 import { createManualToolStreamResponse } from '@/lib/streaming/create-manual-tool-stream'
 import { createToolCallingStreamResponse } from '@/lib/streaming/create-tool-calling-stream'
-import { isProviderEnabled } from '@/lib/utils/registry'
+import { isProviderEnabled, isToolCallSupported } from '@/lib/utils/registry'
 import { cookies } from 'next/headers'
 
 export const maxDuration = 30
@@ -32,8 +32,7 @@ export async function POST(req: Request) {
       })
     }
 
-    const supportsToolCalling = provider === 'openai'
-    // const supportsToolCalling = true
+    const supportsToolCalling = isToolCallSupported(model)
 
     return supportsToolCalling
       ? createToolCallingStreamResponse({
