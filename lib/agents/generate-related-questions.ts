@@ -1,6 +1,10 @@
-import { CoreMessage, generateObject } from 'ai'
 import { relatedSchema } from '@/lib/schema/related'
-import { getModel } from '../utils/registry'
+import { CoreMessage, generateObject } from 'ai'
+import {
+  getModel,
+  getToolCallModel,
+  isToolCallSupported
+} from '../utils/registry'
 
 export async function generateRelatedQuestions(
   messages: CoreMessage[],
@@ -11,8 +15,13 @@ export async function generateRelatedQuestions(
     role: 'user'
   })) as CoreMessage[]
 
+  const supportedModel = isToolCallSupported(model)
+  const currentModel = supportedModel
+    ? getModel(model)
+    : getToolCallModel(model)
+
   const result = await generateObject({
-    model: getModel(model),
+    model: currentModel,
     system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
 
     For instance, if the original query was "Starship's third test flight key milestones", your output should follow this format:

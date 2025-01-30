@@ -98,7 +98,8 @@ export function getToolCallModel(model?: string) {
   const provider = model?.split(':')[0]
   switch (provider) {
     case 'groq':
-      return getModel('groq:llama3.3-70b-versatile')
+      return getModel('openai:gpt-4o-mini')
+    // return getModel(model!)
     case 'deepseek':
       return getModel('deepseek:deepseek-chat')
     default:
