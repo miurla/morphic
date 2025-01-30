@@ -25,6 +25,12 @@ export const models: Model[] = [
     providerId: 'azure'
   },
   {
+    id: 'accounts/fireworks/models/deepseek-r1',
+    name: 'DeepSeek R1',
+    provider: 'Fireworks',
+    providerId: 'fireworks'
+  },
+  {
     id: 'deepseek-reasoner',
     name: 'DeepSeek R1',
     provider: 'DeepSeek',
