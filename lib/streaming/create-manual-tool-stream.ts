@@ -24,7 +24,7 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
         )
 
         const { toolCallDataAnnotation, toolCallMessages } =
-          await executeToolCall(truncatedMessages, dataStream)
+          await executeToolCall(truncatedMessages, dataStream, model)
 
         const researcherConfig = manualResearcher({
           messages: [...truncatedMessages, ...toolCallMessages],

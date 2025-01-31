@@ -31,6 +31,7 @@ export async function executeToolCall(
       return `- ${key}${isOptional ? ' (optional)' : ''}: ${description}`
     })
     .join('\n')
+  const defaultMaxResults = model?.includes('ollama') ? 5 : 20
 
   // Generate tool selection using XML format
   const toolSelectionResponse = await generateText({
@@ -45,7 +46,7 @@ export async function executeToolCall(
               <tool>tool_name</tool>
               <parameters>
                 <query>search query text</query>
-                <max_results>number - 20 by default</max_results>
+                <max_results>number - ${defaultMaxResults} by default</max_results>
                 <search_depth>basic or advanced</search_depth>
                 <include_domains>domain1,domain2</include_domains>
                 <exclude_domains>domain1,domain2</exclude_domains>

@@ -115,14 +115,16 @@ export function isProviderEnabled(providerId: string): boolean {
 export function getToolCallModel(model?: string) {
   const provider = model?.split(':')[0]
   switch (provider) {
-    case 'groq':
-      return getModel('groq:llama-3.1-8b-instant')
     case 'deepseek':
       return getModel('deepseek:deepseek-chat')
     case 'fireworks':
       return getModel(
         'fireworks:accounts/fireworks/models/llama-v3p1-8b-instruct'
       )
+    case 'groq':
+      return getModel('groq:llama-3.1-8b-instant')
+    case 'ollama':
+      return getModel('ollama:phi4')
     default:
       return getModel('openai:gpt-4o-mini')
   }
@@ -131,8 +133,7 @@ export function getToolCallModel(model?: string) {
 export function isToolCallSupported(model?: string) {
   const modelName = model?.split(':')[1]
 
-  return (
-    !modelName?.includes('deepseek-r1') &&
-    !modelName?.includes('deepseek-reasoner')
-  )
+  // Deepseek R1 is not supported
+  // Deepseek v3's tool call is unstable, so we include it in the list
+  return !modelName?.includes('deepseek')
 }

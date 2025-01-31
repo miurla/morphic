@@ -39,7 +39,7 @@ export function Chat({
     onError: error => {
       toast.error(`Error in chat: ${error.message}`)
     },
-    sendExtraMessageFields: true
+    sendExtraMessageFields: false // Disable extra message fields
   })
 
   useEffect(() => {

@@ -72,14 +72,16 @@ export function ReasoningAnswerSection({
         isCollapsible={false}
         showIcon={false}
       >
-        <div className="flex flex-col gap-4">
-          <BotMessage message={content.answer || ''} />
-          <MessageActions
-            message={content.answer || ''}
-            chatId={chatId}
-            enableShare={enableShare}
-          />
-        </div>
+        {content.answer && (
+          <div className="flex flex-col gap-4">
+            <BotMessage message={content.answer || ''} />
+            <MessageActions
+              message={content.answer || ''}
+              chatId={chatId}
+              enableShare={enableShare}
+            />
+          </div>
+        )}
       </CollapsibleMessage>
     </div>
   )
