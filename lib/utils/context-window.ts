@@ -23,28 +23,28 @@ export function getMaxAllowedTokens(modelId: string): number {
 
 export function truncateMessages(
   messages: CoreMessage[],
-  maxTokens: number,
-  preserveSystemMessage = true
+  maxTokens: number
 ): CoreMessage[] {
   let totalTokens = 0
-  const truncatedMessages: CoreMessage[] = []
+  const tempMessages: CoreMessage[] = []
 
-  if (preserveSystemMessage && messages.length > 0) {
-    truncatedMessages.push(messages[0])
-    totalTokens += messages[0].content?.length || 0
-  }
-
-  for (let i = messages.length - 1; i >= (preserveSystemMessage ? 1 : 0); i--) {
+  for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i]
     const messageTokens = message.content?.length || 0
 
     if (totalTokens + messageTokens <= maxTokens) {
-      truncatedMessages.unshift(message)
+      tempMessages.push(message)
       totalTokens += messageTokens
     } else {
       break
     }
   }
 
-  return truncatedMessages
+  const orderedMessages = tempMessages.reverse()
+
+  while (orderedMessages.length > 0 && orderedMessages[0].role !== 'user') {
+    orderedMessages.shift()
+  }
+
+  return orderedMessages
 }
