@@ -28,9 +28,10 @@ export function SearchModeToggle() {
       onPressedChange={handleSearchModeChange}
       variant="outline"
       className={cn(
-        'gap-1 px-3 border border-input text-muted-foreground',
-        'data-[state=on]:bg-blue-50 data-[state=on]:text-blue-500 data-[state=on]:border-blue-100',
-        'dark:data-[state=on]:bg-blue-950 dark:data-[state=on]:text-blue-400 dark:data-[state=on]:border-blue-900',
+        'gap-1 px-3 border border-input text-muted-foreground bg-background',
+        'data-[state=on]:bg-accent-blue',
+        'data-[state=on]:text-accent-blue-foreground',
+        'data-[state=on]:border-accent-blue-border',
         'hover:bg-accent hover:text-accent-foreground rounded-full'
       )}
     >
