@@ -137,3 +137,10 @@ export function isToolCallSupported(model?: string) {
   // Deepseek v3's tool call is unstable, so we include it in the list
   return !modelName?.includes('deepseek')
 }
+
+export function isReasoningModel(model: string): boolean {
+  if (typeof model !== 'string') {
+    return false
+  }
+  return model.includes('deepseek-r1') || model.includes('deepseek-reasoner')
+}

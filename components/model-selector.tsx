@@ -2,7 +2,8 @@
 
 import { Model, models } from '@/lib/types/models'
 import { getCookie, setCookie } from '@/lib/utils/cookies'
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { isReasoningModel } from '@/lib/utils/registry'
+import { Check, ChevronsUpDown, Lightbulb } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { createModelId } from '../lib/utils'
@@ -67,6 +68,9 @@ export function ModelSelector() {
                 className="bg-white rounded-full border"
               />
               <span className="text-xs font-medium">{selectedModel.name}</span>
+              {isReasoningModel(selectedModel.id) && (
+                <Lightbulb size={12} className="text-accent-blue-foreground" />
+              )}
             </div>
           ) : (
             'Select model'
