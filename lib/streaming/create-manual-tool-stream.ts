@@ -33,7 +33,8 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
 
         const researcherConfig = manualResearcher({
           messages: [...truncatedMessages, ...toolCallMessages],
-          model
+          model,
+          isSearchEnabled: searchMode
         })
 
         const result = streamText({
