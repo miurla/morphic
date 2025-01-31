@@ -22,9 +22,9 @@ export async function POST(req: Request) {
 
     const cookieStore = await cookies()
     const modelFromCookie = cookieStore.get('selected-model')?.value
+    const searchMode = cookieStore.get('search-mode')?.value === 'true'
     const model = modelFromCookie || DEFAULT_MODEL
     const provider = model.split(':')[0]
-
     if (!isProviderEnabled(provider)) {
       return new Response(`Selected provider is not enabled ${provider}`, {
         status: 404,
@@ -38,12 +38,14 @@ export async function POST(req: Request) {
       ? createToolCallingStreamResponse({
           messages,
           model,
-          chatId
+          chatId,
+          searchMode
         })
       : createManualToolStreamResponse({
           messages,
           model,
-          chatId
+          chatId,
+          searchMode
         })
   } catch (error) {
     console.error('API route error:', error)

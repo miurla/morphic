@@ -20,8 +20,14 @@ interface ToolExecutionResult {
 export async function executeToolCall(
   coreMessages: CoreMessage[],
   dataStream: DataStreamWriter,
-  model?: string
+  model: string,
+  searchMode: boolean
 ): Promise<ToolExecutionResult> {
+  // If search mode is disabled, return empty tool call
+  if (!searchMode) {
+    return { toolCallDataAnnotation: null, toolCallMessages: [] }
+  }
+
   const toolCallModel = getToolCallModel(model)
   // Convert Zod schema to string representation
   const searchSchemaString = Object.entries(searchSchema.shape)

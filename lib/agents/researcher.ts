@@ -27,10 +27,12 @@ type ResearcherReturn = Parameters<typeof streamText>[0]
 
 export function researcher({
   messages,
-  model
+  model,
+  searchMode
 }: {
   messages: CoreMessage[]
   model: string
+  searchMode: boolean
 }): ResearcherReturn {
   try {
     const currentDate = new Date().toLocaleString()
@@ -44,7 +46,10 @@ export function researcher({
         retrieve: retrieveTool,
         videoSearch: videoSearchTool
       },
-      maxSteps: 5,
+      experimental_activeTools: searchMode
+        ? ['search', 'retrieve', 'videoSearch']
+        : [],
+      maxSteps: searchMode ? 5 : 1,
       experimental_transform: smoothStream({ chunking: 'word' })
     }
   } catch (error) {
