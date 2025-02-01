@@ -67,6 +67,12 @@ export const models: Model[] = [
     providerId: 'ollama'
   },
   {
+    id: 'o3-mini',
+    name: 'o3-mini',
+    provider: 'OpenAI',
+    providerId: 'openai'
+  },
+  {
     id: 'gpt-4o',
     name: 'GPT-4o',
     provider: 'OpenAI',
