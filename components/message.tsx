@@ -1,5 +1,6 @@
 'use client'
 
+import { cn } from '@/lib/utils'
 import 'katex/dist/katex.min.css'
 import rehypeExternalLinks from 'rehype-external-links'
 import rehypeKatex from 'rehype-katex'
@@ -9,7 +10,13 @@ import { Citing } from './custom-link'
 import { CodeBlock } from './ui/codeblock'
 import { MemoizedReactMarkdown } from './ui/markdown'
 
-export function BotMessage({ message }: { message: string }) {
+export function BotMessage({
+  message,
+  className
+}: {
+  message: string
+  className?: string
+}) {
   // Check if the content contains LaTeX patterns
   const containsLaTeX = /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/.test(
     message || ''
@@ -26,7 +33,10 @@ export function BotMessage({ message }: { message: string }) {
           [rehypeKatex]
         ]}
         remarkPlugins={[remarkGfm, remarkMath]}
-        className="prose-sm prose-neutral prose-a:text-accent-foreground/50"
+        className={cn(
+          'prose-sm prose-neutral prose-a:text-accent-foreground/50',
+          className
+        )}
       >
         {processedData}
       </MemoizedReactMarkdown>
@@ -37,7 +47,10 @@ export function BotMessage({ message }: { message: string }) {
     <MemoizedReactMarkdown
       rehypePlugins={[[rehypeExternalLinks, { target: '_blank' }]]}
       remarkPlugins={[remarkGfm]}
-      className="prose-sm prose-neutral prose-a:text-accent-foreground/50"
+      className={cn(
+        'prose-sm prose-neutral prose-a:text-accent-foreground/50',
+        className
+      )}
       components={{
         code({ node, inline, className, children, ...props }) {
           if (children.length) {

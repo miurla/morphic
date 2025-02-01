@@ -5,7 +5,7 @@ import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import { ToolInvocation } from 'ai'
 import { useChat } from 'ai/react'
 import { CollapsibleMessage } from './collapsible-message'
-import { DefaultSkeleton } from './default-skeleton'
+import { SearchSkeleton } from './default-skeleton'
 import { SearchResults } from './search-results'
 import { SearchResultsImageSection } from './search-results-image'
 import { Section, ToolArgsSection } from './section'
@@ -34,7 +34,10 @@ export function SearchSection({
     : ''
 
   const header = (
-    <ToolArgsSection tool="search">{`${query}${includeDomainsString}`}</ToolArgsSection>
+    <ToolArgsSection
+      tool="search"
+      number={searchResults?.results?.length}
+    >{`${query}${includeDomainsString}`}</ToolArgsSection>
   )
 
   return (
@@ -56,7 +59,7 @@ export function SearchSection({
           </Section>
         )}
       {isLoading && isToolLoading ? (
-        <DefaultSkeleton />
+        <SearchSkeleton />
       ) : searchResults?.results ? (
         <Section title="Sources">
           <SearchResults results={searchResults.results} />

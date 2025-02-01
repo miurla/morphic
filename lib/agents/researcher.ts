@@ -17,21 +17,22 @@ When asked a question, you should:
 6. If results are not relevant or helpful, rely on your general knowledge
 7. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question
 8. Use markdown to structure your responses. Use headings to break up the content into sections.
-9. Include relevant images that support your explanations, but avoid using images frequently. Use images only when they actively aid the user's understanding.
-10. **Use the retrieve tool only with user-provided URLs.**
+9. **Use the retrieve tool only with user-provided URLs.**
 
 Citation Format:
-<cite_format>[number](url)</cite_format>
+[number](url)
 `
 
 type ResearcherReturn = Parameters<typeof streamText>[0]
 
 export function researcher({
   messages,
-  model
+  model,
+  searchMode
 }: {
   messages: CoreMessage[]
   model: string
+  searchMode: boolean
 }): ResearcherReturn {
   try {
     const currentDate = new Date().toLocaleString()
@@ -45,8 +46,11 @@ export function researcher({
         retrieve: retrieveTool,
         videoSearch: videoSearchTool
       },
-      maxSteps: 5,
-      experimental_transform: smoothStream()
+      experimental_activeTools: searchMode
+        ? ['search', 'retrieve', 'videoSearch']
+        : [],
+      maxSteps: searchMode ? 5 : 1,
+      experimental_transform: smoothStream({ chunking: 'word' })
     }
   } catch (error) {
     console.error('Error in chatResearcher:', error)

@@ -1,10 +1,10 @@
 'use client'
 
 import { Text } from 'lucide-react'
-import { ChatShare } from './chat-share'
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
 import { BotMessage } from './message'
+import { MessageActions } from './message-actions'
 
 export type AnswerSectionProps = {
   content: string
@@ -30,9 +30,11 @@ export function AnswerSection({
   const message = content ? (
     <div className="flex flex-col gap-1">
       <BotMessage message={content} />
-      {enableShare && chatId && (
-        <ChatShare chatId={chatId} className="self-end" />
-      )}
+      <MessageActions
+        message={content}
+        chatId={chatId}
+        enableShare={enableShare}
+      />
     </div>
   ) : (
     <DefaultSkeleton />
@@ -40,7 +42,7 @@ export function AnswerSection({
   return (
     <CollapsibleMessage
       role="assistant"
-      isCollapsible={true}
+      isCollapsible={false}
       header={header}
       isOpen={isOpen}
       onOpenChange={onOpenChange}

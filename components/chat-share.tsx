@@ -1,10 +1,8 @@
 'use client'
 
 import { shareChat } from '@/lib/actions/chat'
-import { CHAT_ID } from '@/lib/constants'
 import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { cn } from '@/lib/utils'
-import { useChat } from 'ai/react'
 import { Share } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
@@ -30,9 +28,6 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
   const [pending, startTransition] = useTransition()
   const { copyToClipboard } = useCopyToClipboard({ timeout: 1000 })
   const [shareUrl, setShareUrl] = useState('')
-  const { isLoading } = useChat({
-    id: CHAT_ID
-  })
 
   const handleShare = async () => {
     startTransition(() => {
@@ -73,11 +68,10 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
       >
         <DialogTrigger asChild>
           <Button
-            className={cn('rounded-full', isLoading && 'invisible')}
+            className={cn('rounded-full')}
             size="icon"
             variant={'ghost'}
             onClick={() => setOpen(true)}
-            disabled={isLoading}
           >
             <Share size={14} />
           </Button>
