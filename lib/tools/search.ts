@@ -82,6 +82,7 @@ export const searchTool = tool({
       }
     }
 
+    console.log('completed search')
     return searchResult
   }
 })
