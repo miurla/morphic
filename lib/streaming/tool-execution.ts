@@ -91,8 +91,8 @@ export async function executeToolCall(
     toolCall.parameters?.query ?? '',
     toolCall.parameters?.max_results,
     toolCall.parameters?.search_depth as 'basic' | 'advanced',
-    toolCall.parameters?.include_domains,
-    toolCall.parameters?.exclude_domains
+    toolCall.parameters?.include_domains ?? [],
+    toolCall.parameters?.exclude_domains ?? []
   )
 
   const updatedToolCallAnnotation = {
