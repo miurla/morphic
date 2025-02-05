@@ -38,7 +38,8 @@ export const registry = createProviderRegistry({
 })
 
 export function getModel(model: string) {
-  const modelName = model.split(':')[1]
+  const [provider, ...modelNameParts] = model.split(':') ?? []
+  const modelName = modelNameParts.join(':')
   if (model.includes('ollama')) {
     const ollama = createOllama({
       baseURL: `${process.env.OLLAMA_BASE_URL}/api`
@@ -113,8 +114,8 @@ export function isProviderEnabled(providerId: string): boolean {
 }
 
 export function getToolCallModel(model?: string) {
-  const provider = model?.split(':')[0]
-  const modelName = model?.split(':')[1]
+  const [provider, ...modelNameParts] = model?.split(':') ?? []
+  const modelName = modelNameParts.join(':')
   switch (provider) {
     case 'deepseek':
       return getModel('deepseek:deepseek-chat')
@@ -134,8 +135,8 @@ export function getToolCallModel(model?: string) {
 }
 
 export function isToolCallSupported(model?: string) {
-  const provider = model?.split(':')[0]
-  const modelName = model?.split(':')[1]
+  const [provider, ...modelNameParts] = model?.split(':') ?? []
+  const modelName = modelNameParts.join(':')
 
   if (provider === 'ollama') {
     return false
