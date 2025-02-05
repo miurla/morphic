@@ -61,8 +61,8 @@ export const models: Model[] = [
     providerId: 'groq'
   },
   {
-    id: 'deepseek-r1',
-    name: 'DeepSeek R1',
+    id: process.env.NEXT_PUBLIC_OLLAMA_MODEL || 'deepseek-r1',
+    name: process.env.NEXT_PUBLIC_OLLAMA_MODEL || 'DeepSeek R1',
     provider: 'Ollama',
     providerId: 'ollama'
   },
