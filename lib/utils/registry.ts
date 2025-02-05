@@ -129,6 +129,8 @@ export function getToolCallModel(model?: string) {
       const ollamaModel =
         process.env.NEXT_PUBLIC_OLLAMA_TOOL_CALL_MODEL || modelName
       return getModel(`ollama:${ollamaModel}`)
+    case 'google':
+      return getModel('google:gemini-2.0-flash')
     default:
       return getModel('openai:gpt-4o-mini')
   }
@@ -141,6 +143,11 @@ export function isToolCallSupported(model?: string) {
   if (provider === 'ollama') {
     return false
   }
+
+  if (provider === 'google') {
+    return false
+  }
+
   // Deepseek R1 is not supported
   // Deepseek v3's tool call is unstable, so we include it in the list
   return !modelName?.includes('deepseek')
