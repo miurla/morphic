@@ -40,6 +40,21 @@ LOCAL_REDIS_URL=redis://localhost:6379
 
 ## Search Providers
 
+### Search1API Configuration
+
+[Search1API](https://www.search1api.com) is a unified search API optimized for AI applications:
+
+- **Image Search**: Built-in support for image search results
+- **Advanced Search**: Advanced search mode with full content crawling when you need
+- **Retrieval Tool**: Specialized tool for extracting content from specific URLs
+
+Configure Search1API as your search and Retrieve tool:
+
+```bash
+SEARCH_API=search1api
+SEARCH1API_API_KEY=[YOUR_SEARCH1API_API_KEY]
+```
+
 ### SearXNG Configuration
 
 SearXNG can be used as an alternative search backend with advanced search capabilities.
