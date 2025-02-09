@@ -76,14 +76,28 @@ export function RenderMessage({
   }, [message.annotations])
 
   // Extract the reasoning time and reasoning content from the annotation.
-  const reasoningTime = reasoningAnnotation
-    ? reasoningAnnotation.data.time
-    : undefined
+  // If annotation.data is an object, use its fields. Otherwise, default to a time of 0.
+  const reasoningTime = useMemo(() => {
+    if (!reasoningAnnotation) return 0
+    if (
+      typeof reasoningAnnotation.data === 'object' &&
+      reasoningAnnotation.data !== null
+    ) {
+      return reasoningAnnotation.data.time ?? 0
+    }
+    return 0
+  }, [reasoningAnnotation])
 
-  const reasoningResult =
-    reasoningAnnotation && reasoningAnnotation.data.reasoning
-      ? reasoningAnnotation.data.reasoning
-      : message.reasoning
+  const reasoningResult = useMemo(() => {
+    if (!reasoningAnnotation) return message.reasoning
+    if (
+      typeof reasoningAnnotation.data === 'object' &&
+      reasoningAnnotation.data !== null
+    ) {
+      return reasoningAnnotation.data.reasoning ?? message.reasoning
+    }
+    return message.reasoning
+  }, [reasoningAnnotation, message.reasoning])
 
   if (message.role === 'user') {
     return <UserMessage message={message.content} />
@@ -114,7 +128,7 @@ export function RenderMessage({
           onOpenChange={open => onOpenChange(tool.toolCallId, open)}
         />
       ))}
-      {message.reasoning ? (
+      {reasoningResult ? (
         <ReasoningAnswerSection
           content={{
             reasoning: reasoningResult,

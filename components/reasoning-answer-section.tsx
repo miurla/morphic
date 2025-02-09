@@ -50,7 +50,7 @@ export function ReasoningAnswerSection({
             />
           ) : (
             <StatusIndicator icon={Check} iconClassName="text-green-500">
-              {`${content.reasoning.length} chars`}
+              {`${content.reasoning.length.toLocaleString()} chars`}
             </StatusIndicator>
           )}
         </div>
