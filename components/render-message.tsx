@@ -31,7 +31,7 @@ export function RenderMessage({
     [message.annotations]
   )
 
-  // render for manual tool call
+  // Render for manual tool call
   const toolData = useMemo(() => {
     const toolAnnotations =
       (message.annotations?.filter(
@@ -47,7 +47,6 @@ export function RenderMessage({
         }
       }>) || []
 
-    // Group by toolCallId and prioritize 'result' state
     const toolDataMap = toolAnnotations.reduce((acc, annotation) => {
       const existing = acc.get(annotation.data.toolCallId)
       if (!existing || annotation.data.state === 'result') {
@@ -65,6 +64,26 @@ export function RenderMessage({
 
     return Array.from(toolDataMap.values())
   }, [message.annotations])
+
+  // Extract the unified reasoning annotation directly.
+  const reasoningAnnotation = useMemo(() => {
+    const annotations = message.annotations as any[] | undefined
+    if (!annotations) return null
+    return (
+      annotations.find(a => a.type === 'reasoning' && a.data !== undefined) ||
+      null
+    )
+  }, [message.annotations])
+
+  // Extract the reasoning time and reasoning content from the annotation.
+  const reasoningTime = reasoningAnnotation
+    ? reasoningAnnotation.data.time
+    : undefined
+
+  const reasoningResult =
+    reasoningAnnotation && reasoningAnnotation.data.reasoning
+      ? reasoningAnnotation.data.reasoning
+      : message.reasoning
 
   if (message.role === 'user') {
     return <UserMessage message={message.content} />
@@ -98,8 +117,9 @@ export function RenderMessage({
       {message.reasoning ? (
         <ReasoningAnswerSection
           content={{
-            reasoning: message.reasoning,
-            answer: message.content
+            reasoning: reasoningResult,
+            answer: message.content,
+            time: reasoningTime
           }}
           isOpen={getIsOpen(messageId)}
           onOpenChange={open => onOpenChange(messageId, open)}

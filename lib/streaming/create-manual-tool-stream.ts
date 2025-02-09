@@ -50,8 +50,10 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
                 role: 'data',
                 content: {
                   type: 'reasoning',
-                  data: result.reasoning,
-                  time: reasoningDuration ?? 0
+                  data: {
+                    time: reasoningDuration ?? 0,
+                    reasoning: result.reasoning
+                  }
                 } as JSONValue
               }
             ]
@@ -78,8 +80,8 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
                 const elapsedTime = Date.now() - reasoningStartTime
                 reasoningDuration = elapsedTime
                 dataStream.writeMessageAnnotation({
-                  type: 'reasoning-duration',
-                  data: elapsedTime
+                  type: 'reasoning',
+                  data: { time: elapsedTime }
                 } as JSONValue)
                 reasoningStartTime = null
               }
