@@ -37,6 +37,10 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
           isSearchEnabled: searchMode
         })
 
+        // Variables to track the reasoning timing.
+        let reasoningStartTime: number | null = null
+        let reasoningDuration: number | null = null
+
         const result = streamText({
           ...researcherConfig,
           onFinish: async result => {
@@ -46,7 +50,8 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
                 role: 'data',
                 content: {
                   type: 'reasoning',
-                  data: result.reasoning
+                  data: result.reasoning,
+                  time: reasoningDuration ?? 0
                 } as JSONValue
               }
             ]
@@ -60,6 +65,25 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
               skipRelatedQuestions: true,
               annotations
             })
+          },
+          onChunk(event) {
+            const chunkType = event.chunk?.type
+
+            if (chunkType === 'reasoning') {
+              if (reasoningStartTime === null) {
+                reasoningStartTime = Date.now()
+              }
+            } else {
+              if (reasoningStartTime !== null) {
+                const elapsedTime = Date.now() - reasoningStartTime
+                reasoningDuration = elapsedTime
+                dataStream.writeMessageAnnotation({
+                  type: 'reasoning-duration',
+                  data: elapsedTime
+                } as JSONValue)
+                reasoningStartTime = null
+              }
+            }
           }
         })
 
