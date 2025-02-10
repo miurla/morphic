@@ -93,7 +93,8 @@ export function convertToUIMessages(
   messages: Array<ExtendedCoreMessage>
 ): Array<Message> {
   let pendingAnnotations: JSONValue[] = []
-  let pendingReasoning: string | undefined
+  let pendingReasoning: string | undefined = undefined
+  let pendingReasoningTime: number | undefined = undefined
 
   return messages.reduce((chatMessages: Array<Message>, message) => {
     // Handle tool messages
@@ -104,14 +105,12 @@ export function convertToUIMessages(
       })
     }
 
-    // Store data message content for next assistant message
+    // Data messages are used to capture annotations, including reasoning.
     if (message.role === 'data') {
       if (
         message.content !== null &&
         message.content !== undefined &&
-        typeof message.content !== 'string' &&
-        typeof message.content !== 'number' &&
-        typeof message.content !== 'boolean'
+        typeof message.content !== 'string'
       ) {
         const content = message.content as JSONValue
         if (
@@ -121,7 +120,15 @@ export function convertToUIMessages(
           'data' in content
         ) {
           if (content.type === 'reasoning') {
-            pendingReasoning = content.data as string
+            // If content.data is an object, capture its reasoning and time;
+            // otherwise treat it as a simple string.
+            if (typeof content.data === 'object' && content.data !== null) {
+              pendingReasoning = (content.data as any).reasoning
+              pendingReasoningTime = (content.data as any).time
+            } else {
+              pendingReasoning = content.data as string
+              pendingReasoningTime = 0
+            }
           } else {
             pendingAnnotations.push(content)
           }
@@ -130,10 +137,10 @@ export function convertToUIMessages(
       return chatMessages
     }
 
+    // Build the text content and tool invocations from message.content.
     let textContent = ''
     let toolInvocations: Array<ToolInvocation> = []
 
-    // Handle message content
     if (message.content) {
       if (typeof message.content === 'string') {
         textContent = message.content
@@ -160,27 +167,43 @@ export function convertToUIMessages(
       }
     }
 
-    // Create new message
+    // For assistant messages, assemble annotations from any stashed data.
+    let annotations: JSONValue[] | undefined = undefined
+    if (message.role === 'assistant') {
+      if (pendingAnnotations.length > 0 || pendingReasoning !== undefined) {
+        annotations = [
+          ...pendingAnnotations,
+          ...(pendingReasoning !== undefined
+            ? [
+                {
+                  type: 'reasoning',
+                  data: {
+                    reasoning: pendingReasoning,
+                    time: pendingReasoningTime ?? 0
+                  }
+                }
+              ]
+            : [])
+        ]
+      }
+    }
+
+    // Create the new message. Note: we do not include a top-level "reasoning" property.
     const newMessage: Message = {
       id: generateId(),
       role: message.role,
       content: textContent,
       toolInvocations: toolInvocations.length > 0 ? toolInvocations : undefined,
-      // Add pending annotations and reasoning if this is an assistant message
-      ...(message.role === 'assistant' && {
-        ...(pendingAnnotations.length > 0 && {
-          annotations: pendingAnnotations
-        }),
-        ...(pendingReasoning && { reasoning: pendingReasoning })
-      })
+      annotations: annotations
     }
 
     chatMessages.push(newMessage)
 
-    // Clear pending data after adding them
+    // Clear pending state after processing an assistant message.
     if (message.role === 'assistant') {
       pendingAnnotations = []
       pendingReasoning = undefined
+      pendingReasoningTime = undefined
     }
 
     return chatMessages
@@ -203,13 +226,24 @@ export function convertToExtendedCoreMessages(
       })
     }
 
-    // Convert reasoning to data message
+    // Convert reasoning to data message with unified structure (including time)
     if (message.reasoning) {
+      const reasoningTime = (message as any).reasoningTime ?? 0
+      const reasoningData =
+        typeof message.reasoning === 'string'
+          ? { reasoning: message.reasoning, time: reasoningTime }
+          : {
+              ...(message.reasoning as Record<string, unknown>),
+              time:
+                (message as any).reasoningTime ??
+                (message.reasoning as any).time ??
+                0
+            }
       result.push({
         role: 'data',
         content: {
           type: 'reasoning',
-          data: message.reasoning
+          data: reasoningData
         } as JSONValue
       })
     }

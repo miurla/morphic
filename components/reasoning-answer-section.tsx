@@ -1,5 +1,6 @@
 'use client'
 
+import { Badge } from '@/components/ui/badge'
 import { CHAT_ID } from '@/lib/constants'
 import { useChat } from 'ai/react'
 import { Check, Lightbulb, Loader2 } from 'lucide-react'
@@ -12,6 +13,7 @@ import { StatusIndicator } from './ui/status-indicator'
 interface ReasoningAnswerContent {
   reasoning: string
   answer?: string
+  time?: number
 }
 
 export interface ReasoningAnswerSectionProps {
@@ -32,19 +34,27 @@ export function ReasoningAnswerSection({
 
   const reasoningHeader = (
     <div className="flex items-center gap-2 w-full">
-      <Lightbulb size={16} />
-      <div className="w-full flex-1 flex items-center justify-between">
-        <span>{content.answer?.length === 0 ? 'Thinking...' : 'Thoughts'}</span>
-        {content.answer?.length === 0 && isLoading ? (
-          <Loader2
-            size={16}
-            className="animate-spin text-muted-foreground/50"
-          />
-        ) : (
-          <StatusIndicator icon={Check} iconClassName="text-green-500">
-            {content.reasoning.trim().length.toLocaleString()} chars
-          </StatusIndicator>
-        )}
+      <div className="w-full flex flex-col">
+        <div className="flex items-center justify-between">
+          <Badge className="flex items-center gap-0.5" variant="secondary">
+            <Lightbulb size={16} />
+            {content.answer?.length === 0
+              ? 'Thinking...'
+              : content.time !== undefined && content.time > 0
+              ? `Thought for ${(content.time / 1000).toFixed(1)} seconds`
+              : 'Thoughts'}
+          </Badge>
+          {content.answer?.length === 0 && isLoading ? (
+            <Loader2
+              size={16}
+              className="animate-spin text-muted-foreground/50"
+            />
+          ) : (
+            <StatusIndicator icon={Check} iconClassName="text-green-500">
+              {`${content.reasoning.length.toLocaleString()} characters`}
+            </StatusIndicator>
+          )}
+        </div>
       </div>
     </div>
   )
