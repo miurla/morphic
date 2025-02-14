@@ -38,13 +38,3 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Build Redis image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: Dockerfile.redis
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ghcr.io/${{ github.repository }}-redis:latest
-            ghcr.io/${{ github.repository }}-redis:${{ github.sha }}
