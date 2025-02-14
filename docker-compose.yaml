@@ -4,13 +4,13 @@ name: morphic-stack
 services:
   morphic:
     image: ghcr.io/${GITHUB_REPOSITORY:-your-username/morphic}:latest
+    command: bun start -H 0.0.0.0
     build:
       context: .
       dockerfile: Dockerfile
       cache_from:
         - morphic:builder
         - morphic:latest
-    command: bun dev -H 0.0.0.0
     env_file: .env.local # Load environment variables
     ports:
       - '3000:3000' # Maps port 3000 on the host to port 3000 in the container.
