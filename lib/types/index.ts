@@ -113,3 +113,24 @@ export type SearXNGSearchResults = {
   number_of_results?: number
   query: string
 }
+
+export interface Search1APIResult {
+  title: string
+  link: string
+  snippet: string
+  content: string
+}
+
+export interface Search1APIResponse {
+  searchParameters: {
+    query: string
+    search_service: string
+    max_results: number
+    crawl_results: number
+    gl: string
+    hl: string
+    image: boolean
+  }
+  results: Search1APIResult[]
+  images: string[]
+}

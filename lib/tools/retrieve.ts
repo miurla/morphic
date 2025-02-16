@@ -76,15 +76,59 @@ async function fetchTavilyExtractData(
   }
 }
 
+async function fetchSearch1APIData(
+  url: string
+): Promise<SearchResultsType | null> {
+  try {
+    const apiKey = process.env.SEARCH1API_API_KEY
+    if (!apiKey) {
+      console.error('Search1API API key is not set')
+      return null
+    }
+
+    const response = await fetch('https://api.search1api.com/crawl', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url })
+    })
+
+    const json = await response.json()
+    if (!json.results) {
+      return null
+    }
+
+    const content = json.results.content.slice(0, CONTENT_CHARACTER_LIMIT)
+
+    return {
+      results: [
+        {
+          title: json.results.title,
+          content,
+          url: json.results.link || url
+        }
+      ],
+      query: '',
+      images: []
+    }
+  } catch (error) {
+    console.error('Search1API Crawl error:', error)
+    return null
+  }
+}
+
 export const retrieveTool = tool({
   description: 'Retrieve content from the web',
   parameters: retrieveSchema,
   execute: async ({ url }) => {
     let results: SearchResultsType | null
 
-    // Use Jina if the API key is set, otherwise use Tavily
-    const useJina = process.env.JINA_API_KEY
-    if (useJina) {
+    // Use Search1API if SEARCH_API is set to search1api
+    if (process.env.SEARCH_API === 'search1api') {
+      results = await fetchSearch1APIData(url)
+    } else if (process.env.JINA_API_KEY) {
       results = await fetchJinaReaderData(url)
     } else {
       results = await fetchTavilyExtractData(url)

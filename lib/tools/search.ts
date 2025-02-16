@@ -25,7 +25,7 @@ export const searchTool = tool({
       query.length < 5 ? query + ' '.repeat(5 - query.length) : query
     let searchResult: SearchResults
     const searchAPI =
-      (process.env.SEARCH_API as 'tavily' | 'exa' | 'searxng') || 'tavily'
+      (process.env.SEARCH_API as 'tavily' | 'exa' | 'searxng' | 'search1api') || 'tavily'
 
     const effectiveSearchDepth =
       searchAPI === 'searxng' &&
@@ -64,12 +64,14 @@ export const searchTool = tool({
           ? tavilySearch
           : searchAPI === 'exa'
           ? exaSearch
+          : searchAPI === 'search1api'
+          ? search1apiSearch
           : searxngSearch)(
-          filledQuery,
-          max_results,
-          effectiveSearchDepth === 'advanced' ? 'advanced' : 'basic',
-          include_domains,
-          exclude_domains
+            filledQuery,
+            max_results,
+            effectiveSearchDepth === 'advanced' ? 'advanced' : 'basic',
+            include_domains,
+            exclude_domains
         )
       }
     } catch (error) {
@@ -277,5 +279,51 @@ async function searxngSearch(
   } catch (error) {
     console.error('SearXNG API error:', error)
     throw error
+  }
+}
+
+async function search1apiSearch(
+  query: string,
+  maxResults: number = 10,
+  searchDepth: 'basic' | 'advanced' = 'basic',
+  includeDomains: string[] = [],
+  excludeDomains: string[] = []
+): Promise<SearchResults> {
+  const apiKey = process.env.SEARCH1API_API_KEY
+  if (!apiKey) {
+    throw new Error('SEARCH1API_API_KEY is not set in the environment variables')
+  }
+
+  const response = await fetch('https://api.search1api.com/search', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      query,
+      search_service: 'google',
+      image: true,  
+      max_results: maxResults,
+      crawl_results: searchDepth === 'advanced' ? maxResults : 0
+    })
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      `Search1API error: ${response.status} ${response.statusText}`
+    )
+  }
+
+  const data = await response.json()
+  return {
+    results: data.results.map((result: any) => ({
+      title: result.title,
+      url: result.link, 
+      content: result.content || result.snippet  
+    })),
+    query,
+    images: data.images?.map((url: string) => sanitizeUrl(url)) || [], 
+    number_of_results: data.results.length
   }
 }
