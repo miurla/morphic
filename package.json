@@ -17,6 +17,7 @@
     "@ai-sdk/google": "^1.1.5",
     "@ai-sdk/groq": "^1.1.6",
     "@ai-sdk/openai": "^1.1.5",
+    "@ai-sdk/xai": "^1.1.10",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-checkbox": "^1.0.4",

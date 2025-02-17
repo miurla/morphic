@@ -95,5 +95,17 @@ export const models: Model[] = [
     name: process.env.NEXT_PUBLIC_OPENAI_COMPATIBLE_MODEL || 'Undefined',
     provider: 'OpenAI Compatible',
     providerId: 'openai-compatible'
+  },
+  {
+    id: 'grok-2-1212',
+    name: 'Grok 2',
+    provider: 'xAI',
+    providerId: 'xai'
+  },
+  {
+    id: 'grok-2-vision-1212',
+    name: 'Grok 2 Vision',
+    provider: 'xAI',
+    providerId: 'xai'
   }
 ]
