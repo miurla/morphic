@@ -64,6 +64,10 @@ export async function handleStreamFinish({
       ...responseMessages.slice(-1)
     ] as ExtendedCoreMessage[]
 
+    if (process.env.NEXT_PUBLIC_ENABLE_SAVE_CHAT_HISTORY !== 'true') {
+      return
+    }
+
     // Get the chat from the database if it exists, otherwise create a new one
     const savedChat = (await getChat(chatId)) ?? {
       messages: [],
