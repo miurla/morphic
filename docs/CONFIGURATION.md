@@ -165,6 +165,12 @@ NEXT_PUBLIC_AZURE_DEPLOYMENT_NAME=[YOUR_DEPLOYMENT_NAME]
 # FIREWORKS_API_KEY=[YOUR_API_KEY]
 ```
 
+### xAI
+
+```bash
+XAI_API_KEY=[YOUR_XAI_API_KEY]
+```
+
 ## Other Features
 
 ### Share Feature

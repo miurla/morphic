@@ -5,6 +5,7 @@ import { createFireworks, fireworks } from '@ai-sdk/fireworks'
 import { google } from '@ai-sdk/google'
 import { groq } from '@ai-sdk/groq'
 import { createOpenAI, openai } from '@ai-sdk/openai'
+import { xai } from '@ai-sdk/xai'
 import {
   experimental_createProviderRegistry as createProviderRegistry,
   extractReasoningMiddleware,
@@ -34,7 +35,8 @@ export const registry = createProviderRegistry({
   'openai-compatible': createOpenAI({
     apiKey: process.env.OPENAI_COMPATIBLE_API_KEY,
     baseURL: process.env.OPENAI_COMPATIBLE_API_BASE_URL
-  })
+  }),
+  xai
 })
 
 export function getModel(model: string) {
@@ -102,6 +104,8 @@ export function isProviderEnabled(providerId: string): boolean {
       return !!process.env.DEEPSEEK_API_KEY
     case 'fireworks':
       return !!process.env.FIREWORKS_API_KEY
+    case 'xai':
+      return !!process.env.XAI_API_KEY
     case 'openai-compatible':
       return (
         !!process.env.OPENAI_COMPATIBLE_API_KEY &&
