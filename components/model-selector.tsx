@@ -1,6 +1,6 @@
 'use client'
 
-import { Model, models } from '@/lib/types/models'
+import { Model } from '@/lib/types/models'
 import { getCookie, setCookie } from '@/lib/utils/cookies'
 import { isReasoningModel } from '@/lib/utils/registry'
 import { Check, ChevronsUpDown, Lightbulb } from 'lucide-react'
@@ -29,25 +29,29 @@ function groupModelsByProvider(models: Model[]) {
   }, {} as Record<string, Model[]>)
 }
 
-export function ModelSelector() {
+interface ModelSelectorProps {
+  models: Model[]
+}
+
+export function ModelSelector({ models }: ModelSelectorProps) {
   const [open, setOpen] = useState(false)
-  const [selectedModelId, setSelectedModelId] = useState<string>('')
+  const [value, setValue] = useState('')
 
   useEffect(() => {
-    const savedModel = getCookie('selected-model')
-    if (savedModel) {
-      setSelectedModelId(savedModel)
+    const modelId = getCookie('modelId')
+    if (modelId) {
+      setValue(modelId)
     }
   }, [])
 
   const handleModelSelect = (id: string) => {
-    setSelectedModelId(id === selectedModelId ? '' : id)
-    setCookie('selected-model', id)
+    setValue(id === value ? '' : id)
+    setCookie('modelId', id)
     setOpen(false)
   }
 
+  const selectedModel = models.find(model => createModelId(model) === value)
   const groupedModels = groupModelsByProvider(models)
-  const selectedModel = models.find(m => createModelId(m) === selectedModelId)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -108,9 +112,7 @@ export function ModelSelector() {
                       </div>
                       <Check
                         className={`h-4 w-4 ${
-                          selectedModelId === modelId
-                            ? 'opacity-100'
-                            : 'opacity-0'
+                          value === modelId ? 'opacity-100' : 'opacity-0'
                         }`}
                       />
                     </CommandItem>
