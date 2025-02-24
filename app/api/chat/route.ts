@@ -1,11 +1,13 @@
 import { createManualToolStreamResponse } from '@/lib/streaming/create-manual-tool-stream'
 import { createToolCallingStreamResponse } from '@/lib/streaming/create-tool-calling-stream'
+import { Model } from '@/lib/types/models'
+import { createModelId } from '@/lib/utils'
 import { isProviderEnabled, isToolCallSupported } from '@/lib/utils/registry'
 import { cookies } from 'next/headers'
 
 export const maxDuration = 30
 
-const DEFAULT_MODEL = 'openai:gpt-4o-mini'
+const DEFAULT_MODEL = 'gpt-4o-mini'
 
 export async function POST(req: Request) {
   try {
@@ -21,10 +23,22 @@ export async function POST(req: Request) {
     }
 
     const cookieStore = await cookies()
-    const modelFromCookie = cookieStore.get('selected-model')?.value
+    const modelJson = cookieStore.get('selectedModel')?.value
     const searchMode = cookieStore.get('search-mode')?.value === 'true'
-    const model = modelFromCookie || DEFAULT_MODEL
-    const provider = model.split(':')[0]
+    
+    let modelId = DEFAULT_MODEL
+    let provider = 'openai'
+    
+    if (modelJson) {
+      try {
+        const selectedModel = JSON.parse(modelJson) as Model
+        modelId = createModelId(selectedModel)
+        provider = selectedModel.providerId
+      } catch (e) {
+        console.error('Failed to parse selected model:', e)
+      }
+    }
+
     if (!isProviderEnabled(provider)) {
       return new Response(`Selected provider is not enabled ${provider}`, {
         status: 404,
@@ -32,35 +46,26 @@ export async function POST(req: Request) {
       })
     }
 
-    const supportsToolCalling = isToolCallSupported(model)
+    const supportsToolCalling = isToolCallSupported(modelId)
 
     return supportsToolCalling
       ? createToolCallingStreamResponse({
           messages,
-          model,
+          model: modelId,
           chatId,
           searchMode
         })
       : createManualToolStreamResponse({
           messages,
-          model,
+          model: modelId,
           chatId,
           searchMode
         })
   } catch (error) {
     console.error('API route error:', error)
-    return new Response(
-      JSON.stringify({
-        error:
-          error instanceof Error
-            ? error.message
-            : 'An unexpected error occurred',
-        status: 500
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    )
+    return new Response('Error processing your request', {
+      status: 500,
+      statusText: 'Internal Server Error'
+    })
   }
 }
