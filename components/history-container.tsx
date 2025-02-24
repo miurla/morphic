@@ -10,7 +10,7 @@ const HistoryContainer: React.FC<HistoryContainerProps> = async ({
   location
 }) => {
   const enableSaveChatHistory =
-    process.env.NEXT_PUBLIC_ENABLE_SAVE_CHAT_HISTORY === 'true'
+    process.env.ENABLE_SAVE_CHAT_HISTORY === 'true'
   if (!enableSaveChatHistory) {
     return null
   }
