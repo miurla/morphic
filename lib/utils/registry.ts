@@ -109,8 +109,7 @@ export function isProviderEnabled(providerId: string): boolean {
     case 'openai-compatible':
       return (
         !!process.env.OPENAI_COMPATIBLE_API_KEY &&
-        !!process.env.OPENAI_COMPATIBLE_API_BASE_URL &&
-        !!process.env.NEXT_PUBLIC_OPENAI_COMPATIBLE_MODEL
+        !!process.env.OPENAI_COMPATIBLE_API_BASE_URL
       )
     default:
       return false
