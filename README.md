@@ -34,6 +34,8 @@ An AI-powered search engine with a generative UI.
 
 ### AI Providers
 
+The following AI providers are supported:
+
 - OpenAI (Default)
 - Google Generative AI
 - Azure OpenAI
@@ -42,7 +44,10 @@ An AI-powered search engine with a generative UI.
 - Groq
 - DeepSeek
 - Fireworks
+- xAI (Grok)
 - OpenAI Compatible
+
+Models are configured in `lib/config/models.json`. Each model requires its corresponding API key to be set in the environment variables. See [Configuration Guide](docs/CONFIGURATION.md) for details.
 
 ### Search Capabilities
 

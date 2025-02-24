@@ -1,6 +1,7 @@
 'use client'
 
 import { CHAT_ID } from '@/lib/constants'
+import { Model } from '@/lib/types/models'
 import { Message, useChat } from 'ai/react'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
@@ -10,11 +11,13 @@ import { ChatPanel } from './chat-panel'
 export function Chat({
   id,
   savedMessages = [],
-  query
+  query,
+  models
 }: {
   id: string
   savedMessages?: Message[]
   query?: string
+  models?: Model[]
 }) {
   const {
     messages,
@@ -78,6 +81,7 @@ export function Chat({
         stop={stop}
         query={query}
         append={append}
+        models={models}
       />
     </div>
   )

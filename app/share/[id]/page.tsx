@@ -1,7 +1,9 @@
-import { notFound } from 'next/navigation'
 import { Chat } from '@/components/chat'
 import { getSharedChat } from '@/lib/actions/chat'
+import modelsList from '@/lib/config/models.json'
+import { Model } from '@/lib/types/models'
 import { convertToUIMessages } from '@/lib/utils'
+import { notFound } from 'next/navigation'
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>
@@ -30,5 +32,11 @@ export default async function SharePage(props: {
     notFound()
   }
 
-  return <Chat id={id} savedMessages={messages} />
+  return (
+    <Chat
+      id={id}
+      savedMessages={messages}
+      models={modelsList.models as Model[]}
+    />
+  )
 }

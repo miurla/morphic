@@ -1,5 +1,6 @@
 'use client'
 
+import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { Message } from 'ai'
 import { ArrowUp, MessageCirclePlus, Square } from 'lucide-react'
@@ -22,6 +23,7 @@ interface ChatPanelProps {
   query?: string
   stop: () => void
   append: (message: any) => void
+  models?: Model[]
 }
 
 export function ChatPanel({
@@ -33,7 +35,8 @@ export function ChatPanel({
   setMessages,
   query,
   stop,
-  append
+  append,
+  models
 }: ChatPanelProps) {
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const router = useRouter()
@@ -130,7 +133,7 @@ export function ChatPanel({
           {/* Bottom menu area */}
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
-              <ModelSelector />
+              <ModelSelector models={models || []} />
               <SearchModeToggle />
             </div>
             <div className="flex items-center gap-2">

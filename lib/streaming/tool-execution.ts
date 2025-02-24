@@ -9,7 +9,7 @@ import { z } from 'zod'
 import { searchSchema } from '../schema/search'
 import { search } from '../tools/search'
 import { ExtendedCoreMessage } from '../types'
-import { getToolCallModel } from '../utils/registry'
+import { getModel } from '../utils/registry'
 import { parseToolCallXml } from './parse-tool-call'
 
 interface ToolExecutionResult {
@@ -28,7 +28,6 @@ export async function executeToolCall(
     return { toolCallDataAnnotation: null, toolCallMessages: [] }
   }
 
-  const toolCallModel = getToolCallModel(model)
   // Convert Zod schema to string representation
   const searchSchemaString = Object.entries(searchSchema.shape)
     .map(([key, value]) => {
@@ -41,7 +40,7 @@ export async function executeToolCall(
 
   // Generate tool selection using XML format
   const toolSelectionResponse = await generateText({
-    model: toolCallModel,
+    model: getModel(model),
     system: `You are an intelligent assistant that analyzes conversations to select the most appropriate tools and their parameters.
             You excel at understanding context to determine when and how to use available tools, including crafting effective search queries.
             Current date: ${new Date().toISOString().split('T')[0]}

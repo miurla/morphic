@@ -121,6 +121,30 @@ docker-compose logs searxng
 
 ## Additional AI Providers
 
+Models are configured in `lib/config/models.json`. Each model requires its corresponding API key to be set in the environment variables.
+
+### Model Configuration
+
+The `models.json` file contains an array of model configurations with the following structure:
+
+```json
+{
+  "models": [
+    {
+      "id": "model-id",
+      "name": "Model Name",
+      "provider": "Provider Name",
+      "providerId": "provider-id",
+      "enabled": true,
+      "toolCallType": "native|manual",
+      "toolCallModel": "tool-call-model-id" // only required if toolCallType is "manual"
+    }
+  ]
+}
+```
+
+### Provider API Keys
+
 ### Google Generative AI
 
 ```bash
@@ -150,25 +174,31 @@ OLLAMA_BASE_URL=http://localhost:11434
 ```bash
 AZURE_API_KEY=[YOUR_API_KEY]
 AZURE_RESOURCE_NAME=[YOUR_RESOURCE_NAME]
-NEXT_PUBLIC_AZURE_DEPLOYMENT_NAME=[YOUR_DEPLOYMENT_NAME]
 ```
 
 ### DeepSeek
 
-```
-# DEEPSEEK_API_KEY=[YOUR_API_KEY]
+```bash
+DEEPSEEK_API_KEY=[YOUR_API_KEY]
 ```
 
 ### Fireworks
 
-```
-# FIREWORKS_API_KEY=[YOUR_API_KEY]
+```bash
+FIREWORKS_API_KEY=[YOUR_API_KEY]
 ```
 
 ### xAI
 
 ```bash
 XAI_API_KEY=[YOUR_XAI_API_KEY]
+```
+
+### OpenAI Compatible Model
+
+```bash
+OPENAI_COMPATIBLE_API_KEY=[YOUR_API_KEY]
+OPENAI_COMPATIBLE_API_BASE_URL=[YOUR_API_BASE_URL]
 ```
 
 ## Other Features

@@ -1,16 +1,17 @@
 import { CoreMessage } from 'ai'
+import { Model } from '../types/models'
 
 const DEFAULT_CONTEXT_WINDOW = 128_000
 const DEFAULT_RESERVE_TOKENS = 30_000
 
-export function getMaxAllowedTokens(modelId: string): number {
+export function getMaxAllowedTokens(model: Model): number {
   let contextWindow: number
   let reserveTokens: number
 
-  if (modelId.includes('deepseek')) {
+  if (model.id.includes('deepseek')) {
     contextWindow = 64_000
     reserveTokens = 27_000
-  } else if (modelId.includes('claude')) {
+  } else if (model.id.includes('claude')) {
     contextWindow = 200_000
     reserveTokens = 40_000
   } else {

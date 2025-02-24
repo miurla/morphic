@@ -1,11 +1,19 @@
 import { createManualToolStreamResponse } from '@/lib/streaming/create-manual-tool-stream'
 import { createToolCallingStreamResponse } from '@/lib/streaming/create-tool-calling-stream'
-import { isProviderEnabled, isToolCallSupported } from '@/lib/utils/registry'
+import { Model } from '@/lib/types/models'
+import { isProviderEnabled } from '@/lib/utils/registry'
 import { cookies } from 'next/headers'
 
 export const maxDuration = 30
 
-const DEFAULT_MODEL = 'openai:gpt-4o-mini'
+const DEFAULT_MODEL: Model = {
+  id: 'gpt-4o-mini',
+  name: 'GPT-4o mini',
+  provider: 'OpenAI',
+  providerId: 'openai',
+  enabled: true,
+  toolCallType: 'native'
+}
 
 export async function POST(req: Request) {
   try {
@@ -21,46 +29,52 @@ export async function POST(req: Request) {
     }
 
     const cookieStore = await cookies()
-    const modelFromCookie = cookieStore.get('selected-model')?.value
+    const modelJson = cookieStore.get('selectedModel')?.value
     const searchMode = cookieStore.get('search-mode')?.value === 'true'
-    const model = modelFromCookie || DEFAULT_MODEL
-    const provider = model.split(':')[0]
-    if (!isProviderEnabled(provider)) {
-      return new Response(`Selected provider is not enabled ${provider}`, {
-        status: 404,
-        statusText: 'Not Found'
-      })
+
+    let selectedModel = DEFAULT_MODEL
+
+    if (modelJson) {
+      try {
+        selectedModel = JSON.parse(modelJson) as Model
+      } catch (e) {
+        console.error('Failed to parse selected model:', e)
+      }
     }
 
-    const supportsToolCalling = isToolCallSupported(model)
+    if (
+      !isProviderEnabled(selectedModel.providerId) ||
+      selectedModel.enabled === false
+    ) {
+      return new Response(
+        `Selected provider is not enabled ${selectedModel.providerId}`,
+        {
+          status: 404,
+          statusText: 'Not Found'
+        }
+      )
+    }
+
+    const supportsToolCalling = selectedModel.toolCallType === 'native'
 
     return supportsToolCalling
       ? createToolCallingStreamResponse({
           messages,
-          model,
+          model: selectedModel,
           chatId,
           searchMode
         })
       : createManualToolStreamResponse({
           messages,
-          model,
+          model: selectedModel,
           chatId,
           searchMode
         })
   } catch (error) {
     console.error('API route error:', error)
-    return new Response(
-      JSON.stringify({
-        error:
-          error instanceof Error
-            ? error.message
-            : 'An unexpected error occurred',
-        status: 500
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    )
+    return new Response('Error processing your request', {
+      status: 500,
+      statusText: 'Internal Server Error'
+    })
   }
 }
