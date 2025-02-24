@@ -121,7 +121,7 @@ docker-compose logs searxng
 
 ## Additional AI Providers
 
-Models are configured in `lib/config/models.json`. Each model requires its corresponding API key to be set in the environment variables.
+Models are configured in `public/config/models.json`. Each model requires its corresponding API key to be set in the environment variables.
 
 ### Model Configuration
 
