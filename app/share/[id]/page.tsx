@@ -29,7 +29,7 @@ export default async function SharePage(props: {
     return notFound()
   }
 
-  const models = getModels()
+  const models = await getModels()
   return (
     <Chat
       id={chat.id}

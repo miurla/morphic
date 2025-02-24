@@ -1,6 +1,5 @@
 import { Model } from '@/lib/types/models'
-import { existsSync, readFileSync } from 'fs'
-import { join } from 'path'
+import { headers } from 'next/headers'
 
 export function validateModel(model: any): model is Model {
   return (
@@ -14,11 +13,16 @@ export function validateModel(model: any): model is Model {
   )
 }
 
-export function getModels(): Model[] {
-  const configPath = join(process.cwd(), 'public', 'config', 'models.json')
-  
+export async function getModels(): Promise<Model[]> {
   try {
-    const config = JSON.parse(readFileSync(configPath, 'utf-8'))
+    const headersList = await headers()
+    const baseUrl = new URL(headersList.get('x-url') || 'http://localhost:3000')
+    const modelUrl = new URL('/config/models.json', baseUrl.origin)
+
+    const response = await fetch(modelUrl, {
+      cache: 'no-store'
+    })
+    const config = await response.json()
     if (Array.isArray(config.models) && config.models.every(validateModel)) {
       return config.models
     }
