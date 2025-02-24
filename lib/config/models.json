@@ -1,6 +1,30 @@
 {
   "models": [
     {
+      "id": "o3-mini",
+      "name": "o3 mini",
+      "provider": "OpenAI",
+      "providerId": "openai",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "gpt-4o",
+      "name": "GPT-4o",
+      "provider": "OpenAI",
+      "providerId": "openai",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "gpt-4o-mini",
+      "name": "GPT-4o mini",
+      "provider": "OpenAI",
+      "providerId": "openai",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
       "id": "claude-3-5-sonnet-latest",
       "name": "Claude 3.5 Sonnet",
       "provider": "Anthropic",
@@ -25,43 +49,10 @@
       "toolCallType": "native"
     },
     {
-      "id": "accounts/fireworks/models/deepseek-r1",
-      "name": "DeepSeek R1",
-      "provider": "Fireworks",
-      "providerId": "fireworks",
-      "enabled": true,
-      "toolCallType": "native"
-    },
-    {
-      "id": "deepseek-r1",
-      "name": "DeepSeek R1",
-      "provider": "Ollama",
-      "providerId": "ollama",
-      "enabled": true,
-      "toolCallType": "manual"
-    },
-    {
-      "id": "<OLLAMA_MODEL_ID>",
-      "name": "<OLLAMA_MODEL_NAME>",
-      "provider": "Ollama",
-      "providerId": "ollama",
-      "enabled": true,
-      "toolCallType": "manual",
-      "toolCallModel": "<OLLAMA_MODEL_ID>"
-    },
-    {
-      "id": "deepseek-reasoner",
-      "name": "DeepSeek R1",
-      "provider": "DeepSeek",
-      "providerId": "deepseek",
-      "enabled": true,
-      "toolCallType": "manual"
-    },
-    {
-      "id": "deepseek-chat",
-      "name": "DeepSeek V3",
-      "provider": "DeepSeek",
-      "providerId": "deepseek",
+      "id": "gemini-2.0-flash",
+      "name": "Gemini 2.0 Flash",
+      "provider": "Google Generative AI",
+      "providerId": "google",
       "enabled": true,
       "toolCallType": "native"
     },
@@ -71,7 +62,8 @@
       "provider": "Google Generative AI",
       "providerId": "google",
       "enabled": true,
-      "toolCallType": "manual"
+      "toolCallType": "manual",
+      "toolCallModel": "gemini-2.0-flash"
     },
     {
       "id": "gemini-2.0-flash-thinking-exp-01-21",
@@ -79,15 +71,34 @@
       "provider": "Google Generative AI",
       "providerId": "google",
       "enabled": true,
-      "toolCallType": "manual"
+      "toolCallType": "manual",
+      "toolCallModel": "gemini-2.0-flash"
     },
     {
-      "id": "gemini-2.0-flash",
-      "name": "Gemini 2.0 Flash",
-      "provider": "Google Generative AI",
-      "providerId": "google",
+      "id": "accounts/fireworks/models/deepseek-r1",
+      "name": "DeepSeek R1",
+      "provider": "Fireworks",
+      "providerId": "fireworks",
       "enabled": true,
-      "toolCallType": "manual"
+      "toolCallType": "manual",
+      "toolCallModel": "accounts/fireworks/models/llama-v3p1-8b-instruct"
+    },
+    {
+      "id": "deepseek-r1",
+      "name": "DeepSeek R1",
+      "provider": "DeepSeek",
+      "providerId": "deepseek",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "deepseek-chat"
+    },
+    {
+      "id": "deepseek-chat",
+      "name": "DeepSeek Chat",
+      "provider": "DeepSeek",
+      "providerId": "deepseek",
+      "enabled": true,
+      "toolCallType": "native"
     },
     {
       "id": "deepseek-r1-distill-llama-70b",
@@ -95,39 +106,26 @@
       "provider": "Groq",
       "providerId": "groq",
       "enabled": true,
-      "toolCallType": "manual"
+      "toolCallType": "manual",
+      "toolCallModel": "llama-3.1-8b-instant"
     },
     {
-      "id": "o3-mini",
-      "name": "o3-mini",
-      "provider": "OpenAI",
-      "providerId": "openai",
+      "id": "deepseek-r1",
+      "name": "DeepSeek R1",
+      "provider": "Ollama",
+      "providerId": "ollama",
       "enabled": true,
-      "toolCallType": "native"
+      "toolCallType": "manual",
+      "toolCallModel": "phi4"
     },
     {
-      "id": "gpt-4o",
-      "name": "GPT-4o",
-      "provider": "OpenAI",
-      "providerId": "openai",
+      "id": "<OLLAMA_MODEL_ID>",
+      "name": "<OLLAMA_MODEL_NAME>",
+      "provider": "Ollama",
+      "providerId": "ollama",
       "enabled": true,
-      "toolCallType": "native"
-    },
-    {
-      "id": "gpt-4o-mini",
-      "name": "GPT-4o mini",
-      "provider": "OpenAI",
-      "providerId": "openai",
-      "enabled": true,
-      "toolCallType": "native"
-    },
-    {
-      "id": "<OPENAI_COMPATIBLE_MODEL>",
-      "name": "<OPENAI_COMPATIBLE_MODEL>",
-      "provider": "OpenAI Compatible",
-      "providerId": "openai-compatible",
-      "enabled": true,
-      "toolCallType": "native"
+      "toolCallType": "manual",
+      "toolCallModel": "<OLLAMA_MODEL_ID>"
     },
     {
       "id": "grok-2-1212",
@@ -142,6 +140,14 @@
       "name": "Grok 2 Vision",
       "provider": "xAI",
       "providerId": "xai",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "<OPENAI_COMPATIBLE_MODEL>",
+      "name": "<OPENAI_COMPATIBLE_MODEL>",
+      "provider": "OpenAI Compatible",
+      "providerId": "openai-compatible",
       "enabled": true,
       "toolCallType": "native"
     }
