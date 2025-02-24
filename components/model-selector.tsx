@@ -38,15 +38,28 @@ export function ModelSelector({ models }: ModelSelectorProps) {
   const [value, setValue] = useState('')
 
   useEffect(() => {
-    const modelId = getCookie('modelId')
-    if (modelId) {
-      setValue(modelId)
+    const savedModel = getCookie('selectedModel')
+    if (savedModel) {
+      try {
+        const model = JSON.parse(savedModel) as Model
+        setValue(createModelId(model))
+      } catch (e) {
+        console.error('Failed to parse saved model:', e)
+      }
     }
   }, [])
 
   const handleModelSelect = (id: string) => {
-    setValue(id === value ? '' : id)
-    setCookie('modelId', id)
+    const newValue = id === value ? '' : id
+    setValue(newValue)
+    
+    const selectedModel = models.find(model => createModelId(model) === newValue)
+    if (selectedModel) {
+      setCookie('selectedModel', JSON.stringify(selectedModel))
+    } else {
+      setCookie('selectedModel', '')
+    }
+    
     setOpen(false)
   }
 
