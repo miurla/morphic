@@ -1,7 +1,6 @@
 import { Chat } from '@/components/chat'
 import { getChat } from '@/lib/actions/chat'
-import modelsList from '@/lib/config/models.json'
-import { Model } from '@/lib/types/models'
+import { getModels } from '@/lib/config/models'
 import { convertToUIMessages } from '@/lib/utils'
 import { notFound, redirect } from 'next/navigation'
 
@@ -22,6 +21,7 @@ export default async function SearchPage(props: {
 }) {
   const userId = 'anonymous'
   const { id } = await props.params
+
   const chat = await getChat(id, userId)
   // convertToUIMessages for useChat hook
   const messages = convertToUIMessages(chat?.messages || [])
@@ -34,11 +34,6 @@ export default async function SearchPage(props: {
     notFound()
   }
 
-  return (
-    <Chat
-      id={id}
-      savedMessages={messages}
-      models={modelsList.models as Model[]}
-    />
-  )
+  const models = getModels()
+  return <Chat id={id} savedMessages={messages} models={models} />
 }
