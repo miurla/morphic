@@ -31,15 +31,21 @@ export function truncateMessages(
 
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i]
-    const messageTokens = message.content.length / 4 // rough estimation
+    const messageTokens = message.content?.length || 0
 
     if (totalTokens + messageTokens <= maxTokens) {
-      tempMessages.unshift(message)
+      tempMessages.push(message)
       totalTokens += messageTokens
     } else {
       break
     }
   }
 
-  return tempMessages
+  const orderedMessages = tempMessages.reverse()
+
+  while (orderedMessages.length > 0 && orderedMessages[0].role !== 'user') {
+    orderedMessages.shift()
+  }
+
+  return orderedMessages
 }
