@@ -34,6 +34,6 @@ export default async function SearchPage(props: {
     notFound()
   }
 
-  const models = getModels()
+  const models = await getModels()
   return <Chat id={id} savedMessages={messages} models={models} />
 }

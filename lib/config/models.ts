@@ -1,6 +1,4 @@
 import { Model } from '@/lib/types/models'
-import { existsSync, readFileSync } from 'fs'
-import { join } from 'path'
 
 export function validateModel(model: any): model is Model {
   return (
@@ -14,11 +12,10 @@ export function validateModel(model: any): model is Model {
   )
 }
 
-export function getModels(): Model[] {
-  const configPath = join(process.cwd(), 'public', 'config', 'models.json')
-  
+export async function getModels(): Promise<Model[]> {
   try {
-    const config = JSON.parse(readFileSync(configPath, 'utf-8'))
+    const response = await fetch('/config/models.json')
+    const config = await response.json()
     if (Array.isArray(config.models) && config.models.every(validateModel)) {
       return config.models
     }
