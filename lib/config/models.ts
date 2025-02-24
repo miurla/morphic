@@ -1,4 +1,5 @@
 import { Model } from '@/lib/types/models'
+import { headers } from 'next/headers'
 
 export function validateModel(model: any): model is Model {
   return (
@@ -14,7 +15,13 @@ export function validateModel(model: any): model is Model {
 
 export async function getModels(): Promise<Model[]> {
   try {
-    const response = await fetch('/config/models.json')
+    const headersList = await headers()
+    const baseUrl = new URL(headersList.get('x-url') || 'http://localhost:3000')
+    const modelUrl = new URL('/config/models.json', baseUrl.origin)
+
+    const response = await fetch(modelUrl, {
+      cache: 'no-store'
+    })
     const config = await response.json()
     if (Array.isArray(config.models) && config.models.every(validateModel)) {
       return config.models
