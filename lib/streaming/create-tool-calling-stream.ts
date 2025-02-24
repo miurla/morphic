@@ -14,6 +14,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
   return createDataStreamResponse({
     execute: async (dataStream: DataStreamWriter) => {
       const { messages, model, chatId, searchMode } = config
+      const modelId = `${model.providerId}:${model.id}`
 
       try {
         const coreMessages = convertToCoreMessages(messages)
@@ -24,7 +25,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
 
         let researcherConfig = await researcher({
           messages: truncatedMessages,
-          model,
+          model: modelId,
           searchMode
         })
 
@@ -34,10 +35,10 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
             await handleStreamFinish({
               responseMessages: result.response.messages,
               originalMessages: messages,
-              model,
+              model: modelId,
               chatId,
               dataStream,
-              skipRelatedQuestions: isReasoningModel(model)
+              skipRelatedQuestions: isReasoningModel(modelId)
             })
           }
         })

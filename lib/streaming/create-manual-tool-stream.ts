@@ -16,6 +16,11 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
   return createDataStreamResponse({
     execute: async (dataStream: DataStreamWriter) => {
       const { messages, model, chatId, searchMode } = config
+      const modelId = `${model.providerId}:${model.id}`
+      let toolCallModelId = model.toolCallModel
+        ? `${model.providerId}:${model.toolCallModel}`
+        : modelId
+
       try {
         const coreMessages = convertToCoreMessages(messages)
         const truncatedMessages = truncateMessages(
@@ -27,13 +32,13 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
           await executeToolCall(
             truncatedMessages,
             dataStream,
-            model,
+            toolCallModelId,
             searchMode
           )
 
         const researcherConfig = manualResearcher({
           messages: [...truncatedMessages, ...toolCallMessages],
-          model,
+          model: modelId,
           isSearchEnabled: searchMode
         })
 
@@ -61,7 +66,7 @@ export function createManualToolStreamResponse(config: BaseStreamConfig) {
             await handleStreamFinish({
               responseMessages: result.response.messages,
               originalMessages: messages,
-              model,
+              model: modelId,
               chatId,
               dataStream,
               skipRelatedQuestions: true,

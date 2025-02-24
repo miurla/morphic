@@ -1,13 +1,19 @@
 import { createManualToolStreamResponse } from '@/lib/streaming/create-manual-tool-stream'
 import { createToolCallingStreamResponse } from '@/lib/streaming/create-tool-calling-stream'
 import { Model } from '@/lib/types/models'
-import { createModelId } from '@/lib/utils'
-import { isProviderEnabled, isToolCallSupported } from '@/lib/utils/registry'
+import { isProviderEnabled } from '@/lib/utils/registry'
 import { cookies } from 'next/headers'
 
 export const maxDuration = 30
 
-const DEFAULT_MODEL = 'gpt-4o-mini'
+const DEFAULT_MODEL: Model = {
+  id: 'gpt-4o-mini',
+  name: 'GPT-4o mini',
+  provider: 'OpenAI',
+  providerId: 'openai',
+  enabled: true,
+  toolCallType: 'native'
+}
 
 export async function POST(req: Request) {
   try {
@@ -25,39 +31,42 @@ export async function POST(req: Request) {
     const cookieStore = await cookies()
     const modelJson = cookieStore.get('selectedModel')?.value
     const searchMode = cookieStore.get('search-mode')?.value === 'true'
-    
-    let modelId = DEFAULT_MODEL
-    let provider = 'openai'
-    
+
+    let selectedModel = DEFAULT_MODEL
+
     if (modelJson) {
       try {
-        const selectedModel = JSON.parse(modelJson) as Model
-        modelId = createModelId(selectedModel)
-        provider = selectedModel.providerId
+        selectedModel = JSON.parse(modelJson) as Model
       } catch (e) {
         console.error('Failed to parse selected model:', e)
       }
     }
 
-    if (!isProviderEnabled(provider)) {
-      return new Response(`Selected provider is not enabled ${provider}`, {
-        status: 404,
-        statusText: 'Not Found'
-      })
+    if (
+      !isProviderEnabled(selectedModel.providerId) ||
+      selectedModel.enabled === false
+    ) {
+      return new Response(
+        `Selected provider is not enabled ${selectedModel.providerId}`,
+        {
+          status: 404,
+          statusText: 'Not Found'
+        }
+      )
     }
 
-    const supportsToolCalling = isToolCallSupported(modelId)
+    const supportsToolCalling = selectedModel.toolCallType === 'native'
 
     return supportsToolCalling
       ? createToolCallingStreamResponse({
           messages,
-          model: modelId,
+          model: selectedModel,
           chatId,
           searchMode
         })
       : createManualToolStreamResponse({
           messages,
-          model: modelId,
+          model: selectedModel,
           chatId,
           searchMode
         })
