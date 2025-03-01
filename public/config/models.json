@@ -25,6 +25,14 @@
       "toolCallType": "native"
     },
     {
+      "id": "claude-3-7-sonnet-20250219",
+      "name": "Claude 3.7 Sonnet",
+      "provider": "Anthropic",
+      "providerId": "anthropic",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
       "id": "claude-3-5-sonnet-latest",
       "name": "Claude 3.5 Sonnet",
       "provider": "Anthropic",
