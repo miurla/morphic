@@ -1,6 +1,5 @@
 import Footer from '@/components/footer'
 import Header from '@/components/header'
-import { Sidebar } from '@/components/sidebar'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { cn } from '@/lib/utils'
@@ -45,8 +44,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const enableSaveChatHistory =
-    process.env.ENABLE_SAVE_CHAT_HISTORY === 'true'
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn('font-sans antialiased', fontSans.variable)}>
@@ -58,7 +55,6 @@ export default function RootLayout({
         >
           <Header />
           {children}
-          {enableSaveChatHistory && <Sidebar />}
           <Footer />
           <Toaster />
         </ThemeProvider>
