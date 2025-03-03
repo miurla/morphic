@@ -62,7 +62,7 @@
       "provider": "Google Generative AI",
       "providerId": "google",
       "enabled": true,
-      "toolCallType": "native"
+      "toolCallType": "manual"
     },
     {
       "id": "gemini-2.0-pro-exp-02-05",
