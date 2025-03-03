@@ -64,7 +64,7 @@ export async function handleStreamFinish({
       ...responseMessages.slice(-1)
     ] as ExtendedCoreMessage[]
 
-    if (process.env.NEXT_PUBLIC_ENABLE_SAVE_CHAT_HISTORY !== 'true') {
+    if (process.env.ENABLE_SAVE_CHAT_HISTORY !== 'true') {
       return
     }
 
