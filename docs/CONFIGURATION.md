@@ -137,7 +137,7 @@ The `models.json` file contains an array of model configurations with the follow
       "providerId": "provider-id",
       "enabled": true,
       "toolCallType": "native|manual",
-      "toolCallModel": "tool-call-model-id" // only required if toolCallType is "manual"
+      "toolCallModel": "tool-call-model-id" // optional, only needed if toolCallType is "manual" and you need to specify a different model for tool calls
     }
   ]
 }
