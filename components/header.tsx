@@ -6,7 +6,7 @@ import { IconLogo } from './ui/icons'
 
 export const Header: React.FC = async () => {
   return (
-    <header className="fixed w-full p-2 flex justify-between items-center z-10 backdrop-blur md:backdrop-blur-none bg-background/80 md:bg-transparent">
+    <header className="fixed w-full p-2 flex justify-between items-center z-10 backdrop-blur lg:backdrop-blur-none bg-background/80 lg:bg-transparent">
       <div>
         <a href="/">
           <IconLogo className={cn('w-5 h-5')} />
@@ -15,7 +15,7 @@ export const Header: React.FC = async () => {
       </div>
       <div className="flex gap-0.5">
         <ModeToggle />
-        <HistoryContainer location="header" />
+        <HistoryContainer />
       </div>
     </header>
   )
