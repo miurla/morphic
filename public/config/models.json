@@ -106,7 +106,7 @@
       "provider": "DeepSeek",
       "providerId": "deepseek",
       "enabled": true,
-      "toolCallType": "native"
+      "toolCallType": "manual"
     },
     {
       "id": "deepseek-r1-distill-llama-70b",
