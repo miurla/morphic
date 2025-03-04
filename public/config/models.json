@@ -92,7 +92,7 @@
       "toolCallModel": "accounts/fireworks/models/llama-v3p1-8b-instruct"
     },
     {
-      "id": "deepseek-r1",
+      "id": "deepseek-reasoner",
       "name": "DeepSeek R1",
       "provider": "DeepSeek",
       "providerId": "deepseek",
@@ -102,7 +102,7 @@
     },
     {
       "id": "deepseek-chat",
-      "name": "DeepSeek Chat",
+      "name": "DeepSeek V3",
       "provider": "DeepSeek",
       "providerId": "deepseek",
       "enabled": true,
