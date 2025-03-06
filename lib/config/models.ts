@@ -47,6 +47,7 @@ export async function getModels(): Promise<Model[]> {
 
     // Construct the models.json URL
     const modelUrl = new URL('/config/models.json', baseUrlObj)
+    console.log('Attempting to fetch models from:', modelUrl.toString())
 
     try {
       const response = await fetch(modelUrl, {
@@ -57,6 +58,9 @@ export async function getModels(): Promise<Model[]> {
       })
 
       if (!response.ok) {
+        console.warn(
+          `HTTP error when fetching models: ${response.status} ${response.statusText}`
+        )
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
@@ -64,19 +68,27 @@ export async function getModels(): Promise<Model[]> {
 
       // Check if the response starts with HTML doctype
       if (text.trim().toLowerCase().startsWith('<!doctype')) {
+        console.warn('Received HTML instead of JSON when fetching models')
         throw new Error('Received HTML instead of JSON')
       }
 
       const config = JSON.parse(text)
       if (Array.isArray(config.models) && config.models.every(validateModel)) {
+        console.log('Successfully loaded models from URL')
         return config.models
       }
-    } catch (fetchError) {
+    } catch (error: any) {
       // Fallback to default models if fetch fails
+      console.warn(
+        'Fetch failed, falling back to default models:',
+        error.message || 'Unknown error'
+      )
+
       if (
         Array.isArray(defaultModels.models) &&
         defaultModels.models.every(validateModel)
       ) {
+        console.log('Successfully loaded default models')
         return defaultModels.models
       }
     }
@@ -85,5 +97,6 @@ export async function getModels(): Promise<Model[]> {
   }
 
   // Last resort: return empty array
+  console.warn('All attempts to load models failed, returning empty array')
   return []
 }
