@@ -1,5 +1,6 @@
 import { Model } from '@/lib/types/models'
 import { headers } from 'next/headers'
+import defaultModels from './default-models.json'
 
 export function validateModel(model: any): model is Model {
   return (
@@ -28,44 +29,61 @@ export async function getModels(): Promise<Model[]> {
     try {
       // Try to use the pre-constructed base URL if available
       if (baseUrl) {
-        console.log('Using x-base-url:', baseUrl)
         baseUrlObj = new URL(baseUrl)
       } else if (url) {
-        console.log('Using x-url:', url)
         baseUrlObj = new URL(url)
       } else if (host) {
         const constructedUrl = `${protocol}${
           protocol.endsWith(':') ? '//' : '://'
         }${host}`
-        console.log('Constructed URL from host and protocol:', constructedUrl)
         baseUrlObj = new URL(constructedUrl)
       } else {
-        console.log('Using default localhost URL')
         baseUrlObj = new URL('http://localhost:3000')
       }
     } catch (urlError) {
       // Fallback to default URL if any error occurs during URL construction
-      console.warn('Error constructing URL:', urlError)
-      console.log('Falling back to default localhost URL')
       baseUrlObj = new URL('http://localhost:3000')
     }
 
     // Construct the models.json URL
     const modelUrl = new URL('/config/models.json', baseUrlObj)
 
-    console.log('Fetching models from:', modelUrl.toString())
+    try {
+      const response = await fetch(modelUrl, {
+        cache: 'no-store',
+        headers: {
+          Accept: 'application/json'
+        }
+      })
 
-    const response = await fetch(modelUrl, {
-      cache: 'no-store'
-    })
-    const config = await response.json()
-    if (Array.isArray(config.models) && config.models.every(validateModel)) {
-      return config.models
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const text = await response.text()
+
+      // Check if the response starts with HTML doctype
+      if (text.trim().toLowerCase().startsWith('<!doctype')) {
+        throw new Error('Received HTML instead of JSON')
+      }
+
+      const config = JSON.parse(text)
+      if (Array.isArray(config.models) && config.models.every(validateModel)) {
+        return config.models
+      }
+    } catch (fetchError) {
+      // Fallback to default models if fetch fails
+      if (
+        Array.isArray(defaultModels.models) &&
+        defaultModels.models.every(validateModel)
+      ) {
+        return defaultModels.models
+      }
     }
-    console.warn('Invalid model configuration')
   } catch (error) {
     console.warn('Failed to load models:', error)
   }
 
+  // Last resort: return empty array
   return []
 }
