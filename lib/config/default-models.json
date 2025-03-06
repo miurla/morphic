@@ -1,0 +1,163 @@
+{
+  "models": [
+    {
+      "id": "o3-mini",
+      "name": "o3 mini",
+      "provider": "OpenAI",
+      "providerId": "openai",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "gpt-4o",
+      "name": "GPT-4o",
+      "provider": "OpenAI",
+      "providerId": "openai",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "gpt-4o-mini",
+      "name": "GPT-4o mini",
+      "provider": "OpenAI",
+      "providerId": "openai",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "claude-3-7-sonnet-20250219",
+      "name": "Claude 3.7 Sonnet",
+      "provider": "Anthropic",
+      "providerId": "anthropic",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "claude-3-5-sonnet-latest",
+      "name": "Claude 3.5 Sonnet",
+      "provider": "Anthropic",
+      "providerId": "anthropic",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "claude-3-5-haiku-20241022",
+      "name": "Claude 3.5 Haiku",
+      "provider": "Anthropic",
+      "providerId": "anthropic",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "<AZURE_DEPLOYMENT_NAME>",
+      "name": "<AZURE_DEPLOYMENT_NAME>",
+      "provider": "Azure",
+      "providerId": "azure",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "gemini-2.0-flash",
+      "name": "Gemini 2.0 Flash",
+      "provider": "Google Generative AI",
+      "providerId": "google",
+      "enabled": true,
+      "toolCallType": "manual"
+    },
+    {
+      "id": "gemini-2.0-pro-exp-02-05",
+      "name": "Gemini 2.0 Pro (Exp)",
+      "provider": "Google Generative AI",
+      "providerId": "google",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "gemini-2.0-flash"
+    },
+    {
+      "id": "gemini-2.0-flash-thinking-exp-01-21",
+      "name": "Gemini 2.0 Flash Thinking (Exp)",
+      "provider": "Google Generative AI",
+      "providerId": "google",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "gemini-2.0-flash"
+    },
+    {
+      "id": "accounts/fireworks/models/deepseek-r1",
+      "name": "DeepSeek R1",
+      "provider": "Fireworks",
+      "providerId": "fireworks",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "accounts/fireworks/models/llama-v3p1-8b-instruct"
+    },
+    {
+      "id": "deepseek-reasoner",
+      "name": "DeepSeek R1",
+      "provider": "DeepSeek",
+      "providerId": "deepseek",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "deepseek-chat"
+    },
+    {
+      "id": "deepseek-chat",
+      "name": "DeepSeek V3",
+      "provider": "DeepSeek",
+      "providerId": "deepseek",
+      "enabled": true,
+      "toolCallType": "manual"
+    },
+    {
+      "id": "deepseek-r1-distill-llama-70b",
+      "name": "DeepSeek R1 Distill Llama 70B",
+      "provider": "Groq",
+      "providerId": "groq",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "llama-3.1-8b-instant"
+    },
+    {
+      "id": "deepseek-r1",
+      "name": "DeepSeek R1",
+      "provider": "Ollama",
+      "providerId": "ollama",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "phi4"
+    },
+    {
+      "id": "<OLLAMA_MODEL_ID>",
+      "name": "<OLLAMA_MODEL_NAME>",
+      "provider": "Ollama",
+      "providerId": "ollama",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "<OLLAMA_MODEL_ID>"
+    },
+    {
+      "id": "grok-2-1212",
+      "name": "Grok 2",
+      "provider": "xAI",
+      "providerId": "xai",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "grok-2-vision-1212",
+      "name": "Grok 2 Vision",
+      "provider": "xAI",
+      "providerId": "xai",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "<OPENAI_COMPATIBLE_MODEL>",
+      "name": "<OPENAI_COMPATIBLE_MODEL>",
+      "provider": "OpenAI Compatible",
+      "providerId": "openai-compatible",
+      "enabled": true,
+      "toolCallType": "native"
+    }
+  ]
+}

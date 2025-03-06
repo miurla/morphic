@@ -1,5 +1,6 @@
 import { Model } from '@/lib/types/models'
 import { headers } from 'next/headers'
+import defaultModels from './default-models.json'
 
 export function validateModel(model: any): model is Model {
   return (
@@ -9,27 +10,93 @@ export function validateModel(model: any): model is Model {
     typeof model.providerId === 'string' &&
     typeof model.enabled === 'boolean' &&
     (model.toolCallType === 'native' || model.toolCallType === 'manual') &&
-    (model.toolCallModel === undefined || typeof model.toolCallModel === 'string')
+    (model.toolCallModel === undefined ||
+      typeof model.toolCallModel === 'string')
   )
 }
 
 export async function getModels(): Promise<Model[]> {
   try {
     const headersList = await headers()
-    const baseUrl = new URL(headersList.get('x-url') || 'http://localhost:3000')
-    const modelUrl = new URL('/config/models.json', baseUrl.origin)
+    const baseUrl = headersList.get('x-base-url')
+    const url = headersList.get('x-url')
+    const host = headersList.get('x-host')
+    const protocol = headersList.get('x-protocol') || 'http:'
 
-    const response = await fetch(modelUrl, {
-      cache: 'no-store'
-    })
-    const config = await response.json()
-    if (Array.isArray(config.models) && config.models.every(validateModel)) {
-      return config.models
+    // Construct base URL using the headers
+    let baseUrlObj: URL
+
+    try {
+      // Try to use the pre-constructed base URL if available
+      if (baseUrl) {
+        baseUrlObj = new URL(baseUrl)
+      } else if (url) {
+        baseUrlObj = new URL(url)
+      } else if (host) {
+        const constructedUrl = `${protocol}${
+          protocol.endsWith(':') ? '//' : '://'
+        }${host}`
+        baseUrlObj = new URL(constructedUrl)
+      } else {
+        baseUrlObj = new URL('http://localhost:3000')
+      }
+    } catch (urlError) {
+      // Fallback to default URL if any error occurs during URL construction
+      baseUrlObj = new URL('http://localhost:3000')
     }
-    console.warn('Invalid model configuration')
+
+    // Construct the models.json URL
+    const modelUrl = new URL('/config/models.json', baseUrlObj)
+    console.log('Attempting to fetch models from:', modelUrl.toString())
+
+    try {
+      const response = await fetch(modelUrl, {
+        cache: 'no-store',
+        headers: {
+          Accept: 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        console.warn(
+          `HTTP error when fetching models: ${response.status} ${response.statusText}`
+        )
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const text = await response.text()
+
+      // Check if the response starts with HTML doctype
+      if (text.trim().toLowerCase().startsWith('<!doctype')) {
+        console.warn('Received HTML instead of JSON when fetching models')
+        throw new Error('Received HTML instead of JSON')
+      }
+
+      const config = JSON.parse(text)
+      if (Array.isArray(config.models) && config.models.every(validateModel)) {
+        console.log('Successfully loaded models from URL')
+        return config.models
+      }
+    } catch (error: any) {
+      // Fallback to default models if fetch fails
+      console.warn(
+        'Fetch failed, falling back to default models:',
+        error.message || 'Unknown error'
+      )
+
+      if (
+        Array.isArray(defaultModels.models) &&
+        defaultModels.models.every(validateModel)
+      ) {
+        console.log('Successfully loaded default models')
+        return defaultModels.models
+      }
+    }
   } catch (error) {
     console.warn('Failed to load models:', error)
   }
-  
+
+  // Last resort: return empty array
+  console.warn('All attempts to load models failed, returning empty array')
   return []
 }
