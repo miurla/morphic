@@ -17,32 +17,23 @@ export function validateModel(model: any): model is Model {
 
 export async function getModels(): Promise<Model[]> {
   try {
-    const headersList = await headers()
-    const baseUrl = headersList.get('x-base-url')
-    const url = headersList.get('x-url')
-    const host = headersList.get('x-host')
-    const protocol = headersList.get('x-protocol') || 'http:'
-
-    // Construct base URL using the headers
+    // Check for BASE_URL environment variable first
+    const baseUrlEnv = process.env.BASE_URL
     let baseUrlObj: URL
 
-    try {
-      // Try to use the pre-constructed base URL if available
-      if (baseUrl) {
-        baseUrlObj = new URL(baseUrl)
-      } else if (url) {
-        baseUrlObj = new URL(url)
-      } else if (host) {
-        const constructedUrl = `${protocol}${
-          protocol.endsWith(':') ? '//' : '://'
-        }${host}`
-        baseUrlObj = new URL(constructedUrl)
-      } else {
-        baseUrlObj = new URL('http://localhost:3000')
+    if (baseUrlEnv) {
+      try {
+        baseUrlObj = new URL(baseUrlEnv)
+        console.log('Using BASE_URL environment variable:', baseUrlEnv)
+      } catch (error) {
+        console.warn(
+          'Invalid BASE_URL environment variable, falling back to headers'
+        )
+        baseUrlObj = await getBaseUrlFromHeaders()
       }
-    } catch (urlError) {
-      // Fallback to default URL if any error occurs during URL construction
-      baseUrlObj = new URL('http://localhost:3000')
+    } else {
+      // If BASE_URL is not set, use headers
+      baseUrlObj = await getBaseUrlFromHeaders()
     }
 
     // Construct the models.json URL
@@ -99,4 +90,32 @@ export async function getModels(): Promise<Model[]> {
   // Last resort: return empty array
   console.warn('All attempts to load models failed, returning empty array')
   return []
+}
+
+// Helper function to get base URL from headers
+async function getBaseUrlFromHeaders(): Promise<URL> {
+  const headersList = await headers()
+  const baseUrl = headersList.get('x-base-url')
+  const url = headersList.get('x-url')
+  const host = headersList.get('x-host')
+  const protocol = headersList.get('x-protocol') || 'http:'
+
+  try {
+    // Try to use the pre-constructed base URL if available
+    if (baseUrl) {
+      return new URL(baseUrl)
+    } else if (url) {
+      return new URL(url)
+    } else if (host) {
+      const constructedUrl = `${protocol}${
+        protocol.endsWith(':') ? '//' : '://'
+      }${host}`
+      return new URL(constructedUrl)
+    } else {
+      return new URL('http://localhost:3000')
+    }
+  } catch (urlError) {
+    // Fallback to default URL if any error occurs during URL construction
+    return new URL('http://localhost:3000')
+  }
 }
