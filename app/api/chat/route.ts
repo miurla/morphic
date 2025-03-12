@@ -7,12 +7,12 @@ import { cookies } from 'next/headers'
 export const maxDuration = 30
 
 const DEFAULT_MODEL: Model = {
-  id: 'gpt-4o-mini',
-  name: 'GPT-4o mini',
-  provider: 'OpenAI',
-  providerId: 'openai',
+  id: 'Qwen/Qwen2.5-7B-Instruct',
+  name: 'Lucid-fast',
+  provider: 'Lucid',
+  providerId: 'openai-compatible',
   enabled: true,
-  toolCallType: 'native'
+  toolCallType: 'manual'
 }
 
 export async function POST(req: Request) {

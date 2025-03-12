@@ -1,3 +1,19 @@
 <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="50" cy="50" r="32" fill="black"/>
+  <defs>
+    <linearGradient id="lucidGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2B5BEA"/>
+      <stop offset="90%" style="stop-color:#4FC3F7"/>
+    </linearGradient>
+  </defs>
+  <path d="M30 25 V75 H70" 
+        stroke="url(#lucidGradient)" 
+        stroke-width="12" 
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none">
+    <animate attributeName="stroke-dasharray" 
+             from="0,200" to="200,0" 
+             dur="1.5s" 
+             fill="freeze"/>
+  </path>
 </svg>
