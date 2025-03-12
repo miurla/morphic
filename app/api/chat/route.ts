@@ -8,7 +8,7 @@ export const maxDuration = 30
 
 const DEFAULT_MODEL: Model = {
   id: 'Qwen/Qwen2.5-7B-Instruct',
-  name: 'Lucid-fast',
+  name: 'Lucid-Fast',
   provider: 'Lucid',
   providerId: 'openai-compatible',
   enabled: true,

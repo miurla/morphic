@@ -39,7 +39,7 @@ export function CollapsibleMessage({
             (role === 'user' ? (
               <UserCircle2 size={20} className="text-muted-foreground" />
             ) : (
-              <IconLogo className="size-5" />
+              <IconLogo className="w-5 h-5 text-primary" />
             ))}
         </div>
       </div>
