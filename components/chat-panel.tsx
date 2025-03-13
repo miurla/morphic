@@ -84,13 +84,13 @@ export function ChatPanel({
     >
       {messages.length === 0 && (
         <div className="mb-8 flex items-center gap-2">
-          <IconLogo className="size-12 text-muted-foreground" />
+          <IconLogo className="md:size-12 text-muted-foreground size-10" />
           <TypeAnimation
             sequence={['Thinking While Retriving...']}
             wrapper="h2"
             cursor={true}
             repeat={0}
-            className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600 font-semibold md:text-3xl text-xl"
+            className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600 font-semibold md:text-3xl text-2xl"
           />
         </div>
       )}

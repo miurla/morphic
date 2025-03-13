@@ -81,41 +81,6 @@
       "toolCallType": "native"
     },
     {
-      "id": "gemini-2.0-flash",
-      "name": "Gemini 2.0 Flash",
-      "provider": "Google Generative AI",
-      "providerId": "google",
-      "enabled": true,
-      "toolCallType": "manual"
-    },
-    {
-      "id": "gemini-2.0-pro-exp-02-05",
-      "name": "Gemini 2.0 Pro (Exp)",
-      "provider": "Google Generative AI",
-      "providerId": "google",
-      "enabled": true,
-      "toolCallType": "manual",
-      "toolCallModel": "gemini-2.0-flash"
-    },
-    {
-      "id": "gemini-2.0-flash-thinking-exp-01-21",
-      "name": "Gemini 2.0 Flash Thinking (Exp)",
-      "provider": "Google Generative AI",
-      "providerId": "google",
-      "enabled": true,
-      "toolCallType": "manual",
-      "toolCallModel": "gemini-2.0-flash"
-    },
-    {
-      "id": "accounts/fireworks/models/deepseek-r1",
-      "name": "DeepSeek R1",
-      "provider": "Fireworks",
-      "providerId": "fireworks",
-      "enabled": false,
-      "toolCallType": "manual",
-      "toolCallModel": "accounts/fireworks/models/llama-v3p1-8b-instruct"
-    },
-    {
       "id": "deepseek-reasoner",
       "name": "DeepSeek R1",
       "provider": "DeepSeek",
@@ -131,6 +96,32 @@
       "providerId": "deepseek",
       "enabled": true,
       "toolCallType": "manual"
+    },
+    {
+      "id": "gemini-2.0-flash",
+      "name": "Gemini 2.0 Flash",
+      "provider": "Gemini",
+      "providerId": "google",
+      "enabled": true,
+      "toolCallType": "manual"
+    },
+    {
+      "id": "gemini-2.0-pro-exp-02-05",
+      "name": "Gemini 2.0 Pro (Exp)",
+      "provider": "Gemini",
+      "providerId": "google",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "gemini-2.0-flash"
+    },
+    {
+      "id": "gemini-2.0-flash-thinking-exp-01-21",
+      "name": "Gemini 2.0 Flash Thinking (Exp)",
+      "provider": "Gemini",
+      "providerId": "google",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "gemini-2.0-flash"
     }
   ]
 }
