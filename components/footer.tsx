@@ -6,7 +6,10 @@ import { Button } from './ui/button'
 const Footer: React.FC = () => {
   return (
     <footer className="w-fit p-1 md:p-2 fixed bottom-0 right-0 hidden lg:block">
-      <div className="flex justify-end">
+      <div className="flex justify-end items-center gap-2">
+        <span className="text-xs text-muted-foreground/50">
+          Powered by Lucid
+        </span>
         {/* <Button
           variant={'ghost'}
           size={'icon'}

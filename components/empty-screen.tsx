@@ -10,13 +10,13 @@ const exampleMessages = [
   //   heading: 'Why is Nvidia growing rapidly?',
   //   message: 'Why is Nvidia growing rapidly?'
   // },
-  // {
-  //   heading: 'Tesla vs Rivian',
-  //   message: 'Tesla vs Rivian'
-  // },
   {
-    heading: 'Summary: https://arxiv.org/pdf/2501.05707',
-    message: 'Summary: https://arxiv.org/pdf/2501.05707'
+    heading: '上海的天气如何',
+    message: '上海的天气如何'
+  },
+  {
+    heading: '今天的科技圈新闻',
+    message: '今天的科技圈新闻'
   }
 ]
 export function EmptyScreen({
@@ -29,12 +29,12 @@ export function EmptyScreen({
   return (
     <div className={`mx-auto w-full transition-all ${className}`}>
       <div className="bg-background p-2">
-        <div className="mt-2 flex flex-col items-start space-y-2 mb-4">
+        <div className="mt-2 flex flex-col items-start space-y-2 mb-4 ">
           {exampleMessages.map((message, index) => (
             <Button
               key={index}
               variant="link"
-              className="h-auto p-0 text-base"
+              className="h-auto p-0 text-sm text-gray-600"
               name={message.message}
               onClick={async () => {
                 submitMessage(message.message)

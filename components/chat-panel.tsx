@@ -90,7 +90,7 @@ export function ChatPanel({
             wrapper="h2"
             cursor={true}
             repeat={0}
-            className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600 font-semibold text-3xl"
+            className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600 font-semibold md:text-3xl text-xl"
           />
         </div>
       )}

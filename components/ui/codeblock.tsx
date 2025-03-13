@@ -7,8 +7,8 @@ import { FC, memo } from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { coldarkDark } from 'react-syntax-highlighter/dist/cjs/styles/prism'
 
-import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { Button } from '@/components/ui/button'
+import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { generateId } from 'ai'
 import { Check, Copy, Download } from 'lucide-react'
 
@@ -82,13 +82,13 @@ const CodeBlock: FC<Props> = memo(({ language, value }) => {
   }
 
   return (
-    <div className="relative w-full font-sans codeblock bg-neutral-800">
-      <div className="flex items-center justify-between w-full px-6 py-1 pr-4 bg-neutral-700 text-zinc-100">
-        <span className="text-xs lowercase">{language}</span>
-        <div className="flex items-center space-x-1">
+    <div className="relative w-full font-sans codeblock rounded-lg overflow-hidden border border-neutral-700/50">
+      <div className="flex items-center justify-between w-full px-6 py-2 bg-neutral-800/50 text-zinc-100 border-b border-neutral-700/50">
+        <span className="text-xs lowercase opacity-75">{language}</span>
+        <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
-            className="focus-visible:ring-1"
+            className="focus-visible:ring-1 hover:bg-neutral-700/50 transition-colors"
             onClick={downloadAsFile}
             size="icon"
           >
@@ -98,7 +98,7 @@ const CodeBlock: FC<Props> = memo(({ language, value }) => {
           <Button
             variant="ghost"
             size="icon"
-            className="text-xs focus-visible:ring-1 focus-visible:ring-offset-0"
+            className="text-xs focus-visible:ring-1 focus-visible:ring-offset-0 hover:bg-neutral-700/50 transition-colors"
             onClick={onCopy}
           >
             {isCopied ? (
@@ -119,15 +119,20 @@ const CodeBlock: FC<Props> = memo(({ language, value }) => {
           margin: 0,
           width: '100%',
           background: 'transparent',
-          padding: '1.5rem 1rem'
+          padding: '1.5rem 1rem',
+          fontSize: '0.9rem'
         }}
         lineNumberStyle={{
-          userSelect: 'none'
+          userSelect: 'none',
+          opacity: 0.5,
+          paddingRight: '1rem',
+          borderRight: '1px solid rgba(115, 115, 115, 0.2)'
         }}
         codeTagProps={{
           style: {
             fontSize: '0.9rem',
-            fontFamily: 'var(--font-mono)'
+            fontFamily: 'var(--font-mono)',
+            lineHeight: '1.7'
           }
         }}
       >
