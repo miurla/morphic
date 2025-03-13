@@ -5,6 +5,22 @@
       "name": "Lucid-Fast",
       "provider": "Lucid",
       "providerId": "openai-compatible",
+      "enabled": false,
+      "toolCallType": "manual"
+    },
+    {
+      "id": "qwen2-57b-a14b-instruct",
+      "name": "Lucid-Fast",
+      "provider": "Lucid",
+      "providerId": "openai-compatible",
+      "enabled": true,
+      "toolCallType": "manual"
+    },
+    {
+      "id": "deepseek-v3",
+      "name": "Lucid-Pro",
+      "provider": "Lucid",
+      "providerId": "openai-compatible",
       "enabled": true,
       "toolCallType": "manual"
     },
@@ -26,11 +42,11 @@
     },
     {
       "id": "gpt-4o-mini",
-      "name": "GPT-4o mini",
+      "name": "GPT-4o",
       "provider": "OpenAI",
       "providerId": "openai",
-      "enabled": false,
-      "toolCallType": "native"
+      "enabled": true,
+      "toolCallType": "manual"
     },
     {
       "id": "claude-3-7-sonnet-20250219",

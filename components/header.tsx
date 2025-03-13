@@ -13,8 +13,8 @@ export const Header: React.FC = async () => {
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <IconLogo className={cn('w-6 h-6 text-primary')} />
-          <span className="font-semibold text-lg tracking-tight">
-            Lucid Search
+          <span className="font-semibold text-lg tracking-tight text-blue-400">
+            Lucid
           </span>
         </a>
       </div>

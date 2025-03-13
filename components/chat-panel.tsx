@@ -7,6 +7,7 @@ import { ArrowUp, MessageCirclePlus, Square } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
+import { TypeAnimation } from 'react-type-animation'
 import { EmptyScreen } from './empty-screen'
 import { ModelSelector } from './model-selector'
 import { SearchModeToggle } from './search-mode-toggle'
@@ -82,8 +83,15 @@ export function ChatPanel({
       )}
     >
       {messages.length === 0 && (
-        <div className="mb-8">
+        <div className="mb-8 flex items-center gap-2">
           <IconLogo className="size-12 text-muted-foreground" />
+          <TypeAnimation
+            sequence={['Thinking While Retriving...']}
+            wrapper="h2"
+            cursor={true}
+            repeat={0}
+            className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600 font-semibold text-3xl"
+          />
         </div>
       )}
       <form
@@ -129,7 +137,6 @@ export function ChatPanel({
             onFocus={() => setShowEmptyScreen(true)}
             onBlur={() => setShowEmptyScreen(false)}
           />
-
           {/* Bottom menu area */}
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">

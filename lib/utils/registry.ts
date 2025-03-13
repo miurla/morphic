@@ -4,7 +4,7 @@ import { deepseek } from '@ai-sdk/deepseek'
 import { createFireworks, fireworks } from '@ai-sdk/fireworks'
 import { google } from '@ai-sdk/google'
 import { groq } from '@ai-sdk/groq'
-import { createOpenAI, openai } from '@ai-sdk/openai'
+import { createOpenAI } from '@ai-sdk/openai'
 import { xai } from '@ai-sdk/xai'
 import {
   experimental_createProviderRegistry as createProviderRegistry,
@@ -14,7 +14,10 @@ import {
 import { createOllama } from 'ollama-ai-provider'
 
 export const registry = createProviderRegistry({
-  openai,
+  openai: createOpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    baseURL: process.env.OPENAI_BASE_URL
+  }),
   anthropic,
   google,
   groq,

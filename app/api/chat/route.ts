@@ -7,7 +7,7 @@ import { cookies } from 'next/headers'
 export const maxDuration = 30
 
 const DEFAULT_MODEL: Model = {
-  id: 'Qwen/Qwen2.5-7B-Instruct',
+  id: 'qwen2-57b-a14b-instruct',
   name: 'Lucid-Fast',
   provider: 'Lucid',
   providerId: 'openai-compatible',
