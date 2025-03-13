@@ -45,7 +45,7 @@
       "name": "GPT-4o",
       "provider": "OpenAI",
       "providerId": "openai",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual"
     },
     {
