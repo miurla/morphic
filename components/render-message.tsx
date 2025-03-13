@@ -103,60 +103,59 @@ export function RenderMessage({
     return <UserMessage message={message.content} />
   }
 
-  if (message.toolInvocations?.length) {
-    return (
-      <>
-        {message.toolInvocations.map(tool => (
-          <ToolSection
-            key={tool.toolCallId}
-            tool={tool}
-            isOpen={getIsOpen(messageId)}
-            onOpenChange={open => onOpenChange(messageId, open)}
-          />
-        ))}
-      </>
-    )
-  }
-
+  // New way: Use parts instead of toolInvocations
   return (
     <>
-      {toolData.map(tool => (
-        <ToolSection
-          key={tool.toolCallId}
-          tool={tool}
-          isOpen={getIsOpen(tool.toolCallId)}
-          onOpenChange={open => onOpenChange(tool.toolCallId, open)}
-        />
-      ))}
-      {reasoningResult ? (
-        <ReasoningAnswerSection
-          content={{
-            reasoning: reasoningResult,
-            answer: message.content,
-            time: reasoningTime
-          }}
-          isOpen={getIsOpen(messageId)}
-          onOpenChange={open => onOpenChange(messageId, open)}
-          chatId={chatId}
-        />
-      ) : (
-        <AnswerSection
-          content={message.content}
-          isOpen={getIsOpen(messageId)}
-          onOpenChange={open => onOpenChange(messageId, open)}
-          chatId={chatId}
+      {message.parts?.map((part, index) => {
+        switch (part.type) {
+          case 'tool-invocation':
+            return (
+              <ToolSection
+                key={`${messageId}-tool-${index}`}
+                tool={part.toolInvocation}
+                isOpen={getIsOpen(part.toolInvocation.toolCallId)}
+                onOpenChange={open =>
+                  onOpenChange(part.toolInvocation.toolCallId, open)
+                }
+              />
+            )
+          case 'text':
+            return (
+              <AnswerSection
+                key={`${messageId}-text-${index}`}
+                content={part.text}
+                isOpen={getIsOpen(messageId)}
+                onOpenChange={open => onOpenChange(messageId, open)}
+                chatId={chatId}
+              />
+            )
+          case 'reasoning':
+            return (
+              <ReasoningAnswerSection
+                key={`${messageId}-reasoning-${index}`}
+                content={{
+                  reasoning: part.reasoning,
+                  answer: '', // The text part will handle the answer
+                  time: 0 // If you need reasoning time, you can get it from part.details
+                }}
+                isOpen={getIsOpen(messageId)}
+                onOpenChange={open => onOpenChange(messageId, open)}
+                chatId={chatId}
+              />
+            )
+          // Add other part types as needed
+          default:
+            return null
+        }
+      })}
+      {relatedQuestions && relatedQuestions.length > 0 && (
+        <RelatedQuestions
+          annotations={relatedQuestions as JSONValue[]}
+          onQuerySelect={onQuerySelect}
+          isOpen={getIsOpen(`${messageId}-related`)}
+          onOpenChange={open => onOpenChange(`${messageId}-related`, open)}
         />
       )}
-      {!message.toolInvocations &&
-        relatedQuestions &&
-        relatedQuestions.length > 0 && (
-          <RelatedQuestions
-            annotations={relatedQuestions as JSONValue[]}
-            onQuerySelect={onQuerySelect}
-            isOpen={getIsOpen(`${messageId}-related`)}
-            onOpenChange={open => onOpenChange(`${messageId}-related`, open)}
-          />
-        )}
     </>
   )
 }
