@@ -2,42 +2,56 @@
 
 import { cn } from '@/lib/utils'
 import { getCookie, setCookie } from '@/lib/utils/cookies'
-import { Globe } from 'lucide-react'
+import { ChevronDown, Globe } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Toggle } from './ui/toggle'
+import { Button } from './ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from './ui/dropdown-menu'
 
 export function SearchModeToggle() {
-  const [isSearchMode, setIsSearchMode] = useState(true)
+  const [searchMode, setSearchMode] = useState<'academic' | 'normal'>('normal')
 
   useEffect(() => {
     const savedMode = getCookie('search-mode')
-    if (savedMode === 'false') {
-      setIsSearchMode(false)
+    if (savedMode) {
+      setSearchMode(savedMode as 'academic' | 'normal')
     }
   }, [])
 
-  const handleSearchModeChange = (pressed: boolean) => {
-    setIsSearchMode(pressed)
-    console.log('isSearchMode', isSearchMode)
-    setCookie('search-mode', pressed.toString())
+  const handleSearchModeChange = (mode: 'academic' | 'normal') => {
+    setSearchMode(mode)
+    setCookie('search-mode', mode)
   }
 
   return (
-    <Toggle
-      aria-label="Toggle search mode"
-      pressed={isSearchMode}
-      onPressedChange={handleSearchModeChange}
-      variant="outline"
-      className={cn(
-        'gap-1 px-3 border border-input text-muted-foreground bg-background',
-        'data-[state=on]:bg-accent-blue',
-        'data-[state=on]:text-accent-blue-foreground',
-        'data-[state=on]:border-accent-blue-border',
-        'hover:bg-accent hover:text-accent-foreground rounded-full'
-      )}
-    >
-      <Globe className="size-4" />
-      <span className="text-xs">Search</span>
-    </Toggle>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="default"
+          className={cn(
+            'gap-1 px-3 border border-input text-muted-foreground bg-background rounded-full',
+            'bg-accent-blue text-accent-blue-foreground border-accent-blue-border'
+          )}
+        >
+          <Globe className="size-4" />
+          <span className="text-xs">
+            {searchMode === 'academic' ? 'Academic' : 'Normal'}
+          </span>
+          <ChevronDown className="size-3 ml-1" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => handleSearchModeChange('normal')}>
+          Normal
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleSearchModeChange('academic')}>
+          Academic
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
