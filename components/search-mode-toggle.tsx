@@ -18,6 +18,7 @@ export function SearchModeToggle() {
 
   const handleSearchModeChange = (pressed: boolean) => {
     setIsSearchMode(pressed)
+    console.log('isSearchMode', isSearchMode)
     setCookie('search-mode', pressed.toString())
   }
 

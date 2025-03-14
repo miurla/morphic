@@ -34,6 +34,7 @@ export const Header: React.FC = () => {
           onClose={() => setShowLoginModal(false)}
         />
       </div>
+      {/* <History /> */}
     </header>
   )
 }
