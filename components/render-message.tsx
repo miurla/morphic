@@ -95,6 +95,14 @@ export function RenderMessage({
   // New way: Use parts instead of toolInvocations
   return (
     <>
+      {toolData.map(tool => (
+        <ToolSection
+          key={tool.toolCallId}
+          tool={tool}
+          isOpen={getIsOpen(tool.toolCallId)}
+          onOpenChange={open => onOpenChange(tool.toolCallId, open)}
+        />
+      ))}
       {message.parts?.map((part, index) => {
         switch (part.type) {
           case 'tool-invocation':
