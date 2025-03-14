@@ -77,6 +77,9 @@ export function ChatMessages({
   const showLoading = isLoading && messages[messages.length - 1].role === 'user'
 
   const getIsOpen = (id: string) => {
+    if (id.includes('call')) {
+      return openStates[id] ?? true
+    }
     const baseId = id.endsWith('-related') ? id.slice(0, -8) : id
     const index = messages.findIndex(msg => msg.id === baseId)
     return openStates[id] ?? index >= lastUserIndex
