@@ -1,7 +1,7 @@
 import { JSONValue, Message, ToolInvocation } from 'ai'
 import { useMemo } from 'react'
 import { AnswerSection } from './answer-section'
-import { ReasoningAnswerSection } from './reasoning-answer-section'
+import { ReasoningSection } from './reasoning-section'
 import RelatedQuestions from './related-questions'
 import { ToolSection } from './tool-section'
 import { UserMessage } from './user-message'
@@ -88,17 +88,6 @@ export function RenderMessage({
     return 0
   }, [reasoningAnnotation])
 
-  const reasoningResult = useMemo(() => {
-    if (!reasoningAnnotation) return message.reasoning
-    if (
-      typeof reasoningAnnotation.data === 'object' &&
-      reasoningAnnotation.data !== null
-    ) {
-      return reasoningAnnotation.data.reasoning ?? message.reasoning
-    }
-    return message.reasoning
-  }, [reasoningAnnotation, message.reasoning])
-
   if (message.role === 'user') {
     return <UserMessage message={message.content} />
   }
@@ -131,16 +120,14 @@ export function RenderMessage({
             )
           case 'reasoning':
             return (
-              <ReasoningAnswerSection
+              <ReasoningSection
                 key={`${messageId}-reasoning-${index}`}
                 content={{
                   reasoning: part.reasoning,
-                  answer: '', // The text part will handle the answer
-                  time: 0 // If you need reasoning time, you can get it from part.details
+                  time: reasoningTime
                 }}
                 isOpen={getIsOpen(messageId)}
                 onOpenChange={open => onOpenChange(messageId, open)}
-                chatId={chatId}
               />
             )
           // Add other part types as needed
