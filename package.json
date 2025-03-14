@@ -35,7 +35,7 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "@tailwindcss/typography": "^0.5.12",
     "@upstash/redis": "^1.34.0",
-    "ai": "^4.1.9",
+    "ai": "^4.1.61",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cmdk": "1.0.0",
