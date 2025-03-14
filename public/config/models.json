@@ -13,7 +13,7 @@
       "name": "Lucid-Fast",
       "provider": "Lucid",
       "providerId": "openai-compatible",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual"
     },
     {
@@ -21,7 +21,7 @@
       "name": "Lucid-Pro",
       "provider": "Lucid",
       "providerId": "openai-compatible",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual"
     },
     {
