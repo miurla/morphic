@@ -1,11 +1,11 @@
 {
   "models": [
     {
-      "id": "Qwen/Qwen2.5-7B-Instruct",
+      "id": "gemini-2.0-flash",
       "name": "Lucid-Fast",
       "provider": "Lucid",
-      "providerId": "openai-compatible",
-      "enabled": false,
+      "providerId": "gemini",
+      "enabled": true,
       "toolCallType": "manual"
     },
     {

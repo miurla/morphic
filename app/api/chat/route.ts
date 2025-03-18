@@ -7,10 +7,10 @@ import { cookies } from 'next/headers'
 export const maxDuration = 30
 
 const DEFAULT_MODEL: Model = {
-  id: 'qwen2-57b-a14b-instruct',
+  id: 'gemini-2.0-flash',
   name: 'Lucid-Fast',
   provider: 'Lucid',
-  providerId: 'openai-compatible',
+  providerId: 'gemini',
   enabled: true,
   toolCallType: 'manual'
 }

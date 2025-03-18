@@ -33,7 +33,7 @@ export function SearchModeToggle() {
         <Button
           variant="default"
           className={cn(
-            'gap-1 px-3 border border-input text-muted-foreground bg-background rounded-full',
+            'gap-1 px-3 border border-input text-muted-foreground bg-background rounded-full hover:bg-accent-blue hover:text-accent-blue-foreground hover:border-accent-blue-border',
             'bg-accent-blue text-accent-blue-foreground border-accent-blue-border'
           )}
         >
