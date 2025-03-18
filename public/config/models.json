@@ -106,8 +106,8 @@
       "toolCallType": "manual"
     },
     {
-      "id": "gemini-2.0-pro-exp-02-05",
-      "name": "Gemini 2.0 Pro (Exp)",
+      "id": "gemini-2.0-flash-thinking-exp-01-21",
+      "name": "Gemini 2.0 Pro",
       "provider": "Gemini",
       "providerId": "google",
       "enabled": true,
@@ -119,7 +119,7 @@
       "name": "Gemini 2.0 Flash Thinking (Exp)",
       "provider": "Gemini",
       "providerId": "google",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual",
       "toolCallModel": "gemini-2.0-flash"
     }

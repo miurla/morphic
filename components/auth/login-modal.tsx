@@ -3,12 +3,16 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { createClient } from '@/utils/supabase/client'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 export function LoginModal({
   isOpen,
@@ -19,18 +23,83 @@ export function LoginModal({
 }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [isLogin, setIsLogin] = useState(true)
+  const router = useRouter()
+  const supabase = createClient()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // 这里添加登录逻辑
-    console.log('登录:', email, password)
+    setIsLoading(true)
+
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
+
+        if (error) {
+          toast.error(error.message)
+          return
+        }
+
+        toast.success('Successfully logged in')
+      } else {
+        if (password !== confirmPassword) {
+          toast.error('Passwords do not match')
+          setIsLoading(false)
+          return
+        }
+
+        const { error } = await supabase.auth.signUp({
+          email,
+          password
+        })
+
+        if (error) {
+          toast.error(error.message)
+          return
+        }
+
+        toast.success(
+          'Registration successful. Please check your email for verification'
+        )
+      }
+
+      router.refresh()
+      onClose()
+    } catch (error) {
+      toast.error(
+        isLogin
+          ? 'Login failed. Please try again'
+          : 'Registration failed. Please try again'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const toggleMode = () => {
+    setIsLogin(!isLogin)
+    setEmail('')
+    setPassword('')
+    setConfirmPassword('')
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Login</DialogTitle>
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="text-2xl font-bold">
+            {isLogin ? 'Welcome back' : 'Create an account'}
+          </DialogTitle>
+          <DialogDescription>
+            {isLogin
+              ? 'Enter your email and password to login'
+              : 'Fill in the information below to create your account'}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
@@ -40,8 +109,10 @@ export function LoginModal({
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="Please enter your email"
+              placeholder="Enter your email"
               required
+              disabled={isLoading}
+              className="h-11"
             />
           </div>
           <div className="space-y-2">
@@ -51,15 +122,50 @@ export function LoginModal({
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              placeholder="Please enter your password"
+              placeholder="Enter your password"
               required
+              disabled={isLoading}
+              className="h-11"
             />
           </div>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
+          {!isLogin && (
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your password"
+                required
+                disabled={isLoading}
+                className="h-11"
+              />
+            </div>
+          )}
+          <div className="flex flex-col space-y-4 pt-4">
+            <Button type="submit" disabled={isLoading} className="h-11">
+              {isLoading
+                ? isLogin
+                  ? 'Logging in...'
+                  : 'Creating account...'
+                : isLogin
+                ? 'Log in'
+                : 'Create account'}
             </Button>
-            <Button type="submit">Login</Button>
+            <div className="text-center">
+              <Button
+                type="button"
+                variant="link"
+                onClick={toggleMode}
+                disabled={isLoading}
+                className="text-sm"
+              >
+                {isLogin
+                  ? "Don't have an account? Sign up"
+                  : 'Already have an account? Log in'}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
