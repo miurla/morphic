@@ -10,16 +10,19 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/utils/supabase/client'
+import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 export function LoginModal({
   isOpen,
-  onClose
+  onClose,
+  onSuccess
 }: {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: (user: User) => void
 }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -35,7 +38,7 @@ export function LoginModal({
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password
         })
@@ -46,6 +49,9 @@ export function LoginModal({
         }
 
         toast.success('Successfully logged in')
+        if (data.user && onSuccess) {
+          onSuccess(data.user)
+        }
       } else {
         if (password !== confirmPassword) {
           toast.error('Passwords do not match')

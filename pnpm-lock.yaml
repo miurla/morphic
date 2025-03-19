@@ -80,6 +80,9 @@ importers:
       '@supabase/ssr':
         specifier: ^0.6.1
         version: 0.6.1(@supabase/supabase-js@2.49.1)
+      '@supabase/supabase-js':
+        specifier: ^2.49.1
+        version: 2.49.1
       '@tailwindcss/typography':
         specifier: ^0.5.12
         version: 0.5.16(tailwindcss@3.4.17)

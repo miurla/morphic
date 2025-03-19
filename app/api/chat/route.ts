@@ -10,7 +10,7 @@ const DEFAULT_MODEL: Model = {
   id: 'gemini-2.0-flash',
   name: 'Lucid-Fast',
   provider: 'Lucid',
-  providerId: 'gemini',
+  providerId: 'google',
   enabled: true,
   toolCallType: 'manual'
 }
