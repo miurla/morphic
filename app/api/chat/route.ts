@@ -8,8 +8,8 @@ export const maxDuration = 30
 
 const DEFAULT_MODEL: Model = {
   id: 'gemini-2.0-flash',
-  name: 'Lucid-Fast',
-  provider: 'Lucid',
+  name: 'Gemini 2.0 Flash',
+  provider: 'Gemini',
   providerId: 'google',
   enabled: true,
   toolCallType: 'manual'
