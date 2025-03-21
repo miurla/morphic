@@ -150,6 +150,18 @@ export function LoginModal({
             </div>
           )}
           <div className="flex flex-col space-y-4 pt-4">
+            {!isLogin && (
+              <p className="text-sm text-center text-gray-600">
+                By creating an account, you agree to our{' '}
+                <a href="/terms" className="text-primary hover:underline">
+                  Terms of Service
+                </a>{' '}
+                and{' '}
+                <a href="/privacy" className="text-primary hover:underline">
+                  Privacy Policy
+                </a>
+              </p>
+            )}
             <Button type="submit" disabled={isLoading} className="h-11">
               {isLoading
                 ? isLogin
