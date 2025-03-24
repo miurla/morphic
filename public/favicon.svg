@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- 主搜索圈 - 渐变效果 -->
+    <circle cx="14" cy="14" r="8" stroke="url(#blue-gradient)" stroke-width="3" fill="none">
+        <animate attributeName="stroke-dasharray" from="0 50" to="50 50" dur="1.5s" />
+    </circle>
+    
+    <!-- 搜索手柄 -->
+    <line x1="20.1213" y1="20.1213" x2="26.1213" y2="26.1213" stroke="url(#blue-gradient)" stroke-width="3" stroke-linecap="round">
+        <animate attributeName="stroke-dasharray" from="0 10" to="10 10" dur="1.5s" />
+    </line>
+    
+    <!-- 定义渐变 -->
+    <defs>
+        <linearGradient id="blue-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#2563EB"/>
+            <stop offset="100%" style="stop-color:#60A5FA"/>
+        </linearGradient>
+    </defs>
+</svg> 
