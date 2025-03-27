@@ -56,12 +56,6 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
                   ] as CoreMessage
                 ))
 
-            console.log(
-              'shouldSkipRelatedQuestions',
-              shouldSkipRelatedQuestions,
-              JSON.stringify(result.response.messages)
-            )
-
             await handleStreamFinish({
               responseMessages: result.response.messages,
               originalMessages: messages,

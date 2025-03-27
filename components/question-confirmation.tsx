@@ -5,13 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { ToolInvocation } from 'ai'
-import { ArrowRight, Check, FastForward } from 'lucide-react'
+import { ArrowRight, Check, SkipForward } from 'lucide-react'
 import { useState } from 'react'
 
 interface QuestionConfirmationProps {
   toolInvocation: ToolInvocation
   onConfirm: (toolCallId: string, approved: boolean, response?: any) => void
   pending?: boolean
+  isCompleted?: boolean
 }
 
 interface QuestionOption {
@@ -22,15 +23,23 @@ interface QuestionOption {
 export function QuestionConfirmation({
   toolInvocation,
   onConfirm,
-  pending = false
+  pending = false,
+  isCompleted = false
 }: QuestionConfirmationProps) {
   const { question, options, allowsInput, inputLabel, inputPlaceholder } =
     toolInvocation.args
 
+  // Get result data if available
+  const resultData =
+    toolInvocation.state === 'result' && toolInvocation.result
+      ? toolInvocation.result
+      : null
+
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [inputText, setInputText] = useState('')
-  const [completed, setCompleted] = useState(false)
+  const [completed, setCompleted] = useState(isCompleted)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [skipped, setSkipped] = useState(false)
 
   const isButtonDisabled =
     (selectedOptions.length === 0 &&
@@ -53,6 +62,8 @@ export function QuestionConfirmation({
   }
 
   const handleSkip = () => {
+    setSkipped(true)
+    setCompleted(true)
     onConfirm(toolInvocation.toolCallId, false, { skipped: true })
   }
 
@@ -70,27 +81,67 @@ export function QuestionConfirmation({
     setCompleted(true)
   }
 
+  // Get options to display (from result or local state)
+  const getDisplayedOptions = (): string[] => {
+    if (resultData && Array.isArray(resultData.selectedOptions)) {
+      return resultData.selectedOptions
+    }
+    return selectedOptions
+  }
+
+  // Get input text to display (from result or local state)
+  const getDisplayedInputText = (): string => {
+    if (resultData && resultData.inputText) {
+      return resultData.inputText
+    }
+    return inputText
+  }
+
+  // Check if question was skipped
+  const wasSkipped = (): boolean => {
+    if (resultData && resultData.skipped) {
+      return true
+    }
+    return skipped
+  }
+
   const updatedQuery = () => {
+    // If skipped, show skipped message
+    if (wasSkipped()) {
+      return 'Question skipped'
+    }
+
+    const displayOptions = getDisplayedOptions()
+    const displayInputText = getDisplayedInputText()
+
     const optionsText =
-      selectedOptions.length > 0
-        ? `Selected: ${selectedOptions.join(', ')}`
-        : ''
+      displayOptions.length > 0 ? `Selected: ${displayOptions.join(', ')}` : ''
 
     const inputTextDisplay =
-      inputText.trim() !== '' ? `Input: ${inputText}` : ''
+      displayInputText.trim() !== '' ? `Input: ${displayInputText}` : ''
 
     return [optionsText, inputTextDisplay].filter(Boolean).join(' | ')
   }
 
-  if (completed) {
+  // Show result view if completed or if tool has result state
+  if (completed || toolInvocation.state === 'result') {
+    const isSkipped = wasSkipped()
+
     return (
-      <Card className="p-3 md:p-4 w-full flex justify-between items-center">
-        <div className="flex items-center space-x-2 flex-1 min-w-0">
+      <Card className="p-3 md:p-4 w-full flex flex-col justify-between items-center gap-2">
+        <CardTitle className="text-base font-medium text-muted-foreground w-full">
+          {question}
+        </CardTitle>
+        <div className="flex items-center justify-start gap-1 w-full">
+          {isSkipped ? (
+            <SkipForward size={16} className="text-yellow-500 w-4 h-4" />
+          ) : (
+            <Check size={16} className="text-green-500 w-4 h-4" />
+          )}
           <h5 className="text-muted-foreground text-xs truncate">
             {updatedQuery()}
           </h5>
         </div>
-        <Check size={16} className="text-green-500 w-4 h-4" />
       </Card>
     )
   }
@@ -148,7 +199,7 @@ export function QuestionConfirmation({
               onClick={handleSkip}
               disabled={pending || isGenerating}
             >
-              <FastForward size={16} className="mr-1" />
+              <SkipForward size={16} className="mr-1" />
               Skip
             </Button>
             <Button type="submit" disabled={isButtonDisabled}>
