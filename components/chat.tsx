@@ -29,7 +29,8 @@ export function Chat({
     stop,
     append,
     data,
-    setData
+    setData,
+    addToolResult
   } = useChat({
     initialMessages: savedMessages,
     id: CHAT_ID,
@@ -70,6 +71,7 @@ export function Chat({
         onQuerySelect={onQuerySelect}
         isLoading={isLoading}
         chatId={id}
+        addToolResult={addToolResult}
       />
       <ChatPanel
         input={input}

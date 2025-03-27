@@ -10,6 +10,7 @@ interface ChatMessagesProps {
   onQuerySelect: (query: string) => void
   isLoading: boolean
   chatId?: string
+  addToolResult?: (params: { toolCallId: string; result: any }) => void
 }
 
 export function ChatMessages({
@@ -17,7 +18,8 @@ export function ChatMessages({
   data,
   onQuerySelect,
   isLoading,
-  chatId
+  chatId,
+  addToolResult
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
@@ -103,6 +105,7 @@ export function ChatMessages({
             onOpenChange={handleOpenChange}
             onQuerySelect={onQuerySelect}
             chatId={chatId}
+            addToolResult={addToolResult}
           />
         </div>
       ))}
@@ -113,6 +116,7 @@ export function ChatMessages({
             tool={lastToolData}
             isOpen={getIsOpen(manualToolCallId)}
             onOpenChange={open => handleOpenChange(manualToolCallId, open)}
+            addToolResult={addToolResult}
           />
         ) : (
           <Spinner />
