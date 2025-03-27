@@ -28,14 +28,18 @@ export function ToolSection({
     return (
       <QuestionConfirmation
         toolInvocation={tool}
-        onConfirm={(toolCallId, approved) => {
-          // If approved, return the original args so the question can be displayed
+        onConfirm={(toolCallId, approved, response) => {
+          // If approved, return the response with user selections
           // If declined, return a message that the user declined
           addToolResult({
             toolCallId,
             result: approved
-              ? tool.args
-              : { declined: true, message: 'User declined this question' }
+              ? response
+              : {
+                  declined: true,
+                  skipped: response?.skipped,
+                  message: 'User declined this question'
+                }
           })
         }}
       />
