@@ -11,7 +11,6 @@ import { useState } from 'react'
 interface QuestionConfirmationProps {
   toolInvocation: ToolInvocation
   onConfirm: (toolCallId: string, approved: boolean, response?: any) => void
-  pending?: boolean
   isCompleted?: boolean
 }
 
@@ -23,7 +22,6 @@ interface QuestionOption {
 export function QuestionConfirmation({
   toolInvocation,
   onConfirm,
-  pending = false,
   isCompleted = false
 }: QuestionConfirmationProps) {
   const { question, options, allowsInput, inputLabel, inputPlaceholder } =
@@ -38,14 +36,10 @@ export function QuestionConfirmation({
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [inputText, setInputText] = useState('')
   const [completed, setCompleted] = useState(isCompleted)
-  const [isGenerating, setIsGenerating] = useState(false)
   const [skipped, setSkipped] = useState(false)
 
   const isButtonDisabled =
-    (selectedOptions.length === 0 &&
-      (!allowsInput || inputText.trim() === '')) ||
-    pending ||
-    isGenerating
+    selectedOptions.length === 0 && (!allowsInput || inputText.trim() === '')
 
   const handleOptionChange = (label: string) => {
     setSelectedOptions(prev => {
@@ -69,7 +63,6 @@ export function QuestionConfirmation({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsGenerating(true)
 
     const response = {
       selectedOptions,
@@ -193,12 +186,7 @@ export function QuestionConfirmation({
           )}
 
           <div className="flex justify-end space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSkip}
-              disabled={pending || isGenerating}
-            >
+            <Button type="button" variant="outline" onClick={handleSkip}>
               <SkipForward size={16} className="mr-1" />
               Skip
             </Button>

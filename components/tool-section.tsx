@@ -27,8 +27,6 @@ export function ToolSection({
         <QuestionConfirmation
           toolInvocation={tool}
           onConfirm={(toolCallId, approved, response) => {
-            // If approved, return the response with user selections
-            // If declined, return a message that the user declined
             addToolResult({
               toolCallId,
               result: approved
