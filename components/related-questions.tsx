@@ -74,6 +74,7 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
       header={header}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
+      showIcon={false}
     >
       <div className="flex flex-wrap">
         {Array.isArray(relatedQuestions.items) ? (

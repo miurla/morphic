@@ -1,9 +1,9 @@
 'use client'
 
 import { ToolInvocation } from 'ai'
+import RetrieveSection from './retrieve-section'
 import { SearchSection } from './search-section'
 import { VideoSearchSection } from './video-search-section'
-import RetrieveSection from './retrieve-section'
 
 interface ToolSectionProps {
   tool: ToolInvocation

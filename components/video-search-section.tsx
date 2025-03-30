@@ -1,11 +1,11 @@
 'use client'
 
-import { DefaultSkeleton } from './default-skeleton'
-import { Section, ToolArgsSection } from './section'
 import type { SerperSearchResults } from '@/lib/types'
 import { ToolInvocation } from 'ai'
-import { VideoSearchResults } from './video-search-results'
 import { CollapsibleMessage } from './collapsible-message'
+import { DefaultSkeleton } from './default-skeleton'
+import { Section, ToolArgsSection } from './section'
+import { VideoSearchResults } from './video-search-results'
 
 interface VideoSearchSectionProps {
   tool: ToolInvocation
@@ -32,6 +32,7 @@ export function VideoSearchSection({
       header={header}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
+      showIcon={false}
     >
       {!isLoading && searchResults ? (
         <Section title="Videos">
