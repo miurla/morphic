@@ -33,16 +33,17 @@ export function CollapsibleMessage({
 
   return (
     <div className="flex gap-3">
-      <div className="relative flex flex-col items-center">
-        <div className={cn('mt-[10px] w-5', role === 'assistant' && 'mt-4')}>
-          {showIcon &&
-            (role === 'user' ? (
+      {showIcon && (
+        <div className="relative flex flex-col items-center">
+          <div className={cn('mt-[10px] w-5', role === 'assistant' && 'mt-4')}>
+            {role === 'user' ? (
               <UserCircle2 size={20} className="text-muted-foreground" />
             ) : (
               <IconLogo className="size-5" />
-            ))}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {isCollapsible ? (
         <div
