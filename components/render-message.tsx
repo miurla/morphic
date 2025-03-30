@@ -104,6 +104,9 @@ export function RenderMessage({
         />
       ))}
       {message.parts?.map((part, index) => {
+        // Check if this is the last part in the array
+        const isLastPart = index === (message.parts?.length ?? 0) - 1
+
         switch (part.type) {
           case 'tool-invocation':
             return (
@@ -117,6 +120,7 @@ export function RenderMessage({
               />
             )
           case 'text':
+            // Only show actions if this is the last part and it's a text part
             return (
               <AnswerSection
                 key={`${messageId}-text-${index}`}
@@ -124,6 +128,7 @@ export function RenderMessage({
                 isOpen={getIsOpen(messageId)}
                 onOpenChange={open => onOpenChange(messageId, open)}
                 chatId={chatId}
+                showActions={isLastPart}
               />
             )
           case 'reasoning':
