@@ -152,6 +152,14 @@
       "toolCallType": "native"
     },
     {
+      "id": "grok-3-beta",
+      "name": "Grok 3 Beta",
+      "provider": "xAI",
+      "providerId": "xai",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
       "id": "<OPENAI_COMPATIBLE_MODEL>",
       "name": "<OPENAI_COMPATIBLE_MODEL>",
       "provider": "OpenAI Compatible",
