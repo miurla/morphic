@@ -43,6 +43,7 @@ export function AnswerSection({
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       showBorder={false}
+      showIcon={false}
     >
       {message}
     </CollapsibleMessage>
