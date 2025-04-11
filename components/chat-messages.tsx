@@ -27,13 +27,26 @@ export function ChatMessages({
 
   // Scroll to bottom function
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'instant' })
+    messagesEndRef.current?.scrollIntoView({
+      behavior: messages.length > 5 ? 'instant' : 'smooth'
+    })
   }
 
-  // Scroll to bottom on mount and when messages change
+  // Scroll to bottom on mount and when messages change or during streaming
   useEffect(() => {
     scrollToBottom()
-  }, [])
+
+    // Set up interval for continuous scrolling during streaming
+    let intervalId: ReturnType<typeof setInterval> | undefined
+
+    if (isLoading && messages[messages.length - 1]?.role === 'user') {
+      intervalId = setInterval(scrollToBottom, 100)
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [messages.length, isLoading, messages])
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1]
