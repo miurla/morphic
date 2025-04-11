@@ -92,6 +92,15 @@
       "toolCallModel": "accounts/fireworks/models/llama-v3p1-8b-instruct"
     },
     {
+      "id": "accounts/fireworks/models/llama4-maverick-instruct-basic",
+      "name": "Llama 4 Maverick",
+      "provider": "Fireworks",
+      "providerId": "fireworks",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "accounts/fireworks/models/llama-v3p1-8b-instruct"
+    },
+    {
       "id": "deepseek-reasoner",
       "name": "DeepSeek R1",
       "provider": "DeepSeek",
