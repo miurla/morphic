@@ -92,6 +92,15 @@
       "toolCallModel": "accounts/fireworks/models/llama-v3p1-8b-instruct"
     },
     {
+      "id": "accounts/fireworks/models/llama4-maverick-instruct-basic",
+      "name": "Llama 4 Maverick",
+      "provider": "Fireworks",
+      "providerId": "fireworks",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "accounts/fireworks/models/llama-v3p1-8b-instruct"
+    },
+    {
       "id": "deepseek-reasoner",
       "name": "DeepSeek R1",
       "provider": "DeepSeek",
@@ -116,6 +125,14 @@
       "enabled": true,
       "toolCallType": "manual",
       "toolCallModel": "llama-3.1-8b-instant"
+    },
+    {
+      "id": "meta-llama/llama-4-maverick-17b-128e-instruct",
+      "name": "Llama 4 Maverick 17B",
+      "provider": "Groq",
+      "providerId": "groq",
+      "enabled": true,
+      "toolCallType": "native"
     },
     {
       "id": "deepseek-r1",
@@ -146,6 +163,14 @@
     {
       "id": "grok-2-vision-1212",
       "name": "Grok 2 Vision",
+      "provider": "xAI",
+      "providerId": "xai",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "grok-3-beta",
+      "name": "Grok 3 Beta",
       "provider": "xAI",
       "providerId": "xai",
       "enabled": true,
