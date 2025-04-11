@@ -2,7 +2,8 @@
 
 import { CHAT_ID } from '@/lib/constants'
 import { Model } from '@/lib/types/models'
-import { Message, useChat } from 'ai/react'
+import { useChat } from '@ai-sdk/react'
+import { Message } from 'ai/react'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { ChatMessages } from './chat-messages'
@@ -24,7 +25,7 @@ export function Chat({
     input,
     handleInputChange,
     handleSubmit,
-    isLoading,
+    status,
     setMessages,
     stop,
     append,
@@ -45,6 +46,8 @@ export function Chat({
     sendExtraMessageFields: false, // Disable extra message fields,
     experimental_throttle: 100
   })
+
+  const isLoading = status === 'submitted' || status === 'streaming'
 
   useEffect(() => {
     setMessages(savedMessages)
