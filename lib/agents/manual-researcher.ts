@@ -61,7 +61,7 @@ export function manualResearcher({
       temperature: 0.6,
       topP: 1,
       topK: 40,
-      experimental_transform: smoothStream({ chunking: 'word' })
+      experimental_transform: smoothStream()
     }
   } catch (error) {
     console.error('Error in manualResearcher:', error)

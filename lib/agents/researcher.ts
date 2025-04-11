@@ -50,7 +50,7 @@ export function researcher({
         ? ['search', 'retrieve', 'videoSearch']
         : [],
       maxSteps: searchMode ? 5 : 1,
-      experimental_transform: smoothStream({ chunking: 'word' })
+      experimental_transform: smoothStream()
     }
   } catch (error) {
     console.error('Error in chatResearcher:', error)
