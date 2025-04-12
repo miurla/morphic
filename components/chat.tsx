@@ -2,7 +2,8 @@
 
 import { CHAT_ID } from '@/lib/constants'
 import { Model } from '@/lib/types/models'
-import { Message, useChat } from 'ai/react'
+import { useChat } from '@ai-sdk/react'
+import { Message } from 'ai/react'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { ChatMessages } from './chat-messages'
@@ -24,7 +25,7 @@ export function Chat({
     input,
     handleInputChange,
     handleSubmit,
-    isLoading,
+    status,
     setMessages,
     stop,
     append,
@@ -43,8 +44,11 @@ export function Chat({
     onError: error => {
       toast.error(`Error in chat: ${error.message}`)
     },
-    sendExtraMessageFields: false // Disable extra message fields
+    sendExtraMessageFields: false, // Disable extra message fields,
+    experimental_throttle: 100
   })
+
+  const isLoading = status === 'submitted' || status === 'streaming'
 
   useEffect(() => {
     setMessages(savedMessages)
@@ -64,7 +68,7 @@ export function Chat({
   }
 
   return (
-    <div className="flex flex-col w-full max-w-3xl pt-14 pb-60 mx-auto stretch">
+    <div className="flex flex-col w-full max-w-3xl pt-14 pb-32 mx-auto stretch">
       <ChatMessages
         messages={messages}
         data={data}

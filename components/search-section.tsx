@@ -47,6 +47,7 @@ export function SearchSection({
       header={header}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
+      showIcon={false}
     >
       {searchResults &&
         searchResults.images &&

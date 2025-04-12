@@ -61,7 +61,7 @@ export function researcher({
         ? ['search', 'retrieve', 'videoSearch', 'ask_question']
         : [],
       maxSteps: searchMode ? 5 : 1,
-      experimental_transform: smoothStream({ chunking: 'word' })
+      experimental_transform: smoothStream()
     }
   } catch (error) {
     console.error('Error in chatResearcher:', error)

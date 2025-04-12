@@ -82,15 +82,18 @@ export function ChatPanel({
       )}
     >
       {messages.length === 0 && (
-        <div className="mb-8">
+        <div className="mb-10 flex flex-col items-center gap-4">
           <IconLogo className="size-12 text-muted-foreground" />
+          <p className="text-center text-3xl font-semibold">
+            How can I help you today?
+          </p>
         </div>
       )}
       <form
         onSubmit={handleSubmit}
         className={cn(
           'max-w-3xl w-full mx-auto',
-          messages.length > 0 ? 'px-2 py-4' : 'px-6'
+          messages.length > 0 ? 'px-2 pb-4' : 'px-6'
         )}
       >
         <div className="relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input">
@@ -105,7 +108,7 @@ export function ChatPanel({
             placeholder="Ask a question..."
             spellCheck={false}
             value={input}
-            className="resize-none w-full min-h-12 bg-transparent border-0 px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="resize-none w-full min-h-12 bg-transparent border-0 p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             onChange={e => {
               handleInputChange(e)
               setShowEmptyScreen(e.target.value.length === 0)

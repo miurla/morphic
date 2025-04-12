@@ -32,17 +32,18 @@ export function CollapsibleMessage({
   const content = <div className="py-2 flex-1">{children}</div>
 
   return (
-    <div className="flex gap-3">
-      <div className="relative flex flex-col items-center">
-        <div className={cn('mt-[10px] w-5', role === 'assistant' && 'mt-4')}>
-          {showIcon &&
-            (role === 'user' ? (
+    <div className="flex">
+      {showIcon && (
+        <div className="relative flex flex-col items-center">
+          <div className={cn('mt-[10px] w-5', role === 'assistant' && 'mt-4')}>
+            {role === 'user' ? (
               <UserCircle2 size={20} className="text-muted-foreground" />
             ) : (
               <IconLogo className="size-5" />
-            ))}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {isCollapsible ? (
         <div
