@@ -60,6 +60,21 @@ export function ChatPanel({
     router.push('/')
   }
 
+  const isToolInvocationInProgress = () => {
+    if (!messages.length) return false
+
+    const lastMessage = messages[messages.length - 1]
+    if (lastMessage.role !== 'assistant' || !lastMessage.parts) return false
+
+    const parts = lastMessage.parts
+    const lastPart = parts[parts.length - 1]
+
+    return (
+      lastPart?.type === 'tool-invocation' &&
+      lastPart?.toolInvocation?.state === 'call'
+    )
+  }
+
   // if query is not empty, submit the query
   useEffect(() => {
     if (isFirstRender.current && query && query.trim().length > 0) {
@@ -108,6 +123,7 @@ export function ChatPanel({
             placeholder="Ask a question..."
             spellCheck={false}
             value={input}
+            disabled={isLoading || isToolInvocationInProgress()}
             className="resize-none w-full min-h-12 bg-transparent border-0 p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             onChange={e => {
               handleInputChange(e)
@@ -147,7 +163,7 @@ export function ChatPanel({
                   onClick={handleNewChat}
                   className="shrink-0 rounded-full group"
                   type="button"
-                  disabled={isLoading}
+                  disabled={isLoading || isToolInvocationInProgress()}
                 >
                   <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
                 </Button>
@@ -157,7 +173,10 @@ export function ChatPanel({
                 size={'icon'}
                 variant={'outline'}
                 className={cn(isLoading && 'animate-pulse', 'rounded-full')}
-                disabled={input.length === 0 && !isLoading}
+                disabled={
+                  (input.length === 0 && !isLoading) ||
+                  isToolInvocationInProgress()
+                }
                 onClick={isLoading ? stop : undefined}
               >
                 {isLoading ? <Square size={20} /> : <ArrowUp size={20} />}

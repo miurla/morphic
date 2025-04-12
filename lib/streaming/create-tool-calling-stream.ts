@@ -1,6 +1,7 @@
 import { researcher } from '@/lib/agents/researcher'
 import {
   convertToCoreMessages,
+  CoreMessage,
   createDataStreamResponse,
   DataStreamWriter,
   streamText
@@ -9,6 +10,19 @@ import { getMaxAllowedTokens, truncateMessages } from '../utils/context-window'
 import { isReasoningModel } from '../utils/registry'
 import { handleStreamFinish } from './handle-stream-finish'
 import { BaseStreamConfig } from './types'
+
+// Function to check if a message contains ask_question tool invocation
+function containsAskQuestionTool(message: CoreMessage) {
+  // For CoreMessage format, we check the content array
+  if (message.role !== 'assistant' || !Array.isArray(message.content)) {
+    return false
+  }
+
+  // Check if any content item is a tool-call with ask_question tool
+  return message.content.some(
+    item => item.type === 'tool-call' && item.toolName === 'ask_question'
+  )
+}
 
 export function createToolCallingStreamResponse(config: BaseStreamConfig) {
   return createDataStreamResponse({
@@ -32,13 +46,23 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
         const result = streamText({
           ...researcherConfig,
           onFinish: async result => {
+            // Check if the last message contains an ask_question tool invocation
+            const shouldSkipRelatedQuestions =
+              isReasoningModel(modelId) ||
+              (result.response.messages.length > 0 &&
+                containsAskQuestionTool(
+                  result.response.messages[
+                    result.response.messages.length - 1
+                  ] as CoreMessage
+                ))
+
             await handleStreamFinish({
               responseMessages: result.response.messages,
               originalMessages: messages,
               model: modelId,
               chatId,
               dataStream,
-              skipRelatedQuestions: isReasoningModel(modelId)
+              skipRelatedQuestions: shouldSkipRelatedQuestions
             })
           }
         })
@@ -50,7 +74,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
       }
     },
     onError: error => {
-      console.error('Stream error:', error)
+      // console.error('Stream error:', error)
       return error instanceof Error ? error.message : String(error)
     }
   })

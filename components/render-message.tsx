@@ -13,6 +13,7 @@ interface RenderMessageProps {
   onOpenChange: (id: string, open: boolean) => void
   onQuerySelect: (query: string) => void
   chatId?: string
+  addToolResult?: (params: { toolCallId: string; result: any }) => void
 }
 
 export function RenderMessage({
@@ -21,7 +22,8 @@ export function RenderMessage({
   getIsOpen,
   onOpenChange,
   onQuerySelect,
-  chatId
+  chatId,
+  addToolResult
 }: RenderMessageProps) {
   const relatedQuestions = useMemo(
     () =>
@@ -101,6 +103,7 @@ export function RenderMessage({
           tool={tool}
           isOpen={getIsOpen(tool.toolCallId)}
           onOpenChange={open => onOpenChange(tool.toolCallId, open)}
+          addToolResult={addToolResult}
         />
       ))}
       {message.parts?.map((part, index) => {
@@ -117,6 +120,7 @@ export function RenderMessage({
                 onOpenChange={open =>
                   onOpenChange(part.toolInvocation.toolCallId, open)
                 }
+                addToolResult={addToolResult}
               />
             )
           case 'text':

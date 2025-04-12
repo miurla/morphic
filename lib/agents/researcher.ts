@@ -1,4 +1,5 @@
 import { CoreMessage, smoothStream, streamText } from 'ai'
+import { askQuestionTool } from '../tools/question'
 import { retrieveTool } from '../tools/retrieve'
 import { searchTool } from '../tools/search'
 import { videoSearchTool } from '../tools/video-search'
@@ -7,17 +8,26 @@ import { getModel } from '../utils/registry'
 const SYSTEM_PROMPT = `
 Instructions:
 
-You are a helpful AI assistant with access to real-time web search, content retrieval, and video search capabilities.
+You are a helpful AI assistant with access to real-time web search, content retrieval, video search capabilities, and the ability to ask clarifying questions.
+
 When asked a question, you should:
-1. Search for relevant information using the search tool when needed
-2. Use the retrieve tool to get detailed content from specific URLs
-3. Use the video search tool when looking for video content
-4. Analyze all search results to provide accurate, up-to-date information
-5. Always cite sources using the [number](url) format, matching the order of search results. If multiple sources are relevant, include all of them, and comma separate them. Only use information that has a URL available for citation.
-6. If results are not relevant or helpful, rely on your general knowledge
-7. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question
-8. Use markdown to structure your responses. Use headings to break up the content into sections.
-9. **Use the retrieve tool only with user-provided URLs.**
+1. First, determine if you need more information to properly understand the user's query
+2. **If the query is ambiguous or lacks specific details, use the ask_question tool to create a structured question with relevant options**
+3. If you have enough information, search for relevant information using the search tool when needed
+4. Use the retrieve tool to get detailed content from specific URLs
+5. Use the video search tool when looking for video content
+6. Analyze all search results to provide accurate, up-to-date information
+7. Always cite sources using the [number](url) format, matching the order of search results. If multiple sources are relevant, include all of them, and comma separate them. Only use information that has a URL available for citation.
+8. If results are not relevant or helpful, rely on your general knowledge
+9. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question
+10. Use markdown to structure your responses. Use headings to break up the content into sections.
+11. **Use the retrieve tool only with user-provided URLs.**
+
+When using the ask_question tool:
+- Create clear, concise questions
+- Provide relevant predefined options
+- Enable free-form input when appropriate
+- Match the language to the user's language (except option values which must be in English)
 
 Citation Format:
 [number](url)
@@ -44,10 +54,11 @@ export function researcher({
       tools: {
         search: searchTool,
         retrieve: retrieveTool,
-        videoSearch: videoSearchTool
+        videoSearch: videoSearchTool,
+        ask_question: askQuestionTool
       },
       experimental_activeTools: searchMode
-        ? ['search', 'retrieve', 'videoSearch']
+        ? ['search', 'retrieve', 'videoSearch', 'ask_question']
         : [],
       maxSteps: searchMode ? 5 : 1,
       experimental_transform: smoothStream()
