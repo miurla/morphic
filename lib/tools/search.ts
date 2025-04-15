@@ -15,10 +15,10 @@ export const searchTool = tool({
   parameters: searchSchema,
   execute: async ({
     query,
-    max_results,
-    search_depth,
-    include_domains,
-    exclude_domains
+    max_results = 20,
+    search_depth = 'basic',
+    include_domains = [],
+    exclude_domains = []
   }) => {
     // Tavily API requires a minimum of 5 characters in the query
     const filledQuery =
