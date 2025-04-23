@@ -1,6 +1,24 @@
 {
   "models": [
     {
+      "id": "gemma3:27b",
+      "name": "Gemma 3 - 27B",
+      "provider": "Ollama",
+      "providerId": "ollama",
+      "enabled": true,
+      "toolCallType": "manual",
+      "toolCallModel": "phi4"
+    },
+    {
+      "id": "<OLLAMA_MODEL_ID>",
+      "name": "<OLLAMA_MODEL_NAME>",
+      "provider": "Ollama",
+      "providerId": "ollama",
+      "enabled": false,
+      "toolCallType": "manual",
+      "toolCallModel": "<OLLAMA_MODEL_ID>"
+    },
+    {
       "id": "gpt-4.1",
       "name": "GPT-4.1",
       "provider": "OpenAI",
@@ -29,7 +47,7 @@
       "name": "o3 mini",
       "provider": "OpenAI",
       "providerId": "openai",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
     },
     {
@@ -37,7 +55,7 @@
       "name": "GPT-4o",
       "provider": "OpenAI",
       "providerId": "openai",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
     },
     {
@@ -45,7 +63,7 @@
       "name": "GPT-4o mini",
       "provider": "OpenAI",
       "providerId": "openai",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
     },
     {
@@ -53,7 +71,7 @@
       "name": "Claude 3.7 Sonnet",
       "provider": "Anthropic",
       "providerId": "anthropic",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
     },
     {
@@ -61,7 +79,7 @@
       "name": "Claude 3.5 Sonnet",
       "provider": "Anthropic",
       "providerId": "anthropic",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
     },
     {
@@ -69,7 +87,7 @@
       "name": "Claude 3.5 Haiku",
       "provider": "Anthropic",
       "providerId": "anthropic",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
     },
     {
@@ -77,7 +95,7 @@
       "name": "<AZURE_DEPLOYMENT_NAME>",
       "provider": "Azure",
       "providerId": "azure",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
     },
     {
@@ -85,7 +103,7 @@
       "name": "Gemini 2.0 Flash",
       "provider": "Google Generative AI",
       "providerId": "google",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual"
     },
     {
@@ -93,7 +111,7 @@
       "name": "Gemini 2.0 Flash Thinking (Exp)",
       "provider": "Google Generative AI",
       "providerId": "google",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual",
       "toolCallModel": "gemini-2.0-flash"
     },
@@ -102,7 +120,7 @@
       "name": "Gemini 2.5 Pro (Exp)",
       "provider": "Google Generative AI",
       "providerId": "google",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual",
       "toolCallModel": "gemini-2.0-flash"
     },
@@ -111,7 +129,7 @@
       "name": "DeepSeek R1",
       "provider": "Fireworks",
       "providerId": "fireworks",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual",
       "toolCallModel": "accounts/fireworks/models/llama-v3p1-8b-instruct"
     },
@@ -120,7 +138,7 @@
       "name": "Llama 4 Maverick",
       "provider": "Fireworks",
       "providerId": "fireworks",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual",
       "toolCallModel": "accounts/fireworks/models/llama-v3p1-8b-instruct"
     },
@@ -129,7 +147,7 @@
       "name": "DeepSeek R1",
       "provider": "DeepSeek",
       "providerId": "deepseek",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual",
       "toolCallModel": "deepseek-chat"
     },
@@ -138,7 +156,7 @@
       "name": "DeepSeek V3",
       "provider": "DeepSeek",
       "providerId": "deepseek",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual"
     },
     {
@@ -146,7 +164,7 @@
       "name": "DeepSeek R1 Distill Llama 70B",
       "provider": "Groq",
       "providerId": "groq",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual",
       "toolCallModel": "llama-3.1-8b-instant"
     },
@@ -155,33 +173,15 @@
       "name": "Llama 4 Maverick 17B",
       "provider": "Groq",
       "providerId": "groq",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
-    },
-    {
-      "id": "deepseek-r1",
-      "name": "DeepSeek R1",
-      "provider": "Ollama",
-      "providerId": "ollama",
-      "enabled": true,
-      "toolCallType": "manual",
-      "toolCallModel": "phi4"
-    },
-    {
-      "id": "<OLLAMA_MODEL_ID>",
-      "name": "<OLLAMA_MODEL_NAME>",
-      "provider": "Ollama",
-      "providerId": "ollama",
-      "enabled": true,
-      "toolCallType": "manual",
-      "toolCallModel": "<OLLAMA_MODEL_ID>"
     },
     {
       "id": "grok-2-1212",
       "name": "Grok 2",
       "provider": "xAI",
       "providerId": "xai",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
     },
     {
@@ -189,7 +189,7 @@
       "name": "Grok 2 Vision",
       "provider": "xAI",
       "providerId": "xai",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
     },
     {
@@ -197,7 +197,7 @@
       "name": "Grok 3 Beta",
       "provider": "xAI",
       "providerId": "xai",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
     },
     {
@@ -205,7 +205,7 @@
       "name": "<OPENAI_COMPATIBLE_MODEL>",
       "provider": "OpenAI Compatible",
       "providerId": "openai-compatible",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "native"
     }
   ]

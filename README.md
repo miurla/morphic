@@ -131,7 +131,8 @@ For optional features configuration (Redis, SearXNG, etc.), see [CONFIGURATION.m
 #### Using Bun
 
 ```bash
-bun dev
+# bun dev
+NEXT_PUBLIC_BASE_URL=http://localhost:3001 bun dev --port 3001 # this will specifiy the exact url that you want to use. 
 ```
 
 #### Using Docker

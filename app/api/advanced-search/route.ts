@@ -1,15 +1,14 @@
-import { NextResponse } from 'next/server'
+import {
+  SearXNGResponse,
+  SearXNGResult,
+  SearXNGSearchResults,
+  SearchResultItem
+} from '@/lib/types'
+import { Redis } from '@upstash/redis'
 import http from 'http'
 import https from 'https'
 import { JSDOM, VirtualConsole } from 'jsdom'
-import {
-  SearXNGSearchResults,
-  SearXNGResponse,
-  SearXNGResult,
-  SearchResultItem
-} from '@/lib/types'
-import { Agent } from 'http'
-import { Redis } from '@upstash/redis'
+import { NextResponse } from 'next/server'
 import { createClient } from 'redis'
 
 /**
@@ -17,6 +16,7 @@ import { createClient } from 'redis'
  * Increasing this value can improve result quality but may impact performance.
  * In advanced search mode, this is multiplied by SEARXNG_CRAWL_MULTIPLIER for initial fetching.
  */
+// console.log('[SEARXNG_SECRET]',process.env.SEARXNG_SECRET)
 const SEARXNG_MAX_RESULTS = Math.max(
   10,
   Math.min(100, parseInt(process.env.SEARXNG_MAX_RESULTS || '50', 10))
