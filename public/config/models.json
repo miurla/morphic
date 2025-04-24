@@ -207,6 +207,38 @@
       "providerId": "openai-compatible",
       "enabled": false,
       "toolCallType": "native"
+    },
+    {
+      "id": "meta-llama/llama-3-3-70b-instruct",
+      "name": "Llama 3 3B Instruct (RITS)",
+      "provider": "OpenAI Compatible",
+      "providerId": "openai-compatible",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "meta-llama/llama-4-mvk-17b-128e-fp8",
+      "name": "Llama 4 MVK 17B FP8 (RITS)",
+      "provider": "OpenAI Compatible",
+      "providerId": "openai-compatible",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "qwen2-5-72b-instruct",
+      "name": "Qwen2 5B Instruct (RITS)",
+      "provider": "OpenAI Compatible",
+      "providerId": "openai-compatible",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "deepseek-v3",
+      "name": "DeepSeek v3 (RITS)",
+      "provider": "OpenAI Compatible",
+      "providerId": "openai-compatible",
+      "enabled": true,
+      "toolCallType": "native"
     }
   ]
 }

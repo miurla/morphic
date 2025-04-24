@@ -12,6 +12,51 @@ import {
   wrapLanguageModel
 } from 'ai'
 import { createOllama } from 'ollama-ai-provider'
+// import '../debug/request-logger'; // runs once per server start
+
+// 1️⃣ Define your per-model paths (note the leading “/” on each):
+const RITS_MODEL_PATHS: Record<string, string> = {
+  // key ⟶ value
+  "meta-llama/llama-3-3-70b-instruct":   "/llama-3-3-70b-instruct/v1",
+  "meta-llama/llama-4-mvk-17b-128e-fp8": "/llama-4-mvk-17b-128e-fp8/v1",
+  "qwen2-5-72b-instruct":                "/qwen2-5-72b-instruct/v1",
+  "deepseek-v3":                         "/deepseek-v3/v1"
+};
+
+// ---------- build one provider object ----------
+const openAICompatibleProvider = {
+  languageModel(modelId: string, opts?: any) {
+    const path = RITS_MODEL_PATHS[modelId];
+    if (!path) {
+      throw new Error(`No RITS endpoint configured for "${modelId}"`);
+    }
+
+    const apiKey  = process.env.OPENAI_COMPATIBLE_API_KEY!;
+    const baseURL = `${process.env.OPENAI_COMPATIBLE_API_BASE_URL}${path}`;
+
+    const client = createOpenAI({
+      apiKey,                // ⇒ Authorization: Bearer <key>
+      baseURL,
+
+      /* ▲▲▲ 1. put custom headers here, not in baseOptions */
+      headers: {
+        RITS_API_KEY: apiKey // exact casing RITS expects
+      },
+
+      /* 2. add compatibility flag (safer with non-OpenAI back-end) */
+      compatibility: 'compatible'
+    });
+
+    console.log(
+      `⛳ model: ${modelId}  baseURL: ${baseURL}  header[RITS_API_KEY] set`
+    );
+
+    return client.languageModel(modelId, opts);
+  }
+};
+
+
+
 
 export const registry = createProviderRegistry({
   openai,
@@ -32,12 +77,16 @@ export const registry = createProviderRegistry({
     }),
     languageModel: fireworks
   },
-  'openai-compatible': createOpenAI({
-    apiKey: process.env.OPENAI_COMPATIBLE_API_KEY,
-    baseURL: process.env.OPENAI_COMPATIBLE_API_BASE_URL
-  }),
+  'openai-compatible': openAICompatibleProvider,   // ← the *object*, not a fn
   xai
 })
+
+console.log("✅ has languageModel:",
+            typeof registry.providers['openai-compatible']?.languageModel);
+console.log("🔹 registry.providers keys:", Object.keys(registry.providers));
+console.log("➤ models.json content:", JSON.stringify(registry, null,2));
+console.log("📦 Providers:", Object.keys(registry as any));
+console.log("🔍 RITS_MODEL_PATHS keys:", Object.keys(RITS_MODEL_PATHS));
 
 export function getModel(model: string) {
   const [provider, ...modelNameParts] = model.split(':') ?? []
