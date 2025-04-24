@@ -19,8 +19,8 @@ const RITS_MODEL_PATHS: Record<string, string> = {
   // key ⟶ value
   "meta-llama/llama-3-3-70b-instruct":   "/llama-3-3-70b-instruct/v1",
   "meta-llama/llama-4-mvk-17b-128e-fp8": "/llama-4-mvk-17b-128e-fp8/v1",
-  "qwen2-5-72b-instruct":                "/qwen2-5-72b-instruct/v1",
-  "deepseek-v3":                         "/deepseek-v3/v1"
+  "Qwen/Qwen2.5-72B-Instruct":           "/qwen2-5-72b-instruct/v1",
+  "deepseek-ai/DeepSeek-V3":              "/deepseek-v3/v1"
 };
 
 // ---------- build one provider object ----------

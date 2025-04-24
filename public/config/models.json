@@ -225,7 +225,7 @@
       "toolCallType": "native"
     },
     {
-      "id": "qwen2-5-72b-instruct",
+      "id": "Qwen/Qwen2.5-72B-Instruct",
       "name": "Qwen2 5B Instruct (RITS)",
       "provider": "OpenAI Compatible",
       "providerId": "openai-compatible",
@@ -233,7 +233,7 @@
       "toolCallType": "native"
     },
     {
-      "id": "deepseek-v3",
+      "id": "deepseek-ai/DeepSeek-V3",
       "name": "DeepSeek v3 (RITS)",
       "provider": "OpenAI Compatible",
       "providerId": "openai-compatible",
