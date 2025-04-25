@@ -91,7 +91,8 @@ describe('AnswerSection Component', () => {
 
     const outlineBox = screen.getByTestId('mock-outline-box')
     expect(outlineBox).toBeInTheDocument()
-    expect(outlineBox).toHaveTextContent('1. Option 1\n2. Option 2')
+    expect(outlineBox).toHaveTextContent('1. Option 1')
+    expect(outlineBox).toHaveTextContent('2. Option 2')
     expect(outlineBox).toHaveAttribute('data-thread-id', 'thread-2')
 
     // Verifica se a prop onItemClick foi passada corretamente (o mock do OutlineBox a chama)

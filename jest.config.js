@@ -14,6 +14,16 @@ const customJestConfig = {
   // Use jest-environment-jsdom for simulating DOM environment
   testEnvironment: 'jest-environment-jsdom',
 
+  // Explicitly inject Jest global variables
+  injectGlobals: true,
+
+  // Ignore Playwright tests directory
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/.next/',
+    '<rootDir>/tests/e2e/'
+  ],
+
   // Handle module aliases (this will be automatically configured by next/jest)
   // moduleNameMapper: {
   //   '^@/components/(.*)$': '<rootDir>/components/$1',
@@ -33,7 +43,7 @@ const customJestConfig = {
   // coverageProvider: "v8",
 
   // A preset that is used as a base for Jest's configuration (handles TS via ts-jest)
-  preset: 'ts-jest'
+  preset: 'ts-jest' // Re-enable ts-jest preset explicitly
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
