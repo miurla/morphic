@@ -128,6 +128,34 @@ For optional features configuration (Redis, SearXNG, etc.), see [CONFIGURATION.m
 
 ### 4. Run app locally
 
+#### Start Redis locally: 
+
+install using homebrew on a mac (best way)
+
+Note sometimes you will have issues with writing to the default directory so you need to modfiy the `redis.conf`. 
+```bash
+mkdir -p ~/redisdata
+chmod 700 ~/redisdata
+```
+This ensures you (your user account) own it and can write there.
+
+If you installed via Homebrew, it’s usually at: `/opt/homebrew/etc/redis.conf`. Find the line that starts with: `dir /some/path` and change it to point
+to your new directory: 
+
+```bash
+- dir /var/db/redis
++ dir /Users/yourusername/redisdata
+```
+(Replace /Users/yourusername with the output of echo $HOME.)
+
+Restart Redis so it picks up the new directory: 
+```bash
+# Option A: If you're running Redis as a background service under Homebrew. 
+brew services restart redis
+# Option B: If you plan on launching it manually 
+redis-server /opt/homebrew/etc/redis.conf
+```
+
 #### Using Bun
 
 ```bash
@@ -141,7 +169,7 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3001 bun dev --port 3001 # this will speci
 docker compose up -d
 ```
 
-Visit http://localhost:3000 in your browser.
+Visit http://localhost:3001 in your browser.
 
 ## 🌐 Deploy
 
