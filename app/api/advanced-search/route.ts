@@ -175,6 +175,16 @@ async function advancedSearchXNGSearch(
   maxResults: number = 10,
   searchDepth: 'basic' | 'advanced' = 'advanced',
   includeDomains: string[] = [],
+
+
+
+
+
+
+
+
+
+
   excludeDomains: string[] = []
 ): Promise<SearXNGSearchResults> {
   const apiUrl = process.env.SEARXNG_API_URL

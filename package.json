@@ -7,7 +7,11 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.10",
@@ -67,6 +71,10 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^29.5.14",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^20",
     "@types/react": "^18",
@@ -74,8 +82,11 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "eslint": "^8",
     "eslint-config-next": "^14.2.25",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "ts-jest": "^29.3.2",
     "typescript": "^5"
   }
 }

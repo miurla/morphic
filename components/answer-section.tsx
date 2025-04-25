@@ -1,34 +1,52 @@
 'use client'
 
+import { ChatMessage } from '@/lib/db'
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
 import { BotMessage } from './message'
 import { MessageActions } from './message-actions'
+import OutlineBox from './outline-box'
 
 export type AnswerSectionProps = {
-  content: string
+  message: ChatMessage
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  chatId?: string
+  onOutlineItemClick: (itemText: string, threadId: string) => void
   showActions?: boolean
 }
 
 export function AnswerSection({
-  content,
+  message,
   isOpen,
   onOpenChange,
-  chatId,
-  showActions = true // Default to true for backward compatibility
+  onOutlineItemClick,
+  showActions = true
 }: AnswerSectionProps) {
   const enableShare = process.env.NEXT_PUBLIC_ENABLE_SHARE === 'true'
+  const outlineMarker = '@@outline'
+  let mainContent = message.content
+  let outlineText: string | null = null
 
-  const message = content ? (
+  if (message.content && message.content.includes(outlineMarker)) {
+    const parts = message.content.split(outlineMarker, 2)
+    mainContent = parts[0]
+    outlineText = parts[1].trim()
+  }
+
+  const messageContent = mainContent ? (
     <div className="flex flex-col gap-1">
-      <BotMessage message={content} />
+      <BotMessage message={mainContent} />
+      {outlineText && message.thread_id && (
+        <OutlineBox
+          outlineText={outlineText}
+          threadId={message.thread_id}
+          onItemClick={onOutlineItemClick}
+        />
+      )}
       {showActions && (
         <MessageActions
-          message={content}
-          chatId={chatId}
+          message={message.content}
+          chatId={message.thread_id}
           enableShare={enableShare}
         />
       )}
@@ -36,6 +54,7 @@ export function AnswerSection({
   ) : (
     <DefaultSkeleton />
   )
+
   return (
     <CollapsibleMessage
       role="assistant"
@@ -45,7 +64,7 @@ export function AnswerSection({
       showBorder={false}
       showIcon={false}
     >
-      {message}
+      {messageContent}
     </CollapsibleMessage>
   )
 }

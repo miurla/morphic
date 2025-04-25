@@ -1,4 +1,3 @@
-import { Message } from 'ai' // Usaremos a interface Message do Vercel AI SDK por conveniência
 import Dexie, { Table } from 'dexie'
 
 export interface Chat {
@@ -8,9 +7,14 @@ export interface Chat {
   // Adicione outros metadados do chat aqui se necessário
 }
 
-export interface ChatMessage extends Message {
-  chatId: string // Referência ao Chat (threadId)
-  createdAt?: Date
+export interface ChatMessage {
+  id: string // Unique ID for the message (e.g., UUID)
+  chatId: string // Foreign key linking to the ChatThread
+  role: 'user' | 'assistant' | 'system' | 'function' | 'tool' // Role of the message sender
+  content: string // The actual text content of the message
+  createdAt: Date // Timestamp when the message was created
+  thread_id?: string // Optional: Store the thread_id from the backend response for assistant messages
+  // Potentially add other fields like name, tool_calls, etc. if needed later
 }
 
 export class ChatDB extends Dexie {

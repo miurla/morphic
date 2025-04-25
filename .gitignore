@@ -27,6 +27,11 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
+.env.local
+.env.example
+.env.development
+.env.production
 
 # vercel
 .vercel
@@ -38,4 +43,5 @@ next-env.d.ts
 # cursor
 .cursor
 
-docs/
+/docs
+/external_pydantic

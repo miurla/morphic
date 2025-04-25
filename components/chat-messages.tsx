@@ -1,5 +1,4 @@
 import { ChatMessage } from '@/lib/db'
-import { Message } from 'ai'
 import { useEffect, useRef } from 'react'
 import { RenderMessage } from './render-message'
 import { Spinner } from './ui/spinner'
@@ -7,9 +6,14 @@ import { Spinner } from './ui/spinner'
 interface ChatMessagesProps {
   messages: ChatMessage[]
   isLoading: boolean
+  submitQueryFromOutline: (itemText: string, threadId: string) => Promise<void>
 }
 
-export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
+export function ChatMessages({
+  messages,
+  isLoading,
+  submitQueryFromOutline
+}: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -29,10 +33,8 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
       {messages.map(message => (
         <div key={message.id} className="mb-4 flex flex-col gap-4">
           <RenderMessage
-            message={message as Message}
-            messageId={message.id}
-            getIsOpen={() => true}
-            onOpenChange={() => {}}
+            message={message}
+            submitQueryFromOutline={submitQueryFromOutline}
           />
         </div>
       ))}

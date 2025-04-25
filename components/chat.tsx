@@ -21,7 +21,8 @@ export function Chat({ id, models }: ChatProps) {
     sendMessage,
     clearChat,
     currentChatId,
-    setCurrentChatId
+    setCurrentChatId,
+    submitQueryFromOutline
   } = useCustomChat(id)
 
   useEffect(() => {
@@ -42,7 +43,11 @@ export function Chat({ id, models }: ChatProps) {
 
   return (
     <div className="flex flex-col w-full max-w-3xl pt-14 pb-32 mx-auto stretch">
-      <ChatMessages messages={messages} isLoading={isLoading} />
+      <ChatMessages
+        messages={messages}
+        isLoading={isLoading}
+        submitQueryFromOutline={submitQueryFromOutline}
+      />
       <ChatPanel
         isLoading={isLoading}
         messages={messages}
