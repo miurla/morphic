@@ -1,94 +1,60 @@
 'use client'
 
-import { CHAT_ID } from '@/lib/constants'
+import { useCustomChat } from '@/lib/hooks/useCustomChat'
 import { Model } from '@/lib/types/models'
-import { useChat } from '@ai-sdk/react'
-import { Message } from 'ai/react'
+import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { toast } from 'sonner'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
 
-export function Chat({
-  id,
-  savedMessages = [],
-  query,
-  models
-}: {
+export interface ChatProps {
   id: string
-  savedMessages?: Message[]
-  query?: string
   models?: Model[]
-}) {
+}
+
+export function Chat({ id, models }: ChatProps) {
+  const router = useRouter()
   const {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    status,
-    setMessages,
-    stop,
-    append,
-    data,
-    setData,
-    addToolResult
-  } = useChat({
-    initialMessages: savedMessages,
-    id: CHAT_ID,
-    body: {
-      id
-    },
-    onFinish: () => {
-      window.history.replaceState({}, '', `/search/${id}`)
-    },
-    onError: error => {
-      toast.error(`Error in chat: ${error.message}`)
-    },
-    sendExtraMessageFields: false, // Disable extra message fields,
-    experimental_throttle: 100
-  })
-
-  const isLoading = status === 'submitted' || status === 'streaming'
+    isLoading,
+    error,
+    sendMessage,
+    clearChat,
+    currentChatId,
+    setCurrentChatId
+  } = useCustomChat(id)
 
   useEffect(() => {
-    setMessages(savedMessages)
-  }, [id])
+    if (id === 'new' && currentChatId) {
+      router.replace(`/search/${currentChatId}`, { scroll: false })
+    }
+  }, [currentChatId, id, router])
 
-  const onQuerySelect = (query: string) => {
-    append({
-      role: 'user',
-      content: query
-    })
+  const handleSendMessage = async (input: string) => {
+    if (input.trim()) {
+      await sendMessage(input)
+    }
   }
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setData(undefined) // reset data to clear tool call
-    handleSubmit(e)
+  const handleNewChat = () => {
+    router.push('/search')
   }
 
   return (
     <div className="flex flex-col w-full max-w-3xl pt-14 pb-32 mx-auto stretch">
-      <ChatMessages
-        messages={messages}
-        data={data}
-        onQuerySelect={onQuerySelect}
-        isLoading={isLoading}
-        chatId={id}
-        addToolResult={addToolResult}
-      />
+      <ChatMessages messages={messages} isLoading={isLoading} />
       <ChatPanel
-        input={input}
-        handleInputChange={handleInputChange}
-        handleSubmit={onSubmit}
         isLoading={isLoading}
         messages={messages}
-        setMessages={setMessages}
-        stop={stop}
-        query={query}
-        append={append}
+        onSend={handleSendMessage}
+        onNewChat={handleNewChat}
         models={models}
       />
+      {error && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-red-500 text-white text-center">
+          Error: {error.message}
+        </div>
+      )}
     </div>
   )
 }

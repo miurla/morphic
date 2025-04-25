@@ -1,10 +1,10 @@
 'use client'
 
-import React from 'react'
+import { Chat } from '@/lib/db'
+import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Chat } from '@/lib/types'
-import { cn } from '@/lib/utils'
+import React from 'react'
 
 type HistoryItemProps = {
   chat: Chat
@@ -50,11 +50,12 @@ const formatDateWithTime = (date: Date | string) => {
 
 const HistoryItem: React.FC<HistoryItemProps> = ({ chat }) => {
   const pathname = usePathname()
-  const isActive = pathname === chat.path
+  const chatPath = `/search/${chat.id}`
+  const isActive = pathname === chatPath
 
   return (
     <Link
-      href={chat.path}
+      href={chatPath}
       className={cn(
         'flex flex-col hover:bg-muted cursor-pointer p-2 rounded border',
         isActive ? 'bg-muted/70 border-border' : 'border-transparent'

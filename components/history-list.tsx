@@ -1,33 +1,29 @@
-import React, { cache } from 'react'
-import HistoryItem from './history-item'
-import { Chat } from '@/lib/types'
-import { getChats } from '@/lib/actions/chat'
+'use client'
+
+import { db } from '@/lib/db'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { ClearHistory } from './clear-history'
+import HistoryItem from './history-item'
 
-type HistoryListProps = {
-  userId?: string
-}
-
-const loadChats = cache(async (userId?: string) => {
-  return await getChats(userId)
-})
-
-// Start of Selection
-export async function HistoryList({ userId }: HistoryListProps) {
-  const chats = await loadChats(userId)
+export function HistoryList() {
+  const chats = useLiveQuery(() => db.listChats(), [])
 
   return (
     <div className="flex flex-col flex-1 space-y-3 h-full">
       <div className="flex flex-col space-y-0.5 flex-1 overflow-y-auto">
-        {!chats?.length ? (
+        {chats === undefined && (
           <div className="text-foreground/30 text-sm text-center py-4">
-            No search history
+            Carregando conversas...
           </div>
-        ) : (
-          chats?.map(
-            (chat: Chat) => chat && <HistoryItem key={chat.id} chat={chat} />
-          )
         )}
+        {chats && chats.length === 0 && (
+          <div className="text-foreground/30 text-sm text-center py-4">
+            Nenhuma conversa
+          </div>
+        )}
+        {chats &&
+          chats.length > 0 &&
+          chats.map(chat => <HistoryItem key={chat.id} chat={chat} />)}
       </div>
       <div className="mt-auto">
         <ClearHistory empty={!chats?.length} />

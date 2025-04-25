@@ -15,7 +15,7 @@ export async function generateMetadata(props: {
   }
 
   return {
-    title: chat?.title.toString().slice(0, 50) || 'Search'
+    title: chat?.title.toString().slice(0, 50) || 'Busca'
   }
 }
 

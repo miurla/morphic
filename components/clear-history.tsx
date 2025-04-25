@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useTransition } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +12,8 @@ import {
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { clearChats } from '@/lib/actions/chat'
+import { db } from '@/lib/db'
+import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Spinner } from './ui/spinner'
 
@@ -24,36 +24,48 @@ type ClearHistoryProps = {
 export function ClearHistory({ empty }: ClearHistoryProps) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  const handleClear = async () => {
+    startTransition(async () => {
+      try {
+        const chatsToClear = await db.chats.toArray()
+        for (const chat of chatsToClear) {
+          await db.deleteChat(chat.id)
+        }
+        toast.success('Conversas descartadas')
+        setOpen(false)
+      } catch (error) {
+        console.error('Failed to clear history:', error)
+        toast.error('Falha ao limpar o histórico. Por favor, tente novamente.')
+      }
+    })
+  }
+
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" className="w-full" disabled={empty}>
-          Clear History
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={empty || isPending}
+        >
+          {isPending ? <Spinner /> : 'Limpar conversas'}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+        <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your
-            history and remove your data from our servers.
+            Esta ação não pode ser desfeita. Isso excluirá permanentemente o histórico da sua conversa neste navegador.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             disabled={isPending}
             onClick={event => {
               event.preventDefault()
-              startTransition(async () => {
-                const result = await clearChats()
-                if (result?.error) {
-                  toast.error(result.error)
-                } else {
-                  toast.success('History cleared')
-                }
-                setOpen(false)
-              })
+              handleClear()
             }}
           >
             {isPending ? <Spinner /> : 'Clear'}

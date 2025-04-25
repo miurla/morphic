@@ -4,8 +4,7 @@ import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { Message } from 'ai'
 import { ArrowUp, MessageCirclePlus, Square } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
 import { EmptyScreen } from './empty-screen'
 import { ModelSelector } from './model-selector'
@@ -14,36 +13,25 @@ import { Button } from './ui/button'
 import { IconLogo } from './ui/icons'
 
 interface ChatPanelProps {
-  input: string
-  handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
   isLoading: boolean
   messages: Message[]
-  setMessages: (messages: Message[]) => void
-  query?: string
-  stop: () => void
-  append: (message: any) => void
+  onSend: (message: string) => void
+  onNewChat: () => void
   models?: Model[]
 }
 
 export function ChatPanel({
-  input,
-  handleInputChange,
-  handleSubmit,
   isLoading,
   messages,
-  setMessages,
-  query,
-  stop,
-  append,
+  onSend,
+  onNewChat,
   models
 }: ChatPanelProps) {
+  const [input, setInput] = useState('')
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
-  const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const isFirstRender = useRef(true)
-  const [isComposing, setIsComposing] = useState(false) // Composition state
-  const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
+  const [isComposing, setIsComposing] = useState(false)
+  const [enterDisabled, setEnterDisabled] = useState(false)
 
   const handleCompositionStart = () => setIsComposing(true)
 
@@ -55,37 +43,18 @@ export function ChatPanel({
     }, 300)
   }
 
-  const handleNewChat = () => {
-    setMessages([])
-    router.push('/')
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!input.trim() || isLoading) return
+    onSend(input)
+    setInput('')
+    inputRef.current?.focus()
   }
 
-  const isToolInvocationInProgress = () => {
-    if (!messages.length) return false
-
-    const lastMessage = messages[messages.length - 1]
-    if (lastMessage.role !== 'assistant' || !lastMessage.parts) return false
-
-    const parts = lastMessage.parts
-    const lastPart = parts[parts.length - 1]
-
-    return (
-      lastPart?.type === 'tool-invocation' &&
-      lastPart?.toolInvocation?.state === 'call'
-    )
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value)
+    setShowEmptyScreen(e.target.value.length === 0)
   }
-
-  // if query is not empty, submit the query
-  useEffect(() => {
-    if (isFirstRender.current && query && query.trim().length > 0) {
-      append({
-        role: 'user',
-        content: query
-      })
-      isFirstRender.current = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query])
 
   return (
     <div
@@ -100,7 +69,7 @@ export function ChatPanel({
         <div className="mb-10 flex flex-col items-center gap-4">
           <IconLogo className="size-12 text-muted-foreground" />
           <p className="text-center text-3xl font-semibold">
-            How can I help you today?
+            Olá! Como a Nexro AI pode ajudar você hoje?
           </p>
         </div>
       )}
@@ -120,15 +89,12 @@ export function ChatPanel({
             tabIndex={0}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}
-            placeholder="Ask a question..."
+            placeholder="Pergunte o que você precisa..."
             spellCheck={false}
             value={input}
-            disabled={isLoading || isToolInvocationInProgress()}
+            disabled={isLoading}
             className="resize-none w-full min-h-12 bg-transparent border-0 p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-            onChange={e => {
-              handleInputChange(e)
-              setShowEmptyScreen(e.target.value.length === 0)
-            }}
+            onChange={handleInputChange}
             onKeyDown={e => {
               if (
                 e.key === 'Enter' &&
@@ -136,13 +102,13 @@ export function ChatPanel({
                 !isComposing &&
                 !enterDisabled
               ) {
-                if (input.trim().length === 0) {
+                if (input.trim().length === 0 || isLoading) {
                   e.preventDefault()
                   return
                 }
                 e.preventDefault()
-                const textarea = e.target as HTMLTextAreaElement
-                textarea.form?.requestSubmit()
+                const form = e.currentTarget.closest('form')
+                form?.requestSubmit()
               }
             }}
             onFocus={() => setShowEmptyScreen(true)}
@@ -160,10 +126,10 @@ export function ChatPanel({
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={handleNewChat}
+                  onClick={onNewChat}
                   className="shrink-0 rounded-full group"
                   type="button"
-                  disabled={isLoading || isToolInvocationInProgress()}
+                  disabled={isLoading}
                 >
                   <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
                 </Button>
@@ -173,11 +139,7 @@ export function ChatPanel({
                 size={'icon'}
                 variant={'outline'}
                 className={cn(isLoading && 'animate-pulse', 'rounded-full')}
-                disabled={
-                  (input.length === 0 && !isLoading) ||
-                  isToolInvocationInProgress()
-                }
-                onClick={isLoading ? stop : undefined}
+                disabled={isLoading || input.trim().length === 0}
               >
                 {isLoading ? <Square size={20} /> : <ArrowUp size={20} />}
               </Button>
@@ -188,9 +150,8 @@ export function ChatPanel({
         {messages.length === 0 && (
           <EmptyScreen
             submitMessage={message => {
-              handleInputChange({
-                target: { value: message }
-              } as React.ChangeEvent<HTMLTextAreaElement>)
+              setInput(message)
+              inputRef.current?.focus()
             }}
             className={cn(showEmptyScreen ? 'visible' : 'invisible')}
           />
