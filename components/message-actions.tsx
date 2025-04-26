@@ -25,7 +25,7 @@ export function MessageActions({
   })
   async function handleCopy() {
     await navigator.clipboard.writeText(message)
-    toast.success('Message copied to clipboard')
+    toast.success('Mensagem copiada para a área de transferência')
   }
 
   if (isLoading) {
