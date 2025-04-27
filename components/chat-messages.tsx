@@ -1,4 +1,3 @@
-import { useAutoScroll } from '@/lib/hooks/use-auto-scroll'
 import { JSONValue, Message } from 'ai'
 import { useEffect, useMemo, useState } from 'react'
 import { RenderMessage } from './render-message'
@@ -12,6 +11,8 @@ interface ChatMessagesProps {
   isLoading: boolean
   chatId?: string
   addToolResult?: (params: { toolCallId: string; result: any }) => void
+  /** Ref for anchoring auto-scroll position */
+  anchorRef: React.RefObject<HTMLDivElement>
 }
 
 export function ChatMessages({
@@ -20,17 +21,11 @@ export function ChatMessages({
   onQuerySelect,
   isLoading,
   chatId,
-  addToolResult
+  addToolResult,
+  anchorRef
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
-
-  // Use auto-scroll hook for continuous scrolling with user-cancel
-  const { anchorRef } = useAutoScroll({
-    isLoading,
-    dependency: messages.length,
-    isStreaming: () => messages[messages.length - 1]?.role === 'assistant'
-  })
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1]
@@ -116,7 +111,7 @@ export function ChatMessages({
         ) : (
           <Spinner />
         ))}
-      <div ref={anchorRef} /> {/* Auto-scroll anchor */}
+      <div ref={anchorRef} /> {/* Anchor for auto-scroll */}
     </div>
   )
 }
