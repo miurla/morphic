@@ -93,12 +93,29 @@ export function ChatPanel({
   return (
     <div
       className={cn(
-        'mx-auto w-full',
+        'mx-auto w-full relative',
         messages.length > 0
           ? 'fixed bottom-0 left-0 right-0 bg-background'
           : 'fixed bottom-8 left-0 right-0 top-6 flex flex-col items-center justify-center'
       )}
     >
+      {/* Scroll-down button: show when user is not at bottom */}
+      {!isAutoScroll && (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="absolute top-4 right-4 z-20"
+          onClick={() =>
+            window.scrollTo({
+              top: document.documentElement.scrollHeight,
+              behavior: 'smooth'
+            })
+          }
+        >
+          <ArrowDown size={20} />
+        </Button>
+      )}
       {messages.length === 0 && (
         <div className="mb-10 flex flex-col items-center gap-4">
           <IconLogo className="size-12 text-muted-foreground" />
@@ -151,24 +168,6 @@ export function ChatPanel({
             onFocus={() => setShowEmptyScreen(true)}
             onBlur={() => setShowEmptyScreen(false)}
           />
-
-          {/* Scroll-down button: show when user is not at bottom */}
-          {!isAutoScroll && (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="absolute top-3 right-3 z-10"
-              onClick={() =>
-                window.scrollTo({
-                  top: document.documentElement.scrollHeight,
-                  behavior: 'smooth'
-                })
-              }
-            >
-              <ArrowDown size={20} />
-            </Button>
-          )}
 
           {/* Bottom menu area */}
           <div className="flex items-center justify-between p-3">
