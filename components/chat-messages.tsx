@@ -27,6 +27,22 @@ export function ChatMessages({
   // Add ref for the messages container
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // Add isAutoScroll state to enable/disable auto-scrolling
+  const [isAutoScroll, setIsAutoScroll] = useState(true)
+
+  // Listen to user scroll to toggle auto-scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const threshold = 40
+      const scrollHeight = document.documentElement.scrollHeight
+      const atBottom =
+        window.innerHeight + window.scrollY >= scrollHeight - threshold
+      setIsAutoScroll(atBottom)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   // Scroll to bottom function
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -36,19 +52,23 @@ export function ChatMessages({
 
   // Scroll to bottom on mount and when messages change or during streaming
   useEffect(() => {
-    scrollToBottom()
+    if (isAutoScroll) scrollToBottom()
 
     // Set up interval for continuous scrolling during streaming
     let intervalId: ReturnType<typeof setInterval> | undefined
 
-    if (isLoading && messages[messages.length - 1]?.role === 'user') {
+    if (
+      isAutoScroll &&
+      isLoading &&
+      messages[messages.length - 1]?.role === 'assistant'
+    ) {
       intervalId = setInterval(scrollToBottom, 100)
     }
 
     return () => {
       if (intervalId) clearInterval(intervalId)
     }
-  }, [messages.length, isLoading, messages])
+  }, [messages.length, isLoading, isAutoScroll])
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1]
