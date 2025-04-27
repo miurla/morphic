@@ -1,11 +1,11 @@
 import axios from 'axios' // Import axios for error type checking
-import { pmcAxiosInstance } from './pmc_axiosClient' // Import the configured Axios instance
 import type {
-  StartPmcResearchResponse,
+  PmcResearchResultResponse,
   PmcResearchStatusResponse,
-  PmcResearchResultResponse
+  StartPmcResearchResponse
 } from '../types/pmc_research' // Adjusted import path and type names
 import { Logger } from './logger' // Use logger for consistency
+import { pmcAxiosInstance } from './pmc_axiosClient' // Import the configured Axios instance
 
 // TODO: Replace with your actual API base URL (or import from config)
 const API_BASE_URL =
@@ -14,7 +14,7 @@ const API_V1_STR = '/api/v1' // Adjust if your API path differs
 
 // Base path for the research endpoints within the API
 // Adjust if your API structure differs (e.g., /pmc/start instead of /research/start)
-const RESEARCH_API_PATH = '/api/v1/research'
+const RESEARCH_API_PATH = '/api/v1/research2'
 
 /**
  * Initiates a new PMC research task using Axios.
@@ -23,6 +23,8 @@ export async function startPmcResearch(
   query: string
 ): Promise<StartPmcResearchResponse> {
   const endpoint = `${RESEARCH_API_PATH}/start` // Relative path
+  // Log the final endpoint being used just before the API call
+  console.log(`[startPmcResearch] Attempting to POST to endpoint: ${endpoint}`)
   Logger.debug(`Calling startPmcResearch: POST ${endpoint}`)
   const payload = { query: query } // Adjust payload structure if needed
 

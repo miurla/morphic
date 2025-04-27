@@ -1,5 +1,6 @@
 import { ChatMessage } from '@/lib/db'
 import { AnswerSection } from './answer-section'
+import PmcResultDisplay from './pmc-result-display'
 import { UserMessage } from './user-message'
 
 interface RenderMessageProps {
@@ -11,6 +12,10 @@ export function RenderMessage({
   message,
   submitQueryFromOutline
 }: RenderMessageProps) {
+  if (message.pmcResultData) {
+    return <PmcResultDisplay data={message.pmcResultData} />
+  }
+
   if (message.role === 'user') {
     return <UserMessage message={message.content} />
   }

@@ -177,14 +177,18 @@ export function useCustomChat(chatId: string | 'new' = 'new') {
     }
   }, [currentChatId])
 
+  // Return object exposing state and functions to components
   return {
     messages,
     isLoading,
     error,
-    sendMessage,
+    // Make sure the exposed names map to the correct internal functions
+    sendMessage: sendMessage, // The function that calls the API
+    addUserMessageOptimistically: sendMessage, // The function for optimistic UI update
     clearChat,
     currentChatId,
     setCurrentChatId,
-    submitQueryFromOutline // <-- Export the new function
+    submitQueryFromOutline,
+    setMessages // The state setter for messages
   }
 }

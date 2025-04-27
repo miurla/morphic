@@ -1,4 +1,5 @@
 import Dexie, { Table } from 'dexie'
+import { PmcResearchResultResponse } from '../types/pmc_research'
 
 export interface Chat {
   id: string // Usaremos o threadId como ID do chat
@@ -13,6 +14,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system' | 'function' | 'tool' // Role of the message sender
   content: string // The actual text content of the message
   createdAt: Date // Timestamp when the message was created
+  pmcResultData?: PmcResearchResultResponse
   thread_id?: string // Optional: Store the thread_id from the backend response for assistant messages
   // Potentially add other fields like name, tool_calls, etc. if needed later
 }
