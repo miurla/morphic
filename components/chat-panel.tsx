@@ -3,7 +3,7 @@
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { Message } from 'ai'
-import { ArrowUp, MessageCirclePlus, Square } from 'lucide-react'
+import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
@@ -24,6 +24,8 @@ interface ChatPanelProps {
   stop: () => void
   append: (message: any) => void
   models?: Model[]
+  /** Whether auto-scroll is currently active (at bottom) */
+  isAutoScroll: boolean
 }
 
 export function ChatPanel({
@@ -36,7 +38,8 @@ export function ChatPanel({
   query,
   stop,
   append,
-  models
+  models,
+  isAutoScroll
 }: ChatPanelProps) {
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const router = useRouter()
@@ -107,10 +110,27 @@ export function ChatPanel({
       <form
         onSubmit={handleSubmit}
         className={cn(
-          'max-w-3xl w-full mx-auto',
+          'max-w-3xl w-full mx-auto relative',
           messages.length > 0 ? 'px-2 pb-4' : 'px-6'
         )}
       >
+        {/* Scroll-down button: show when user is not at bottom */}
+        {!isAutoScroll && (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="absolute -top-10 right-4 z-20 size-8 rounded-full"
+            onClick={() =>
+              window.scrollTo({
+                top: document.documentElement.scrollHeight,
+                behavior: 'smooth'
+              })
+            }
+          >
+            <ChevronDown size={16} />
+          </Button>
+        )}
         <div className="relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input">
           <Textarea
             ref={inputRef}

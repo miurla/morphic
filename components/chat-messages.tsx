@@ -1,5 +1,5 @@
 import { JSONValue, Message } from 'ai'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { RenderMessage } from './render-message'
 import { ToolSection } from './tool-section'
 import { Spinner } from './ui/spinner'
@@ -11,6 +11,8 @@ interface ChatMessagesProps {
   isLoading: boolean
   chatId?: string
   addToolResult?: (params: { toolCallId: string; result: any }) => void
+  /** Ref for anchoring auto-scroll position */
+  anchorRef: React.RefObject<HTMLDivElement>
 }
 
 export function ChatMessages({
@@ -19,36 +21,11 @@ export function ChatMessages({
   onQuerySelect,
   isLoading,
   chatId,
-  addToolResult
+  addToolResult,
+  anchorRef
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
-
-  // Add ref for the messages container
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  // Scroll to bottom function
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: messages.length > 5 ? 'instant' : 'smooth'
-    })
-  }
-
-  // Scroll to bottom on mount and when messages change or during streaming
-  useEffect(() => {
-    scrollToBottom()
-
-    // Set up interval for continuous scrolling during streaming
-    let intervalId: ReturnType<typeof setInterval> | undefined
-
-    if (isLoading && messages[messages.length - 1]?.role === 'user') {
-      intervalId = setInterval(scrollToBottom, 100)
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [messages.length, isLoading, messages])
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1]
@@ -134,7 +111,7 @@ export function ChatMessages({
         ) : (
           <Spinner />
         ))}
-      <div ref={messagesEndRef} /> {/* Add empty div as scroll anchor */}
+      <div ref={anchorRef} /> {/* Anchor for auto-scroll */}
     </div>
   )
 }

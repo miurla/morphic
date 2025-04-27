@@ -1,6 +1,7 @@
 'use client'
 
 import { CHAT_ID } from '@/lib/constants'
+import { useAutoScroll } from '@/lib/hooks/use-auto-scroll'
 import { Model } from '@/lib/types/models'
 import { useChat } from '@ai-sdk/react'
 import { Message } from 'ai/react'
@@ -50,6 +51,13 @@ export function Chat({
 
   const isLoading = status === 'submitted' || status === 'streaming'
 
+  // Manage auto-scroll and user scroll cancel
+  const { anchorRef, isAutoScroll } = useAutoScroll({
+    isLoading,
+    dependency: messages.length,
+    isStreaming: () => status === 'streaming'
+  })
+
   useEffect(() => {
     setMessages(savedMessages)
   }, [id])
@@ -76,6 +84,7 @@ export function Chat({
         isLoading={isLoading}
         chatId={id}
         addToolResult={addToolResult}
+        anchorRef={anchorRef}
       />
       <ChatPanel
         input={input}
@@ -88,6 +97,7 @@ export function Chat({
         query={query}
         append={append}
         models={models}
+        isAutoScroll={isAutoScroll}
       />
     </div>
   )
