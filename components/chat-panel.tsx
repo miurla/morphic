@@ -3,7 +3,7 @@
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { Message } from 'ai'
-import { ArrowDown, ArrowUp, MessageCirclePlus, Square } from 'lucide-react'
+import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
@@ -120,7 +120,7 @@ export function ChatPanel({
             type="button"
             variant="outline"
             size="icon"
-            className="absolute top-2 right-2 z-20"
+            className="absolute -top-10 right-4 z-20 size-8 rounded-full"
             onClick={() =>
               window.scrollTo({
                 top: document.documentElement.scrollHeight,
@@ -128,7 +128,7 @@ export function ChatPanel({
               })
             }
           >
-            <ArrowDown size={20} />
+            <ChevronDown size={16} />
           </Button>
         )}
         <div className="relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input">
