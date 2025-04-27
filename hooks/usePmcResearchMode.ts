@@ -1,4 +1,4 @@
-import { getCookie, setCookie } from '@/lib/utils/cookies'
+import { AppState, useAppStore } from '@/lib/store' // Correct path and import AppState type
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Logger } from '../lib/logger'
 import {
@@ -8,17 +8,15 @@ import {
 } from '../lib/pmc_researchApi'
 import type { PmcResearchResultResponse } from '../types/pmc_research'
 
-// Module-level variables to persist state across hook re-initializations
+// Module-level variables might still be useful for polling robustness
 let modulePmcTaskId: string | null = null
 let moduleIsPolling: boolean = false
 
 const POLLING_INTERVAL = 5000
 
 export interface UsePmcResearchModeResult {
-  isPmcResearchMode: boolean
-  setIsPmcResearchMode: (
-    value: boolean | ((prevState: boolean) => boolean)
-  ) => void
+  // isPmcResearchMode: boolean // Get from store directly
+  // setIsPmcResearchMode: (value: boolean | ((prevState: boolean) => boolean)) => void // Use store action
   isPollingPmc: boolean
   pmcResearchTaskId: string | null
   startPmcResearchTask: (query: string) => Promise<string>
@@ -26,6 +24,7 @@ export interface UsePmcResearchModeResult {
   setPmcResearchResultData: React.Dispatch<
     React.SetStateAction<PmcResearchResultResponse | null>
   >
+  // Removed setIsPmcResearchMode from return as it's now handled by the store
 }
 
 export function usePmcResearchMode(): UsePmcResearchModeResult {
@@ -33,8 +32,14 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
     `!!!!!! usePmcResearchMode Hook Initializing/Re-running !!!!!! Module Task ID: ${modulePmcTaskId}, Module Polling: ${moduleIsPolling}`
   )
 
-  // Default initial state, cookie will be read in useEffect client-side
-  const [isPmcResearchMode, _internalSetIsPmcResearchMode] = useState(true)
+  // Get state and actions from Zustand store
+  // Note: We don't select isPmcResearchMode here directly to avoid re-renders if only that changes
+  // Components that need it will select it themselves.
+  const storeSetIsPmcResearchMode = useAppStore(
+    (state: AppState) => state.setIsPmcResearchMode
+  )
+
+  // State managed by this hook (polling and results)
   const [pmcResearchTaskId, _internalSetPmcResearchTaskId] = useState<
     string | null
   >(modulePmcTaskId)
@@ -44,28 +49,7 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
     useState<PmcResearchResultResponse | null>(null)
   const pollingIntervalRef = useRef<number | null>(null)
 
-  // Effect to read initial mode from cookie on client mount
-  useEffect(() => {
-    const savedMode = getCookie('search-mode')
-    if (savedMode !== null) {
-      console.log(
-        '[usePmcResearchMode Mount Effect] Found cookie value:',
-        savedMode
-      )
-      const initialValue = savedMode === 'true'
-      // Use the internal setter directly to avoid triggering the wrapper's cookie set
-      _internalSetIsPmcResearchMode(initialValue)
-    } else {
-      console.log(
-        '[usePmcResearchMode Mount Effect] No cookie found, defaulting to true.'
-      )
-      // Optional: Set cookie to default if not found
-      // setCookie('search-mode', 'true')
-    }
-    // Empty dependency array ensures this runs only once on mount
-  }, []) // <- Added empty dependency array
-
-  // Wrapper setters to update both React state and module variables
+  // Wrapper setters still useful for module variables
   const setPmcResearchTaskId = useCallback(
     (taskId: string | null) => {
       console.log(
@@ -75,7 +59,7 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
       _internalSetPmcResearchTaskId(taskId)
     },
     [_internalSetPmcResearchTaskId]
-  ) // Dependency on internal setter
+  )
 
   const setIsPollingPmc = useCallback(
     (polling: boolean | ((prevState: boolean) => boolean)) => {
@@ -90,7 +74,7 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
       })
     },
     [_internalSetIsPollingPmc]
-  ) // Dependency on internal setter
+  )
 
   const stopPolling = useCallback(() => {
     if (pollingIntervalRef.current) {
@@ -103,13 +87,13 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
     console.log(
       '[usePmcResearchMode] Setting isPollingPmc to false via stopPolling'
     )
-    setIsPollingPmc(false) // This will update moduleIsPolling via wrapper
-    setPmcResearchTaskId(null) // This will update modulePmcTaskId via wrapper
-  }, [setIsPollingPmc, setPmcResearchTaskId]) // Depend on the wrapper setters
+    setIsPollingPmc(false)
+    setPmcResearchTaskId(null)
+  }, [setIsPollingPmc, setPmcResearchTaskId])
 
+  // checkPmcStatus remains largely the same, using module variables and setters
   const checkPmcStatus = useCallback(
     async (taskIdToCheck: string) => {
-      // Use modulePmcTaskId for safety inside async callback?
       const currentTask = modulePmcTaskId
       if (!currentTask || taskIdToCheck !== currentTask) {
         Logger.warn(
@@ -133,7 +117,6 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
           progress: statusResponse.progress
         })
 
-        // Check moduleIsPolling again in case stopPolling was called elsewhere
         if (!moduleIsPolling) {
           Logger.warn(
             `Polling flag (module) turned false during status check for ${taskIdToCheck}. Stopping.`
@@ -164,12 +147,11 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
           setPmcResearchResultData({
             task_id: taskIdToCheck,
             status: 'failed',
-            query: 'Unknown',
+            query: 'Unknown', // TODO: Maybe get query from somewhere else?
             message: statusResponse.message || 'Pesquisa PMC falhou.'
           })
           stopPolling()
         }
-        // If still processing, do nothing, interval will call again
       } catch (error) {
         Logger.error(
           `${logPrefix} Error during PMC status check/result fetch:`,
@@ -178,7 +160,7 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
         setPmcResearchResultData({
           task_id: taskIdToCheck,
           status: 'failed',
-          query: 'Unknown',
+          query: 'Unknown', // TODO: Maybe get query from somewhere else?
           message: `Erro ao buscar status/resultado: ${
             (error as Error).message
           }`
@@ -189,6 +171,7 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
     [stopPolling, setPmcResearchResultData] // Depend on stopPolling and setter
   )
 
+  // startPmcResearchTask remains the same
   const startPmcResearchTask = useCallback(
     async (query: string): Promise<string> => {
       setPmcResearchResultData(null)
@@ -221,9 +204,8 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
     [setPmcResearchResultData, setIsPollingPmc, setPmcResearchTaskId] // Depend on wrapper setters
   )
 
-  // This useEffect sets up and clears the interval based on React state
+  // Polling useEffect remains the same, using module variables and local state
   useEffect(() => {
-    // Clear previous interval if dependencies change
     if (pollingIntervalRef.current) {
       console.log(
         `[usePmcResearchMode Polling useEffect] Clearing previous interval: ${pollingIntervalRef.current}`
@@ -232,13 +214,11 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
       pollingIntervalRef.current = null
     }
 
-    // Setup new interval only if React state indicates polling should be active
     if (pmcResearchTaskId && isPollingPmc) {
       console.log(
         `[usePmcResearchMode Polling useEffect] Setting up interval for React TaskID: ${pmcResearchTaskId}, React Polling: ${isPollingPmc}`
       )
       pollingIntervalRef.current = window.setInterval(() => {
-        // Inside the interval, use the module variable to decide if work should be done
         if (modulePmcTaskId && moduleIsPolling) {
           console.log(
             `[setInterval Callback] Polling active for Module TaskID: ${modulePmcTaskId}. Calling checkPmcStatus.`
@@ -252,7 +232,6 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
             clearInterval(pollingIntervalRef.current)
             pollingIntervalRef.current = null
           }
-          // Also ensure React state reflects the stop if module state dictates it
           _internalSetIsPollingPmc(false)
         }
       }, POLLING_INTERVAL)
@@ -262,14 +241,13 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
       )
     }
 
-    // Cleanup function remains the same
     return () => {
       console.log(
         `[usePmcResearchMode Polling useEffect Cleanup] Running. Interval ID: ${pollingIntervalRef.current}`
       )
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current)
-        pollingIntervalRef.current = null // Ensure ref is cleared
+        pollingIntervalRef.current = null
         Logger.debug(
           `PMC polling interval cleared for ${
             pmcResearchTaskId || modulePmcTaskId
@@ -277,7 +255,6 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
         )
       }
     }
-    // Dependencies: React state triggers setup/cleanup, checkPmcStatus callback
   }, [
     pmcResearchTaskId,
     isPollingPmc,
@@ -285,27 +262,11 @@ export function usePmcResearchMode(): UsePmcResearchModeResult {
     _internalSetIsPollingPmc
   ])
 
-  const setIsPmcResearchMode = useCallback(
-    (value: boolean | ((prevState: boolean) => boolean)) => {
-      _internalSetIsPmcResearchMode(prevState => {
-        const newValue = typeof value === 'function' ? value(prevState) : value
-        setCookie('search-mode', newValue.toString())
-        // If turning PMC mode OFF, stop any active polling
-        if (!newValue && moduleIsPolling) {
-          console.log(
-            '[setIsPmcResearchMode] Mode toggled OFF, stopping polling.'
-          )
-          stopPolling()
-        }
-        return newValue
-      })
-    },
-    [_internalSetIsPmcResearchMode, stopPolling] // Added stopPolling dependency
-  )
+  // Removed the useCallback for setIsPmcResearchMode - use store action directly
 
   return {
-    isPmcResearchMode,
-    setIsPmcResearchMode,
+    // isPmcResearchMode, // Removed - get from store
+    // setIsPmcResearchMode, // Removed - use store action
     isPollingPmc,
     pmcResearchTaskId,
     startPmcResearchTask,

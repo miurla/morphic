@@ -1,11 +1,15 @@
 'use client'
 
+import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { cn } from '@/lib/utils'
 import {
   PmcResearchArticle,
   PmcResearchResultResponse
 } from '@/types/pmc_research'
+import { Copy } from 'lucide-react'
+import { toast } from 'sonner'
 import { BotMessage } from './message' // Using BotMessage for Markdown rendering
+import { Button } from './ui/button'
 import { IconLogo } from './ui/icons'
 
 interface PmcResultDisplayProps {
@@ -13,6 +17,19 @@ interface PmcResultDisplayProps {
 }
 
 export default function PmcResultDisplay({ data }: PmcResultDisplayProps) {
+  const { copyToClipboard } = useCopyToClipboard({ timeout: 1000 })
+
+  const textToCopy = `Pesquisa PMC: "${data.query}"\n\nSumário:\n${
+    data.summary || 'N/A'
+  }\n\nRelatório:\n${data.markdown_report || 'N/A'}\n\nArtigos: ${
+    data.articles?.map(a => a.title).join(', ') || 'N/A'
+  }`
+
+  const handleCopy = () => {
+    copyToClipboard(textToCopy)
+    toast.success('Resultado da pesquisa copiado!')
+  }
+
   return (
     <div className={cn('group relative mb-4 flex items-start')}>
       {/* Icon */}
@@ -24,7 +41,7 @@ export default function PmcResultDisplay({ data }: PmcResultDisplayProps) {
       <div className="flex-1 space-y-4 overflow-hidden px-1">
         {/* Query Display */}
         <p className="text-sm font-semibold text-muted-foreground">
-          Resultados da Pesquisa PMC para: "{data.query}"
+          Resultados da Pesquisa PMC para: &quot;{data.query}&quot;
         </p>
 
         {/* Summary Section */}
@@ -86,6 +103,19 @@ export default function PmcResultDisplay({ data }: PmcResultDisplayProps) {
               {data.message || 'Nenhum resultado detalhado encontrado.'}
             </p>
           )}
+
+        {/* Copy Button */}
+        <div className="flex justify-end pt-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6"
+            onClick={handleCopy}
+            aria-label="Copiar resultado da pesquisa"
+          >
+            <Copy className="size-4" />
+          </Button>
+        </div>
       </div>
     </div>
   )

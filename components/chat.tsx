@@ -1,44 +1,60 @@
 'use client'
 
 import { usePmcResearchMode } from '@/hooks/usePmcResearchMode'
-import { ChatMessage } from '@/lib/db'
+import { ChatMessage, db } from '@/lib/db'
 import { useCustomChat } from '@/lib/hooks/useCustomChat'
+import { useAppStore } from '@/lib/store'
 import { Model } from '@/lib/types/models'
-import { getCookie } from '@/lib/utils/cookies'
+import { useQueryClient } from '@tanstack/react-query'
 import { Message } from 'ai'
 import { nanoid } from 'nanoid'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
 
 export interface ChatProps {
   id: string
   models?: Model[]
+  savedMessages?: Message[]
 }
 
-export function Chat({ id, models }: ChatProps) {
+export function Chat({ id, models, savedMessages }: ChatProps) {
+  console.log('[Chat Component] Rendering with props:', {
+    id,
+    models: models?.length,
+    hasSavedMessages: !!savedMessages
+  }) // Log props
   const router = useRouter()
+
+  // Use Zustand store for PMC mode state
+  const isPmcModeActiveFromStore = useAppStore(state => state.isPmcResearchMode)
+
+  // Call initializePmcModeFromCookie once on mount
+  const pmcCookieInitialized = useRef(false) // Ref to track initialization
+  useEffect(() => {
+    if (!pmcCookieInitialized.current) {
+      useAppStore.getState().initializePmcModeFromCookie()
+      pmcCookieInitialized.current = true
+    }
+  }, []) // Empty array ensures it runs only on mount
+
   const {
     messages,
     isLoading: isChatLoading,
     error,
     sendMessage,
     clearChat,
-    currentChatId,
-    setCurrentChatId,
     submitQueryFromOutline,
-    addUserMessageOptimistically,
-    setMessages
-  } = useCustomChat(id)
+    addUserMessageOptimistically
+  } = useCustomChat(id, savedMessages)
 
+  // Use polling state and result data from the hook
   const {
-    isPmcResearchMode,
     startPmcResearchTask,
     isPollingPmc,
     pmcResearchResultData,
-    setPmcResearchResultData,
-    setIsPmcResearchMode
+    setPmcResearchResultData
   } = usePmcResearchMode()
 
   const panelMessages: Message[] = messages
@@ -52,86 +68,102 @@ export function Chat({ id, models }: ChatProps) {
       content: msg.content
     }))
 
+  // Restore router effect
+  // Use store's currentChatId for router logic
+  const storeChatIdForRouter = useAppStore(state => state.currentChatId)
   useEffect(() => {
-    if (id === 'new' && currentChatId) {
-      router.replace(`/search/${currentChatId}`, { scroll: false })
+    console.log(
+      `[Chat Router Effect] Running. ID Prop: ${id}, Store Chat ID: ${storeChatIdForRouter}`
+    )
+    if (id === 'new' && storeChatIdForRouter) {
+      console.log(
+        `[Chat Router Effect] Replacing route to /search/${storeChatIdForRouter}`
+      )
+      router.replace(`/search/${storeChatIdForRouter}`, { scroll: false })
     }
-  }, [currentChatId, id, router])
+  }, [storeChatIdForRouter, id, router]) // Depend on store ID
 
+  // Restore PMC result effect
+  const queryClient = useQueryClient() // Get query client
+  const storeCurrentChatId = useAppStore(state => state.currentChatId)
   useEffect(() => {
     if (pmcResearchResultData) {
-      setMessages((prev: ChatMessage[]) => [
-        ...prev,
-        {
+      console.log(
+        '[Chat PMC Result Effect] Received PMC result. Invalidating chat query for:',
+        storeCurrentChatId
+      )
+      // Instead of directly setting messages, add the result to the DB
+      // (assuming you might want to persist it) and invalidate the query.
+      // This example assumes pmcResultData needs to be added as a message.
+      // Adjust this logic based on how PMC results should actually be integrated.
+      const addPmcResultAsMessage = async () => {
+        if (!storeCurrentChatId) return // Cannot add message without a chat ID
+        const assistantMessage: ChatMessage = {
           id: nanoid(),
           role: 'assistant',
-          content: `Resultados da Pesquisa PMC para: "${pmcResearchResultData.query}"`,
-          chatId: currentChatId || 'pmc-result',
+          content: `Resultados da Pesquisa PMC para: "${
+            pmcResearchResultData.query
+          }"\n${pmcResearchResultData.summary || ''}`.trim(),
+          chatId: storeCurrentChatId,
           createdAt: new Date(),
-          pmcResultData: pmcResearchResultData
+          pmcResultData: pmcResearchResultData // Store the full data
         }
-      ])
-      setPmcResearchResultData(null)
+        try {
+          await db.addChatMessage(assistantMessage)
+          queryClient.invalidateQueries({
+            queryKey: ['chats', 'detail', storeCurrentChatId] // Use the specific query key
+          })
+        } catch (dbError) {
+          console.error('Error saving PMC result message to DB:', dbError)
+        }
+        setPmcResearchResultData(null) // Clear the result data after processing
+      }
+      addPmcResultAsMessage()
     }
   }, [
     pmcResearchResultData,
-    currentChatId,
+    storeCurrentChatId,
     setPmcResearchResultData,
-    setMessages
+    queryClient // Add queryClient dependency
   ])
 
-  // Memoize the send handler based on the current cookie value
-  // Note: This reads the cookie when the component renders or dependencies change.
-  // It might still have a slight delay compared to reading *inside* the handler,
-  // but separates the logic more cleanly.
+  // Updated send handler
   const onSendHandler = useCallback(
     async (input: string) => {
       if (!input.trim()) return
 
-      const currentSearchModeCookie = getCookie('search-mode')
-      const isPmcModeActive =
-        currentSearchModeCookie !== null
-          ? currentSearchModeCookie === 'true'
-          : true
+      // Read PMC mode directly from the store state
+      const isPmcMode = useAppStore.getState().isPmcResearchMode
       console.log(
-        '[onSendHandler] Decided mode from cookie. Active:',
-        isPmcModeActive,
-        '(Cookie:',
-        currentSearchModeCookie,
-        ')'
+        '[onSendHandler] Decided mode from Zustand store. Active:',
+        isPmcMode
       )
 
       const userMessageId = addUserMessageOptimistically(input)
 
-      if (isPmcModeActive) {
+      if (isPmcMode) {
         console.log('[onSendHandler] Triggering PMC Research Task')
         try {
           await startPmcResearchTask(input)
-          // No explicit return needed here if the function ends
         } catch (error) {
           console.error('Error starting PMC research task:', error)
-          // Handle error, maybe remove optimistic message?
-          // setMessages(prev => prev.filter(msg => msg.id !== userMessageId))
         }
       } else {
         console.log('[onSendHandler] Triggering Standard Chat Send')
         try {
-          await sendMessage(input, userMessageId)
+          await sendMessage(input)
         } catch (error) {
           console.error('Error during standard send:', error)
-          // Error state is likely handled within sendMessage/useCustomChat already
         }
       }
     },
-    [
-      addUserMessageOptimistically,
-      startPmcResearchTask,
-      sendMessage,
-      setMessages
-    ]
+    // Dependencies: actions from hooks, but not the Zustand state itself
+    [addUserMessageOptimistically, startPmcResearchTask, sendMessage]
   )
 
   const handleNewChat = () => {
+    // When creating a new chat, reset the store's currentChatId
+    useAppStore.getState().setCurrentChatId(null)
     router.push('/search')
   }
 
@@ -144,14 +176,23 @@ export function Chat({ id, models }: ChatProps) {
       />
       <ChatPanel
         isLoading={isChatLoading}
-        messages={panelMessages}
+        messages={messages
+          .filter(
+            m =>
+              m.role === 'user' || m.role === 'assistant' || m.role === 'system'
+          )
+          .map(msg => ({
+            id: msg.id,
+            role: msg.role as any,
+            content: msg.content
+          }))}
         onSend={onSendHandler}
         onNewChat={handleNewChat}
         models={models}
       />
       {error && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-red-500 text-white text-center">
-          Error: {error.message}
+          Error: {error instanceof Error ? error.message : String(error)}
         </div>
       )}
     </div>

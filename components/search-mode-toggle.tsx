@@ -1,42 +1,29 @@
 'use client'
 
-import { cn } from '@/lib/utils'
-import { getCookie, setCookie } from '@/lib/utils/cookies'
-import { Globe } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { Toggle } from './ui/toggle'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { useAppStore } from '@/lib/store'
 
 export function SearchModeToggle() {
-  const [isSearchMode, setIsSearchMode] = useState(true)
+  const isPmcResearchMode = useAppStore(state => state.isPmcResearchMode)
+  const setIsPmcResearchMode = useAppStore(state => state.setIsPmcResearchMode)
 
-  useEffect(() => {
-    const savedMode = getCookie('search-mode')
-    if (savedMode !== null) {
-      setIsSearchMode(savedMode === 'true')
-    }
-  }, [])
-
-  const handleSearchModeChange = (pressed: boolean) => {
-    setIsSearchMode(pressed)
-    setCookie('search-mode', pressed.toString())
+  const handleCheckedChange = (checked: boolean) => {
+    console.log('[SearchModeToggle] Toggled to:', checked)
+    setIsPmcResearchMode(checked)
   }
 
   return (
-    <Toggle
-      aria-label="Toggle search mode"
-      pressed={isSearchMode}
-      onPressedChange={handleSearchModeChange}
-      variant="outline"
-      className={cn(
-        'gap-1 px-3 border border-input text-muted-foreground bg-background',
-        'data-[state=on]:bg-accent-blue',
-        'data-[state=on]:text-accent-blue-foreground',
-        'data-[state=on]:border-accent-blue-border',
-        'hover:bg-accent hover:text-accent-foreground rounded-full'
-      )}
-    >
-      <Globe className="size-4" />
-      <span className="text-xs">Search</span>
-    </Toggle>
+    <div className="flex items-center space-x-2">
+      <Label htmlFor="search-mode-toggle" className="text-sm">
+        Search
+      </Label>
+      <Switch
+        id="search-mode-toggle"
+        checked={isPmcResearchMode}
+        onCheckedChange={handleCheckedChange}
+        aria-label="Toggle search mode"
+      />
+    </div>
   )
 }
