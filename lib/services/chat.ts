@@ -19,13 +19,13 @@ export class ChatService {
 
     console.log(
       'Sending request to:',
-      getApiUrl(`/questions/${API_CONFIG.ASSISTANT_ID}/ask`)
+      getApiUrl(`/assistants/${API_CONFIG.ASSISTANT_ID}/ask`)
     )
     console.log('Payload:', payload)
 
     try {
       const response = await fetch(
-        getApiUrl(`/questions/${API_CONFIG.ASSISTANT_ID}/ask`),
+        getApiUrl(`/assistants/${API_CONFIG.ASSISTANT_ID}/ask`),
         {
           method: 'POST',
           headers: {

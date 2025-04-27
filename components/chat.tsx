@@ -2,6 +2,7 @@
 
 import { useCustomChat } from '@/lib/hooks/useCustomChat'
 import { Model } from '@/lib/types/models'
+import { Message } from 'ai'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { ChatMessages } from './chat-messages'
@@ -24,6 +25,17 @@ export function Chat({ id, models }: ChatProps) {
     setCurrentChatId,
     submitQueryFromOutline
   } = useCustomChat(id)
+
+  const panelMessages: Message[] = messages
+    .filter(
+      msg =>
+        msg.role === 'user' || msg.role === 'assistant' || msg.role === 'system'
+    )
+    .map(msg => ({
+      id: msg.id,
+      role: msg.role as 'user' | 'assistant' | 'system',
+      content: msg.content
+    }))
 
   useEffect(() => {
     if (id === 'new' && currentChatId) {
@@ -50,7 +62,7 @@ export function Chat({ id, models }: ChatProps) {
       />
       <ChatPanel
         isLoading={isLoading}
-        messages={messages}
+        messages={panelMessages}
         onSend={handleSendMessage}
         onNewChat={handleNewChat}
         models={models}

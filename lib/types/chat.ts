@@ -7,7 +7,7 @@ export interface QuestionRequest {
 }
 
 export interface QuestionResponse {
-  answer: string
+  content: string
   thread_id: string
   assistant_id: string
   user_id: string

@@ -1,4 +1,3 @@
-import { useLiveQuery } from 'dexie-react-hooks'
 import { nanoid } from 'nanoid' // Para gerar IDs únicos para mensagens
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChatMessage, db } from '../db'
@@ -24,6 +23,7 @@ export function useCustomChat(chatId: string | 'new' = 'new') {
   const [error, setError] = useState<Error | null>(null)
 
   const chatIdRef = useRef(currentChatId)
+  const initialChatIdProp = useRef(chatId) // Store the initial prop value
 
   console.log(
     '[useCustomChat] Initial state - currentChatId:',
@@ -37,18 +37,35 @@ export function useCustomChat(chatId: string | 'new' = 'new') {
     chatIdRef.current = currentChatId
   }, [currentChatId])
 
-  const initialMessages = useLiveQuery(
-    () =>
-      currentChatId ? db.getChatMessages(currentChatId) : Promise.resolve([]),
-    [currentChatId],
-    []
-  )
-
+  // Effect to load messages only ONCE for existing chats when the component mounts
   useEffect(() => {
-    if (initialMessages) {
-      setMessages(initialMessages)
+    const loadInitialMessages = async () => {
+      // Use the initial prop value stored in the ref
+      if (initialChatIdProp.current && initialChatIdProp.current !== 'new') {
+        console.log(
+          '[useCustomChat] Loading initial messages for existing chat:',
+          initialChatIdProp.current
+        )
+        const initialMessagesData = await db.getChatMessages(
+          initialChatIdProp.current
+        )
+        if (initialMessagesData) {
+          setMessages(initialMessagesData)
+          console.log(
+            '[useCustomChat] Initial messages loaded:',
+            initialMessagesData.length
+          )
+        }
+      } else {
+        console.log(
+          '[useCustomChat] Starting a new chat, no initial messages to load.'
+        )
+        setMessages([]) // Ensure messages are empty for a new chat explicitly
+      }
     }
-  }, [initialMessages])
+    loadInitialMessages()
+    // Empty dependency array ensures this runs only once on mount
+  }, [])
 
   // Common logic to handle API response and update state/DB
   const handleApiResponse = useCallback(
@@ -58,6 +75,8 @@ export function useCustomChat(chatId: string | 'new' = 'new') {
       isNewChat: boolean
     ) => {
       const newChatId = response.thread_id // Get the definitive thread_id from response
+      // Ensure response.content exists (corrected field name), otherwise provide a default message
+      const assistantContent = response.content || '[No content received]' // <-- Corrected field name
       const finalUserMessage = { ...userMessage, chatId: newChatId } // Update user message with correct chatId
 
       if (isNewChat) {
@@ -73,7 +92,7 @@ export function useCustomChat(chatId: string | 'new' = 'new') {
       const assistantMessage: ChatMessage = {
         id: nanoid(),
         role: 'assistant',
-        content: response.answer,
+        content: assistantContent, // Use the safe content
         chatId: newChatId,
         createdAt: new Date(),
         thread_id: response.thread_id // <-- Store the thread_id from the response here
@@ -88,7 +107,7 @@ export function useCustomChat(chatId: string | 'new' = 'new') {
       ])
       await db.addChatMessage(assistantMessage) // Add assistant message to DB
     },
-    []
+    [setCurrentChatId] // <-- Add dependencies
   )
 
   const sendMessage = useCallback(
