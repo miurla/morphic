@@ -93,29 +93,12 @@ export function ChatPanel({
   return (
     <div
       className={cn(
-        'mx-auto w-full relative',
+        'mx-auto w-full',
         messages.length > 0
           ? 'fixed bottom-0 left-0 right-0 bg-background'
           : 'fixed bottom-8 left-0 right-0 top-6 flex flex-col items-center justify-center'
       )}
     >
-      {/* Scroll-down button: show when user is not at bottom */}
-      {!isAutoScroll && (
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="absolute top-4 right-4 z-20"
-          onClick={() =>
-            window.scrollTo({
-              top: document.documentElement.scrollHeight,
-              behavior: 'smooth'
-            })
-          }
-        >
-          <ArrowDown size={20} />
-        </Button>
-      )}
       {messages.length === 0 && (
         <div className="mb-10 flex flex-col items-center gap-4">
           <IconLogo className="size-12 text-muted-foreground" />
@@ -127,10 +110,27 @@ export function ChatPanel({
       <form
         onSubmit={handleSubmit}
         className={cn(
-          'max-w-3xl w-full mx-auto',
+          'max-w-3xl w-full mx-auto relative',
           messages.length > 0 ? 'px-2 pb-4' : 'px-6'
         )}
       >
+        {/* Scroll-down button: show when user is not at bottom */}
+        {!isAutoScroll && (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="absolute top-2 right-2 z-20"
+            onClick={() =>
+              window.scrollTo({
+                top: document.documentElement.scrollHeight,
+                behavior: 'smooth'
+              })
+            }
+          >
+            <ArrowDown size={20} />
+          </Button>
+        )}
         <div className="relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input">
           <Textarea
             ref={inputRef}
