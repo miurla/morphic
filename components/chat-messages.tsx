@@ -1,5 +1,6 @@
+import { useAutoScroll } from '@/lib/hooks/use-auto-scroll'
 import { JSONValue, Message } from 'ai'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { RenderMessage } from './render-message'
 import { ToolSection } from './tool-section'
 import { Spinner } from './ui/spinner'
@@ -24,51 +25,12 @@ export function ChatMessages({
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
 
-  // Add ref for the messages container
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  // Add isAutoScroll state to enable/disable auto-scrolling
-  const [isAutoScroll, setIsAutoScroll] = useState(true)
-
-  // Listen to user scroll to toggle auto-scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      const threshold = 40
-      const scrollHeight = document.documentElement.scrollHeight
-      const atBottom =
-        window.innerHeight + window.scrollY >= scrollHeight - threshold
-      setIsAutoScroll(atBottom)
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  // Scroll to bottom function
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: messages.length > 5 ? 'instant' : 'smooth'
-    })
-  }
-
-  // Scroll to bottom on mount and when messages change or during streaming
-  useEffect(() => {
-    if (isAutoScroll) scrollToBottom()
-
-    // Set up interval for continuous scrolling during streaming
-    let intervalId: ReturnType<typeof setInterval> | undefined
-
-    if (
-      isAutoScroll &&
-      isLoading &&
-      messages[messages.length - 1]?.role === 'assistant'
-    ) {
-      intervalId = setInterval(scrollToBottom, 100)
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [messages.length, isLoading, isAutoScroll])
+  // Use auto-scroll hook for continuous scrolling with user-cancel
+  const { anchorRef } = useAutoScroll({
+    isLoading,
+    dependency: messages.length,
+    isStreaming: () => messages[messages.length - 1]?.role === 'assistant'
+  })
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1]
@@ -154,7 +116,7 @@ export function ChatMessages({
         ) : (
           <Spinner />
         ))}
-      <div ref={messagesEndRef} /> {/* Add empty div as scroll anchor */}
+      <div ref={anchorRef} /> {/* Auto-scroll anchor */}
     </div>
   )
 }
