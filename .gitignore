@@ -38,3 +38,4 @@ next-env.d.ts
 # cursor
 .cursor
 dump.rdb
+uploads/*
