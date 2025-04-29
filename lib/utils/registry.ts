@@ -24,7 +24,7 @@ const RITS_MODEL_PATHS: Record<string, string> = {
 };
 
 // ---------- build one provider object ----------
-const createOpenAICompatibleProvider = () => {
+const createRITSProvider = () => {
   const baseClient = createOpenAI({
     apiKey: process.env.OPENAI_COMPATIBLE_API_KEY!,
     baseURL: process.env.OPENAI_COMPATIBLE_API_BASE_URL!,
@@ -39,8 +39,8 @@ const createOpenAICompatibleProvider = () => {
         throw new Error(`No RITS endpoint configured for "${modelId}"`);
       }
 
-      const apiKey = process.env.OPENAI_COMPATIBLE_API_KEY!;
-      const baseURL = `${process.env.OPENAI_COMPATIBLE_API_BASE_URL}${path}`;
+      const apiKey = process.env.RITS_API_KEY!;
+      const baseURL = `${process.env.RITS_API_BASE_URL}${path}`;
 
       const client = createOpenAI({
         apiKey,                // ⇒ Authorization: Bearer <key>
@@ -103,7 +103,7 @@ export const registry = createProviderRegistry({
     }),
     languageModel: fireworks
   },
-  'openai-compatible': createOpenAICompatibleProvider(),
+  'openai-compatible': createRITSProvider(),
   'openrouter': createOpenRouterProvider(),
   xai
 })
