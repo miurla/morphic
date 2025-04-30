@@ -13,6 +13,7 @@ interface ChatMessagesProps {
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for anchoring auto-scroll position */
   anchorRef: React.RefObject<HTMLDivElement>
+  onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
 }
 
 export function ChatMessages({
@@ -22,7 +23,8 @@ export function ChatMessages({
   isLoading,
   chatId,
   addToolResult,
-  anchorRef
+  anchorRef,
+  onUpdateMessage
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
@@ -96,6 +98,7 @@ export function ChatMessages({
             onQuerySelect={onQuerySelect}
             chatId={chatId}
             addToolResult={addToolResult}
+            onUpdateMessage={onUpdateMessage}
           />
         </div>
       ))}
