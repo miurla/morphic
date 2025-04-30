@@ -229,28 +229,6 @@ This will allow you to use Morphic as your default search engine in the browser.
   - grok-2-vision
   - grok-3-beta
 
-## ⚡ AI SDK Implementation
-
-### Current Version: AI SDK UI
-
-This version of Morphic uses the AI SDK UI implementation, which is recommended for production use. It provides better streaming performance and more reliable client-side UI updates.
-
-### Previous Version: AI SDK RSC (v0.2.34 and earlier)
-
-The React Server Components (RSC) implementation of AI SDK was used in versions up to [v0.2.34](https://github.com/miurla/morphic/releases/tag/v0.2.34) but is now considered experimental and not recommended for production. If you need to reference the RSC implementation, please check the v0.2.34 release tag.
-
-> Note: v0.2.34 was the final version using RSC implementation before migrating to AI SDK UI.
-
-For more information about choosing between AI SDK UI and RSC, see the [official documentation](https://sdk.vercel.ai/docs/getting-started/navigating-the-library#when-to-use-ai-sdk-rsc).
-
-## 📦 Open Source vs Cloud Offering
-
-Morphic is open source software available under the Apache-2.0 license.
-
-To maintain sustainable development and provide cloud-ready features, we offer a hosted version of Morphic alongside our open-source offering. The cloud solution makes Morphic accessible to non-technical users and provides additional features while keeping the core functionality open and available for developers.
-
-For our cloud service, visit [morphic.sh](https://morphic.sh).
-
 ## 👥 Contributing
 
 We welcome contributions to Morphic! Whether it's bug reports, feature requests, or pull requests, all contributions are appreciated.
