@@ -19,32 +19,32 @@
     {
       "id": "meta-llama/llama-3-3-70b-instruct",
       "name": "Llama 3 3B Instruct (RITS)",
-      "provider": "OpenAI Compatible",
-      "providerId": "openai-compatible",
+      "provider": "rits",
+      "providerId": "rits",
       "enabled": true,
       "toolCallType": "native"
     },
     {
       "id": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
       "name": "Llama 4 Maverick 128 MOE (RITS)",
-      "provider": "OpenAI Compatible",
-      "providerId": "openai-compatible",
+      "provider": "rits",
+      "providerId": "rits",
       "enabled": true,
       "toolCallType": "native"
     },
     {
       "id": "Qwen/Qwen2.5-72B-Instruct",
       "name": "Qwen2 5B Instruct (RITS)",
-      "provider": "OpenAI Compatible",
-      "providerId": "openai-compatible",
+      "provider": "rits",
+      "providerId": "rits",
       "enabled": true,
       "toolCallType": "native"
     },
     {
       "id": "meta-llama/llama-4-scout-17b-16e",
       "name": "Llama 4 Scout 16 MOE (RITS)",
-      "provider": "OpenAI Compatible",
-      "providerId": "openai-compatible",
+      "provider": "rits",
+      "providerId": "rits",
       "enabled": true,
       "toolCallType": "native"
     },

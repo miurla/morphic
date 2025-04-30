@@ -26,8 +26,8 @@ const RITS_MODEL_PATHS: Record<string, string> = {
 // ---------- build one provider object ----------
 const createRITSProvider = () => {
   const baseClient = createOpenAI({
-    apiKey: process.env.OPENAI_COMPATIBLE_API_KEY!,
-    baseURL: process.env.OPENAI_COMPATIBLE_API_BASE_URL!,
+    apiKey: process.env.IBM_RITS_API_KEY!,
+    baseURL: process.env.IBM_RITS_API_BASE_URL!,
     compatibility: 'compatible'
   });
 
@@ -39,8 +39,8 @@ const createRITSProvider = () => {
         throw new Error(`No RITS endpoint configured for "${modelId}"`);
       }
 
-      const apiKey = process.env.RITS_API_KEY!;
-      const baseURL = `${process.env.RITS_API_BASE_URL}${path}`;
+      const apiKey = process.env.IBM_RITS_API_KEY!;
+      const baseURL = `${process.env.IBM_RITS_API_BASE_URL}${path}`;
 
       const client = createOpenAI({
         apiKey,                // ⇒ Authorization: Bearer <key>
@@ -56,7 +56,7 @@ const createRITSProvider = () => {
       });
 
       console.log(
-        `⛳ model: ${modelId}  baseURL: ${baseURL}  header[RITS_API_KEY] set`
+        `⛳ model: ${modelId}  baseURL: ${baseURL} set`
       );
 
       return client.languageModel(modelId, opts);
@@ -103,7 +103,7 @@ export const registry = createProviderRegistry({
     }),
     languageModel: fireworks
   },
-  'openai-compatible': createRITSProvider(),
+  'rits': createRITSProvider(),
   'openrouter': createOpenRouterProvider(),
   xai
 })
@@ -111,7 +111,7 @@ export const registry = createProviderRegistry({
 // Using registry as any to access internal properties for debugging
 const registryAny = registry as any;
 console.log("✅ has languageModel:",
-            typeof registryAny.providers?.['openai-compatible']?.languageModel);
+            typeof registryAny.providers?.['rits']?.languageModel);
 console.log("🔹 registry.providers keys:", Object.keys(registryAny.providers || {}));
 console.log("➤ models.json content:", JSON.stringify(registryAny, null,2));
 console.log("📦 Providers:", Object.keys(registry as any));
@@ -187,10 +187,10 @@ export function isProviderEnabled(providerId: string): boolean {
       return !!process.env.FIREWORKS_API_KEY
     case 'xai':
       return !!process.env.XAI_API_KEY
-    case 'openai-compatible':
+    case 'rits':
       return (
-        !!process.env.OPENAI_COMPATIBLE_API_KEY &&
-        !!process.env.OPENAI_COMPATIBLE_API_BASE_URL
+        !!process.env.IBM_RITS_API_KEY &&
+        !!process.env.IBM_RITS_API_BASE_URL
       )
     case 'openrouter':
       return (
