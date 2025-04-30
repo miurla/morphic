@@ -14,6 +14,7 @@ interface RenderMessageProps {
   onQuerySelect: (query: string) => void
   chatId?: string
   addToolResult?: (params: { toolCallId: string; result: any }) => void
+  onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
 }
 
 export function RenderMessage({
@@ -23,7 +24,8 @@ export function RenderMessage({
   onOpenChange,
   onQuerySelect,
   chatId,
-  addToolResult
+  addToolResult,
+  onUpdateMessage
 }: RenderMessageProps) {
   const relatedQuestions = useMemo(
     () =>
@@ -91,7 +93,13 @@ export function RenderMessage({
   }, [reasoningAnnotation])
 
   if (message.role === 'user') {
-    return <UserMessage message={message.content} />
+    return (
+      <UserMessage
+        message={message.content}
+        messageId={messageId}
+        onUpdateMessage={onUpdateMessage}
+      />
+    )
   }
 
   // New way: Use parts instead of toolInvocations
