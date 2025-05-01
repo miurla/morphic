@@ -1,4 +1,4 @@
-import { JSONValue, Message, ToolInvocation } from 'ai'
+import { ChatRequestOptions, JSONValue, Message, ToolInvocation } from 'ai'
 import { useMemo } from 'react'
 import { AnswerSection } from './answer-section'
 import { ReasoningSection } from './reasoning-section'
@@ -14,6 +14,11 @@ interface RenderMessageProps {
   onQuerySelect: (query: string) => void
   chatId?: string
   addToolResult?: (params: { toolCallId: string; result: any }) => void
+  onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
+  reload?: (
+    messageId: string,
+    options?: ChatRequestOptions
+  ) => Promise<string | null | undefined>
 }
 
 export function RenderMessage({
@@ -23,7 +28,9 @@ export function RenderMessage({
   onOpenChange,
   onQuerySelect,
   chatId,
-  addToolResult
+  addToolResult,
+  onUpdateMessage,
+  reload
 }: RenderMessageProps) {
   const relatedQuestions = useMemo(
     () =>
@@ -91,7 +98,13 @@ export function RenderMessage({
   }, [reasoningAnnotation])
 
   if (message.role === 'user') {
-    return <UserMessage message={message.content} />
+    return (
+      <UserMessage
+        message={message.content}
+        messageId={messageId}
+        onUpdateMessage={onUpdateMessage}
+      />
+    )
   }
 
   // New way: Use parts instead of toolInvocations
@@ -133,6 +146,8 @@ export function RenderMessage({
                 onOpenChange={open => onOpenChange(messageId, open)}
                 chatId={chatId}
                 showActions={isLastPart}
+                messageId={messageId}
+                reload={reload}
               />
             )
           case 'reasoning':

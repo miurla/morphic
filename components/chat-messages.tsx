@@ -1,4 +1,4 @@
-import { JSONValue, Message } from 'ai'
+import { ChatRequestOptions, JSONValue, Message } from 'ai'
 import { useEffect, useMemo, useState } from 'react'
 import { RenderMessage } from './render-message'
 import { ToolSection } from './tool-section'
@@ -13,6 +13,11 @@ interface ChatMessagesProps {
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for anchoring auto-scroll position */
   anchorRef: React.RefObject<HTMLDivElement>
+  onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
+  reload?: (
+    messageId: string,
+    options?: ChatRequestOptions
+  ) => Promise<string | null | undefined>
 }
 
 export function ChatMessages({
@@ -22,7 +27,9 @@ export function ChatMessages({
   isLoading,
   chatId,
   addToolResult,
-  anchorRef
+  anchorRef,
+  onUpdateMessage,
+  reload
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
@@ -96,6 +103,8 @@ export function ChatMessages({
             onQuerySelect={onQuerySelect}
             chatId={chatId}
             addToolResult={addToolResult}
+            onUpdateMessage={onUpdateMessage}
+            reload={reload}
           />
         </div>
       ))}

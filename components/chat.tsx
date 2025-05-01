@@ -4,6 +4,7 @@ import { CHAT_ID } from '@/lib/constants'
 import { useAutoScroll } from '@/lib/hooks/use-auto-scroll'
 import { Model } from '@/lib/types/models'
 import { useChat } from '@ai-sdk/react'
+import { ChatRequestOptions } from 'ai'
 import { Message } from 'ai/react'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
@@ -32,7 +33,8 @@ export function Chat({
     append,
     data,
     setData,
-    addToolResult
+    addToolResult,
+    reload
   } = useChat({
     initialMessages: savedMessages,
     id: CHAT_ID,
@@ -69,6 +71,69 @@ export function Chat({
     })
   }
 
+  // Function to update message content and reload the conversation
+  const handleUpdateAndReloadMessage = async (
+    messageId: string,
+    newContent: string
+  ) => {
+    // Update the message with new content
+    setMessages(currentMessages =>
+      currentMessages.map(msg =>
+        msg.id === messageId ? { ...msg, content: newContent } : msg
+      )
+    )
+
+    try {
+      // Find the updated message's index
+      const messageIndex = messages.findIndex(msg => msg.id === messageId)
+      if (messageIndex === -1) return
+
+      // Keep only messages up to that point
+      const messagesUpToEdited = messages.slice(0, messageIndex + 1)
+
+      // Update messages to include only up to the edited message
+      setMessages(messagesUpToEdited)
+
+      // Reset data to clear any tool calls
+      setData(undefined)
+
+      // Regenerate the conversation using reload
+      await reload({
+        body: {
+          chatId: id,
+          regenerate: true
+        }
+      })
+    } catch (error) {
+      console.error('Failed to reload after message update:', error)
+      toast.error(`Failed to reload conversation: ${(error as Error).message}`)
+    }
+  }
+
+  // Function to trim messages and reload from a specific message
+  const handleReloadFrom = async (
+    messageId: string,
+    options?: ChatRequestOptions
+  ) => {
+    // Find the index of the message with the specified ID
+    const messageIndex = messages.findIndex(m => m.id === messageId)
+    if (messageIndex !== -1) {
+      // Keep messages up to the specified one (usually the assistant message)
+      // and the user message just before it.
+      const userMessageIndex = messages
+        .slice(0, messageIndex)
+        .findLastIndex(m => m.role === 'user')
+      if (userMessageIndex !== -1) {
+        const trimmedMessages = messages.slice(0, userMessageIndex + 1)
+        setMessages(trimmedMessages)
+        // Reload the conversation
+        return await reload(options)
+      }
+    }
+    // If message or preceding user message not found, perform a normal reload
+    return await reload(options)
+  }
+
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setData(undefined) // reset data to clear tool call
@@ -85,6 +150,8 @@ export function Chat({
         chatId={id}
         addToolResult={addToolResult}
         anchorRef={anchorRef}
+        onUpdateMessage={handleUpdateAndReloadMessage}
+        reload={handleReloadFrom}
       />
       <ChatPanel
         input={input}
