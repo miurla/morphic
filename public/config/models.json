@@ -49,11 +49,27 @@
       "toolCallType": "native"
     },
     {
+      "id": "qwen3:32b",
+      "name": "qwen3-32b Dense",
+      "provider": "Ollama",
+      "providerId": "ollama",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
+      "id": "qwen3:30b-a3b",
+      "name": "qwen3-30b-MOE",
+      "provider": "Ollama",
+      "providerId": "ollama",
+      "enabled": true,
+      "toolCallType": "native"
+    },
+    {
       "id": "gemma3:27b",
       "name": "Gemma 3 - 27B",
       "provider": "Ollama",
       "providerId": "ollama",
-      "enabled": true,
+      "enabled": false,
       "toolCallType": "manual",
       "toolCallModel": "phi4"
     },
