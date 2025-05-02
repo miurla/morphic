@@ -61,7 +61,7 @@ export function Chat({
     dependency: messages.length,
     isStreaming: () => status === 'streaming',
     scrollContainer: scrollContainerRef,
-    threshold: 10
+    threshold: 50
   })
 
   useEffect(() => {
