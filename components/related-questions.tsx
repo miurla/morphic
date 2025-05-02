@@ -1,8 +1,8 @@
 'use client'
 
 import { CHAT_ID } from '@/lib/constants'
+import { useChat } from '@ai-sdk/react'
 import { JSONValue } from 'ai'
-import { useChat } from 'ai/react'
 import { ArrowRight } from 'lucide-react'
 import React from 'react'
 import { CollapsibleMessage } from './collapsible-message'
@@ -30,9 +30,10 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   isOpen,
   onOpenChange
 }) => {
-  const { isLoading } = useChat({
+  const { status } = useChat({
     id: CHAT_ID
   })
+  const isLoading = status === 'submitted' || status === 'streaming'
 
   if (!annotations) {
     return null
