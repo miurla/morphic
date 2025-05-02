@@ -90,13 +90,22 @@ export function ChatPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
+  // Add scroll to bottom handler
+  const handleScrollToBottom = () => {
+    const scrollContainer = document.getElementById('scroll-container')
+    if (scrollContainer) {
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
+  }
+
   return (
     <div
       className={cn(
-        'mx-auto w-full',
-        messages.length > 0
-          ? 'fixed bottom-0 left-0 right-0 bg-background'
-          : 'fixed bottom-8 left-0 right-0 top-6 flex flex-col items-center justify-center'
+        'w-full bg-background group/form-container shrink-0',
+        messages.length > 0 ? 'sticky bottom-0 px-2 pb-4' : 'px-6'
       )}
     >
       {messages.length === 0 && (
@@ -109,28 +118,22 @@ export function ChatPanel({
       )}
       <form
         onSubmit={handleSubmit}
-        className={cn(
-          'max-w-3xl w-full mx-auto relative',
-          messages.length > 0 ? 'px-2 pb-4' : 'px-6'
-        )}
+        className={cn('max-w-3xl w-full mx-auto relative')}
       >
-        {/* Scroll-down button: show when user is not at bottom */}
-        {!isAutoScroll && (
+        {/* Add scroll-down button to ChatPanel right top - show when not auto scrolling */}
+        {!isAutoScroll && messages.length > 0 && (
           <Button
             type="button"
             variant="outline"
             size="icon"
-            className="absolute -top-10 right-4 z-20 size-8 rounded-full"
-            onClick={() =>
-              window.scrollTo({
-                top: document.documentElement.scrollHeight,
-                behavior: 'smooth'
-              })
-            }
+            className="absolute -top-10 right-4 z-20 size-8 rounded-full shadow-md"
+            onClick={handleScrollToBottom}
+            title="Scroll to bottom"
           >
             <ChevronDown size={16} />
           </Button>
         )}
+
         <div className="relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input">
           <Textarea
             ref={inputRef}

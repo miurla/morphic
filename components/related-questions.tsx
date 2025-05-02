@@ -70,7 +70,7 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
       showIcon={false}
       showBorder={false}
     >
-      <Section title="Related" className="pt-0 pb-8">
+      <Section title="Related" className="pt-0 pb-4">
         <div className="flex flex-col">
           {Array.isArray(relatedQuestions.items) ? (
             relatedQuestions.items

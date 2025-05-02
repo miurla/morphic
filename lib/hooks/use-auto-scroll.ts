@@ -4,6 +4,7 @@ interface UseAutoScrollOptions {
   isLoading: boolean
   dependency: number
   isStreaming: () => boolean
+  scrollContainer?: React.RefObject<HTMLElement>
   threshold?: number
   intervalMs?: number
 }
@@ -20,7 +21,8 @@ export function useAutoScroll({
   isLoading,
   dependency,
   isStreaming,
-  threshold = 162,
+  scrollContainer,
+  threshold = 70,
   intervalMs = 100
 }: UseAutoScrollOptions): UseAutoScrollReturn {
   const anchorRef = useRef<HTMLDivElement>(null)
@@ -28,27 +30,51 @@ export function useAutoScroll({
 
   // Detect user scroll to toggle auto-scroll
   const handleScroll = useCallback(() => {
-    if (typeof window === 'undefined') return
-    const scrollHeight = document.documentElement.scrollHeight
-    const atBottom =
-      window.innerHeight + window.scrollY >= scrollHeight - threshold
-    setIsAutoScroll(atBottom)
-  }, [threshold])
+    if (scrollContainer?.current) {
+      const element = scrollContainer.current
+      const atBottom =
+        element.scrollHeight - element.scrollTop - element.clientHeight <=
+        threshold
+      setIsAutoScroll(atBottom)
+    } else if (typeof window !== 'undefined') {
+      const scrollHeight = document.documentElement.scrollHeight
+      const atBottom =
+        window.innerHeight + window.scrollY >= scrollHeight - threshold
+      setIsAutoScroll(atBottom)
+    }
+  }, [threshold, scrollContainer])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
+    if (scrollContainer?.current) {
+      const element = scrollContainer.current
+      element.addEventListener('scroll', handleScroll, { passive: true })
+      return () => {
+        element.removeEventListener('scroll', handleScroll)
+      }
+    } else if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', handleScroll, { passive: true })
+      return () => {
+        window.removeEventListener('scroll', handleScroll)
+      }
     }
-  }, [handleScroll])
+    return undefined
+  }, [handleScroll, scrollContainer])
 
   // Scroll to anchor element
   const scrollToBottom = useCallback(() => {
-    anchorRef.current?.scrollIntoView({
-      behavior: dependency > 5 ? 'instant' : 'smooth'
-    })
-  }, [dependency])
+    if (anchorRef.current) {
+      if (scrollContainer?.current) {
+        anchorRef.current.scrollIntoView({
+          behavior: dependency > 5 ? 'instant' : 'smooth',
+          block: 'end'
+        })
+      } else {
+        anchorRef.current.scrollIntoView({
+          behavior: dependency > 5 ? 'instant' : 'smooth'
+        })
+      }
+    }
+  }, [dependency, scrollContainer])
 
   // Auto-scroll on updates and during streaming
   useEffect(() => {
