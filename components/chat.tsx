@@ -3,6 +3,7 @@
 import { CHAT_ID } from '@/lib/constants'
 import { useAutoScroll } from '@/lib/hooks/use-auto-scroll'
 import { Model } from '@/lib/types/models'
+import { cn } from '@/lib/utils'
 import { useChat } from '@ai-sdk/react'
 import { ChatRequestOptions } from 'ai'
 import { Message } from 'ai/react'
@@ -141,18 +142,35 @@ export function Chat({
   }
 
   return (
-    <div className="flex flex-col w-full max-w-3xl pt-14 pb-32 mx-auto stretch">
-      <ChatMessages
-        messages={messages}
-        data={data}
-        onQuerySelect={onQuerySelect}
-        isLoading={isLoading}
-        chatId={id}
-        addToolResult={addToolResult}
-        anchorRef={anchorRef}
-        onUpdateMessage={handleUpdateAndReloadMessage}
-        reload={handleReloadFrom}
-      />
+    <div
+      className={cn(
+        'relative flex h-full min-w-0 flex-1 flex-col',
+        messages.length === 0 ? 'items-center justify-center' : ''
+      )}
+      data-testid="full-chat"
+    >
+      <div
+        id="scroll-container"
+        role="list"
+        aria-roledescription="chat messages"
+        className={cn(
+          'relative size-full pt-14',
+          messages.length > 0 ? 'flex-1 overflow-y-auto' : ''
+        )}
+        style={{ contain: 'strict' }}
+      >
+        <ChatMessages
+          messages={messages}
+          data={data}
+          onQuerySelect={onQuerySelect}
+          isLoading={isLoading}
+          chatId={id}
+          addToolResult={addToolResult}
+          anchorRef={anchorRef}
+          onUpdateMessage={handleUpdateAndReloadMessage}
+          reload={handleReloadFrom}
+        />
+      </div>
       <ChatPanel
         input={input}
         handleInputChange={handleInputChange}

@@ -93,10 +93,8 @@ export function ChatPanel({
   return (
     <div
       className={cn(
-        'mx-auto w-full',
-        messages.length > 0
-          ? 'fixed bottom-0 left-0 right-0 bg-background'
-          : 'fixed bottom-8 left-0 right-0 top-6 flex flex-col items-center justify-center'
+        'w-full bg-background group/form-container shrink-0',
+        messages.length > 0 ? 'sticky bottom-0 px-2 pb-4' : 'px-6'
       )}
     >
       {messages.length === 0 && (
@@ -109,13 +107,10 @@ export function ChatPanel({
       )}
       <form
         onSubmit={handleSubmit}
-        className={cn(
-          'max-w-3xl w-full mx-auto relative',
-          messages.length > 0 ? 'px-2 pb-4' : 'px-6'
-        )}
+        className={cn('max-w-3xl w-full mx-auto relative')}
       >
-        {/* Scroll-down button: show when user is not at bottom */}
-        {!isAutoScroll && (
+        {/* Scroll-down button: position relative to the sticky panel */}
+        {!isAutoScroll && messages.length > 0 && (
           <Button
             type="button"
             variant="outline"
