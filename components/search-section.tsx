@@ -44,13 +44,16 @@ export function SearchSection({
         tool="search"
         number={searchResults?.results?.length}
       >{`${query}${includeDomainsString}`}</ToolArgsSection>
-      <button
+      <span
         onClick={() => open(tool)}
-        className="ml-2 rounded-md p-1 hover:bg-accent"
+        className="ml-2 rounded-md p-1 hover:bg-accent cursor-pointer"
         title="Open details"
+        role="button"
+        tabIndex={0}
+        onKeyDown={e => e.key === 'Enter' && open(tool)}
       >
         <Maximize2 size={14} />
-      </button>
+      </span>
     </div>
   )
 
