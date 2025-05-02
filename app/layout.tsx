@@ -17,7 +17,7 @@ const description =
   'Autonomous AI that opens investing to all.'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://morphic-n7sx.onrender.com/'),
+  metadataBase: new URL('https://jarvis-investment-agent.onrender.com'),
   title,
   description,
   openGraph: {
