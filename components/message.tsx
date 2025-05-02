@@ -6,7 +6,6 @@ import rehypeExternalLinks from 'rehype-external-links'
 import rehypeKatex from 'rehype-katex'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
-import { Citing } from './custom-link'
 import { CodeBlock } from './ui/codeblock'
 import { MemoizedReactMarkdown } from './ui/markdown'
 
@@ -82,7 +81,35 @@ export function BotMessage({
             />
           )
         },
-        a: Citing
+        a({ href, children, ...props }) {
+          // Only handle in‑page anchors
+          if (href?.startsWith('#')) {
+            return (
+              <a
+                href={href}
+                {...props}
+                onClick={e => {
+                  e.preventDefault() // Don't let the router reload
+                  const id = href.substring(1)
+                  const el = document.getElementById(id)
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth' })
+                  }
+                  // Update the URL hash without reloading
+                  window.history.pushState({}, '', href)
+                }}
+              >
+                {children}
+              </a>
+            )
+          }
+          // Fallback for normal links
+          return (
+            <a href={href} {...props}>
+              {children}
+            </a>
+          )
+        }
       }}
     >
       {message}

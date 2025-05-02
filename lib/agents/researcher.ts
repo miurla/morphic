@@ -33,7 +33,7 @@ Format your response using this exact markdown structure:
 [Detailed synthesis of financial information from the tool results]
 
 # Sources
-[Numbered list of sources from the tool results, order them using [^1], [^2] format]
+[Numbered list of sources from the tool results. *IMPORTANT*: order them using [^1], [^2], instead of 1, 2 since we need the footnote format]
 
 Guidelines:
 1. Keep Summary concise (2-3 sentences), directly summarizing the key investment findings
