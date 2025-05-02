@@ -107,7 +107,7 @@ export const registry = createProviderRegistry({
   'openrouter': createOpenRouterProvider(),
   xai
 })
-
+//synch back to the main i mesesd this one up again. 
 // Using registry as any to access internal properties for debugging
 const registryAny = registry as any;
 console.log("✅ has languageModel:",
