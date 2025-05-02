@@ -120,7 +120,7 @@ export function ChatMessages({
         ) : (
           <Spinner />
         ))}
-      <div ref={anchorRef} /> {/* Anchor for auto-scroll */}
+      <div ref={anchorRef} />
     </div>
   )
 }
