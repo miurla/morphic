@@ -3,20 +3,20 @@ import { ArrowRight } from 'lucide-react'
 
 const exampleMessages = [
   {
-    heading: 'What is DeepSeek R1?',
-    message: 'What is DeepSeek R1?'
+    heading: 'Analyze NVIDIA Q4 2024 Earnings',
+    message: 'Analyze NVIDIA Q4 2024 Earnings'
   },
   {
-    heading: 'Why is Nvidia growing rapidly?',
-    message: 'Why is Nvidia growing rapidly?'
+    heading: 'Compare Tesla vs. BYD Market Position',
+    message: 'Compare Tesla vs. BYD Market Position'
   },
   {
-    heading: 'Tesla vs Rivian',
-    message: 'Tesla vs Rivian'
+    heading: 'Microsoft AI Strategy Impact',
+    message: "Analyze Microsoft's AI strategy and its impact on future growth"
   },
   {
-    heading: 'Summary: https://arxiv.org/pdf/2501.05707',
-    message: 'Summary: https://arxiv.org/pdf/2501.05707'
+    heading: 'Meta Platforms Growth Analysis',
+    message: "Analyze Meta Platforms' growth trajectory and key drivers"
   }
 ]
 export function EmptyScreen({

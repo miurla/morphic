@@ -17,7 +17,18 @@ export const searchTool = tool({
     query,
     max_results = 20,
     search_depth = 'basic',
-    include_domains = [],
+    include_domains = [
+      'wsj.com',
+      'ft.com',
+      'bloomberg.com',
+      'reuters.com',
+      'cnbc.com',
+      'seekingalpha.com',
+      'fool.com',
+      'marketwatch.com',
+      'investing.com',
+      'finance.yahoo.com'
+  ],
     exclude_domains = []
   }) => {
     // Tavily API requires a minimum of 5 characters in the query
