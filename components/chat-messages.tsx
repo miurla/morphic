@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils'
 import { ChatRequestOptions, JSONValue, Message } from 'ai'
 import { useEffect, useMemo, useState } from 'react'
 import { RenderMessage } from './render-message'
@@ -13,6 +14,8 @@ interface ChatMessagesProps {
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for anchoring auto-scroll position */
   anchorRef: React.RefObject<HTMLDivElement>
+  /** Ref for the scroll container */
+  scrollContainerRef: React.RefObject<HTMLDivElement>
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (
     messageId: string,
@@ -28,6 +31,7 @@ export function ChatMessages({
   chatId,
   addToolResult,
   anchorRef,
+  scrollContainerRef,
   onUpdateMessage,
   reload
 }: ChatMessagesProps) {
@@ -92,35 +96,47 @@ export function ChatMessages({
   }
 
   return (
-    <div className="relative mx-auto w-full max-w-3xl px-4">
-      {messages.map(message => (
-        <div key={message.id} className="mb-4 flex flex-col gap-4">
-          <RenderMessage
-            message={message}
-            messageId={message.id}
-            getIsOpen={getIsOpen}
-            onOpenChange={handleOpenChange}
-            onQuerySelect={onQuerySelect}
-            chatId={chatId}
-            addToolResult={addToolResult}
-            onUpdateMessage={onUpdateMessage}
-            reload={reload}
-          />
-        </div>
-      ))}
-      {showLoading &&
-        (lastToolData ? (
-          <ToolSection
-            key={manualToolCallId}
-            tool={lastToolData}
-            isOpen={getIsOpen(manualToolCallId)}
-            onOpenChange={open => handleOpenChange(manualToolCallId, open)}
-            addToolResult={addToolResult}
-          />
-        ) : (
-          <Spinner />
+    <div
+      id="scroll-container"
+      ref={scrollContainerRef}
+      role="list"
+      aria-roledescription="chat messages"
+      className={cn(
+        'relative size-full pt-14',
+        messages.length > 0 ? 'flex-1 overflow-y-auto' : ''
+      )}
+      style={{ contain: 'strict' }}
+    >
+      <div className="relative mx-auto w-full max-w-3xl px-4">
+        {messages.map(message => (
+          <div key={message.id} className="mb-4 flex flex-col gap-4">
+            <RenderMessage
+              message={message}
+              messageId={message.id}
+              getIsOpen={getIsOpen}
+              onOpenChange={handleOpenChange}
+              onQuerySelect={onQuerySelect}
+              chatId={chatId}
+              addToolResult={addToolResult}
+              onUpdateMessage={onUpdateMessage}
+              reload={reload}
+            />
+          </div>
         ))}
-      <div ref={anchorRef} />
+        {showLoading &&
+          (lastToolData ? (
+            <ToolSection
+              key={manualToolCallId}
+              tool={lastToolData}
+              isOpen={getIsOpen(manualToolCallId)}
+              onOpenChange={open => handleOpenChange(manualToolCallId, open)}
+              addToolResult={addToolResult}
+            />
+          ) : (
+            <Spinner />
+          ))}
+        <div ref={anchorRef} />
+      </div>
     </div>
   )
 }

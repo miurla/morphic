@@ -139,29 +139,18 @@ export function Chat({
       )}
       data-testid="full-chat"
     >
-      <div
-        id="scroll-container"
-        ref={scrollContainerRef}
-        role="list"
-        aria-roledescription="chat messages"
-        className={cn(
-          'relative size-full pt-14',
-          messages.length > 0 ? 'flex-1 overflow-y-auto' : ''
-        )}
-        style={{ contain: 'strict' }}
-      >
-        <ChatMessages
-          messages={messages}
-          data={data}
-          onQuerySelect={onQuerySelect}
-          isLoading={isLoading}
-          chatId={id}
-          addToolResult={addToolResult}
-          anchorRef={anchorRef}
-          onUpdateMessage={handleUpdateAndReloadMessage}
-          reload={handleReloadFrom}
-        />
-      </div>
+      <ChatMessages
+        messages={messages}
+        data={data}
+        onQuerySelect={onQuerySelect}
+        isLoading={isLoading}
+        chatId={id}
+        addToolResult={addToolResult}
+        anchorRef={anchorRef}
+        scrollContainerRef={scrollContainerRef}
+        onUpdateMessage={handleUpdateAndReloadMessage}
+        reload={handleReloadFrom}
+      />
       <ChatPanel
         input={input}
         handleInputChange={handleInputChange}
