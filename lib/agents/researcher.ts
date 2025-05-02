@@ -66,6 +66,7 @@ export function researcher({
       model: getModel(model),
       system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
       messages,
+      temperature: 0.1,
       tools: {
         search: searchTool,
         retrieve: retrieveTool,
