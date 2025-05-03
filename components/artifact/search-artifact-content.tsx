@@ -2,7 +2,7 @@
 
 import { SearchResults } from '@/components/search-results'
 import { SearchResultsImageSection } from '@/components/search-results-image'
-import { Section } from '@/components/section'
+import { Section, ToolArgsSection } from '@/components/section'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import type { ToolInvocation } from 'ai'
 
@@ -17,6 +17,7 @@ export function SearchArtifactContent({ tool }: { tool: ToolInvocation }) {
 
   return (
     <div className="space-y-2">
+      <ToolArgsSection tool="search">{`${query}`}</ToolArgsSection>
       {searchResults.images && searchResults.images.length > 0 && (
         <SearchResultsImageSection
           images={searchResults.images}
