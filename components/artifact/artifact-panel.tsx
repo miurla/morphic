@@ -12,8 +12,8 @@ export function ArtifactPanel() {
   if (!artifact) return null
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-muted md:px-4 md:py-4 md:pb-4 md:pt-14">
-      <div className="flex flex-col h-full bg-background rounded-xl">
+    <div className="h-full flex flex-col overflow-hidden bg-muted md:px-4 md:py-14">
+      <div className="flex flex-col h-full bg-background rounded-xl md:border">
         <div className="flex items-center justify-between px-4 py-2">
           <h3 className="flex items-center gap-2">
             <div className="bg-muted p-2 rounded-md flex items-center gap-2">
