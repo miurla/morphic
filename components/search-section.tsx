@@ -5,7 +5,6 @@ import { CHAT_ID } from '@/lib/constants'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import { useChat } from '@ai-sdk/react'
 import { ToolInvocation } from 'ai'
-import { Maximize2 } from 'lucide-react'
 import { CollapsibleMessage } from './collapsible-message'
 import { SearchSkeleton } from './default-skeleton'
 import { SearchResults } from './search-results'
@@ -39,22 +38,17 @@ export function SearchSection({
 
   const { open } = useArtifact()
   const header = (
-    <div className="flex items-center justify-between w-full">
+    <button
+      type="button"
+      onClick={() => open(tool)}
+      className="flex items-center justify-between w-full text-left rounded-md p-1 -ml-1"
+      title="Open details"
+    >
       <ToolArgsSection
         tool="search"
         number={searchResults?.results?.length}
       >{`${query}${includeDomainsString}`}</ToolArgsSection>
-      <span
-        onClick={() => open(tool)}
-        className="ml-2 rounded-md p-1 hover:bg-accent cursor-pointer"
-        title="Open details"
-        role="button"
-        tabIndex={0}
-        onKeyDown={e => e.key === 'Enter' && open(tool)}
-      >
-        <Maximize2 size={14} />
-      </span>
-    </div>
+    </button>
   )
 
   return (
