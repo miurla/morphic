@@ -26,7 +26,7 @@ export function SearchArtifactContent({ tool }: { tool: ToolInvocation }) {
       )}
 
       <Section title="Sources">
-        <SearchResults results={searchResults.results} />
+        <SearchResults results={searchResults.results} displayMode="list" />
       </Section>
     </div>
   )

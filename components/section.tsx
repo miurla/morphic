@@ -77,7 +77,7 @@ export const Section: React.FC<SectionProps> = ({
           </h2>
         )}
         {title && type === 'badge' && (
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="mb-2">
             {icon}
             {title}
           </Badge>
