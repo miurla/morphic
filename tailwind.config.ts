@@ -87,11 +87,27 @@ const config = {
           to: {
             height: '0'
           }
+        },
+        'collapse-down': {
+          from: { height: '0', opacity: '0' },
+          to: {
+            height: 'var(--radix-collapsible-content-height)',
+            opacity: '1'
+          }
+        },
+        'collapse-up': {
+          from: {
+            height: 'var(--radix-collapsible-content-height)',
+            opacity: '1'
+          },
+          to: { height: '0', opacity: '0' }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out'
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'collapse-down': 'collapse-down 0.1s ease-in-out',
+        'collapse-up': 'collapse-up 0.1s ease-in-out'
       },
       fontFamily: {
         sans: ['var(--font-sans)', ...fontFamily.sans]
