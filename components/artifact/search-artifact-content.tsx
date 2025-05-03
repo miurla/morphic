@@ -16,7 +16,7 @@ export function SearchArtifactContent({ tool }: { tool: ToolInvocation }) {
   }
 
   return (
-    <div className="p-4 space-y-2">
+    <div className="space-y-2">
       {searchResults.images && searchResults.images.length > 0 && (
         <SearchResultsImageSection
           images={searchResults.images}
