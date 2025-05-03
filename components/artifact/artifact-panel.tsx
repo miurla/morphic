@@ -11,7 +11,7 @@ export function ArtifactPanel() {
   if (!artifact) return null
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-background">
+    <div className="h-full flex flex-col overflow-hidden bg-muted">
       <div className="flex items-center justify-between p-4 border-b">
         <h3 className="font-medium capitalize">
           {artifact.toolName === 'search'

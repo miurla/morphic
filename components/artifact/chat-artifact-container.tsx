@@ -31,8 +31,8 @@ export function ChatArtifactContainer({
 
           {state.isOpen && (
             <>
-              <ResizableHandle withHandle />
-              <ResizablePanel className="min-w-0 w-96 border-l">
+              <ResizableHandle />
+              <ResizablePanel className="min-w-96 w-96" maxSize={50}>
                 <ArtifactPanel />
               </ResizablePanel>
             </>
