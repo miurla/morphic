@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { X } from 'lucide-react'
+import { Minimize2, Wrench } from 'lucide-react'
 import { ArtifactContent } from './artifact-content'
 import { useArtifact } from './artifact-context'
 
@@ -12,23 +12,28 @@ export function ArtifactPanel() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-muted">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="font-medium capitalize">
-          {artifact.toolName === 'search'
-            ? 'Search Results'
-            : artifact.toolName}
-        </h3>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={close}
-          aria-label="Close panel"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="flex-1 overflow-y-auto">
-        <ArtifactContent artifact={artifact} />
+      <div className="flex flex-col h-full m-4 mt-16 bg-background rounded-xl">
+        <div className="flex items-center justify-between p-4">
+          <h3 className="flex items-center gap-2">
+            <div className="bg-muted p-2 rounded-md flex items-center gap-2">
+              <Wrench size={18} />
+            </div>
+            <span className="text-sm font-medium capitalize">
+              {artifact.toolName}
+            </span>
+          </h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={close}
+            aria-label="Close panel"
+          >
+            <Minimize2 className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          <ArtifactContent artifact={artifact} />
+        </div>
       </div>
     </div>
   )
