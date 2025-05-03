@@ -42,7 +42,7 @@ export function ChatArtifactContainer({
   }, [state.isOpen, renderPanel])
 
   return (
-    <div className="flex-1 min-h-0 flex">
+    <div className="flex-1 min-h-0 h-screen flex">
       {/* Desktop: Resizable panels (Do not render on mobile) */}
       {!isMobile && (
         <ResizablePanelGroup
