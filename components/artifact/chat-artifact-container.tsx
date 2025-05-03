@@ -6,7 +6,8 @@ import {
   ResizablePanelGroup
 } from '@/components/ui/resizable'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
-import React from 'react'
+import { cn } from '@/lib/utils'
+import React, { useEffect, useState } from 'react'
 import { useArtifact } from './artifact-context'
 import { ArtifactDrawer } from './artifact-drawer'
 import { ArtifactPanel } from './artifact-panel'
@@ -18,6 +19,27 @@ export function ChatArtifactContainer({
 }) {
   const { state } = useArtifact()
   const isMobile = useMediaQuery('(max-width: 767px)') // Below md breakpoint
+  const [renderPanel, setRenderPanel] = useState(state.isOpen)
+  const [isClosing, setIsClosing] = useState(false)
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (state.isOpen) {
+      setRenderPanel(true)
+      setIsClosing(false)
+    } else {
+      if (renderPanel) {
+        setIsClosing(true)
+        timer = setTimeout(() => {
+          setRenderPanel(false)
+          setIsClosing(false)
+        }, 200)
+      }
+    }
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [state.isOpen, renderPanel])
 
   return (
     <div className="flex-1 min-h-0 flex">
@@ -29,10 +51,16 @@ export function ChatArtifactContainer({
         >
           <ResizablePanel className="min-w-0">{children}</ResizablePanel>
 
-          {state.isOpen && (
+          {renderPanel && (
             <>
               <ResizableHandle />
-              <ResizablePanel className="min-w-96 w-96" maxSize={50}>
+              <ResizablePanel
+                className={cn('min-w-96 w-96 overflow-hidden', {
+                  'animate-slide-in-right': state.isOpen && !isClosing,
+                  'animate-slide-out-right': isClosing
+                })}
+                maxSize={50}
+              >
                 <ArtifactPanel />
               </ResizablePanel>
             </>
