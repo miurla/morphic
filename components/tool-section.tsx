@@ -63,7 +63,7 @@ export function ToolSection({
           onOpenChange={onOpenChange}
         />
       )
-    case 'video_search':
+    case 'videoSearch':
       return (
         <VideoSearchSection
           tool={tool}
