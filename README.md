@@ -2,7 +2,7 @@
 
 An AI-powered search engine with a generative UI.
 
-![capture](/public/screenshot-2025-01-31.png)
+![capture](/public/screenshot-2025-05-04.png)
 
 ## 🗂️ Overview
 
@@ -12,8 +12,6 @@ An AI-powered search engine with a generative UI.
 - 🌐 [Deploy](#-deploy)
 - 🔎 [Search Engine](#-search-engine)
 - ✅ [Verified models](#-verified-models)
-- ⚡ [AI SDK Implementation](#-ai-sdk-implementation)
-- 📦 [Open Source vs Cloud Offering](#-open-source-vs-cloud-offering)
 - 👥 [Contributing](#-contributing)
 
 ## 🛠 Features
