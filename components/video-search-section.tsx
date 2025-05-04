@@ -35,7 +35,7 @@ export function VideoSearchSection({
   const header = (
     <button
       type="button"
-      onClick={() => open(tool)}
+      onClick={() => open({ type: 'tool-invocation', toolInvocation: tool })}
       className="flex items-center justify-between w-full text-left rounded-md p-1 -ml-1"
       title="Open details"
     >

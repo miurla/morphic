@@ -1,25 +1,20 @@
 'use client'
 
-import { RetrieveArtifactContent } from '@/components/artifact/retrieve-artifact-content'
-import { SearchArtifactContent } from '@/components/artifact/search-artifact-content'
-import { VideoSearchArtifactContent } from '@/components/artifact/video-search-artifact-content'
-import type { ToolInvocation } from 'ai'
+import { Part } from '@/components/artifact/artifact-context'
+import { ReasoningContent } from './reasoning-content'
+import { ToolInvocationContent } from './tool-invocation-content'
 
-export function ArtifactContent({
-  artifact
-}: {
-  artifact: ToolInvocation | null
-}) {
-  if (!artifact) return null
+export function ArtifactContent({ part }: { part: Part | null }) {
+  if (!part) return null
 
-  switch (artifact.toolName) {
-    case 'search':
-      return <SearchArtifactContent tool={artifact} />
-    case 'retrieve':
-      return <RetrieveArtifactContent tool={artifact} />
-    case 'videoSearch':
-      return <VideoSearchArtifactContent tool={artifact} />
+  switch (part.type) {
+    case 'tool-invocation':
+      return <ToolInvocationContent toolInvocation={part.toolInvocation} />
+    case 'reasoning':
+      return <ReasoningContent reasoning={part.reasoning} />
     default:
-      return <div className="p-4">Details for this tool are not available</div>
+      return (
+        <div className="p-4">Details for this part type are not available</div>
+      )
   }
 }
