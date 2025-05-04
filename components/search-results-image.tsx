@@ -96,11 +96,26 @@ export const SearchResultsImageSection: React.FC<
   const renderImageGrid = (
     imageSubset: { url: string; description: string }[],
     gridClasses: string,
-    startIndex: number = 0
+    startIndex: number = 0,
+    isFullMode: boolean = false // Add flag to indicate full mode for corner rounding
   ) => (
     <div className={gridClasses}>
       {imageSubset.map((image, index) => {
         const actualIndex = startIndex + index
+        // Determine corner rounding based on index in full mode 2x3 layout
+        let cornerClasses = '' // Default to no rounding
+        if (isFullMode) {
+          if (actualIndex === 0) cornerClasses = 'rounded-tl-lg' // Top-left
+          else if (actualIndex === 1)
+            cornerClasses = 'rounded-tr-lg' // Top-right
+          else if (actualIndex === 2)
+            cornerClasses = 'rounded-bl-lg' // Bottom-left
+          // Index 3 (bottom-middle) gets no rounding
+          else if (actualIndex === 4) cornerClasses = 'rounded-br-lg' // Bottom-right
+        } else {
+          cornerClasses = 'rounded-lg' // Default for preview mode
+        }
+
         return (
           <Dialog key={actualIndex}>
             <DialogTrigger asChild>
@@ -114,7 +129,8 @@ export const SearchResultsImageSection: React.FC<
                       <img
                         src={image.url}
                         alt={`Image ${actualIndex + 1}`}
-                        className="h-full w-full object-cover rounded-lg shadow"
+                        // Apply specific or default rounding
+                        className={`h-full w-full object-cover shadow ${cornerClasses}`}
                         onError={e =>
                           (e.currentTarget.src =
                             '/images/placeholder-image.png')
@@ -179,7 +195,7 @@ export const SearchResultsImageSection: React.FC<
                   )}
                 </Carousel>
                 <div className="py-2 text-center text-sm text-muted-foreground">
-                  {current} of {count} images
+                  {current} of {count}
                 </div>
               </div>
             </DialogContent>
@@ -190,18 +206,37 @@ export const SearchResultsImageSection: React.FC<
   )
 
   if (displayMode === 'full') {
+    // Original 2 rows: 2 images + 3 images
     const firstRowImages = convertedImages.slice(0, 2)
     const secondRowImages = convertedImages.slice(2, 5)
 
+    // Render two rows, passing isFullMode=true to apply specific rounding
     return (
       <div className="flex flex-col gap-2">
-        {renderImageGrid(firstRowImages, 'grid grid-cols-2 gap-2', 0)}
-        {renderImageGrid(secondRowImages, 'grid grid-cols-3 gap-2', 2)}
+        {renderImageGrid(
+          firstRowImages,
+          'grid grid-cols-2 gap-2',
+          0,
+          true // Pass true for isFullMode
+        )}
+        {secondRowImages.length > 0 && // Only render second row if images exist
+          renderImageGrid(
+            secondRowImages,
+            'grid grid-cols-3 gap-2',
+            2,
+            true // Pass true for isFullMode
+          )}
       </div>
     )
   }
 
-  // Default to preview mode
+  // Default to preview mode (2x2 or 4 wide grid)
   const previewImages = convertedImages.slice(0, 4)
-  return renderImageGrid(previewImages, 'grid grid-cols-2 md:grid-cols-4 gap-2')
+  // Preview mode uses default rounding (rounded-lg), so isFullMode=false
+  return renderImageGrid(
+    previewImages,
+    'grid grid-cols-2 md:grid-cols-4 gap-2',
+    0,
+    false
+  )
 }
