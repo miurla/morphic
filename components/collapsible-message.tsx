@@ -29,13 +29,13 @@ export function CollapsibleMessage({
   showBorder = true,
   showIcon = true
 }: CollapsibleMessageProps) {
-  const content = <div className="py-2 flex-1">{children}</div>
+  const content = <div className="flex-1">{children}</div>
 
   return (
     <div className="flex">
       {showIcon && (
         <div className="relative flex flex-col items-center">
-          <div className={cn('mt-[10px] w-5', role === 'assistant' && 'mt-4')}>
+          <div className={cn('mt-[2px] w-5', role === 'assistant' && 'mt-4')}>
             {role === 'user' ? (
               <UserCircle2 size={20} className="text-muted-foreground" />
             ) : (

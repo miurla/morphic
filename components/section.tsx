@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import {
   BookCheck,
   Check,
+  File,
   Film,
   Image,
   MessageCircleMore,
@@ -56,6 +57,10 @@ export const Section: React.FC<SectionProps> = ({
       break
     case 'Follow-up':
       icon = <MessageCircleMore size={iconSize} className={iconClassName} />
+      break
+    case 'Content':
+      icon = <File size={iconSize} className={iconClassName} />
+      type = 'badge'
       break
     default:
       icon = <Search size={iconSize} className={iconClassName} />
