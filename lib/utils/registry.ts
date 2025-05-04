@@ -23,7 +23,8 @@ export const registry = createProviderRegistry({
   }),
   azure: createAzure({
     apiKey: process.env.AZURE_API_KEY,
-    resourceName: process.env.AZURE_RESOURCE_NAME
+    resourceName: process.env.AZURE_RESOURCE_NAME,
+    apiVersion: '2025-03-01-preview'
   }),
   deepseek,
   fireworks: {
