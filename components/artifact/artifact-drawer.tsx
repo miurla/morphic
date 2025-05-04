@@ -28,7 +28,7 @@ export function ArtifactDrawer() {
       onOpenChange={open => {
         if (!open) close()
       }}
-      modal={false}
+      modal={true}
     >
       <DrawerContent className="p-0 max-h-[90vh] md:hidden">
         <ArtifactPanel />
