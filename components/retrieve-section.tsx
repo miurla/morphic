@@ -1,5 +1,6 @@
 'use client'
 
+import { useArtifact } from '@/components/artifact/artifact-context'
 import { SearchResults } from '@/components/search-results'
 import { Section, ToolArgsSection } from '@/components/section'
 import { SearchResults as SearchResultsType } from '@/lib/types'
@@ -23,7 +24,19 @@ export function RetrieveSection({
     tool.state === 'result' ? tool.result : undefined
   const url = tool.args.url as string | undefined
 
-  const header = <ToolArgsSection tool="retrieve">{url}</ToolArgsSection>
+  const { open } = useArtifact()
+  const header = (
+    <button
+      type="button"
+      onClick={() => open({ type: 'tool-invocation', toolInvocation: tool })}
+      className="flex items-center justify-between w-full text-left rounded-md p-1 -ml-1"
+      title="Open details"
+    >
+      <ToolArgsSection tool="retrieve" number={data?.results?.length}>
+        {url}
+      </ToolArgsSection>
+    </button>
+  )
 
   return (
     <CollapsibleMessage

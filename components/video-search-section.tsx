@@ -1,6 +1,9 @@
 'use client'
 
+import { useArtifact } from '@/components/artifact/artifact-context'
+import { CHAT_ID } from '@/lib/constants'
 import type { SerperSearchResults } from '@/lib/types'
+import { useChat } from '@ai-sdk/react'
 import { ToolInvocation } from 'ai'
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
@@ -18,12 +21,29 @@ export function VideoSearchSection({
   isOpen,
   onOpenChange
 }: VideoSearchSectionProps) {
-  const isLoading = tool.state === 'call'
-  const searchResults: SerperSearchResults =
-    tool.state === 'result' ? tool.result : undefined
-  const query = tool.args.q as string | undefined
+  const { status } = useChat({
+    id: CHAT_ID
+  })
+  const isLoading = status === 'submitted' || status === 'streaming'
 
-  const header = <ToolArgsSection tool="video_search">{query}</ToolArgsSection>
+  const isToolLoading = tool.state === 'call'
+  const videoResults: SerperSearchResults =
+    tool.state === 'result' ? tool.result : undefined
+  const query = tool.args?.query as string | undefined
+
+  const { open } = useArtifact()
+  const header = (
+    <button
+      type="button"
+      onClick={() => open({ type: 'tool-invocation', toolInvocation: tool })}
+      className="flex items-center justify-between w-full text-left rounded-md p-1 -ml-1"
+      title="Open details"
+    >
+      <ToolArgsSection tool="videoSearch" number={videoResults?.videos?.length}>
+        {query}
+      </ToolArgsSection>
+    </button>
+  )
 
   return (
     <CollapsibleMessage
@@ -34,9 +54,9 @@ export function VideoSearchSection({
       onOpenChange={onOpenChange}
       showIcon={false}
     >
-      {!isLoading && searchResults ? (
+      {!isLoading && videoResults ? (
         <Section title="Videos">
-          <VideoSearchResults results={searchResults} />
+          <VideoSearchResults results={videoResults} />
         </Section>
       ) : (
         <DefaultSkeleton />

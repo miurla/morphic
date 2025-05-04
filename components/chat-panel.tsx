@@ -7,6 +7,7 @@ import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
+import { useArtifact } from './artifact/artifact-context'
 import { EmptyScreen } from './empty-screen'
 import { ModelSelector } from './model-selector'
 import { SearchModeToggle } from './search-mode-toggle'
@@ -47,6 +48,7 @@ export function ChatPanel({
   const isFirstRender = useRef(true)
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
+  const { close: closeArtifact } = useArtifact()
 
   const handleCompositionStart = () => setIsComposing(true)
 
@@ -60,6 +62,7 @@ export function ChatPanel({
 
   const handleNewChat = () => {
     setMessages([])
+    closeArtifact()
     router.push('/')
   }
 

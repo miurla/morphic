@@ -1,5 +1,6 @@
 'use client'
 
+import { useArtifact } from '@/components/artifact/artifact-context'
 import { CHAT_ID } from '@/lib/constants'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import { useChat } from '@ai-sdk/react'
@@ -35,11 +36,19 @@ export function SearchSection({
     ? ` [${includeDomains.join(', ')}]`
     : ''
 
+  const { open } = useArtifact()
   const header = (
-    <ToolArgsSection
-      tool="search"
-      number={searchResults?.results?.length}
-    >{`${query}${includeDomainsString}`}</ToolArgsSection>
+    <button
+      type="button"
+      onClick={() => open({ type: 'tool-invocation', toolInvocation: tool })}
+      className="flex items-center justify-between w-full text-left rounded-md p-1 -ml-1"
+      title="Open details"
+    >
+      <ToolArgsSection
+        tool="search"
+        number={searchResults?.results?.length}
+      >{`${query}${includeDomainsString}`}</ToolArgsSection>
+    </button>
   )
 
   return (

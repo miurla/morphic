@@ -1,3 +1,4 @@
+import ArtifactRoot from '@/components/artifact/artifact-root'
 import Footer from '@/components/footer'
 import Header from '@/components/header'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -60,7 +61,9 @@ export default function RootLayout({
         >
           <div className="flex flex-col flex-1">
             <Header />
-            <main className="flex flex-col flex-1 min-h-0">{children}</main>
+            <main className="flex flex-1 min-h-0">
+              <ArtifactRoot>{children}</ArtifactRoot>
+            </main>
             <Footer />
           </div>
           <Toaster />

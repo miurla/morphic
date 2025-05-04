@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import {
   BookCheck,
   Check,
+  File,
   Film,
   Image,
   MessageCircleMore,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react'
 import React from 'react'
 import { ToolBadge } from './tool-badge'
+import { Badge } from './ui/badge'
 import { Separator } from './ui/separator'
 import { StatusIndicator } from './ui/status-indicator'
 
@@ -34,6 +36,7 @@ export const Section: React.FC<SectionProps> = ({
   const iconSize = 16
   const iconClassName = 'mr-1.5 text-muted-foreground'
   let icon: React.ReactNode
+  let type: 'text' | 'badge' = 'text'
   switch (title) {
     case 'Images':
       // eslint-disable-next-line jsx-a11y/alt-text
@@ -41,9 +44,11 @@ export const Section: React.FC<SectionProps> = ({
       break
     case 'Videos':
       icon = <Film size={iconSize} className={iconClassName} />
+      type = 'badge'
       break
     case 'Sources':
       icon = <Newspaper size={iconSize} className={iconClassName} />
+      type = 'badge'
       break
     case 'Answer':
       icon = <BookCheck size={iconSize} className={iconClassName} />
@@ -53,6 +58,10 @@ export const Section: React.FC<SectionProps> = ({
       break
     case 'Follow-up':
       icon = <MessageCircleMore size={iconSize} className={iconClassName} />
+      break
+    case 'Content':
+      icon = <File size={iconSize} className={iconClassName} />
+      type = 'badge'
       break
     default:
       icon = <Search size={iconSize} className={iconClassName} />
@@ -67,11 +76,17 @@ export const Section: React.FC<SectionProps> = ({
           className
         )}
       >
-        {title && (
+        {title && type === 'text' && (
           <h2 className="flex items-center leading-none py-2">
             {icon}
             {title}
           </h2>
+        )}
+        {title && type === 'badge' && (
+          <Badge variant="secondary" className="mb-2">
+            {icon}
+            {title}
+          </Badge>
         )}
         {children}
       </section>
@@ -89,7 +104,10 @@ export function ToolArgsSection({
   number?: number
 }) {
   return (
-    <Section size="sm" className="py-0 flex items-center justify-between">
+    <Section
+      size="sm"
+      className="py-0 flex items-center justify-between w-full"
+    >
       <ToolBadge tool={tool}>{children}</ToolBadge>
       {number && (
         <StatusIndicator icon={Check} iconClassName="text-green-500">
