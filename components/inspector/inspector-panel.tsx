@@ -1,5 +1,7 @@
 'use client'
 
+import { ArtifactContent } from '@/components/artifact/artifact-content'
+import { useArtifact } from '@/components/artifact/artifact-context'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -9,10 +11,8 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip'
 import { LightbulbIcon, MessageSquare, Minimize2, Wrench } from 'lucide-react'
-import { ArtifactContent } from './artifact-content'
-import { useArtifact } from './artifact-context'
 
-export function ArtifactPanel() {
+export function InspectorPanel() {
   const { state, close } = useArtifact()
   const part = state.part
   if (!part) return null

@@ -1,5 +1,7 @@
 'use client'
 
+import { InspectorDrawer } from '@/components/inspector/inspector-drawer'
+import { InspectorPanel } from '@/components/inspector/inspector-panel'
 import {
   ResizableHandle,
   ResizablePanel,
@@ -9,8 +11,6 @@ import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
 import React, { useEffect, useState } from 'react'
 import { useArtifact } from './artifact-context'
-import { ArtifactDrawer } from './artifact-drawer'
-import { ArtifactPanel } from './artifact-panel'
 
 export function ChatArtifactContainer({
   children
@@ -57,7 +57,7 @@ export function ChatArtifactContainer({
                 minSize={30}
                 defaultSize={40}
               >
-                <ArtifactPanel />
+                <InspectorPanel />
               </ResizablePanel>
             </>
           )}
@@ -71,7 +71,7 @@ export function ChatArtifactContainer({
           {/* Responsive classes removed */}
           {children}
           {/* ArtifactDrawer checks isMobile internally, no double check needed */}
-          <ArtifactDrawer />
+          <InspectorDrawer />
         </div>
       )}
     </div>

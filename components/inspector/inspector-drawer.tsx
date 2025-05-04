@@ -1,12 +1,12 @@
 'use client'
 
+import { useArtifact } from '@/components/artifact/artifact-context'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import { useArtifact } from './artifact-context'
-import { ArtifactPanel } from './artifact-panel'
+import { InspectorPanel } from './inspector-panel'
 
-export function ArtifactDrawer() {
+export function InspectorDrawer() {
   const { state, close } = useArtifact()
   const part = state.part
   const isMobile = useMediaQuery('(max-width: 767px)')
@@ -40,7 +40,7 @@ export function ArtifactDrawer() {
         <DrawerTitle asChild>
           <VisuallyHidden>{getTitle()}</VisuallyHidden>
         </DrawerTitle>
-        <ArtifactPanel />
+        <InspectorPanel />
       </DrawerContent>
     </Drawer>
   )
