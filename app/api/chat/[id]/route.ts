@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const enableSaveChatHistory = process.env.ENABLE_SAVE_CHAT_HISTORY === 'true'
   if (!enableSaveChatHistory) {
@@ -13,7 +13,7 @@ export async function DELETE(
     )
   }
 
-  const chatId = params.id
+  const chatId = (await params).id
   if (!chatId) {
     return NextResponse.json({ error: 'Chat ID is required' }, { status: 400 })
   }
