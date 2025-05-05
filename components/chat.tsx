@@ -7,7 +7,8 @@ import { cn } from '@/lib/utils'
 import { useChat } from '@ai-sdk/react'
 import { ChatRequestOptions } from 'ai'
 import { Message } from 'ai/react'
-import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useTransition } from 'react'
 import { toast } from 'sonner'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
@@ -24,6 +25,8 @@ export function Chat({
   models?: Model[]
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
 
   const {
     messages,
@@ -45,7 +48,10 @@ export function Chat({
       id
     },
     onFinish: () => {
-      window.history.replaceState({}, '', `/search/${id}`)
+      router.replace(`/search/${id}`)
+      startTransition(() => {
+        router.refresh()
+      })
     },
     onError: error => {
       toast.error(`Error in chat: ${error.message}`)

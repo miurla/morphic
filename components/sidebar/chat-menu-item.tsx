@@ -1,12 +1,11 @@
 'use client'
 
-import React from 'react'
+import { SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
+import { Chat } from '@/lib/types'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Chat } from '@/lib/types'
-import { cn } from '@/lib/utils'
 
-type HistoryItemProps = {
+interface ChatMenuItemProps {
   chat: Chat
 }
 
@@ -48,26 +47,26 @@ const formatDateWithTime = (date: Date | string) => {
   }
 }
 
-const HistoryItem: React.FC<HistoryItemProps> = ({ chat }) => {
+export function ChatMenuItem({ chat }: ChatMenuItemProps) {
   const pathname = usePathname()
   const isActive = pathname === chat.path
 
   return (
-    <Link
-      href={chat.path}
-      className={cn(
-        'flex flex-col hover:bg-muted cursor-pointer p-2 rounded border',
-        isActive ? 'bg-muted/70 border-border' : 'border-transparent'
-      )}
-    >
-      <div className="text-xs font-medium truncate select-none">
-        {chat.title}
-      </div>
-      <div className="text-xs text-muted-foreground">
-        {formatDateWithTime(chat.createdAt)}
-      </div>
-    </Link>
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        isActive={isActive}
+        className="h-auto flex-col gap-0.5 items-start p-2"
+      >
+        <Link href={chat.path}>
+          <div className="text-xs font-medium truncate select-none w-full">
+            {chat.title}
+          </div>
+          <div className="text-xs text-muted-foreground w-full">
+            {formatDateWithTime(chat.createdAt)}
+          </div>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   )
 }
-
-export default HistoryItem

@@ -1,21 +1,22 @@
+'use client'
+
+import { useSidebar } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import React from 'react'
-import HistoryContainer from './history-container'
 import { ModeToggle } from './mode-toggle'
-import { IconLogo } from './ui/icons'
 
-export const Header: React.FC = async () => {
+export const Header: React.FC = () => {
+  const { open } = useSidebar()
   return (
-    <header className="fixed w-full p-2 flex justify-between items-center z-10 backdrop-blur lg:backdrop-blur-none bg-background/80 lg:bg-transparent">
-      <div>
-        <a href="/">
-          <IconLogo className={cn('w-5 h-5')} />
-          <span className="sr-only">Morphic</span>
-        </a>
-      </div>
+    <header
+      className={cn(
+        'absolute top-0 right-0 p-2 flex justify-end items-center z-10 backdrop-blur lg:backdrop-blur-none bg-background/80 lg:bg-transparent transition-[width] duration-200 ease-linear',
+        open ? 'md:w-[calc(100%-var(--sidebar-width))]' : 'md:w-full',
+        'w-full'
+      )}
+    >
       <div className="flex gap-0.5">
         <ModeToggle />
-        <HistoryContainer />
       </div>
     </header>
   )

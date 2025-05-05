@@ -1,7 +1,8 @@
+import AppSidebar from '@/components/app-sidebar'
 import ArtifactRoot from '@/components/artifact/artifact-root'
-import Footer from '@/components/footer'
 import Header from '@/components/header'
 import { ThemeProvider } from '@/components/theme-provider'
+import { SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
 import { cn } from '@/lib/utils'
 import type { Metadata, Viewport } from 'next'
@@ -59,13 +60,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex flex-col flex-1">
-            <Header />
-            <main className="flex flex-1 min-h-0">
-              <ArtifactRoot>{children}</ArtifactRoot>
-            </main>
-            <Footer />
-          </div>
+          <SidebarProvider defaultOpen>
+            <AppSidebar />
+            <div className="flex flex-col flex-1">
+              <Header />
+              <main className="flex flex-1 min-h-0">
+                <ArtifactRoot>{children}</ArtifactRoot>
+              </main>
+            </div>
+          </SidebarProvider>
           <Toaster />
         </ThemeProvider>
       </body>
