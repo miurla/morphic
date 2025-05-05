@@ -1,11 +1,6 @@
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu
-} from '@/components/ui/sidebar'
-import { getChats } from '@/lib/actions/chat'
-import { Chat } from '@/lib/types'
-import { ChatMenuItem } from './chat-menu-item'
+import { SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar'
+import { getChatsPage } from '@/lib/actions/chat'
+import { ChatHistoryClient } from './chat-history-client'
 import { ClearHistoryAction } from './clear-history-action'
 
 export async function ChatHistorySection() {
@@ -14,30 +9,19 @@ export async function ChatHistorySection() {
     return null
   }
 
-  // Replace with your own user ID
-  const chats = await getChats('anonymous')
+  // Fetch the initial page of chats
+  // Replace 'anonymous' with your actual user ID logic
+  const { chats, nextOffset } = await getChatsPage('anonymous', 20, 0)
 
   return (
     <div className="flex flex-col flex-1 h-full">
       <SidebarGroup>
         <div className="flex items-center justify-between w-full">
           <SidebarGroupLabel className="p-0">History</SidebarGroupLabel>
-          <ClearHistoryAction empty={!chats?.length} />
+          <ClearHistoryAction empty={!chats?.length && !nextOffset} />
         </div>
       </SidebarGroup>
-      <div className="flex-1 overflow-y-auto mb-2">
-        {!chats?.length ? (
-          <div className="px-2 text-foreground/30 text-sm text-center py-4">
-            No search history
-          </div>
-        ) : (
-          <SidebarMenu>
-            {chats.map(
-              (chat: Chat) => chat && <ChatMenuItem key={chat.id} chat={chat} />
-            )}
-          </SidebarMenu>
-        )}
-      </div>
+      <ChatHistoryClient initialChats={chats} initialNextOffset={nextOffset} />
     </div>
   )
 }
