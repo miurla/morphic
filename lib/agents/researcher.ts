@@ -1,8 +1,8 @@
 import { CoreMessage, smoothStream, streamText } from 'ai'
-import { askQuestionTool } from '../tools/question'
+import { createQuestionTool } from '../tools/question'
 import { retrieveTool } from '../tools/retrieve'
-import { searchTool } from '../tools/search'
-import { videoSearchTool } from '../tools/video-search'
+import { createSearchTool } from '../tools/search'
+import { createVideoSearchTool } from '../tools/video-search'
 import { getModel } from '../utils/registry'
 
 const SYSTEM_PROMPT = `
@@ -46,6 +46,11 @@ export function researcher({
 }): ResearcherReturn {
   try {
     const currentDate = new Date().toLocaleString()
+
+    // Create model-specific tools
+    const searchTool = createSearchTool(model)
+    const videoSearchTool = createVideoSearchTool(model)
+    const askQuestionTool = createQuestionTool(model)
 
     return {
       model: getModel(model),

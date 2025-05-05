@@ -1,4 +1,4 @@
-import { searchSchema } from '@/lib/schema/search'
+import { getSearchSchemaForModel } from '@/lib/schema/search'
 import {
   SearchResultImage,
   SearchResultItem,
@@ -10,82 +10,100 @@ import { sanitizeUrl } from '@/lib/utils'
 import { tool } from 'ai'
 import Exa from 'exa-js'
 
-export const searchTool = tool({
-  description: 'Search the web for information',
-  parameters: searchSchema,
-  execute: async ({
-    query,
-    max_results = 20,
-    search_depth = 'basic',
-    include_domains = [],
-    exclude_domains = []
-  }) => {
-    // Tavily API requires a minimum of 5 characters in the query
-    const filledQuery =
-      query.length < 5 ? query + ' '.repeat(5 - query.length) : query
-    let searchResult: SearchResults
-    const searchAPI =
-      (process.env.SEARCH_API as 'tavily' | 'exa' | 'searxng') || 'tavily'
+/**
+ * Creates a search tool with the appropriate schema for the given model.
+ */
+export function createSearchTool(fullModel: string) {
+  return tool({
+    description: 'Search the web for information',
+    parameters: getSearchSchemaForModel(fullModel),
+    execute: async ({
+      query,
+      max_results = 20,
+      search_depth = 'basic', // Default for standard schema
+      include_domains = [],
+      exclude_domains = []
+    }) => {
+      // Ensure max_results is at least 10
+      const minResults = 10
+      const effectiveMaxResults = Math.max(
+        max_results || minResults,
+        minResults
+      )
+      const effectiveSearchDepth = search_depth as 'basic' | 'advanced'
 
-    const effectiveSearchDepth =
-      searchAPI === 'searxng' &&
-      process.env.SEARXNG_DEFAULT_DEPTH === 'advanced'
-        ? 'advanced'
-        : search_depth || 'basic'
+      // Tavily API requires a minimum of 5 characters in the query
+      const filledQuery =
+        query.length < 5 ? query + ' '.repeat(5 - query.length) : query
+      let searchResult: SearchResults
+      const searchAPI =
+        (process.env.SEARCH_API as 'tavily' | 'exa' | 'searxng') || 'tavily'
 
-    console.log(
-      `Using search API: ${searchAPI}, Search Depth: ${effectiveSearchDepth}`
-    )
+      const effectiveSearchDepthForAPI =
+        searchAPI === 'searxng' &&
+        process.env.SEARXNG_DEFAULT_DEPTH === 'advanced'
+          ? 'advanced'
+          : effectiveSearchDepth || 'basic'
 
-    try {
-      if (searchAPI === 'searxng' && effectiveSearchDepth === 'advanced') {
-        // API route for advanced SearXNG search
-        const baseUrl =
-          process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-        const response = await fetch(`${baseUrl}/api/advanced-search`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: filledQuery,
-            maxResults: max_results,
-            searchDepth: effectiveSearchDepth,
-            includeDomains: include_domains,
-            excludeDomains: exclude_domains
+      console.log(
+        `Using search API: ${searchAPI}, Search Depth: ${effectiveSearchDepthForAPI}`
+      )
+
+      try {
+        if (
+          searchAPI === 'searxng' &&
+          effectiveSearchDepthForAPI === 'advanced'
+        ) {
+          const baseUrl =
+            process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+          const response = await fetch(`${baseUrl}/api/advanced-search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: filledQuery,
+              maxResults: effectiveMaxResults,
+              searchDepth: effectiveSearchDepthForAPI,
+              includeDomains: include_domains,
+              excludeDomains: exclude_domains
+            })
           })
-        })
-        if (!response.ok) {
-          throw new Error(
-            `Advanced search API error: ${response.status} ${response.statusText}`
+          if (!response.ok) {
+            throw new Error(
+              `Advanced search API error: ${response.status} ${response.statusText}`
+            )
+          }
+          searchResult = await response.json()
+        } else {
+          searchResult = await (searchAPI === 'tavily'
+            ? tavilySearch
+            : searchAPI === 'exa'
+            ? exaSearch
+            : searxngSearch)(
+            filledQuery,
+            effectiveMaxResults,
+            effectiveSearchDepthForAPI,
+            include_domains,
+            exclude_domains
           )
         }
-        searchResult = await response.json()
-      } else {
-        searchResult = await (searchAPI === 'tavily'
-          ? tavilySearch
-          : searchAPI === 'exa'
-          ? exaSearch
-          : searxngSearch)(
-          filledQuery,
-          max_results,
-          effectiveSearchDepth === 'advanced' ? 'advanced' : 'basic',
-          include_domains,
-          exclude_domains
-        )
+      } catch (error) {
+        console.error('Search API error:', error)
+        searchResult = {
+          results: [],
+          query: filledQuery,
+          images: [],
+          number_of_results: 0
+        }
       }
-    } catch (error) {
-      console.error('Search API error:', error)
-      searchResult = {
-        results: [],
-        query: filledQuery,
-        images: [],
-        number_of_results: 0
-      }
-    }
 
-    console.log('completed search')
-    return searchResult
-  }
-})
+      console.log('completed search')
+      return searchResult
+    }
+  })
+}
+
+// Default export for backward compatibility, using a default model
+export const searchTool = createSearchTool('openai:gpt-4o-mini')
 
 export async function search(
   query: string,
