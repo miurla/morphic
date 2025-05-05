@@ -5,6 +5,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
   SidebarTrigger
 } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
@@ -29,19 +30,20 @@ export default function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link href="/?new=true" className="flex items-center gap-2">
+              <Link href="/" className="flex items-center gap-2">
                 <Plus className="size-4" />
                 <span>New</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <div className="mt-6 flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto">
           <Suspense fallback={<ChatHistorySkeleton />}>
             <ChatHistorySection />
           </Suspense>
         </div>
       </SidebarContent>
+      <SidebarRail />
     </Sidebar>
   )
 }
