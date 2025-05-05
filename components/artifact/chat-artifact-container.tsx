@@ -7,11 +7,11 @@ import {
   ResizablePanel,
   ResizablePanelGroup
 } from '@/components/ui/resizable'
+import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
 import React, { useEffect, useState } from 'react'
 import { useArtifact } from './artifact-context'
-
 export function ChatArtifactContainer({
   children
 }: {
@@ -20,6 +20,7 @@ export function ChatArtifactContainer({
   const { state } = useArtifact()
   const isMobile = useMediaQuery('(max-width: 767px)') // Below md breakpoint
   const [renderPanel, setRenderPanel] = useState(state.isOpen)
+  const { open, openMobile, isMobile: isMobileSidebar } = useSidebar()
 
   useEffect(() => {
     if (state.isOpen) {
@@ -31,6 +32,11 @@ export function ChatArtifactContainer({
 
   return (
     <div className="flex-1 min-h-0 h-screen flex">
+      <div className="absolute p-4 z-50 transition-opacity duration-1000">
+        {(!open || isMobileSidebar) && (
+          <SidebarTrigger className="animate-fade-in" />
+        )}
+      </div>
       {/* Desktop: Resizable panels (Do not render on mobile) */}
       {!isMobile && (
         <ResizablePanelGroup
