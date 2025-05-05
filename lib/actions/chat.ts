@@ -1,9 +1,9 @@
 'use server'
 
+import { getRedisClient, RedisWrapper } from '@/lib/redis/config'
+import { type Chat } from '@/lib/types'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { type Chat } from '@/lib/types'
-import { getRedisClient, RedisWrapper } from '@/lib/redis/config'
 
 async function getRedis(): Promise<RedisWrapper> {
   return await getRedisClient()
@@ -59,6 +59,62 @@ export async function getChats(userId?: string | null) {
       })
   } catch (error) {
     return []
+  }
+}
+
+export async function getChatsPage(
+  userId: string,
+  limit = 20,
+  offset = 0
+): Promise<{ chats: Chat[]; nextOffset: number | null }> {
+  try {
+    const redis = await getRedis()
+    const userChatKey = getUserChatKey(userId)
+    const start = offset
+    const end = offset + limit - 1
+
+    const chatKeys = await redis.zrange(userChatKey, start, end, {
+      rev: true
+    })
+
+    if (chatKeys.length === 0) {
+      return { chats: [], nextOffset: null }
+    }
+
+    const results = await Promise.all(
+      chatKeys.map(async chatKey => {
+        const chat = await redis.hgetall(chatKey)
+        return chat
+      })
+    )
+
+    const chats = results
+      .filter((result): result is Record<string, any> => {
+        if (result === null || Object.keys(result).length === 0) {
+          return false
+        }
+        return true
+      })
+      .map(chat => {
+        const plainChat = { ...chat }
+        if (typeof plainChat.messages === 'string') {
+          try {
+            plainChat.messages = JSON.parse(plainChat.messages)
+          } catch (error) {
+            plainChat.messages = []
+          }
+        }
+        if (plainChat.createdAt && !(plainChat.createdAt instanceof Date)) {
+          plainChat.createdAt = new Date(plainChat.createdAt)
+        }
+        return plainChat as Chat
+      })
+
+    const nextOffset = chatKeys.length === limit ? offset + limit : null
+    return { chats, nextOffset }
+  } catch (error) {
+    console.error('Error fetching chat page:', error)
+    return { chats: [], nextOffset: null }
   }
 }
 
