@@ -2,12 +2,49 @@
 
 import { SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 import { Chat } from '@/lib/types'
-import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 interface ChatMenuItemProps {
   chat: Chat
+}
+
+const formatDateWithTime = (date: Date | string) => {
+  const parsedDate = new Date(date)
+  const now = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
+
+  if (
+    parsedDate.getDate() === now.getDate() &&
+    parsedDate.getMonth() === now.getMonth() &&
+    parsedDate.getFullYear() === now.getFullYear()
+  ) {
+    return `Today, ${formatTime(parsedDate)}`
+  } else if (
+    parsedDate.getDate() === yesterday.getDate() &&
+    parsedDate.getMonth() === yesterday.getMonth() &&
+    parsedDate.getFullYear() === yesterday.getFullYear()
+  ) {
+    return `Yesterday, ${formatTime(parsedDate)}`
+  } else {
+    return parsedDate.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
 }
 
 export function ChatMenuItem({ chat }: ChatMenuItemProps) {
@@ -16,16 +53,18 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild data-active={isActive}>
-        <Link
-          href={chat.path}
-          className={cn(
-            'flex items-center gap-2 truncate text-sm'
-            // Additional styles for active state can be handled by
-            // the parent component's data-active attribute or sidebar CSS variables
-          )}
-        >
-          <span>{chat.title}</span>
+      <SidebarMenuButton
+        asChild
+        isActive={isActive}
+        className="h-auto flex-col gap-0.5 items-start p-2"
+      >
+        <Link href={chat.path}>
+          <div className="text-xs font-medium truncate select-none w-full">
+            {chat.title}
+          </div>
+          <div className="text-xs text-muted-foreground w-full">
+            {formatDateWithTime(chat.createdAt)}
+          </div>
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
