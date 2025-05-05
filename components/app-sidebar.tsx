@@ -5,14 +5,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSkeleton,
   SidebarTrigger
 } from '@/components/ui/sidebar'
-import { getChats } from '@/lib/actions/chat'
 import { cn } from '@/lib/utils'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
+import { ChatHistorySection } from './sidebar/chat-history-section'
+import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
 import { IconLogo } from './ui/icons'
 
 export default function AppSidebar() {
@@ -37,43 +37,11 @@ export default function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
         <div className="mt-6 flex-1 overflow-y-auto">
-          <Suspense fallback={<NavChatsSkeleton />}>
+          <Suspense fallback={<ChatHistorySkeleton />}>
             <ChatHistorySection />
           </Suspense>
         </div>
       </SidebarContent>
     </Sidebar>
-  )
-}
-
-function NavChatsSkeleton() {
-  return (
-    <SidebarMenu>
-      {Array.from({ length: 5 }).map((_, idx) => (
-        <SidebarMenuItem key={idx}>
-          <SidebarMenuSkeleton showIcon />
-        </SidebarMenuItem>
-      ))}
-    </SidebarMenu>
-  )
-}
-
-async function ChatHistorySection() {
-  const chats = await getChats()
-  return (
-    <SidebarMenu>
-      {chats.map(chat => (
-        <SidebarMenuItem key={chat.id}>
-          <SidebarMenuButton asChild>
-            <Link
-              href={`/chat?chatId=${chat.id}`}
-              className="flex items-center gap-2 truncate"
-            >
-              <span>{chat.title}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-    </SidebarMenu>
   )
 }
