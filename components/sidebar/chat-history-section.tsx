@@ -5,13 +5,8 @@ import {
 } from '@/components/ui/sidebar'
 import { getChats } from '@/lib/actions/chat'
 import { Chat } from '@/lib/types'
-import { cache } from 'react'
 import { ChatMenuItem } from './chat-menu-item'
 import { ClearHistoryAction } from './clear-history-action'
-
-const loadChats = cache(async (userId?: string) => {
-  return await getChats(userId)
-})
 
 export async function ChatHistorySection() {
   const enableSaveChatHistory = process.env.ENABLE_SAVE_CHAT_HISTORY === 'true'
@@ -20,7 +15,7 @@ export async function ChatHistorySection() {
   }
 
   // Replace with your own user ID
-  const chats = await loadChats('anonymous')
+  const chats = await getChats('anonymous')
 
   return (
     <div className="flex flex-col flex-1 h-full">
