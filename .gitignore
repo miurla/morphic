@@ -36,4 +36,4 @@ yarn-error.log*
 next-env.d.ts
 
 # cursor
-.cursor
+.cursor/rules/private
