@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
-    request,
+    request
   })
 
   const supabase = createServerClient(
@@ -15,15 +15,17 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          )
           supabaseResponse = NextResponse.next({
-            request,
+            request
           })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
-        },
-      },
+        }
+      }
     }
   )
 
@@ -34,14 +36,22 @@ export async function updateSession(request: NextRequest) {
   // IMPORTANT: DO NOT REMOVE auth.getUser()
 
   const {
-    data: { user },
+    data: { user }
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
-  ) {
+  // Define public paths that don't require authentication
+  const publicPaths = [
+    '/', // Root path
+    '/auth', // Auth-related pages
+    '/share', // Share pages
+    '/api' // API routes
+    // Add other public paths here if needed
+  ]
+
+  const pathname = request.nextUrl.pathname
+
+  // Redirect to login if the user is not authenticated and the path is not public
+  if (!user && !publicPaths.some(path => pathname.startsWith(path))) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
