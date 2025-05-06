@@ -26,6 +26,12 @@ An AI-powered search engine with a generative UI.
 - Model selection from UI (switch between available AI models)
   - Reasoning models with visible thought process
 
+### Authentication
+
+- User authentication powered by [Supabase Auth](https://supabase.com/docs/guides/auth)
+- Supports Email/Password sign-up and sign-in
+- Supports Social Login with Google
+
 ### Chat & History
 
 - Chat history functionality (Optional)
@@ -73,6 +79,10 @@ Models are configured in `public/config/models.json`. Each model requires its co
 - [TypeScript](https://www.typescriptlang.org/) - Type safety
 - [Vercel AI SDK](https://sdk.vercel.ai/docs) - Text streaming / Generative UI
 
+### Authentication & Authorization (Updated Category)
+
+- [Supabase](https://supabase.com/) - User authentication and backend services
+
 ### AI & Search
 
 - [OpenAI](https://openai.com/) - Default AI provider (Optional: Google AI, Anthropic, Groq, Ollama, Azure OpenAI, DeepSeek, Fireworks)
@@ -119,7 +129,7 @@ cp .env.local.example .env.local
 Fill in the required environment variables in `.env.local`:
 
 ```bash
-# Required
+# Required for Core Functionality
 OPENAI_API_KEY=     # Get from https://platform.openai.com/api-keys
 TAVILY_API_KEY=     # Get from https://app.tavily.com/home
 ```
