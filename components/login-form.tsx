@@ -150,6 +150,11 @@ export function LoginForm({
           </div>
         </CardContent>
       </Card>
+      <div className="text-center text-xs text-muted-foreground">
+        <Link href="/" className="hover:underline">
+          &larr; Back to Home
+        </Link>
+      </div>
     </div>
   )
 }
