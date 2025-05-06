@@ -1,10 +1,10 @@
 # Base image
-FROM oven/bun:latest AS builder
+FROM oven/bun:1.2.12 AS builder
 
 WORKDIR /app
 
 # Install dependencies (separated for better cache utilization)
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN bun install
 
 # Copy source code and build
@@ -13,14 +13,14 @@ RUN bun next telemetry disable
 RUN bun run build
 
 # Runtime stage
-FROM oven/bun:latest AS runner
+FROM oven/bun:1.2.12 AS runner
 WORKDIR /app
 
 # Copy only necessary files from builder
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/bun.lockb ./bun.lockb
+COPY --from=builder /app/bun.lock ./bun.lock
 COPY --from=builder /app/node_modules ./node_modules
 
 # Start production server
