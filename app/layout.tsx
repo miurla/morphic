@@ -4,6 +4,7 @@ import Header from '@/components/header'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
+import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import type { Metadata, Viewport } from 'next'
 import { Inter as FontSans } from 'next/font/google'
@@ -41,11 +42,16 @@ export const viewport: Viewport = {
   maximumScale: 1
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const supabase = await createClient()
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -63,7 +69,7 @@ export default function RootLayout({
           <SidebarProvider defaultOpen>
             <AppSidebar />
             <div className="flex flex-col flex-1">
-              <Header />
+              <Header user={user} />
               <main className="flex flex-1 min-h-0">
                 <ArtifactRoot>{children}</ArtifactRoot>
               </main>
