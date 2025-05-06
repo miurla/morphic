@@ -1,5 +1,6 @@
 import { SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar'
 import { getChatsPage } from '@/lib/actions/chat'
+import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { ChatHistoryClient } from './chat-history-client'
 import { ClearHistoryAction } from './clear-history-action'
 
@@ -10,8 +11,8 @@ export async function ChatHistorySection() {
   }
 
   // Fetch the initial page of chats
-  // Replace 'anonymous' with your actual user ID logic
-  const { chats, nextOffset } = await getChatsPage('anonymous', 20, 0)
+  const userId = await getCurrentUserId()
+  const { chats, nextOffset } = await getChatsPage(userId, 20, 0)
 
   return (
     <div className="flex flex-col flex-1 h-full">

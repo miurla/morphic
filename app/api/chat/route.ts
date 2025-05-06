@@ -1,3 +1,4 @@
+import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { createManualToolStreamResponse } from '@/lib/streaming/create-manual-tool-stream'
 import { createToolCallingStreamResponse } from '@/lib/streaming/create-tool-calling-stream'
 import { Model } from '@/lib/types/models'
@@ -20,6 +21,7 @@ export async function POST(req: Request) {
     const { messages, id: chatId } = await req.json()
     const referer = req.headers.get('referer')
     const isSharePage = referer?.includes('/share/')
+    const userId = await getCurrentUserId()
 
     if (isSharePage) {
       return new Response('Chat API is not available on share pages', {
@@ -62,13 +64,15 @@ export async function POST(req: Request) {
           messages,
           model: selectedModel,
           chatId,
-          searchMode
+          searchMode,
+          userId
         })
       : createManualToolStreamResponse({
           messages,
           model: selectedModel,
           chatId,
-          searchMode
+          searchMode,
+          userId
         })
   } catch (error) {
     console.error('API route error:', error)

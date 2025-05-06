@@ -1,4 +1,5 @@
 import { getChatsPage } from '@/lib/actions/chat'
+import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { type Chat } from '@/lib/types'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -17,8 +18,7 @@ export async function GET(request: NextRequest) {
   const offset = parseInt(searchParams.get('offset') || '0', 10)
   const limit = parseInt(searchParams.get('limit') || '20', 10)
 
-  // Replace 'anonymous' with your actual user ID logic
-  const userId = 'anonymous'
+  const userId = await getCurrentUserId()
 
   try {
     const result = await getChatsPage(userId, limit, offset)
