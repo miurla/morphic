@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils'
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 import React from 'react'
-import { ModeToggle } from './mode-toggle'
 import { Button } from './ui/button'
 import UserMenu from './user-menu'
 
@@ -33,7 +32,6 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
             <Link href="/auth/login">Sign In</Link>
           </Button>
         )}
-        <ModeToggle />
       </div>
     </header>
   )
