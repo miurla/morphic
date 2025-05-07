@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
-import { ChevronDown, UserCircle2 } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
+import { CurrentUserAvatar } from './current-user-avatar'
 import {
   Collapsible,
   CollapsibleContent,
@@ -35,11 +36,11 @@ export function CollapsibleMessage({
     <div className="flex">
       {showIcon && (
         <div className="relative flex flex-col items-center">
-          <div className={cn('mt-[2px] w-5', role === 'assistant' && 'mt-4')}>
-            {role === 'user' ? (
-              <UserCircle2 size={20} className="text-muted-foreground" />
-            ) : (
+          <div className="w-5">
+            {role === 'assistant' ? (
               <IconLogo className="size-5" />
+            ) : (
+              <CurrentUserAvatar />
             )}
           </div>
         </div>
@@ -76,7 +77,14 @@ export function CollapsibleMessage({
           </Collapsible>
         </div>
       ) : (
-        <div className="flex-1 rounded-2xl px-4">{content}</div>
+        <div
+          className={cn(
+            'flex-1 rounded-2xl',
+            role === 'assistant' ? 'px-0' : 'px-3'
+          )}
+        >
+          {content}
+        </div>
       )}
     </div>
   )
