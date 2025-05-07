@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
+import { NextIntlClientProvider } from 'next-intl'
 import { Inter as FontSans } from 'next/font/google'
 import './globals.css'
 
@@ -43,18 +44,25 @@ export const viewport: Viewport = {
   maximumScale: 1
 }
 
+export type paramsType = Promise<{ locale: string }>
+
 export default async function RootLayout({
-  children
-}: Readonly<{
+  children,
+  params
+}: {
   children: React.ReactNode
-}>) {
+  params: paramsType
+}) {
+  const { locale } = await params
+  console.log(`Layout locale: ${locale}`)
+
   const supabase = await createClient()
   const {
     data: { user }
   } = await supabase.auth.getUser()
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={cn(
           'min-h-screen flex flex-col font-sans antialiased',
@@ -67,17 +75,19 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider defaultOpen>
-            <AppSidebar />
-            <div className="flex flex-col flex-1">
-              <Header user={user} />
-              <main className="flex flex-1 min-h-0">
-                <ArtifactRoot>{children}</ArtifactRoot>
-              </main>
-            </div>
-          </SidebarProvider>
-          <Toaster />
-          <Analytics />
+          <NextIntlClientProvider locale={locale}>
+            <SidebarProvider defaultOpen>
+              <AppSidebar />
+              <div className="flex flex-col flex-1">
+                <Header user={user} />
+                <main className="flex flex-1 min-h-0">
+                  <ArtifactRoot>{children}</ArtifactRoot>
+                </main>
+              </div>
+            </SidebarProvider>
+            <Toaster />
+            <Analytics />
+          </NextIntlClientProvider>
         </ThemeProvider>
       </body>
     </html>
