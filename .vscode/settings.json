@@ -4,5 +4,6 @@
   "cSpell.words": ["openai", "Tavily"],
   "editor.codeActionsOnSave": {
     "source.organizeImports": "always"
-  }
+  },
+  "i18n-ally.localesPaths": ["i18n", "locales"]
 }

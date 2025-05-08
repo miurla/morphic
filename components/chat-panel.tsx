@@ -4,6 +4,7 @@ import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { Message } from 'ai'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
@@ -42,6 +43,7 @@ export function ChatPanel({
   models,
   isAutoScroll
 }: ChatPanelProps) {
+  const t = useTranslations('ChatPanel')
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -114,9 +116,7 @@ export function ChatPanel({
       {messages.length === 0 && (
         <div className="mb-10 flex flex-col items-center gap-4">
           <IconLogo className="size-12 text-muted-foreground" />
-          <p className="text-center text-3xl font-semibold">
-            How can I help you today?
-          </p>
+          <p className="text-center text-3xl font-semibold">{t('title')}</p>
         </div>
       )}
       <form
@@ -146,7 +146,7 @@ export function ChatPanel({
             tabIndex={0}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}
-            placeholder="Ask a question..."
+            placeholder={t('placeholder')}
             spellCheck={false}
             value={input}
             disabled={isLoading || isToolInvocationInProgress()}
