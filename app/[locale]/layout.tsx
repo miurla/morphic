@@ -44,8 +44,7 @@ export const viewport: Viewport = {
   maximumScale: 1
 }
 
-export type paramsType = Promise<{ locale: string }>
-
+export type paramsType = { locale: string }
 export default async function RootLayout({
   children,
   params
