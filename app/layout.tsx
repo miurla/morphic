@@ -48,10 +48,17 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const supabase = await createClient()
-  const {
-    data: { user }
-  } = await supabase.auth.getUser()
+  let user = null
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (supabaseUrl && supabaseAnonKey) {
+    const supabase = await createClient()
+    const {
+      data: { user: supabaseUser }
+    } = await supabase.auth.getUser()
+    user = supabaseUser
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>
