@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useTransition } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +13,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { clearChats } from '@/lib/actions/chat'
+import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Spinner } from './ui/spinner'
 

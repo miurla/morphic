@@ -98,8 +98,7 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
         if (isActive) {
           router.push('/')
         }
-        // Refresh data for the sidebar
-        router.refresh()
+        window.dispatchEvent(new CustomEvent('chat-history-updated'))
       } catch (error) {
         console.error('Failed to delete chat:', error)
         toast.error((error as Error).message || 'Failed to delete chat')
