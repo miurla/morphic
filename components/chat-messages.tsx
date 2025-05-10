@@ -1,3 +1,5 @@
+'use client'
+
 import { cn } from '@/lib/utils'
 import { ChatRequestOptions, JSONValue, Message } from 'ai'
 import { useEffect, useMemo, useState } from 'react'
@@ -21,6 +23,10 @@ interface ChatMessagesProps {
     messageId: string,
     options?: ChatRequestOptions
   ) => Promise<string | null | undefined>
+  /** Whether auto-scroll is enabled (used by the button, now removed) */
+  // isAutoScroll?: boolean  // No longer needed
+  /** Function to enable auto-scroll (used by the button, now removed) */
+  // enableAutoScroll?: () => void // No longer needed
 }
 
 export function ChatMessages({
@@ -34,7 +40,9 @@ export function ChatMessages({
   scrollContainerRef,
   onUpdateMessage,
   reload
-}: ChatMessagesProps) {
+}: // isAutoScroll, // No longer needed
+// enableAutoScroll // No longer needed
+ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
 
@@ -105,7 +113,7 @@ export function ChatMessages({
         'relative size-full pt-14',
         messages.length > 0 ? 'flex-1 overflow-y-auto' : ''
       )}
-      style={{ contain: 'strict' }}
+      // style={{ contain: 'strict' }}
     >
       <div className="relative mx-auto w-full max-w-3xl px-4">
         {messages.map(message => (
@@ -137,6 +145,7 @@ export function ChatMessages({
           ))}
         <div ref={anchorRef} />
       </div>
+      {/* Scroll to bottom button has been removed from here */}
     </div>
   )
 }
