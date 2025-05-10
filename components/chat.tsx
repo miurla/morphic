@@ -62,10 +62,14 @@ export function Chat({
 
   const isLoading = status === 'submitted' || status === 'streaming'
 
-  const { anchorRef, isAutoScroll } = useAutoScroll({
+  const {
+    anchorRef,
+    isAutoScroll,
+    enable: enableAutoScroll
+  } = useAutoScroll({
     isLoading,
     dependency: messages.length,
-    isStreaming: () => status === 'streaming',
+    isStreaming: status === 'streaming',
     scrollContainer: scrollContainerRef,
     threshold: 50
   })
