@@ -36,7 +36,7 @@ export function useAutoScroll({
   isLoading,
   isStreaming,
   scrollContainer,
-  threshold = 60
+  threshold = 70
 }: UseAutoScrollOptions): UseAutoScrollReturn {
   const anchorRef = useRef<HTMLDivElement>(null)
   const [isAutoScroll, setIsAutoScroll] = useState(true)
