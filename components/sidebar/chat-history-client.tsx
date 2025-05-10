@@ -1,6 +1,10 @@
 'use client'
 
-import { SidebarMenu } from '@/components/ui/sidebar'
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu
+} from '@/components/ui/sidebar'
 import { Chat } from '@/lib/types'
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
@@ -108,10 +112,13 @@ export function ChatHistoryClient() {
   const isHistoryEmpty = !isLoading && !chats.length && nextOffset === null
 
   return (
-    <>
-      <div className="px-2 pb-1 pt-0 mt-[-8px] mb-1">
-        <ClearHistoryAction empty={isHistoryEmpty} />
-      </div>
+    <div className="flex flex-col flex-1 h-full">
+      <SidebarGroup>
+        <div className="flex items-center justify-between w-full">
+          <SidebarGroupLabel className="p-0">History</SidebarGroupLabel>
+          <ClearHistoryAction empty={isHistoryEmpty} />
+        </div>
+      </SidebarGroup>
       <div className="flex-1 overflow-y-auto mb-2 relative">
         {isHistoryEmpty && !isPending ? (
           <div className="px-2 text-foreground/30 text-sm text-center py-4">
@@ -131,6 +138,6 @@ export function ChatHistoryClient() {
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }
