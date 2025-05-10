@@ -21,7 +21,6 @@ import { SidebarGroupAction } from '@/components/ui/sidebar'
 import { Spinner } from '@/components/ui/spinner'
 import { clearChats } from '@/lib/actions/chat'
 import { MoreHorizontal, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
@@ -32,14 +31,13 @@ interface ClearHistoryActionProps {
 export function ClearHistoryAction({ empty }: ClearHistoryActionProps) {
   const [isPending, start] = useTransition()
   const [open, setOpen] = useState(false)
-  const router = useRouter()
 
   const onClear = () =>
     start(async () => {
       const res = await clearChats()
       res?.error ? toast.error(res.error) : toast.success('History cleared')
       setOpen(false)
-      router.refresh()
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
     })
 
   return (

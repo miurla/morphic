@@ -48,10 +48,8 @@ export function Chat({
       id
     },
     onFinish: () => {
-      router.replace(`/search/${id}`)
-      startTransition(() => {
-        router.refresh()
-      })
+      window.history.replaceState({}, '', `/search/${id}`)
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
     },
     onError: error => {
       toast.error(`Error in chat: ${error.message}`)
