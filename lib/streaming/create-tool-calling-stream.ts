@@ -1,14 +1,19 @@
 import { researcher } from '@/lib/agents/researcher'
 import {
+  convertMessagesForDB,
+  extractTitleFromMessage
+} from '@/lib/utils/message-utils'
+import {
   convertToCoreMessages,
   CoreMessage,
   createDataStreamResponse,
   DataStreamWriter,
   streamText
 } from 'ai'
+import { saveChat } from '../actions/chat-db'
+import { getCurrentUserId } from '../auth/get-current-user'
+import { getChat } from '../db/chat'
 import { getMaxAllowedTokens, truncateMessages } from '../utils/context-window'
-import { isReasoningModel } from '../utils/registry'
-import { handleStreamFinish } from './handle-stream-finish'
 import { BaseStreamConfig } from './types'
 
 // Function to check if a message contains ask_question tool invocation
@@ -44,31 +49,57 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
         })
 
         const result = streamText({
-          ...researcherConfig,
-          onFinish: async result => {
-            // Check if the last message contains an ask_question tool invocation
-            const shouldSkipRelatedQuestions =
-              isReasoningModel(modelId) ||
-              (result.response.messages.length > 0 &&
-                containsAskQuestionTool(
-                  result.response.messages[
-                    result.response.messages.length - 1
-                  ] as CoreMessage
-                ))
+          ...researcherConfig
+          // onFinish: async result => {
+          //   // Check if the last message contains an ask_question tool invocation
+          //   const shouldSkipRelatedQuestions =
+          //     isReasoningModel(modelId) ||
+          //     (result.response.messages.length > 0 &&
+          //       containsAskQuestionTool(
+          //         result.response.messages[
+          //           result.response.messages.length - 1
+          //         ] as CoreMessage
+          //       ))
 
-            await handleStreamFinish({
-              responseMessages: result.response.messages,
-              originalMessages: messages,
-              model: modelId,
-              chatId,
-              dataStream,
-              userId,
-              skipRelatedQuestions: shouldSkipRelatedQuestions
-            })
-          }
+          //   await handleStreamFinish({
+          //     responseMessages: result.response.messages,
+          //     originalMessages: messages,
+          //     model: modelId,
+          //     chatId,
+          //     dataStream,
+          //     userId,
+          //     skipRelatedQuestions: shouldSkipRelatedQuestions
+          //   })
+          // }
         })
 
         result.mergeIntoDataStream(dataStream)
+
+        const userId = await getCurrentUserId()
+        const responseMessages = (await result.response).messages
+
+        // Convert messages to database format
+        const saveMessages = convertMessagesForDB(responseMessages)
+
+        // Check if chat exists to determine title and update strategy
+        const existingChat = await getChat(chatId, userId)
+
+        // Get appropriate title - use existing title if available, otherwise extract from message
+        const title = existingChat
+          ? existingChat.title
+          : extractTitleFromMessage(coreMessages[0]) || 'New Chat'
+
+        // Save the chat to the database
+        // Only update metadata if this is a new chat (existingChat is null)
+        await saveChat(
+          {
+            id: chatId,
+            title
+          },
+          saveMessages,
+          userId,
+          !existingChat // Only update metadata for new chats
+        )
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error
