@@ -128,21 +128,34 @@ export async function deleteChat(
 
 // Add a message to a chat
 export async function addMessage({
+  id, // Optional ID parameter
   chatId,
   role,
   parts
 }: {
+  id?: string // Make ID optional
   chatId: string
   role: string
   parts: any
 }): Promise<Message> {
+  const valuesToInsert: {
+    id?: string
+    chatId: string
+    role: string
+    parts: any
+  } = {
+    chatId,
+    role,
+    parts
+  }
+
+  if (id) {
+    valuesToInsert.id = id // Set ID if provided
+  }
+
   const [message] = await db
     .insert(messages)
-    .values({
-      chatId,
-      role,
-      parts
-    })
+    .values(valuesToInsert) // Use the modified values
     .returning()
 
   return message

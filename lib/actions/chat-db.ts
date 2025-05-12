@@ -1,6 +1,7 @@
 'use server'
 
 import * as chatDb from '@/lib/db/chat'
+import { type Chat as DBChat, type Message as DBMessage } from '@/lib/db/schema' // Import DB schema types
 
 // Get all chats for a user
 export async function getChats(userId: string) {
@@ -27,35 +28,74 @@ export async function deleteChat(chatId: string, userId: string) {
   return chatDb.deleteChat(chatId, userId)
 }
 
-// Save a chat (with message history)
-export async function saveChat(chat: any, userId: string) {
+// Interface for chat metadata input from the client
+interface ClientChatInput {
+  id: string // Chat ID is required
+  title: string // Title is also required
+  visibility?: DBChat['visibility'] // Visibility setting is optional
+}
+
+// Interface for new message input from the client
+interface ClientNewMessageInput {
+  id: string // Accept message.id from AI SDK
+  role: DBMessage['role']
+  parts: DBMessage['parts']
+}
+
+export async function saveChat(
+  clientChatInput: ClientChatInput,
+  clientNewMessages: ClientNewMessageInput[] | undefined, // New messages are optional (e.g., when only updating metadata)
+  userId: string // Authenticated user ID is passed as a separate argument
+) {
   try {
-    // First save the chat
-    const savedChat = await chatDb.saveChat(chat, userId)
+    // 1. Prepare chat metadata (align with the type expected by lib/db/chat.ts saveChat)
+    //    Conform to DBChat type while setting required fields.
+    const chatDataForDb: Pick<
+      DBChat,
+      'id' | 'title' | 'userId' | 'visibility'
+    > &
+      Partial<DBChat> = {
+      id: clientChatInput.id,
+      title: clientChatInput.title,
+      userId: userId, // Ensure authenticated user ID is used
+      visibility: clientChatInput.visibility || 'private' // Set default value
+    }
 
-    // Then save all messages if provided
-    if (chat.messages && Array.isArray(chat.messages)) {
-      // Delete existing messages first to avoid duplicates
-      const existingMessages = await chatDb.getChatMessages(chat.id)
-      if (existingMessages.length > 0) {
-        // We would need a deleteMessages function, but for now we can recreate all
-        // This would be more efficiently handled with a batch delete/insert
-      }
+    // Call lib/db/chat.ts saveChat to save/update chat metadata in the DB
+    // chatDb.saveChat is expected to return an array with a single element: [savedChat] or [updatedChat]
+    const savedOrUpdatedChatArray = await chatDb.saveChat(
+      chatDataForDb as DBChat,
+      userId
+    )
+    const savedOrUpdatedChatDetails =
+      savedOrUpdatedChatArray && savedOrUpdatedChatArray[0]
 
-      // Add all messages
-      for (const message of chat.messages) {
+    if (!savedOrUpdatedChatDetails) {
+      throw new Error(
+        `Failed to save chat metadata for chat ID: ${clientChatInput.id}. The operation returned no details.`
+      )
+    }
+
+    // 2. Add new messages
+    if (clientNewMessages && clientNewMessages.length > 0) {
+      for (const message of clientNewMessages) {
         await chatDb.addMessage({
-          chatId: chat.id,
+          id: message.id, // Use ID provided by the client (from AI SDK)
+          chatId: savedOrUpdatedChatDetails.id, // Use the ID of the saved/updated chat
           role: message.role,
-          parts: message.parts || message.content
+          parts: message.parts
         })
       }
     }
 
-    return savedChat
+    // Return the saved/updated chat metadata
+    return savedOrUpdatedChatDetails
   } catch (error) {
-    console.error('Error in saveChat action:', error)
-    throw error
+    console.error(
+      `Error in saveChat action for chat ID ${clientChatInput.id}:`,
+      error
+    )
+    throw error // Rethrow the error to the caller
   }
 }
 
