@@ -1,19 +1,18 @@
 import { researcher } from '@/lib/agents/researcher'
+import { openai } from '@ai-sdk/openai'
 import {
-  convertToCoreMessages,
-  CoreMessage,
+  convertToModelMessages,
+  createDataStream,
   createDataStreamResponse,
-  DataStreamWriter,
+  ModelMessage,
   streamText
 } from 'ai'
 import { getMaxAllowedTokens, truncateMessages } from '../utils/context-window'
-import { isReasoningModel } from '../utils/registry'
-import { handleStreamFinish } from './handle-stream-finish'
 import { BaseStreamConfig } from './types'
 
 // Function to check if a message contains ask_question tool invocation
-function containsAskQuestionTool(message: CoreMessage) {
-  // For CoreMessage format, we check the content array
+function containsAskQuestionTool(message: ModelMessage) {
+  // For ModelMessage format, we check the content array
   if (message.role !== 'assistant' || !Array.isArray(message.content)) {
     return false
   }
@@ -25,15 +24,15 @@ function containsAskQuestionTool(message: CoreMessage) {
 }
 
 export function createToolCallingStreamResponse(config: BaseStreamConfig) {
-  return createDataStreamResponse({
-    execute: async (dataStream: DataStreamWriter) => {
+  const dataStream = createDataStream({
+    execute: async writer => {
       const { messages, model, chatId, searchMode, userId } = config
       const modelId = `${model.providerId}:${model.id}`
 
       try {
-        const coreMessages = convertToCoreMessages(messages)
+        const modelMessages = convertToModelMessages(messages)
         const truncatedMessages = truncateMessages(
-          coreMessages,
+          modelMessages,
           getMaxAllowedTokens(model)
         )
 
@@ -44,31 +43,18 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
         })
 
         const result = streamText({
-          ...researcherConfig,
-          onFinish: async result => {
-            // Check if the last message contains an ask_question tool invocation
-            const shouldSkipRelatedQuestions =
-              isReasoningModel(modelId) ||
-              (result.response.messages.length > 0 &&
-                containsAskQuestionTool(
-                  result.response.messages[
-                    result.response.messages.length - 1
-                  ] as CoreMessage
-                ))
-
-            await handleStreamFinish({
-              responseMessages: result.response.messages,
-              originalMessages: messages,
-              model: modelId,
-              chatId,
-              dataStream,
-              userId,
-              skipRelatedQuestions: shouldSkipRelatedQuestions
-            })
+          // ...researcherConfig,
+          model: openai('gpt-4o-mini'),
+          system: 'You are a helpful assistant.',
+          prompt: 'Hello',
+          onError: error => {
+            console.error('Stream error:', error)
+          },
+          onChunk: chunk => {
+            console.log('Chunk:', chunk)
           }
         })
-
-        result.mergeIntoDataStream(dataStream)
+        writer.merge(result.toDataStream())
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error
@@ -79,4 +65,6 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
       return error instanceof Error ? error.message : String(error)
     }
   })
+
+  return createDataStreamResponse({ dataStream })
 }

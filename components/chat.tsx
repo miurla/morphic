@@ -5,10 +5,9 @@ import { useAutoScroll } from '@/lib/hooks/use-auto-scroll'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { useChat } from '@ai-sdk/react'
-import { ChatRequestOptions } from 'ai'
-import { Message } from 'ai/react'
+import { ChatRequestOptions, UIMessage } from 'ai'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useTransition } from 'react'
+import { useRef, useTransition } from 'react'
 import { toast } from 'sonner'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
@@ -20,7 +19,7 @@ export function Chat({
   models
 }: {
   id: string
-  savedMessages?: Message[]
+  savedMessages?: UIMessage[]
   query?: string
   models?: Model[]
 }) {
@@ -42,7 +41,7 @@ export function Chat({
     addToolResult,
     reload
   } = useChat({
-    initialMessages: savedMessages,
+    // initialMessages: savedMessages,
     id: CHAT_ID,
     body: {
       id
@@ -52,9 +51,10 @@ export function Chat({
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
     },
     onError: error => {
+      console.error('Error in chat:', error)
       toast.error(`Error in chat: ${error.message}`)
     },
-    sendExtraMessageFields: false, // Disable extra message fields,
+    // sendExtraMessageFields: false, // Disable extra message fields,
     experimental_throttle: 100
   })
 
@@ -72,14 +72,14 @@ export function Chat({
     threshold: 70
   })
 
-  useEffect(() => {
-    setMessages(savedMessages)
-  }, [id])
+  // useEffect(() => {
+  //   setMessages(savedMessages)
+  // }, [id])
 
   const onQuerySelect = (query: string) => {
     append({
       role: 'user',
-      content: query
+      parts: [{ text: query, type: 'text' }]
     })
   }
 
