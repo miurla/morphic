@@ -3,7 +3,7 @@
 import * as chatDb from '@/lib/db/chat'
 
 // Get all chats for a user
-export async function getChats(userId?: string | null) {
+export async function getChats(userId: string) {
   return chatDb.getChats(userId)
 }
 
@@ -13,22 +13,22 @@ export async function getChatsPage(userId: string, limit = 20, offset = 0) {
 }
 
 // Get a single chat by ID
-export async function getChat(id: string, userId: string = 'anonymous') {
+export async function getChat(id: string, userId: string) {
   return chatDb.getChat(id, userId)
 }
 
 // Clear all chats for a user
-export async function clearChats(userId: string = 'anonymous') {
+export async function clearChats(userId: string) {
   return chatDb.clearChats(userId)
 }
 
 // Delete a single chat
-export async function deleteChat(chatId: string, userId = 'anonymous') {
+export async function deleteChat(chatId: string, userId: string) {
   return chatDb.deleteChat(chatId, userId)
 }
 
 // Save a chat (with message history)
-export async function saveChat(chat: any, userId: string = 'anonymous') {
+export async function saveChat(chat: any, userId: string) {
   try {
     // First save the chat
     const savedChat = await chatDb.saveChat(chat, userId)
@@ -79,6 +79,6 @@ export async function getSharedChat(id: string) {
 }
 
 // Share a chat
-export async function shareChat(id: string, userId: string = 'anonymous') {
+export async function shareChat(id: string, userId: string) {
   return chatDb.shareChat(id, userId)
 }

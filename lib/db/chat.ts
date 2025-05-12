@@ -29,17 +29,12 @@ export async function createChat({
 // Get a chat by ID
 export async function getChat(
   id: string,
-  userId?: string
+  userId: string
 ): Promise<Chat | null> {
   const [chat] = await db.select().from(chats).where(eq(chats.id, id)).limit(1)
 
   // If userId is provided, check if the chat belongs to the user or is public
-  if (
-    userId &&
-    chat &&
-    chat.userId !== userId &&
-    chat.visibility !== 'public'
-  ) {
+  if (chat && chat.userId !== userId && chat.visibility !== 'public') {
     return null // User doesn't have access to this chat
   }
 
@@ -47,11 +42,7 @@ export async function getChat(
 }
 
 // Get all chats for a user
-export async function getChats(userId?: string | null): Promise<Chat[]> {
-  if (!userId) {
-    return []
-  }
-
+export async function getChats(userId: string): Promise<Chat[]> {
   return db
     .select()
     .from(chats)
@@ -106,24 +97,23 @@ export async function updateChat(
 // Delete a chat and its messages
 export async function deleteChat(
   id: string,
-  userId = 'anonymous'
+  userId: string
 ): Promise<{ error?: string }> {
   try {
     // First verify the chat exists and belongs to the user
-    const chat = await getChat(id)
+    const chat = await getChat(id, userId)
 
     if (!chat) {
       console.warn(`Attempted to delete non-existent chat: ${id}`)
       return { error: 'Chat not found' }
     }
 
-    // Optional authorization check
-    // if (userId !== 'anonymous' && chat.userId !== userId) {
-    //   return { error: 'Unauthorized' }
-    // }
+    // Check if the chat belongs to the user
+    if (chat.userId !== userId) {
+      return { error: 'Unauthorized' }
+    }
 
-    // First delete all messages for this chat (this happens automatically due to ON DELETE CASCADE)
-    // Then delete the chat
+    // Delete the chat
     await db.delete(chats).where(eq(chats.id, id))
 
     // Revalidate the root path where the chat history is displayed
@@ -168,9 +158,7 @@ export async function getChatMessages(chatId: string): Promise<Message[]> {
 }
 
 // Clear all chats for a user
-export async function clearChats(
-  userId: string = 'anonymous'
-): Promise<{ error?: string }> {
+export async function clearChats(userId: string): Promise<{ error?: string }> {
   try {
     // Get all chat IDs for this user
     const userChats = await getChats(userId)
@@ -178,8 +166,6 @@ export async function clearChats(
     if (!userChats.length) {
       return { error: 'No chats to clear' }
     }
-
-    const chatIds = userChats.map(chat => chat.id)
 
     // Delete all chats for this user
     // Message deletion happens automatically due to ON DELETE CASCADE
@@ -194,10 +180,10 @@ export async function clearChats(
 }
 
 // Save a chat (create or update)
-export async function saveChat(chat: Chat, userId: string = 'anonymous') {
+export async function saveChat(chat: Chat, userId: string) {
   try {
     // Check if the chat exists
-    const existingChat = await getChat(chat.id)
+    const existingChat = await getChat(chat.id, userId)
 
     if (existingChat) {
       // Update existing chat
@@ -231,7 +217,12 @@ export async function saveChat(chat: Chat, userId: string = 'anonymous') {
 // Get a shared chat
 export async function getSharedChat(id: string) {
   try {
-    const chat = await getChat(id)
+    // For shared chats, we bypass the userId check and directly query the database
+    const [chat] = await db
+      .select()
+      .from(chats)
+      .where(eq(chats.id, id))
+      .limit(1)
 
     if (!chat || chat.visibility !== 'public') {
       return null
@@ -245,9 +236,9 @@ export async function getSharedChat(id: string) {
 }
 
 // Share a chat (make it public)
-export async function shareChat(id: string, userId: string = 'anonymous') {
+export async function shareChat(id: string, userId: string) {
   try {
-    const chat = await getChat(id)
+    const chat = await getChat(id, userId)
 
     if (!chat || chat.userId !== userId) {
       return null
