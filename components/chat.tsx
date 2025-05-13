@@ -3,7 +3,7 @@
 import { CHAT_ID } from '@/lib/constants'
 import { useAutoScroll } from '@/lib/hooks/use-auto-scroll'
 import { Model } from '@/lib/types/models'
-import { cn } from '@/lib/utils'
+import { cn, generateUUID } from '@/lib/utils'
 import { useChat } from '@ai-sdk/react'
 import { ChatRequestOptions } from 'ai'
 import { Message } from 'ai/react'
@@ -44,9 +44,6 @@ export function Chat({
   } = useChat({
     initialMessages: savedMessages,
     id: CHAT_ID,
-    body: {
-      id
-    },
     onFinish: () => {
       window.history.replaceState({}, '', `/search/${id}`)
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
@@ -55,7 +52,12 @@ export function Chat({
       toast.error(`Error in chat: ${error.message}`)
     },
     sendExtraMessageFields: false, // Disable extra message fields,
-    experimental_throttle: 100
+    experimental_throttle: 100,
+    generateId: generateUUID,
+    experimental_prepareRequestBody: body => ({
+      id,
+      message: body.messages.at(-1)
+    })
   })
 
   const isLoading = status === 'submitted' || status === 'streaming'

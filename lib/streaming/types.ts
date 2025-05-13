@@ -2,7 +2,7 @@ import { Message } from 'ai'
 import { Model } from '../types/models'
 
 export interface BaseStreamConfig {
-  messages: Message[]
+  message: Message
   model: Model
   chatId: string
   searchMode: boolean

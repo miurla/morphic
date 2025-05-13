@@ -41,6 +41,74 @@ interface ClientNewMessageInput {
   parts: DBMessage['parts']
 }
 
+// Interface for single message save
+interface SaveMessageInput {
+  id?: string
+  chatId: string
+  role: string
+  parts: any
+}
+
+// Save a single message
+export async function saveSingleMessage(
+  message: SaveMessageInput
+): Promise<DBMessage> {
+  try {
+    return await chatDb.addMessage(message)
+  } catch (error) {
+    console.error(`Error saving message for chat ID ${message.chatId}:`, error)
+    throw error
+  }
+}
+
+// Save or create a chat and add a user message
+export async function saveChatMessage(
+  chatId: string,
+  messageId: string,
+  messageContent: any,
+  messageRole: string,
+  userId: string,
+  title?: string
+): Promise<{ chat: DBChat; message: DBMessage }> {
+  try {
+    // 1. Check if chat exists
+    const existingChat = await chatDb.getChat(chatId, userId)
+
+    // 2. Save or update chat if needed
+    let chat: DBChat
+    if (!existingChat) {
+      // Create new chat
+      const chatTitle =
+        title ||
+        (typeof messageContent === 'string' ? messageContent : 'New Chat')
+      const chatDataForDb: Partial<DBChat> = {
+        id: chatId,
+        title: chatTitle.substring(0, 255), // Limit title length
+        userId: userId,
+        visibility: 'private'
+      }
+
+      const savedChats = await chatDb.saveChat(chatDataForDb as DBChat, userId)
+      chat = savedChats[0]
+    } else {
+      chat = existingChat
+    }
+
+    // 3. Save message
+    const message = await chatDb.addMessage({
+      id: messageId,
+      chatId,
+      role: messageRole,
+      parts: messageContent
+    })
+
+    return { chat, message }
+  } catch (error) {
+    console.error(`Error in saveChatMessage for chat ID ${chatId}:`, error)
+    throw error
+  }
+}
+
 export async function saveChat(
   clientChatInput: ClientChatInput,
   clientNewMessages: ClientNewMessageInput[] | undefined, // New messages are optional (e.g., when only updating metadata)
