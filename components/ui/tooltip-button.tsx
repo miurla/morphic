@@ -5,7 +5,6 @@ import { Button, ButtonProps } from '@/components/ui/button'
 import {
   Tooltip,
   TooltipContent,
-  TooltipContentProps,
   TooltipTrigger
 } from '@/components/ui/tooltip'
 
@@ -14,7 +13,7 @@ interface TooltipButtonProps extends ButtonProps {
    * The tooltip content to display.
    * Can be a string or TooltipContent props.
    */
-  tooltipContent: string | Omit<TooltipContentProps, 'children'> & {
+  tooltipContent: string | Omit<React.ComponentPropsWithoutRef<typeof TooltipContent>, 'children'> & {
     children: React.ReactNode
   }
   /**
