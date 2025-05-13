@@ -22,7 +22,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
-import { Chat } from '@/lib/types'
+import { Chat as DBChat } from '@/lib/db/schema'
 import { MoreHorizontal, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -31,7 +31,7 @@ import { toast } from 'sonner'
 import { Spinner } from '../ui/spinner'
 
 interface ChatMenuItemProps {
-  chat: Chat
+  chat: DBChat
 }
 
 const formatDateWithTime = (date: Date | string) => {
@@ -74,7 +74,8 @@ const formatDateWithTime = (date: Date | string) => {
 
 export function ChatMenuItem({ chat }: ChatMenuItemProps) {
   const pathname = usePathname()
-  const isActive = pathname === chat.path
+  const path = `/search/${chat.id}`
+  const isActive = pathname === path
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -115,7 +116,7 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
         isActive={isActive}
         className="h-auto flex-col gap-0.5 items-start p-2 pr-8"
       >
-        <Link href={chat.path}>
+        <Link href={path}>
           <div className="text-xs font-medium truncate select-none w-full">
             {chat.title}
           </div>
