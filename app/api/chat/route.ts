@@ -1,5 +1,4 @@
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import { createManualToolStreamResponse } from '@/lib/streaming/create-manual-tool-stream'
 import { createToolCallingStreamResponse } from '@/lib/streaming/create-tool-calling-stream'
 import { Model } from '@/lib/types/models'
 import { isProviderEnabled } from '@/lib/utils/registry'
@@ -57,23 +56,13 @@ export async function POST(req: Request) {
       )
     }
 
-    const supportsToolCalling = selectedModel.toolCallType === 'native'
-
-    return supportsToolCalling
-      ? createToolCallingStreamResponse({
-          message,
-          model: selectedModel,
-          chatId,
-          searchMode,
-          userId: userId!
-        })
-      : createManualToolStreamResponse({
-          message,
-          model: selectedModel,
-          chatId,
-          searchMode,
-          userId: userId!
-        })
+    return createToolCallingStreamResponse({
+      message,
+      model: selectedModel,
+      chatId,
+      searchMode,
+      userId: userId!
+    })
   } catch (error) {
     console.error('API route error:', error)
     return new Response('Error processing your request', {
