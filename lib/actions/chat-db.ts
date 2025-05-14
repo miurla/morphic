@@ -21,49 +21,56 @@ export async function getChat(
 ): Promise<(DBChat & { messages: DBMessage[] }) | null> {
   let chat: DBChat | null = null
 
-  // Attempt to fetch chat data.
-  // Try getSharedChat first; it might be a public chat or one shared via a link (if system supports).
-  // We assume getSharedChat fetches by ID and doesn't require a userId for public/shared entities.
-  const potentialSharedChat = await chatDb.getSharedChat(chatId)
-  if (potentialSharedChat) {
-    // Assuming potentialSharedChat is compatible with DBChat or is DBChat itself.
-    // If it's a different type, appropriate mapping/casting would be needed here.
-    chat = potentialSharedChat as DBChat
-  }
+  // Step 1: Attempt to fetch the chat using a method that could find public/shared chats.
+  // We assume chatDb.getSharedChat(chatId) is the best candidate for this.
+  chat = await chatDb.getSharedChat(chatId)
 
-  // If not found through getSharedChat (e.g., it's private) AND a user is logged in,
-  // try to fetch it as a chat belonging to that user.
+  // Step 2: If not found by the general method, AND a user is logged in,
+  // try to fetch it as a private chat belonging to that user.
   if (!chat && requestingUserId) {
-    chat = await chatDb.getChat(chatId, requestingUserId)
+    const privateChat = await chatDb.getChat(chatId, requestingUserId)
+    // Ensure the fetched private chat actually belongs to the requesting user,
+    // in case chatDb.getChat isn't strictly scoped or for an extra layer of caution.
+    if (privateChat && privateChat.userId === requestingUserId) {
+      chat = privateChat
+    } else if (privateChat) {
+      // This case should ideally not happen if chatDb.getChat is correctly scoped.
+      // Logging it can help identify issues if it does occur.
+      console.warn(
+        `getChat: chatDb.getChat for user ${requestingUserId} returned chat ${chatId} owned by ${privateChat.userId}. Denying access.`
+      )
+      // Do not assign to 'chat', effectively treating it as not found for this user.
+    }
   }
 
-  // If chat is still not found after these attempts, it either doesn't exist or isn't accessible
-  // through the primary fetch mechanisms used.
+  // Step 3: If no chat record was found by any means, return null.
   if (!chat) {
     return null
   }
 
-  // Authorization check
-  const isOwner = requestingUserId && chat.userId === requestingUserId
-  const isPublic = chat.visibility === 'public'
-
-  if (isPublic) {
-    // Public chat: access granted.
-  } else if (chat.visibility === 'private') {
-    if (!isOwner) {
-      return null // Private chat, but the requesting user is not the owner.
-    }
-    // Private chat and user is owner: access granted.
-  } else {
-    // Chat is neither 'public' nor 'private' (e.g., unknown visibility status),
-    // or some other condition not met. Deny access.
-    return null
+  // Step 4: Permission checks on the retrieved chat record.
+  if (chat.visibility === 'public') {
+    // Public chat: access granted to anyone (authenticated or not).
+    const messages = await chatDb.getChatMessages(chatId)
+    return { ...chat, messages }
   }
 
-  // If access is granted, fetch messages for the chat.
-  const messages = await chatDb.getChatMessages(chatId)
+  if (chat.visibility === 'private') {
+    // Private chat: access granted only if the requestingUser is the owner.
+    if (requestingUserId && chat.userId === requestingUserId) {
+      const messages = await chatDb.getChatMessages(chatId)
+      return { ...chat, messages }
+    } else {
+      // User is not the owner, or user is not authenticated.
+      return null
+    }
+  }
 
-  return { ...chat, messages }
+  // If chat visibility is neither 'public' nor 'private', or any other unhandled case.
+  console.warn(
+    `getChat: Chat ${chatId} has unhandled visibility '${chat.visibility}'. Denying access.`
+  )
+  return null
 }
 
 // Clear all chats for a user
