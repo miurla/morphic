@@ -14,9 +14,56 @@ export async function getChatsPage(userId: string, limit = 20, offset = 0) {
   return chatDb.getChatsPage(userId, limit, offset)
 }
 
-// Get a single chat by ID
-export async function getChat(id: string, userId: string) {
-  return chatDb.getChat(id, userId)
+// Get a single chat by ID, including its messages, with permission checks.
+export async function getChat(
+  chatId: string,
+  requestingUserId?: string // Optional: for logged-in user context
+): Promise<(DBChat & { messages: DBMessage[] }) | null> {
+  let chat: DBChat | null = null
+
+  // Attempt to fetch chat data.
+  // Try getSharedChat first; it might be a public chat or one shared via a link (if system supports).
+  // We assume getSharedChat fetches by ID and doesn't require a userId for public/shared entities.
+  const potentialSharedChat = await chatDb.getSharedChat(chatId)
+  if (potentialSharedChat) {
+    // Assuming potentialSharedChat is compatible with DBChat or is DBChat itself.
+    // If it's a different type, appropriate mapping/casting would be needed here.
+    chat = potentialSharedChat as DBChat
+  }
+
+  // If not found through getSharedChat (e.g., it's private) AND a user is logged in,
+  // try to fetch it as a chat belonging to that user.
+  if (!chat && requestingUserId) {
+    chat = await chatDb.getChat(chatId, requestingUserId)
+  }
+
+  // If chat is still not found after these attempts, it either doesn't exist or isn't accessible
+  // through the primary fetch mechanisms used.
+  if (!chat) {
+    return null
+  }
+
+  // Authorization check
+  const isOwner = requestingUserId && chat.userId === requestingUserId
+  const isPublic = chat.visibility === 'public'
+
+  if (isPublic) {
+    // Public chat: access granted.
+  } else if (chat.visibility === 'private') {
+    if (!isOwner) {
+      return null // Private chat, but the requesting user is not the owner.
+    }
+    // Private chat and user is owner: access granted.
+  } else {
+    // Chat is neither 'public' nor 'private' (e.g., unknown visibility status),
+    // or some other condition not met. Deny access.
+    return null
+  }
+
+  // If access is granted, fetch messages for the chat.
+  const messages = await chatDb.getChatMessages(chatId)
+
+  return { ...chat, messages }
 }
 
 // Clear all chats for a user

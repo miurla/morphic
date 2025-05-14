@@ -100,7 +100,7 @@ export function RenderMessage({
   if (message.role === 'user') {
     return (
       <UserMessage
-        message={message.content}
+        message={message}
         messageId={messageId}
         onUpdateMessage={onUpdateMessage}
       />

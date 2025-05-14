@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { Message } from 'ai'
 import { Pencil } from 'lucide-react'
 import React, { useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
@@ -8,7 +9,7 @@ import { CollapsibleMessage } from './collapsible-message'
 import { Button } from './ui/button'
 
 type UserMessageProps = {
-  message: string
+  message: Message
   messageId?: string
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
 }
@@ -18,12 +19,17 @@ export const UserMessage: React.FC<UserMessageProps> = ({
   messageId,
   onUpdateMessage
 }) => {
+  const messageText =
+    message.parts
+      ?.filter(part => part.type === 'text')
+      .map(part => part.text)
+      .join('') || ''
   const [isEditing, setIsEditing] = useState(false)
-  const [editedContent, setEditedContent] = useState(message)
+  const [editedContent, setEditedContent] = useState(messageText)
 
   const handleEditClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
-    setEditedContent(message)
+    setEditedContent(messageText)
     setIsEditing(true)
   }
 
@@ -70,7 +76,7 @@ export const UserMessage: React.FC<UserMessageProps> = ({
           </div>
         ) : (
           <div className="flex justify-between items-start">
-            <div className="flex-1">{message}</div>
+            <div className="flex-1">{messageText}</div>
             <div
               className={cn(
                 'absolute top-1 right-1 transition-opacity ml-2',
