@@ -1,5 +1,6 @@
 'use server'
 
+import { getCurrentUserId } from '@/lib/auth/get-current-user' // Import getCurrentUserId
 import * as chatDb from '@/lib/db/chat'
 import { type Chat as DBChat, type Message as DBMessage } from '@/lib/db/schema' // Import DB schema types
 
@@ -19,13 +20,57 @@ export async function getChat(id: string, userId: string) {
 }
 
 // Clear all chats for a user
-export async function clearChats(userId: string) {
-  return chatDb.clearChats(userId)
+export async function clearChats(): Promise<{
+  error?: string
+  success?: boolean
+}> {
+  const userId = await getCurrentUserId() // Get userId on the server
+  if (!userId) {
+    return { error: 'User not authenticated' }
+  }
+  try {
+    const result = await chatDb.clearChats(userId) // Call the db function
+    if (result.error) {
+      return { error: result.error }
+    }
+    return { success: true } // Indicate success
+  } catch (error) {
+    // This catch might be redundant if chatDb.clearChats handles its own errors and returns { error: ... }
+    // However, it can catch unexpected errors during the call to chatDb.clearChats itself.
+    console.error('Error in server action clearChats:', error)
+    return { error: 'Failed to clear chats at server action level' }
+  }
 }
 
 // Delete a single chat
-export async function deleteChat(chatId: string, userId: string) {
-  return chatDb.deleteChat(chatId, userId)
+export async function deleteChat(chatId: string): Promise<{
+  error?: string
+  success?: boolean
+}> {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return { error: 'User not authenticated' }
+  }
+  try {
+    const result = await chatDb.deleteChat(chatId, userId)
+    // Assuming chatDb.deleteChat also returns a similar object or throws an error
+    // If chatDb.deleteChat returns something else, this part needs adjustment
+    if (result && 'error' in result && result.error) {
+      return { error: result.error }
+    }
+    // If chatDb.deleteChat signifies success differently, adjust this condition
+    // For example, if it returns the deleted chat or a count > 0 on success
+    // For now, let's assume if no error, it's a success. Consider a more explicit success check.
+    return { success: true }
+  } catch (error: any) {
+    console.error(
+      `Error in server action deleteChat for chat ID ${chatId}:`,
+      error
+    )
+    return {
+      error: error.message || 'Failed to delete chat at server action level'
+    }
+  }
 }
 
 // Interface for chat metadata input from the client
