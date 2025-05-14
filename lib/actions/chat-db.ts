@@ -267,26 +267,27 @@ export async function saveChat(
   }
 }
 
-// Get a shared chat
-export async function getSharedChat(id: string) {
-  const chat = await chatDb.getSharedChat(id)
+// Share a chat (makes it public if authorized)
+export async function shareChat(id: string): Promise<DBChat | null> {
+  const userId = await getCurrentUserId() // Get user ID on the server
 
-  if (!chat) {
+  if (!userId) {
+    // Or throw new Error('Authentication required to share a chat.');
+    // Depending on how you want to handle unauthorized attempts at the action level.
+    console.error('shareChat: User not authenticated')
     return null
   }
 
-  // Get messages for the chat
-  const messages = await chatDb.getChatMessages(id)
+  // We assume chatDb.shareChat updates the chat in the DB (e.g., sets visibility to public)
+  // and handles ownership check (i.e., if this userId can share this chat id).
+  // It should return the updated chat object (DBChat), or null on failure/permission denied.
+  const updatedChat = await chatDb.shareChat(id, userId)
 
-  // Return chat with messages
-  return {
-    ...chat,
-    messages,
-    sharePath: `/share/${id}`
+  if (!updatedChat) {
+    // The operation to share the chat in the database failed or was not permitted
+    return null
   }
-}
 
-// Share a chat
-export async function shareChat(id: string, userId: string) {
-  return chatDb.shareChat(id, userId)
+  // Return the updated chat object. The concept of a specific sharePath is obsolete.
+  return updatedChat
 }

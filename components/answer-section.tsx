@@ -28,7 +28,7 @@ export function AnswerSection({
   messageId,
   reload
 }: AnswerSectionProps) {
-  const enableShare = process.env.NEXT_PUBLIC_ENABLE_SHARE === 'true'
+  const enableShare = process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined
 
   const handleReload = () => {
     if (reload) {
