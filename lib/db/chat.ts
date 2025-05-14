@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq, gt } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { db } from '.'
@@ -170,6 +170,32 @@ export async function getChatMessages(chatId: string): Promise<Message[]> {
     .orderBy(messages.createdAt)
 }
 
+// Delete all messages created after (strictly greater than) the
+// given timestamp in the same chat.
+export async function deleteMessagesByChatIdAfterTimestamp(
+  chatId: string,
+  timestamp: string // Assuming this is an ISO 8601 string
+): Promise<{ count: number; error?: string }> {
+  try {
+    const result = await db
+      .delete(messages)
+      .where(
+        and(
+          eq(messages.chatId, chatId),
+          gt(messages.createdAt, timestamp) // Use the ISO string directly
+        )
+      )
+      .returning({ id: messages.id }) // Returning something to count
+    return { count: result.length }
+  } catch (error) {
+    console.error(
+      `Error deleting messages for chat ${chatId} after ${timestamp}:`,
+      error
+    )
+    return { count: 0, error: 'Failed to delete messages' }
+  }
+}
+
 // Clear all chats for a user
 export async function clearChats(userId: string): Promise<{ error?: string }> {
   try {
@@ -277,6 +303,31 @@ export async function shareChat(id: string, userId: string) {
     return null
   } catch (error) {
     console.error('Error sharing chat:', error)
+    return null
+  }
+}
+
+// Update the content (parts) of a specific message
+export async function updateMessageContent(
+  messageId: string,
+  newParts: any // Assuming parts can be of any structure, similar to addMessage
+): Promise<Message | null> {
+  try {
+    const [updatedMessage] = await db
+      .update(messages)
+      .set({
+        parts: newParts,
+        updatedAt: new Date().toISOString() // Convert Date to ISO string
+      })
+      .where(eq(messages.id, messageId))
+      .returning()
+
+    return updatedMessage || null
+  } catch (error) {
+    console.error(
+      `Error updating message content for message ${messageId}:`,
+      error
+    )
     return null
   }
 }

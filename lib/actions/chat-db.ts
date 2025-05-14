@@ -274,6 +274,141 @@ export async function saveChat(
   }
 }
 
+// Server action to update the content of a specific message
+export async function updateMessageContent(
+  chatId: string,
+  messageId: string,
+  newParts: DBMessage['parts'] // Use the type from DBMessage for parts
+): Promise<DBMessage | null> {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    console.error('updateMessageContent: User not authenticated')
+    // Optionally, you could throw an error or return an object indicating failure
+    return null
+  }
+
+  try {
+    // 1. Verify chat access for the current user
+    const chat = await chatDb.getChat(chatId, userId)
+    if (!chat) {
+      console.warn(
+        `updateMessageContent: Chat ${chatId} not found or user ${userId} unauthorized.`
+      )
+      return null
+    }
+
+    // 2. Fetch the specific message to check its role and ensure it belongs to the chat
+    // This also implicitly checks if messageId is valid for this chatId
+    const messagesInChat = await chatDb.getChatMessages(chatId)
+    const messageToUpdate = messagesInChat.find(msg => msg.id === messageId)
+
+    if (!messageToUpdate) {
+      console.warn(
+        `updateMessageContent: Message ${messageId} not found in chat ${chatId}.`
+      )
+      return null
+    }
+
+    // 3. Permission: Allow user to only update their own 'user' messages
+    // Adjust this logic if other roles can be edited or if admins have broader permissions.
+    if (messageToUpdate.role !== 'user' || chat.userId !== userId) {
+      // If message is not a 'user' message, or if the chat doesn't belong to the user
+      // (this latter check is a bit redundant if getChat already scopes by userId for private chats,
+      // but good for 'public' chats where anyone can see but only owner should edit their user messages within it).
+      // For this specific app's UserMessage component, we are editing a 'user' message.
+      console.warn(
+        `updateMessageContent: User ${userId} not permitted to update message ${messageId} (role: ${messageToUpdate.role}, chat owner: ${chat.userId}).`
+      )
+      return null
+    }
+
+    // 4. Call the database function to update message content
+    const updatedMessage = await chatDb.updateMessageContent(
+      messageId,
+      newParts
+    )
+
+    if (updatedMessage) {
+      // Optional: Revalidate relevant paths if needed
+      // revalidatePath(`/chat/${chatId}`)
+      return updatedMessage
+    }
+
+    // Log if chatDb.updateMessageContent returned null without throwing an error
+    console.error(
+      `updateMessageContent: Failed to update message ${messageId} in DB.`
+    )
+    return null
+  } catch (error: any) {
+    console.error(
+      `Error in server action updateMessageContent for message ID ${messageId}:`,
+      error
+    )
+    // Rethrow or return an error structure if preferred
+    return null
+  }
+}
+
+// Action to delete messages in a chat after a specific message (the pivot)
+export async function deleteTrailingMessages(
+  chatId: string,
+  pivotMessageId: string
+): Promise<{ success?: boolean; deleted?: number; error?: string }> {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return { error: 'User not authenticated' }
+  }
+
+  try {
+    // 1. Verify chat access for the current user
+    // getChat handles non-existent chats and ownership/public visibility checks.
+    const chat = await chatDb.getChat(chatId, userId)
+    if (!chat) {
+      // This means either chat doesn't exist or user doesn't have access.
+      return { error: 'Chat not found or unauthorized' }
+    }
+
+    // 2. Get the pivot message to find its creation timestamp
+    // We need to fetch all messages first to find the specific one by ID.
+    // This is not ideal if there are many messages, but getChatMessages is what we have.
+    // Alternatively, we could add a getMessageById db function if performance becomes an issue.
+    const messagesInChat = await chatDb.getChatMessages(chatId)
+    const pivotMessage = messagesInChat.find(msg => msg.id === pivotMessageId)
+
+    if (!pivotMessage) {
+      return { error: 'Pivot message not found' }
+    }
+
+    // The createdAt field from DBMessage is expected to be a string (ISO 8601 format)
+    const pivotTimestamp = pivotMessage.createdAt
+
+    // 3. Call the database function to delete messages after the pivot message
+    const deleteResult = await chatDb.deleteMessagesByChatIdAfterTimestamp(
+      chatId,
+      pivotTimestamp
+    )
+
+    if (deleteResult.error) {
+      return { error: deleteResult.error }
+    }
+
+    // Optional: revalidatePath if needed here, though typically done by the calling client/component logic
+    // revalidatePath(`/chat/${chatId}`) // Or some other relevant path
+
+    return { success: true, deleted: deleteResult.count }
+  } catch (error: any) {
+    console.error(
+      `Error in server action deleteTrailingMessages for chat ID ${chatId} and pivot message ID ${pivotMessageId}:`,
+      error
+    )
+    return {
+      error:
+        error.message ||
+        'Failed to delete trailing messages at server action level'
+    }
+  }
+}
+
 // Share a chat (makes it public if authorized)
 export async function shareChat(id: string): Promise<DBChat | null> {
   const userId = await getCurrentUserId() // Get user ID on the server
