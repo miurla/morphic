@@ -1,0 +1,189 @@
+{
+  "id": "fb8e1dca-4a37-41e5-b928-c32e86e9f5b6",
+  "prevId": "74bfe8c4-6a83-4e8a-9d1c-2b5a7f31e0f4",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.chats": {
+      "name": "chats",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "Users can view their own chats": {
+          "using": "(auth.uid()::uuid = user_id)",
+          "check": null,
+          "operation": "select",
+          "roles": ["authenticated"]
+        },
+        "Users can view public chats": {
+          "using": "(visibility = 'public')",
+          "check": null,
+          "operation": "select",
+          "roles": ["authenticated", "anon"]
+        },
+        "Users can insert their own chats": {
+          "using": null,
+          "check": "(auth.uid()::uuid = user_id)",
+          "operation": "insert",
+          "roles": ["authenticated"]
+        },
+        "Users can update their own chats": {
+          "using": "(auth.uid()::uuid = user_id)",
+          "check": "(auth.uid()::uuid = user_id)",
+          "operation": "update",
+          "roles": ["authenticated"]
+        },
+        "Users can delete their own chats": {
+          "using": "(auth.uid()::uuid = user_id)",
+          "check": null,
+          "operation": "delete",
+          "roles": ["authenticated"]
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.messages": {
+      "name": "messages",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "chat_id": {
+          "name": "chat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parts": {
+          "name": "parts",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attachments": {
+          "name": "attachments",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "messages_chat_id_chats_id_fk": {
+          "name": "messages_chat_id_chats_id_fk",
+          "tableFrom": "messages",
+          "tableTo": "chats",
+          "columnsFrom": ["chat_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "Users can view messages from their own chats": {
+          "using": "(chat_id IN (SELECT id FROM chats WHERE (auth.uid())::uuid = user_id))",
+          "check": null,
+          "operation": "select",
+          "roles": ["authenticated"]
+        },
+        "Users can view messages from public chats": {
+          "using": "(chat_id IN (SELECT id FROM chats WHERE visibility = 'public'))",
+          "check": null,
+          "operation": "select",
+          "roles": ["authenticated", "anon"]
+        },
+        "Users can insert messages to their own chats": {
+          "using": null,
+          "check": "(chat_id IN (SELECT id FROM chats WHERE (auth.uid())::uuid = user_id))",
+          "operation": "insert",
+          "roles": ["authenticated"]
+        },
+        "Users can update messages in their own chats": {
+          "using": "(chat_id IN (SELECT id FROM chats WHERE (auth.uid())::uuid = user_id))",
+          "check": "(chat_id IN (SELECT id FROM chats WHERE (auth.uid())::uuid = user_id))",
+          "operation": "update",
+          "roles": ["authenticated"]
+        },
+        "Users can delete messages from their own chats": {
+          "using": "(chat_id IN (SELECT id FROM chats WHERE (auth.uid())::uuid = user_id))",
+          "check": null,
+          "operation": "delete",
+          "roles": ["authenticated"]
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
