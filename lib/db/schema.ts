@@ -13,9 +13,6 @@ export const chats = pgTable('chats', {
   createdAt: timestamp('created_at', { mode: 'string', withTimezone: true })
     .notNull()
     .defaultNow(),
-  updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true })
-    .notNull()
-    .defaultNow(),
   title: text('title').notNull(),
   userId: uuid('user_id').notNull(), // User ID from the authentication system
   visibility: varchar('visibility', {
@@ -35,10 +32,8 @@ export const messages = pgTable('messages', {
     .references(() => chats.id, { onDelete: 'cascade' }),
   role: varchar('role', { length: 256 }).notNull(),
   parts: json('parts').notNull(), // Stores structured message content (e.g., Vercel AI SDK Message parts)
+  attachments: json('attachments').notNull(),
   createdAt: timestamp('created_at', { mode: 'string', withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true })
     .notNull()
     .defaultNow()
 })

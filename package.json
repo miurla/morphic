@@ -7,7 +7,8 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate": "bun run lib/db/migrate.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.10",

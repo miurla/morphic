@@ -85,8 +85,7 @@ export async function updateChat(
   const [chat] = await db
     .update(chats)
     .set({
-      ...data,
-      updatedAt: new Date().toISOString()
+      ...data
     })
     .where(eq(chats.id, id))
     .returning()
@@ -143,10 +142,12 @@ export async function addMessage({
     chatId: string
     role: string
     parts: any
+    attachments: any
   } = {
     chatId,
     role,
-    parts
+    parts,
+    attachments: {}
   }
 
   if (id) {
@@ -244,8 +245,7 @@ export async function saveChat(chat: Chat, userId: string) {
         .update(chats)
         .set({
           title: chat.title,
-          visibility: chat.visibility,
-          updatedAt: new Date().toISOString()
+          visibility: chat.visibility
         })
         .where(eq(chats.id, chat.id))
         .returning()
@@ -301,8 +301,7 @@ export async function shareChat(id: string, userId: string) {
     const [updatedChat] = await db
       .update(chats)
       .set({
-        visibility: 'public',
-        updatedAt: new Date().toISOString()
+        visibility: 'public'
       })
       .where(eq(chats.id, id))
       .returning()
