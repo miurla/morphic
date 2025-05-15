@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { ChatRequestOptions, JSONValue, Message } from 'ai'
+import { JSONValue, Message } from 'ai'
 import { useEffect, useMemo, useState } from 'react'
 import { RenderMessage } from './render-message'
 import { ToolSection } from './tool-section'
@@ -19,10 +19,7 @@ interface ChatMessagesProps {
   /** Ref for the scroll container */
   scrollContainerRef: React.RefObject<HTMLDivElement>
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
-  reload?: (
-    messageId: string,
-    options?: ChatRequestOptions
-  ) => Promise<string | null | undefined>
+  reload?: (messageId: string) => Promise<void | string | null | undefined>
   /** Whether auto-scroll is enabled (used by the button, now removed) */
   // isAutoScroll?: boolean  // No longer needed
   /** Function to enable auto-scroll (used by the button, now removed) */

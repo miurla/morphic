@@ -1,4 +1,4 @@
-import { CoreMessage, smoothStream, streamText } from 'ai'
+import { Message, smoothStream, streamText } from 'ai'
 import { createQuestionTool } from '../tools/question'
 import { retrieveTool } from '../tools/retrieve'
 import { createSearchTool } from '../tools/search'
@@ -40,7 +40,7 @@ export function researcher({
   model,
   searchMode
 }: {
-  messages: CoreMessage[]
+  messages: Message[]
   model: string
   searchMode: boolean
 }): ResearcherReturn {
@@ -63,7 +63,7 @@ export function researcher({
         ask_question: askQuestionTool
       },
       experimental_activeTools: searchMode
-        ? ['search', 'retrieve', 'videoSearch', 'ask_question']
+        ? ['search', 'retrieve', 'videoSearch']
         : [],
       maxSteps: searchMode ? 5 : 1,
       experimental_transform: smoothStream()

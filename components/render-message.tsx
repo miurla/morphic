@@ -1,4 +1,4 @@
-import { ChatRequestOptions, JSONValue, Message, ToolInvocation } from 'ai'
+import { JSONValue, Message, ToolInvocation } from 'ai'
 import { useMemo } from 'react'
 import { AnswerSection } from './answer-section'
 import { ReasoningSection } from './reasoning-section'
@@ -15,10 +15,7 @@ interface RenderMessageProps {
   chatId?: string
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
-  reload?: (
-    messageId: string,
-    options?: ChatRequestOptions
-  ) => Promise<string | null | undefined>
+  reload?: (messageId: string) => Promise<void | string | null | undefined>
 }
 
 export function RenderMessage({
@@ -100,7 +97,7 @@ export function RenderMessage({
   if (message.role === 'user') {
     return (
       <UserMessage
-        message={message.content}
+        message={message}
         messageId={messageId}
         onUpdateMessage={onUpdateMessage}
       />

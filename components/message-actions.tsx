@@ -12,7 +12,7 @@ import { Button } from './ui/button'
 interface MessageActionsProps {
   message: string
   messageId: string
-  reload?: () => Promise<string | null | undefined>
+  reload?: () => Promise<void | string | null | undefined>
   chatId?: string
   enableShare?: boolean
   className?: string

@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1747030516658,
+      "tag": "0000_famous_gunslinger",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1747030781234,
+      "tag": "0001_update_schema_drop_updated_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1747032500000,
+      "tag": "0002_enable_rls",
+      "breakpoints": true
+    }
+  ]
+}

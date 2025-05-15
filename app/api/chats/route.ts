@@ -1,10 +1,10 @@
-import { getChatsPage } from '@/lib/actions/chat'
+import { getChatsPage } from '@/lib/actions/chat-db'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import { type Chat } from '@/lib/types'
+import { Chat as DBChat } from '@/lib/db/schema'
 import { NextRequest, NextResponse } from 'next/server'
 
 interface ChatPageResponse {
-  chats: Chat[]
+  chats: DBChat[]
   nextOffset: number | null
 }
 
@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '20', 10)
 
   const userId = await getCurrentUserId()
+  if (!userId) {
+    return NextResponse.json<ChatPageResponse>({ chats: [], nextOffset: null })
+  }
 
   try {
     const result = await getChatsPage(userId, limit, offset)

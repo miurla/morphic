@@ -4,7 +4,7 @@ import { RotateCcw } from 'lucide-react'
 import { Button } from './ui/button'
 
 interface RetryButtonProps {
-  reload: () => Promise<string | null | undefined>
+  reload: () => Promise<void | string | null | undefined>
   messageId: string
 }
 

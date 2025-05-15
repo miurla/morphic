@@ -22,16 +22,17 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
-import { Chat } from '@/lib/types'
+import { deleteChat } from '@/lib/actions/chat-db'
+import { Chat as DBChat } from '@/lib/db/schema'
 import { MoreHorizontal, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useCallback, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Spinner } from '../ui/spinner'
 
 interface ChatMenuItemProps {
-  chat: Chat
+  chat: DBChat
 }
 
 const formatDateWithTime = (date: Date | string) => {
@@ -74,39 +75,52 @@ const formatDateWithTime = (date: Date | string) => {
 
 export function ChatMenuItem({ chat }: ChatMenuItemProps) {
   const pathname = usePathname()
-  const isActive = pathname === chat.path
+  const path = `/search/${chat.id}`
+  const isActive = pathname === path
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [isAlertOpen, setIsAlertOpen] = useState(false)
 
-  const onDelete = () => {
+  const handleDeleteChat = useCallback(() => {
     startTransition(async () => {
-      try {
-        const res = await fetch(`/api/chat/${chat.id}`, { method: 'DELETE' })
+      const result = await deleteChat(chat.id)
 
-        if (!res.ok) {
-          const errorData = await res.json()
-          throw new Error(errorData.error || 'Failed to delete chat')
-        }
-
+      if (result?.success) {
         toast.success('Chat deleted')
-        setIsMenuOpen(false) // Close menu on success
-        setDialogOpen(false) // Close dialog on success
-
-        // If deleting the currently active chat, navigate home
         if (isActive) {
           router.push('/')
         }
         window.dispatchEvent(new CustomEvent('chat-history-updated'))
-      } catch (error) {
-        console.error('Failed to delete chat:', error)
-        toast.error((error as Error).message || 'Failed to delete chat')
-        setIsMenuOpen(false) // Close menu on error
-        setDialogOpen(false) // Close dialog on error
+      } else if (result?.error) {
+        toast.error(result.error)
+      } else {
+        toast.error('An unexpected error occurred while deleting the chat.')
       }
+      setIsAlertOpen(false)
+      setIsMenuOpen(false)
     })
-  }
+  }, [chat.id, isActive, router, startTransition])
+
+  const handleAlertOpenChange = useCallback(
+    (open: boolean) => {
+      setIsAlertOpen(open)
+      if (!open && !isPending) {
+        setIsMenuOpen(false)
+      }
+    },
+    [isPending, setIsMenuOpen, setIsAlertOpen]
+  )
+
+  const handleMenuOpenChange = useCallback(
+    (open: boolean) => {
+      setIsMenuOpen(open)
+      if (!open && !isPending) {
+        setIsAlertOpen(false)
+      }
+    },
+    [isPending, setIsMenuOpen, setIsAlertOpen]
+  )
 
   return (
     <SidebarMenuItem>
@@ -115,7 +129,7 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
         isActive={isActive}
         className="h-auto flex-col gap-0.5 items-start p-2 pr-8"
       >
-        <Link href={chat.path}>
+        <Link href={path}>
           <div className="text-xs font-medium truncate select-none w-full">
             {chat.title}
           </div>
@@ -125,28 +139,20 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
         </Link>
       </SidebarMenuButton>
 
-      <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+      <DropdownMenu open={isMenuOpen} onOpenChange={handleMenuOpenChange}>
         <DropdownMenuTrigger asChild>
-          <SidebarMenuAction disabled={isPending} className="size-7 p-1 mr-1">
-            {isPending ? (
-              <div className="flex items-center justify-center size-full">
-                <Spinner />
-              </div>
-            ) : (
-              <MoreHorizontal size={16} />
-            )}
+          <SidebarMenuAction className="size-7 p-1 mr-1">
+            <MoreHorizontal size={16} />
             <span className="sr-only">Chat Actions</span>
           </SidebarMenuAction>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start">
-          <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <AlertDialog open={isAlertOpen} onOpenChange={handleAlertOpenChange}>
             <AlertDialogTrigger asChild>
               <DropdownMenuItem
-                disabled={isPending}
                 className="gap-2 text-destructive focus:text-destructive"
                 onSelect={e => {
                   e.preventDefault()
-                  // Don't call onDelete directly, just open the dialog
                 }}
               >
                 <Trash2 size={14} />
@@ -167,7 +173,10 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
                 </AlertDialogCancel>
                 <AlertDialogAction
                   disabled={isPending}
-                  onClick={onDelete} // Call onDelete here
+                  onClick={event => {
+                    event.preventDefault()
+                    handleDeleteChat()
+                  }}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   {isPending ? (

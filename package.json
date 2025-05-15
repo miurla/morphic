@@ -7,7 +7,8 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate": "bun run lib/db/migrate.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.10",
@@ -45,6 +46,9 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
     "cmdk": "1.0.0",
+    "dotenv": "^16.5.0",
+    "drizzle-kit": "^0.31.1",
+    "drizzle-orm": "^0.43.1",
     "embla-carousel-react": "^8.0.0",
     "exa-js": "^1.0.12",
     "jsdom": "^22.1.0",
@@ -54,6 +58,7 @@
     "next-themes": "^0.3.0",
     "node-html-parser": "^6.1.13",
     "ollama-ai-provider": "^1.2.0",
+    "postgres": "^3.4.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.0.1",

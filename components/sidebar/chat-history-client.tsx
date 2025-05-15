@@ -5,23 +5,20 @@ import {
   SidebarGroupLabel,
   SidebarMenu
 } from '@/components/ui/sidebar'
-import { Chat } from '@/lib/types'
+import { Chat as DBChat } from '@/lib/db/schema'
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { ChatHistorySkeleton } from './chat-history-skeleton'
 import { ChatMenuItem } from './chat-menu-item'
 import { ClearHistoryAction } from './clear-history-action'
 
-// interface ChatHistoryClientProps {} // Removed empty interface
-
 interface ChatPageResponse {
-  chats: Chat[]
+  chats: DBChat[]
   nextOffset: number | null
 }
 
 export function ChatHistoryClient() {
-  // Removed props from function signature
-  const [chats, setChats] = useState<Chat[]>([])
+  const [chats, setChats] = useState<DBChat[]>([])
   const [nextOffset, setNextOffset] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const loadMoreRef = useRef<HTMLDivElement>(null)
@@ -34,10 +31,10 @@ export function ChatHistoryClient() {
       if (!response.ok) {
         throw new Error('Failed to fetch initial chat history')
       }
-      const { chats: newChats, nextOffset: newNextOffset } =
+      const { chats: dbChats, nextOffset: newNextOffset } =
         (await response.json()) as ChatPageResponse
 
-      setChats(newChats)
+      setChats(dbChats)
       setNextOffset(newNextOffset)
     } catch (error) {
       console.error('Failed to load initial chats:', error)
@@ -73,10 +70,10 @@ export function ChatHistoryClient() {
       if (!response.ok) {
         throw new Error('Failed to fetch more chat history')
       }
-      const { chats: newChats, nextOffset: newNextOffset } =
+      const { chats: dbChats, nextOffset: newNextOffset } =
         (await response.json()) as ChatPageResponse
 
-      setChats(prevChats => [...prevChats, ...newChats])
+      setChats(prevChats => [...prevChats, ...dbChats])
       setNextOffset(newNextOffset)
     } catch (error) {
       console.error('Failed to load more chats:', error)
@@ -127,7 +124,8 @@ export function ChatHistoryClient() {
         ) : (
           <SidebarMenu>
             {chats.map(
-              (chat: Chat) => chat && <ChatMenuItem key={chat.id} chat={chat} />
+              (chat: DBChat) =>
+                chat && <ChatMenuItem key={chat.id} chat={chat} />
             )}
           </SidebarMenu>
         )}

@@ -1,74 +1,97 @@
 import { researcher } from '@/lib/agents/researcher'
 import {
-  convertToCoreMessages,
-  CoreMessage,
+  appendClientMessage,
+  appendResponseMessages,
   createDataStreamResponse,
   DataStreamWriter,
   streamText
 } from 'ai'
-import { getMaxAllowedTokens, truncateMessages } from '../utils/context-window'
-import { isReasoningModel } from '../utils/registry'
-import { handleStreamFinish } from './handle-stream-finish'
+import { saveChatMessage, saveSingleMessage } from '../actions/chat-db'
+import { getChat, getChatMessages } from '../db/chat'
+import { generateUUID } from '../utils'
 import { BaseStreamConfig } from './types'
-
-// Function to check if a message contains ask_question tool invocation
-function containsAskQuestionTool(message: CoreMessage) {
-  // For CoreMessage format, we check the content array
-  if (message.role !== 'assistant' || !Array.isArray(message.content)) {
-    return false
-  }
-
-  // Check if any content item is a tool-call with ask_question tool
-  return message.content.some(
-    item => item.type === 'tool-call' && item.toolName === 'ask_question'
-  )
-}
 
 export function createToolCallingStreamResponse(config: BaseStreamConfig) {
   return createDataStreamResponse({
     execute: async (dataStream: DataStreamWriter) => {
-      const { messages, model, chatId, searchMode, userId } = config
+      const { message, model, chatId, searchMode, userId } = config
       const modelId = `${model.providerId}:${model.id}`
 
       try {
-        const coreMessages = convertToCoreMessages(messages)
-        const truncatedMessages = truncateMessages(
-          coreMessages,
-          getMaxAllowedTokens(model)
-        )
+        const chat = await getChat(chatId, userId)
+        if (!chat) {
+          // Extract title from message content
+          const title = message.content
+
+          // Save the chat and user message to the database using server action
+          await saveChatMessage(
+            chatId,
+            message.id,
+            message.parts,
+            message.role,
+            userId,
+            title
+          )
+        } else {
+          if (chat.userId !== userId) {
+            // TODO: Handle this
+            // return new Response('You are not allowed to access this chat', {
+            //   status: 403,
+            //   statusText: 'Forbidden'
+            // })
+          }
+
+          // Save just the user message to an existing chat
+          await saveSingleMessage({
+            id: message.id,
+            chatId,
+            role: message.role,
+            parts: message.parts
+          })
+        }
+
+        const previousMessages = await getChatMessages(chatId)
+        const messages = appendClientMessage({
+          // @ts-ignore
+          messages: previousMessages,
+          message
+        })
 
         let researcherConfig = await researcher({
-          messages: truncatedMessages,
+          messages,
           model: modelId,
           searchMode
         })
 
         const result = streamText({
           ...researcherConfig,
-          onFinish: async result => {
-            // Check if the last message contains an ask_question tool invocation
-            const shouldSkipRelatedQuestions =
-              isReasoningModel(modelId) ||
-              (result.response.messages.length > 0 &&
-                containsAskQuestionTool(
-                  result.response.messages[
-                    result.response.messages.length - 1
-                  ] as CoreMessage
-                ))
-
-            await handleStreamFinish({
-              responseMessages: result.response.messages,
-              originalMessages: messages,
-              model: modelId,
-              chatId,
-              dataStream,
-              userId,
-              skipRelatedQuestions: shouldSkipRelatedQuestions
-            })
-          }
+          experimental_generateMessageId: generateUUID
         })
 
         result.mergeIntoDataStream(dataStream)
+
+        const responseMessages = (await result.response).messages
+        const assistantId = responseMessages
+          .filter(message => message.role === 'assistant')
+          .at(-1)?.id
+        if (!assistantId) {
+          throw new Error('No assistant id found')
+        }
+
+        const [, assistantMessage] = appendResponseMessages({
+          messages: [message],
+          responseMessages: responseMessages
+        })
+
+        // Save the assistant message to the database using server action
+        if (assistantMessage) {
+          await saveSingleMessage({
+            id: assistantId,
+            chatId,
+            role: assistantMessage.role,
+            parts: assistantMessage.parts
+          })
+        }
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error

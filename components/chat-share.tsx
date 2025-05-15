@@ -1,6 +1,6 @@
 'use client'
 
-import { shareChat } from '@/lib/actions/chat'
+import { shareChat } from '@/lib/actions/chat-db'
 import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { cn } from '@/lib/utils'
 import { Share } from 'lucide-react'
@@ -33,18 +33,19 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
     startTransition(() => {
       setOpen(true)
     })
-    const result = await shareChat(chatId)
-    if (!result) {
-      toast.error('Failed to share chat')
+
+    const sharedChatObject = await shareChat(chatId)
+    if (!sharedChatObject) {
+      toast.error(
+        'Failed to make chat public. You may need to be logged in or own the chat.'
+      )
       return
     }
 
-    if (!result.sharePath) {
-      toast.error('Could not copy link to clipboard')
-      return
-    }
-
-    const url = new URL(result.sharePath, window.location.href)
+    const url = new URL(
+      `/search/${sharedChatObject.id}`,
+      window.location.origin
+    )
     setShareUrl(url.toString())
   }
 
@@ -78,9 +79,10 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Share link to search result</DialogTitle>
+            <DialogTitle>Share Chat</DialogTitle>
             <DialogDescription>
-              Anyone with the link will be able to view this search result.
+              Anyone with the link will be able to view this chat if it&apos;s
+              public.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="items-center">
