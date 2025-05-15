@@ -7,48 +7,49 @@ import { RenderMessage } from './render-message'
 import { ToolSection } from './tool-section'
 import { Spinner } from './ui/spinner'
 
+// Import section structure interface
+interface ChatSection {
+  id: string
+  userMessage: Message
+  assistantMessages: Message[]
+}
+
 interface ChatMessagesProps {
-  messages: Message[]
+  sections: ChatSection[] // Changed from messages to sections
   data: JSONValue[] | undefined
   onQuerySelect: (query: string) => void
   isLoading: boolean
   chatId?: string
   addToolResult?: (params: { toolCallId: string; result: any }) => void
-  /** Ref for anchoring auto-scroll position */
-  anchorRef: React.RefObject<HTMLDivElement>
   /** Ref for the scroll container */
   scrollContainerRef: React.RefObject<HTMLDivElement>
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
-  /** Whether auto-scroll is enabled (used by the button, now removed) */
-  // isAutoScroll?: boolean  // No longer needed
-  /** Function to enable auto-scroll (used by the button, now removed) */
-  // enableAutoScroll?: () => void // No longer needed
 }
 
 export function ChatMessages({
-  messages,
+  sections,
   data,
   onQuerySelect,
   isLoading,
   chatId,
   addToolResult,
-  anchorRef,
   scrollContainerRef,
   onUpdateMessage,
   reload
-}: // isAutoScroll, // No longer needed
-// enableAutoScroll // No longer needed
-ChatMessagesProps) {
+}: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
 
   useEffect(() => {
-    const lastMessage = messages[messages.length - 1]
-    if (lastMessage?.role === 'user') {
-      setOpenStates({ [manualToolCallId]: true })
+    // Open manual tool call when the last section is a user message
+    if (sections.length > 0) {
+      const lastSection = sections[sections.length - 1]
+      if (lastSection.userMessage.role === 'user') {
+        setOpenStates({ [manualToolCallId]: true })
+      }
     }
-  }, [messages])
+  }, [sections])
 
   // get last tool data for manual tool call
   const lastToolData = useMemo(() => {
@@ -75,21 +76,31 @@ ChatMessagesProps) {
     }
   }, [data])
 
-  if (!messages.length) return null
+  if (!sections.length) return null
+
+  // Get all messages as a flattened array
+  const allMessages = sections.flatMap(section => [
+    section.userMessage,
+    ...section.assistantMessages
+  ])
 
   const lastUserIndex =
-    messages.length -
+    allMessages.length -
     1 -
-    [...messages].reverse().findIndex(msg => msg.role === 'user')
+    [...allMessages].reverse().findIndex(msg => msg.role === 'user')
 
-  const showLoading = isLoading && messages[messages.length - 1].role === 'user'
+  // Check if loading indicator should be shown
+  const showLoading =
+    isLoading &&
+    sections.length > 0 &&
+    sections[sections.length - 1].assistantMessages.length === 0
 
   const getIsOpen = (id: string) => {
     if (id.includes('call')) {
       return openStates[id] ?? true
     }
     const baseId = id.endsWith('-related') ? id.slice(0, -8) : id
-    const index = messages.findIndex(msg => msg.id === baseId)
+    const index = allMessages.findIndex(msg => msg.id === baseId)
     return openStates[id] ?? index >= lastUserIndex
   }
 
@@ -108,41 +119,66 @@ ChatMessagesProps) {
       aria-roledescription="chat messages"
       className={cn(
         'relative size-full pt-14',
-        messages.length > 0 ? 'flex-1 overflow-y-auto' : ''
+        sections.length > 0 ? 'flex-1 overflow-y-auto' : ''
       )}
-      // style={{ contain: 'strict' }}
     >
       <div className="relative mx-auto w-full max-w-3xl px-4">
-        {messages.map(message => (
-          <div key={message.id} className="mb-4 flex flex-col gap-4">
-            <RenderMessage
-              message={message}
-              messageId={message.id}
-              getIsOpen={getIsOpen}
-              onOpenChange={handleOpenChange}
-              onQuerySelect={onQuerySelect}
-              chatId={chatId}
-              addToolResult={addToolResult}
-              onUpdateMessage={onUpdateMessage}
-              reload={reload}
-            />
+        {sections.map((section, sectionIndex) => (
+          <div
+            key={section.id}
+            id={`section-${section.id}`}
+            className="chat-section mb-8"
+            style={
+              sectionIndex === sections.length - 1
+                ? { minHeight: 'calc(-228px + 100dvh)' }
+                : {}
+            }
+          >
+            {/* User message */}
+            <div className="flex flex-col gap-4">
+              <RenderMessage
+                message={section.userMessage}
+                messageId={section.userMessage.id}
+                getIsOpen={getIsOpen}
+                onOpenChange={handleOpenChange}
+                onQuerySelect={onQuerySelect}
+                chatId={chatId}
+                addToolResult={addToolResult}
+                onUpdateMessage={onUpdateMessage}
+                reload={reload}
+              />
+              {showLoading && <Spinner />}
+            </div>
+
+            {/* Assistant messages */}
+            {section.assistantMessages.map(assistantMessage => (
+              <div key={assistantMessage.id} className="mt-4">
+                <RenderMessage
+                  message={assistantMessage}
+                  messageId={assistantMessage.id}
+                  getIsOpen={getIsOpen}
+                  onOpenChange={handleOpenChange}
+                  onQuerySelect={onQuerySelect}
+                  chatId={chatId}
+                  addToolResult={addToolResult}
+                  onUpdateMessage={onUpdateMessage}
+                  reload={reload}
+                />
+              </div>
+            ))}
           </div>
         ))}
-        {showLoading &&
-          (lastToolData ? (
-            <ToolSection
-              key={manualToolCallId}
-              tool={lastToolData}
-              isOpen={getIsOpen(manualToolCallId)}
-              onOpenChange={open => handleOpenChange(manualToolCallId, open)}
-              addToolResult={addToolResult}
-            />
-          ) : (
-            <Spinner />
-          ))}
-        <div ref={anchorRef} />
+
+        {showLoading && lastToolData && (
+          <ToolSection
+            key={manualToolCallId}
+            tool={lastToolData}
+            isOpen={getIsOpen(manualToolCallId)}
+            onOpenChange={open => handleOpenChange(manualToolCallId, open)}
+            addToolResult={addToolResult}
+          />
+        )}
       </div>
-      {/* Scroll to bottom button has been removed from here */}
     </div>
   )
 }

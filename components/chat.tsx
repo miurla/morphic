@@ -2,16 +2,21 @@
 
 import { deleteTrailingMessages } from '@/lib/actions/chat-db'
 import { CHAT_ID } from '@/lib/constants'
-import { useAutoScroll } from '@/lib/hooks/use-auto-scroll'
 import { Model } from '@/lib/types/models'
 import { cn, generateUUID } from '@/lib/utils'
 import { useChat } from '@ai-sdk/react'
-import { Message as UIMessage } from 'ai'
-import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useTransition } from 'react'
+import { Message } from 'ai/react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
+
+// Define section structure
+interface ChatSection {
+  id: string // User message ID
+  userMessage: Message
+  assistantMessages: Message[]
+}
 
 export function Chat({
   id,
@@ -20,13 +25,12 @@ export function Chat({
   models
 }: {
   id: string
-  savedMessages?: UIMessage[]
+  savedMessages?: Message[]
   query?: string
   models?: Model[]
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const [isAtBottom, setIsAtBottom] = useState(true)
 
   const {
     messages,
@@ -62,17 +66,72 @@ export function Chat({
 
   const isLoading = status === 'submitted' || status === 'streaming'
 
-  const {
-    anchorRef,
-    isAutoScroll,
-    enable: enableAutoScroll
-  } = useAutoScroll({
-    isLoading,
-    dependency: messages.length,
-    isStreaming: status === 'streaming',
-    scrollContainer: scrollContainerRef,
-    threshold: 70
-  })
+  // Convert messages array to sections array
+  const sections = useMemo<ChatSection[]>(() => {
+    const result: ChatSection[] = []
+    let currentSection: ChatSection | null = null
+
+    for (const message of messages) {
+      if (message.role === 'user') {
+        // Start a new section when a user message is found
+        if (currentSection) {
+          result.push(currentSection)
+        }
+        currentSection = {
+          id: message.id,
+          userMessage: message,
+          assistantMessages: []
+        }
+      } else if (currentSection && message.role === 'assistant') {
+        // Add assistant message to the current section
+        currentSection.assistantMessages.push(message)
+      }
+      // Ignore other role types like 'system' for now
+    }
+
+    // Add the last section if exists
+    if (currentSection) {
+      result.push(currentSection)
+    }
+
+    return result
+  }, [messages])
+
+  // Detect if scroll container is at the bottom
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container
+      const threshold = 50 // threshold in pixels
+      if (scrollHeight - scrollTop - clientHeight < threshold) {
+        setIsAtBottom(true)
+      } else {
+        setIsAtBottom(false)
+      }
+    }
+
+    container.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll() // Set initial state
+
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [scrollContainerRef.current])
+
+  // Scroll to the section when a new user message is sent
+  useEffect(() => {
+    if (sections.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+      if (lastMessage && lastMessage.role === 'user') {
+        // If the last message is from user, find the corresponding section
+        const sectionId = lastMessage.id
+        requestAnimationFrame(() => {
+          const sectionElement = document.getElementById(`section-${sectionId}`)
+          sectionElement?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        })
+      }
+    }
+  }, [sections, messages])
 
   useEffect(() => {
     setMessages(savedMessages)
@@ -118,7 +177,7 @@ export function Chat({
             ? prevMessages.slice(0, messageIndex)
             : prevMessages
 
-        const newUIMessage: UIMessage = {
+        const newUIMessage: Message = {
           id: generateUUID(),
           role: 'user',
           content: newContentText,
@@ -191,7 +250,7 @@ export function Chat({
           targetUserMessageIndex
         )
 
-        const newResentUserMessage: UIMessage = {
+        const newResentUserMessage: Message = {
           id: generateUUID(),
           role: 'user',
           content: contentToResend,
@@ -227,13 +286,12 @@ export function Chat({
       data-testid="full-chat"
     >
       <ChatMessages
-        messages={messages}
+        sections={sections}
         data={data}
         onQuerySelect={onQuerySelect}
         isLoading={isLoading}
         chatId={id}
         addToolResult={addToolResult}
-        anchorRef={anchorRef}
         scrollContainerRef={scrollContainerRef}
         onUpdateMessage={handleUpdateAndReloadMessage}
         reload={handleReloadFrom}
@@ -249,7 +307,8 @@ export function Chat({
         query={query}
         append={append}
         models={models}
-        isAutoScroll={isAutoScroll}
+        showScrollToBottomButton={!isAtBottom}
+        scrollContainerRef={scrollContainerRef}
       />
     </div>
   )
