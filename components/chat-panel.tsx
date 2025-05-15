@@ -25,8 +25,10 @@ interface ChatPanelProps {
   stop: () => void
   append: (message: any) => void
   models?: Model[]
-  /** Whether auto-scroll is currently active (at bottom) */
-  isAutoScroll: boolean
+  /** Whether to show the scroll to bottom button */
+  showScrollToBottomButton: boolean
+  /** Reference to the scroll container */
+  scrollContainerRef: React.RefObject<HTMLDivElement>
 }
 
 export function ChatPanel({
@@ -40,7 +42,8 @@ export function ChatPanel({
   stop,
   append,
   models,
-  isAutoScroll
+  showScrollToBottomButton,
+  scrollContainerRef
 }: ChatPanelProps) {
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const router = useRouter()
@@ -93,9 +96,9 @@ export function ChatPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
-  // Add scroll to bottom handler
+  // Scroll to the bottom of the container
   const handleScrollToBottom = () => {
-    const scrollContainer = document.getElementById('scroll-container')
+    const scrollContainer = scrollContainerRef.current
     if (scrollContainer) {
       scrollContainer.scrollTo({
         top: scrollContainer.scrollHeight,
@@ -123,8 +126,8 @@ export function ChatPanel({
         onSubmit={handleSubmit}
         className={cn('max-w-3xl w-full mx-auto relative')}
       >
-        {/* Add scroll-down button to ChatPanel right top - show when not auto scrolling */}
-        {!isAutoScroll && messages.length > 0 && (
+        {/* Scroll to bottom button - only shown when showScrollToBottomButton is true */}
+        {showScrollToBottomButton && messages.length > 0 && (
           <Button
             type="button"
             variant="outline"
