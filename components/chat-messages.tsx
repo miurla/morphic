@@ -138,7 +138,7 @@ export function ChatMessages({
             }
           >
             {/* User message */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 mb-4">
               <RenderMessage
                 message={section.userMessage}
                 messageId={section.userMessage.id}
@@ -155,7 +155,7 @@ export function ChatMessages({
 
             {/* Assistant messages */}
             {section.assistantMessages.map(assistantMessage => (
-              <div key={assistantMessage.id} className="mt-4">
+              <div key={assistantMessage.id} className="flex flex-col gap-4">
                 <RenderMessage
                   message={assistantMessage}
                   messageId={assistantMessage.id}
