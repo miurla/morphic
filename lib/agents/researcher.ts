@@ -63,7 +63,7 @@ export function researcher({
         ask_question: askQuestionTool
       },
       experimental_activeTools: searchMode
-        ? ['search', 'retrieve', 'videoSearch', 'ask_question']
+        ? ['search', 'retrieve', 'videoSearch']
         : [],
       maxSteps: searchMode ? 5 : 1,
       experimental_transform: smoothStream()
