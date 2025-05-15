@@ -19,7 +19,7 @@ interface ChatMessagesProps {
   /** Ref for the scroll container */
   scrollContainerRef: React.RefObject<HTMLDivElement>
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
-  reload?: (messageId: string) => Promise<void>
+  reload?: (messageId: string) => Promise<void | string | null | undefined>
   /** Whether auto-scroll is enabled (used by the button, now removed) */
   // isAutoScroll?: boolean  // No longer needed
   /** Function to enable auto-scroll (used by the button, now removed) */

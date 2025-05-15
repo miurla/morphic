@@ -16,7 +16,7 @@ export type AnswerSectionProps = {
   reload?: (
     messageId: string,
     options?: ChatRequestOptions
-  ) => Promise<string | null | undefined>
+  ) => Promise<void | string | null | undefined>
 }
 
 export function AnswerSection({
