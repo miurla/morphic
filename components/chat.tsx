@@ -1,12 +1,12 @@
 'use client'
 
+import { deleteTrailingMessages } from '@/lib/actions/chat-db'
 import { CHAT_ID } from '@/lib/constants'
 import { useAutoScroll } from '@/lib/hooks/use-auto-scroll'
 import { Model } from '@/lib/types/models'
 import { cn, generateUUID } from '@/lib/utils'
 import { useChat } from '@ai-sdk/react'
-import { ChatRequestOptions } from 'ai'
-import { Message } from 'ai/react'
+import { ChatRequestOptions, Message as UIMessage } from 'ai'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useTransition } from 'react'
 import { toast } from 'sonner'
@@ -20,7 +20,7 @@ export function Chat({
   models
 }: {
   id: string
-  savedMessages?: Message[]
+  savedMessages?: UIMessage[]
   query?: string
   models?: Model[]
 }) {
@@ -51,7 +51,7 @@ export function Chat({
     onError: error => {
       toast.error(`Error in chat: ${error.message}`)
     },
-    sendExtraMessageFields: false, // Disable extra message fields,
+    sendExtraMessageFields: false,
     experimental_throttle: 100,
     generateId: generateUUID,
     experimental_prepareRequestBody: body => ({
@@ -86,34 +86,56 @@ export function Chat({
   }
 
   const handleUpdateAndReloadMessage = async (
-    messageId: string,
-    newContent: string
+    editedMessageId: string,
+    newContentText: string
   ) => {
-    setMessages(currentMessages =>
-      currentMessages.map(msg =>
-        msg.id === messageId ? { ...msg, content: newContent } : msg
+    if (!id) {
+      toast.error('Chat ID is missing.')
+      console.error(
+        'handleUpdateAndReloadMessage: chatId (id prop) is undefined.'
       )
-    )
+      return
+    }
+
+    const pivotMessage = messages.find(m => m.id === editedMessageId)
+    if (!pivotMessage) {
+      toast.error('Original message not found to edit locally.')
+      console.error(
+        'handleUpdateAndReloadMessage: Pivot message not found for timestamp.'
+      )
+      return
+    }
+    const pivotTimestamp =
+      pivotMessage.createdAt?.toISOString() ?? new Date(0).toISOString()
 
     try {
-      const messageIndex = messages.findIndex(msg => msg.id === messageId)
-      if (messageIndex === -1) return
+      setMessages(prevMessages => {
+        const messageIndex = prevMessages.findIndex(
+          m => m.id === editedMessageId
+        )
+        const messagesBeforeEdited =
+          messageIndex !== -1
+            ? prevMessages.slice(0, messageIndex)
+            : prevMessages
 
-      const messagesUpToEdited = messages.slice(0, messageIndex + 1)
-
-      setMessages(messagesUpToEdited)
-
-      setData(undefined)
-
-      await reload({
-        body: {
-          chatId: id,
-          regenerate: true
+        const newUIMessage: UIMessage = {
+          id: generateUUID(),
+          role: 'user',
+          content: newContentText,
+          parts: [{ type: 'text', text: newContentText }],
+          createdAt: new Date()
         }
+
+        return [...messagesBeforeEdited, newUIMessage]
       })
+
+      await deleteTrailingMessages(id, pivotTimestamp)
+      await reload()
     } catch (error) {
-      console.error('Failed to reload after message update:', error)
-      toast.error(`Failed to reload conversation: ${(error as Error).message}`)
+      console.error('Error during message edit and reload process:', error)
+      toast.error(
+        `Error processing edited message: ${(error as Error).message}`
+      )
     }
   }
 
@@ -124,7 +146,7 @@ export function Chat({
     const messageIndex = messages.findIndex(m => m.id === messageId)
     if (messageIndex !== -1) {
       const userMessageIndex = messages
-        .slice(0, messageIndex)
+        .slice(0, messageIndex + 1)
         .findLastIndex(m => m.role === 'user')
       if (userMessageIndex !== -1) {
         const trimmedMessages = messages.slice(0, userMessageIndex + 1)
