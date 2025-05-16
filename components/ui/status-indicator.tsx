@@ -4,7 +4,7 @@ import { ReactNode } from 'react'
 interface StatusIndicatorProps {
   icon: LucideIcon
   iconClassName?: string
-  children: ReactNode
+  children?: ReactNode
 }
 
 export function StatusIndicator({
@@ -15,7 +15,7 @@ export function StatusIndicator({
   return (
     <span className="flex items-center gap-1 text-muted-foreground text-xs">
       <Icon size={16} className={iconClassName} />
-      <span>{children}</span>
+      {children && <span>{children}</span>}
     </span>
   )
 }
