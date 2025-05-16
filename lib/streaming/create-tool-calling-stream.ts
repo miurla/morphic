@@ -7,8 +7,11 @@ import {
   streamText
 } from 'ai'
 import { saveChatMessage, saveSingleMessage } from '../actions/chat-db'
+import { generateChatTitle } from '../agents/title-generator'
 import { getChat, getChatMessages } from '../db/chat'
 import { generateUUID } from '../utils'
+import { getTextFromParts } from '../utils/message-utils'
+import { getModel } from '../utils/registry'
 import { BaseStreamConfig } from './types'
 
 export function createToolCallingStreamResponse(config: BaseStreamConfig) {
@@ -20,8 +23,10 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
       try {
         const chat = await getChat(chatId, userId)
         if (!chat) {
-          // Extract title from message content
-          const title = message.content
+          const title = await generateChatTitle({
+            userMessageContent: getTextFromParts(message.parts),
+            model: getModel(modelId)
+          })
 
           // Save the chat and user message to the database using server action
           await saveChatMessage(

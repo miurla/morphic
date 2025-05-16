@@ -1,5 +1,5 @@
 import { type Message as DBMessage } from '@/lib/db/schema'
-import { CoreMessage as SDKCoreMessage } from 'ai'
+import { CoreMessage as SDKCoreMessage, UIMessage } from 'ai'
 
 // Type definition for the CoreMessage from AI SDK
 interface CoreMessage {
@@ -90,4 +90,23 @@ export function extractTitleFromMessage(
   }
 
   return 'New Chat'
+}
+
+/**
+ * Extracts and concatenates text content from a message's 'parts' array.
+ *
+ * This function mimics the behavior of the expression:
+ * `message?.parts?.filter(part => part.type === 'text').map(part => part.text).join(' ') ?? '';`
+ *
+ * @param message - An object that may contain a 'parts' array. Can be undefined.
+ * @returns A string of concatenated text from text parts, or an empty string
+ *          if 'message' or 'message.parts' is undefined, or if 'parts' is empty or contains no text parts.
+ */
+export function getTextFromParts(parts?: UIMessage['parts']): string {
+  return (
+    parts
+      ?.filter(part => part.type === 'text')
+      .map(part => part.text)
+      .join(' ') ?? ''
+  )
 }
