@@ -9,7 +9,7 @@ import { StatusIndicator } from './ui/status-indicator'
 
 interface ReasoningContent {
   reasoning: string
-  time?: number
+  isDone: boolean
 }
 
 export interface ReasoningSectionProps {
@@ -29,21 +29,18 @@ export function ReasoningSection({
         <div className="flex items-center justify-between">
           <Badge className="flex items-center gap-0.5" variant="secondary">
             <Lightbulb size={16} />
-            {content.time === 0
-              ? 'Thinking...'
-              : content.time !== undefined && content.time > 0
-              ? `Thought for ${(content.time / 1000).toFixed(1)} seconds`
-              : 'Thoughts'}
+            {!content.isDone ? 'Thinking...' : 'Thoughts'}
           </Badge>
-          {content.time === 0 ? (
+          {!content.isDone ? (
             <Loader2
               size={16}
               className="animate-spin text-muted-foreground/50"
             />
           ) : (
-            <StatusIndicator icon={Check} iconClassName="text-green-500">
-              {`${content.reasoning.length.toLocaleString()} characters`}
-            </StatusIndicator>
+            <StatusIndicator
+              icon={Check}
+              iconClassName="text-green-500"
+            ></StatusIndicator>
           )}
         </div>
       </div>

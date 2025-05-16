@@ -111,6 +111,8 @@ export function ChatMessages({
     }))
   }
 
+  console.log(allMessages)
+
   return (
     <div
       id="scroll-container"
