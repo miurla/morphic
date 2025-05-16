@@ -1,3 +1,4 @@
+import { getBaseUrlFromHeaders } from '@/lib/config/models'
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import {
   SearchResultImage,
@@ -54,8 +55,16 @@ export function createSearchTool(fullModel: string) {
           searchAPI === 'searxng' &&
           effectiveSearchDepthForAPI === 'advanced'
         ) {
-          const baseUrl =
-            process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+          // Check for NEXT_PUBLIC_BASE_URL first as an override
+          let baseUrl: string
+          if (process.env.NEXT_PUBLIC_BASE_URL) {
+            baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+          } else {
+            // Use the base URL from headers
+            const baseUrlObj = await getBaseUrlFromHeaders()
+            baseUrl = baseUrlObj.toString()
+          }
+          
           const response = await fetch(`${baseUrl}/api/advanced-search`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

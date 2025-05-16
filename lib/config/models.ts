@@ -17,8 +17,8 @@ export function validateModel(model: any): model is Model {
 
 export async function getModels(): Promise<Model[]> {
   try {
-    // Check for BASE_URL environment variable first
-    const baseUrlEnv = process.env.BASE_URL
+    // Check for NEXT_PUBLIC_BASE_URL environment variable first
+    const baseUrlEnv = process.env.NEXT_PUBLIC_BASE_URL || process.env.BASE_URL
     let baseUrlObj: URL
 
     if (baseUrlEnv) {
@@ -93,7 +93,7 @@ export async function getModels(): Promise<Model[]> {
 }
 
 // Helper function to get base URL from headers
-async function getBaseUrlFromHeaders(): Promise<URL> {
+export async function getBaseUrlFromHeaders(): Promise<URL> {
   const headersList = await headers()
   const baseUrl = headersList.get('x-base-url')
   const url = headersList.get('x-url')
