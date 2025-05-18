@@ -1,6 +1,5 @@
 import { and, desc, eq, gte, inArray } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { db } from '.'
 import { chats, messages, type Chat, type Message } from './schema'
 
@@ -226,7 +225,8 @@ export async function clearChats(userId: string): Promise<{ error?: string }> {
     await db.delete(chats).where(eq(chats.userId, userId))
 
     revalidatePath('/')
-    redirect('/')
+
+    return { error: undefined }
   } catch (error) {
     console.error('Error clearing chats:', error)
     return { error: 'Failed to clear chats' }

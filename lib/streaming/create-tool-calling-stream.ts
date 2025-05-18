@@ -1,22 +1,22 @@
 import { researcher } from '@/lib/agents/researcher'
+import { openai } from '@ai-sdk/openai'
 import {
   appendClientMessage,
-  appendResponseMessages,
-  createDataStreamResponse,
-  DataStreamWriter,
-  streamText
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  streamText,
+  UIMessageStreamWriter
 } from 'ai'
 import { saveChatMessage, saveSingleMessage } from '../actions/chat-db'
 import { generateChatTitle } from '../agents/title-generator'
 import { getChat, getChatMessages } from '../db/chat'
-import { generateUUID } from '../utils'
 import { getTextFromParts } from '../utils/message-utils'
-import { getModel } from '../utils/registry'
 import { BaseStreamConfig } from './types'
 
 export function createToolCallingStreamResponse(config: BaseStreamConfig) {
-  return createDataStreamResponse({
-    execute: async (dataStream: DataStreamWriter) => {
+  const stream = createUIMessageStream({
+    execute: async (writer: UIMessageStreamWriter) => {
       const { message, model, chatId, searchMode, userId } = config
       const modelId = `${model.providerId}:${model.id}`
 
@@ -25,7 +25,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
         if (!chat) {
           const title = await generateChatTitle({
             userMessageContent: getTextFromParts(message.parts),
-            model: getModel(modelId)
+            model: openai('gpt-4o-mini')
           })
 
           // Save the chat and user message to the database using server action
@@ -63,48 +63,39 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
         })
 
         let researcherConfig = await researcher({
-          messages,
+          messages: convertToModelMessages(messages),
           model: modelId,
           searchMode
         })
 
         const result = streamText({
-          ...researcherConfig,
-          experimental_generateMessageId: generateUUID
+          ...researcherConfig
         })
 
-        result.mergeIntoDataStream(dataStream)
+        writer.merge(result.toUIMessageStream())
 
         const responseMessages = (await result.response).messages
-        const assistantId = responseMessages
-          .filter(message => message.role === 'assistant')
-          .at(-1)?.id
-        if (!assistantId) {
-          throw new Error('No assistant id found')
-        }
-
-        const [, assistantMessage] = appendResponseMessages({
-          messages: [message],
-          responseMessages: responseMessages
-        })
+        console.log('responseMessages', responseMessages)
 
         // Save the assistant message to the database using server action
-        if (assistantMessage) {
-          await saveSingleMessage({
-            id: assistantId,
-            chatId,
-            role: assistantMessage.role,
-            parts: assistantMessage.parts
-          })
-        }
+        // if (assistantMessage) {
+        //   await saveSingleMessage({
+        //     id: assistantId,
+        //     chatId,
+        //     role: assistantMessage.role,
+        //     parts: assistantMessage.parts
+        //   })
+        // }
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error
       }
     },
-    onError: error => {
+    onError: (error: any) => {
       // console.error('Stream error:', error)
       return error instanceof Error ? error.message : String(error)
     }
   })
+
+  return createUIMessageStreamResponse({ stream })
 }

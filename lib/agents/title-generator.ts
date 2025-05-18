@@ -1,3 +1,4 @@
+import { openai } from '@ai-sdk/openai'
 import { generateText, LanguageModel } from 'ai'
 
 interface GenerateChatTitleParams {
@@ -22,10 +23,9 @@ export async function generateChatTitle({
     const systemPrompt = `System: You are an AI assistant specialized in creating very short, concise, and informative titles for chat conversations based on the user's first message. The title should ideally be 3-5 words long, and no more than 10 words. Only output the title itself, with no prefixes, labels, or quotation marks.`
 
     const { text: generatedTitle } = await generateText({
-      model: model,
+      model: openai('gpt-4o-mini'), // TODO: Make this configurable
       system: systemPrompt,
-      prompt: userMessageContent,
-      maxTokens: 25 // A bit more tokens for safety, but prompt guides length.
+      prompt: userMessageContent
     })
 
     const cleanedTitle = generatedTitle.trim()

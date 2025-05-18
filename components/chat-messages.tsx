@@ -1,22 +1,20 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { JSONValue, Message } from 'ai'
-import { useEffect, useMemo, useState } from 'react'
+import { UIMessage } from 'ai'
+import { useEffect, useState } from 'react'
 import { RenderMessage } from './render-message'
-import { ToolSection } from './tool-section'
 import { Spinner } from './ui/spinner'
 
 // Import section structure interface
 interface ChatSection {
   id: string
-  userMessage: Message
-  assistantMessages: Message[]
+  userMessage: UIMessage
+  assistantMessages: UIMessage[]
 }
 
 interface ChatMessagesProps {
   sections: ChatSection[] // Changed from messages to sections
-  data: JSONValue[] | undefined
   onQuerySelect: (query: string) => void
   isLoading: boolean
   chatId?: string
@@ -29,7 +27,6 @@ interface ChatMessagesProps {
 
 export function ChatMessages({
   sections,
-  data,
   onQuerySelect,
   isLoading,
   chatId,
@@ -50,31 +47,6 @@ export function ChatMessages({
       }
     }
   }, [sections])
-
-  // get last tool data for manual tool call
-  const lastToolData = useMemo(() => {
-    if (!data || !Array.isArray(data) || data.length === 0) return null
-
-    const lastItem = data[data.length - 1] as {
-      type: 'tool_call'
-      data: {
-        toolCallId: string
-        state: 'call' | 'result'
-        toolName: string
-        args: string
-      }
-    }
-
-    if (lastItem.type !== 'tool_call') return null
-
-    const toolData = lastItem.data
-    return {
-      state: 'call' as const,
-      toolCallId: toolData.toolCallId,
-      toolName: toolData.toolName,
-      args: toolData.args ? JSON.parse(toolData.args) : undefined
-    }
-  }, [data])
 
   if (!sections.length) return null
 
@@ -168,16 +140,6 @@ export function ChatMessages({
             ))}
           </div>
         ))}
-
-        {showLoading && lastToolData && (
-          <ToolSection
-            key={manualToolCallId}
-            tool={lastToolData}
-            isOpen={getIsOpen(manualToolCallId)}
-            onOpenChange={open => handleOpenChange(manualToolCallId, open)}
-            addToolResult={addToolResult}
-          />
-        )}
       </div>
     </div>
   )
