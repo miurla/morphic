@@ -3,6 +3,8 @@
 import { getCurrentUserId } from '@/lib/auth/get-current-user' // Import getCurrentUserId
 import * as chatDb from '@/lib/db/chat'
 import { type Chat as DBChat, type Message as DBMessage } from '@/lib/db/schema' // Import DB schema types
+import { getTextFromParts } from '@/lib/utils/message-utils' // Corrected import path
+import { UIMessage } from '@ai-sdk/react' // Import UIMessage
 
 // Get all chats for a user
 export async function getChats(userId: string) {
@@ -140,22 +142,29 @@ interface ClientNewMessageInput {
   parts: DBMessage['parts']
 }
 
-// Interface for single message save
-interface SaveMessageInput {
-  id?: string
-  chatId: string
-  role: string
-  parts: any
-}
+// Interface for single message save - This will be effectively replaced by UIMessage type
+// interface SaveMessageInput {
+//   id?: string
+//   chatId: string
+//   role: string
+//   parts: any
+// }
 
 // Save a single message
 export async function saveSingleMessage(
-  message: SaveMessageInput
+  chatId: string,
+  message: UIMessage
 ): Promise<DBMessage> {
   try {
-    return await chatDb.addMessage(message)
+    const messageToSave = {
+      id: message.id,
+      chatId: chatId,
+      role: message.role,
+      parts: message.parts // Use UIMessage.parts directly
+    }
+    return await chatDb.addMessage(messageToSave as any)
   } catch (error) {
-    console.error(`Error saving message for chat ID ${message.chatId}:`, error)
+    console.error(`Error saving message for chat ID ${chatId}:`, error)
     throw error
   }
 }
@@ -163,45 +172,42 @@ export async function saveSingleMessage(
 // Save or create a chat and add a user message
 export async function saveChatMessage(
   chatId: string,
-  messageId: string,
-  messageContent: any,
-  messageRole: string,
+  userMessage: UIMessage,
   userId: string,
   title?: string
 ): Promise<{ chat: DBChat; message: DBMessage }> {
   try {
-    // 1. Check if chat exists
     const existingChat = await chatDb.getChat(chatId, userId)
 
-    // 2. Save or update chat if needed
     let chat: DBChat
     if (!existingChat) {
-      // Create new chat
-      const chatTitle =
-        title ||
-        (typeof messageContent === 'string' ? messageContent : 'New Chat')
+      // Use userMessage.parts for title generation
+      const messageTextForTitle = getTextFromParts(userMessage.parts as any[])
+      const chatTitle = title || messageTextForTitle || 'New Chat'
       const chatDataForDb: Partial<DBChat> = {
         id: chatId,
-        title: chatTitle.substring(0, 255), // Limit title length
+        title: chatTitle.substring(0, 255),
         userId: userId,
         visibility: 'private'
       }
-
       const savedChats = await chatDb.saveChat(chatDataForDb as DBChat, userId)
+      if (!savedChats || savedChats.length === 0) {
+        throw new Error(`Failed to create chat with id: ${chatId}`)
+      }
       chat = savedChats[0]
     } else {
       chat = existingChat
     }
 
-    // 3. Save message
-    const message = await chatDb.addMessage({
-      id: messageId,
+    const messageToSaveToDb = {
+      id: userMessage.id,
       chatId,
-      role: messageRole,
-      parts: messageContent
-    })
+      role: userMessage.role,
+      parts: userMessage.parts // Use UIMessage.parts directly
+    }
+    const dbSavedMessage = await chatDb.addMessage(messageToSaveToDb as any)
 
-    return { chat, message }
+    return { chat, message: dbSavedMessage }
   } catch (error) {
     console.error(`Error in saveChatMessage for chat ID ${chatId}:`, error)
     throw error

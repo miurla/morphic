@@ -1,5 +1,6 @@
 import { researcher } from '@/lib/agents/researcher'
 import { openai } from '@ai-sdk/openai'
+import { UIMessage } from '@ai-sdk/react'
 import {
   appendClientMessage,
   convertToModelMessages,
@@ -11,6 +12,7 @@ import {
 import { saveChatMessage, saveSingleMessage } from '../actions/chat-db'
 import { generateChatTitle } from '../agents/title-generator'
 import { getChat, getChatMessages } from '../db/chat'
+import { generateUUID } from '../utils'
 import { getTextFromParts } from '../utils/message-utils'
 import { BaseStreamConfig } from './types'
 
@@ -23,20 +25,19 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
       try {
         const chat = await getChat(chatId, userId)
         if (!chat) {
+          const userContent = getTextFromParts(message.parts)
           const title = await generateChatTitle({
-            userMessageContent: getTextFromParts(message.parts),
+            userMessageContent: userContent,
             model: openai('gpt-4o-mini')
           })
 
-          // Save the chat and user message to the database using server action
-          await saveChatMessage(
-            chatId,
-            message.id,
-            message.parts,
-            message.role,
-            userId,
-            title
-          )
+          const userMessageToSave: UIMessage = {
+            id: message.id,
+            role: message.role,
+            parts: [{ type: 'text', text: message.content }]
+          }
+
+          await saveChatMessage(chatId, userMessageToSave, userId, title)
         } else {
           if (chat.userId !== userId) {
             // TODO: Handle this
@@ -47,12 +48,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           }
 
           // Save just the user message to an existing chat
-          await saveSingleMessage({
-            id: message.id,
-            chatId,
-            role: message.role,
-            parts: message.parts
-          })
+          await saveSingleMessage(chatId, message)
         }
 
         const previousMessages = await getChatMessages(chatId)
@@ -72,20 +68,19 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           ...researcherConfig
         })
 
-        writer.merge(result.toUIMessageStream())
-
-        const responseMessages = (await result.response).messages
-        console.log('responseMessages', responseMessages)
-
-        // Save the assistant message to the database using server action
-        // if (assistantMessage) {
-        //   await saveSingleMessage({
-        //     id: assistantId,
-        //     chatId,
-        //     role: assistantMessage.role,
-        //     parts: assistantMessage.parts
-        //   })
-        // }
+        writer.merge(
+          result.toUIMessageStream({
+            newMessageId: generateUUID(),
+            onFinish({ messages }) {
+              const assistantMessage = messages.find(
+                message => message.role === 'assistant'
+              )
+              if (assistantMessage) {
+                saveSingleMessage(chatId, assistantMessage)
+              }
+            }
+          })
+        )
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error

@@ -326,7 +326,11 @@ describe('Chat Actions - getChat', () => {
 // --- Tests for saveSingleMessage ---
 describe('Chat Actions - saveSingleMessage', () => {
   let chatId: string
-  let messageInput: any
+  let messageInput: {
+    id: string
+    role: 'user' | 'assistant'
+    parts: Array<{ type: 'text'; text: string }>
+  }
   let savedMessageOutput: DBMessage
 
   beforeEach(() => {
@@ -334,9 +338,9 @@ describe('Chat Actions - saveSingleMessage', () => {
     chatId = generateUUID()
     const messageId = generateUUID()
     messageInput = {
-      chatId: chatId,
+      id: messageId,
       role: 'user' as const,
-      parts: [{ type: 'text' as const, content: 'Test message' }]
+      parts: [{ type: 'text' as const, text: 'Test message' }]
     }
     savedMessageOutput = {
       ...testMessageData,
@@ -349,18 +353,32 @@ describe('Chat Actions - saveSingleMessage', () => {
 
   it('should save a single message and return the saved message', async () => {
     mockAddMessageDb.mockResolvedValue(savedMessageOutput)
-    const result = await saveSingleMessage(messageInput)
-    expect(mockAddMessageDb).toHaveBeenCalledWith(messageInput)
+    const result = await saveSingleMessage(chatId, messageInput as any)
+    expect(mockAddMessageDb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: messageInput.id,
+        chatId: chatId,
+        role: messageInput.role,
+        parts: messageInput.parts
+      })
+    )
     expect(result).toEqual(savedMessageOutput)
   })
 
   it('should throw an error if db operation fails', async () => {
     const dbError = new Error('DB save failed')
     mockAddMessageDb.mockRejectedValue(dbError)
-    await expect(saveSingleMessage(messageInput)).rejects.toThrow(
-      'DB save failed'
+    await expect(
+      saveSingleMessage(chatId, messageInput as any)
+    ).rejects.toThrow('DB save failed')
+    expect(mockAddMessageDb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: messageInput.id,
+        chatId: chatId,
+        role: messageInput.role,
+        parts: messageInput.parts
+      })
     )
-    expect(mockAddMessageDb).toHaveBeenCalledWith(messageInput)
   })
 })
 
@@ -368,9 +386,7 @@ describe('Chat Actions - saveSingleMessage', () => {
 describe('Chat Actions - saveChatMessage', () => {
   let userId: string
   let chatId: string
-  let messageId: string
-  let messageContent: any[]
-  let messageRole: string
+  let userMessageInput: { id: string; role: string; parts: any[] }
   let newChatData: DBChat
   let newMessageData: DBMessage
 
@@ -378,21 +394,24 @@ describe('Chat Actions - saveChatMessage', () => {
     vi.resetAllMocks()
     userId = generateUUID()
     chatId = generateUUID()
-    messageId = generateUUID()
-    messageContent = [{ type: 'text', content: 'Saving this message' }]
-    messageRole = 'user'
+    const messageId = generateUUID()
+    userMessageInput = {
+      id: messageId,
+      role: 'user',
+      parts: [{ type: 'text', text: 'Saving this message' }]
+    }
     newChatData = {
       ...testChatData,
       id: chatId,
       userId: userId,
-      title: 'New Chat'
-    } // Default title
+      title: 'Saving this message'
+    }
     newMessageData = {
       ...testMessageData,
-      id: messageId,
+      id: userMessageInput.id,
       chatId: chatId,
-      parts: messageContent,
-      role: messageRole
+      parts: userMessageInput.parts,
+      role: userMessageInput.role
     }
   })
 
@@ -402,26 +421,24 @@ describe('Chat Actions - saveChatMessage', () => {
     mockAddMessageDb.mockResolvedValue(newMessageData)
     const result = await saveChatMessage(
       chatId,
-      messageId,
-      messageContent,
-      messageRole,
+      userMessageInput as any,
       userId
     )
     expect(mockGetChatDb).toHaveBeenCalledWith(chatId, userId)
     expect(mockSaveChatDb).toHaveBeenCalledWith(
       expect.objectContaining({
         id: chatId,
-        title: 'New Chat',
+        title: newChatData.title,
         userId: userId,
         visibility: 'private'
       }),
       userId
     )
     expect(mockAddMessageDb).toHaveBeenCalledWith({
-      id: messageId,
+      id: userMessageInput.id,
       chatId: chatId,
-      role: messageRole,
-      parts: messageContent
+      role: userMessageInput.role,
+      parts: userMessageInput.parts
     })
     expect(result).toEqual({ chat: newChatData, message: newMessageData })
   })
@@ -437,19 +454,17 @@ describe('Chat Actions - saveChatMessage', () => {
     mockAddMessageDb.mockResolvedValue(newMessageData)
     const result = await saveChatMessage(
       chatId,
-      messageId,
-      messageContent,
-      messageRole,
+      userMessageInput as any,
       userId,
       'Custom Title'
     )
     expect(mockGetChatDb).toHaveBeenCalledWith(chatId, userId)
     expect(mockSaveChatDb).not.toHaveBeenCalled()
     expect(mockAddMessageDb).toHaveBeenCalledWith({
-      id: messageId,
+      id: userMessageInput.id,
       chatId: chatId,
-      role: messageRole,
-      parts: messageContent
+      role: userMessageInput.role,
+      parts: userMessageInput.parts
     })
     expect(result).toEqual({ chat: existingChatData, message: newMessageData })
   })
@@ -462,9 +477,7 @@ describe('Chat Actions - saveChatMessage', () => {
     mockAddMessageDb.mockResolvedValue(newMessageData)
     const result = await saveChatMessage(
       chatId,
-      messageId,
-      messageContent,
-      messageRole,
+      userMessageInput as any,
       userId,
       customTitle
     )
@@ -485,16 +498,16 @@ describe('Chat Actions - saveChatMessage', () => {
     mockGetChatDb.mockResolvedValue(null)
     mockSaveChatDb.mockRejectedValue(dbError)
     await expect(
-      saveChatMessage(chatId, messageId, messageContent, messageRole, userId)
+      saveChatMessage(chatId, userMessageInput as any, userId)
     ).rejects.toThrow('Failed to save chat')
   })
 
   it('should throw an error if saving message fails', async () => {
     const dbError = new Error('Failed to save message')
-    mockGetChatDb.mockResolvedValue(newChatData) // Use newChatData for consistency, or a generic existing chat
+    mockGetChatDb.mockResolvedValue(newChatData)
     mockAddMessageDb.mockRejectedValue(dbError)
     await expect(
-      saveChatMessage(chatId, messageId, messageContent, messageRole, userId)
+      saveChatMessage(chatId, userMessageInput as any, userId)
     ).rejects.toThrow('Failed to save message')
   })
 })
