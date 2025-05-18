@@ -75,8 +75,6 @@ export function Chat({
     generateId: generateUUID
   })
 
-  const isLoading = status === 'submitted' || status === 'streaming'
-
   // Convert messages array to sections array
   const sections = useMemo<ChatSection[]>(() => {
     const result: ChatSection[] = []
@@ -297,7 +295,7 @@ export function Chat({
       <ChatMessages
         sections={sections}
         onQuerySelect={onQuerySelect}
-        isLoading={isLoading}
+        status={status}
         chatId={id}
         addToolResult={addToolResult}
         scrollContainerRef={scrollContainerRef}
@@ -308,7 +306,7 @@ export function Chat({
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={onSubmit}
-        isLoading={isLoading}
+        status={status}
         messages={messages}
         setMessages={setMessages}
         stop={stop}

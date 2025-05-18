@@ -1,4 +1,4 @@
-import { UIMessage } from '@ai-sdk/react'
+import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
 import { AnswerSection } from './answer-section'
 import { ReasoningSection } from './reasoning-section'
 import { ToolSection } from './tool-section'
@@ -11,6 +11,7 @@ interface RenderMessageProps {
   onOpenChange: (id: string, open: boolean) => void
   onQuerySelect: (query: string) => void
   chatId?: string
+  status?: UseChatHelpers['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
@@ -23,6 +24,7 @@ export function RenderMessage({
   onOpenChange,
   onQuerySelect,
   chatId,
+  status,
   addToolResult,
   onUpdateMessage,
   reload
@@ -69,6 +71,7 @@ export function RenderMessage({
                 showActions={isLastPart}
                 messageId={messageId}
                 reload={reload}
+                status={status}
               />
             )
           case 'reasoning':

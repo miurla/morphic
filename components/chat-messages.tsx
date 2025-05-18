@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { UseChatHelpers } from '@ai-sdk/react'
 import { UIMessage } from 'ai'
 import { useEffect, useState } from 'react'
 import { RenderMessage } from './render-message'
@@ -16,7 +17,7 @@ interface ChatSection {
 interface ChatMessagesProps {
   sections: ChatSection[] // Changed from messages to sections
   onQuerySelect: (query: string) => void
-  isLoading: boolean
+  status: UseChatHelpers['status'] // isLoadingの代わりにstatusを使用
   chatId?: string
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for the scroll container */
@@ -28,7 +29,7 @@ interface ChatMessagesProps {
 export function ChatMessages({
   sections,
   onQuerySelect,
-  isLoading,
+  status, // isLoadingの代わりにstatusを使用
   chatId,
   addToolResult,
   scrollContainerRef,
@@ -37,6 +38,7 @@ export function ChatMessages({
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
+  const isLoading = status === 'submitted' || status === 'streaming' // statusからisLoadingを導出
 
   useEffect(() => {
     // Open manual tool call when the last section is a user message
@@ -115,6 +117,7 @@ export function ChatMessages({
                 onOpenChange={handleOpenChange}
                 onQuerySelect={onQuerySelect}
                 chatId={chatId}
+                status={status}
                 addToolResult={addToolResult}
                 onUpdateMessage={onUpdateMessage}
                 reload={reload}
@@ -132,6 +135,7 @@ export function ChatMessages({
                   onOpenChange={handleOpenChange}
                   onQuerySelect={onQuerySelect}
                   chatId={chatId}
+                  status={status}
                   addToolResult={addToolResult}
                   onUpdateMessage={onUpdateMessage}
                   reload={reload}
