@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils'
 import { UseChatHelpers } from '@ai-sdk/react'
 import { UIMessage } from 'ai'
 import { useEffect, useState } from 'react'
+import { DefaultSkeleton } from './default-skeleton'
 import { RenderMessage } from './render-message'
-import { Spinner } from './ui/spinner'
 
 // Import section structure interface
 interface ChatSection {
@@ -122,7 +122,7 @@ export function ChatMessages({
                 onUpdateMessage={onUpdateMessage}
                 reload={reload}
               />
-              {showLoading && <Spinner />}
+              {showLoading && <DefaultSkeleton />}
             </div>
 
             {/* Assistant messages */}
