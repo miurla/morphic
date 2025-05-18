@@ -1,7 +1,6 @@
 'use client'
 
-import { CHAT_ID } from '@/lib/constants'
-import { useChat } from '@ai-sdk/react'
+import { UseChatHelpers } from '@ai-sdk/react'
 import { JSONValue } from 'ai'
 import { ArrowRight } from 'lucide-react'
 import React from 'react'
@@ -15,6 +14,7 @@ export interface RelatedQuestionsProps {
   onQuerySelect: (query: string) => void
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  status?: UseChatHelpers['status']
 }
 
 interface RelatedQuestionsAnnotation extends Record<string, JSONValue> {
@@ -28,11 +28,9 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   annotations,
   onQuerySelect,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  status
 }) => {
-  const { status } = useChat({
-    id: CHAT_ID
-  })
   const isLoading = status === 'submitted' || status === 'streaming'
 
   if (!annotations) {

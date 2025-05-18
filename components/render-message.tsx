@@ -57,6 +57,7 @@ export function RenderMessage({
                   onOpenChange(part.toolInvocation.toolCallId, open)
                 }
                 addToolResult={addToolResult}
+                status={status}
               />
             )
           case 'text':

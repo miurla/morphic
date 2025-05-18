@@ -1,9 +1,8 @@
 'use client'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
-import { CHAT_ID } from '@/lib/constants'
 import type { SerperSearchResults } from '@/lib/types'
-import { useChat } from '@ai-sdk/react'
+import { UseChatHelpers } from '@ai-sdk/react'
 import { ToolInvocation } from 'ai'
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
@@ -14,16 +13,15 @@ interface VideoSearchSectionProps {
   tool: ToolInvocation
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  status?: UseChatHelpers['status']
 }
 
 export function VideoSearchSection({
   tool,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  status
 }: VideoSearchSectionProps) {
-  const { status } = useChat({
-    id: CHAT_ID
-  })
   const isLoading = status === 'submitted' || status === 'streaming'
 
   const isToolLoading = tool.state === 'call'

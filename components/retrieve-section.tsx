@@ -4,6 +4,7 @@ import { useArtifact } from '@/components/artifact/artifact-context'
 import { SearchResults } from '@/components/search-results'
 import { Section, ToolArgsSection } from '@/components/section'
 import { SearchResults as SearchResultsType } from '@/lib/types'
+import { UseChatHelpers } from '@ai-sdk/react'
 import { ToolInvocation } from 'ai'
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
@@ -12,14 +13,19 @@ interface RetrieveSectionProps {
   tool: ToolInvocation
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  status?: UseChatHelpers['status']
 }
 
 export function RetrieveSection({
   tool,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  status
 }: RetrieveSectionProps) {
-  const isLoading = tool.state === 'call'
+  const isToolLoading = tool.state === 'call'
+  const isChatLoading = status === 'submitted' || status === 'streaming'
+  const isLoading = isToolLoading || isChatLoading
+
   const data: SearchResultsType =
     tool.state === 'result' ? tool.result : undefined
   const url = tool.args.url as string | undefined
