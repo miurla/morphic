@@ -1,6 +1,6 @@
-import { getBaseUrlFromHeaders } from '@/lib/config/models'
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { SearchResults } from '@/lib/types'
+import { getBaseUrlString } from '@/lib/utils/url'
 import { tool } from 'ai'
 import { DEFAULT_PROVIDER, SearchProviderType, createSearchProvider } from './search/providers'
 
@@ -47,15 +47,8 @@ export function createSearchTool(fullModel: string) {
           searchAPI === 'searxng' &&
           effectiveSearchDepthForAPI === 'advanced'
         ) {
-          // Check for NEXT_PUBLIC_BASE_URL first as an override
-          let baseUrl: string
-          if (process.env.NEXT_PUBLIC_BASE_URL) {
-            baseUrl = process.env.NEXT_PUBLIC_BASE_URL
-          } else {
-            // Use the base URL from headers
-            const baseUrlObj = await getBaseUrlFromHeaders()
-            baseUrl = baseUrlObj.toString()
-          }
+          // Get the base URL using the centralized utility function
+          const baseUrl = await getBaseUrlString()
           
           const response = await fetch(`${baseUrl}/api/advanced-search`, {
             method: 'POST',
