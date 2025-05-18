@@ -1,6 +1,5 @@
 import { researcher } from '@/lib/agents/researcher'
 import { openai } from '@ai-sdk/openai'
-import { UIMessage } from '@ai-sdk/react'
 import {
   appendClientMessage,
   convertToModelMessages,
@@ -31,13 +30,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
             model: openai('gpt-4o-mini')
           })
 
-          const userMessageToSave: UIMessage = {
-            id: message.id,
-            role: message.role,
-            parts: [{ type: 'text', text: message.content }]
-          }
-
-          await saveChatMessage(chatId, userMessageToSave, userId, title)
+          await saveChatMessage(chatId, message, userId, title)
         } else {
           if (chat.userId !== userId) {
             // TODO: Handle this

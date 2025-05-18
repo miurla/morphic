@@ -22,9 +22,6 @@ export async function POST(req: Request) {
     const isSharePage = referer?.includes('/share/')
     const userId = await getCurrentUserId()
 
-    console.log('message', message)
-    console.log('chatId', chatId)
-
     if (isSharePage) {
       return new Response('Chat API is not available on share pages', {
         status: 403,

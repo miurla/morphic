@@ -1,8 +1,8 @@
-import { Message } from 'ai'
+import { UIMessage } from '@ai-sdk/react'
 import { Model } from '../types/models'
 
 export interface BaseStreamConfig {
-  message: Message
+  message: UIMessage
   model: Model
   chatId: string
   searchMode: boolean

@@ -2,7 +2,7 @@
 
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
-import { Message } from 'ai'
+import { UIMessage } from '@ai-sdk/react'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
@@ -19,8 +19,8 @@ interface ChatPanelProps {
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
   isLoading: boolean
-  messages: Message[]
-  setMessages: (messages: Message[]) => void
+  messages: UIMessage[]
+  setMessages: (messages: UIMessage[]) => void
   query?: string
   stop: () => void
   append: (message: any) => void
