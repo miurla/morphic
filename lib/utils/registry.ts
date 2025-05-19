@@ -9,9 +9,9 @@ import { xai } from '@ai-sdk/xai'
 import {
   createProviderRegistry,
   extractReasoningMiddleware,
+  LanguageModel,
   wrapLanguageModel
 } from 'ai'
-import { createOllama } from 'ollama-ai-provider'
 
 export const registry = createProviderRegistry({
   openai,
@@ -37,19 +37,9 @@ export const registry = createProviderRegistry({
   xai
 })
 
-export function getModel(model: string) {
+export function getModel(model: string): LanguageModel {
   const [provider, ...modelNameParts] = model.split(':') ?? []
   const modelName = modelNameParts.join(':')
-  if (model.includes('ollama')) {
-    const ollama = createOllama({
-      baseURL: `${process.env.OLLAMA_BASE_URL}/api`
-    })
-
-    // if ollama provider, set simulateStreaming to true
-    return ollama(modelName, {
-      simulateStreaming: true
-    })
-  }
 
   // if model is groq and includes deepseek-r1, add reasoning middleware
   if (model.includes('groq') && model.includes('deepseek-r1')) {
