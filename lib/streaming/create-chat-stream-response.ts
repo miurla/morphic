@@ -1,5 +1,4 @@
 import { researcher } from '@/lib/agents/researcher'
-import { openai } from '@ai-sdk/openai'
 import {
   appendClientMessage,
   convertToModelMessages,
@@ -41,7 +40,7 @@ export async function createChatStreamResponse(
           const userContent = getTextFromParts(message.parts)
           const title = await generateChatTitle({
             userMessageContent: userContent,
-            model: openai('gpt-4o-mini') // TODO: Consider making this model configurable
+            modelId
           })
           await saveChatMessage(chatId, message, userId, title)
         } else {

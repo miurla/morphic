@@ -3,7 +3,7 @@ import { getModel } from '../utils/registry'
 
 interface GenerateChatTitleParams {
   userMessageContent: string
-  model: string
+  modelId: string
 }
 
 /**
@@ -14,7 +14,7 @@ interface GenerateChatTitleParams {
  */
 export async function generateChatTitle({
   userMessageContent,
-  model
+  modelId
 }: GenerateChatTitleParams): Promise<string> {
   // Fallback title uses the first 75 characters of the message or a default string.
   const fallbackTitle = userMessageContent.substring(0, 75).trim() || 'New Chat'
@@ -23,7 +23,7 @@ export async function generateChatTitle({
     const systemPrompt = `System: You are an AI assistant specialized in creating very short, concise, and informative titles for chat conversations based on the user's first message. The title should ideally be 3-5 words long, and no more than 10 words. Only output the title itself, with no prefixes, labels, or quotation marks.`
 
     const { text: generatedTitle } = await generateText({
-      model: getModel(model),
+      model: getModel(modelId),
       system: systemPrompt,
       prompt: userMessageContent
     })
