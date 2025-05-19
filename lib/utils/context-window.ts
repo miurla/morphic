@@ -1,4 +1,4 @@
-import { CoreMessage } from 'ai'
+import { ModelMessage } from 'ai'
 import { Model } from '../types/models'
 
 const DEFAULT_CONTEXT_WINDOW = 128_000
@@ -23,11 +23,11 @@ export function getMaxAllowedTokens(model: Model): number {
 }
 
 export function truncateMessages(
-  messages: CoreMessage[],
+  messages: ModelMessage[],
   maxTokens: number
-): CoreMessage[] {
+): ModelMessage[] {
   let totalTokens = 0
-  const tempMessages: CoreMessage[] = []
+  const tempMessages: ModelMessage[] = []
 
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i]

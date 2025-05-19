@@ -1,5 +1,3 @@
-import { CoreMessage, JSONValue, Message } from 'ai'
-
 export type SearchResults = {
   images: SearchResultImage[]
   results: SearchResultItem[]
@@ -55,39 +53,6 @@ export type SerperSearchResultItem = {
   channel: string
   date: string
   position: number
-}
-
-export interface Chat extends Record<string, any> {
-  id: string
-  title: string
-  createdAt: Date
-  userId: string
-  path: string
-  messages: ExtendedCoreMessage[] // Note: Changed from AIMessage to ExtendedCoreMessage
-  sharePath?: string
-}
-
-// ExtendedCoreMessage for saveing annotations
-export type ExtendedCoreMessage = Omit<CoreMessage, 'role' | 'content'> & {
-  role: CoreMessage['role'] | 'data'
-  content: CoreMessage['content'] | JSONValue
-}
-
-export type AIMessage = {
-  role: 'user' | 'assistant' | 'system' | 'function' | 'data' | 'tool'
-  content: string
-  id: string
-  name?: string
-  type?:
-    | 'answer'
-    | 'related'
-    | 'skip'
-    | 'inquiry'
-    | 'input'
-    | 'input_related'
-    | 'tool'
-    | 'followup'
-    | 'end'
 }
 
 export interface SearXNGResult {

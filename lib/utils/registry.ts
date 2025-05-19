@@ -18,9 +18,6 @@ export const registry = createProviderRegistry({
   anthropic,
   google,
   groq,
-  ollama: createOllama({
-    baseURL: `${process.env.OLLAMA_BASE_URL}/api`
-  }),
   azure: createAzure({
     apiKey: process.env.AZURE_API_KEY,
     resourceName: process.env.AZURE_RESOURCE_NAME,
@@ -47,16 +44,6 @@ export function getModel(model: string) {
     const ollama = createOllama({
       baseURL: `${process.env.OLLAMA_BASE_URL}/api`
     })
-
-    // if model is deepseek-r1, add reasoning middleware
-    if (model.includes('deepseek-r1')) {
-      return wrapLanguageModel({
-        model: ollama(modelName),
-        middleware: extractReasoningMiddleware({
-          tagName: 'think'
-        })
-      })
-    }
 
     // if ollama provider, set simulateStreaming to true
     return ollama(modelName, {

@@ -1,13 +1,5 @@
 import { type Message as DBMessage } from '@/lib/db/schema'
-import { CoreMessage as SDKCoreMessage, UIMessage } from 'ai'
-
-// Type definition for the CoreMessage from AI SDK
-interface CoreMessage {
-  role: string
-  content: string | Array<{ type: string; text: string }> | null
-  id?: string
-  // Add other properties that might be in CoreMessage here
-}
+import { ModelMessage, UIMessage } from 'ai'
 
 // Interface matching the expected DB message input format
 interface DatabaseMessageInput {
@@ -21,7 +13,7 @@ interface DatabaseMessageInput {
  * @returns Database-compatible message object
  */
 export function convertMessageForDB(
-  message: SDKCoreMessage
+  message: ModelMessage
 ): DatabaseMessageInput {
   // Handle case where content might be a string, array, or null
   let parts: any
@@ -60,7 +52,7 @@ export function convertMessageForDB(
  * @returns Array of database-compatible message objects
  */
 export function convertMessagesForDB(
-  messages: SDKCoreMessage[]
+  messages: ModelMessage[]
 ): DatabaseMessageInput[] {
   return messages.map(convertMessageForDB)
 }
@@ -72,7 +64,7 @@ export function convertMessagesForDB(
  * @returns Extracted title string, truncated to maxLength
  */
 export function extractTitleFromMessage(
-  message: SDKCoreMessage,
+  message: ModelMessage,
   maxLength = 100
 ): string {
   if (!message.content) return 'New Chat'
