@@ -142,10 +142,6 @@ export function Chat({
     }
   }, [sections, messages])
 
-  // useEffect(() => {
-  //   setMessages(savedMessages)
-  // }, [id])
-
   const onQuerySelect = (query: string) => {
     append({
       role: 'user',

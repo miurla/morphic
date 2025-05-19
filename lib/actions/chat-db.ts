@@ -142,14 +142,6 @@ interface ClientNewMessageInput {
   parts: DBMessage['parts']
 }
 
-// Interface for single message save - This will be effectively replaced by UIMessage type
-// interface SaveMessageInput {
-//   id?: string
-//   chatId: string
-//   role: string
-//   parts: any
-// }
-
 // Save a single message
 export async function saveSingleMessage(
   chatId: string,

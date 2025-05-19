@@ -17,7 +17,7 @@ interface ChatSection {
 interface ChatMessagesProps {
   sections: ChatSection[] // Changed from messages to sections
   onQuerySelect: (query: string) => void
-  status: UseChatHelpers['status'] // isLoadingの代わりにstatusを使用
+  status: UseChatHelpers['status']
   chatId?: string
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for the scroll container */
@@ -29,7 +29,7 @@ interface ChatMessagesProps {
 export function ChatMessages({
   sections,
   onQuerySelect,
-  status, // isLoadingの代わりにstatusを使用
+  status,
   chatId,
   addToolResult,
   scrollContainerRef,
@@ -38,7 +38,7 @@ export function ChatMessages({
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
-  const isLoading = status === 'submitted' || status === 'streaming' // statusからisLoadingを導出
+  const isLoading = status === 'submitted' || status === 'streaming'
 
   useEffect(() => {
     // Open manual tool call when the last section is a user message
