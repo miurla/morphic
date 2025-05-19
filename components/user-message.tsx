@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { Message } from 'ai'
+import { UIMessage } from '@ai-sdk/react'
 import { Pencil } from 'lucide-react'
 import React, { useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
@@ -9,7 +9,7 @@ import { CollapsibleMessage } from './collapsible-message'
 import { Button } from './ui/button'
 
 type UserMessageProps = {
-  message: Message
+  message: UIMessage
   messageId?: string
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
 }

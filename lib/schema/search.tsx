@@ -30,9 +30,7 @@ export const searchSchema = z.object({
 // Strict schema with all fields required
 export const strictSearchSchema = z.object({
   query: z.string().describe('The query to search for'),
-  max_results: z
-    .number()
-    .describe('The maximum number of results to return. default is 20'),
+  max_results: z.number().describe('The maximum number of results to return.'),
   search_depth: z
     .enum(['basic', 'advanced'])
     .describe('The depth of the search'),
@@ -53,6 +51,8 @@ export const strictSearchSchema = z.object({
  * Uses the strict schema for OpenAI models starting with 'o'.
  */
 export function getSearchSchemaForModel(fullModel: string) {
+  return strictSearchSchema
+
   const [provider, modelName] = fullModel?.split(':') ?? []
   const useStrictSchema =
     (provider === 'openai' || provider === 'azure') &&

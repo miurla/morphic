@@ -2,7 +2,7 @@
 
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
-import { Message } from 'ai'
+import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
@@ -18,9 +18,9 @@ interface ChatPanelProps {
   input: string
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
-  isLoading: boolean
-  messages: Message[]
-  setMessages: (messages: Message[]) => void
+  status: UseChatHelpers['status']
+  messages: UIMessage[]
+  setMessages: (messages: UIMessage[]) => void
   query?: string
   stop: () => void
   append: (message: any) => void
@@ -35,7 +35,7 @@ export function ChatPanel({
   input,
   handleInputChange,
   handleSubmit,
-  isLoading,
+  status,
   messages,
   setMessages,
   query,
@@ -52,6 +52,8 @@ export function ChatPanel({
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
   const { close: closeArtifact } = useArtifact()
+
+  const isLoading = status === 'submitted' || status === 'streaming'
 
   const handleCompositionStart = () => setIsComposing(true)
 

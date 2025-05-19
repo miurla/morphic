@@ -1,16 +1,17 @@
-import { Message } from 'ai'
+import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
 import { AnswerSection } from './answer-section'
 import { ReasoningSection } from './reasoning-section'
 import { ToolSection } from './tool-section'
 import { UserMessage } from './user-message'
 
 interface RenderMessageProps {
-  message: Message
+  message: UIMessage
   messageId: string
   getIsOpen: (id: string) => boolean
   onOpenChange: (id: string, open: boolean) => void
   onQuerySelect: (query: string) => void
   chatId?: string
+  status?: UseChatHelpers['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
@@ -23,6 +24,7 @@ export function RenderMessage({
   onOpenChange,
   onQuerySelect,
   chatId,
+  status,
   addToolResult,
   onUpdateMessage,
   reload
@@ -55,6 +57,7 @@ export function RenderMessage({
                   onOpenChange(part.toolInvocation.toolCallId, open)
                 }
                 addToolResult={addToolResult}
+                status={status}
               />
             )
           case 'text':
@@ -69,6 +72,7 @@ export function RenderMessage({
                 showActions={isLastPart}
                 messageId={messageId}
                 reload={reload}
+                status={status}
               />
             )
           case 'reasoning':
@@ -76,7 +80,7 @@ export function RenderMessage({
               <ReasoningSection
                 key={`${messageId}-reasoning-${index}`}
                 content={{
-                  reasoning: part.reasoning,
+                  reasoning: part.text,
                   isDone: index !== (message.parts?.length ?? 0) - 1
                 }}
                 isOpen={getIsOpen(messageId)}

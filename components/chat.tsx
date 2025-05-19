@@ -1,21 +1,21 @@
 'use client'
 
 import { deleteTrailingMessages } from '@/lib/actions/chat-db'
-import { CHAT_ID } from '@/lib/constants'
 import { Model } from '@/lib/types/models'
 import { cn, generateUUID } from '@/lib/utils'
 import { useChat } from '@ai-sdk/react'
-import { Message } from 'ai/react'
+import { UIMessage, defaultChatStore } from 'ai'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { z } from 'zod'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
 
 // Define section structure
 interface ChatSection {
   id: string // User message ID
-  userMessage: Message
-  assistantMessages: Message[]
+  userMessage: UIMessage
+  assistantMessages: UIMessage[]
 }
 
 export function Chat({
@@ -25,12 +25,30 @@ export function Chat({
   models
 }: {
   id: string
-  savedMessages?: Message[]
+  savedMessages?: UIMessage[]
   query?: string
   models?: Model[]
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
+
+  const chatStore: any = defaultChatStore({
+    api: '/api/chat',
+    messageMetadataSchema: z.object({
+      createdAt: z.date()
+    }),
+    chats: {
+      [id]: {
+        messages: savedMessages
+      }
+    },
+    prepareRequestBody: (body: any) => {
+      return {
+        chatId: body.chatId,
+        message: body.messages.at(-1)
+      }
+    }
+  })
 
   const {
     messages,
@@ -41,13 +59,10 @@ export function Chat({
     setMessages,
     stop,
     append,
-    data,
-    setData,
     addToolResult,
     reload
   } = useChat({
-    initialMessages: savedMessages,
-    id: CHAT_ID,
+    chatId: id,
     onFinish: () => {
       window.history.replaceState({}, '', `/search/${id}`)
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
@@ -55,16 +70,10 @@ export function Chat({
     onError: error => {
       toast.error(`Error in chat: ${error.message}`)
     },
-    sendExtraMessageFields: false,
     experimental_throttle: 100,
-    generateId: generateUUID,
-    experimental_prepareRequestBody: body => ({
-      id,
-      message: body.messages.at(-1)
-    })
+    chatStore,
+    generateId: generateUUID
   })
-
-  const isLoading = status === 'submitted' || status === 'streaming'
 
   // Convert messages array to sections array
   const sections = useMemo<ChatSection[]>(() => {
@@ -133,14 +142,10 @@ export function Chat({
     }
   }, [sections, messages])
 
-  useEffect(() => {
-    setMessages(savedMessages)
-  }, [id])
-
   const onQuerySelect = (query: string) => {
     append({
       role: 'user',
-      content: query
+      parts: [{ type: 'text', text: query }]
     })
   }
 
@@ -165,7 +170,9 @@ export function Chat({
       return
     }
     const pivotTimestamp =
-      pivotMessage.createdAt?.toISOString() ?? new Date(0).toISOString()
+      (
+        pivotMessage.metadata as { createdAt?: Date }
+      )?.createdAt?.toISOString() ?? new Date(0).toISOString()
 
     try {
       setMessages(prevMessages => {
@@ -177,12 +184,10 @@ export function Chat({
             ? prevMessages.slice(0, messageIndex)
             : prevMessages
 
-        const newUIMessage: Message = {
+        const newUIMessage: UIMessage = {
           id: generateUUID(),
           role: 'user',
-          content: newContentText,
-          parts: [{ type: 'text', text: newContentText }],
-          createdAt: new Date()
+          parts: [{ type: 'text', text: newContentText }]
         }
 
         return [...messagesBeforeEdited, newUIMessage]
@@ -231,17 +236,16 @@ export function Chat({
       return
     }
 
-    const followerMessage = messages[followerMessageIndex]
     const deletionTimestamp =
-      followerMessage.createdAt?.toISOString() ?? new Date(0).toISOString()
+      (
+        targetUserMessage.metadata as { createdAt?: Date }
+      )?.createdAt?.toISOString() ?? new Date(0).toISOString()
 
     const contentToResend =
       targetUserMessage.parts
         ?.filter(p => p.type === 'text')
         .map(p => p.text)
-        .join('') ||
-      targetUserMessage.content ||
-      ''
+        .join('') || ''
 
     try {
       setMessages(prevMessages => {
@@ -250,12 +254,10 @@ export function Chat({
           targetUserMessageIndex
         )
 
-        const newResentUserMessage: Message = {
+        const newResentUserMessage: UIMessage = {
           id: generateUUID(),
           role: 'user',
-          content: contentToResend,
-          parts: [{ type: 'text', text: contentToResend }],
-          createdAt: new Date()
+          parts: [{ type: 'text', text: contentToResend }]
         }
         return [...messagesBeforeTarget, newResentUserMessage]
       })
@@ -273,9 +275,10 @@ export function Chat({
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setData(undefined)
     handleSubmit(e)
   }
+
+  console.log('id', id)
 
   return (
     <div
@@ -287,9 +290,8 @@ export function Chat({
     >
       <ChatMessages
         sections={sections}
-        data={data}
         onQuerySelect={onQuerySelect}
-        isLoading={isLoading}
+        status={status}
         chatId={id}
         addToolResult={addToolResult}
         scrollContainerRef={scrollContainerRef}
@@ -300,7 +302,7 @@ export function Chat({
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={onSubmit}
-        isLoading={isLoading}
+        status={status}
         messages={messages}
         setMessages={setMessages}
         stop={stop}

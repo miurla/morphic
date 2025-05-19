@@ -1,8 +1,7 @@
 'use client'
 
-import { CHAT_ID } from '@/lib/constants'
 import { cn } from '@/lib/utils'
-import { useChat } from '@ai-sdk/react'
+import { UseChatHelpers } from '@ai-sdk/react'
 import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { ChatShare } from './chat-share'
@@ -16,6 +15,7 @@ interface MessageActionsProps {
   chatId?: string
   enableShare?: boolean
   className?: string
+  status?: UseChatHelpers['status']
 }
 
 export function MessageActions({
@@ -24,12 +24,12 @@ export function MessageActions({
   reload,
   chatId,
   enableShare,
-  className
+  className,
+  status
 }: MessageActionsProps) {
-  const { status } = useChat({
-    id: CHAT_ID
-  })
   const isLoading = status === 'submitted' || status === 'streaming'
+
+  console.log('isLoading', status)
 
   async function handleCopy() {
     await navigator.clipboard.writeText(message)

@@ -1,5 +1,6 @@
 'use client'
 
+import { UseChatHelpers } from '@ai-sdk/react'
 import { ChatRequestOptions } from 'ai'
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
@@ -13,6 +14,7 @@ export type AnswerSectionProps = {
   chatId?: string
   showActions?: boolean
   messageId: string
+  status?: UseChatHelpers['status']
   reload?: (
     messageId: string,
     options?: ChatRequestOptions
@@ -26,6 +28,7 @@ export function AnswerSection({
   chatId,
   showActions = true, // Default to true for backward compatibility
   messageId,
+  status,
   reload
 }: AnswerSectionProps) {
   const enableShare = process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined
@@ -47,6 +50,7 @@ export function AnswerSection({
           chatId={chatId}
           enableShare={enableShare}
           reload={handleReload}
+          status={status}
         />
       )}
     </div>

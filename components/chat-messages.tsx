@@ -1,24 +1,23 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { JSONValue, Message } from 'ai'
-import { useEffect, useMemo, useState } from 'react'
+import { UseChatHelpers } from '@ai-sdk/react'
+import { UIMessage } from 'ai'
+import { useEffect, useState } from 'react'
+import { DefaultSkeleton } from './default-skeleton'
 import { RenderMessage } from './render-message'
-import { ToolSection } from './tool-section'
-import { Spinner } from './ui/spinner'
 
 // Import section structure interface
 interface ChatSection {
   id: string
-  userMessage: Message
-  assistantMessages: Message[]
+  userMessage: UIMessage
+  assistantMessages: UIMessage[]
 }
 
 interface ChatMessagesProps {
   sections: ChatSection[] // Changed from messages to sections
-  data: JSONValue[] | undefined
   onQuerySelect: (query: string) => void
-  isLoading: boolean
+  status: UseChatHelpers['status']
   chatId?: string
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for the scroll container */
@@ -29,9 +28,8 @@ interface ChatMessagesProps {
 
 export function ChatMessages({
   sections,
-  data,
   onQuerySelect,
-  isLoading,
+  status,
   chatId,
   addToolResult,
   scrollContainerRef,
@@ -40,6 +38,7 @@ export function ChatMessages({
 }: ChatMessagesProps) {
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
   const manualToolCallId = 'manual-tool-call'
+  const isLoading = status === 'submitted' || status === 'streaming'
 
   useEffect(() => {
     // Open manual tool call when the last section is a user message
@@ -50,31 +49,6 @@ export function ChatMessages({
       }
     }
   }, [sections])
-
-  // get last tool data for manual tool call
-  const lastToolData = useMemo(() => {
-    if (!data || !Array.isArray(data) || data.length === 0) return null
-
-    const lastItem = data[data.length - 1] as {
-      type: 'tool_call'
-      data: {
-        toolCallId: string
-        state: 'call' | 'result'
-        toolName: string
-        args: string
-      }
-    }
-
-    if (lastItem.type !== 'tool_call') return null
-
-    const toolData = lastItem.data
-    return {
-      state: 'call' as const,
-      toolCallId: toolData.toolCallId,
-      toolName: toolData.toolName,
-      args: toolData.args ? JSON.parse(toolData.args) : undefined
-    }
-  }, [data])
 
   if (!sections.length) return null
 
@@ -143,11 +117,12 @@ export function ChatMessages({
                 onOpenChange={handleOpenChange}
                 onQuerySelect={onQuerySelect}
                 chatId={chatId}
+                status={status}
                 addToolResult={addToolResult}
                 onUpdateMessage={onUpdateMessage}
                 reload={reload}
               />
-              {showLoading && <Spinner />}
+              {showLoading && <DefaultSkeleton />}
             </div>
 
             {/* Assistant messages */}
@@ -160,6 +135,7 @@ export function ChatMessages({
                   onOpenChange={handleOpenChange}
                   onQuerySelect={onQuerySelect}
                   chatId={chatId}
+                  status={status}
                   addToolResult={addToolResult}
                   onUpdateMessage={onUpdateMessage}
                   reload={reload}
@@ -168,16 +144,6 @@ export function ChatMessages({
             ))}
           </div>
         ))}
-
-        {showLoading && lastToolData && (
-          <ToolSection
-            key={manualToolCallId}
-            tool={lastToolData}
-            isOpen={getIsOpen(manualToolCallId)}
-            onOpenChange={open => handleOpenChange(manualToolCallId, open)}
-            addToolResult={addToolResult}
-          />
-        )}
       </div>
     </div>
   )

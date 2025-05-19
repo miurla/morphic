@@ -1,5 +1,6 @@
 'use client'
 
+import { UseChatHelpers } from '@ai-sdk/react'
 import { ToolInvocation } from 'ai'
 import { QuestionConfirmation } from './question-confirmation'
 import RetrieveSection from './retrieve-section'
@@ -10,6 +11,7 @@ interface ToolSectionProps {
   tool: ToolInvocation
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  status?: UseChatHelpers['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
 }
 
@@ -17,6 +19,7 @@ export function ToolSection({
   tool,
   isOpen,
   onOpenChange,
+  status,
   addToolResult
 }: ToolSectionProps) {
   // Special handling for ask_question tool
@@ -61,6 +64,7 @@ export function ToolSection({
           tool={tool}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
+          status={status}
         />
       )
     case 'videoSearch':
@@ -69,6 +73,7 @@ export function ToolSection({
           tool={tool}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
+          status={status}
         />
       )
     case 'retrieve':
@@ -77,6 +82,7 @@ export function ToolSection({
           tool={tool}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
+          status={status}
         />
       )
     default:

@@ -1,9 +1,9 @@
-import { Message, smoothStream, streamText } from 'ai'
+import { openai } from '@ai-sdk/openai'
+import { ModelMessage, smoothStream, streamText } from 'ai'
 import { createQuestionTool } from '../tools/question'
 import { retrieveTool } from '../tools/retrieve'
 import { createSearchTool } from '../tools/search'
 import { createVideoSearchTool } from '../tools/video-search'
-import { getModel } from '../utils/registry'
 
 const SYSTEM_PROMPT = `
 Instructions:
@@ -40,7 +40,7 @@ export function researcher({
   model,
   searchMode
 }: {
-  messages: Message[]
+  messages: ModelMessage[]
   model: string
   searchMode: boolean
 }): ResearcherReturn {
@@ -53,7 +53,7 @@ export function researcher({
     const askQuestionTool = createQuestionTool(model)
 
     return {
-      model: getModel(model),
+      model: openai('gpt-4o-mini'), // TODO: Make this configurable
       system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
       messages,
       tools: {

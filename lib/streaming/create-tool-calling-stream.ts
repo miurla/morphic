@@ -1,42 +1,36 @@
 import { researcher } from '@/lib/agents/researcher'
+import { openai } from '@ai-sdk/openai'
 import {
   appendClientMessage,
-  appendResponseMessages,
-  createDataStreamResponse,
-  DataStreamWriter,
-  streamText
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  streamText,
+  UIMessageStreamWriter
 } from 'ai'
 import { saveChatMessage, saveSingleMessage } from '../actions/chat-db'
 import { generateChatTitle } from '../agents/title-generator'
 import { getChat, getChatMessages } from '../db/chat'
 import { generateUUID } from '../utils'
 import { getTextFromParts } from '../utils/message-utils'
-import { getModel } from '../utils/registry'
 import { BaseStreamConfig } from './types'
 
 export function createToolCallingStreamResponse(config: BaseStreamConfig) {
-  return createDataStreamResponse({
-    execute: async (dataStream: DataStreamWriter) => {
+  const stream = createUIMessageStream({
+    execute: async (writer: UIMessageStreamWriter) => {
       const { message, model, chatId, searchMode, userId } = config
       const modelId = `${model.providerId}:${model.id}`
 
       try {
         const chat = await getChat(chatId, userId)
         if (!chat) {
+          const userContent = getTextFromParts(message.parts)
           const title = await generateChatTitle({
-            userMessageContent: getTextFromParts(message.parts),
-            model: getModel(modelId)
+            userMessageContent: userContent,
+            model: openai('gpt-4o-mini')
           })
 
-          // Save the chat and user message to the database using server action
-          await saveChatMessage(
-            chatId,
-            message.id,
-            message.parts,
-            message.role,
-            userId,
-            title
-          )
+          await saveChatMessage(chatId, message, userId, title)
         } else {
           if (chat.userId !== userId) {
             // TODO: Handle this
@@ -47,12 +41,7 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           }
 
           // Save just the user message to an existing chat
-          await saveSingleMessage({
-            id: message.id,
-            chatId,
-            role: message.role,
-            parts: message.parts
-          })
+          await saveSingleMessage(chatId, message)
         }
 
         const previousMessages = await getChatMessages(chatId)
@@ -63,48 +52,38 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
         })
 
         let researcherConfig = await researcher({
-          messages,
+          messages: convertToModelMessages(messages),
           model: modelId,
           searchMode
         })
 
         const result = streamText({
-          ...researcherConfig,
-          experimental_generateMessageId: generateUUID
+          ...researcherConfig
         })
 
-        result.mergeIntoDataStream(dataStream)
-
-        const responseMessages = (await result.response).messages
-        const assistantId = responseMessages
-          .filter(message => message.role === 'assistant')
-          .at(-1)?.id
-        if (!assistantId) {
-          throw new Error('No assistant id found')
-        }
-
-        const [, assistantMessage] = appendResponseMessages({
-          messages: [message],
-          responseMessages: responseMessages
-        })
-
-        // Save the assistant message to the database using server action
-        if (assistantMessage) {
-          await saveSingleMessage({
-            id: assistantId,
-            chatId,
-            role: assistantMessage.role,
-            parts: assistantMessage.parts
+        writer.merge(
+          result.toUIMessageStream({
+            newMessageId: generateUUID(),
+            onFinish({ messages }) {
+              const assistantMessage = messages.find(
+                message => message.role === 'assistant'
+              )
+              if (assistantMessage) {
+                saveSingleMessage(chatId, assistantMessage)
+              }
+            }
           })
-        }
+        )
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error
       }
     },
-    onError: error => {
+    onError: (error: any) => {
       // console.error('Stream error:', error)
       return error instanceof Error ? error.message : String(error)
     }
   })
+
+  return createUIMessageStreamResponse({ stream })
 }
