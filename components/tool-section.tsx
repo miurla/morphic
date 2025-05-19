@@ -3,6 +3,7 @@
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ToolInvocation } from 'ai'
 import { QuestionConfirmation } from './question-confirmation'
+import { RelatedQuestions } from './related-questions'
 import RetrieveSection from './retrieve-section'
 import { SearchSection } from './search-section'
 import { VideoSearchSection } from './video-search-section'
@@ -13,6 +14,7 @@ interface ToolSectionProps {
   onOpenChange: (open: boolean) => void
   status?: UseChatHelpers['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
+  onQuerySelect: (query: string) => void
 }
 
 export function ToolSection({
@@ -20,7 +22,8 @@ export function ToolSection({
   isOpen,
   onOpenChange,
   status,
-  addToolResult
+  addToolResult,
+  onQuerySelect
 }: ToolSectionProps) {
   // Special handling for ask_question tool
   if (tool.toolName === 'ask_question') {
@@ -83,6 +86,16 @@ export function ToolSection({
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           status={status}
+        />
+      )
+    case 'related_questions':
+      return (
+        <RelatedQuestions
+          tool={tool}
+          isOpen={isOpen}
+          onOpenChange={onOpenChange}
+          status={status}
+          onQuerySelect={onQuerySelect}
         />
       )
     default:

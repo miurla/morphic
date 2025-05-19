@@ -43,8 +43,12 @@ export function RenderMessage({
   return (
     <>
       {message.parts?.map((part, index) => {
-        // Check if this is the last part in the array
-        const isLastPart = index === (message.parts?.length ?? 0) - 1
+        // Check if this is the last text part in the array
+        const textParts =
+          message.parts?.filter(part => part.type === 'text') || []
+        const isLastTextPart =
+          part.type === 'text' &&
+          textParts.indexOf(part) === textParts.length - 1
 
         switch (part.type) {
           case 'tool-invocation':
@@ -58,6 +62,7 @@ export function RenderMessage({
                 }
                 addToolResult={addToolResult}
                 status={status}
+                onQuerySelect={onQuerySelect}
               />
             )
           case 'text':
@@ -69,7 +74,7 @@ export function RenderMessage({
                 isOpen={getIsOpen(messageId)}
                 onOpenChange={open => onOpenChange(messageId, open)}
                 chatId={chatId}
-                showActions={isLastPart}
+                showActions={isLastTextPart}
                 messageId={messageId}
                 reload={reload}
                 status={status}

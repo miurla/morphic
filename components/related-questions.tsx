@@ -1,7 +1,8 @@
 'use client'
 
+import { Related } from '@/lib/schema/related'
 import { UseChatHelpers } from '@ai-sdk/react'
-import { JSONValue } from 'ai'
+import { ToolInvocation } from 'ai'
 import { ArrowRight } from 'lucide-react'
 import React from 'react'
 import { CollapsibleMessage } from './collapsible-message'
@@ -10,43 +11,28 @@ import { Button } from './ui/button'
 import { Skeleton } from './ui/skeleton'
 
 export interface RelatedQuestionsProps {
-  annotations: JSONValue[]
+  tool: ToolInvocation
   onQuerySelect: (query: string) => void
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   status?: UseChatHelpers['status']
 }
 
-interface RelatedQuestionsAnnotation extends Record<string, JSONValue> {
-  type: 'related-questions'
-  data: {
-    items: Array<{ query: string }>
-  }
-}
-
 export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
-  annotations,
+  tool,
   onQuerySelect,
   isOpen,
   onOpenChange,
   status
 }) => {
-  const isLoading = status === 'submitted' || status === 'streaming'
+  const isLoading =
+    status === 'submitted' || status === 'streaming' || tool.state === 'call'
 
-  if (!annotations) {
-    return null
-  }
+  const data: Related | undefined =
+    tool.state === 'result' ? tool.result : undefined
 
-  const lastRelatedQuestionsAnnotation = annotations[
-    annotations.length - 1
-  ] as RelatedQuestionsAnnotation
-
-  const relatedQuestions = lastRelatedQuestionsAnnotation?.data
-  if ((!relatedQuestions || !relatedQuestions.items) && !isLoading) {
-    return null
-  }
-
-  if (relatedQuestions.items.length === 0 && isLoading) {
+  console.log('data', data)
+  if (!data && isLoading) {
     return (
       <CollapsibleMessage
         role="assistant"
@@ -55,7 +41,16 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
         onOpenChange={onOpenChange}
         showIcon={false}
       >
-        <Skeleton className="w-full h-6" />
+        <Section title="Related" className="pt-0 pb-4">
+          <div className="flex flex-col gap-2">
+            {[1, 2, 3].map((_, index) => (
+              <div className="flex items-start w-full" key={index}>
+                <ArrowRight className="h-4 w-4 mr-2 mt-1.5 flex-shrink-0 text-accent-foreground/50" />
+                <Skeleton className="h-6 w-full" />
+              </div>
+            ))}
+          </div>
+        </Section>
       </CollapsibleMessage>
     )
   }
@@ -71,24 +66,22 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
     >
       <Section title="Related" className="pt-0 pb-4">
         <div className="flex flex-col">
-          {Array.isArray(relatedQuestions.items) ? (
-            relatedQuestions.items
-              ?.filter(item => item?.query !== '')
-              .map((item, index) => (
-                <div className="flex items-start w-full" key={index}>
-                  <ArrowRight className="h-4 w-4 mr-2 mt-1 flex-shrink-0 text-accent-foreground/50" />
-                  <Button
-                    variant="link"
-                    className="flex-1 justify-start px-0 py-1 h-fit font-semibold text-accent-foreground/50 whitespace-normal text-left"
-                    type="submit"
-                    name={'related_query'}
-                    value={item?.query}
-                    onClick={() => onQuerySelect(item?.query)}
-                  >
-                    {item?.query}
-                  </Button>
-                </div>
-              ))
+          {Array.isArray(data?.questions) ? (
+            data.questions.map((item, index) => (
+              <div className="flex items-start w-full" key={index}>
+                <ArrowRight className="h-4 w-4 mr-2 mt-1.5 flex-shrink-0 text-accent-foreground/50" />
+                <Button
+                  variant="link"
+                  className="flex-1 justify-start px-0 py-1 h-fit font-semibold text-accent-foreground/50 whitespace-normal text-left"
+                  type="submit"
+                  name={'related_query'}
+                  value={item.question}
+                  onClick={() => onQuerySelect(item.question)}
+                >
+                  {item.question}
+                </Button>
+              </div>
+            ))
           ) : (
             <div>Not an array</div>
           )}

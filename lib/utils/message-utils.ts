@@ -85,13 +85,9 @@ export function extractTitleFromMessage(
 }
 
 /**
- * Extracts and concatenates text content from a message's 'parts' array.
- *
- * This function mimics the behavior of the expression:
- * `message?.parts?.filter(part => part.type === 'text').map(part => part.text).join(' ') ?? '';`
- *
- * @param message - An object that may contain a 'parts' array. Can be undefined.
- * @returns A string of concatenated text from text parts, or an empty string
+ * Extracts text content from UIMessage parts.
+ * @param parts Array of message parts to extract text from.
+ * @returns Concatenated text content or empty string if no text content is found,
  *          if 'message' or 'message.parts' is undefined, or if 'parts' is empty or contains no text parts.
  */
 export function getTextFromParts(parts?: UIMessage['parts']): string {
@@ -101,4 +97,20 @@ export function getTextFromParts(parts?: UIMessage['parts']): string {
       .map(part => part.text)
       .join(' ') ?? ''
   )
+}
+
+/**
+ * Merges two UIMessage objects by combining their parts
+ * @param primaryMessage The main message (properties from this will be preserved)
+ * @param secondaryMessage The message whose parts will be merged into the primary message
+ * @returns A new UIMessage with combined parts
+ */
+export function mergeUIMessages(
+  primaryMessage: UIMessage,
+  secondaryMessage: UIMessage
+): UIMessage {
+  return {
+    ...primaryMessage,
+    parts: [...primaryMessage.parts, ...secondaryMessage.parts]
+  }
 }

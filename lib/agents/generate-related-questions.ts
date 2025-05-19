@@ -1,8 +1,9 @@
-import { relatedSchema } from '@/lib/schema/related'
-import { ModelMessage, generateObject } from 'ai'
+import { generateObject, ModelMessage, streamText, tool } from 'ai'
+import { z } from 'zod'
+import { relatedSchema } from '../schema/related'
 import { getModel } from '../utils/registry'
 
-export async function generateRelatedQuestions(
+export function generateRelatedQuestions(
   messages: ModelMessage[],
   model: string
 ) {
@@ -11,16 +12,42 @@ export async function generateRelatedQuestions(
     role: 'user'
   })) as ModelMessage[]
 
-  const result = await generateObject({
+  const systemPrompt = `As a professional web researcher, generate 3 related queries that explore the topic more deeply, based on the initial query and search results.
+
+    The queries should:
+    - Progress from general to specific aspects
+    - Cover implications and connected topics
+    - Match the user's language style and level
+    - Help build comprehensive understanding
+    - Be relevant and naturally follow from the context
+
+    Example format for "Starship's third test flight key milestones":
+    - "What technical improvements were made for Starship's third test flight?"
+    - "How does the third flight's performance compare to previous launches?"
+    - "What are the implications of this test flight for future Starship missions?"`
+
+  const result = streamText({
     model: getModel(model),
-    system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
-
-    For instance, if the original query was "Starship's third test flight key milestones", your output should follow this format:
-
-    Aim to create queries that progressively delve into more specific aspects, implications, or adjacent topics related to the initial query. The goal is to anticipate the user's potential information needs and guide them towards a more comprehensive understanding of the subject matter.
-    Please match the language of the response to the user's language.`,
+    system:
+      'Generate related questions.  Use the generateRelatedQuestions tool exactly once to provide the related questions.',
     messages: lastMessages,
-    schema: relatedSchema
+    tools: {
+      related_questions: tool({
+        description: 'Generate related questions',
+        parameters: z.object({}),
+        execute: async () => {
+          const questions = await generateObject({
+            model: getModel(model),
+            system: systemPrompt,
+            messages: lastMessages,
+            schema: relatedSchema
+          })
+
+          return questions.object
+        }
+      })
+    },
+    toolChoice: 'required'
   })
 
   return result
