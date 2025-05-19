@@ -1,5 +1,5 @@
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import { createToolCallingStreamResponse } from '@/lib/streaming/create-tool-calling-stream'
+import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { Model } from '@/lib/types/models'
 import { isProviderEnabled } from '@/lib/utils/registry'
 import { cookies } from 'next/headers'
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       )
     }
 
-    return createToolCallingStreamResponse({
+    return await createChatStreamResponse({
       message,
       model: selectedModel,
       chatId,
