@@ -145,7 +145,8 @@ export function Chat({
   const onQuerySelect = (query: string) => {
     append({
       role: 'user',
-      parts: [{ type: 'text', text: query }]
+      parts: [{ type: 'text', text: query }],
+      id: generateUUID()
     })
   }
 

@@ -4,13 +4,15 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  UIMessage,
   UIMessageStreamWriter
 } from 'ai'
 import { saveChatMessage, saveSingleMessage } from '../actions/chat-db'
+import { generateRelatedQuestions } from '../agents/generate-related-questions'
 import { generateChatTitle } from '../agents/title-generator'
 import { getChat, getChatMessages } from '../db/chat'
 import { generateUUID } from '../utils'
-import { getTextFromParts } from '../utils/message-utils'
+import { getTextFromParts, mergeUIMessages } from '../utils/message-utils'
 import { BaseStreamConfig } from './types'
 
 export async function createChatStreamResponse(
@@ -55,23 +57,44 @@ export async function createChatStreamResponse(
           message
         })
 
-        const result = await researcher({
+        const result = researcher({
           messages: convertToModelMessages(messagesToModel),
           model: modelId,
           searchMode
         })
 
+        // Create a variable to store the messages from the first callback
+        let firstResponseMessage: UIMessage | null = null
+
         writer.merge(
           result.toUIMessageStream({
             newMessageId: generateUUID(),
-            onFinish({ messages: resultingMessages }) {
-              const assistantMessage = resultingMessages.find(
-                m => m.role === 'assistant'
-              )
-              if (assistantMessage) {
-                saveSingleMessage(chatId, assistantMessage)
-              }
+            experimental_sendFinish: false,
+            onFinish: ({ responseMessage }) => {
+              // Store the messages for later use
+              firstResponseMessage = responseMessage
             }
+          })
+        )
+
+        const relatedQuestions = generateRelatedQuestions(
+          (await result.response).messages,
+          modelId
+        )
+        writer.merge(
+          relatedQuestions.toUIMessageStream({
+            newMessageId: generateUUID(),
+            onFinish: ({ responseMessage }) => {
+              // If there is a first response message, merge it with the new message
+              if (firstResponseMessage) {
+                const mergedMessage = mergeUIMessages(
+                  firstResponseMessage,
+                  responseMessage
+                )
+                saveSingleMessage(chatId, mergedMessage)
+              }
+            },
+            experimental_sendStart: false
           })
         )
       } catch (error) {
