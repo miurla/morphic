@@ -33,8 +33,6 @@ Citation Format:
 [number](url)
 `
 
-type ResearcherReturn = Parameters<typeof streamText>[0]
-
 export function researcher({
   messages,
   model,
@@ -43,7 +41,7 @@ export function researcher({
   messages: ModelMessage[]
   model: string
   searchMode: boolean
-}): ResearcherReturn {
+}) {
   try {
     const currentDate = new Date().toLocaleString()
 
@@ -52,7 +50,7 @@ export function researcher({
     const videoSearchTool = createVideoSearchTool(model)
     const askQuestionTool = createQuestionTool(model)
 
-    return {
+    const config = {
       model: openai('gpt-4o-mini'), // TODO: Make this configurable
       system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
       messages,
@@ -68,6 +66,8 @@ export function researcher({
       maxSteps: searchMode ? 5 : 1,
       experimental_transform: smoothStream()
     }
+
+    return streamText(config)
   } catch (error) {
     console.error('Error in chatResearcher:', error)
     throw error

@@ -5,7 +5,6 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
-  streamText,
   UIMessageStreamWriter
 } from 'ai'
 import { saveChatMessage, saveSingleMessage } from '../actions/chat-db'
@@ -51,14 +50,10 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           message
         })
 
-        let researcherConfig = await researcher({
+        const result = await researcher({
           messages: convertToModelMessages(messages),
           model: modelId,
           searchMode
-        })
-
-        const result = streamText({
-          ...researcherConfig
         })
 
         writer.merge(
