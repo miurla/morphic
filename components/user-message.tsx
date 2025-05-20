@@ -5,6 +5,7 @@ import { UIMessage } from '@ai-sdk/react'
 import { Pencil } from 'lucide-react'
 import React, { useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
+import { AttachmentPreview } from './attachment-preview'
 import { CollapsibleMessage } from './collapsible-message'
 import { Button } from './ui/button'
 
@@ -12,12 +13,18 @@ type UserMessageProps = {
   message: UIMessage
   messageId?: string
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
+  attachments?: {
+    name: string
+    url: string
+    contentType: string
+  }[]
 }
 
 export const UserMessage: React.FC<UserMessageProps> = ({
   message,
   messageId,
-  onUpdateMessage
+  onUpdateMessage,
+  attachments
 }) => {
   const messageText =
     message.parts
@@ -55,6 +62,9 @@ export const UserMessage: React.FC<UserMessageProps> = ({
         className="flex-1 break-words w-full group outline-none relative"
         tabIndex={0}
       >
+        {!isEditing && attachments && attachments.length > 0 && (
+          <AttachmentPreview attachments={attachments} />
+        )}
         {isEditing ? (
           <div className="flex flex-col gap-2">
             <TextareaAutosize

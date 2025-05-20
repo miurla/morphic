@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
+import { DragOverlay } from './drag-overlay'
 
 // Define section structure
 interface ChatSection {
@@ -31,6 +32,7 @@ export function Chat({
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
 
   const chatStore: any = defaultChatStore({
     api: '/api/chat',
@@ -279,6 +281,56 @@ export function Chat({
     handleSubmit(e)
   }
 
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragging(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+
+    const files = Array.from(e.dataTransfer.files).slice(0, 4)
+
+    const allowed = files.filter(file =>
+      [
+        'image/png',
+        'image/jpeg',
+        'image/gif',
+        'image/webp',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ].includes(file.type)
+    )
+
+    const rejected = files.filter(file => !allowed.includes(file))
+
+    if (rejected.length > 0) {
+      toast.error(
+        'Some files were not accepted: ' + rejected.map(f => f.name).join(', ')
+      )
+    }
+
+    const total = uploadedFiles.length + allowed.length
+    if (total > 3) {
+      toast.error('You can upload a maximum of 3 files.')
+      return
+    }
+
+    if (allowed.length > 0) {
+      setUploadedFiles(prev => [...prev, ...allowed].slice(0, 3))
+    }
+  }
+
   console.log('id', id)
 
   return (
@@ -288,6 +340,9 @@ export function Chat({
         messages.length === 0 ? 'items-center justify-center' : ''
       )}
       data-testid="full-chat"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       <ChatMessages
         sections={sections}
@@ -311,8 +366,11 @@ export function Chat({
         append={append}
         models={models}
         showScrollToBottomButton={!isAtBottom}
+        uploadedFiles={uploadedFiles}
+        setUploadedFiles={setUploadedFiles}
         scrollContainerRef={scrollContainerRef}
       />
+      <DragOverlay visible={isDragging} />
     </div>
   )
 }

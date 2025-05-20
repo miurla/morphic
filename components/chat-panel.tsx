@@ -5,14 +5,17 @@ import { cn } from '@/lib/utils'
 import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
+import { toast } from 'sonner'
 import { useArtifact } from './artifact/artifact-context'
 import { EmptyScreen } from './empty-screen'
+import { FileUploadButton } from './file-upload-button'
 import { ModelSelector } from './model-selector'
 import { SearchModeToggle } from './search-mode-toggle'
 import { Button } from './ui/button'
 import { IconLogo } from './ui/icons'
+import { UploadedFileList } from './uploaded-fileList'
 
 interface ChatPanelProps {
   input: string
@@ -29,6 +32,8 @@ interface ChatPanelProps {
   showScrollToBottomButton: boolean
   /** Reference to the scroll container */
   scrollContainerRef: React.RefObject<HTMLDivElement>
+  uploadedFiles: File[]
+  setUploadedFiles: React.Dispatch<React.SetStateAction<File[]>>
 }
 
 export function ChatPanel({
@@ -43,6 +48,8 @@ export function ChatPanel({
   append,
   models,
   showScrollToBottomButton,
+  uploadedFiles,
+  setUploadedFiles,
   scrollContainerRef
 }: ChatPanelProps) {
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
@@ -52,7 +59,6 @@ export function ChatPanel({
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
   const { close: closeArtifact } = useArtifact()
-
   const isLoading = status === 'submitted' || status === 'streaming'
 
   const handleCompositionStart = () => setIsComposing(true)
@@ -98,6 +104,12 @@ export function ChatPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
+  const handleFileRemove = useCallback(
+    (index: number) => {
+      setUploadedFiles(prev => prev.filter((_, i) => i !== index))
+    },
+    [setUploadedFiles]
+  )
   // Scroll to the bottom of the container
   const handleScrollToBottom = () => {
     const scrollContainer = scrollContainerRef.current
@@ -123,6 +135,9 @@ export function ChatPanel({
             How can I help you today?
           </p>
         </div>
+      )}
+      {uploadedFiles.length > 0 && (
+        <UploadedFileList files={uploadedFiles} onRemove={handleFileRemove} />
       )}
       <form
         onSubmit={handleSubmit}
@@ -199,6 +214,17 @@ export function ChatPanel({
                   <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
                 </Button>
               )}
+              <FileUploadButton
+                onFileSelect={files => {
+                  const total = uploadedFiles.length + files.length
+
+                  if (total > 3) {
+                    return toast.error('You can upload a maximum of 3 files.')
+                  }
+                  const allowedFiles = [...uploadedFiles, ...files].slice(0, 3)
+                  setUploadedFiles(allowedFiles)
+                }}
+              />
               <Button
                 type={isLoading ? 'button' : 'submit'}
                 size={'icon'}
