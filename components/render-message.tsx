@@ -15,11 +15,6 @@ interface RenderMessageProps {
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
-  attachments?: {
-    name: string
-    url: string
-    contentType: string
-  }[]
 }
 
 export function RenderMessage({
@@ -32,8 +27,7 @@ export function RenderMessage({
   status,
   addToolResult,
   onUpdateMessage,
-  reload,
-  attachments
+  reload
 }: RenderMessageProps) {
   if (message.role === 'user') {
     return (
@@ -41,7 +35,6 @@ export function RenderMessage({
         message={message}
         messageId={messageId}
         onUpdateMessage={onUpdateMessage}
-        attachments={attachments}
       />
     )
   }

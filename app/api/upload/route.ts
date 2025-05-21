@@ -59,7 +59,7 @@ async function uploadFileToSupabase(file: File) {
   const filePath = `${Date.now()}-${sanitizedFileName}`
   const supabase = await createClient()
   const { error } = await supabase.storage
-    .from('chat-uploads')
+    .from('user-uploads')
     .upload(filePath, file, {
       cacheControl: '3600',
       upsert: false,
@@ -75,9 +75,9 @@ async function uploadFileToSupabase(file: File) {
   } = supabase.storage.from('user-uploads').getPublicUrl(filePath)
 
   return {
-    name: file.name,
+    filename: file.name,
     url: publicUrl,
-    contentType: file.type,
-    key: filePath
+    mediaType: file.type,
+    type: 'file'
   }
 }

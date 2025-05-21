@@ -277,9 +277,32 @@ export function Chat({
     }
   }
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    handleSubmit(e)
+
+    const uploadedAttachments = await Promise.all(
+      uploadedFiles.map(async file => {
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+        if (!res.ok) {
+          const errorData = await res.json()
+          toast.error(`Upload failed: ${errorData.error || 'Unknown error'}`)
+          return null
+        }
+        const { file: uploadedFile } = await res.json()
+        return uploadedFile // contains name, url, contentType, key
+      })
+    )
+    const validAttachments = uploadedAttachments.filter(Boolean) // remove failed uploads
+    handleSubmit(e, {
+      files: validAttachments
+    })
+
+    setUploadedFiles([])
   }
 
   const { isDragging, handleDragOver, handleDragLeave, handleDrop } =

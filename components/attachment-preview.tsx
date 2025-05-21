@@ -3,11 +3,11 @@
 import React from 'react'
 
 interface Attachment {
-  name: string
+  name: string | undefined
   url: string
   contentType: string
 }
-
+;[]
 interface AttachmentPreviewProps {
   attachments: Attachment[]
 }

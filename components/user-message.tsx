@@ -13,18 +13,12 @@ type UserMessageProps = {
   message: UIMessage
   messageId?: string
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
-  attachments?: {
-    name: string
-    url: string
-    contentType: string
-  }[]
 }
 
 export const UserMessage: React.FC<UserMessageProps> = ({
   message,
   messageId,
-  onUpdateMessage,
-  attachments
+  onUpdateMessage
 }) => {
   const messageText =
     message.parts
@@ -56,14 +50,23 @@ export const UserMessage: React.FC<UserMessageProps> = ({
     }
   }
 
+  const derivedAttachments =
+    message.parts
+      ?.filter(part => part.type === 'file')
+      .map(part => ({
+        name: part.filename,
+        url: part.url,
+        contentType: part.mediaType
+      })) || []
+
   return (
     <CollapsibleMessage role="user">
       <div
         className="flex-1 break-words w-full group outline-none relative"
         tabIndex={0}
       >
-        {!isEditing && attachments && attachments.length > 0 && (
-          <AttachmentPreview attachments={attachments} />
+        {!isEditing && derivedAttachments && derivedAttachments.length > 0 && (
+          <AttachmentPreview attachments={derivedAttachments} />
         )}
         {isEditing ? (
           <div className="flex flex-col gap-2">
