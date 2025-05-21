@@ -1,5 +1,6 @@
 'use client'
 
+import { useFileDropzone } from '@/hooks/use-file-dropzone'
 import { deleteTrailingMessages } from '@/lib/actions/chat-db'
 import { Model } from '@/lib/types/models'
 import { cn, generateUUID } from '@/lib/utils'
@@ -281,56 +282,11 @@ export function Chat({
     handleSubmit(e)
   }
 
-  const [isDragging, setIsDragging] = useState(false)
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDragging(false)
-    }
-  }
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsDragging(false)
-
-    const files = Array.from(e.dataTransfer.files).slice(0, 4)
-
-    const allowed = files.filter(file =>
-      [
-        'image/png',
-        'image/jpeg',
-        'image/gif',
-        'image/webp',
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      ].includes(file.type)
-    )
-
-    const rejected = files.filter(file => !allowed.includes(file))
-
-    if (rejected.length > 0) {
-      toast.error(
-        'Some files were not accepted: ' + rejected.map(f => f.name).join(', ')
-      )
-    }
-
-    const total = uploadedFiles.length + allowed.length
-    if (total > 3) {
-      toast.error('You can upload a maximum of 3 files.')
-      return
-    }
-
-    if (allowed.length > 0) {
-      setUploadedFiles(prev => [...prev, ...allowed].slice(0, 3))
-    }
-  }
-
+  const { isDragging, handleDragOver, handleDragLeave, handleDrop } =
+    useFileDropzone({
+      uploadedFiles,
+      setUploadedFiles
+    })
   console.log('id', id)
 
   return (
