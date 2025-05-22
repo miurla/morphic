@@ -242,7 +242,6 @@ export async function clearChats(userId: string): Promise<{ error?: string }> {
 
 // Save a chat (create or update)
 export async function saveChat(chat: Chat, userId: string) {
-  console.log('chat', chat)
   try {
     // Check if the chat exists
     const existingChat = await getChat(chat.id, userId)

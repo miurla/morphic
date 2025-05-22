@@ -1,5 +1,6 @@
 'use client'
 
+import { UploadedFile } from '@/lib/types'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
@@ -18,6 +19,7 @@ import { IconLogo } from './ui/icons'
 import { UploadedFileList } from './uploaded-fileList'
 
 interface ChatPanelProps {
+  chatId: string
   input: string
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
@@ -32,11 +34,12 @@ interface ChatPanelProps {
   showScrollToBottomButton: boolean
   /** Reference to the scroll container */
   scrollContainerRef: React.RefObject<HTMLDivElement>
-  uploadedFiles: File[]
-  setUploadedFiles: React.Dispatch<React.SetStateAction<File[]>>
+  uploadedFiles: UploadedFile[]
+  setUploadedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>
 }
 
 export function ChatPanel({
+  chatId,
   input,
   handleInputChange,
   handleSubmit,
@@ -215,14 +218,51 @@ export function ChatPanel({
                 </Button>
               )}
               <FileUploadButton
-                onFileSelect={files => {
-                  const total = uploadedFiles.length + files.length
+                onFileSelect={async files => {
+                  const newFiles: UploadedFile[] = files.map(file => ({
+                    file,
+                    status: 'uploading'
+                  }))
+                  setUploadedFiles(prev => [...prev, ...newFiles])
+                  await Promise.all(
+                    newFiles.map(async uf => {
+                      const formData = new FormData()
+                      formData.append('file', uf.file)
+                      formData.append('chatId', chatId)
+                      try {
+                        const res = await fetch('/api/upload', {
+                          method: 'POST',
+                          body: formData
+                        })
 
-                  if (total > 3) {
-                    return toast.error('You can upload a maximum of 3 files.')
-                  }
-                  const allowedFiles = [...uploadedFiles, ...files].slice(0, 3)
-                  setUploadedFiles(allowedFiles)
+                        if (!res.ok) {
+                          throw new Error('Upload failed')
+                        }
+
+                        const { file: uploaded } = await res.json()
+                        setUploadedFiles(prev =>
+                          prev.map(f =>
+                            f.file === uf.file
+                              ? {
+                                  ...f,
+                                  status: 'uploaded',
+                                  url: uploaded.url,
+                                  name: uploaded.name,
+                                  key: uploaded.key
+                                }
+                              : f
+                          )
+                        )
+                      } catch (e) {
+                        toast.error(`Failed to upload ${uf.file.name}`)
+                        setUploadedFiles(prev =>
+                          prev.map(f =>
+                            f.file === uf.file ? { ...f, status: 'error' } : f
+                          )
+                        )
+                      }
+                    })
+                  )
                 }}
               />
               <Button

@@ -2,10 +2,11 @@
 
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
 import { deleteTrailingMessages } from '@/lib/actions/chat-db'
+import { UploadedFile } from '@/lib/types'
 import { Model } from '@/lib/types/models'
 import { cn, generateUUID } from '@/lib/utils'
 import { useChat } from '@ai-sdk/react'
-import { UIMessage, defaultChatStore } from 'ai'
+import { FileUIPart, UIMessage, defaultChatStore } from 'ai'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -33,7 +34,7 @@ export function Chat({
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
 
   const chatStore: any = defaultChatStore({
     api: '/api/chat',
@@ -280,38 +281,26 @@ export function Chat({
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    const uploadedAttachments = await Promise.all(
-      uploadedFiles.map(async file => {
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('chatId', id)
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        })
-        if (!res.ok) {
-          const errorData = await res.json()
-          toast.error(`Upload failed: ${errorData.error || 'Unknown error'}`)
-          return null
-        }
-        const { file: uploadedFile } = await res.json()
-        return uploadedFile // contains name, url, contentType, key
-      })
-    )
-    const validAttachments = uploadedAttachments.filter(Boolean) // remove failed uploads
-    handleSubmit(e, {
-      files: validAttachments
-    })
+    const uploaded = uploadedFiles.filter(f => f.status === 'uploaded')
 
+    const files: FileUIPart[] = uploaded.map(f => ({
+      type: 'file',
+      url: f.url!,
+      name: f.name!,
+      key: f.key!,
+      mediaType: f.file.type
+    }))
+
+    handleSubmit(e, { files })
     setUploadedFiles([])
   }
 
   const { isDragging, handleDragOver, handleDragLeave, handleDrop } =
     useFileDropzone({
       uploadedFiles,
-      setUploadedFiles
+      setUploadedFiles,
+      chatId: id
     })
-  console.log('id', id)
 
   return (
     <div
@@ -335,6 +324,7 @@ export function Chat({
         reload={handleReloadFrom}
       />
       <ChatPanel
+        chatId={id}
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={onSubmit}

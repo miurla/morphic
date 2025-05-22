@@ -27,7 +27,7 @@ export function FileUploadButton({
   const handleFiles = (files: FileList | null) => {
     if (!files) return
 
-    const fileArray = Array.from(files).slice(0, 4)
+    const fileArray = Array.from(files).slice(0, 3)
 
     const validFiles = fileArray.filter(isAllowedFileType)
     const rejected = fileArray.filter(f => !isAllowedFileType(f))
