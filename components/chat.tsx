@@ -133,7 +133,8 @@ export function Chat({
 
   useEffect(() => {
     setMessages(savedMessages)
-  }, [id, savedMessages, setMessages])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   const onQuerySelect = (query: string) => {
     append({
