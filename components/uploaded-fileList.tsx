@@ -17,15 +17,15 @@ export const UploadedFileList = React.memo(function UploadedFileList({
   return (
     <div className="w-full flex justify-center py-4">
       <div className="flex gap-6 overflow-x-auto">
-        {files.map((file, index) => (
+        {files.map((it, index) => (
           <div
             key={index}
             className="relative w-28 flex-shrink-0 flex flex-col items-center"
           >
             <div className="relative w-28 h-20 rounded-lg overflow-hidden shadow border bg-muted/20 dark:bg-muted/10">
-              {file.file.type.startsWith('image/') ? (
+              {it.file.type.startsWith('image/') ? (
                 <Image
-                  src={URL.createObjectURL(file.file)}
+                  src={URL.createObjectURL(it.file)}
                   alt={`file-${index}`}
                   fill
                   className="object-cover"
@@ -33,12 +33,12 @@ export const UploadedFileList = React.memo(function UploadedFileList({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-sm font-semibold bg-gray-300 dark:bg-gray-700">
-                  {file.file.name.split('.').pop()?.toUpperCase()}
+                  {it.file.name.split('.').pop()?.toUpperCase()}
                 </div>
               )}
 
               {/* Spinner overlay while uploading */}
-              {file.status === 'uploading' && (
+              {it.status === 'uploading' && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
                   <Loader2 className="animate-spin text-white" size={20} />
                 </div>
@@ -54,7 +54,7 @@ export const UploadedFileList = React.memo(function UploadedFileList({
             </div>
 
             <div className="mt-2 text-xs text-center text-foreground truncate w-full">
-              {file.name || file.file.name}
+              {it.name || it.file.name}
             </div>
           </div>
         ))}
