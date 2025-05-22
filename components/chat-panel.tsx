@@ -1,20 +1,25 @@
 'use client'
 
+import { UploadedFile } from '@/lib/types'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
+import { toast } from 'sonner'
 import { useArtifact } from './artifact/artifact-context'
 import { EmptyScreen } from './empty-screen'
+import { FileUploadButton } from './file-upload-button'
 import { ModelSelector } from './model-selector'
 import { SearchModeToggle } from './search-mode-toggle'
 import { Button } from './ui/button'
 import { IconLogo } from './ui/icons'
+import { UploadedFileList } from './uploaded-fileList'
 
 interface ChatPanelProps {
+  chatId: string
   input: string
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
@@ -29,9 +34,12 @@ interface ChatPanelProps {
   showScrollToBottomButton: boolean
   /** Reference to the scroll container */
   scrollContainerRef: React.RefObject<HTMLDivElement>
+  uploadedFiles: UploadedFile[]
+  setUploadedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>
 }
 
 export function ChatPanel({
+  chatId,
   input,
   handleInputChange,
   handleSubmit,
@@ -43,6 +51,8 @@ export function ChatPanel({
   append,
   models,
   showScrollToBottomButton,
+  uploadedFiles,
+  setUploadedFiles,
   scrollContainerRef
 }: ChatPanelProps) {
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
@@ -52,7 +62,6 @@ export function ChatPanel({
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
   const { close: closeArtifact } = useArtifact()
-
   const isLoading = status === 'submitted' || status === 'streaming'
 
   const handleCompositionStart = () => setIsComposing(true)
@@ -98,6 +107,12 @@ export function ChatPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
+  const handleFileRemove = useCallback(
+    (index: number) => {
+      setUploadedFiles(prev => prev.filter((_, i) => i !== index))
+    },
+    [setUploadedFiles]
+  )
   // Scroll to the bottom of the container
   const handleScrollToBottom = () => {
     const scrollContainer = scrollContainerRef.current
@@ -123,6 +138,9 @@ export function ChatPanel({
             How can I help you today?
           </p>
         </div>
+      )}
+      {uploadedFiles.length > 0 && (
+        <UploadedFileList files={uploadedFiles} onRemove={handleFileRemove} />
       )}
       <form
         onSubmit={handleSubmit}
@@ -199,6 +217,54 @@ export function ChatPanel({
                   <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
                 </Button>
               )}
+              <FileUploadButton
+                onFileSelect={async files => {
+                  const newFiles: UploadedFile[] = files.map(file => ({
+                    file,
+                    status: 'uploading'
+                  }))
+                  setUploadedFiles(prev => [...prev, ...newFiles])
+                  await Promise.all(
+                    newFiles.map(async uf => {
+                      const formData = new FormData()
+                      formData.append('file', uf.file)
+                      formData.append('chatId', chatId)
+                      try {
+                        const res = await fetch('/api/upload', {
+                          method: 'POST',
+                          body: formData
+                        })
+
+                        if (!res.ok) {
+                          throw new Error('Upload failed')
+                        }
+
+                        const { file: uploaded } = await res.json()
+                        setUploadedFiles(prev =>
+                          prev.map(f =>
+                            f.file === uf.file
+                              ? {
+                                  ...f,
+                                  status: 'uploaded',
+                                  url: uploaded.url,
+                                  name: uploaded.name,
+                                  key: uploaded.key
+                                }
+                              : f
+                          )
+                        )
+                      } catch (e) {
+                        toast.error(`Failed to upload ${uf.file.name}`)
+                        setUploadedFiles(prev =>
+                          prev.map(f =>
+                            f.file === uf.file ? { ...f, status: 'error' } : f
+                          )
+                        )
+                      }
+                    })
+                  )
+                }}
+              />
               <Button
                 type={isLoading ? 'button' : 'submit'}
                 size={'icon'}

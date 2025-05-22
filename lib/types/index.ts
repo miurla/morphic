@@ -78,3 +78,11 @@ export type SearXNGSearchResults = {
   number_of_results?: number
   query: string
 }
+
+export type UploadedFile = {
+  file: File
+  status: 'uploading' | 'uploaded' | 'error'
+  url?: string
+  name?: string
+  key?: string
+}

@@ -1,15 +1,18 @@
 'use client'
 
+import { useFileDropzone } from '@/hooks/use-file-dropzone'
 import { deleteTrailingMessages } from '@/lib/actions/chat-db'
+import { UploadedFile } from '@/lib/types'
 import { Model } from '@/lib/types/models'
 import { cn, generateUUID } from '@/lib/utils'
 import { useChat } from '@ai-sdk/react'
-import { UIMessage, defaultChatStore } from 'ai'
+import { FileUIPart, UIMessage, defaultChatStore } from 'ai'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
+import { DragOverlay } from './drag-overlay'
 
 // Define section structure
 interface ChatSection {
@@ -31,6 +34,7 @@ export function Chat({
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
 
   const chatStore: any = defaultChatStore({
     api: '/api/chat',
@@ -274,12 +278,29 @@ export function Chat({
     }
   }
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    handleSubmit(e)
+
+    const uploaded = uploadedFiles.filter(f => f.status === 'uploaded')
+
+    const files: FileUIPart[] = uploaded.map(f => ({
+      type: 'file',
+      url: f.url!,
+      name: f.name!,
+      key: f.key!,
+      mediaType: f.file.type
+    }))
+
+    handleSubmit(e, { files })
+    setUploadedFiles([])
   }
 
-  console.log('id', id)
+  const { isDragging, handleDragOver, handleDragLeave, handleDrop } =
+    useFileDropzone({
+      uploadedFiles,
+      setUploadedFiles,
+      chatId: id
+    })
 
   return (
     <div
@@ -288,6 +309,9 @@ export function Chat({
         messages.length === 0 ? 'items-center justify-center' : ''
       )}
       data-testid="full-chat"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       <ChatMessages
         sections={sections}
@@ -300,6 +324,7 @@ export function Chat({
         reload={handleReloadFrom}
       />
       <ChatPanel
+        chatId={id}
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={onSubmit}
@@ -311,8 +336,11 @@ export function Chat({
         append={append}
         models={models}
         showScrollToBottomButton={!isAtBottom}
+        uploadedFiles={uploadedFiles}
+        setUploadedFiles={setUploadedFiles}
         scrollContainerRef={scrollContainerRef}
       />
+      <DragOverlay visible={isDragging} />
     </div>
   )
 }

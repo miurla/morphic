@@ -5,6 +5,7 @@ import { UIMessage } from '@ai-sdk/react'
 import { Pencil } from 'lucide-react'
 import React, { useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
+import { AttachmentPreview } from './attachment-preview'
 import { CollapsibleMessage } from './collapsible-message'
 import { Button } from './ui/button'
 
@@ -49,12 +50,24 @@ export const UserMessage: React.FC<UserMessageProps> = ({
     }
   }
 
+  const derivedAttachments =
+    message.parts
+      ?.filter(part => part.type === 'file')
+      .map(part => ({
+        name: part.filename,
+        url: part.url,
+        contentType: part.mediaType
+      })) || []
+
   return (
     <CollapsibleMessage role="user">
       <div
         className="flex-1 break-words w-full group outline-none relative"
         tabIndex={0}
       >
+        {!isEditing && derivedAttachments && derivedAttachments.length > 0 && (
+          <AttachmentPreview attachments={derivedAttachments} />
+        )}
         {isEditing ? (
           <div className="flex flex-col gap-2">
             <TextareaAutosize

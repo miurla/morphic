@@ -126,16 +126,26 @@ export async function deleteChat(
 
 // Add a message to a chat
 export async function addMessage({
-  id, // Optional ID parameter
+  id,
   chatId,
   role,
   parts
 }: {
-  id?: string // Make ID optional
+  id?: string
   chatId: string
   role: string
   parts: any
 }): Promise<Message> {
+  const attachments = Array.isArray(parts)
+    ? parts
+        .filter(part => part.type === 'file')
+        .map(part => ({
+          name: part.filename,
+          url: part.url,
+          contentType: part.mediaType
+        }))
+    : []
+
   const valuesToInsert: {
     id?: string
     chatId: string
@@ -146,17 +156,14 @@ export async function addMessage({
     chatId,
     role,
     parts,
-    attachments: {}
+    attachments
   }
 
   if (id) {
-    valuesToInsert.id = id // Set ID if provided
+    valuesToInsert.id = id
   }
 
-  const [message] = await db
-    .insert(messages)
-    .values(valuesToInsert) // Use the modified values
-    .returning()
+  const [message] = await db.insert(messages).values(valuesToInsert).returning()
 
   return message
 }
