@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData()
     const file = formData.get('file') as File
-
+    const chatId = formData.get('chatId') as string
     if (!file) {
       return NextResponse.json({ error: 'File is required' }, { status: 400 })
     }
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    const result = await uploadFileToSupabase(file)
+    const result = await uploadFileToSupabase(file, userId, chatId)
     return NextResponse.json({ success: true, file: result }, { status: 200 })
   } catch (err: any) {
     console.error('Upload Error:', err)
@@ -54,9 +54,13 @@ function sanitizeFilename(filename: string) {
   return filename.replace(/[^a-z0-9.\-_]/gi, '_').toLowerCase()
 }
 
-async function uploadFileToSupabase(file: File) {
+async function uploadFileToSupabase(
+  file: File,
+  userId: string,
+  chatId: string
+) {
   const sanitizedFileName = sanitizeFilename(file.name)
-  const filePath = `${Date.now()}-${sanitizedFileName}`
+  const filePath = `${userId}/chats/${chatId}/${Date.now()}-${sanitizedFileName}`
   const supabase = await createClient()
   const { error } = await supabase.storage
     .from('user-uploads')
