@@ -15,14 +15,14 @@ export const UploadedFileList = React.memo(function UploadedFileList({
   onRemove
 }: UploadedFileListProps) {
   return (
-    <div className="w-full flex justify-center py-4">
+    <div className="w-full flex p-4 max-w-3xl mx-auto">
       <div className="flex gap-6 overflow-x-auto">
         {files.map((it, index) => (
           <div
             key={index}
-            className="relative w-28 flex-shrink-0 flex flex-col items-center"
+            className="relative w-20 flex-shrink-0 flex flex-col items-center"
           >
-            <div className="relative w-28 h-20 rounded-lg overflow-hidden shadow border bg-muted/20 dark:bg-muted/10">
+            <div className="relative w-20 aspect-[7/5] rounded-lg overflow-hidden shadow border bg-muted/20 dark:bg-muted/10">
               {it.file.type.startsWith('image/') ? (
                 <Image
                   src={URL.createObjectURL(it.file)}
