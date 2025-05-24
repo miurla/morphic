@@ -1,36 +1,29 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { UIMessage } from '@ai-sdk/react'
 import { Pencil } from 'lucide-react'
 import React, { useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
-import { AttachmentPreview } from './attachment-preview'
 import { CollapsibleMessage } from './collapsible-message'
 import { Button } from './ui/button'
 
-type UserMessageProps = {
-  message: UIMessage
+interface UserTextSectionProps {
+  content: string
   messageId?: string
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
 }
 
-export const UserMessage: React.FC<UserMessageProps> = ({
-  message,
+export const UserTextSection: React.FC<UserTextSectionProps> = ({
+  content,
   messageId,
   onUpdateMessage
 }) => {
-  const messageText =
-    message.parts
-      ?.filter(part => part.type === 'text')
-      .map(part => part.text)
-      .join('') || ''
   const [isEditing, setIsEditing] = useState(false)
-  const [editedContent, setEditedContent] = useState(messageText)
+  const [editedContent, setEditedContent] = useState(content)
 
   const handleEditClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
-    setEditedContent(messageText)
+    setEditedContent(content)
     setIsEditing(true)
   }
 
@@ -50,24 +43,12 @@ export const UserMessage: React.FC<UserMessageProps> = ({
     }
   }
 
-  const derivedAttachments =
-    message.parts
-      ?.filter(part => part.type === 'file')
-      .map(part => ({
-        name: part.filename,
-        url: part.url,
-        contentType: part.mediaType
-      })) || []
-
   return (
     <CollapsibleMessage role="user">
       <div
         className="flex-1 break-words w-full group outline-none relative"
         tabIndex={0}
       >
-        {!isEditing && derivedAttachments && derivedAttachments.length > 0 && (
-          <AttachmentPreview attachments={derivedAttachments} />
-        )}
         {isEditing ? (
           <div className="flex flex-col gap-2">
             <TextareaAutosize
@@ -89,7 +70,7 @@ export const UserMessage: React.FC<UserMessageProps> = ({
           </div>
         ) : (
           <div className="flex justify-between items-start">
-            <div className="flex-1">{messageText}</div>
+            <div className="flex-1">{content}</div>
             <div
               className={cn(
                 'absolute top-1 right-1 transition-opacity ml-2',
