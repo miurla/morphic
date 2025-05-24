@@ -30,7 +30,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
               <img
                 src={att.url}
                 alt={att.name}
-                className="rounded border max-h-60 object-contain"
+                className="rounded border max-h-28 object-contain"
               />
             ) : isPdf ? (
               <a
