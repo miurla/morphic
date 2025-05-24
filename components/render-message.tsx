@@ -2,7 +2,8 @@ import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
 import { AnswerSection } from './answer-section'
 import { ReasoningSection } from './reasoning-section'
 import { ToolSection } from './tool-section'
-import { UserMessage } from './user-message'
+import { UserFileSection } from './user-file-section'
+import { UserTextSection } from './user-text-section'
 
 interface RenderMessageProps {
   message: UIMessage
@@ -31,15 +32,37 @@ export function RenderMessage({
 }: RenderMessageProps) {
   if (message.role === 'user') {
     return (
-      <UserMessage
-        message={message}
-        messageId={messageId}
-        onUpdateMessage={onUpdateMessage}
-      />
+      <>
+        {message.parts?.map((part, index) => {
+          switch (part.type) {
+            case 'text':
+              return (
+                <UserTextSection
+                  key={`${messageId}-user-text-${index}`}
+                  content={part.text}
+                  messageId={messageId}
+                  onUpdateMessage={onUpdateMessage}
+                />
+              )
+            case 'file':
+              return (
+                <UserFileSection
+                  key={`${messageId}-user-file-${index}`}
+                  file={{
+                    name: part.filename || 'Unknown file',
+                    url: part.url,
+                    contentType: part.mediaType
+                  }}
+                />
+              )
+            default:
+              return null
+          }
+        })}
+      </>
     )
   }
 
-  // New way: Use parts instead of toolInvocations
   return (
     <>
       {message.parts?.map((part, index) => {
