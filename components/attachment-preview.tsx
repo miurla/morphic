@@ -18,7 +18,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
   if (!attachments?.length) return null
 
   return (
-    <div className="mt-3 flex flex-wrap gap-4">
+    <div className="flex flex-wrap gap-4">
       {attachments.map((att, index) => {
         const isImage = att.contentType.startsWith('image/')
         const isPdf = att.contentType === 'application/pdf'
@@ -30,7 +30,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
               <img
                 src={att.url}
                 alt={att.name}
-                className="rounded border max-h-28 object-contain"
+                className="rounded-md border max-h-16 object-contain"
               />
             ) : isPdf ? (
               <a
