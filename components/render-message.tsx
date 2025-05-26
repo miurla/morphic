@@ -101,7 +101,7 @@ export function RenderMessage({
               <AnswerSection
                 key={`${messageId}-text-${index}`}
                 content={part.text}
-                isOpen={getIsOpen(messageId, 'text', hasNextPart)}
+                isOpen={getIsOpen(messageId, part.type, hasNextPart)}
                 onOpenChange={open => onOpenChange(messageId, open)}
                 chatId={chatId}
                 showActions={isLastTextPart}
@@ -118,7 +118,7 @@ export function RenderMessage({
                   reasoning: part.text,
                   isDone: index !== (message.parts?.length ?? 0) - 1
                 }}
-                isOpen={getIsOpen(messageId, 'reasoning', hasNextPart)}
+                isOpen={getIsOpen(messageId, part.type, hasNextPart)}
                 onOpenChange={open => onOpenChange(messageId, open)}
               />
             )
