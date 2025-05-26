@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils'
 import { UseChatHelpers } from '@ai-sdk/react'
 import { UIMessage } from 'ai'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { DefaultSkeleton } from './default-skeleton'
 import { RenderMessage } from './render-message'
 
@@ -36,32 +36,13 @@ export function ChatMessages({
   onUpdateMessage,
   reload
 }: ChatMessagesProps) {
-  const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
-  const manualToolCallId = 'manual-tool-call'
+  // Track user-modified states (when user explicitly opens/closes)
+  const [userModifiedStates, setUserModifiedStates] = useState<
+    Record<string, boolean>
+  >({})
   const isLoading = status === 'submitted' || status === 'streaming'
 
-  useEffect(() => {
-    // Open manual tool call when the last section is a user message
-    if (sections.length > 0) {
-      const lastSection = sections[sections.length - 1]
-      if (lastSection.userMessage.role === 'user') {
-        setOpenStates({ [manualToolCallId]: true })
-      }
-    }
-  }, [sections])
-
   if (!sections.length) return null
-
-  // Get all messages as a flattened array
-  const allMessages = sections.flatMap(section => [
-    section.userMessage,
-    ...section.assistantMessages
-  ])
-
-  const lastUserIndex =
-    allMessages.length -
-    1 -
-    [...allMessages].reverse().findIndex(msg => msg.role === 'user')
 
   // Check if loading indicator should be shown
   const showLoading =
@@ -69,17 +50,28 @@ export function ChatMessages({
     sections.length > 0 &&
     sections[sections.length - 1].assistantMessages.length === 0
 
-  const getIsOpen = (id: string) => {
-    if (id.includes('call')) {
-      return openStates[id] ?? true
+  const getIsOpen = (id: string, partType?: string, hasNextPart?: boolean) => {
+    // If user has explicitly modified this state, use that
+    if (userModifiedStates.hasOwnProperty(id)) {
+      return userModifiedStates[id]
     }
-    const baseId = id.endsWith('-related') ? id.slice(0, -8) : id
-    const index = allMessages.findIndex(msg => msg.id === baseId)
-    return openStates[id] ?? index >= lastUserIndex
+
+    // For tool-invocations, default to open
+    if (partType === 'tool-invocation') {
+      return true
+    }
+
+    // For reasoning, auto-collapse if there's a next part in the same message
+    if (partType === 'reasoning') {
+      return !hasNextPart
+    }
+
+    // For other types (like text), default to open
+    return true
   }
 
   const handleOpenChange = (id: string, open: boolean) => {
-    setOpenStates(prev => ({
+    setUserModifiedStates(prev => ({
       ...prev,
       [id]: open
     }))
@@ -121,6 +113,7 @@ export function ChatMessages({
                 addToolResult={addToolResult}
                 onUpdateMessage={onUpdateMessage}
                 reload={reload}
+                sectionIndex={sectionIndex}
               />
               {showLoading && <DefaultSkeleton />}
             </div>
@@ -139,6 +132,7 @@ export function ChatMessages({
                   addToolResult={addToolResult}
                   onUpdateMessage={onUpdateMessage}
                   reload={reload}
+                  sectionIndex={sectionIndex}
                 />
               </div>
             ))}
