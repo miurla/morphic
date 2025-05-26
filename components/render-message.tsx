@@ -8,7 +8,7 @@ import { UserTextSection } from './user-text-section'
 interface RenderMessageProps {
   message: UIMessage
   messageId: string
-  getIsOpen: (id: string) => boolean
+  getIsOpen: (id: string, partType?: string, hasNextPart?: boolean) => boolean
   onOpenChange: (id: string, open: boolean) => void
   onQuerySelect: (query: string) => void
   chatId?: string
@@ -73,13 +73,20 @@ export function RenderMessage({
           part.type === 'text' &&
           textParts.indexOf(part) === textParts.length - 1
 
+        // Check if there's a next part in this message
+        const hasNextPart = message.parts && index < message.parts.length - 1
+
         switch (part.type) {
           case 'tool-invocation':
             return (
               <ToolSection
                 key={`${messageId}-tool-${index}`}
                 tool={part.toolInvocation}
-                isOpen={getIsOpen(part.toolInvocation.toolCallId)}
+                isOpen={getIsOpen(
+                  part.toolInvocation.toolCallId,
+                  part.type,
+                  hasNextPart
+                )}
                 onOpenChange={open =>
                   onOpenChange(part.toolInvocation.toolCallId, open)
                 }
@@ -94,7 +101,7 @@ export function RenderMessage({
               <AnswerSection
                 key={`${messageId}-text-${index}`}
                 content={part.text}
-                isOpen={getIsOpen(messageId)}
+                isOpen={getIsOpen(messageId, part.type, hasNextPart)}
                 onOpenChange={open => onOpenChange(messageId, open)}
                 chatId={chatId}
                 showActions={isLastTextPart}
@@ -111,7 +118,7 @@ export function RenderMessage({
                   reasoning: part.text,
                   isDone: index !== (message.parts?.length ?? 0) - 1
                 }}
-                isOpen={getIsOpen(messageId)}
+                isOpen={getIsOpen(messageId, part.type, hasNextPart)}
                 onOpenChange={open => onOpenChange(messageId, open)}
               />
             )
