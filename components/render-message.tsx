@@ -16,7 +16,6 @@ interface RenderMessageProps {
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
-  sectionIndex: number
 }
 
 export function RenderMessage({
@@ -29,8 +28,7 @@ export function RenderMessage({
   status,
   addToolResult,
   onUpdateMessage,
-  reload,
-  sectionIndex
+  reload
 }: RenderMessageProps) {
   if (message.role === 'user') {
     return (

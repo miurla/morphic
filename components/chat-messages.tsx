@@ -113,7 +113,6 @@ export function ChatMessages({
                 addToolResult={addToolResult}
                 onUpdateMessage={onUpdateMessage}
                 reload={reload}
-                sectionIndex={sectionIndex}
               />
               {showLoading && <DefaultSkeleton />}
             </div>
@@ -132,7 +131,6 @@ export function ChatMessages({
                   addToolResult={addToolResult}
                   onUpdateMessage={onUpdateMessage}
                   reload={reload}
-                  sectionIndex={sectionIndex}
                 />
               </div>
             ))}
