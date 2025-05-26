@@ -29,8 +29,6 @@ export function MessageActions({
 }: MessageActionsProps) {
   const isLoading = status === 'submitted' || status === 'streaming'
 
-  console.log('isLoading', status)
-
   async function handleCopy() {
     await navigator.clipboard.writeText(message)
     toast.success('Message copied to clipboard')
