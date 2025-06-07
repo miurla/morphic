@@ -1,5 +1,5 @@
 import { Model } from '@/lib/types/models'
-import { headers } from 'next/headers'
+import { getBaseUrl } from '@/lib/utils/url'
 import defaultModels from './default-models.json'
 
 export function validateModel(model: any): model is Model {
@@ -17,24 +17,8 @@ export function validateModel(model: any): model is Model {
 
 export async function getModels(): Promise<Model[]> {
   try {
-    // Check for BASE_URL environment variable first
-    const baseUrlEnv = process.env.BASE_URL
-    let baseUrlObj: URL
-
-    if (baseUrlEnv) {
-      try {
-        baseUrlObj = new URL(baseUrlEnv)
-        console.log('Using BASE_URL environment variable:', baseUrlEnv)
-      } catch (error) {
-        console.warn(
-          'Invalid BASE_URL environment variable, falling back to headers'
-        )
-        baseUrlObj = await getBaseUrlFromHeaders()
-      }
-    } else {
-      // If BASE_URL is not set, use headers
-      baseUrlObj = await getBaseUrlFromHeaders()
-    }
+    // Get the base URL using the centralized utility function
+    const baseUrlObj = await getBaseUrl()
 
     // Construct the models.json URL
     const modelUrl = new URL('/config/models.json', baseUrlObj)
@@ -92,30 +76,3 @@ export async function getModels(): Promise<Model[]> {
   return []
 }
 
-// Helper function to get base URL from headers
-async function getBaseUrlFromHeaders(): Promise<URL> {
-  const headersList = await headers()
-  const baseUrl = headersList.get('x-base-url')
-  const url = headersList.get('x-url')
-  const host = headersList.get('x-host')
-  const protocol = headersList.get('x-protocol') || 'http:'
-
-  try {
-    // Try to use the pre-constructed base URL if available
-    if (baseUrl) {
-      return new URL(baseUrl)
-    } else if (url) {
-      return new URL(url)
-    } else if (host) {
-      const constructedUrl = `${protocol}${
-        protocol.endsWith(':') ? '//' : '://'
-      }${host}`
-      return new URL(constructedUrl)
-    } else {
-      return new URL('http://localhost:3000')
-    }
-  } catch (urlError) {
-    // Fallback to default URL if any error occurs during URL construction
-    return new URL('http://localhost:3000')
-  }
-}

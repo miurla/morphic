@@ -129,7 +129,7 @@ export function Chat({
     handleScroll() // Set initial state
 
     return () => container.removeEventListener('scroll', handleScroll)
-  }, [scrollContainerRef.current])
+  }, [])
 
   // Scroll to the section when a new user message is sent
   useEffect(() => {
