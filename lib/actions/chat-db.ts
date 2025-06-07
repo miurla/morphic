@@ -5,6 +5,7 @@ import * as chatDb from '@/lib/db/chat'
 import { type Chat as DBChat, type Message as DBMessage } from '@/lib/db/schema' // Import DB schema types
 import { getTextFromParts } from '@/lib/utils/message-utils' // Corrected import path
 import { UIMessage } from '@ai-sdk/react' // Import UIMessage
+import { revalidateTag, unstable_cache } from 'next/cache'
 
 // Get all chats for a user
 export async function getChats(userId: string) {
@@ -17,7 +18,7 @@ export async function getChatsPage(userId: string, limit = 20, offset = 0) {
 }
 
 // Get a single chat by ID, including its messages, with permission checks.
-export async function getChat(
+const getChatUncached = async function (
   chatId: string,
   requestingUserId?: string // Optional: for logged-in user context
 ): Promise<(DBChat & { messages: DBMessage[] }) | null> {
@@ -75,6 +76,26 @@ export async function getChat(
   return null
 }
 
+// Create a cached version for each chatId
+const createCachedGetChat = (chatId: string) =>
+  unstable_cache(
+    (id: string, userId?: string) => getChatUncached(id, userId),
+    [`chat-${chatId}`],
+    {
+      revalidate: 300, // 5 minutes cache
+      tags: [`chat-${chatId}`, 'chat']
+    }
+  )
+
+// Export function that uses the cached version
+export async function getChat(
+  chatId: string,
+  requestingUserId?: string
+): Promise<(DBChat & { messages: DBMessage[] }) | null> {
+  const cachedGetChat = createCachedGetChat(chatId)
+  return cachedGetChat(chatId, requestingUserId)
+}
+
 // Clear all chats for a user
 export async function clearChats(): Promise<{
   error?: string
@@ -89,6 +110,10 @@ export async function clearChats(): Promise<{
     if (result.error) {
       return { error: result.error }
     }
+
+    // Revalidate chat cache when all chats are cleared
+    revalidateTag('chat')
+
     return { success: true } // Indicate success
   } catch (error) {
     // This catch might be redundant if chatDb.clearChats handles its own errors and returns { error: ... }
@@ -117,6 +142,10 @@ export async function deleteChat(chatId: string): Promise<{
     // If chatDb.deleteChat signifies success differently, adjust this condition
     // For example, if it returns the deleted chat or a count > 0 on success
     // For now, let's assume if no error, it's a success. Consider a more explicit success check.
+
+    // Revalidate specific chat cache when a chat is deleted
+    revalidateTag(`chat-${chatId}`)
+
     return { success: true }
   } catch (error: any) {
     console.error(
@@ -154,7 +183,12 @@ export async function saveSingleMessage(
       role: message.role,
       parts: message.parts // Use UIMessage.parts directly
     }
-    return await chatDb.addMessage(messageToSave as any)
+    const result = await chatDb.addMessage(messageToSave as any)
+
+    // Revalidate specific chat cache when new message is added
+    revalidateTag(`chat-${chatId}`)
+
+    return result
   } catch (error) {
     console.error(`Error saving message for chat ID ${chatId}:`, error)
     throw error
@@ -198,6 +232,9 @@ export async function saveChatMessage(
       parts: userMessage.parts // Use UIMessage.parts directly
     }
     const dbSavedMessage = await chatDb.addMessage(messageToSaveToDb as any)
+
+    // Revalidate specific chat cache when new message is added
+    revalidateTag(`chat-${chatId}`)
 
     return { chat, message: dbSavedMessage }
   } catch (error) {
@@ -259,6 +296,9 @@ export async function saveChat(
           parts: message.parts
         })
       }
+
+      // Revalidate specific chat cache when new messages are added
+      revalidateTag(`chat-${savedOrUpdatedChatDetails.id}`)
     }
 
     // Return the saved/updated chat metadata
@@ -315,8 +355,8 @@ export async function deleteTrailingMessages(
       return { error: deleteResult.error }
     }
 
-    // Optional: revalidatePath if needed here, though typically done by the calling client/component logic
-    // revalidatePath(`/chat/${chatId}`) // Or some other relevant path
+    // Revalidate specific chat cache when messages are deleted
+    revalidateTag(`chat-${chatId}`)
 
     return { success: true, deleted: deleteResult.count }
   } catch (error: any) {
@@ -352,6 +392,9 @@ export async function shareChat(id: string): Promise<DBChat | null> {
     // The operation to share the chat in the database failed or was not permitted
     return null
   }
+
+  // Revalidate specific chat cache when chat visibility is changed
+  revalidateTag(`chat-${id}`)
 
   // Return the updated chat object. The concept of a specific sharePath is obsolete.
   return updatedChat

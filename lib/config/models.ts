@@ -1,5 +1,5 @@
 import { Model } from '@/lib/types/models'
-import { getBaseUrl } from '@/lib/utils/url'
+import { unstable_cache } from 'next/cache'
 import defaultModels from './default-models.json'
 
 export function validateModel(model: any): model is Model {
@@ -15,18 +15,15 @@ export function validateModel(model: any): model is Model {
   )
 }
 
-export async function getModels(): Promise<Model[]> {
+const getModelsUncached = async function (baseUrl: string): Promise<Model[]> {
   try {
-    // Get the base URL using the centralized utility function
-    const baseUrlObj = await getBaseUrl()
-
-    // Construct the models.json URL
-    const modelUrl = new URL('/config/models.json', baseUrlObj)
+    // Construct the models.json URL using the provided baseUrl
+    const modelUrl = new URL('/config/models.json', baseUrl)
     console.log('Attempting to fetch models from:', modelUrl.toString())
 
     try {
       const response = await fetch(modelUrl, {
-        cache: 'no-store',
+        next: { revalidate: 3600 },
         headers: {
           Accept: 'application/json'
         }
@@ -76,3 +73,15 @@ export async function getModels(): Promise<Model[]> {
   return []
 }
 
+// Cached version with 1 hour revalidation
+const getCachedModels = unstable_cache(getModelsUncached, ['models'], {
+  revalidate: 3600, // 1 hour cache
+  tags: ['models']
+})
+
+// Wrapper function that handles the dynamic baseUrl
+export async function getModels(): Promise<Model[]> {
+  const { getBaseUrl } = await import('@/lib/utils/url')
+  const baseUrlObj = await getBaseUrl()
+  return getCachedModels(baseUrlObj.toString())
+}
