@@ -31,7 +31,6 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   const data: Related | undefined =
     tool.state === 'result' ? tool.result : undefined
 
-  console.log('data', data)
   if (!data && isLoading) {
     return (
       <CollapsibleMessage
