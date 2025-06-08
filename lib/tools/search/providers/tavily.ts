@@ -32,7 +32,8 @@ export class TavilySearchProvider extends BaseSearchProvider {
         include_image_descriptions: includeImageDescriptions,
         include_answers: true,
         include_domains: includeDomains,
-        exclude_domains: excludeDomains
+        exclude_domains: excludeDomains,
+        country: "russia"
       })
     })
 
