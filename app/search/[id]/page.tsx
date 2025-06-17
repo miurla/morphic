@@ -4,7 +4,7 @@ import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { getModels } from '@/lib/config/models'
 import { convertToUIMessages } from '@/lib/utils'
 import { notFound, redirect } from 'next/navigation'
-import { ExtendedCoreMessage, SearchResults, SearchResultImage } from '@/lib/types'; // Added SearchResults and SearchResultImage
+import { ExtendedCoreMessage, SearchResults } from '@/lib/types'; // Added SearchResults
 
 export const maxDuration = 60
 
