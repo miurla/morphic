@@ -47,7 +47,7 @@ export class AdaptiveLearningEngine {
     const totalSubmissions = progress.codeSubmissions.length
     if (totalSubmissions === 0) return 100
 
-    const correctSubmissions = progress.codeSubmissions.filter(s => s.isCorrect).length
+    const correctSubmissions = progress.codeSubmissions.filter((s) => s.isCorrect).length
     return (correctSubmissions / totalSubmissions) * 100
   }
 
@@ -76,7 +76,7 @@ export class AdaptiveLearningEngine {
     
     // Check for repeated mistakes on same steps
     const mistakesByStep = new Map<number, number>()
-    progress.mistakes.forEach(mistake => {
+    progress.mistakes.forEach((mistake) => {
       const count = mistakesByStep.get(mistake.stepId) || 0
       mistakesByStep.set(mistake.stepId, count + 1)
     })
@@ -92,7 +92,7 @@ export class AdaptiveLearningEngine {
     
     // Check for steps with low accuracy
     const submissionsByStep = new Map<number, { total: number, correct: number }>()
-    progress.codeSubmissions.forEach(submission => {
+    progress.codeSubmissions.forEach((submission) => {
       const stats = submissionsByStep.get(submission.stepId) || { total: 0, correct: 0 }
       stats.total++
       if (submission.isCorrect) stats.correct++
@@ -121,13 +121,13 @@ export class AdaptiveLearningEngine {
     needsVisualAids: boolean
     prefersStepByStep: boolean
   } {
-    const recentMistakes = progress.mistakes.filter(m => {
+    const recentMistakes = progress.mistakes.filter((m) => {
       const mistakeTime = new Date(m.timestamp)
       const hourAgo = new Date(Date.now() - 60 * 60 * 1000)
       return mistakeTime > hourAgo
     })
     
-    const recentSubmissions = progress.codeSubmissions.filter(s => {
+    const recentSubmissions = progress.codeSubmissions.filter((s) => {
       const submissionTime = new Date(s.timestamp)
       const hourAgo = new Date(Date.now() - 60 * 60 * 1000)
       return submissionTime > hourAgo
@@ -135,8 +135,8 @@ export class AdaptiveLearningEngine {
     
     return {
       needsMoreExplanations: recentMistakes.length > 2,
-      needsMorePractice: recentSubmissions.length > 5 && recentSubmissions.filter(s => s.isCorrect).length / recentSubmissions.length < 0.7,
-      needsVisualAids: recentMistakes.some(m => m.error.includes('syntax') || m.error.includes('structure')),
+      needsMorePractice: recentSubmissions.length > 5 && recentSubmissions.filter((s) => s.isCorrect).length / recentSubmissions.length < 0.7,
+      needsVisualAids: recentMistakes.some((m) => m.error.includes('syntax') || m.error.includes('structure')),
       prefersStepByStep: progress.completedSteps.length > 0 && progress.currentStep === Math.max(...progress.completedSteps) + 1
     }
   }

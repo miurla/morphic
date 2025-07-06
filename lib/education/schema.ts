@@ -7,12 +7,16 @@ export const LessonStepSchema = z.object({
   type: z.enum(['instruction', 'code_exercise', 'explanation', 'quiz', 'project']),
   content: z.string(), // Markdown content for the step
   order: z.number(),
+  concept: z.string().optional(), // Main concept being taught (for adaptive learning)
+  instruction: z.string().optional(), // Step instruction
+  hints: z.array(z.string()).optional(), // Hints for this step
   
   // Code-related fields
   code: z.object({
     language: z.enum(['javascript', 'python', 'html', 'css', 'typescript']).optional(),
     startingCode: z.string().optional(),
     solution: z.string().optional(),
+    expectedOutput: z.string().optional(), // Expected output for validation
     highlightLines: z.array(z.number()).optional(), // Lines to highlight (1-indexed)
     readOnlyLines: z.array(z.number()).optional(), // Lines that cannot be edited
     tests: z.array(z.object({
@@ -81,8 +85,32 @@ export const LessonSchema = z.object({
   }).optional()
 })
 
-// User progress schema
+// User progress schema - compatible with lesson state manager
 export const LessonProgressSchema = z.object({
+  userId: z.string(),
+  lessonId: z.string(),
+  currentStep: z.number().default(0), // Current step index
+  completedSteps: z.array(z.number()).default([]), // Array of completed step indices
+  score: z.number().default(0),
+  timeSpent: z.number().default(0), // in seconds
+  lastAccessed: z.string(),
+  achievements: z.array(z.string()).default([]),
+  codeSubmissions: z.array(z.object({
+    stepId: z.number(),
+    code: z.string(),
+    timestamp: z.string(),
+    isCorrect: z.boolean().optional()
+  })).default([]),
+  mistakes: z.array(z.object({
+    stepId: z.number(),
+    error: z.string(),
+    timestamp: z.string(),
+    resolved: z.boolean().optional()
+  })).default([])
+})
+
+// Alternative progress schema for more detailed tracking
+export const DetailedProgressSchema = z.object({
   userId: z.string(),
   lessonId: z.string(),
   currentStepId: z.string(),
@@ -143,7 +171,11 @@ export const LearningPathSchema = z.object({
 export type LessonStep = z.infer<typeof LessonStepSchema>
 export type Lesson = z.infer<typeof LessonSchema>
 export type LessonProgress = z.infer<typeof LessonProgressSchema>
+export type DetailedProgress = z.infer<typeof DetailedProgressSchema>
 export type LearningPath = z.infer<typeof LearningPathSchema>
+
+// Schema exports for validation
+export const ProgressSchema = LessonProgressSchema
 
 // Validation helpers
 export function validateLesson(lesson: unknown): lesson is Lesson {

@@ -319,27 +319,33 @@ export class LessonContentLoader {
   }
 }
 
+// Convenient export functions
+export const loadLesson = (lessonId: string) => LessonContentLoader.loadLesson(lessonId)
+export const loadLessonStep = (lessonId: string, stepId: string) => LessonContentLoader.loadLessonStep(lessonId, stepId)
+export const loadLessonsByDifficulty = (difficulty: 'beginner' | 'intermediate' | 'advanced') => LessonContentLoader.loadLessonsByDifficulty(difficulty)
+export const loadLessonsByLanguage = (language: string) => LessonContentLoader.loadLessonsByLanguage(language)
+
 // Helper functions for lesson management
 export const createLessonProgress = (lessonId: string, userId: string): Progress => ({
   userId,
   lessonId,
-  currentStepId: 'step-1',
+  currentStep: 0,
   completedSteps: [],
-  startedAt: new Date().toISOString(),
-  lastAccessedAt: new Date().toISOString(),
+  score: 0,
   timeSpent: 0,
-  attempts: 1,
-  stepProgress: {},
-  interactions: []
+  lastAccessed: new Date().toISOString(),
+  achievements: [],
+  codeSubmissions: [],
+  mistakes: []
 })
 
-export const updateLessonProgress = (progress: Progress, stepId: string, completed: boolean): Progress => ({
+export const updateLessonProgress = (progress: Progress, stepIndex: number, completed: boolean): Progress => ({
   ...progress,
-  completedSteps: completed && !progress.completedSteps.includes(stepId) 
-    ? [...progress.completedSteps, stepId]
+  completedSteps: completed && !progress.completedSteps.includes(stepIndex) 
+    ? [...progress.completedSteps, stepIndex]
     : progress.completedSteps,
-  lastAccessedAt: new Date().toISOString(),
-  currentStepId: completed ? stepId : progress.currentStepId
+  lastAccessed: new Date().toISOString(),
+  currentStep: completed ? stepIndex + 1 : progress.currentStep
 })
 
 export const calculateLessonProgress = (lesson: Lesson, progress: Progress): number => {

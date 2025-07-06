@@ -102,41 +102,55 @@ interface CodeExecutionResult {
 
 interface CodeEditorProps {
   language: string
-  initialCode: string
+  value?: string
+  initialCode?: string
   solution?: string
   tests?: Array<{
     name: string
     code: string
     expected: any
   }>
+  onChange?: (code: string) => void
   onCodeChange?: (code: string) => void
   onExecute?: (code: string) => Promise<CodeExecutionResult>
   theme?: 'vs-dark' | 'vs-light'
   readOnly?: boolean
   highlightedLines?: number[]
   className?: string
+  height?: string
 }
 
 export function CodeEditor({
   language,
+  value,
   initialCode,
   solution,
   tests = [],
+  onChange,
   onCodeChange,
   onExecute,
   theme = 'vs-dark',
   readOnly = false,
   highlightedLines = [],
-  className = ''
+  className = '',
+  height = '400px'
 }: CodeEditorProps) {
-  const [code, setCode] = useState(initialCode)
+  const [code, setCode] = useState(value || initialCode || '')
   const [isExecuting, setIsExecuting] = useState(false)
   const [executionResult, setExecutionResult] = useState<CodeExecutionResult | null>(null)
   const [showSolution, setShowSolution] = useState(false)
   const [testResults, setTestResults] = useState<Array<{name: string, passed: boolean, error?: string}>>([])
 
+  // Update code when value prop changes
+  useEffect(() => {
+    if (value !== undefined) {
+      setCode(value)
+    }
+  }, [value])
+
   const handleCodeChange = (newCode: string) => {
     setCode(newCode)
+    onChange?.(newCode)
     onCodeChange?.(newCode)
     // Clear previous execution results when code changes
     setExecutionResult(null)
@@ -187,7 +201,7 @@ export function CodeEditor({
   }
 
   const resetCode = () => {
-    setCode(initialCode)
+    setCode(initialCode || '')
     setExecutionResult(null)
     setTestResults([])
   }

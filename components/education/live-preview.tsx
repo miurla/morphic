@@ -21,10 +21,11 @@ import { executeCode, type ExecutionResult } from '@/lib/services/code-execution
 
 export interface LivePreviewProps {
   code: string
-  language: 'javascript' | 'python' | 'html' | 'css' | 'typescript'
+  language: 'javascript' | 'python' | 'html' | 'css' | 'typescript' | 'react'
   autoExecute?: boolean
   showConsole?: boolean
   className?: string
+  height?: string
   onExecutionChange?: (result: ExecutionResult) => void
 }
 
@@ -68,7 +69,9 @@ export function LivePreview({
     setIsExecuting(true)
     
     try {
-      const executionResult = await executeCode(language, code)
+      // Map react to javascript for execution
+      const executionLanguage = language === 'react' ? 'javascript' : language
+      const executionResult = await executeCode(executionLanguage as 'javascript' | 'python' | 'html' | 'css' | 'typescript', code)
       setResult(executionResult)
       setExecutionHistory(prev => [executionResult, ...prev.slice(0, 4)]) // Keep last 5 executions
       

@@ -1,397 +1,207 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { CodeEditor } from './code-editor'
-import { 
-  Play, 
-  Pause, 
-  ChevronLeft, 
-  ChevronRight, 
-  Code2, 
-  Eye, 
-  CheckCircle,
-  Clock,
-  Target,
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Play,
+  Pause,
   Volume2,
   VolumeX,
-  Monitor,
-  MessageCircle,
-  Maximize2
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  Eye,
+  Code,
+  Terminal,
+  Lightbulb,
+  CheckCircle,
+  AlertCircle,
+  MessageSquare,
+  Maximize2,
+  Minimize2
 } from 'lucide-react'
+import { CodeEditor } from './code-editor'
+import { LivePreview } from './live-preview'
+import { StepNavigation } from './step-navigation'
 
-// Enhanced mock data for demonstration
-const mockLesson = {
-  id: 'js-variables-intro',
-  title: 'Introduction to JavaScript Variables',
-  difficulty: 'beginner',
-  estimatedDuration: 15,
-  currentStep: 2,
-  totalSteps: 5,
-  progress: 40,
-  language: 'javascript'
+interface EducationalArtifactProps {
+  lessonId?: string
+  stepId?: string
+  className?: string
 }
 
-const mockSteps = [
-  {
-    id: 'step-1',
-    title: 'What Are Variables?',
-    type: 'instruction',
-    content: `# What Are Variables?
+interface MockLesson {
+  id: string
+  title: string
+  description: string
+  currentStep: number
+  totalSteps: number
+  progress: number
+  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  estimatedTime: string
+  topics: string[]
+  instructor: {
+    name: string
+    voice: string
+  }
+  currentStepData: {
+    title: string
+    description: string
+    instructions: string[]
+    code: string
+    hints: string[]
+    expectedOutput: string
+    challenge: string
+  }
+}
 
-Variables are containers that store data values. In JavaScript, you can think of them as labeled boxes that hold information.
-
-## Why Use Variables?
-- Store data for later use
-- Make code more readable
-- Avoid repeating values
-- Create dynamic programs
-
-Let's start learning how to create and use variables!`,
-    narration: 'Welcome to JavaScript variables! Variables are like labeled containers that store information.'
+// Mock data for demonstration
+const mockLesson: MockLesson = {
+  id: 'react-basics-1',
+  title: 'React Components Fundamentals',
+  description: 'Learn the basics of React components, props, and JSX syntax',
+  currentStep: 2,
+  totalSteps: 8,
+  progress: 25,
+  difficulty: 'beginner',
+  estimatedTime: '15 minutes',
+  topics: ['React', 'Components', 'JSX', 'Props'],
+  instructor: {
+    name: 'AI Instructor',
+    voice: 'friendly-female'
   },
-  {
-    id: 'step-2',
-    title: 'Declaring Your First Variable',
-    type: 'code_exercise',
-    content: `# Declaring Your First Variable
+  currentStepData: {
+    title: 'Creating Your First Component',
+    description: 'In this step, you\'ll learn how to create a simple React component using JSX syntax.',
+    instructions: [
+      'Create a function component called `Welcome`',
+      'Add a `name` prop to personalize the greeting',
+      'Return JSX that displays a welcome message',
+      'Test your component by calling it with different names'
+    ],
+    code: `import React from 'react'
 
-Let's create your first variable! In JavaScript, we use the \`let\` keyword to declare a variable.
-
-## Your Task
-1. Declare a variable called \`message\`
-2. Assign it the value "Hello, World!"
-3. Use \`console.log()\` to display it`,
-    code: {
-      language: 'javascript',
-      startingCode: '// Declare a variable called message and assign it "Hello, World!"\n// Then log it to the console\n\n',
-      solution: 'let message = "Hello, World!";\nconsole.log(message);',
-      tests: [
-        {
-          name: 'Variable Declaration',
-          code: 'typeof message !== "undefined"',
-          expected: true
-        },
-        {
-          name: 'Correct Value',
-          code: 'message === "Hello, World!"',
-          expected: true
-        }
-      ]
-    },
-    narration: 'Now let\'s write some code! Declare a variable called message and assign it the value Hello, World.'
-  },
-  {
-    id: 'step-3',
-    title: 'Different Types of Variables',
-    type: 'explanation',
-    content: `# Different Types of Variables
-
-JavaScript has several ways to declare variables:
-
-## \`let\` - Block Scoped
-- Can be reassigned
-- Block scoped
-- Modern way to declare variables
-
-## \`const\` - Constant
-- Cannot be reassigned
-- Block scoped
-- Use for values that won't change
-
-## \`var\` - Function Scoped (Avoid)
-- Can be reassigned
-- Function scoped
-- Older way, avoid in modern JavaScript`,
-    code: {
-      language: 'javascript',
-      startingCode: '// Examples of different variable declarations\n\n// Constant - cannot be changed\nconst PI = 3.14159;\n\n// Let - can be reassigned\nlet age = 25;\nage = 26; // This is allowed\n\n// Var - avoid using this\nvar oldStyle = "Don\'t use this";',
-      highlightedLines: [4, 7, 11]
-    },
-    narration: 'JavaScript has three ways to declare variables. Let me show you the differences.'
-  }
-]
-
-/**
- * Enhanced Educational Artifact Component
- * 
- * Features:
- * - Dynamic interface morphing (chat/editor/preview modes)
- * - Integrated Monaco code editor
- * - Step-by-step lesson navigation
- * - AI narration controls
- * - Progress tracking
- * - Responsive design
- */
-export function EducationalArtifact() {
-  const [mode, setMode] = useState<'chat' | 'editor' | 'preview'>('chat')
-  const [currentStepIndex, setCurrentStepIndex] = useState(1)
-  const [isNarrating, setIsNarrating] = useState(false)
-  const [code, setCode] = useState('')
-  const [isFullscreen, setIsFullscreen] = useState(false)
-
-  const currentStep = mockSteps[currentStepIndex]
-  const canGoPrevious = currentStepIndex > 0
-  const canGoNext = currentStepIndex < mockSteps.length - 1
-
-  const handleModeChange = (newMode: 'chat' | 'editor' | 'preview') => {
-    setMode(newMode)
-    console.log(`Morphing interface to ${newMode} mode`)
-  }
-
-  const toggleNarration = () => {
-    setIsNarrating(!isNarrating)
-    console.log(`Narration ${!isNarrating ? 'started' : 'stopped'}: ${currentStep.narration}`)
-  }
-
-  const navigateStep = (direction: 'previous' | 'next') => {
-    if (direction === 'previous' && canGoPrevious) {
-      setCurrentStepIndex(currentStepIndex - 1)
-    } else if (direction === 'next' && canGoNext) {
-      setCurrentStepIndex(currentStepIndex + 1)
-    }
-    
-    // Reset code when changing steps
-    const newStep = mockSteps[currentStepIndex + (direction === 'next' ? 1 : -1)]
-    if (newStep?.code?.startingCode) {
-      setCode(newStep.code.startingCode)
-    }
-  }
-
-  const handleCodeChange = (newCode: string) => {
-    setCode(newCode)
-  }
-
-  const handleCodeExecute = async (code: string) => {
-    // Mock code execution
-    console.log('Executing code:', code)
-    return {
-      success: true,
-      output: 'Hello, World!',
-      logs: ['Code executed successfully']
-    }
-  }
-
+// Create your Welcome component here
+function Welcome({ name }) {
   return (
-    <div className={`w-full mx-auto space-y-4 transition-all duration-300 ${
-      isFullscreen ? 'fixed inset-0 z-50 bg-background p-4' : 'max-w-7xl p-4'
-    }`}>
-      {/* Lesson Header */}
-      <Card className="border-2 border-primary/20">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-primary" />
-                {mockLesson.title}
-              </CardTitle>
-              <div className="flex items-center gap-4 mt-2">
-                <Badge variant="secondary">{mockLesson.difficulty}</Badge>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  {mockLesson.estimatedDuration} min
-                </div>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  Step {currentStepIndex + 1} of {mockSteps.length}
-                </div>
-              </div>
-            </div>
-            
-            {/* Mode Toggle */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant={mode === 'chat' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => handleModeChange('chat')}
-              >
-                <MessageCircle className="h-4 w-4 mr-1" />
-                Chat
-              </Button>
-              <Button
-                variant={mode === 'editor' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => handleModeChange('editor')}
-              >
-                <Code2 className="h-4 w-4 mr-1" />
-                Editor
-              </Button>
-              <Button
-                variant={mode === 'preview' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => handleModeChange('preview')}
-              >
-                <Monitor className="h-4 w-4 mr-1" />
-                Preview
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsFullscreen(!isFullscreen)}
-              >
-                <Maximize2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <Progress value={mockLesson.progress} className="h-2" />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {mockLesson.progress}% Complete
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Step Navigation */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">{currentStep.title}</CardTitle>
-              <Badge variant="outline" className="mt-1">
-                {currentStep.type.replace('_', ' ')}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleNarration}
-                className="flex items-center gap-1"
-              >
-                {isNarrating ? (
-                  <>
-                    <VolumeX className="h-4 w-4" />
-                    Stop
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="h-4 w-4" />
-                    Listen
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigateStep('previous')}
-                disabled={!canGoPrevious}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigateStep('next')}
-                disabled={!canGoNext}
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Dynamic Content Area */}
-      <div className={`grid gap-4 transition-all duration-300 ${
-        mode === 'chat' ? 'grid-cols-1' : 
-        mode === 'editor' ? 'grid-cols-2' : 
-        'grid-cols-1'
-      }`}>
-        {/* Lesson Content */}
-        {(mode === 'chat' || mode === 'editor') && (
-          <Card className="h-fit">
-            <CardHeader>
-              <CardTitle className="text-base">Lesson Content</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                <div dangerouslySetInnerHTML={{ 
-                  __html: currentStep.content.replace(/\n/g, '<br />') 
-                }} />
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Code Editor */}
-        {currentStep.type === 'code_exercise' && (mode === 'editor' || mode === 'chat') && (
-          <div className={mode === 'chat' ? 'mt-4' : ''}>
-            <CodeEditor
-              language={currentStep.code.language}
-              initialCode={currentStep.code.startingCode}
-              solution={currentStep.code.solution}
-              tests={currentStep.code.tests}
-              onCodeChange={handleCodeChange}
-              onExecute={handleCodeExecute}
-              highlightedLines={currentStep.code.highlightedLines}
-              className="h-fit"
-            />
-          </div>
-        )}
-
-        {/* Code Display (for explanation steps) */}
-        {currentStep.type === 'explanation' && currentStep.code && (
-          <div className={mode === 'chat' ? 'mt-4' : ''}>
-            <CodeEditor
-              language={currentStep.code.language}
-              initialCode={currentStep.code.startingCode}
-              onCodeChange={handleCodeChange}
-              highlightedLines={currentStep.code.highlightedLines}
-              readOnly={true}
-              className="h-fit"
-            />
-          </div>
-        )}
-
-        {/* Preview Mode */}
-        {mode === 'preview' && (
-          <Card className="h-96">
-            <CardHeader>
-              <CardTitle className="text-base">Live Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="w-full h-full bg-gray-50 dark:bg-gray-900 rounded-lg flex items-center justify-center">
-                <div className="text-center text-gray-500 dark:text-gray-400">
-                  <Monitor className="h-12 w-12 mx-auto mb-2" />
-                  <p>Preview mode - Shows live output</p>
-                  <p className="text-sm">Would display HTML/CSS/JS results here</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Narration Status */}
-      {isNarrating && (
-        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <Volume2 className="h-4 w-4" />
-              <span className="text-sm">AI Narration: "{currentStep.narration}"</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+    <div className="welcome-container">
+      <h1>Welcome to React, {name}!</h1>
+      <p>This is your first component.</p>
     </div>
   )
 }
-            <div className="flex items-center gap-2">
+
+// Export the component
+export default Welcome`,
+    hints: [
+      'Remember to use curly braces {} for JavaScript expressions in JSX',
+      'Props are passed as an object to your function component',
+      'Don\'t forget to export your component at the end'
+    ],
+    expectedOutput: '<div class="welcome-container"><h1>Welcome to React, Alice!</h1><p>This is your first component.</p></div>',
+    challenge: 'Modify the component to also display the current date and time'
+  }
+}
+
+export function EducationalArtifact({
+  lessonId = 'react-basics-1',
+  stepId = 'step-2',
+  className = ''
+}: EducationalArtifactProps) {
+  const [mode, setMode] = useState<'chat' | 'editor' | 'preview'>('chat')
+  const [isNarrating, setIsNarrating] = useState(false)
+  const [isMuted, setIsMuted] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [currentHint, setCurrentHint] = useState(0)
+  const [code, setCode] = useState(mockLesson.currentStepData.code)
+  const [executionResult, setExecutionResult] = useState<string>('')
+  const [isExecuting, setIsExecuting] = useState(false)
+
+  // Mock narration functionality
+  const handleNarration = () => {
+    setIsNarrating(!isNarrating)
+    // In a real implementation, this would start/stop text-to-speech
+    if (!isNarrating) {
+      setTimeout(() => setIsNarrating(false), 3000) // Auto-stop after 3 seconds for demo
+    }
+  }
+
+  // Mock code execution
+  const handleCodeExecution = async () => {
+    setIsExecuting(true)
+    // Simulate code execution
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    setExecutionResult('✓ Component rendered successfully!')
+    setIsExecuting(false)
+  }
+
+  // Mock step navigation
+  const handleStepNavigation = (stepId: number) => {
+    console.log(`Navigating to step ${stepId}`)
+    // In a real implementation, this would update the lesson state
+  }
+
+  // Mock reset functionality
+  const handleReset = () => {
+    setCode(mockLesson.currentStepData.code)
+    setExecutionResult('')
+    setCurrentHint(0)
+  }
+
+  // Mock fullscreen toggle
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen)
+  }
+
+  return (
+    <div className={`educational-artifact ${className} ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : ''}`}>
+      {/* Header with lesson info and controls */}
+      <Card className="mb-4">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <Lightbulb className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">{mockLesson.title}</h2>
+                <p className="text-sm text-muted-foreground">{mockLesson.description}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Badge variant="secondary">{mockLesson.difficulty}</Badge>
+              <Badge variant="outline">{mockLesson.estimatedTime}</Badge>
               <Button
-                variant={isNarrating ? "default" : "outline"}
+                variant="ghost"
                 size="sm"
-                onClick={toggleNarration}
-                className="gap-2"
+                onClick={toggleFullscreen}
+              >
+                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center space-x-2">
+              <h3 className="text-lg font-semibold">{mockLesson.currentStepData.title}</h3>
+              <Badge variant="outline">Step {mockLesson.currentStep}</Badge>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsMuted(!isMuted)}
+              >
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNarration}
               >
                 {isNarrating ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 {isNarrating ? 'Pause' : 'Narrate'}
@@ -412,159 +222,213 @@ export function EducationalArtifact() {
 
       {/* Main Content Area - Morphing Interface */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[600px]">
-        
         {/* Chat/Instruction Panel */}
         <Card className={`${mode === 'editor' ? 'lg:col-span-4' : 'lg:col-span-6'} transition-all duration-300`}>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Step Instructions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="prose prose-sm max-w-none">
-              <h1>{mockStep.title}</h1>
-              <p>Let's create your first variable! In JavaScript, we use the <code>let</code> keyword to declare a variable.</p>
-              
-              <h2>Your Task</h2>
-              <ol>
-                <li>Declare a variable called <code>message</code></li>
-                <li>Assign it the value "Hello, World!"</li>
-                <li>Use <code>console.log()</code> to display it</li>
-              </ol>
-            </div>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              {mockLesson.currentStepData.description}
+            </p>
             
-            {/* Navigation Controls */}
-            <div className="flex items-center justify-between pt-4 border-t">
-              <Button variant="outline" size="sm" className="gap-2">
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm text-muted-foreground">Complete to continue</span>
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm">Instructions:</h4>
+              <ul className="space-y-2">
+                {mockLesson.currentStepData.instructions.map((instruction, index) => (
+                  <li key={index} className="flex items-start space-x-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>{instruction}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Hints Section */}
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-semibold text-sm flex items-center">
+                  <Lightbulb className="h-4 w-4 mr-1" />
+                  Hint {currentHint + 1} of {mockLesson.currentStepData.hints.length}
+                </h4>
+                <div className="flex space-x-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentHint(Math.max(0, currentHint - 1))}
+                    disabled={currentHint === 0}
+                  >
+                    <ChevronLeft className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentHint(Math.min(mockLesson.currentStepData.hints.length - 1, currentHint + 1))}
+                    disabled={currentHint === mockLesson.currentStepData.hints.length - 1}
+                  >
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
-              <Button size="sm" className="gap-2">
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                {mockLesson.currentStepData.hints[currentHint]}
+              </p>
+            </div>
+
+            {/* Challenge Section */}
+            <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+              <h4 className="font-semibold text-sm flex items-center mb-2">
+                <AlertCircle className="h-4 w-4 mr-1" />
+                Challenge
+              </h4>
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                {mockLesson.currentStepData.challenge}
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Code Editor Panel */}
+        {/* Code Editor / Preview Panel */}
         <Card className={`${mode === 'chat' ? 'lg:col-span-6' : 'lg:col-span-8'} transition-all duration-300`}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Code2 className="h-5 w-5" />
-                Code Editor
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={mode === 'chat' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handleModeChange('chat')}
-                >
-                  Chat Focus
-                </Button>
-                <Button
-                  variant={mode === 'editor' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handleModeChange('editor')}
-                >
-                  Editor Focus
-                </Button>
-                <Button
-                  variant={mode === 'preview' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handleModeChange('preview')}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              </div>
+              <CardTitle className="text-lg">Interactive Workspace</CardTitle>
+              <Tabs value={mode} onValueChange={(value) => setMode(value as any)}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="chat" className="flex items-center space-x-1">
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Chat</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="editor" className="flex items-center space-x-1">
+                    <Code className="h-4 w-4" />
+                    <span>Code</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" className="flex items-center space-x-1">
+                    <Eye className="h-4 w-4" />
+                    <span>Preview</span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="editor" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="editor">Editor</TabsTrigger>
-                <TabsTrigger value="output">Output</TabsTrigger>
-                <TabsTrigger value="hints">Hints</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="editor" className="mt-4">
-                {/* Mock Code Editor */}
-                <div className="border rounded-lg p-4 bg-slate-950 text-slate-50 font-mono text-sm min-h-[300px]">
-                  <div className="space-y-1">
-                    <div className="flex">
-                      <span className="w-8 text-slate-500 text-right pr-2">1</span>
-                      <span className="text-slate-400">// Declare a variable called message and assign it "Hello, World!"</span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-8 text-slate-500 text-right pr-2">2</span>
-                      <span className="text-slate-400">// Then log it to the console</span>
-                    </div>
-                    <div className="flex">
-                      <span className="w-8 text-slate-500 text-right pr-2">3</span>
-                      <span></span>
-                    </div>
-                    <div className="flex bg-slate-800 rounded">
-                      <span className="w-8 text-slate-500 text-right pr-2">4</span>
-                      <span className="text-green-400">let message = </span>
-                      <span className="text-yellow-300">"Hello, World!"</span>
-                      <span className="text-slate-50">;</span>
-                      <span className="animate-pulse ml-1">|</span>
+            <Tabs value={mode} className="w-full">
+              <TabsContent value="chat">
+                <div className="space-y-4">
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="text-sm">
+                      👋 Hi! I'm your AI instructor. I'm here to help you learn React step by step. 
+                      Ask me anything about the current lesson or if you need help with the code!
+                    </p>
+                  </div>
+                  
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                        <MessageSquare className="h-4 w-4 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">AI Instructor</p>
+                        <p className="text-sm mt-1">
+                          Great! You're working on creating your first React component. 
+                          Remember that React components are just JavaScript functions that return JSX. 
+                          The `name` prop will be passed to your function automatically.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center justify-between mt-4">
-                  <div className="text-sm text-muted-foreground">
-                    JavaScript • Line 4, Column 28
-                  </div>
-                  <Button onClick={runCode} className="gap-2">
-                    <Play className="h-4 w-4" />
-                    Run Code
-                  </Button>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="output" className="mt-4">
-                <div className="border rounded-lg p-4 bg-slate-50 min-h-[300px]">
-                  <div className="text-sm">
-                    <div className="text-slate-600 mb-2">Console Output:</div>
-                    <div className="font-mono text-green-600">Hello, World!</div>
+                  
+                  {/* Chat input placeholder */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        placeholder="Ask me anything about this lesson..."
+                        className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <Button size="sm">Send</Button>
+                    </div>
                   </div>
                 </div>
               </TabsContent>
               
-              <TabsContent value="hints" className="mt-4">
-                <div className="space-y-3">
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="text-sm font-medium text-blue-800">💡 Hint 1</div>
-                    <div className="text-sm text-blue-600 mt-1">
-                      Use the <code>let</code> keyword to declare a variable
+              <TabsContent value="editor">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm">Code Editor</h4>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleReset}
+                      >
+                        <RotateCcw className="h-4 w-4 mr-1" />
+                        Reset
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleCodeExecution}
+                        disabled={isExecuting}
+                      >
+                        <Terminal className="h-4 w-4 mr-1" />
+                        {isExecuting ? 'Running...' : 'Run Code'}
+                      </Button>
                     </div>
                   </div>
-                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="text-sm font-medium text-yellow-800">💡 Hint 2</div>
-                    <div className="text-sm text-yellow-600 mt-1">
-                      Assign a value using the equals sign (=)
+                  
+                  <CodeEditor
+                    value={code}
+                    onChange={setCode}
+                    language="typescript"
+                    height="400px"
+                  />
+                  
+                  {executionResult && (
+                    <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        {executionResult}
+                      </p>
                     </div>
+                  )}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="preview">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm">Live Preview</h4>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMode('editor')}
+                    >
+                      <Code className="h-4 w-4 mr-1" />
+                      Edit Code
+                    </Button>
                   </div>
+                  
+                  <LivePreview
+                    code={code}
+                    language="react"
+                    height="400px"
+                  />
                 </div>
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
       </div>
-      
-      {/* Debug Info */}
+
+      {/* Step Navigation */}
       <Card className="mt-4">
-        <CardContent className="pt-6">
-          <div className="text-sm text-muted-foreground">
-            <strong>Current Mode:</strong> {mode} | 
-            <strong> Narration:</strong> {isNarrating ? 'Active' : 'Inactive'} | 
-            <strong> Highlighted Lines:</strong> {highlightedLines.join(', ') || 'None'}
-          </div>
+        <CardContent className="py-4">
+          <StepNavigation
+            currentStep={mockLesson.currentStep}
+            totalSteps={mockLesson.totalSteps}
+            onStepChange={handleStepNavigation}
+            onNext={() => handleStepNavigation(mockLesson.currentStep + 1)}
+            onPrevious={() => handleStepNavigation(mockLesson.currentStep - 1)}
+          />
         </CardContent>
       </Card>
     </div>

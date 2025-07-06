@@ -31,14 +31,14 @@ export interface Step {
 }
 
 export interface StepNavigationProps {
-  steps: Step[]
+  steps?: Step[]
   currentStep: number
   totalSteps: number
   onStepChange: (stepId: number) => void
-  onPrevious: () => void
-  onNext: () => void
-  onReset: () => void
-  canProceed: boolean
+  onPrevious?: () => void
+  onNext?: () => void
+  onReset?: () => void
+  canProceed?: boolean
   isPlaying?: boolean
   onPlayPause?: () => void
   progress?: {
@@ -51,14 +51,14 @@ export interface StepNavigationProps {
 }
 
 export function StepNavigation({
-  steps,
+  steps = [],
   currentStep,
   totalSteps,
   onStepChange,
   onPrevious,
   onNext,
   onReset,
-  canProceed,
+  canProceed = true,
   isPlaying = false,
   onPlayPause,
   progress,

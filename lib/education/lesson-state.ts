@@ -2,6 +2,8 @@ import { redis } from '@/lib/redis'
 import { Lesson, LessonProgress, LessonSchema, ProgressSchema } from '@/lib/education/schema'
 import { loadLesson } from '@/lib/education/content-loader'
 
+export type { LessonProgress } from '@/lib/education/schema'
+
 export interface LessonState {
   lesson: Lesson
   progress: LessonProgress
