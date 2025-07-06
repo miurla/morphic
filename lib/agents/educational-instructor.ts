@@ -4,6 +4,7 @@ import { createCodeEditorTool } from '../tools/education/code-editor'
 import { createHighlightTool } from '../tools/education/highlight'
 import { createStepNavigationTool } from '../tools/education/step-navigation'
 import { createOCRTool } from '../tools/education/ocr'
+import { progressTracker } from '../tools/education/progress'
 
 const EDUCATIONAL_SYSTEM_PROMPT = `
 You are an expert educational AI instructor specializing in interactive, step-by-step programming education.
@@ -59,9 +60,10 @@ export function educationalInstructor({
         code_editor: createCodeEditorTool(model),
         highlight: createHighlightTool(model),
         step_navigation: createStepNavigationTool(model),
-        ocr: createOCRTool(model)
+        ocr: createOCRTool(model),
+        progress: progressTracker
       },
-      experimental_activeTools: lessonMode ? ['code_editor', 'highlight', 'step_navigation', 'ocr'] : [],
+      experimental_activeTools: lessonMode ? ['code_editor', 'highlight', 'step_navigation', 'ocr', 'progress'] : [],
       maxSteps: lessonMode ? 10 : 1,
       experimental_transform: smoothStream()
     }
