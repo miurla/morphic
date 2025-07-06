@@ -1,12 +1,13 @@
 # Morphic
 
-An AI-powered search engine with a generative UI.
+An AI-powered search engine with a generative UI, now enhanced with an interactive educational platform for step-by-step programming instruction.
 
 ![capture](/public/screenshot-2025-05-04.png)
 
 ## 🗂️ Overview
 
 - 🛠 [Features](#-features)
+- 🎓 [Educational Platform](#-educational-platform)
 - 🧱 [Stack](#-stack)
 - 🚀 [Quickstart](#-quickstart)
 - 🌐 [Deploy](#-deploy)
@@ -72,6 +73,41 @@ Models are configured in `public/config/models.json`. Each model requires its co
 - Docker deployment ready
 - Browser search engine integration
 
+## 🎓 Educational Platform
+
+### Interactive Learning Features
+
+- **Adaptive AI Instructor**: Personalized programming instruction that adapts to your learning style and pace
+- **Step-by-Step Lessons**: Breaking down complex programming concepts into digestible, sequential steps
+- **Real-Time Code Execution**: Safe, sandboxed code execution for JavaScript, Python, HTML, and CSS
+- **Live Preview**: Instant visual feedback for web development lessons
+- **Progress Tracking**: Comprehensive achievement system with performance analytics
+- **Code Highlighting**: Visual annotations and code explanations
+- **OCR Troubleshooting**: Screenshot analysis for debugging assistance
+
+### Educational Tools
+
+- **Monaco Editor Integration**: Full-featured code editor with syntax highlighting and IntelliSense
+- **Visual Progress Indicators**: Track completion, accuracy, and learning milestones
+- **Adaptive Learning Engine**: AI analyzes your progress and adjusts teaching approach
+- **Mobile-Responsive Interface**: Learn on any device with optimized mobile experience
+- **Achievement System**: Earn badges and track your programming journey
+
+### Supported Programming Languages
+
+- **JavaScript/TypeScript**: Interactive web development lessons
+- **Python**: Programming fundamentals and data structures
+- **HTML/CSS**: Web design and styling tutorials
+- **More languages**: Extensible architecture for additional language support
+
+### Learning Analytics
+
+- Real-time performance tracking
+- Accuracy and speed metrics
+- Personalized recommendations
+- Learning pattern analysis
+- Progress persistence across sessions
+
 ## 🧱 Stack
 
 ### Core Framework
@@ -103,6 +139,15 @@ Models are configured in `public/config/models.json`. Each model requires its co
 - [shadcn/ui](https://ui.shadcn.com/) - Re-usable components
 - [Radix UI](https://www.radix-ui.com/) - Unstyled, accessible components
 - [Lucide Icons](https://lucide.dev/) - Beautiful & consistent icons
+
+### Educational Platform
+
+- [Monaco Editor](https://microsoft.github.io/monaco-editor/) - Advanced code editor with IntelliSense
+- **Adaptive Learning Engine** - AI-powered personalized instruction system
+- **Code Execution Service** - Sandboxed code execution with security controls
+- **Progress Tracking System** - Redis-based achievement and analytics tracking
+- **Lesson State Management** - Comprehensive lesson flow and progress persistence
+- **OCR Integration** - Screenshot analysis for debugging assistance
 
 ## 🚀 Quickstart
 
