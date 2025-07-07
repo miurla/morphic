@@ -53,6 +53,18 @@ function useSidebar() {
   return context
 }
 
+// Helper function to get cookie value
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) {
+    return parts.pop()?.split(';').shift() || null
+  }
+  return null
+}
+
 const SidebarProvider = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<'div'> & {
@@ -76,9 +88,20 @@ const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
 
-    // This is the internal state of the sidebar.
-    // We use openProp and setOpenProp for control from outside the component.
+    // Initialize state - for SSR we use defaultOpen, for client we read from cookie
     const [_open, _setOpen] = React.useState(defaultOpen)
+    const [isHydrated, setIsHydrated] = React.useState(false)
+
+    // On client side, immediately read from cookie and update state
+    React.useLayoutEffect(() => {
+      const cookieValue = getCookie(SIDEBAR_COOKIE_NAME)
+      const cookieState =
+        cookieValue !== null ? cookieValue === 'true' : defaultOpen
+
+      _setOpen(cookieState)
+      setIsHydrated(true)
+    }, [defaultOpen])
+
     const open = openProp ?? _open
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
@@ -90,7 +113,9 @@ const SidebarProvider = React.forwardRef<
         }
 
         // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        if (typeof document !== 'undefined') {
+          document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        }
       },
       [setOpenProp, open]
     )
@@ -146,10 +171,14 @@ const SidebarProvider = React.forwardRef<
             }
             className={cn(
               'group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar',
+              // Prevent flash during hydration
+              !isHydrated && 'opacity-0',
+              isHydrated && 'opacity-100 transition-opacity duration-150',
               className
             )}
             ref={ref}
             {...props}
+            suppressHydrationWarning
           >
             {children}
           </div>
