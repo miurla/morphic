@@ -97,7 +97,7 @@ export default function UserMenu({ user }: UserMenuProps) {
         {/* Show admin setup for non-admin users */}
         {!isAdmin && (
           <>
-            <Link href="/admin-setup">
+            <Link href="/admin/setup">
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Admin Setup</span>
