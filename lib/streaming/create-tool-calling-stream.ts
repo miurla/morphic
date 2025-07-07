@@ -1,11 +1,11 @@
 import { educationalInstructor } from '@/lib/agents/educational-instructor'
 import { researcher } from '@/lib/agents/researcher'
 import {
-  convertToCoreMessages,
-  CoreMessage,
-  createDataStreamResponse,
-  DataStreamWriter,
-  streamText
+    convertToCoreMessages,
+    CoreMessage,
+    createDataStreamResponse,
+    DataStreamWriter,
+    streamText
 } from 'ai'
 import { getMaxAllowedTokens, truncateMessages } from '../utils/context-window'
 import { isReasoningModel } from '../utils/registry'
