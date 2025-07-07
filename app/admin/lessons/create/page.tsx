@@ -3,10 +3,9 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Bot, Send, User, Loader2 } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { Bot, Loader2, Send, User } from 'lucide-react'
+import { useRef, useState } from 'react'
 
 interface ChatMessage {
   id: string

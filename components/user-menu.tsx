@@ -14,8 +14,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
-import { Link2, LogOut, Palette } from 'lucide-react'
+import { Link2, LogOut, Palette, Shield, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { ExternalLinkItems } from './external-link-items'
 import { ThemeMenuItems } from './theme-menu-items'
 import { Button } from './ui/button'
@@ -30,6 +31,12 @@ export default function UserMenu({ user }: UserMenuProps) {
     user.user_metadata?.full_name || user.user_metadata?.name || 'User'
   const avatarUrl =
     user.user_metadata?.avatar_url || user.user_metadata?.picture
+
+  // Check if user is admin
+  const isAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL || 
+                  user.email === 'admin@example.com' ||
+                  user.user_metadata?.role === 'admin' || 
+                  user.user_metadata?.admin === true
 
   const getInitials = (name: string, email: string | undefined) => {
     if (name && name !== 'User') {
@@ -74,6 +81,33 @@ export default function UserMenu({ user }: UserMenuProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        
+        {/* Admin Links */}
+        {isAdmin && (
+          <>
+            <Link href="/admin">
+              <DropdownMenuItem>
+                <Shield className="mr-2 h-4 w-4" />
+                <span>Admin Panel</span>
+              </DropdownMenuItem>
+            </Link>
+          </>
+        )}
+        
+        {/* Show admin setup for non-admin users */}
+        {!isAdmin && (
+          <>
+            <Link href="/admin-setup">
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Admin Setup</span>
+              </DropdownMenuItem>
+            </Link>
+          </>
+        )}
+        
+        <DropdownMenuSeparator />
+        
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <Palette className="mr-2 h-4 w-4" />

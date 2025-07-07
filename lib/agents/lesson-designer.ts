@@ -1,6 +1,6 @@
-import { CoreMessage, smoothStream, streamText } from 'ai'
+import { CoreMessage, streamText } from 'ai'
+import { Lesson } from '../education/schema'
 import { getModel } from '../utils/registry'
-import { LessonStep, Lesson } from '../education/schema'
 
 const LESSON_DESIGNER_SYSTEM_PROMPT = `
 You are an expert AI lesson design assistant specialized in creating comprehensive, interactive educational content for programming and technology topics.
