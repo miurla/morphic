@@ -1,6 +1,6 @@
 import { getRedisClient } from './config'
 
-export { getRedisClient, RedisWrapper, redisConfig } from './config'
+export { getRedisClient, redisConfig, RedisWrapper } from './config'
 
 // For convenience, export a default redis instance getter
 export const redis = {

@@ -1,4 +1,4 @@
-import { LessonProgress, LessonState } from '@/lib/education/lesson-state'
+import { LessonProgress } from '@/lib/education/lesson-state'
 import { Lesson } from '@/lib/education/schema'
 
 export interface LearningProfile {

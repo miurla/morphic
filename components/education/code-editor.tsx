@@ -1,21 +1,20 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
-import { 
-  Play, 
-  Square,
-  RotateCcw,
-  Copy,
-  Maximize2,
-  Settings,
-  CheckCircle,
-  XCircle,
-  AlertCircle
+import {
+    AlertCircle,
+    CheckCircle,
+    Copy,
+    Play,
+    RotateCcw,
+    Settings,
+    Square,
+    XCircle
 } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
 
 // Monaco Editor types (would be imported from @monaco-editor/react in real implementation)
 interface MonacoEditorProps {

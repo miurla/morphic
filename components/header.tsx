@@ -3,10 +3,11 @@
 import { useSidebar } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import { User } from '@supabase/supabase-js'
-// import Link from 'next/link' // No longer needed directly here for Sign In button
+import { BookOpen } from 'lucide-react'
+import Link from 'next/link'
 import React from 'react'
-// import { Button } from './ui/button' // No longer needed directly here for Sign In button
-import GuestMenu from './guest-menu' // Import the new GuestMenu component
+import GuestMenu from './guest-menu'
+import { Button } from './ui/button'
 import UserMenu from './user-menu'
 
 interface HeaderProps {
@@ -27,6 +28,14 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
       <div></div>
 
       <div className="flex items-center gap-2">
+        {/* Learn Button */}
+        <Link href="/lessons">
+          <Button variant="outline" size="sm">
+            <BookOpen className="h-4 w-4 mr-1" />
+            Learn
+          </Button>
+        </Link>
+        
         {user ? <UserMenu user={user} /> : <GuestMenu />}
       </div>
     </header>

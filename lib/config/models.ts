@@ -1,4 +1,5 @@
 import { Model } from '@/lib/types/models'
+import { isProviderEnabled } from '@/lib/utils/registry'
 import { getBaseUrl } from '@/lib/utils/url'
 import defaultModels from './default-models.json'
 
@@ -50,7 +51,12 @@ export async function getModels(): Promise<Model[]> {
       const config = JSON.parse(text)
       if (Array.isArray(config.models) && config.models.every(validateModel)) {
         console.log('Successfully loaded models from URL')
-        return config.models
+        // Filter models based on enabled flag and provider availability
+        const filteredModels = config.models.filter(
+          (model: Model) => model.enabled && isProviderEnabled(model.providerId)
+        )
+        console.log(`Filtered ${config.models.length} models to ${filteredModels.length} available models`)
+        return filteredModels
       }
     } catch (error: any) {
       // Fallback to default models if fetch fails
@@ -64,7 +70,12 @@ export async function getModels(): Promise<Model[]> {
         defaultModels.models.every(validateModel)
       ) {
         console.log('Successfully loaded default models')
-        return defaultModels.models
+        // Filter default models based on enabled flag and provider availability
+        const filteredModels = defaultModels.models.filter(
+          (model: Model) => model.enabled && isProviderEnabled(model.providerId)
+        )
+        console.log(`Filtered ${defaultModels.models.length} default models to ${filteredModels.length} available models`)
+        return filteredModels
       }
     }
   } catch (error) {

@@ -1,5 +1,5 @@
-import { LessonSchema, LessonStepSchema, LessonProgressSchema } from './schema'
 import { z } from 'zod'
+import { LessonProgressSchema, LessonSchema, LessonStepSchema } from './schema'
 
 // Type definitions
 export type Lesson = z.infer<typeof LessonSchema>

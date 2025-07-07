@@ -1,7 +1,7 @@
+import { LessonProgress, ProgressSchema } from '@/lib/education/schema'
+import { redis } from '@/lib/redis'
 import { tool } from 'ai'
 import { z } from 'zod'
-import { redis } from '@/lib/redis'
-import { LessonProgress, ProgressSchema } from '@/lib/education/schema'
 
 // Progress tracking tool for educational lessons
 export const progressTracker = tool({

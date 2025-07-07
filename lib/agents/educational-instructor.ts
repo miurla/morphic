@@ -1,11 +1,10 @@
 import { CoreMessage, smoothStream, streamText } from 'ai'
-import { getModel } from '../utils/registry'
 import { createCodeEditorTool } from '../tools/education/code-editor'
 import { createHighlightTool } from '../tools/education/highlight'
-import { createStepNavigationTool } from '../tools/education/step-navigation'
 import { createOCRTool } from '../tools/education/ocr'
 import { progressTracker } from '../tools/education/progress'
-import { AdaptiveLearningEngine } from '../education/adaptive-learning'
+import { createStepNavigationTool } from '../tools/education/step-navigation'
+import { getModel } from '../utils/registry'
 
 const EDUCATIONAL_SYSTEM_PROMPT = `
 You are an expert educational AI instructor specializing in interactive, step-by-step programming education with adaptive learning capabilities.

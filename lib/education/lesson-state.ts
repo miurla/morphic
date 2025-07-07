@@ -1,6 +1,6 @@
-import { redis } from '@/lib/redis'
-import { Lesson, LessonProgress, LessonSchema, ProgressSchema } from '@/lib/education/schema'
 import { loadLesson } from '@/lib/education/content-loader'
+import { Lesson, LessonProgress, ProgressSchema } from '@/lib/education/schema'
+import { redis } from '@/lib/redis'
 
 export type { LessonProgress } from '@/lib/education/schema'
 

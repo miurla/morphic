@@ -1,23 +1,23 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { 
-  Play, 
-  Square, 
-  RefreshCw, 
-  ExternalLink, 
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Eye,
-  EyeOff
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { executeCode, type ExecutionResult } from '@/lib/services/code-execution'
+import { cn } from '@/lib/utils'
+import {
+    AlertCircle,
+    CheckCircle,
+    Clock,
+    ExternalLink,
+    Eye,
+    EyeOff,
+    Play,
+    RefreshCw,
+    Square
+} from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export interface LivePreviewProps {
   code: string
@@ -44,58 +44,7 @@ export function LivePreview({
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const timeoutRef = useRef<NodeJS.Timeout>()
 
-  useEffect(() => {
-    if (autoExecute && code.trim()) {
-      // Debounce execution
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-      
-      timeoutRef.current = setTimeout(() => {
-        executeUserCode()
-      }, 500)
-    }
-    
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [code, autoExecute])
-
-  const executeUserCode = async () => {
-    if (!code.trim()) return
-    
-    setIsExecuting(true)
-    
-    try {
-      // Map react to javascript for execution
-      const executionLanguage = language === 'react' ? 'javascript' : language
-      const executionResult = await executeCode(executionLanguage as 'javascript' | 'python' | 'html' | 'css' | 'typescript', code)
-      setResult(executionResult)
-      setExecutionHistory(prev => [executionResult, ...prev.slice(0, 4)]) // Keep last 5 executions
-      
-      // Update iframe for HTML/CSS
-      if (language === 'html' || language === 'css') {
-        updatePreview(executionResult)
-      }
-      
-      onExecutionChange?.(executionResult)
-    } catch (error) {
-      const errorResult: ExecutionResult = {
-        success: false,
-        output: '',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        executionTime: 0
-      }
-      setResult(errorResult)
-      onExecutionChange?.(errorResult)
-    } finally {
-      setIsExecuting(false)
-    }
-  }
-
-  const updatePreview = (executionResult: ExecutionResult) => {
+  const updatePreview = useCallback((executionResult: ExecutionResult) => {
     if (!iframeRef.current) return
     
     const iframe = iframeRef.current
@@ -128,7 +77,58 @@ export function LivePreview({
       doc.write(htmlContent)
       doc.close()
     }
-  }
+  }, [code, language])
+
+  const executeUserCode = useCallback(async () => {
+    if (!code.trim()) return
+    
+    setIsExecuting(true)
+    
+    try {
+      // Map react to javascript for execution
+      const executionLanguage = language === 'react' ? 'javascript' : language
+      const executionResult = await executeCode(executionLanguage as 'javascript' | 'python' | 'html' | 'css' | 'typescript', code)
+      setResult(executionResult)
+      setExecutionHistory(prev => [executionResult, ...prev.slice(0, 4)]) // Keep last 5 executions
+      
+      // Update iframe for HTML/CSS
+      if (language === 'html' || language === 'css') {
+        updatePreview(executionResult)
+      }
+      
+      onExecutionChange?.(executionResult)
+    } catch (error) {
+      const errorResult: ExecutionResult = {
+        success: false,
+        output: '',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        executionTime: 0
+      }
+      setResult(errorResult)
+      onExecutionChange?.(errorResult)
+    } finally {
+      setIsExecuting(false)
+    }
+  }, [code, language, onExecutionChange, updatePreview])
+
+  useEffect(() => {
+    if (autoExecute && code.trim()) {
+      // Debounce execution
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      
+      timeoutRef.current = setTimeout(() => {
+        executeUserCode()
+      }, 500)
+    }
+    
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [code, autoExecute, executeUserCode])
 
   const clearPreview = () => {
     if (iframeRef.current) {

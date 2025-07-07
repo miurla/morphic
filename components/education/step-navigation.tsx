@@ -1,23 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  CheckCircle, 
-  Circle, 
-  Play, 
-  Pause,
-  RotateCcw,
-  Trophy,
-  Clock,
-  Target
-} from 'lucide-react'
+import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
+import {
+    CheckCircle,
+    ChevronLeft,
+    ChevronRight,
+    Circle,
+    Clock,
+    Pause,
+    Play,
+    RotateCcw,
+    Target,
+    Trophy
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 export interface Step {
   id: number

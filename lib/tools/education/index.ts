@@ -1,14 +1,14 @@
-import { createCodeEditorTool, createEducationalCodeEditor } from './code-editor'
-import { createHighlightTool, createEducationalHighlight } from './highlight'
-import { createStepNavigationTool, createStepNavigationWithProgress } from './step-navigation'
-import { createOCRTool, createEducationalOCR } from './ocr'
+import { createCodeEditorTool } from './code-editor'
+import { createHighlightTool } from './highlight'
+import { createOCRTool } from './ocr'
 import { progressTracker } from './progress'
+import { createStepNavigationTool } from './step-navigation'
 
 export { createCodeEditorTool, createEducationalCodeEditor } from './code-editor'
-export { createHighlightTool, createEducationalHighlight } from './highlight'
-export { createStepNavigationTool, createStepNavigationWithProgress } from './step-navigation'
-export { createOCRTool, createEducationalOCR } from './ocr'
+export { createEducationalHighlight, createHighlightTool } from './highlight'
+export { createEducationalOCR, createOCRTool } from './ocr'
 export { progressTracker } from './progress'
+export { createStepNavigationTool, createStepNavigationWithProgress } from './step-navigation'
 
 // Educational tool types
 export type EducationalTool = 'code_editor' | 'highlight' | 'step_navigation' | 'ocr' | 'progress'

@@ -1,29 +1,29 @@
 'use client'
 
-import React, { useState } from 'react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  ChevronLeft,
-  ChevronRight,
-  RotateCcw,
-  Eye,
-  Code,
-  Terminal,
-  Lightbulb,
-  CheckCircle,
-  AlertCircle,
-  MessageSquare,
-  Maximize2,
-  Minimize2
+    AlertCircle,
+    CheckCircle,
+    ChevronLeft,
+    ChevronRight,
+    Code,
+    Eye,
+    Lightbulb,
+    Maximize2,
+    MessageSquare,
+    Minimize2,
+    Pause,
+    Play,
+    RotateCcw,
+    Terminal,
+    Volume2,
+    VolumeX
 } from 'lucide-react'
+import { useState } from 'react'
 import { CodeEditor } from './code-editor'
 import { LivePreview } from './live-preview'
 import { StepNavigation } from './step-navigation'
@@ -317,7 +317,7 @@ export function EducationalArtifact({
                 <div className="space-y-4">
                   <div className="bg-muted p-4 rounded-lg">
                     <p className="text-sm">
-                      👋 Hi! I'm your AI instructor. I'm here to help you learn React step by step. 
+                      👋 Hi! I&apos;m your AI instructor. I&apos;m here to help you learn React step by step. 
                       Ask me anything about the current lesson or if you need help with the code!
                     </p>
                   </div>
@@ -330,7 +330,7 @@ export function EducationalArtifact({
                       <div>
                         <p className="font-semibold text-sm">AI Instructor</p>
                         <p className="text-sm mt-1">
-                          Great! You're working on creating your first React component. 
+                          Great! You&apos;re working on creating your first React component. 
                           Remember that React components are just JavaScript functions that return JSX. 
                           The `name` prop will be passed to your function automatically.
                         </p>

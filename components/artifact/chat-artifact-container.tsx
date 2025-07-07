@@ -3,9 +3,9 @@
 import { InspectorDrawer } from '@/components/inspector/inspector-drawer'
 import { InspectorPanel } from '@/components/inspector/inspector-panel'
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup
+    ResizableHandle,
+    ResizablePanel,
+    ResizablePanelGroup
 } from '@/components/ui/resizable'
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
@@ -31,7 +31,7 @@ export function ChatArtifactContainer({
   }, [state.isOpen])
 
   return (
-    <div className="flex-1 min-h-0 h-screen flex">
+    <div className="flex-1 min-h-0 flex">
       <div className="absolute p-4 z-50 transition-opacity duration-1000">
         {(!open || isMobileSidebar) && (
           <SidebarTrigger className="animate-fade-in" />
@@ -41,7 +41,7 @@ export function ChatArtifactContainer({
       {!isMobile && (
         <ResizablePanelGroup
           direction="horizontal"
-          className="flex flex-1 min-w-0 h-full" // Responsive classes removed
+          className="flex flex-1 min-w-0" // Responsive classes removed
         >
           <ResizablePanel
             className={cn(
@@ -72,9 +72,7 @@ export function ChatArtifactContainer({
 
       {/* Mobile: full-width chat + drawer (Do not render on desktop) */}
       {isMobile && (
-        <div className="flex-1 h-full">
-          {' '}
-          {/* Responsive classes removed */}
+        <div className="flex-1">
           {children}
           {/* ArtifactDrawer checks isMobile internally, no double check needed */}
           <InspectorDrawer />
