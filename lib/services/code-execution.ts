@@ -18,6 +18,7 @@ const ExecutionResultSchema = z.object({
   error: z.string().optional(),
   executionTime: z.number(),
   memoryUsage: z.number().optional(),
+  logs: z.array(z.string()).optional(),
   exitCode: z.number().optional(),
   warnings: z.array(z.string()).optional()
 })
