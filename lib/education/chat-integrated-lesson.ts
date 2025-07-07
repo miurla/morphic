@@ -8,6 +8,8 @@ export const chatIntegratedLesson: Lesson = {
   category: 'frontend',
   difficulty: 'beginner',
   estimatedDuration: 15,
+  author: 'Educational AI System',
+  version: '1.0.0',
   tags: ['chat-integration', 'morphing-ui', 'interactive', 'demo'],
   prerequisites: [],
   nextLessons: ['comprehensive-web-development-masterclass'],
@@ -113,7 +115,7 @@ console.log(greetUser("Student"));`,
     {
       id: 'morphing-demonstration',
       title: '🔄 Experience the Morphing Interface',
-      type: 'preview',
+      type: 'explanation',
       content: `# 🎭 Interface Morphing in Action!
 
 **AI Instructor**: Fantastic! Now you're experiencing the **preview mode**. Notice how the interface smoothly transitioned from:

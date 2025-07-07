@@ -1,7 +1,7 @@
-import { z } from 'zod'
-import { lessonDatabase } from '@/lib/education/lesson-database'
-import { comprehensiveSampleLesson } from '@/lib/education/comprehensive-sample-lesson'
 import chatIntegratedLesson from '@/lib/education/chat-integrated-lesson'
+import { comprehensiveSampleLesson } from '@/lib/education/comprehensive-sample-lesson'
+import { lessonDatabase } from '@/lib/education/lesson-database'
+import { z } from 'zod'
 
 // Educational lesson tool schema
 const EducationalLessonToolSchema = z.object({

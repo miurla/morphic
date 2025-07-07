@@ -1,3 +1,4 @@
+import { educationalInstructor } from '@/lib/agents/educational-instructor'
 import { researcher } from '@/lib/agents/researcher'
 import {
   convertToCoreMessages,
@@ -24,6 +25,27 @@ function containsAskQuestionTool(message: CoreMessage) {
   )
 }
 
+// Function to detect if the conversation contains educational intent
+function detectEducationalIntent(messages: CoreMessage[]): boolean {
+  const educationalKeywords = [
+    'learn', 'teach', 'tutorial', 'lesson', 'course', 'programming', 'coding',
+    'javascript', 'python', 'html', 'css', 'web development', 'practice',
+    'exercise', 'challenge', 'guide', 'explain', 'show me how', 'help me understand',
+    'educational', 'instruction', 'demo', 'example', 'interactive'
+  ]
+  
+  // Check recent messages for educational intent
+  const recentMessages = messages.slice(-3) // Last 3 messages
+  
+  return recentMessages.some(message => {
+    if (message.role === 'user' && typeof message.content === 'string') {
+      const content = message.content.toLowerCase()
+      return educationalKeywords.some(keyword => content.includes(keyword))
+    }
+    return false
+  })
+}
+
 export function createToolCallingStreamResponse(config: BaseStreamConfig) {
   return createDataStreamResponse({
     execute: async (dataStream: DataStreamWriter) => {
@@ -37,14 +59,28 @@ export function createToolCallingStreamResponse(config: BaseStreamConfig) {
           getMaxAllowedTokens(model)
         )
 
-        let researcherConfig = await researcher({
-          messages: truncatedMessages,
-          model: modelId,
-          searchMode
-        })
+        // Detect educational intent and choose appropriate agent
+        const isEducationalRequest = detectEducationalIntent(truncatedMessages)
+        
+        let agentConfig
+        if (isEducationalRequest) {
+          // Use educational instructor for learning-related requests
+          agentConfig = educationalInstructor({
+            messages: truncatedMessages,
+            model: modelId,
+            lessonMode: true
+          })
+        } else {
+          // Use researcher for general questions and search
+          agentConfig = await researcher({
+            messages: truncatedMessages,
+            model: modelId,
+            searchMode
+          })
+        }
 
         const result = streamText({
-          ...researcherConfig,
+          ...agentConfig,
           onFinish: async result => {
             // Check if the last message contains an ask_question tool invocation
             const shouldSkipRelatedQuestions =
