@@ -75,7 +75,7 @@ export function LoginForm() {
           Welcome to Bulldozer Search
         </CardTitle>
         <CardDescription className="text-center">
-          Sign in to access Local 825's construction industry research platform
+          Sign in to access Local 825&apos;s construction industry research platform
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

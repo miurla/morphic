@@ -121,7 +121,7 @@ export function ChatPanel({
             Welcome to Bulldozer Search
           </p>
           <p className="text-center text-muted-foreground max-w-md">
-            Local 825's AI-powered construction industry research platform.
+            Local 825&apos;s AI-powered construction industry research platform.
             Research OSHA violations, NLRB cases, government contracts, and
             company intelligence.
           </p>

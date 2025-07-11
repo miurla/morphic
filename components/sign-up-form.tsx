@@ -97,7 +97,7 @@ export function SignUpForm() {
           Join Bulldozer Search
         </CardTitle>
         <CardDescription className="text-center">
-          Create an account to access Local 825's construction industry research
+          Create an account to access Local 825&apos;s construction industry research
           platform
         </CardDescription>
       </CardHeader>
