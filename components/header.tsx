@@ -3,10 +3,9 @@
 import { useSidebar } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import { User } from '@supabase/supabase-js'
-// import Link from 'next/link' // No longer needed directly here for Sign In button
+import Image from 'next/image'
 import React from 'react'
-// import { Button } from './ui/button' // No longer needed directly here for Sign In button
-import GuestMenu from './guest-menu' // Import the new GuestMenu component
+import GuestMenu from './guest-menu'
 import UserMenu from './user-menu'
 
 interface HeaderProps {
@@ -23,8 +22,24 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
         'w-full'
       )}
     >
-      {/* This div can be used for a logo or title on the left if needed */}
-      <div></div>
+      {/* Local 825 Logo and Branding */}
+      <div className="flex items-center gap-3">
+        <Image
+          src="/images/local825-logo.png"
+          alt="Local 825 Logo"
+          width={40}
+          height={40}
+          className="rounded-md"
+        />
+        <div className="hidden sm:block">
+          <h1 className="text-lg font-semibold text-foreground">
+            Bulldozer Search
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            Construction Industry Intelligence
+          </p>
+        </div>
+      </div>
 
       <div className="flex items-center gap-2">
         {user ? <UserMenu user={user} /> : <GuestMenu />}

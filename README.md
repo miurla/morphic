@@ -1,6 +1,6 @@
-# Morphic
+# Bulldozer Search
 
-An AI-powered search engine with a generative UI.
+Local 825's AI-powered construction industry research and analysis platform.
 
 ![capture](/public/screenshot-2025-05-04.png)
 
@@ -21,11 +21,19 @@ An AI-powered search engine with a generative UI.
 
 ### Core Features
 
-- AI-powered search with GenerativeUI
-- Natural language question understanding
+- AI-powered construction industry research with GenerativeUI
+- Natural language question understanding for company research
 - Multiple search providers support (Tavily, SearXNG, Exa)
 - Model selection from UI (switch between available AI models)
   - Reasoning models with visible thought process
+
+### Construction Industry Focus
+
+- **OSHA Violations Research**: Search and analyze safety violations, citations, and accident reports
+- **NLRB Case Analysis**: Find labor relations cases, union recognition petitions, and unfair labor practices
+- **Government Contract Research**: Analyze federal, state, and local government contracts and bidding patterns
+- **Company Intelligence**: Research corporate structure, ownership, subsidiaries, and financial performance
+- **Regulatory Compliance**: Check licensing status, environmental violations, and other regulatory issues
 
 ### Authentication
 

@@ -4,12 +4,12 @@ import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { Message } from 'ai'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
 import { useArtifact } from './artifact/artifact-context'
 import { EmptyScreen } from './empty-screen'
-import { ModelSelector } from './model-selector'
 import { SearchModeToggle } from './search-mode-toggle'
 import { Button } from './ui/button'
 import { IconLogo } from './ui/icons'
@@ -118,8 +118,23 @@ export function ChatPanel({
         <div className="mb-10 flex flex-col items-center gap-4">
           <IconLogo className="size-12 text-muted-foreground" />
           <p className="text-center text-3xl font-semibold">
-            How can I help you today?
+            Welcome to Bulldozer Search
           </p>
+          <p className="text-center text-muted-foreground max-w-md">
+            Local 825's AI-powered construction industry research platform.
+            Research OSHA violations, NLRB cases, government contracts, and
+            company intelligence.
+          </p>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Image
+              src="/images/local825-logo.png"
+              alt="BulldozerAI"
+              width={16}
+              height={16}
+              className="rounded-full"
+            />
+            <span>Powered by BulldozerAI</span>
+          </div>
         </div>
       )}
       <form
@@ -181,7 +196,6 @@ export function ChatPanel({
           {/* Bottom menu area */}
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
-              <ModelSelector models={models || []} />
               <SearchModeToggle />
             </div>
             <div className="flex items-center gap-2">

@@ -16,12 +16,12 @@ const fontSans = FontSans({
   variable: '--font-sans'
 })
 
-const title = 'Morphic'
+const title = 'Bulldozer Search'
 const description =
-  'A fully open-source AI-powered answer engine with a generative UI.'
+  "Local 825's AI-powered construction industry research and analysis platform for company research, OSHA violations, and strategic intelligence."
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://morphic.sh'),
+  metadataBase: new URL('https://bulldozer-search.local825.org'),
   title,
   description,
   openGraph: {
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     title,
     description,
     card: 'summary_large_image',
-    creator: '@miiura'
+    creator: '@local825'
   }
 }
 

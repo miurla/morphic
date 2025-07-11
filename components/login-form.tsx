@@ -8,153 +8,141 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { IconLogo } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils/index'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
+export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
-    setError(null)
+    setError('')
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
-      if (error) throw error
-      // Redirect to root and refresh to ensure server components get updated session
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
       router.push('/')
-      router.refresh()
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
-    } finally {
-      setIsLoading(false)
     }
+    setIsLoading(false)
   }
 
-  const handleSocialLogin = async () => {
-    const supabase = createClient()
+  const handleGoogleLogin = async () => {
     setIsLoading(true)
-    setError(null)
+    setError('')
 
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${location.origin}/auth/oauth`
-        }
-      })
-      if (error) throw error
-    } catch (error: unknown) {
-      setError(
-        error instanceof Error ? error.message : 'An OAuth error occurred'
-      )
-    } finally {
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/oauth`
+      }
+    })
+
+    if (error) {
+      setError(error.message)
       setIsLoading(false)
     }
   }
 
   return (
-    <div
-      className={cn('flex flex-col items-center gap-6', className)}
-      {...props}
-    >
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl flex flex-col items-center justify-center gap-4">
-            <IconLogo className="size-12" />
-            Welcome back
-          </CardTitle>
-          <CardDescription>Sign in to your account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            <Button
-              variant="outline"
-              type="button"
-              className="w-full"
-              onClick={handleSocialLogin}
-              disabled={isLoading}
-            >
-              Sign In with Google
-            </Button>
+    <Card className="w-full">
+      <CardHeader className="space-y-1">
+        <div className="flex justify-center mb-4">
+          <Image
+            src="/images/local825-logo.png"
+            alt="Local 825 Logo"
+            width={100}
+            height={100}
+          />
+        </div>
+        <CardTitle className="text-2xl text-center">
+          Welcome to Bulldozer Search
+        </CardTitle>
+        <CardDescription className="text-center">
+          Sign in to access Local 825's construction industry research platform
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Button
+          onClick={handleGoogleLogin}
+          disabled={isLoading}
+          className="w-full"
+          variant="outline"
+        >
+          <Image
+            src="/images/google.svg"
+            alt="Google"
+            width={20}
+            height={20}
+            className="mr-2"
+          />
+          Continue with Google
+        </Button>
 
-            <div className="relative my-2">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-muted px-2 text-muted-foreground">Or</span>
-              </div>
-            </div>
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with email
+            </span>
+          </div>
+        </div>
 
-            <form onSubmit={handleLogin} className="flex flex-col gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="********"
-                  required
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                />
-              </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Logging in...' : 'Sign In'}
-              </Button>
-            </form>
+        <form onSubmit={handleEmailLogin} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="m@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
           </div>
-          <div className="mt-6 text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/auth/sign-up" className="underline underline-offset-4">
-              Sign Up
-            </Link>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
           </div>
-        </CardContent>
-      </Card>
-      <div className="text-center text-xs text-muted-foreground">
-        <Link href="/" className="hover:underline">
-          &larr; Back to Home
-        </Link>
-      </div>
-    </div>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Signing in...' : 'Sign in'}
+          </Button>
+        </form>
+
+        <div className="text-center text-sm">
+          <Link
+            href="/auth/forgot-password"
+            className="text-primary hover:underline"
+          >
+            Forgot your password?
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

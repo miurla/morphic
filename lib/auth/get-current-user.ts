@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentUserWithAccess } from './check-user-access'
 
 export async function getCurrentUser() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -8,9 +8,8 @@ export async function getCurrentUser() {
     return null // Supabase is not configured
   }
 
-  const supabase = await createClient()
-  const { data } = await supabase.auth.getUser()
-  return data.user ?? null
+  const { user, hasAccess } = await getCurrentUserWithAccess()
+  return hasAccess ? user : null
 }
 
 export async function getCurrentUserId() {

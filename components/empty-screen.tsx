@@ -3,20 +3,20 @@ import { ArrowRight } from 'lucide-react'
 
 const exampleMessages = [
   {
-    heading: 'What is DeepSeek R1?',
-    message: 'What is DeepSeek R1?'
+    heading: 'Research OSHA violations for ABC Construction',
+    message: 'Research OSHA violations for ABC Construction'
   },
   {
-    heading: 'Why is Nvidia growing rapidly?',
-    message: 'Why is Nvidia growing rapidly?'
+    heading: 'Find NLRB cases involving XYZ Contractors',
+    message: 'Find NLRB cases involving XYZ Contractors'
   },
   {
-    heading: 'Tesla vs Rivian',
-    message: 'Tesla vs Rivian'
+    heading: 'Analyze government contracts for Smith & Sons',
+    message: 'Analyze government contracts for Smith & Sons'
   },
   {
-    heading: 'Summary: https://arxiv.org/pdf/2501.05707',
-    message: 'Summary: https://arxiv.org/pdf/2501.05707'
+    heading: 'Research union status of Johnson Builders',
+    message: 'Research union status of Johnson Builders'
   }
 ]
 export function EmptyScreen({
