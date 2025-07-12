@@ -136,6 +136,16 @@ export function Chat({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
+  // Auto-start search if query is provided
+  useEffect(() => {
+    if (query && messages.length === 0) {
+      append({
+        role: 'user',
+        content: query
+      })
+    }
+  }, [query, messages.length, append])
+
   const onQuerySelect = (query: string) => {
     append({
       role: 'user',

@@ -59,28 +59,28 @@ export default function AppSidebar() {
           </h3>
           <div className="space-y-1">
             <Link
-              href="/?q=OSHA violations"
+              href="/search?q=OSHA violations"
               className="flex items-center gap-2 p-2 text-sm rounded-md hover:bg-accent"
             >
               <Shield className="size-4" />
               <span>Safety & OSHA</span>
             </Link>
             <Link
-              href="/?q=government contracts"
+              href="/search?q=government contracts"
               className="flex items-center gap-2 p-2 text-sm rounded-md hover:bg-accent"
             >
               <FileText className="size-4" />
               <span>Government Contracts</span>
             </Link>
             <Link
-              href="/?q=union status"
+              href="/search?q=union status"
               className="flex items-center gap-2 p-2 text-sm rounded-md hover:bg-accent"
             >
               <Users className="size-4" />
               <span>Union Relations</span>
             </Link>
             <Link
-              href="/?q=company analysis"
+              href="/search?q=company analysis"
               className="flex items-center gap-2 p-2 text-sm rounded-md hover:bg-accent"
             >
               <Building2 className="size-4" />

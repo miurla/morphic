@@ -26,12 +26,25 @@ export function CompaniesDropdown() {
   const [companies, setCompanies] = useState<Company[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
         const supabase = createClient()
+        console.log('Fetching companies from Supabase...')
+
+        // First, let's check if we can connect and see what's in the table
+        const { data: allData, error: allError } = await supabase
+          .from('main_companies')
+          .select('*')
+          .limit(5)
+
+        console.log('All companies data:', allData)
+        console.log('All companies error:', allError)
+
+        // Now try the filtered query
         const { data, error } = await supabase
           .from('main_companies')
           .select(
@@ -41,13 +54,19 @@ export function CompaniesDropdown() {
           .order('priority', { ascending: false })
           .order('name')
 
+        console.log('Filtered companies data:', data)
+        console.log('Filtered companies error:', error)
+
         if (error) {
           console.error('Error fetching companies:', error)
+          setError(error.message)
         } else {
           setCompanies(data || [])
+          console.log('Companies set:', data?.length || 0)
         }
       } catch (error) {
         console.error('Error fetching companies:', error)
+        setError(error instanceof Error ? error.message : 'Unknown error')
       } finally {
         setIsLoading(false)
       }
@@ -59,7 +78,7 @@ export function CompaniesDropdown() {
   const handleCompanySelect = (companyName: string) => {
     setIsOpen(false)
     // Navigate to search with the company name as the query
-    router.push(`/?q=${encodeURIComponent(companyName)}`)
+    router.push(`/search?q=${encodeURIComponent(companyName)}`)
   }
 
   if (isLoading) {
@@ -74,13 +93,25 @@ export function CompaniesDropdown() {
     )
   }
 
+  if (error) {
+    return (
+      <Button variant="outline" disabled className="w-full justify-between">
+        <div className="flex items-center gap-2">
+          <Building2 className="size-4" />
+          <span>Companies</span>
+        </div>
+        <span className="text-xs text-red-500">Error</span>
+      </Button>
+    )
+  }
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="w-full justify-between">
           <div className="flex items-center gap-2">
             <Building2 className="size-4" />
-            <span>Companies</span>
+            <span>Companies ({companies.length})</span>
           </div>
           <ChevronDown className="size-4" />
         </Button>
