@@ -13,8 +13,8 @@ function IconLogo({ className, ...props }: React.ComponentProps<'svg'>) {
       {...props}
     >
       <circle cx="128" cy="128" r="128" fill="black"></circle>
-      <circle cx="102" cy="128" r="18" fill="white"></circle>
-      <circle cx="154" cy="128" r="18" fill="white"></circle>
+      {/* Hard hat */}
+      <path d="M64 110 C72 70, 184 70, 192 110 Z" fill="orange" />
     </svg>
   )
 }
