@@ -32,6 +32,13 @@ export function CompaniesDropdown() {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
+        // Debug environment variables
+        console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+        console.log(
+          'Supabase Key exists:',
+          !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        )
+
         const supabase = createClient()
         console.log('Fetching companies from Supabase...')
 
@@ -44,25 +51,27 @@ export function CompaniesDropdown() {
         console.log('All companies data:', allData)
         console.log('All companies error:', allError)
 
-        // Now try the filtered query
+        // Try a simpler query without the is_active filter first
         const { data, error } = await supabase
           .from('main_companies')
           .select(
             'id, name, description, industry, priority, is_active, status'
           )
-          .eq('is_active', true)
-          .order('priority', { ascending: false })
           .order('name')
+          .limit(20)
 
-        console.log('Filtered companies data:', data)
-        console.log('Filtered companies error:', error)
+        console.log('Simple companies data:', data)
+        console.log('Simple companies error:', error)
 
         if (error) {
           console.error('Error fetching companies:', error)
           setError(error.message)
         } else {
-          setCompanies(data || [])
-          console.log('Companies set:', data?.length || 0)
+          // Filter active companies on the client side for now
+          const activeCompanies =
+            data?.filter(company => company.is_active !== false) || []
+          setCompanies(activeCompanies)
+          console.log('Active companies set:', activeCompanies.length)
         }
       } catch (error) {
         console.error('Error fetching companies:', error)
