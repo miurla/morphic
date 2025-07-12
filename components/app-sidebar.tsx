@@ -12,6 +12,7 @@ import { Building2, FileText, Plus, Shield, Users } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Suspense } from 'react'
+import { CompaniesDropdown } from './companies-dropdown'
 import { ChatHistorySection } from './sidebar/chat-history-section'
 import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
 
@@ -45,6 +46,11 @@ export default function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+
+        {/* Companies Section */}
+        <div className="px-2 py-2">
+          <CompaniesDropdown />
+        </div>
 
         {/* Quick Research Categories */}
         <div className="px-2 py-2">
