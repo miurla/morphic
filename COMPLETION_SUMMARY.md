@@ -25,7 +25,7 @@ The complete transformation of Morphic from an AI-powered search engine to a com
 - **Step-by-Step Navigation**: Guided learning with progress tracking
 - **Progress Analytics**: Achievement system with comprehensive tracking
 - **Mobile Responsive**: Optimized for all device sizes
-- **Authentication**: Supabase user management working
+- **Authentication**: NextAuth.js user management working
 - **Code Highlighting**: Visual annotations and explanations
 - **OCR Integration**: Screenshot-based debugging assistance
 
@@ -33,7 +33,7 @@ The complete transformation of Morphic from an AI-powered search engine to a com
 - **Zero TypeScript Errors**: Complete type safety across the codebase
 - **Production-Ready Build**: Optimized performance and security
 - **Clean Architecture**: Modular, maintainable code structure
-- **API Integration**: OpenAI, Tavily, and Supabase fully operational
+- **API Integration**: OpenAI and Tavily fully operational
 - **Database**: Redis integration for progress persistence
 - **Security**: Sandboxed code execution environment
 
@@ -58,7 +58,7 @@ The complete transformation of Morphic from an AI-powered search engine to a com
 ### **3. Technical Infrastructure**
 - ✅ Complete TypeScript implementation with full type safety
 - ✅ Next.js 15 with Turbopack for optimal performance
-- ✅ Supabase authentication and user management
+- ✅ NextAuth.js authentication and user management
 - ✅ Redis integration for progress persistence
 - ✅ OpenAI API for AI instruction capabilities
 - ✅ Tavily API for enhanced search functionality

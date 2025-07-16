@@ -1,16 +1,23 @@
-import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/db/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth/config'
 
 export async function getCurrentUser() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.email) {
+      return null
+    }
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return null // Supabase is not configured
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    return user
+  } catch (error) {
+    console.error('Error getting current user:', error)
+    return null
   }
-
-  const supabase = await createClient()
-  const { data } = await supabase.auth.getUser()
-  return data.user ?? null
 }
 
 export async function getCurrentUserId() {

@@ -1,47 +1,45 @@
-import { createClient } from '@/lib/supabase/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth/config'
 import { NextRequest } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user) {
+      return Response.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
     const { email, action } = await req.json()
     
     if (!email) {
       return Response.json({ error: 'Email is required' }, { status: 400 })
     }
 
-    const supabase = await createClient()
-    
-    // Check if current user is already an admin (for security)
-    const { data: currentUser } = await supabase.auth.getUser()
-    const isCurrentUserAdmin = currentUser.user?.user_metadata?.role === 'admin' || 
-                               currentUser.user?.email === process.env.ADMIN_EMAIL ||
-                               currentUser.user?.user_metadata?.admin === true
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com'
+    const isCurrentUserAdmin = session.user.email === adminEmail
 
-    // Allow the first admin creation if no admin exists yet, or if current user is admin
-    if (!isCurrentUserAdmin && process.env.ADMIN_EMAIL !== email) {
+    // Only allow admin operations if current user is admin or this is the first admin setup
+    if (!isCurrentUserAdmin && email !== adminEmail) {
       return Response.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     if (action === 'promote') {
-      // This would require Supabase service role key to update user metadata
-      // For now, we'll just return instructions
       return Response.json({
         success: true,
-        message: 'To promote a user to admin, you need to update their user_metadata in Supabase dashboard',
+        message: 'Admin access is controlled by the ADMIN_EMAIL environment variable',
         instructions: [
-          '1. Go to your Supabase dashboard',
-          '2. Navigate to Authentication > Users',
-          '3. Find the user by email',
-          '4. Click on the user to edit',
-          '5. In the "User Metadata" section, add: {"role": "admin"}',
-          '6. Save the changes'
+          '1. Set the ADMIN_EMAIL environment variable to the desired admin email',
+          '2. Sign up or log in with that email address',
+          '3. The user will automatically have admin access',
+          '4. Restart the application if you changed the environment variable'
         ]
       })
     }
 
     return Response.json({
       success: true,
-      message: 'Admin operations require Supabase dashboard access for user metadata updates'
+      message: 'Admin operations are managed through environment variables'
     })
 
   } catch (error) {

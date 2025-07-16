@@ -1,7 +1,6 @@
 'use client'
 
 import { ToolInvocation } from 'ai'
-import { EducationalLessonSection } from './educational-lesson-section'
 import { QuestionConfirmation } from './question-confirmation'
 import RetrieveSection from './retrieve-section'
 import { SearchSection } from './search-section'
@@ -78,17 +77,6 @@ export function ToolSection({
           tool={tool}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
-        />
-      )
-    case 'educational_lesson':
-    case 'code_editor':
-    case 'step_navigation':
-      return (
-        <EducationalLessonSection
-          tool={tool}
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-          addToolResult={addToolResult}
         />
       )
     default:

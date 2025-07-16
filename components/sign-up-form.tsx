@@ -11,7 +11,7 @@ import {
 import { IconLogo } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createClient } from '@/lib/supabase/client'
+import { signIn } from 'next-auth/react'
 import { cn } from '@/lib/utils/index'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -30,7 +30,6 @@ export function SignUpForm({
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
@@ -41,15 +40,21 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // For our simple setup, we'll just sign in with credentials
+      // This will create the user if they don't exist
+      const result = await signIn('credentials', {
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
+        redirect: false
       })
-      if (error) throw error
-      router.push('/auth/sign-up-success')
+      
+      if (result?.error) {
+        throw new Error('Failed to create account')
+      }
+      
+      // Redirect to root on successful signup
+      router.push('/')
+      router.refresh()
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {

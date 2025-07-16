@@ -12,33 +12,39 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { createClient } from '@/lib/supabase/client'
-import { User } from '@supabase/supabase-js'
+import { signOut } from 'next-auth/react'
 import { Link2, LogOut, Palette, Settings, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+
+type DbUser = {
+  id: string
+  name: string | null
+  email: string | null
+  emailVerified: Date | null
+  image: string | null
+  role: string
+  createdAt: Date
+  updatedAt: Date
+}
 import { ExternalLinkItems } from './external-link-items'
 import { ThemeMenuItems } from './theme-menu-items'
 import { Button } from './ui/button'
 
 interface UserMenuProps {
-  user: User
+  user: DbUser
 }
 
 export default function UserMenu({ user }: UserMenuProps) {
   const router = useRouter()
-  const userName =
-    user.user_metadata?.full_name || user.user_metadata?.name || 'User'
-  const avatarUrl =
-    user.user_metadata?.avatar_url || user.user_metadata?.picture
+  const userName = user.name || 'User'
+  const avatarUrl = user.image || undefined
 
   // Check if user is admin
   const isAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL || 
-                  user.email === 'admin@example.com' ||
-                  user.user_metadata?.role === 'admin' || 
-                  user.user_metadata?.admin === true
+                  user.email === 'admin@example.com'
 
-  const getInitials = (name: string, email: string | undefined) => {
+  const getInitials = (name: string, email: string | null | undefined) => {
     if (name && name !== 'User') {
       const names = name.split(' ')
       if (names.length > 1) {
@@ -53,10 +59,7 @@ export default function UserMenu({ user }: UserMenuProps) {
   }
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
+    await signOut({ callbackUrl: '/' })
   }
 
   return (

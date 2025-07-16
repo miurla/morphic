@@ -1,13 +1,12 @@
 # Morphic
 
-An AI-powered search engine with a generative UI, now enhanced with an interactive educational platform for step-by-step programming instruction.
+An AI-powered search engine with a generative UI.
 
 ![capture](/public/screenshot-2025-05-04.png)
 
 ## 🗂️ Overview
 
 - 🛠 [Features](#-features)
-- 🎓 [Educational Platform](#-educational-platform)
 - 🧱 [Stack](#-stack)
 - 🚀 [Quickstart](#-quickstart)
 - 🌐 [Deploy](#-deploy)
@@ -30,7 +29,7 @@ An AI-powered search engine with a generative UI, now enhanced with an interacti
 
 ### Authentication
 
-- User authentication powered by [Supabase Auth](https://supabase.com/docs/guides/auth)
+- User authentication powered by [NextAuth.js](https://next-auth.js.org/)
 - Supports Email/Password sign-up and sign-in
 - Supports Social Login with Google
 
@@ -73,41 +72,6 @@ Models are configured in `public/config/models.json`. Each model requires its co
 - Docker deployment ready
 - Browser search engine integration
 
-## 🎓 Educational Platform
-
-### Interactive Learning Features
-
-- **Adaptive AI Instructor**: Personalized programming instruction that adapts to your learning style and pace
-- **Step-by-Step Lessons**: Breaking down complex programming concepts into digestible, sequential steps
-- **Real-Time Code Execution**: Safe, sandboxed code execution for JavaScript, Python, HTML, and CSS
-- **Live Preview**: Instant visual feedback for web development lessons
-- **Progress Tracking**: Comprehensive achievement system with performance analytics
-- **Code Highlighting**: Visual annotations and code explanations
-- **OCR Troubleshooting**: Screenshot analysis for debugging assistance
-
-### Educational Tools
-
-- **Monaco Editor Integration**: Full-featured code editor with syntax highlighting and IntelliSense
-- **Visual Progress Indicators**: Track completion, accuracy, and learning milestones
-- **Adaptive Learning Engine**: AI analyzes your progress and adjusts teaching approach
-- **Mobile-Responsive Interface**: Learn on any device with optimized mobile experience
-- **Achievement System**: Earn badges and track your programming journey
-
-### Supported Programming Languages
-
-- **JavaScript/TypeScript**: Interactive web development lessons
-- **Python**: Programming fundamentals and data structures
-- **HTML/CSS**: Web design and styling tutorials
-- **More languages**: Extensible architecture for additional language support
-
-### Learning Analytics
-
-- Real-time performance tracking
-- Accuracy and speed metrics
-- Personalized recommendations
-- Learning pattern analysis
-- Progress persistence across sessions
-
 ## 🧱 Stack
 
 ### Core Framework
@@ -118,7 +82,9 @@ Models are configured in `public/config/models.json`. Each model requires its co
 
 ### Authentication & Authorization (Updated Category)
 
-- [Supabase](https://supabase.com/) - User authentication and backend services
+- [NextAuth.js](https://next-auth.js.org/) - Authentication and user management
+- [Prisma](https://prisma.io/) - Database ORM and development server
+- [PostgreSQL](https://www.postgresql.org/) - Primary database (via Prisma dev server)
 
 ### AI & Search
 
@@ -139,13 +105,6 @@ Models are configured in `public/config/models.json`. Each model requires its co
 - [shadcn/ui](https://ui.shadcn.com/) - Re-usable components
 - [Radix UI](https://www.radix-ui.com/) - Unstyled, accessible components
 - [Lucide Icons](https://lucide.dev/) - Beautiful & consistent icons
-
-### Educational Platform
-
-- [Monaco Editor](https://microsoft.github.io/monaco-editor/) - Advanced code editor with IntelliSense
-- **Adaptive Learning Engine** - AI-powered personalized instruction system
-- **Code Execution Service** - Sandboxed code execution with security controls
-- **Progress Tracking System** - Redis-based achievement and analytics tracking
 - **Lesson State Management** - Comprehensive lesson flow and progress persistence
 - **OCR Integration** - Screenshot analysis for debugging assistance
 
@@ -182,7 +141,48 @@ TAVILY_API_KEY=     # Get from https://app.tavily.com/home
 
 For optional features configuration (Redis, SearXNG, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
 
-### 4. Run app locally
+### 4. Set up database
+
+The application uses Prisma with PostgreSQL. You can choose between:
+
+#### Option 1: Prisma Development Server (Recommended)
+```bash
+# Start Prisma development server (includes PostgreSQL)
+npx prisma dev
+```
+
+#### Option 2: Custom PostgreSQL
+If you prefer to use your own PostgreSQL installation:
+```bash
+# Install PostgreSQL
+sudo apt-get install postgresql postgresql-contrib
+
+# Create database
+sudo -u postgres createdb dynamic_chat
+
+# Update DATABASE_URL in .env.local
+DATABASE_URL=postgresql://username:password@localhost:5432/dynamic_chat
+```
+
+Push the database schema:
+```bash
+npx prisma db push
+```
+
+### 5. Start Redis (for chat history)
+
+```bash
+# Install Redis
+sudo apt-get install redis-server
+
+# Start Redis service
+sudo service redis-server start
+
+# Or use Docker
+docker run -d -p 6379:6379 redis:alpine
+```
+
+### 6. Run app locally
 
 #### Using Bun
 
@@ -273,52 +273,49 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## ✅ Current Status
 
-**🎉 FULLY OPERATIONAL - Production Ready Educational Platform**
+**🎉 FULLY OPERATIONAL - Production Ready Search Platform**
 
-**Status: July 6, 2025** - The complete transformation of Morphic from a search engine to an interactive educational platform is now **100% complete and fully functional**.
+**Status: July 16, 2025** - Morphic is a fully functional AI-powered search engine with generative UI.
 
 ### 🚀 Live Application Status
+
 - ✅ **Development Server**: Running successfully at http://localhost:3000
 - ✅ **Production Build**: Compiles cleanly with no errors
 - ✅ **TypeScript**: All type errors resolved
 - ✅ **Linting**: All code quality issues fixed
 - ✅ **Testing**: Core functionality validated
 
-### 🎯 Educational Platform Features (All Complete)
-- ✅ **AI-Powered Instructor**: Adaptive learning with personalized instruction
-- ✅ **Interactive Code Editor**: Monaco Editor with syntax highlighting
-- ✅ **Live Code Execution**: Real-time JavaScript, Python, HTML, CSS execution
-- ✅ **Step-by-Step Navigation**: Guided learning with progress tracking
-- ✅ **Visual Progress Indicators**: Achievement system with analytics
-- ✅ **Responsive Design**: Mobile-friendly educational interface
-- ✅ **Code Highlighting**: Visual annotations and explanations
-- ✅ **OCR Integration**: Screenshot-based debugging assistance
-- ✅ **Lesson State Management**: Redis-based progress persistence
+### 🎯 Core Platform Features
 
-### 🔧 Technical Infrastructure (All Complete)
-- ✅ **Authentication**: Supabase user management working
-- ✅ **API Integration**: OpenAI, Tavily, and Supabase APIs configured
-- ✅ **Database**: Redis integration for progress tracking
-- ✅ **Security**: Sandboxed code execution environment
+- ✅ **AI-Powered Search**: Intelligent search with multiple provider support
+- ✅ **Generative UI**: Dynamic interfaces generated based on search results
+- ✅ **Multi-Model Support**: OpenAI, Anthropic, Google AI, and more
+- ✅ **Chat History**: Persistent conversation history with Redis
+- ✅ **Authentication**: NextAuth.js user management
+- ✅ **Responsive Design**: Mobile-friendly interface
+- ✅ **Video Search**: Enhanced search capabilities with video results
+- ✅ **Share Functionality**: Share search results and conversations
+
+### 🔧 Technical Infrastructure
+
+- ✅ **Authentication**: NextAuth.js user management working
+- ✅ **API Integration**: Multiple AI providers and search APIs configured
+- ✅ **Database**: PostgreSQL with Prisma for data management
+- ✅ **Redis**: Chat history and session management
+- ✅ **Security**: Secure API handling and user authentication
 - ✅ **Performance**: Optimized build and runtime performance
 
-### 🌟 Key Achievements
-- **Complete UI Transformation**: Morphing interface between chat, editor, and preview modes
-- **Full-Stack Integration**: Frontend, backend, and database working together
-- **Production Deployment Ready**: All configurations complete
-- **Comprehensive Documentation**: Updated guides and API documentation
-- **Zero Technical Debt**: All TypeScript errors resolved and code quality standards met
+### 🌟 Key Features
 
-### 🎨 User Experience
-- **Intuitive Interface**: Clean, modern design with smooth transitions
-- **Accessibility**: Screen reader friendly with proper ARIA labels
-- **Mobile Responsive**: Works seamlessly on all device sizes
-- **Fast Performance**: Optimized loading and execution times
+- **Multi-Provider Search**: Tavily, SearXNG, and Exa search integration
+- **AI Model Selection**: Choose from multiple AI providers and models
+- **Real-time Streaming**: Live AI responses with streaming support
+- **Comprehensive UI**: shadcn/ui components with Tailwind CSS
+- **Production Ready**: All configurations complete for deployment
 
-The educational platform is now ready for:
+The platform is now ready for:
+
 - **Production Deployment**
-- **User Testing**
+- **Educational Platform Development** (Future Enhancement)
 - **Feature Expansion**
 - **Community Contributions**
-
-**Next Steps**: The platform is production-ready and can be deployed immediately. All educational features are implemented and fully functional.

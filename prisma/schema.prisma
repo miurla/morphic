@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth.js Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  role          String    @default("user")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  accounts         Account[]
+  sessions         Session[]
+  chats            Chat[]
+  lessonProgress   LessonProgress[]
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+// Chat System Models
+model Chat {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  title       String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  
+  @@map("chats")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String   @map("chat_id")
+  role      String   // 'user', 'assistant', 'system'
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  
+  @@map("messages")
+}
+
+// Educational System Models
+model Lesson {
+  id               String   @id @default(cuid())
+  title            String
+  description      String   @db.Text
+  language         String   // Programming language
+  category         String   // frontend, backend, etc.
+  difficulty       String   // beginner, intermediate, advanced
+  estimatedDuration Int     // in minutes
+  objectives       String[] // Learning objectives as JSON array
+  prerequisites    String[] // Lesson IDs or skill names
+  nextLessons      String[] // Recommended next lessons
+  content          Json     // Full lesson content structure
+  author           String
+  version          String
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  tags             String[]
+  
+  progress         LessonProgress[]
+  
+  @@map("lessons")
+}
+
+model LessonProgress {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  lessonId        String   @map("lesson_id")
+  currentStep     Int      @default(0)
+  completedSteps  Int[]    @default([])
+  score           Int      @default(0)
+  timeSpent       Int      @default(0) // in seconds
+  lastAccessed    DateTime @default(now()) @map("last_accessed")
+  completed       Boolean  @default(false)
+  achievements    String[] @default([])
+  stepProgress    Json?    @default("{}")  // Detailed step-by-step progress
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson          Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, lessonId])
+  @@map("lesson_progress")
+}

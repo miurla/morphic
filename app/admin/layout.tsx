@@ -9,9 +9,7 @@ export default async function AdminLayout({
   const user = await getCurrentUser()
   
   // Check if user is admin (you can modify this logic based on your admin system)
-  const isAdmin = user?.user_metadata?.role === 'admin' || 
-                  user?.email === process.env.ADMIN_EMAIL ||
-                  user?.user_metadata?.admin === true
+  const isAdmin = user?.email === process.env.ADMIN_EMAIL
 
   if (!user || !isAdmin) {
     redirect('/auth/login?redirect=/admin')
@@ -22,7 +20,7 @@ export default async function AdminLayout({
       <div className="border-b">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold">Educational Platform Admin</h1>
+            <h1 className="text-xl font-semibold">Platform Admin</h1>
             <div className="text-sm text-muted-foreground">
               Logged in as: {user.email}
             </div>

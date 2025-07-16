@@ -4,10 +4,74 @@ This guide covers the optional features and their configuration in Morphic.
 
 ## Table of Contents
 
+- [Database Setup](#database-setup)
+- [Authentication](#authentication)
 - [Chat History Storage](#chat-history-storage)
 - [Search Providers](#search-providers)
 - [Additional AI Providers](#additional-ai-providers)
 - [Other Features](#other-features)
+
+## Database Setup
+
+The application uses PostgreSQL as the primary database with Prisma as the ORM.
+
+### Option 1: Prisma Development Server (Recommended)
+
+The easiest way to get started is using Prisma's built-in development server:
+
+```bash
+# Start Prisma development server with PostgreSQL
+npx prisma dev
+
+# Push database schema
+npx prisma db push
+```
+
+Configure your `.env.local`:
+```bash
+DATABASE_URL="prisma+postgres://localhost:51213/?api_key=[YOUR_API_KEY]"
+```
+
+### Option 2: Custom PostgreSQL Installation
+
+If you prefer to use your own PostgreSQL installation:
+
+```bash
+# Install PostgreSQL
+sudo apt-get install postgresql postgresql-contrib
+
+# Create user and database
+sudo -u postgres createuser --interactive
+sudo -u postgres createdb dynamic_chat
+
+# Configure password
+sudo -u postgres psql
+ALTER USER your_username PASSWORD 'your_password';
+```
+
+Configure your `.env.local`:
+```bash
+DATABASE_URL="postgresql://username:password@localhost:5432/dynamic_chat"
+```
+
+## Authentication
+
+The application uses NextAuth.js for authentication with Prisma adapter.
+
+### Basic Configuration
+
+Configure your `.env.local`:
+```bash
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here-change-this-in-production
+ADMIN_EMAIL=your-email@example.com
+```
+
+### Production Notes
+
+- Generate a secure `NEXTAUTH_SECRET` for production
+- Update `NEXTAUTH_URL` to your production domain
+- Set `ADMIN_EMAIL` to grant admin access
 
 ## Chat History Storage
 

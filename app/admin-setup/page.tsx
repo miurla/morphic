@@ -3,35 +3,20 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { createClient } from '@/lib/supabase/client'
-import { User } from '@supabase/supabase-js'
 import { Shield, Mail, UserCheck, AlertCircle, CheckCircle, Copy } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
+import { User } from 'next-auth'
 
 export default function AdminSetup() {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: session, status } = useSession()
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
-
-  useEffect(() => {
-    const getUser = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      setIsLoading(false)
-    }
-    getUser()
-  }, [])
 
   const isUserAdmin = (user: User | null) => {
     if (!user) return false
-    return (
-      user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
-      user.email === 'admin@example.com' ||
-      user.user_metadata?.role === 'admin' ||
-      user.user_metadata?.admin === true
-    )
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@example.com'
+    return user.email === adminEmail
   }
 
   const copyToClipboard = async (text: string) => {
@@ -45,7 +30,7 @@ export default function AdminSetup() {
     }
   }
 
-  if (isLoading) {
+  if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
@@ -54,7 +39,7 @@ export default function AdminSetup() {
   }
 
   const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@example.com'
-  const isCurrentUserAdmin = isUserAdmin(user)
+  const isCurrentUserAdmin = isUserAdmin(session?.user || null)
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,7 +51,7 @@ export default function AdminSetup() {
             Admin Setup
           </h1>
           <p className="text-muted-foreground mt-2">
-            Configure admin access for the educational platform
+            Configure admin access for the platform
           </p>
         </div>
 
@@ -92,18 +77,15 @@ export default function AdminSetup() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {!user ? (
+            {!session?.user ? (
               <div className="space-y-4">
                 <Badge variant="secondary">Not Logged In</Badge>
                 <p className="text-muted-foreground">
                   You need to be logged in to check your admin status.
                 </p>
                 <div className="flex space-x-2">
-                  <Link href="/auth/login">
+                  <Link href="/auth/signin">
                     <Button>Login</Button>
-                  </Link>
-                  <Link href="/auth/sign-up">
-                    <Button variant="outline">Sign Up</Button>
                   </Link>
                 </div>
               </div>
@@ -111,7 +93,7 @@ export default function AdminSetup() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span>Email:</span>
-                  <code className="bg-muted px-2 py-1 rounded">{user.email}</code>
+                  <code className="bg-muted px-2 py-1 rounded">{session.user.email}</code>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Admin Status:</span>
@@ -207,8 +189,8 @@ export default function AdminSetup() {
               <ul className="list-disc list-inside space-y-1 text-sm text-yellow-800">
                 <li>Restart the development server after updating environment variables</li>
                 <li>Make sure to sign up with the exact email address specified</li>
-                <li>Admin access is required to create and manage educational lessons</li>
-                <li>Only users with admin access can see the lesson creation interface</li>
+                <li>Admin access is required to manage platform settings</li>
+                <li>Only users with admin access can see the admin interface</li>
               </ul>
             </div>
           </CardContent>

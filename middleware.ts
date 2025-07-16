@@ -1,42 +1,57 @@
-import { updateSession } from '@/lib/supabase/middleware'
-import { type NextRequest, NextResponse } from 'next/server'
+import { withAuth } from 'next-auth/middleware'
+import { NextResponse } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  // Get the protocol from X-Forwarded-Proto header or request protocol
-  const protocol =
-    request.headers.get('x-forwarded-proto') || request.nextUrl.protocol
+export default withAuth(
+  function middleware(req) {
+    // Get the protocol from X-Forwarded-Proto header or request protocol
+    const protocol =
+      req.headers.get('x-forwarded-proto') || req.nextUrl.protocol
 
-  // Get the host from X-Forwarded-Host header or request host
-  const host =
-    request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
+    // Get the host from X-Forwarded-Host header or request host
+    const host =
+      req.headers.get('x-forwarded-host') || req.headers.get('host') || ''
 
-  // Construct the base URL - ensure protocol has :// format
-  const baseUrl = `${protocol}${protocol.endsWith(':') ? '//' : '://'}${host}`
+    // Construct the base URL - ensure protocol has :// format
+    const baseUrl = `${protocol}${protocol.endsWith(':') ? '//' : '://'}${host}`
 
-  // Create a response
-  let response: NextResponse
+    // Create a response
+    const response = NextResponse.next()
 
-  // Handle Supabase session if configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    // Add request information to response headers
+    response.headers.set('x-url', req.url)
+    response.headers.set('x-host', host)
+    response.headers.set('x-protocol', protocol)
+    response.headers.set('x-base-url', baseUrl)
 
-  if (supabaseUrl && supabaseAnonKey) {
-    response = await updateSession(request)
-  } else {
-    // If Supabase is not configured, just pass the request through
-    response = NextResponse.next({
-      request
-    })
+    return response
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        // Define public paths that don't require authentication
+        const publicPaths = [
+          '/', // Root path
+          '/auth', // Auth-related pages
+          '/share', // Share pages
+          '/api/auth', // NextAuth API routes
+          '/api/chat', // Allow chat API for public access
+          '/api/advanced-search' // Allow search API
+          // Add other public paths here if needed
+        ]
+
+        const pathname = req.nextUrl.pathname
+
+        // Allow access to public paths
+        if (publicPaths.some(path => pathname.startsWith(path))) {
+          return true
+        }
+
+        // Require authentication for all other paths
+        return !!token
+      },
+    },
   }
-
-  // Add request information to response headers
-  response.headers.set('x-url', request.url)
-  response.headers.set('x-host', host)
-  response.headers.set('x-protocol', protocol)
-  response.headers.set('x-base-url', baseUrl)
-
-  return response
-}
+)
 
 export const config = {
   matcher: [

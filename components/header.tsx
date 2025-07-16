@@ -2,16 +2,25 @@
 
 import { useSidebar } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
-import { User } from '@supabase/supabase-js'
-import { BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
+
+type DbUser = {
+  id: string
+  name: string | null
+  email: string | null
+  emailVerified: Date | null
+  image: string | null
+  role: string
+  createdAt: Date
+  updatedAt: Date
+}
 import GuestMenu from './guest-menu'
 import { Button } from './ui/button'
 import UserMenu from './user-menu'
 
 interface HeaderProps {
-  user: User | null
+  user: DbUser | null
 }
 
 export const Header: React.FC<HeaderProps> = ({ user }) => {
@@ -28,14 +37,6 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
       <div></div>
 
       <div className="flex items-center gap-2">
-        {/* Learn Button */}
-        <Link href="/lessons">
-          <Button variant="outline" size="sm">
-            <BookOpen className="h-4 w-4 mr-1" />
-            Learn
-          </Button>
-        </Link>
-        
         {user ? <UserMenu user={user} /> : <GuestMenu />}
       </div>
     </header>

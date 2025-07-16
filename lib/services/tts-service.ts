@@ -16,7 +16,7 @@ const TTS_CONFIG = {
 }
 
 // Directory for cached audio files
-const AUDIO_CACHE_DIR = path.join(process.cwd(), 'public', 'audio', 'lessons')
+const AUDIO_CACHE_DIR = path.join(process.cwd(), 'public', 'audio', 'tts')
 
 /**
  * Generate a hash for text content to use as filename
@@ -67,7 +67,7 @@ export async function generateAndCacheAudio(
   const hash = generateAudioHash(text, voice)
   const fileName = `${hash}.mp3`
   const filePath = path.join(AUDIO_CACHE_DIR, fileName)
-  const publicUrl = `/audio/lessons/${fileName}`
+  const publicUrl = `/audio/tts/${fileName}`
   
   // Ensure cache directory exists
   await ensureAudioCacheDir()
@@ -148,7 +148,7 @@ export async function getCachedAudioUrl(text: string, voice: string = TTS_CONFIG
   const fileName = `${hash}.mp3`
   
   if (await isAudioCached(hash)) {
-    return `/audio/lessons/${fileName}`
+    return `/audio/tts/${fileName}`
   }
   
   return null
@@ -228,53 +228,4 @@ export async function getAudioCacheStats(): Promise<{
     console.error('Error getting cache stats:', error)
     return { totalFiles: 0, totalSize: 0 }
   }
-}
-
-/**
- * Generate TTS for all content in a lesson
- */
-export async function generateLessonTTS(
-  lessonId: string, 
-  lesson: any,
-  options: { onProgress?: (completed: number, total: number) => void } = {}
-): Promise<Array<{ stepId: string; audioUrl: string }>> {
-  const textsToGenerate: Array<{ id: string; text: string; voice?: typeof TTS_CONFIG.voice }> = []
-  
-  // Add lesson introduction if exists
-  if (lesson.description) {
-    textsToGenerate.push({
-      id: `${lessonId}-intro`,
-      text: `Welcome to ${lesson.title}. ${lesson.description}`
-    })
-  }
-  
-  // Add TTS for each step
-  lesson.steps?.forEach((step: any, index: number) => {
-    if (step.content) {
-      let stepText = `Step ${index + 1}: ${step.title}. ${step.content}`
-      
-      // Clean up text for better TTS
-      stepText = stepText
-        .replace(/```[\s\S]*?```/g, ' [Code example] ') // Replace code blocks
-        .replace(/`[^`]+`/g, ' [Code] ') // Replace inline code
-        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
-        .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
-        .replace(/#{1,6}\s+/g, '') // Remove markdown headers
-        .replace(/\n+/g, ' ') // Replace newlines with spaces
-        .trim()
-      
-      textsToGenerate.push({
-        id: step.id || `step-${index}`,
-        text: stepText
-      })
-    }
-  })
-  
-  // Generate TTS for all texts
-  const results = await generateBatchAudio(textsToGenerate, {
-    onProgress: options.onProgress
-  })
-  
-  console.log(`Generated TTS for lesson ${lessonId}: ${results.length} audio files`)
-  return results.map(result => ({ stepId: result.id, audioUrl: result.audioUrl }))
 }

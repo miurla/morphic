@@ -11,7 +11,7 @@ import {
 import { IconLogo } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createClient } from '@/lib/supabase/client'
+import { signIn } from 'next-auth/react'
 import { cn } from '@/lib/utils/index'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -29,17 +29,21 @@ export function LoginForm({
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const result = await signIn('credentials', {
         email,
-        password
+        password,
+        redirect: false
       })
-      if (error) throw error
-      // Redirect to root and refresh to ensure server components get updated session
+      
+      if (result?.error) {
+        throw new Error('Invalid credentials')
+      }
+      
+      // Redirect to root on successful login
       router.push('/')
       router.refresh()
     } catch (error: unknown) {
@@ -50,18 +54,20 @@ export function LoginForm({
   }
 
   const handleSocialLogin = async () => {
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${location.origin}/auth/oauth`
-        }
+      const result = await signIn('google', {
+        redirect: false,
+        callbackUrl: '/'
       })
-      if (error) throw error
+      
+      if (result?.error) {
+        setError('Failed to sign in with Google')
+      } else if (result?.ok) {
+        router.push('/')
+      }
     } catch (error: unknown) {
       setError(
         error instanceof Error ? error.message : 'An OAuth error occurred'
