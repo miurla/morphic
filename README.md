@@ -105,8 +105,6 @@ Models are configured in `public/config/models.json`. Each model requires its co
 - [shadcn/ui](https://ui.shadcn.com/) - Re-usable components
 - [Radix UI](https://www.radix-ui.com/) - Unstyled, accessible components
 - [Lucide Icons](https://lucide.dev/) - Beautiful & consistent icons
-- **Lesson State Management** - Comprehensive lesson flow and progress persistence
-- **OCR Integration** - Screenshot analysis for debugging assistance
 
 ## 🚀 Quickstart
 
