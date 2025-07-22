@@ -35,7 +35,7 @@ export function generateRelatedQuestions(
     tools: {
       related_questions: tool({
         description: 'Generate related questions',
-        parameters: z.object({}),
+        inputSchema: z.object({}),
         execute: async () => {
           const questions = await generateObject({
             model: getModel(model),
