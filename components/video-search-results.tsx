@@ -2,6 +2,7 @@
 'use client'
 
 import { SerperSearchResultItem, SerperSearchResults } from '@/lib/types'
+
 import { VideoResultGrid } from './video-result-grid'
 
 export interface VideoSearchResultsProps {

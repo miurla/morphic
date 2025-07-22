@@ -1,9 +1,12 @@
 'use client'
 
-import { cn } from '@/lib/utils'
-import { Paperclip } from 'lucide-react'
 import { useRef, useState } from 'react'
+
+import { Paperclip } from 'lucide-react'
 import { toast } from 'sonner'
+
+import { cn } from '@/lib/utils'
+
 import { Button } from './ui/button'
 
 const allowedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']

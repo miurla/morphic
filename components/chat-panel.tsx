@@ -1,21 +1,24 @@
 'use client'
 
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Textarea from 'react-textarea-autosize'
+import { useRouter } from 'next/navigation'
+
+import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
+import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
+import { toast } from 'sonner'
+
 import { UploadedFile } from '@/lib/types'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
-import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
-import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import Textarea from 'react-textarea-autosize'
-import { toast } from 'sonner'
+
 import { useArtifact } from './artifact/artifact-context'
+import { Button } from './ui/button'
+import { IconLogo } from './ui/icons'
 import { EmptyScreen } from './empty-screen'
 import { FileUploadButton } from './file-upload-button'
 import { ModelSelector } from './model-selector'
 import { SearchModeToggle } from './search-mode-toggle'
-import { Button } from './ui/button'
-import { IconLogo } from './ui/icons'
 import { UploadedFileList } from './uploaded-file-list'
 
 interface ChatPanelProps {

@@ -1,6 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 'use client'
 
+import { useEffect, useState } from 'react'
+
+import { PlusCircle } from 'lucide-react'
+
+import { SearchResultImage } from '@/lib/types'
+
 import {
   Carousel,
   type CarouselApi,
@@ -17,9 +23,6 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { SearchResultImage } from '@/lib/types'
-import { PlusCircle } from 'lucide-react'
-import { useEffect, useState } from 'react'
 
 interface SearchResultsImageSectionProps {
   images: SearchResultImage[]

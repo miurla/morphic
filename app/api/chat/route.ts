@@ -1,8 +1,9 @@
+import { cookies } from 'next/headers'
+
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { Model } from '@/lib/types/models'
 import { isProviderEnabled } from '@/lib/utils/registry'
-import { cookies } from 'next/headers'
 
 export const maxDuration = 30
 

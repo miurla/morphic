@@ -1,13 +1,17 @@
 'use client'
 
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
+
+import { toast } from 'sonner'
+
+import { Chat as DBChat } from '@/lib/db/schema'
+
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu
 } from '@/components/ui/sidebar'
-import { Chat as DBChat } from '@/lib/db/schema'
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
-import { toast } from 'sonner'
+
 import { ChatHistorySkeleton } from './chat-history-skeleton'
 import { ChatMenuItem } from './chat-menu-item'
 import { ClearHistoryAction } from './clear-history-action'

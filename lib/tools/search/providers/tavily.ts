@@ -1,5 +1,6 @@
 import { SearchResultImage, SearchResults } from '@/lib/types'
 import { sanitizeUrl } from '@/lib/utils'
+
 import { BaseSearchProvider } from './base'
 
 export class TavilySearchProvider extends BaseSearchProvider {

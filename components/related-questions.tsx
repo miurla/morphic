@@ -1,14 +1,17 @@
 'use client'
 
-import { Related } from '@/lib/schema/related'
+import React from 'react'
+
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ToolInvocation } from 'ai'
 import { ArrowRight } from 'lucide-react'
-import React from 'react'
-import { CollapsibleMessage } from './collapsible-message'
-import { Section } from './section'
+
+import { Related } from '@/lib/schema/related'
+
 import { Button } from './ui/button'
 import { Skeleton } from './ui/skeleton'
+import { CollapsibleMessage } from './collapsible-message'
+import { Section } from './section'
 
 export interface RelatedQuestionsProps {
   tool: ToolInvocation

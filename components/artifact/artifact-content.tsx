@@ -1,6 +1,7 @@
 'use client'
 
 import { Part } from '@/components/artifact/artifact-context'
+
 import { ReasoningContent } from './reasoning-content'
 import { ToolInvocationContent } from './tool-invocation-content'
 

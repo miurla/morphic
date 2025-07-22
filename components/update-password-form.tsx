@@ -1,5 +1,11 @@
 'use client'
 
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+
+import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils/index'
+
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -10,10 +16,6 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils/index'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 
 export function UpdatePasswordForm({
   className,

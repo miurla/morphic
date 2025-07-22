@@ -1,11 +1,13 @@
 'use server'
 
+import { revalidateTag, unstable_cache } from 'next/cache'
+
+import { UIMessage } from '@ai-sdk/react' // Import UIMessage
+
 import { getCurrentUserId } from '@/lib/auth/get-current-user' // Import getCurrentUserId
 import * as chatDb from '@/lib/db/chat'
 import { type Chat as DBChat, type Message as DBMessage } from '@/lib/db/schema' // Import DB schema types
 import { getTextFromParts } from '@/lib/utils/message-utils' // Corrected import path
-import { UIMessage } from '@ai-sdk/react' // Import UIMessage
-import { revalidateTag, unstable_cache } from 'next/cache'
 
 // Get all chats for a user
 export async function getChats(userId: string) {

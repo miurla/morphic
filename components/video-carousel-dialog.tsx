@@ -1,5 +1,9 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
+
+import { SerperSearchResultItem } from '@/lib/types'
+
 import {
   Carousel,
   type CarouselApi,
@@ -16,8 +20,6 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { SerperSearchResultItem } from '@/lib/types'
-import { useEffect, useRef, useState } from 'react'
 
 interface VideoCarouselDialogProps {
   children: React.ReactNode

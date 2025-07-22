@@ -1,5 +1,6 @@
-import { generateUUID } from '@/lib/utils' // Import the UUID generator
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { generateUUID } from '@/lib/utils' // Import the UUID generator
 
 // Mock target modules first
 vi.mock('@/lib/db/chat', () => ({
@@ -22,6 +23,7 @@ vi.mock('@/lib/auth/get-current-user', () => ({
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as chatDb from '@/lib/db/chat'
 import type { Chat as DBChat, Message as DBMessage } from '@/lib/db/schema' // Import DB schema types for test data
+
 import {
   clearChats,
   deleteChat,

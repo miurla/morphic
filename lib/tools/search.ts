@@ -1,12 +1,13 @@
+import { tool } from 'ai'
+
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { SearchResults } from '@/lib/types'
 import { getBaseUrlString } from '@/lib/utils/url'
-import { tool } from 'ai'
+
 import {
+  createSearchProvider,
   DEFAULT_PROVIDER,
-  SearchProviderType,
-  createSearchProvider
-} from './search/providers'
+  SearchProviderType} from './search/providers'
 
 /**
  * Creates a search tool with the appropriate schema for the given model.

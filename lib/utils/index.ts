@@ -1,6 +1,7 @@
-import { type Model } from '@/lib/types/models'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+
+import { type Model } from '@/lib/types/models'
 
 // Function to generate a UUID
 export function generateUUID(): string {

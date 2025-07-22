@@ -1,9 +1,12 @@
 'use client'
 
-import { useArtifact } from '@/components/artifact/artifact-context'
-import type { SerperSearchResults } from '@/lib/types'
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ToolInvocation } from 'ai'
+
+import type { SerperSearchResults } from '@/lib/types'
+
+import { useArtifact } from '@/components/artifact/artifact-context'
+
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
 import { Section, ToolArgsSection } from './section'

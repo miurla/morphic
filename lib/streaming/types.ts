@@ -1,4 +1,5 @@
 import { UIMessage } from '@ai-sdk/react'
+
 import { Model } from '../types/models'
 
 export interface BaseStreamConfig {

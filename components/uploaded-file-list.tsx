@@ -1,9 +1,11 @@
 'use client'
 
-import { UploadedFile } from '@/lib/types'
-import { Loader2, X } from 'lucide-react'
-import Image from 'next/image'
 import React from 'react'
+import Image from 'next/image'
+
+import { Loader2, X } from 'lucide-react'
+
+import { UploadedFile } from '@/lib/types'
 
 interface UploadedFileListProps {
   files: UploadedFile[]

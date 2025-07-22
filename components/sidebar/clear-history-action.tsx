@@ -1,5 +1,13 @@
 'use client'
 
+import { useCallback, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+
+import { MoreHorizontal, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+
+import { clearChats } from '@/lib/actions/chat-db'
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,11 +27,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { SidebarGroupAction } from '@/components/ui/sidebar'
 import { Spinner } from '@/components/ui/spinner'
-import { clearChats } from '@/lib/actions/chat-db'
-import { MoreHorizontal, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useCallback, useState, useTransition } from 'react'
-import { toast } from 'sonner'
 
 interface ClearHistoryActionProps {
   empty: boolean

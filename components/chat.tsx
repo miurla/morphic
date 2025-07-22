@@ -1,15 +1,19 @@
 'use client'
 
-import { useFileDropzone } from '@/hooks/use-file-dropzone'
+import { useEffect, useMemo, useRef, useState } from 'react'
+
+import { useChat } from '@ai-sdk/react'
+import { defaultChatStore,FileUIPart, UIMessage } from 'ai'
+import { toast } from 'sonner'
+import { z } from 'zod'
+
 import { deleteTrailingMessages } from '@/lib/actions/chat-db'
 import { UploadedFile } from '@/lib/types'
 import { Model } from '@/lib/types/models'
 import { cn, generateUUID } from '@/lib/utils'
-import { useChat } from '@ai-sdk/react'
-import { FileUIPart, UIMessage, defaultChatStore } from 'ai'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { toast } from 'sonner'
-import { z } from 'zod'
+
+import { useFileDropzone } from '@/hooks/use-file-dropzone'
+
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
 import { DragOverlay } from './drag-overlay'

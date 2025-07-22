@@ -1,7 +1,9 @@
-import { Chat } from '@/components/chat'
+import { redirect } from 'next/navigation'
+
 import { getModels } from '@/lib/config/models'
 import { generateUUID } from '@/lib/utils'
-import { redirect } from 'next/navigation'
+
+import { Chat } from '@/components/chat'
 
 export const maxDuration = 60
 

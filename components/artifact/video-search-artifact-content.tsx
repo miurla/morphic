@@ -1,12 +1,14 @@
 'use client'
 
-import { ToolArgsSection } from '@/components/section'
-import { VideoResultGrid } from '@/components/video-result-grid'
+import type { ToolInvocation } from 'ai'
+
 import {
   type SerperSearchResultItem,
   type SerperSearchResults
 } from '@/lib/types'
-import type { ToolInvocation } from 'ai'
+
+import { ToolArgsSection } from '@/components/section'
+import { VideoResultGrid } from '@/components/video-result-grid'
 
 export function VideoSearchArtifactContent({ tool }: { tool: ToolInvocation }) {
   const videoResults: SerperSearchResults | undefined =

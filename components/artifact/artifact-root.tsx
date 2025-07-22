@@ -1,6 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
+
 import { ArtifactProvider } from './artifact-context'
 import { ChatArtifactContainer } from './chat-artifact-container'
 

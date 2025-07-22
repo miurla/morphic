@@ -1,5 +1,12 @@
 'use client'
 
+import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
+import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils/index'
+
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -11,11 +18,6 @@ import {
 import { IconLogo } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils/index'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 
 export function SignUpForm({
   className,

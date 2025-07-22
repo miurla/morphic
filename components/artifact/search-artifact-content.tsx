@@ -1,10 +1,12 @@
 'use client'
 
+import type { ToolInvocation } from 'ai'
+
+import type { SearchResults as TypeSearchResults } from '@/lib/types'
+
 import { SearchResults } from '@/components/search-results'
 import { SearchResultsImageSection } from '@/components/search-results-image'
 import { Section, ToolArgsSection } from '@/components/section'
-import type { SearchResults as TypeSearchResults } from '@/lib/types'
-import type { ToolInvocation } from 'ai'
 
 export function SearchArtifactContent({ tool }: { tool: ToolInvocation }) {
   const searchResults: TypeSearchResults =

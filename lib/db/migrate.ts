@@ -1,7 +1,8 @@
-import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import postgres from 'postgres'
+
+import 'dotenv/config'
 
 // This script is used to run migrations on the database
 // Run it with: bun run lib/db/migrate.ts

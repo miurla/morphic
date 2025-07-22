@@ -1,14 +1,17 @@
 'use client'
 
-import { cn } from '@/lib/utils'
-import 'katex/dist/katex.min.css'
 import rehypeExternalLinks from 'rehype-external-links'
 import rehypeKatex from 'rehype-katex'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
-import { Citing } from './custom-link'
+
+import { cn } from '@/lib/utils'
+
 import { CodeBlock } from './ui/codeblock'
 import { MemoizedReactMarkdown } from './ui/markdown'
+import { Citing } from './custom-link'
+
+import 'katex/dist/katex.min.css'
 
 export function BotMessage({
   message,

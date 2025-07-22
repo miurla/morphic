@@ -1,5 +1,7 @@
-import { Model } from '@/lib/types/models'
 import { unstable_cache } from 'next/cache'
+
+import { Model } from '@/lib/types/models'
+
 import defaultModels from './default-models.json'
 
 export function validateModel(model: any): model is Model {

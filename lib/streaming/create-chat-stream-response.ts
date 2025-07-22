@@ -1,4 +1,3 @@
-import { researcher } from '@/lib/agents/researcher'
 import {
   appendClientMessage,
   convertToModelMessages,
@@ -7,12 +6,16 @@ import {
   UIMessage,
   UIMessageStreamWriter
 } from 'ai'
+
+import { researcher } from '@/lib/agents/researcher'
+
 import { saveChatMessage, saveSingleMessage } from '../actions/chat-db'
 import { generateRelatedQuestions } from '../agents/generate-related-questions'
 import { generateChatTitle } from '../agents/title-generator'
 import { getChat, getChatMessages } from '../db/chat'
 import { generateUUID } from '../utils'
 import { getTextFromParts, mergeUIMessages } from '../utils/message-utils'
+
 import { BaseStreamConfig } from './types'
 
 export async function createChatStreamResponse(

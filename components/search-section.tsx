@@ -1,9 +1,12 @@
 'use client'
 
-import { useArtifact } from '@/components/artifact/artifact-context'
-import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ToolInvocation } from 'ai'
+
+import type { SearchResults as TypeSearchResults } from '@/lib/types'
+
+import { useArtifact } from '@/components/artifact/artifact-context'
+
 import { CollapsibleMessage } from './collapsible-message'
 import { SearchSkeleton } from './default-skeleton'
 import { SearchResults } from './search-results'

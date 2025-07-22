@@ -1,6 +1,5 @@
 'use client'
 
-import type { ToolInvocation } from 'ai'
 import {
   createContext,
   ReactNode,
@@ -9,6 +8,9 @@ import {
   useEffect,
   useReducer
 } from 'react'
+
+import type { ToolInvocation } from 'ai'
+
 import { useSidebar } from '../ui/sidebar'
 
 // Part types as seen in render-message.tsx
