@@ -33,6 +33,8 @@ jobs:
 
       - name: Build application
         run: bun run build
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
 
       - name: Run tests
         run: bun test
