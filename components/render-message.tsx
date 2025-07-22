@@ -1,4 +1,5 @@
-import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
+import { UseChatHelpers } from '@ai-sdk/react'
+import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 
 import { AnswerSection } from './answer-section'
 import { ReasoningSection } from './reasoning-section'
@@ -13,7 +14,7 @@ interface RenderMessageProps {
   onOpenChange: (id: string, open: boolean) => void
   onQuerySelect: (query: string) => void
   chatId?: string
-  status?: UseChatHelpers['status']
+  status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
@@ -78,18 +79,22 @@ export function RenderMessage({
         const hasNextPart = message.parts && index < message.parts.length - 1
 
         switch (part.type) {
-          case 'tool-invocation':
+          case 'tool-search':
+          case 'tool-retrieve':
+          case 'tool-videoSearch':
+          case 'tool-askQuestion':
+          case 'tool-relatedQuestions':
             return (
               <ToolSection
                 key={`${messageId}-tool-${index}`}
-                tool={part.toolInvocation}
+                tool={part as any}
                 isOpen={getIsOpen(
-                  part.toolInvocation.toolCallId,
+                  part.toolCallId,
                   part.type,
                   hasNextPart
                 )}
                 onOpenChange={open =>
-                  onOpenChange(part.toolInvocation.toolCallId, open)
+                  onOpenChange(part.toolCallId, open)
                 }
                 addToolResult={addToolResult}
                 status={status}

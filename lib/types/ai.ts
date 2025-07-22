@@ -1,42 +1,20 @@
-import type { Message } from 'ai'
+import type { Message, InferUITool } from 'ai'
+import { searchTool } from '@/lib/tools/search'
+import { retrieveTool } from '@/lib/tools/retrieve'
+import { videoSearchTool } from '@/lib/tools/video-search'
+import { askQuestionTool } from '@/lib/tools/question'
 
-export type UIMessage = Message
+export type UIMessage<TMetadata = unknown, TDataTypes = UIDataTypes, TTools = UITools> = Message
 
 export type UIDataTypes = {
   sources?: any[]
 }
 
 export type UITools = {
-  search: {
-    input: {
-      query: string
-      max_results?: number
-      search_depth?: 'basic' | 'advanced'
-      include_domains?: string[]
-      exclude_domains?: string[]
-    }
-    output: any
-  }
-  retrieve: {
-    input: {
-      url: string
-    }
-    output: any
-  }
-  videoSearch: {
-    input: {
-      query: string
-    }
-    output: any
-  }
-  askQuestion: {
-    input: {
-      question: string
-      options: string[]
-      allowMultiple?: boolean
-    }
-    output: any
-  }
+  search: InferUITool<typeof searchTool>
+  retrieve: InferUITool<typeof retrieveTool>
+  videoSearch: InferUITool<typeof videoSearchTool>
+  askQuestion: InferUITool<typeof askQuestionTool>
 }
 
 export type TextPart = {

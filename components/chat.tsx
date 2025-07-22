@@ -48,9 +48,9 @@ export function Chat({
     stop,
     sendMessage,
     regenerate,
-    addToolInvocation
+    addToolResult
   } = useChat<UIMessage<unknown, UIDataTypes, UITools>>({
-    api: '/api/chat',
+    url: '/api/chat',
     body: {
       chatId: id
     },
@@ -146,10 +146,9 @@ export function Chat({
   }, [sections, messages])
 
   const onQuerySelect = (query: string) => {
-    append({
+    sendMessage({
       role: 'user',
-      parts: [{ type: 'text', text: query }],
-      id: generateUUID()
+      parts: [{ type: 'text', text: query }]
     })
   }
 
@@ -198,7 +197,7 @@ export function Chat({
       })
 
       await deleteTrailingMessages(id, pivotTimestamp)
-      await reload()
+      await regenerate()
     } catch (error) {
       console.error('Error during message edit and reload process:', error)
       toast.error(
@@ -247,8 +246,8 @@ export function Chat({
 
     const contentToResend =
       targetUserMessage.parts
-        ?.filter(p => p.type === 'text')
-        .map(p => p.text)
+        ?.filter((p: any) => p.type === 'text')
+        .map((p: any) => p.text)
         .join('') || ''
 
     try {
@@ -328,9 +327,7 @@ export function Chat({
         onQuerySelect={onQuerySelect}
         status={status}
         chatId={id}
-        addToolResult={({ toolCallId, result }) => {
-          addToolInvocation({ toolCallId, result })
-        }}
+        addToolResult={addToolResult}
         scrollContainerRef={scrollContainerRef}
         onUpdateMessage={handleUpdateAndReloadMessage}
         reload={handleReloadFrom}

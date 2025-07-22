@@ -1,5 +1,4 @@
 import {
-  appendClientMessage,
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
@@ -37,7 +36,7 @@ export async function createChatStreamResponse(
 
   // If authorized or it's a new chat, proceed to create the stream
   const stream = createUIMessageStream({
-    execute: async (writer: UIMessageStreamWriter) => {
+    execute: async ({ writer }: { writer: UIMessageStreamWriter }) => {
       try {
         // Use chatForAuth (from outer scope) to decide new/existing path
         if (!chatForAuth) {
@@ -54,11 +53,7 @@ export async function createChatStreamResponse(
         }
 
         const previousMessages = await getChatMessages(chatId)
-        const messagesToModel = appendClientMessage({
-          // @ts-ignore
-          messages: previousMessages,
-          message
-        })
+        const messagesToModel = [...previousMessages, message]
 
         const result = researcher({
           messages: convertToModelMessages(messagesToModel),
@@ -71,7 +66,7 @@ export async function createChatStreamResponse(
 
         writer.merge(
           result.toUIMessageStream({
-            newMessageId: generateUUID(),
+            id: generateUUID(),
             experimental_sendFinish: false,
             onFinish: ({ responseMessage }) => {
               // Store the messages for later use
@@ -86,7 +81,7 @@ export async function createChatStreamResponse(
         )
         writer.merge(
           relatedQuestions.toUIMessageStream({
-            newMessageId: generateUUID(),
+            id: generateUUID(),
             onFinish: ({ responseMessage }) => {
               // If there is a first response message, merge it with the new message
               if (firstResponseMessage) {

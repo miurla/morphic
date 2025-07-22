@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 import { UseChatHelpers } from '@ai-sdk/react'
+import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 import { UIMessage } from 'ai'
 
 import { cn } from '@/lib/utils'
@@ -20,7 +21,7 @@ interface ChatSection {
 interface ChatMessagesProps {
   sections: ChatSection[] // Changed from messages to sections
   onQuerySelect: (query: string) => void
-  status: UseChatHelpers['status']
+  status: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   chatId?: string
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for the scroll container */

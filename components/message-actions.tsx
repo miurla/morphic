@@ -1,6 +1,7 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
+import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -17,7 +18,7 @@ interface MessageActionsProps {
   chatId?: string
   enableShare?: boolean
   className?: string
-  status?: UseChatHelpers['status']
+  status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
 }
 
 export function MessageActions({
