@@ -1,6 +1,7 @@
-import { cn } from '@/lib/utils'
 import { ChevronDown } from 'lucide-react'
-import { CurrentUserAvatar } from './current-user-avatar'
+
+import { cn } from '@/lib/utils'
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -8,6 +9,7 @@ import {
 } from './ui/collapsible'
 import { IconLogo } from './ui/icons'
 import { Separator } from './ui/separator'
+import { CurrentUserAvatar } from './current-user-avatar'
 
 interface CollapsibleMessageProps {
   children: React.ReactNode

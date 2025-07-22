@@ -1,7 +1,8 @@
+import { NextRequest, NextResponse } from 'next/server'
+
 import { getChatsPage } from '@/lib/actions/chat-db'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { Chat as DBChat } from '@/lib/db/schema'
-import { NextRequest, NextResponse } from 'next/server'
 
 interface ChatPageResponse {
   chats: DBChat[]

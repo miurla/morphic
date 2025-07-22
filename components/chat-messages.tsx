@@ -1,9 +1,12 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { useState } from 'react'
+
 import { UseChatHelpers } from '@ai-sdk/react'
 import { UIMessage } from 'ai'
-import { useState } from 'react'
+
+import { cn } from '@/lib/utils'
+
 import { DefaultSkeleton } from './default-skeleton'
 import { RenderMessage } from './render-message'
 

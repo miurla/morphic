@@ -1,9 +1,12 @@
-import { Chat } from '@/components/chat'
+import { notFound, redirect } from 'next/navigation'
+
+import { UIMessage } from 'ai'
+
 import { getChat } from '@/lib/actions/chat-db'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { getModels } from '@/lib/config/models'
-import { UIMessage } from 'ai'
-import { notFound, redirect } from 'next/navigation'
+
+import { Chat } from '@/components/chat'
 
 export const maxDuration = 60
 

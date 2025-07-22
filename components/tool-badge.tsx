@@ -1,5 +1,7 @@
-import { Film, Link, Search } from 'lucide-react'
 import React from 'react'
+
+import { Film, Link, Search } from 'lucide-react'
+
 import { Badge } from './ui/badge'
 
 type ToolBadgeProps = {

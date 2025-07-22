@@ -1,14 +1,19 @@
+import type { Metadata, Viewport } from 'next'
+import { Inter as FontSans } from 'next/font/google'
+
+import { Analytics } from '@vercel/analytics/next'
+
+import { createClient } from '@/lib/supabase/server'
+import { cn } from '@/lib/utils'
+
+import { SidebarProvider } from '@/components/ui/sidebar'
+import { Toaster } from '@/components/ui/sonner'
+
 import AppSidebar from '@/components/app-sidebar'
 import ArtifactRoot from '@/components/artifact/artifact-root'
 import Header from '@/components/header'
 import { ThemeProvider } from '@/components/theme-provider'
-import { SidebarProvider } from '@/components/ui/sidebar'
-import { Toaster } from '@/components/ui/sonner'
-import { createClient } from '@/lib/supabase/server'
-import { cn } from '@/lib/utils'
-import { Analytics } from '@vercel/analytics/next'
-import type { Metadata, Viewport } from 'next'
-import { Inter as FontSans } from 'next/font/google'
+
 import './globals.css'
 
 const fontSans = FontSans({

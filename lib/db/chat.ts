@@ -1,7 +1,9 @@
-import { and, desc, eq, gte, inArray } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+
+import { and, desc, eq, gte, inArray } from 'drizzle-orm'
+
+import { type Chat, chats, type Message, messages } from './schema'
 import { db } from '.'
-import { chats, messages, type Chat, type Message } from './schema'
 
 // Create a new chat
 export async function createChat({

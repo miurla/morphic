@@ -1,5 +1,6 @@
-import { cn } from '@/lib/utils'
 import { AnchorHTMLAttributes, DetailedHTMLProps, ReactNode } from 'react'
+
+import { cn } from '@/lib/utils'
 
 type CustomLinkProps = Omit<
   DetailedHTMLProps<AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement>,

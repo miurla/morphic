@@ -6,9 +6,12 @@ import { TavilySearchProvider } from './tavily'
 export type SearchProviderType = 'tavily' | 'exa' | 'searxng'
 export const DEFAULT_PROVIDER: SearchProviderType = 'tavily'
 
-export function createSearchProvider(type?: SearchProviderType): SearchProvider {
-  const providerType = type || (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
-  
+export function createSearchProvider(
+  type?: SearchProviderType
+): SearchProvider {
+  const providerType =
+    type || (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
+
   switch (providerType) {
     case 'tavily':
       return new TavilySearchProvider()
@@ -26,4 +29,3 @@ export type { ExaSearchProvider } from './exa'
 export { SearXNGSearchProvider } from './searxng'
 export { TavilySearchProvider } from './tavily'
 export type { SearchProvider }
-

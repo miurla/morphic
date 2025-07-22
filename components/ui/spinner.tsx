@@ -1,6 +1,7 @@
 // Based on: https://github.com/vercel/ai/blob/main/examples/next-ai-rsc/components/llm-stocks/spinner.tsx
 
 import { cn } from '@/lib/utils'
+
 import { IconLogo } from './icons'
 
 interface SpinnerProps extends React.SVGProps<SVGSVGElement> {}

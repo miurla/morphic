@@ -1,9 +1,12 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
+import { Globe } from 'lucide-react'
+
 import { cn } from '@/lib/utils'
 import { getCookie, setCookie } from '@/lib/utils/cookies'
-import { Globe } from 'lucide-react'
-import { useEffect, useState } from 'react'
+
 import { Toggle } from './ui/toggle'
 
 export function SearchModeToggle() {

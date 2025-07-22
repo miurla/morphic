@@ -1,4 +1,5 @@
 import { generateText } from 'ai'
+
 import { getModel } from '../utils/registry'
 
 interface GenerateChatTitleParams {

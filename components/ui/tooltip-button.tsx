@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+
 import { Button, ButtonProps } from '@/components/ui/button'
 import {
   Tooltip,
@@ -13,9 +14,14 @@ interface TooltipButtonProps extends ButtonProps {
    * The tooltip content to display.
    * Can be a string or TooltipContent props.
    */
-  tooltipContent: string | Omit<React.ComponentPropsWithoutRef<typeof TooltipContent>, 'children'> & {
-    children: React.ReactNode
-  }
+  tooltipContent:
+    | string
+    | (Omit<
+        React.ComponentPropsWithoutRef<typeof TooltipContent>,
+        'children'
+      > & {
+        children: React.ReactNode
+      })
   /**
    * The content of the button.
    */

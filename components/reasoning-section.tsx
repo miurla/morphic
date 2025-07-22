@@ -1,11 +1,13 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
 import { Check, Lightbulb, Loader2 } from 'lucide-react'
+
+import { Badge } from '@/components/ui/badge'
+
+import { StatusIndicator } from './ui/status-indicator'
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
 import { BotMessage } from './message'
-import { StatusIndicator } from './ui/status-indicator'
 
 interface ReasoningContent {
   reasoning: string

@@ -1,5 +1,15 @@
 'use client'
 
+import { useCallback, useState, useTransition } from 'react'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+
+import { MoreHorizontal, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+
+import { deleteChat } from '@/lib/actions/chat-db'
+import { Chat as DBChat } from '@/lib/db/schema'
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,13 +32,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
-import { deleteChat } from '@/lib/actions/chat-db'
-import { Chat as DBChat } from '@/lib/db/schema'
-import { MoreHorizontal, Trash2 } from 'lucide-react'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useCallback, useState, useTransition } from 'react'
-import { toast } from 'sonner'
+
 import { Spinner } from '../ui/spinner'
 
 interface ChatMenuItemProps {

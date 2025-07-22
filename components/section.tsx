@@ -1,6 +1,7 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import React from 'react'
+
 import {
   BookCheck,
   Check,
@@ -12,11 +13,13 @@ import {
   Repeat2,
   Search
 } from 'lucide-react'
-import React from 'react'
-import { ToolBadge } from './tool-badge'
+
+import { cn } from '@/lib/utils'
+
 import { Badge } from './ui/badge'
 import { Separator } from './ui/separator'
 import { StatusIndicator } from './ui/status-indicator'
+import { ToolBadge } from './tool-badge'
 
 type SectionProps = {
   children: React.ReactNode

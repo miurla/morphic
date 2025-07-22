@@ -1,5 +1,6 @@
-import { getQuestionSchemaForModel } from '@/lib/schema/question'
 import { tool } from 'ai'
+
+import { getQuestionSchemaForModel } from '@/lib/schema/question'
 
 /**
  * Creates a question tool with the appropriate schema for the specified model.

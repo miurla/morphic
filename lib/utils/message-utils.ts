@@ -1,5 +1,6 @@
-import { type Message as DBMessage } from '@/lib/db/schema'
 import { ModelMessage, UIMessage } from 'ai'
+
+import { type Message as DBMessage } from '@/lib/db/schema'
 
 // Interface matching the expected DB message input format
 interface DatabaseMessageInput {
