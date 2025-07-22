@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Development
 
 - `bun dev` - Start development server with Next.js Turbo mode (http://localhost:3000)
-- `bun build` - Create production build
+- `bun run build` - Create production build
 - `bun start` - Start production server
 - `bun lint` - Run ESLint for code quality checks and import sorting
 - `bun typecheck` - Run TypeScript type checking
@@ -92,7 +92,7 @@ TAVILY_API_KEY=      # Default search provider
 Currently no dedicated test framework. Verify changes by:
 
 1. Running `bun lint` to check code quality
-2. Building with `bun build` to catch TypeScript errors
+2. Building with `bun run build` to catch TypeScript errors
 3. Manual testing in development mode
 
 ## Pre-PR Requirements
@@ -102,7 +102,7 @@ Before creating a pull request, you MUST ensure all of the following checks pass
 1. **Linting**: Run `bun lint` and fix all ESLint errors and warnings (includes import sorting)
 2. **Type checking**: Run `bun typecheck` to ensure no TypeScript errors
 3. **Formatting**: Run `bun format:check` to verify code formatting (or `bun format` to auto-fix)
-4. **Build**: Run `bun build` to ensure the application builds successfully
+4. **Build**: Run `bun run build` to ensure the application builds successfully
 
 These checks are enforced in CI/CD and PRs will fail if any of these steps don't pass.
 

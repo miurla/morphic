@@ -32,4 +32,4 @@ jobs:
         run: bun format:check
 
       - name: Build application
-        run: bun build
+        run: bun run build
