@@ -16,7 +16,7 @@ import {
 export function createSearchTool(fullModel: string) {
   return tool({
     description: 'Search the web for information',
-    parameters: getSearchSchemaForModel(fullModel),
+    inputSchema: getSearchSchemaForModel(fullModel),
     execute: async ({
       query,
       max_results = 20,

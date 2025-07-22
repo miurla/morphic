@@ -79,7 +79,7 @@ async function fetchTavilyExtractData(
 
 export const retrieveTool = tool({
   description: 'Retrieve content from the web',
-  parameters: retrieveSchema,
+  inputSchema: retrieveSchema,
   execute: async ({ url }) => {
     let results: SearchResultsType | null
 
