@@ -1,4 +1,9 @@
-import { SearchResultItem, SearchResults, SearXNGResponse, SearXNGResult } from '@/lib/types'
+import {
+  SearchResultItem,
+  SearchResults,
+  SearXNGResponse,
+  SearXNGResult
+} from '@/lib/types'
 import { BaseSearchProvider } from './base'
 
 export class SearXNGSearchProvider extends BaseSearchProvider {

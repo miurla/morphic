@@ -45,10 +45,12 @@ export class TavilySearchProvider extends BaseSearchProvider {
     const data = await response.json()
     const processedImages = includeImageDescriptions
       ? data.images
-          .map(({ url, description }: { url: string; description: string }) => ({
-            url: sanitizeUrl(url),
-            description
-          }))
+          .map(
+            ({ url, description }: { url: string; description: string }) => ({
+              url: sanitizeUrl(url),
+              description
+            })
+          )
           .filter(
             (
               image: SearchResultImage

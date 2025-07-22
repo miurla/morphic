@@ -2,7 +2,11 @@ import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { SearchResults } from '@/lib/types'
 import { getBaseUrlString } from '@/lib/utils/url'
 import { tool } from 'ai'
-import { DEFAULT_PROVIDER, SearchProviderType, createSearchProvider } from './search/providers'
+import {
+  DEFAULT_PROVIDER,
+  SearchProviderType,
+  createSearchProvider
+} from './search/providers'
 
 /**
  * Creates a search tool with the appropriate schema for the given model.
@@ -49,7 +53,7 @@ export function createSearchTool(fullModel: string) {
         ) {
           // Get the base URL using the centralized utility function
           const baseUrl = await getBaseUrlString()
-          
+
           const response = await fetch(`${baseUrl}/api/advanced-search`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

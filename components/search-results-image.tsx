@@ -105,7 +105,8 @@ export const SearchResultsImageSection: React.FC<
         // Determine corner rounding based on index in full mode 2x3 layout
         let cornerClasses = '' // Default to no rounding
         if (isFullMode) {
-          if (actualIndex === 0) cornerClasses = 'rounded-tl-lg' // Top-left
+          if (actualIndex === 0)
+            cornerClasses = 'rounded-tl-lg' // Top-left
           else if (actualIndex === 1)
             cornerClasses = 'rounded-tr-lg' // Top-right
           else if (actualIndex === 2)

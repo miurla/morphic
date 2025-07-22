@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, v0.5]
+  pull_request:
+    branches: [main, v0.5]
+
+jobs:
+  lint-typecheck-format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.12
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run linting
+        run: bun lint
+
+      - name: Run type checking
+        run: bun typecheck
+
+      - name: Check formatting
+        run: bun format:check
+
+      - name: Build application
+        run: bun run build
+
+      - name: Run tests
+        run: bun test

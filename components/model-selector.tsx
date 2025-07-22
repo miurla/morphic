@@ -21,14 +21,17 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 function groupModelsByProvider(models: Model[]) {
   return models
     .filter(model => model.enabled)
-    .reduce((groups, model) => {
-      const provider = model.provider
-      if (!groups[provider]) {
-        groups[provider] = []
-      }
-      groups[provider].push(model)
-      return groups
-    }, {} as Record<string, Model[]>)
+    .reduce(
+      (groups, model) => {
+        const provider = model.provider
+        if (!groups[provider]) {
+          groups[provider] = []
+        }
+        groups[provider].push(model)
+        return groups
+      },
+      {} as Record<string, Model[]>
+    )
 }
 
 interface ModelSelectorProps {
@@ -54,14 +57,16 @@ export function ModelSelector({ models }: ModelSelectorProps) {
   const handleModelSelect = (id: string) => {
     const newValue = id === value ? '' : id
     setValue(newValue)
-    
-    const selectedModel = models.find(model => createModelId(model) === newValue)
+
+    const selectedModel = models.find(
+      model => createModelId(model) === newValue
+    )
     if (selectedModel) {
       setCookie('selectedModel', JSON.stringify(selectedModel))
     } else {
       setCookie('selectedModel', '')
     }
-    
+
     setOpen(false)
   }
 
