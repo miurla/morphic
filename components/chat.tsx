@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useChat } from '@ai-sdk/react'
-import { defaultChatStore, FileUIPart, UIMessage } from 'ai'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 
 import { deleteTrailingMessages } from '@/lib/actions/chat-db'
 import { UploadedFile } from '@/lib/types'
@@ -39,38 +39,22 @@ export function Chat({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-
-  const chatStore: any = defaultChatStore({
-    api: '/api/chat',
-    messageMetadataSchema: z.object({
-      createdAt: z.date()
-    }),
-    chats: {
-      [id]: {
-        messages: savedMessages
-      }
-    },
-    prepareRequestBody: (body: any) => {
-      return {
-        chatId: body.chatId,
-        message: body.messages.at(-1)
-      }
-    }
-  })
+  const [input, setInput] = useState('')
 
   const {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
     status,
     setMessages,
     stop,
-    append,
-    addToolResult,
-    reload
-  } = useChat({
-    chatId: id,
+    sendMessage,
+    regenerate,
+    addToolInvocation
+  } = useChat<UIMessage<unknown, UIDataTypes, UITools>>({
+    api: '/api/chat',
+    body: {
+      chatId: id
+    },
+    initialMessages: savedMessages,
     onFinish: () => {
       window.history.replaceState({}, '', `/search/${id}`)
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
@@ -79,9 +63,20 @@ export function Chat({
       toast.error(`Error in chat: ${error.message}`)
     },
     experimental_throttle: 100,
-    chatStore,
     generateId: generateUUID
   })
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value)
+  }
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (input.trim()) {
+      sendMessage({ role: 'user', content: input })
+      setInput('')
+    }
+  }
 
   // Convert messages array to sections array
   const sections = useMemo<ChatSection[]>(() => {
@@ -272,7 +267,7 @@ export function Chat({
       })
 
       await deleteTrailingMessages(id, deletionTimestamp)
-      await reload()
+      await regenerate()
     } catch (error) {
       console.error(
         `Error during reload from message preceding ${reloadFromFollowerMessageId}:`,
@@ -287,16 +282,27 @@ export function Chat({
 
     const uploaded = uploadedFiles.filter(f => f.status === 'uploaded')
 
-    const files: FileUIPart[] = uploaded.map(f => ({
-      type: 'file',
-      url: f.url!,
-      name: f.name!,
-      key: f.key!,
-      mediaType: f.file.type
-    }))
+    if (input.trim() || uploaded.length > 0) {
+      const parts: any[] = []
+      
+      if (input.trim()) {
+        parts.push({ type: 'text', text: input })
+      }
+      
+      uploaded.forEach(f => {
+        parts.push({
+          type: 'file',
+          url: f.url!,
+          name: f.name!,
+          key: f.key!,
+          mediaType: f.file.type
+        })
+      })
 
-    handleSubmit(e, { files })
-    setUploadedFiles([])
+      sendMessage({ role: 'user', parts })
+      setInput('')
+      setUploadedFiles([])
+    }
   }
 
   const { isDragging, handleDragOver, handleDragLeave, handleDrop } =
@@ -322,7 +328,9 @@ export function Chat({
         onQuerySelect={onQuerySelect}
         status={status}
         chatId={id}
-        addToolResult={addToolResult}
+        addToolResult={({ toolCallId, result }) => {
+          addToolInvocation({ toolCallId, result })
+        }}
         scrollContainerRef={scrollContainerRef}
         onUpdateMessage={handleUpdateAndReloadMessage}
         reload={handleReloadFrom}
@@ -337,7 +345,9 @@ export function Chat({
         setMessages={setMessages}
         stop={stop}
         query={query}
-        append={append}
+        append={(message: any) => {
+          sendMessage(message)
+        }}
         models={models}
         showScrollToBottomButton={!isAtBottom}
         uploadedFiles={uploadedFiles}

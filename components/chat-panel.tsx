@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
 import { useRouter } from 'next/navigation'
 
-import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
+import { UseChatHelpers } from '@ai-sdk/react'
+import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -26,7 +27,7 @@ interface ChatPanelProps {
   input: string
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
-  status: UseChatHelpers['status']
+  status: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   messages: UIMessage[]
   setMessages: (messages: UIMessage[]) => void
   query?: string
