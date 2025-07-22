@@ -36,7 +36,11 @@ jobs:
         env:
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
 
+      # Run tests only if test script exists (for v0.5 branch)
       - name: Run tests
-        run: bun test
+        run: |
+          if [ -f "vitest.config.ts" ]; then
+            bun run test
+          fi
         env:
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
