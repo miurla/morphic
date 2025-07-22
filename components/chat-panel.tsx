@@ -94,8 +94,11 @@ export function ChatPanel({
     const lastPart = parts[parts.length - 1]
 
     return (
-      lastPart?.type === 'tool-invocation' &&
-      lastPart?.toolInvocation?.state === 'call'
+      (lastPart?.type === 'tool-search' ||
+       lastPart?.type === 'tool-retrieve' ||
+       lastPart?.type === 'tool-videoSearch' ||
+       lastPart?.type === 'tool-askQuestion') &&
+      ((lastPart as any)?.state === 'input-streaming' || (lastPart as any)?.state === 'input-available')
     )
   }
 

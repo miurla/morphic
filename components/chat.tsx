@@ -49,7 +49,7 @@ export function Chat({
     sendMessage,
     regenerate,
     addToolResult
-  } = useChat<UIMessage<unknown, UIDataTypes, UITools>>({
+  } = useChat({
     api: '/api/chat',
     body: {
       chatId: id
@@ -73,7 +73,7 @@ export function Chat({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (input.trim()) {
-      sendMessage({ role: 'user', content: input })
+      sendMessage({ role: 'user' as const, parts: [{ type: 'text', text: input }] })
       setInput('')
     }
   }

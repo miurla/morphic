@@ -115,8 +115,8 @@ export async function search(
       query,
       max_results: maxResults,
       search_depth: searchDepth,
-      include_domains: includeDomains,
-      exclude_domains: excludeDomains
+      include_domains: includeDomains as any,
+      exclude_domains: excludeDomains as any
     },
     {
       toolCallId: 'search',

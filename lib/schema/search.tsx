@@ -51,8 +51,6 @@ export const strictSearchSchema = z.object({
  * Uses the strict schema for OpenAI models starting with 'o'.
  */
 export function getSearchSchemaForModel(fullModel: string) {
-  return strictSearchSchema
-
   const [provider, modelName] = fullModel?.split(':') ?? []
   const useStrictSchema =
     (provider === 'openai' || provider === 'azure') &&

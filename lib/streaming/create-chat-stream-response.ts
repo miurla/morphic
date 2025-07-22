@@ -66,8 +66,6 @@ export async function createChatStreamResponse(
 
         writer.merge(
           result.toUIMessageStream({
-            generateId: () => generateUUID(),
-            experimental_sendFinish: false,
             onFinish: ({ responseMessage }) => {
               // Store the messages for later use
               firstResponseMessage = responseMessage
@@ -81,7 +79,6 @@ export async function createChatStreamResponse(
         )
         writer.merge(
           relatedQuestions.toUIMessageStream({
-            generateId: () => generateUUID(),
             onFinish: ({ responseMessage }) => {
               // If there is a first response message, merge it with the new message
               if (firstResponseMessage) {
@@ -91,8 +88,7 @@ export async function createChatStreamResponse(
                 )
                 saveSingleMessage(chatId, mergedMessage)
               }
-            },
-            experimental_sendStart: false
+            }
           })
         )
       } catch (error) {

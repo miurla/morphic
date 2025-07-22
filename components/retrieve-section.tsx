@@ -30,7 +30,7 @@ export function RetrieveSection({
   const isLoading = isToolLoading || isChatLoading
 
   const data: SearchResultsType | undefined =
-    tool.state === 'output-available' ? tool.output : undefined
+    tool.state === 'output-available' ? (tool.output || undefined) : undefined
   const url = tool.input?.url
 
   const { open } = useArtifact()

@@ -40,8 +40,8 @@ export function QuestionConfirmation({
   onConfirm,
   isCompleted = false
 }: QuestionConfirmationProps) {
-  const { question = '', options = [], allowsInput = false, inputLabel = '', inputPlaceholder = '' } =
-    toolInvocation.input || {}
+  const input = (toolInvocation.input || {}) as QuestionInput
+  const { question = '', options = [], allowsInput = false, inputLabel = '', inputPlaceholder = '' } = input
 
   // Get result data if available
   const resultData =
