@@ -50,7 +50,7 @@ export function Chat({
     regenerate,
     addToolResult
   } = useChat<UIMessage<unknown, UIDataTypes, UITools>>({
-    url: '/api/chat',
+    api: '/api/chat',
     body: {
       chatId: id
     },
@@ -327,7 +327,9 @@ export function Chat({
         onQuerySelect={onQuerySelect}
         status={status}
         chatId={id}
-        addToolResult={addToolResult}
+        addToolResult={({ toolCallId, result }: { toolCallId: string; result: any }) => {
+          addToolResult({ toolCallId, output: result })
+        }}
         scrollContainerRef={scrollContainerRef}
         onUpdateMessage={handleUpdateAndReloadMessage}
         reload={handleReloadFrom}

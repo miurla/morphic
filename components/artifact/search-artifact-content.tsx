@@ -8,7 +8,7 @@ import { SearchResultsImageSection } from '@/components/search-results-image'
 import { Section, ToolArgsSection } from '@/components/section'
 
 export function SearchArtifactContent({ tool }: { tool: ToolPart<'search'> }) {
-  const searchResults: TypeSearchResults =
+  const searchResults: TypeSearchResults | undefined =
     tool.state === 'output-available' ? tool.output : undefined
   const query = tool.input?.query
 

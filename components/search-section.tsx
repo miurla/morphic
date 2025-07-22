@@ -29,7 +29,7 @@ export function SearchSection({
   const isLoading = status === 'submitted' || status === 'streaming'
 
   const isToolLoading = tool.state === 'input-streaming' || tool.state === 'input-available'
-  const searchResults: TypeSearchResults =
+  const searchResults: TypeSearchResults | undefined =
     tool.state === 'output-available' ? tool.output : undefined
   const query = tool.input?.query
   const includeDomains = tool.input?.include_domains

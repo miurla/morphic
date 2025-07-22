@@ -29,7 +29,7 @@ export function RetrieveSection({
   const isChatLoading = status === 'submitted' || status === 'streaming'
   const isLoading = isToolLoading || isChatLoading
 
-  const data: SearchResultsType =
+  const data: SearchResultsType | undefined =
     tool.state === 'output-available' ? tool.output : undefined
   const url = tool.input?.url
 

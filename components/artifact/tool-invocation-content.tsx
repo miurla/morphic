@@ -13,11 +13,11 @@ export function ToolInvocationContent({
 }) {
   switch (part.type) {
     case 'tool-search':
-      return <SearchArtifactContent tool={part} />
+      return <SearchArtifactContent tool={part as ToolPart<'search'>} />
     case 'tool-retrieve':
-      return <RetrieveArtifactContent tool={part} />
+      return <RetrieveArtifactContent tool={part as ToolPart<'retrieve'>} />
     case 'tool-videoSearch':
-      return <VideoSearchArtifactContent tool={part} />
+      return <VideoSearchArtifactContent tool={part as ToolPart<'videoSearch'>} />
     default:
       return <div className="p-4">Details for this tool are not available</div>
   }

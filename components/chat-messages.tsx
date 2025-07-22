@@ -4,7 +4,6 @@ import { useState } from 'react'
 
 import { UseChatHelpers } from '@ai-sdk/react'
 import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
-import { UIMessage } from 'ai'
 
 import { cn } from '@/lib/utils'
 

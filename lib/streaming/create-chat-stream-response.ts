@@ -53,7 +53,7 @@ export async function createChatStreamResponse(
         }
 
         const previousMessages = await getChatMessages(chatId)
-        const messagesToModel = [...previousMessages, message]
+        const messagesToModel = [...previousMessages as any[], message]
 
         const result = researcher({
           messages: convertToModelMessages(messagesToModel),
@@ -66,7 +66,7 @@ export async function createChatStreamResponse(
 
         writer.merge(
           result.toUIMessageStream({
-            id: generateUUID(),
+            generateId: () => generateUUID(),
             experimental_sendFinish: false,
             onFinish: ({ responseMessage }) => {
               // Store the messages for later use
@@ -81,7 +81,7 @@ export async function createChatStreamResponse(
         )
         writer.merge(
           relatedQuestions.toUIMessageStream({
-            id: generateUUID(),
+            generateId: () => generateUUID(),
             onFinish: ({ responseMessage }) => {
               // If there is a first response message, merge it with the new message
               if (firstResponseMessage) {

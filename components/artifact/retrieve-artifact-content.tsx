@@ -15,7 +15,7 @@ const MAX_CONTENT_LENGTH = 1000
 
 export function RetrieveArtifactContent({ tool }: { tool: ToolPart<'retrieve'> }) {
   const searchResults: TypeSearchResults | undefined =
-    tool.state === 'output-available' ? tool.output : undefined
+    tool.state === 'output-available' ? (tool.output ?? undefined) : undefined
   const url = tool.input?.url
 
   if (!searchResults?.results) {

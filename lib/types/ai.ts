@@ -1,10 +1,10 @@
-import type { Message, InferUITool } from 'ai'
+import type { UIMessage as AIMessage, InferUITool } from 'ai'
 import { searchTool } from '@/lib/tools/search'
 import { retrieveTool } from '@/lib/tools/retrieve'
 import { videoSearchTool } from '@/lib/tools/video-search'
 import { askQuestionTool } from '@/lib/tools/question'
 
-export type UIMessage<TMetadata = unknown, TDataTypes = UIDataTypes, TTools = UITools> = Message
+export type UIMessage<TMetadata = unknown, TDataTypes = UIDataTypes, TTools = UITools> = AIMessage
 
 export type UIDataTypes = {
   sources?: any[]

@@ -110,7 +110,7 @@ export async function search(
   includeDomains: string[] = [],
   excludeDomains: string[] = []
 ): Promise<SearchResults> {
-  return searchTool.execute(
+  return searchTool.execute?.(
     {
       query,
       max_results: maxResults,
@@ -122,5 +122,5 @@ export async function search(
       toolCallId: 'search',
       messages: []
     }
-  )
+  ) ?? Promise.resolve({ results: [], images: [], query, number_of_results: 0 })
 }

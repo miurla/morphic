@@ -35,7 +35,7 @@ export function RenderMessage({
   if (message.role === 'user') {
     return (
       <>
-        {message.parts?.map((part, index) => {
+        {message.parts?.map((part: any, index: number) => {
           switch (part.type) {
             case 'text':
               return (
@@ -67,10 +67,10 @@ export function RenderMessage({
 
   return (
     <>
-      {message.parts?.map((part, index) => {
+      {message.parts?.map((part: any, index: number) => {
         // Check if this is the last text part in the array
         const textParts =
-          message.parts?.filter(part => part.type === 'text') || []
+          message.parts?.filter((part: any) => part.type === 'text') || []
         const isLastTextPart =
           part.type === 'text' &&
           textParts.indexOf(part) === textParts.length - 1

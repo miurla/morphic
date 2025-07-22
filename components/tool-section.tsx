@@ -89,7 +89,7 @@ export function ToolSection({
           status={status}
         />
       )
-    case 'tool-relatedQuestions':
+    case 'tool-relatedQuestions' as any:
       return (
         <RelatedQuestions
           tool={tool}

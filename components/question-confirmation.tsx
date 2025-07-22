@@ -21,12 +21,26 @@ interface QuestionOption {
   label: string
 }
 
+interface QuestionInput {
+  question: string
+  options: QuestionOption[]
+  allowsInput?: boolean
+  inputLabel?: string
+  inputPlaceholder?: string
+}
+
+interface QuestionOutput {
+  selectedOptions?: string[]
+  inputText?: string
+  skipped?: boolean
+}
+
 export function QuestionConfirmation({
   toolInvocation,
   onConfirm,
   isCompleted = false
 }: QuestionConfirmationProps) {
-  const { question, options, allowsInput, inputLabel, inputPlaceholder } =
+  const { question = '', options = [], allowsInput = false, inputLabel = '', inputPlaceholder = '' } =
     toolInvocation.input || {}
 
   // Get result data if available
@@ -78,23 +92,26 @@ export function QuestionConfirmation({
 
   // Get options to display (from result or local state)
   const getDisplayedOptions = (): string[] => {
-    if (resultData && Array.isArray(resultData.selectedOptions)) {
-      return resultData.selectedOptions
+    const result = resultData as QuestionOutput | null
+    if (result && Array.isArray(result.selectedOptions)) {
+      return result.selectedOptions
     }
     return selectedOptions
   }
 
   // Get input text to display (from result or local state)
   const getDisplayedInputText = (): string => {
-    if (resultData && resultData.inputText) {
-      return resultData.inputText
+    const result = resultData as QuestionOutput | null
+    if (result && result.inputText) {
+      return result.inputText
     }
     return inputText
   }
 
   // Check if question was skipped
   const wasSkipped = (): boolean => {
-    if (resultData && resultData.skipped) {
+    const result = resultData as QuestionOutput | null
+    if (result && result.skipped) {
       return true
     }
     return skipped
