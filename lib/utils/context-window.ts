@@ -1,4 +1,5 @@
 import { CoreMessage } from 'ai'
+
 import { Model } from '../types/models'
 
 const DEFAULT_CONTEXT_WINDOW = 128_000

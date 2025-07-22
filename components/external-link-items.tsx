@@ -1,8 +1,9 @@
 'use client'
 
-import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
-import Link from 'next/link'
 import { SiDiscord, SiGithub, SiX } from 'react-icons/si'
+import Link from 'next/link'
+
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
 const externalLinks = [
   {

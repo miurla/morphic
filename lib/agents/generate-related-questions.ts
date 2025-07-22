@@ -1,5 +1,7 @@
-import { relatedSchema } from '@/lib/schema/related'
 import { CoreMessage, generateObject } from 'ai'
+
+import { relatedSchema } from '@/lib/schema/related'
+
 import {
   getModel,
   getToolCallModel,

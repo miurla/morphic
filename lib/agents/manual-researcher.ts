@@ -1,4 +1,5 @@
 import { CoreMessage, smoothStream, streamText } from 'ai'
+
 import { getModel } from '../utils/registry'
 
 const BASE_SYSTEM_PROMPT = `

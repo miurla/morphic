@@ -1,5 +1,11 @@
 'use client'
 
+import { useState, useTransition } from 'react'
+
+import { toast } from 'sonner'
+
+import { clearChats } from '@/lib/actions/chat'
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,9 +18,7 @@ import {
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { clearChats } from '@/lib/actions/chat'
-import { useState, useTransition } from 'react'
-import { toast } from 'sonner'
+
 import { Spinner } from './ui/spinner'
 
 type ClearHistoryProps = {

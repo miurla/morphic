@@ -1,5 +1,6 @@
 import { Model } from '@/lib/types/models'
 import { getBaseUrl } from '@/lib/utils/url'
+
 import defaultModels from './default-models.json'
 
 export function validateModel(model: any): model is Model {
@@ -75,4 +76,3 @@ export async function getModels(): Promise<Model[]> {
   console.warn('All attempts to load models failed, returning empty array')
   return []
 }
-

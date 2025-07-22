@@ -5,9 +5,11 @@ import {
   JSONValue,
   streamText
 } from 'ai'
+
 import { manualResearcher } from '../agents/manual-researcher'
 import { ExtendedCoreMessage } from '../types'
 import { getMaxAllowedTokens, truncateMessages } from '../utils/context-window'
+
 import { handleStreamFinish } from './handle-stream-finish'
 import { executeToolCall } from './tool-execution'
 import { BaseStreamConfig } from './types'

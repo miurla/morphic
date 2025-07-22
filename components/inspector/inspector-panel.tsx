@@ -1,17 +1,19 @@
 'use client'
 
-import { ArtifactContent } from '@/components/artifact/artifact-content'
-import { useArtifact } from '@/components/artifact/artifact-context'
+import { LightbulbIcon, MessageSquare, Minimize2, Wrench } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { TooltipButton } from '@/components/ui/tooltip-button'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip'
-import { LightbulbIcon, MessageSquare, Minimize2, Wrench } from 'lucide-react'
+import { TooltipButton } from '@/components/ui/tooltip-button'
+
+import { ArtifactContent } from '@/components/artifact/artifact-content'
+import { useArtifact } from '@/components/artifact/artifact-context'
 
 export function InspectorPanel() {
   const { state, close } = useArtifact()

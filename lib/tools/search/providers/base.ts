@@ -19,15 +19,25 @@ export abstract class BaseSearchProvider implements SearchProvider {
     excludeDomains: string[]
   ): Promise<SearchResults>
 
-  protected validateApiKey(key: string | undefined, providerName: string): void {
+  protected validateApiKey(
+    key: string | undefined,
+    providerName: string
+  ): void {
     if (!key) {
-      throw new Error(`${providerName}_API_KEY is not set in the environment variables`)
+      throw new Error(
+        `${providerName}_API_KEY is not set in the environment variables`
+      )
     }
   }
 
-  protected validateApiUrl(url: string | undefined, providerName: string): void {
+  protected validateApiUrl(
+    url: string | undefined,
+    providerName: string
+  ): void {
     if (!url) {
-      throw new Error(`${providerName}_API_URL is not set in the environment variables`)
+      throw new Error(
+        `${providerName}_API_URL is not set in the environment variables`
+      )
     }
   }
 }

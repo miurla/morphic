@@ -1,5 +1,14 @@
 'use client'
 
+import { useState, useTransition } from 'react'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+
+import { MoreHorizontal, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+
+import { Chat } from '@/lib/types'
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,12 +31,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
-import { Chat } from '@/lib/types'
-import { MoreHorizontal, Trash2 } from 'lucide-react'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
-import { toast } from 'sonner'
+
 import { Spinner } from '../ui/spinner'
 
 interface ChatMenuItemProps {

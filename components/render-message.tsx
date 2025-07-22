@@ -1,5 +1,7 @@
-import { ChatRequestOptions, JSONValue, Message, ToolInvocation } from 'ai'
 import { useMemo } from 'react'
+
+import { ChatRequestOptions, JSONValue, Message, ToolInvocation } from 'ai'
+
 import { AnswerSection } from './answer-section'
 import { ReasoningSection } from './reasoning-section'
 import RelatedQuestions from './related-questions'

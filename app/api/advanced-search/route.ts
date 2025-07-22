@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server'
+
+import { Redis } from '@upstash/redis'
 import http from 'http'
+import { Agent } from 'http'
 import https from 'https'
 import { JSDOM, VirtualConsole } from 'jsdom'
+import { createClient } from 'redis'
+
 import {
-  SearXNGSearchResults,
+  SearchResultItem,
   SearXNGResponse,
   SearXNGResult,
-  SearchResultItem
+  SearXNGSearchResults
 } from '@/lib/types'
-import { Agent } from 'http'
-import { Redis } from '@upstash/redis'
-import { createClient } from 'redis'
 
 /**
  * Maximum number of results to fetch from SearXNG.

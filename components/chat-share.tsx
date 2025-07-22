@@ -1,11 +1,14 @@
 'use client'
 
+import { useState, useTransition } from 'react'
+
+import { Share } from 'lucide-react'
+import { toast } from 'sonner'
+
 import { shareChat } from '@/lib/actions/chat'
 import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { cn } from '@/lib/utils'
-import { Share } from 'lucide-react'
-import { useState, useTransition } from 'react'
-import { toast } from 'sonner'
+
 import { Button } from './ui/button'
 import {
   Dialog,

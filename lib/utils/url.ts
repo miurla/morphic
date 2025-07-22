@@ -39,7 +39,7 @@ export async function getBaseUrlFromHeaders(): Promise<URL> {
 export async function getBaseUrl(): Promise<URL> {
   // Check for environment variables first
   const baseUrlEnv = process.env.NEXT_PUBLIC_BASE_URL || process.env.BASE_URL
-  
+
   if (baseUrlEnv) {
     try {
       const baseUrlObj = new URL(baseUrlEnv)
@@ -52,7 +52,7 @@ export async function getBaseUrl(): Promise<URL> {
       // Fall back to headers if the environment variable is invalid
     }
   }
-  
+
   // If no valid environment variable is available, use headers
   return await getBaseUrlFromHeaders()
 }

@@ -1,5 +1,12 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+
+import { User } from '@supabase/supabase-js'
+import { Link2, LogOut, Palette } from 'lucide-react'
+
+import { createClient } from '@/lib/supabase/client'
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -12,13 +19,10 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { createClient } from '@/lib/supabase/client'
-import { User } from '@supabase/supabase-js'
-import { Link2, LogOut, Palette } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+
+import { Button } from './ui/button'
 import { ExternalLinkItems } from './external-link-items'
 import { ThemeMenuItems } from './theme-menu-items'
-import { Button } from './ui/button'
 
 interface UserMenuProps {
   user: User

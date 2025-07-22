@@ -1,4 +1,5 @@
 import { tool } from 'ai'
+
 import { retrieveSchema } from '@/lib/schema/retrieve'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 

@@ -1,5 +1,6 @@
-import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { tool } from 'ai'
+
+import { getSearchSchemaForModel } from '@/lib/schema/search'
 
 /**
  * Creates a video search tool with the appropriate schema for the model.

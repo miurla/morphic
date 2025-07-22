@@ -1,13 +1,16 @@
 'use client'
 
-import { CHAT_ID } from '@/lib/constants'
-import { Model } from '@/lib/types/models'
-import { cn } from '@/lib/utils'
+import { useEffect, useMemo, useRef, useState } from 'react'
+
 import { useChat } from '@ai-sdk/react'
 import { ChatRequestOptions } from 'ai'
 import { Message } from 'ai/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+
+import { CHAT_ID } from '@/lib/constants'
+import { Model } from '@/lib/types/models'
+import { cn } from '@/lib/utils'
+
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
 

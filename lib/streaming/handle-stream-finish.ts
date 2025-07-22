@@ -1,8 +1,9 @@
+import { CoreMessage, DataStreamWriter, JSONValue, Message } from 'ai'
+
 import { getChat, saveChat } from '@/lib/actions/chat'
 import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
 import { ExtendedCoreMessage } from '@/lib/types'
 import { convertToExtendedCoreMessages } from '@/lib/utils'
-import { CoreMessage, DataStreamWriter, JSONValue, Message } from 'ai'
 
 interface HandleStreamFinishParams {
   responseMessages: CoreMessage[]
