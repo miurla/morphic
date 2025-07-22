@@ -9,6 +9,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun build` - Create production build
 - `bun start` - Start production server
 - `bun lint` - Run ESLint for code quality checks
+- `bun typecheck` - Run TypeScript type checking
+- `bun format` - Format code with Prettier
+- `bun format:check` - Check code formatting without modifying files
 
 ### Docker
 - `docker compose up -d` - Run the application with Docker
@@ -84,6 +87,15 @@ Currently no dedicated test framework. Verify changes by:
 1. Running `bun lint` to check code quality
 2. Building with `bun build` to catch TypeScript errors
 3. Manual testing in development mode
+
+## Pre-PR Requirements
+Before creating a pull request, you MUST ensure all of the following checks pass:
+1. **Linting**: Run `bun lint` and fix all ESLint errors and warnings
+2. **Type checking**: Run `bun typecheck` to ensure no TypeScript errors
+3. **Formatting**: Run `bun format:check` to verify code formatting (or `bun format` to auto-fix)
+4. **Build**: Run `bun build` to ensure the application builds successfully
+
+These checks are enforced in CI/CD and PRs will fail if any of these steps don't pass.
 
 ## Model Configuration
 Models are defined in `public/config/models.json` with:
