@@ -1,5 +1,14 @@
 'use client'
 
+import Link from 'next/link'
+
+import {
+  Link2,
+  LogIn,
+  Palette,
+  Settings2 // Or EllipsisVertical, etc.
+} from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -11,13 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import {
-  Link2,
-  LogIn,
-  Palette,
-  Settings2 // Or EllipsisVertical, etc.
-} from 'lucide-react'
-import Link from 'next/link'
+
 import { ExternalLinkItems } from './external-link-items'
 import { ThemeMenuItems } from './theme-menu-items'
 

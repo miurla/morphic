@@ -1,11 +1,14 @@
 'use client'
 
-import { cn } from '@/lib/utils'
-import { Pencil } from 'lucide-react'
 import React, { useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
-import { CollapsibleMessage } from './collapsible-message'
+
+import { Pencil } from 'lucide-react'
+
+import { cn } from '@/lib/utils'
+
 import { Button } from './ui/button'
+import { CollapsibleMessage } from './collapsible-message'
 
 type UserMessageProps = {
   message: string

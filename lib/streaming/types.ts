@@ -1,4 +1,5 @@
 import { Message } from 'ai'
+
 import { Model } from '../types/models'
 
 export interface BaseStreamConfig {

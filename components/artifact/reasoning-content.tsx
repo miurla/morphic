@@ -1,7 +1,9 @@
 'use client'
 
-import { cn } from '@/lib/utils'
 import remarkGfm from 'remark-gfm'
+
+import { cn } from '@/lib/utils'
+
 import { MemoizedReactMarkdown } from '../ui/markdown'
 
 export function ReasoningContent({ reasoning }: { reasoning: string }) {

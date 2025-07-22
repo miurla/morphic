@@ -1,10 +1,14 @@
 'use client'
 
+import Image from 'next/image'
+
+import { PlusCircle } from 'lucide-react'
+
+import { SerperSearchResultItem } from '@/lib/types'
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
-import { SerperSearchResultItem } from '@/lib/types'
-import { PlusCircle } from 'lucide-react'
-import Image from 'next/image'
+
 import { VideoCarouselDialog } from './video-carousel-dialog'
 
 interface VideoResultGridProps {

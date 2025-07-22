@@ -32,4 +32,4 @@ server:
 
 search:
   formats:
-    - json  
+    - json

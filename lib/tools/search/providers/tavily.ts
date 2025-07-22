@@ -1,5 +1,6 @@
 import { SearchResultImage, SearchResults } from '@/lib/types'
 import { sanitizeUrl } from '@/lib/utils'
+
 import { BaseSearchProvider } from './base'
 
 export class TavilySearchProvider extends BaseSearchProvider {
@@ -45,10 +46,12 @@ export class TavilySearchProvider extends BaseSearchProvider {
     const data = await response.json()
     const processedImages = includeImageDescriptions
       ? data.images
-          .map(({ url, description }: { url: string; description: string }) => ({
-            url: sanitizeUrl(url),
-            description
-          }))
+          .map(
+            ({ url, description }: { url: string; description: string }) => ({
+              url: sanitizeUrl(url),
+              description
+            })
+          )
           .filter(
             (
               image: SearchResultImage

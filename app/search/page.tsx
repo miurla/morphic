@@ -1,7 +1,10 @@
-import { Chat } from '@/components/chat'
-import { getModels } from '@/lib/config/models'
-import { generateId } from 'ai'
 import { redirect } from 'next/navigation'
+
+import { generateId } from 'ai'
+
+import { getModels } from '@/lib/config/models'
+
+import { Chat } from '@/components/chat'
 
 export const maxDuration = 60
 

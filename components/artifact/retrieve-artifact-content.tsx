@@ -1,12 +1,15 @@
 'use client'
 
-import { SearchResults } from '@/components/search-results'
-import { Section, ToolArgsSection } from '@/components/section'
+import type { ToolInvocation } from 'ai'
+
 import type {
   SearchResultItem,
   SearchResults as TypeSearchResults
 } from '@/lib/types/index'
-import type { ToolInvocation } from 'ai'
+
+import { SearchResults } from '@/components/search-results'
+import { Section, ToolArgsSection } from '@/components/section'
+
 import { MemoizedReactMarkdown } from '../ui/markdown'
 
 const MAX_CONTENT_LENGTH = 1000

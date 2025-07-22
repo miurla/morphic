@@ -1,8 +1,10 @@
 'use client'
 
-import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
-import { Laptop, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
+
+import { Laptop, Moon, Sun } from 'lucide-react'
+
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
 export function ThemeMenuItems() {
   const { setTheme } = useTheme()

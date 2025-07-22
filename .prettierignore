@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Environment
+.env*
+
+# Generated files
+*.lock
+bun.lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.log
+.DS_Store
+coverage/
+.cache/
+
+# Next.js
+.next/
+out/
+
+# Production
+build/
+
+# Temporary files
+tmp/
+temp/

@@ -1,12 +1,16 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import Image from 'next/image'
+
+import { Check, ChevronsUpDown, Lightbulb } from 'lucide-react'
+
 import { Model } from '@/lib/types/models'
 import { getCookie, setCookie } from '@/lib/utils/cookies'
 import { isReasoningModel } from '@/lib/utils/registry'
-import { Check, ChevronsUpDown, Lightbulb } from 'lucide-react'
-import Image from 'next/image'
-import { useEffect, useState } from 'react'
+
 import { createModelId } from '../lib/utils'
+
 import { Button } from './ui/button'
 import {
   Command,
@@ -21,14 +25,17 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 function groupModelsByProvider(models: Model[]) {
   return models
     .filter(model => model.enabled)
-    .reduce((groups, model) => {
-      const provider = model.provider
-      if (!groups[provider]) {
-        groups[provider] = []
-      }
-      groups[provider].push(model)
-      return groups
-    }, {} as Record<string, Model[]>)
+    .reduce(
+      (groups, model) => {
+        const provider = model.provider
+        if (!groups[provider]) {
+          groups[provider] = []
+        }
+        groups[provider].push(model)
+        return groups
+      },
+      {} as Record<string, Model[]>
+    )
 }
 
 interface ModelSelectorProps {
@@ -54,14 +61,16 @@ export function ModelSelector({ models }: ModelSelectorProps) {
   const handleModelSelect = (id: string) => {
     const newValue = id === value ? '' : id
     setValue(newValue)
-    
-    const selectedModel = models.find(model => createModelId(model) === newValue)
+
+    const selectedModel = models.find(
+      model => createModelId(model) === newValue
+    )
     if (selectedModel) {
       setCookie('selectedModel', JSON.stringify(selectedModel))
     } else {
       setCookie('selectedModel', '')
     }
-    
+
     setOpen(false)
   }
 

@@ -1,6 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 'use client'
 
+import { useEffect, useState } from 'react'
+
+import { PlusCircle } from 'lucide-react'
+
+import { SearchResultImage } from '@/lib/types'
+
 import {
   Carousel,
   type CarouselApi,
@@ -17,9 +23,6 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { SearchResultImage } from '@/lib/types'
-import { PlusCircle } from 'lucide-react'
-import { useEffect, useState } from 'react'
 
 interface SearchResultsImageSectionProps {
   images: SearchResultImage[]
@@ -105,7 +108,8 @@ export const SearchResultsImageSection: React.FC<
         // Determine corner rounding based on index in full mode 2x3 layout
         let cornerClasses = '' // Default to no rounding
         if (isFullMode) {
-          if (actualIndex === 0) cornerClasses = 'rounded-tl-lg' // Top-left
+          if (actualIndex === 0)
+            cornerClasses = 'rounded-tl-lg' // Top-left
           else if (actualIndex === 1)
             cornerClasses = 'rounded-tr-lg' // Top-right
           else if (actualIndex === 2)

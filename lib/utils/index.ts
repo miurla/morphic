@@ -1,4 +1,3 @@
-import { type Model } from '@/lib/types/models'
 import {
   convertToCoreMessages,
   CoreMessage,
@@ -10,6 +9,9 @@ import {
 } from 'ai'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+
+import { type Model } from '@/lib/types/models'
+
 import { ExtendedCoreMessage } from '../types'
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

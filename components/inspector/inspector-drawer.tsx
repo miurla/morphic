@@ -1,9 +1,13 @@
 'use client'
 
-import { useArtifact } from '@/components/artifact/artifact-context'
-import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
-import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
+
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
+
+import { useArtifact } from '@/components/artifact/artifact-context'
+
 import { InspectorPanel } from './inspector-panel'
 
 export function InspectorDrawer() {

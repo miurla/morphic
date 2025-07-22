@@ -1,7 +1,8 @@
+import { NextRequest, NextResponse } from 'next/server'
+
 import { getChatsPage } from '@/lib/actions/chat'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { type Chat } from '@/lib/types'
-import { NextRequest, NextResponse } from 'next/server'
 
 interface ChatPageResponse {
   chats: Chat[]

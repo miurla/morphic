@@ -1,6 +1,7 @@
 'use client'
 
 import { ChatRequestOptions } from 'ai'
+
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
 import { BotMessage } from './message'

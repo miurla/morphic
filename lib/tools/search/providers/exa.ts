@@ -1,5 +1,7 @@
-import { SearchResults } from '@/lib/types'
 import Exa from 'exa-js'
+
+import { SearchResults } from '@/lib/types'
+
 import { BaseSearchProvider } from './base'
 
 export class ExaSearchProvider extends BaseSearchProvider {

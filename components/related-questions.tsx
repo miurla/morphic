@@ -1,14 +1,17 @@
 'use client'
 
-import { CHAT_ID } from '@/lib/constants'
+import React from 'react'
+
 import { useChat } from '@ai-sdk/react'
 import { JSONValue } from 'ai'
 import { ArrowRight } from 'lucide-react'
-import React from 'react'
-import { CollapsibleMessage } from './collapsible-message'
-import { Section } from './section'
+
+import { CHAT_ID } from '@/lib/constants'
+
 import { Button } from './ui/button'
 import { Skeleton } from './ui/skeleton'
+import { CollapsibleMessage } from './collapsible-message'
+import { Section } from './section'
 
 export interface RelatedQuestionsProps {
   annotations: JSONValue[]
