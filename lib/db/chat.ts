@@ -2,7 +2,7 @@ import { revalidatePath } from 'next/cache'
 
 import { and, desc, eq, gte, inArray } from 'drizzle-orm'
 
-import { type Chat, chats, type Message,messages } from './schema'
+import { type Chat, chats, type Message, messages } from './schema'
 import { db } from '.'
 
 // Create a new chat

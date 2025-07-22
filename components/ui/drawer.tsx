@@ -115,4 +115,5 @@ export {
   DrawerOverlay,
   DrawerPortal,
   DrawerTitle,
-  DrawerTrigger}
+  DrawerTrigger
+}

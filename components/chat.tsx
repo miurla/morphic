@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useChat } from '@ai-sdk/react'
-import { defaultChatStore,FileUIPart, UIMessage } from 'ai'
+import { defaultChatStore, FileUIPart, UIMessage } from 'ai'
 import { toast } from 'sonner'
 import { z } from 'zod'
 

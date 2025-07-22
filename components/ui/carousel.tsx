@@ -260,4 +260,5 @@ export {
   CarouselContent,
   CarouselItem,
   CarouselNext,
-  CarouselPrevious}
+  CarouselPrevious
+}

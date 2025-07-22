@@ -11,7 +11,8 @@ import {
   SearchResultItem,
   SearXNGResponse,
   SearXNGResult,
-  SearXNGSearchResults} from '@/lib/types'
+  SearXNGSearchResults
+} from '@/lib/types'
 
 /**
  * Maximum number of results to fetch from SearXNG.

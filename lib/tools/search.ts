@@ -7,7 +7,8 @@ import { getBaseUrlString } from '@/lib/utils/url'
 import {
   createSearchProvider,
   DEFAULT_PROVIDER,
-  SearchProviderType} from './search/providers'
+  SearchProviderType
+} from './search/providers'
 
 /**
  * Creates a search tool with the appropriate schema for the given model.
