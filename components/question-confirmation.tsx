@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 import { ArrowRight, Check, SkipForward } from 'lucide-react'
+
 import type { ToolPart } from '@/lib/types/ai'
 
 import { Button } from '@/components/ui/button'
@@ -41,7 +42,13 @@ export function QuestionConfirmation({
   isCompleted = false
 }: QuestionConfirmationProps) {
   const input = (toolInvocation.input || {}) as QuestionInput
-  const { question = '', options = [], allowsInput = false, inputLabel = '', inputPlaceholder = '' } = input
+  const {
+    question = '',
+    options = [],
+    allowsInput = false,
+    inputLabel = '',
+    inputPlaceholder = ''
+  } = input
 
   // Get result data if available
   const resultData =

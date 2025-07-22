@@ -9,8 +9,9 @@ import {
   useReducer
 } from 'react'
 
-import { useSidebar } from '../ui/sidebar'
 import type { Part } from '@/lib/types/ai'
+
+import { useSidebar } from '../ui/sidebar'
 
 interface ArtifactState {
   part: Part | null

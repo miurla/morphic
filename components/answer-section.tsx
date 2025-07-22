@@ -1,8 +1,9 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 import { ChatRequestOptions } from 'ai'
+
+import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'

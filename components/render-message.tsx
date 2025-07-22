@@ -1,5 +1,6 @@
 import { UseChatHelpers } from '@ai-sdk/react'
-import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
+
+import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { AnswerSection } from './answer-section'
 import { ReasoningSection } from './reasoning-section'
@@ -88,14 +89,8 @@ export function RenderMessage({
               <ToolSection
                 key={`${messageId}-tool-${index}`}
                 tool={part as any}
-                isOpen={getIsOpen(
-                  part.toolCallId,
-                  part.type,
-                  hasNextPart
-                )}
-                onOpenChange={open =>
-                  onOpenChange(part.toolCallId, open)
-                }
+                isOpen={getIsOpen(part.toolCallId, part.type, hasNextPart)}
+                onOpenChange={open => onOpenChange(part.toolCallId, open)}
                 addToolResult={addToolResult}
                 status={status}
                 onQuerySelect={onQuerySelect}

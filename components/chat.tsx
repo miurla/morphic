@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 
 import { deleteTrailingMessages } from '@/lib/actions/chat-db'
 import { UploadedFile } from '@/lib/types'
+import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { Model } from '@/lib/types/models'
 import { cn, generateUUID } from '@/lib/utils'
 
@@ -50,11 +51,13 @@ export function Chat({
     regenerate,
     addToolResult
   } = useChat({
-    api: '/api/chat',
-    body: {
-      chatId: id
-    },
-    initialMessages: savedMessages,
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: {
+        chatId: id
+      }
+    }),
+    messages: savedMessages,
     onFinish: () => {
       window.history.replaceState({}, '', `/search/${id}`)
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
@@ -73,7 +76,10 @@ export function Chat({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (input.trim()) {
-      sendMessage({ role: 'user' as const, parts: [{ type: 'text', text: input }] })
+      sendMessage({
+        role: 'user' as const,
+        parts: [{ type: 'text', text: input }]
+      })
       setInput('')
     }
   }
@@ -283,11 +289,11 @@ export function Chat({
 
     if (input.trim() || uploaded.length > 0) {
       const parts: any[] = []
-      
+
       if (input.trim()) {
         parts.push({ type: 'text', text: input })
       }
-      
+
       uploaded.forEach(f => {
         parts.push({
           type: 'file',
@@ -327,7 +333,13 @@ export function Chat({
         onQuerySelect={onQuerySelect}
         status={status}
         chatId={id}
-        addToolResult={({ toolCallId, result }: { toolCallId: string; result: any }) => {
+        addToolResult={({
+          toolCallId,
+          result
+        }: {
+          toolCallId: string
+          result: any
+        }) => {
           addToolResult({ toolCallId, output: result })
         }}
         scrollContainerRef={scrollContainerRef}

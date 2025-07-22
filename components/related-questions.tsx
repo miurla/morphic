@@ -4,9 +4,9 @@ import React from 'react'
 
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ArrowRight } from 'lucide-react'
-import type { ToolPart, UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 
 import { Related } from '@/lib/schema/related'
+import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { Button } from './ui/button'
 import { Skeleton } from './ui/skeleton'
@@ -29,7 +29,10 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   status
 }) => {
   const isLoading =
-    status === 'submitted' || status === 'streaming' || tool.state === 'input-streaming' || tool.state === 'input-available'
+    status === 'submitted' ||
+    status === 'streaming' ||
+    tool.state === 'input-streaming' ||
+    tool.state === 'input-available'
 
   const data: Related | undefined =
     tool.state === 'output-available' ? tool.output : undefined

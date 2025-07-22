@@ -5,11 +5,11 @@ import Textarea from 'react-textarea-autosize'
 import { useRouter } from 'next/navigation'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { UploadedFile } from '@/lib/types'
+import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 
@@ -95,10 +95,11 @@ export function ChatPanel({
 
     return (
       (lastPart?.type === 'tool-search' ||
-       lastPart?.type === 'tool-retrieve' ||
-       lastPart?.type === 'tool-videoSearch' ||
-       lastPart?.type === 'tool-askQuestion') &&
-      ((lastPart as any)?.state === 'input-streaming' || (lastPart as any)?.state === 'input-available')
+        lastPart?.type === 'tool-retrieve' ||
+        lastPart?.type === 'tool-videoSearch' ||
+        lastPart?.type === 'tool-askQuestion') &&
+      ((lastPart as any)?.state === 'input-streaming' ||
+        (lastPart as any)?.state === 'input-available')
     )
   }
 

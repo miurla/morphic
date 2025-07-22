@@ -1,7 +1,8 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import type { ToolPart, UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
+
+import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { QuestionConfirmation } from './question-confirmation'
 import { RelatedQuestions } from './related-questions'
@@ -29,7 +30,10 @@ export function ToolSection({
   // Special handling for ask_question tool
   if (tool.type === 'tool-askQuestion') {
     // When waiting for user input
-    if ((tool.state === 'input-streaming' || tool.state === 'input-available') && addToolResult) {
+    if (
+      (tool.state === 'input-streaming' || tool.state === 'input-available') &&
+      addToolResult
+    ) {
       return (
         <QuestionConfirmation
           toolInvocation={tool as ToolPart<'askQuestion'>}

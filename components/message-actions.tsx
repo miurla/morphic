@@ -1,10 +1,10 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
 
+import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
 import { Button } from './ui/button'

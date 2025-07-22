@@ -1,9 +1,9 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import type { ToolPart, UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 
 import type { SerperSearchResults } from '@/lib/types'
+import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
 
@@ -27,7 +27,8 @@ export function VideoSearchSection({
 }: VideoSearchSectionProps) {
   const isLoading = status === 'submitted' || status === 'streaming'
 
-  const isToolLoading = tool.state === 'input-streaming' || tool.state === 'input-available'
+  const isToolLoading =
+    tool.state === 'input-streaming' || tool.state === 'input-available'
   const videoResults: SerperSearchResults =
     tool.state === 'output-available' ? tool.output : undefined
   const query = tool.input?.query

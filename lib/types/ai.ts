@@ -1,10 +1,15 @@
-import type { UIMessage as AIMessage, InferUITool } from 'ai'
-import { searchTool } from '@/lib/tools/search'
-import { retrieveTool } from '@/lib/tools/retrieve'
-import { videoSearchTool } from '@/lib/tools/video-search'
-import { askQuestionTool } from '@/lib/tools/question'
+import type { InferUITool, UIMessage as AIMessage } from 'ai'
 
-export type UIMessage<TMetadata = unknown, TDataTypes = UIDataTypes, TTools = UITools> = AIMessage
+import { askQuestionTool } from '@/lib/tools/question'
+import { retrieveTool } from '@/lib/tools/retrieve'
+import { searchTool } from '@/lib/tools/search'
+import { videoSearchTool } from '@/lib/tools/video-search'
+
+export type UIMessage<
+  TMetadata = unknown,
+  TDataTypes = UIDataTypes,
+  TTools = UITools
+> = AIMessage
 
 export type UIDataTypes = {
   sources?: any[]
@@ -32,7 +37,11 @@ export type ToolPart<T extends keyof UITools = keyof UITools> = {
   toolCallId: string
   input: UITools[T]['input']
   output?: UITools[T]['output']
-  state: 'input-streaming' | 'input-available' | 'output-available' | 'output-error'
+  state:
+    | 'input-streaming'
+    | 'input-available'
+    | 'output-available'
+    | 'output-error'
   errorText?: string
 }
 

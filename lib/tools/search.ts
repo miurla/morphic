@@ -110,17 +110,20 @@ export async function search(
   includeDomains: string[] = [],
   excludeDomains: string[] = []
 ): Promise<SearchResults> {
-  return searchTool.execute?.(
-    {
-      query,
-      max_results: maxResults,
-      search_depth: searchDepth,
-      include_domains: includeDomains as any,
-      exclude_domains: excludeDomains as any
-    },
-    {
-      toolCallId: 'search',
-      messages: []
-    }
-  ) ?? Promise.resolve({ results: [], images: [], query, number_of_results: 0 })
+  return (
+    searchTool.execute?.(
+      {
+        query,
+        max_results: maxResults,
+        search_depth: searchDepth,
+        include_domains: includeDomains as any,
+        exclude_domains: excludeDomains as any
+      },
+      {
+        toolCallId: 'search',
+        messages: []
+      }
+    ) ??
+    Promise.resolve({ results: [], images: [], query, number_of_results: 0 })
+  )
 }

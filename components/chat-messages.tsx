@@ -3,8 +3,8 @@
 import { useState } from 'react'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import type { UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 
+import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
 import { DefaultSkeleton } from './default-skeleton'

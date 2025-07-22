@@ -13,7 +13,11 @@ import { MemoizedReactMarkdown } from '../ui/markdown'
 
 const MAX_CONTENT_LENGTH = 1000
 
-export function RetrieveArtifactContent({ tool }: { tool: ToolPart<'retrieve'> }) {
+export function RetrieveArtifactContent({
+  tool
+}: {
+  tool: ToolPart<'retrieve'>
+}) {
   const searchResults: TypeSearchResults | undefined =
     tool.state === 'output-available' ? (tool.output ?? undefined) : undefined
   const url = tool.input?.url

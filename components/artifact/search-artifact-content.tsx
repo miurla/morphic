@@ -1,7 +1,7 @@
 'use client'
 
-import type { ToolPart } from '@/lib/types/ai'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
+import type { ToolPart } from '@/lib/types/ai'
 
 import { SearchResults } from '@/components/search-results'
 import { SearchResultsImageSection } from '@/components/search-results-image'

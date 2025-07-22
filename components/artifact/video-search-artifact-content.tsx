@@ -1,15 +1,19 @@
 'use client'
 
-import type { ToolPart } from '@/lib/types/ai'
 import {
   type SerperSearchResultItem,
   type SerperSearchResults
 } from '@/lib/types'
+import type { ToolPart } from '@/lib/types/ai'
 
 import { ToolArgsSection } from '@/components/section'
 import { VideoResultGrid } from '@/components/video-result-grid'
 
-export function VideoSearchArtifactContent({ tool }: { tool: ToolPart<'videoSearch'> }) {
+export function VideoSearchArtifactContent({
+  tool
+}: {
+  tool: ToolPart<'videoSearch'>
+}) {
   const videoResults: SerperSearchResults | undefined =
     tool.state === 'output-available' ? tool.output : undefined
   const query = tool.input?.query

@@ -1,9 +1,9 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import type { ToolPart, UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 
 import { SearchResults as SearchResultsType } from '@/lib/types'
+import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
 import { SearchResults } from '@/components/search-results'
@@ -25,12 +25,13 @@ export function RetrieveSection({
   onOpenChange,
   status
 }: RetrieveSectionProps) {
-  const isToolLoading = tool.state === 'input-streaming' || tool.state === 'input-available'
+  const isToolLoading =
+    tool.state === 'input-streaming' || tool.state === 'input-available'
   const isChatLoading = status === 'submitted' || status === 'streaming'
   const isLoading = isToolLoading || isChatLoading
 
   const data: SearchResultsType | undefined =
-    tool.state === 'output-available' ? (tool.output || undefined) : undefined
+    tool.state === 'output-available' ? tool.output || undefined : undefined
   const url = tool.input?.url
 
   const { open } = useArtifact()

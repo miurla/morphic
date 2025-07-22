@@ -53,7 +53,7 @@ export async function createChatStreamResponse(
         }
 
         const previousMessages = await getChatMessages(chatId)
-        const messagesToModel = [...previousMessages as any[], message]
+        const messagesToModel = [...(previousMessages as any[]), message]
 
         const result = researcher({
           messages: convertToModelMessages(messagesToModel),
