@@ -38,3 +38,5 @@ jobs:
 
       - name: Run tests
         run: bun test
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
