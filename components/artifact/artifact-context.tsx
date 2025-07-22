@@ -9,27 +9,8 @@ import {
   useReducer
 } from 'react'
 
-import type { ToolInvocation } from 'ai'
-
 import { useSidebar } from '../ui/sidebar'
-
-// Part types as seen in render-message.tsx
-export type TextPart = {
-  type: 'text'
-  text: string
-}
-
-export type ReasoningPart = {
-  type: 'reasoning'
-  reasoning: string
-}
-
-export type ToolInvocationPart = {
-  type: 'tool-invocation'
-  toolInvocation: ToolInvocation
-}
-
-export type Part = TextPart | ReasoningPart | ToolInvocationPart
+import type { Part } from '@/lib/types/ai'
 
 interface ArtifactState {
   part: Part | null
