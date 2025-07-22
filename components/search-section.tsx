@@ -1,7 +1,7 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { ToolInvocation } from 'ai'
+import type { ToolPart, UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 
@@ -14,10 +14,10 @@ import { SearchResultsImageSection } from './search-results-image'
 import { Section, ToolArgsSection } from './section'
 
 interface SearchSectionProps {
-  tool: ToolInvocation
+  tool: ToolPart<'search'>
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  status?: UseChatHelpers['status']
+  status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
 }
 
 export function SearchSection({
@@ -28,11 +28,11 @@ export function SearchSection({
 }: SearchSectionProps) {
   const isLoading = status === 'submitted' || status === 'streaming'
 
-  const isToolLoading = tool.state === 'call'
+  const isToolLoading = tool.state === 'input-streaming' || tool.state === 'input-available'
   const searchResults: TypeSearchResults =
-    tool.state === 'result' ? tool.result : undefined
-  const query = tool.args?.query as string | undefined
-  const includeDomains = tool.args?.includeDomains as string[] | undefined
+    tool.state === 'output-available' ? tool.output : undefined
+  const query = tool.input?.query
+  const includeDomains = tool.input?.include_domains
   const includeDomainsString = includeDomains
     ? ` [${includeDomains.join(', ')}]`
     : ''
@@ -41,7 +41,7 @@ export function SearchSection({
   const header = (
     <button
       type="button"
-      onClick={() => open({ type: 'tool-invocation', toolInvocation: tool })}
+      onClick={() => open(tool)}
       className="flex items-center justify-between w-full text-left rounded-md p-1 -ml-1"
       title="Open details"
     >

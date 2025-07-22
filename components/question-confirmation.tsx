@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 
-import { ToolInvocation } from 'ai'
 import { ArrowRight, Check, SkipForward } from 'lucide-react'
+import type { ToolPart } from '@/lib/types/ai'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 
 interface QuestionConfirmationProps {
-  toolInvocation: ToolInvocation
+  toolInvocation: ToolPart<'askQuestion'>
   onConfirm: (toolCallId: string, approved: boolean, response?: any) => void
   isCompleted?: boolean
 }
@@ -27,12 +27,12 @@ export function QuestionConfirmation({
   isCompleted = false
 }: QuestionConfirmationProps) {
   const { question, options, allowsInput, inputLabel, inputPlaceholder } =
-    toolInvocation.args
+    toolInvocation.input || {}
 
   // Get result data if available
   const resultData =
-    toolInvocation.state === 'result' && toolInvocation.result
-      ? toolInvocation.result
+    toolInvocation.state === 'output-available' && toolInvocation.output
+      ? toolInvocation.output
       : null
 
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
@@ -119,7 +119,7 @@ export function QuestionConfirmation({
   }
 
   // Show result view if completed or if tool has result state
-  if (completed || toolInvocation.state === 'result') {
+  if (completed || toolInvocation.state === 'output-available') {
     const isSkipped = wasSkipped()
 
     return (

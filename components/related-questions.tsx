@@ -3,8 +3,8 @@
 import React from 'react'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { ToolInvocation } from 'ai'
 import { ArrowRight } from 'lucide-react'
+import type { ToolPart, UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 
 import { Related } from '@/lib/schema/related'
 
@@ -14,11 +14,11 @@ import { CollapsibleMessage } from './collapsible-message'
 import { Section } from './section'
 
 export interface RelatedQuestionsProps {
-  tool: ToolInvocation
+  tool: ToolPart
   onQuerySelect: (query: string) => void
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  status?: UseChatHelpers['status']
+  status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
 }
 
 export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
@@ -29,10 +29,10 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   status
 }) => {
   const isLoading =
-    status === 'submitted' || status === 'streaming' || tool.state === 'call'
+    status === 'submitted' || status === 'streaming' || tool.state === 'input-streaming' || tool.state === 'input-available'
 
   const data: Related | undefined =
-    tool.state === 'result' ? tool.result : undefined
+    tool.state === 'output-available' ? tool.output : undefined
 
   if (!data && isLoading) {
     return (

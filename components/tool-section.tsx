@@ -1,7 +1,7 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { ToolInvocation } from 'ai'
+import type { ToolPart, UIMessage, UIDataTypes, UITools } from '@/lib/types/ai'
 
 import { QuestionConfirmation } from './question-confirmation'
 import { RelatedQuestions } from './related-questions'
@@ -10,10 +10,10 @@ import { SearchSection } from './search-section'
 import { VideoSearchSection } from './video-search-section'
 
 interface ToolSectionProps {
-  tool: ToolInvocation
+  tool: ToolPart
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  status?: UseChatHelpers['status']
+  status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onQuerySelect: (query: string) => void
 }
@@ -27,12 +27,12 @@ export function ToolSection({
   onQuerySelect
 }: ToolSectionProps) {
   // Special handling for ask_question tool
-  if (tool.toolName === 'ask_question') {
+  if (tool.type === 'tool-askQuestion') {
     // When waiting for user input
-    if (tool.state === 'call' && addToolResult) {
+    if ((tool.state === 'input-streaming' || tool.state === 'input-available') && addToolResult) {
       return (
         <QuestionConfirmation
-          toolInvocation={tool}
+          toolInvocation={tool as ToolPart<'askQuestion'>}
           onConfirm={(toolCallId, approved, response) => {
             addToolResult({
               toolCallId,
@@ -50,10 +50,10 @@ export function ToolSection({
     }
 
     // When result is available, display the result
-    if (tool.state === 'result') {
+    if (tool.state === 'output-available') {
       return (
         <QuestionConfirmation
-          toolInvocation={tool}
+          toolInvocation={tool as ToolPart<'askQuestion'>}
           isCompleted={true}
           onConfirm={() => {}} // Not used in result display mode
         />
@@ -61,35 +61,35 @@ export function ToolSection({
     }
   }
 
-  switch (tool.toolName) {
-    case 'search':
+  switch (tool.type) {
+    case 'tool-search':
       return (
         <SearchSection
-          tool={tool}
+          tool={tool as ToolPart<'search'>}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           status={status}
         />
       )
-    case 'videoSearch':
+    case 'tool-videoSearch':
       return (
         <VideoSearchSection
-          tool={tool}
+          tool={tool as ToolPart<'videoSearch'>}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           status={status}
         />
       )
-    case 'retrieve':
+    case 'tool-retrieve':
       return (
         <RetrieveSection
-          tool={tool}
+          tool={tool as ToolPart<'retrieve'>}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           status={status}
         />
       )
-    case 'related_questions':
+    case 'tool-relatedQuestions':
       return (
         <RelatedQuestions
           tool={tool}
