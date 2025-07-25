@@ -45,7 +45,7 @@ export function VideoResultGrid({
             initialIndex={index}
           >
             <div className={`relative cursor-pointer ${cardClasses}`}>
-              <Card className="flex-1 min-h-40 overflow-hidden rounded-lg border hover:shadow-sm transition-shadow duration-200">
+              <Card className="flex-1 min-h-40 overflow-hidden rounded-lg border hover:shadow-xs transition-shadow duration-200">
                 <CardContent className="p-0">
                   {' '}
                   {/* Adjusted padding */}
