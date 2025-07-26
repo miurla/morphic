@@ -73,16 +73,19 @@ export async function createChatStreamResponse(
           messages: convertToModelMessages(messagesToModel)
         })
 
-        // Merge research stream without finishing
-        writer.merge(
-          researchResult.toUIMessageStream({
-            sendFinish: false
-          })
-        )
-
         // Store messages for merging
         let researchMessage: UIMessage | null = null
         let relatedQuestionsMessage: UIMessage | null = null
+
+        // Merge research stream without finishing and capture the message
+        writer.merge(
+          researchResult.toUIMessageStream({
+            sendFinish: false,
+            onFinish: ({ responseMessage }) => {
+              researchMessage = responseMessage
+            }
+          })
+        )
 
         // After research completes, generate related questions
         researchResult.response
@@ -103,13 +106,6 @@ export async function createChatStreamResponse(
               const relatedQuestionsAgent = generateRelatedQuestions(modelId)
               const relatedQuestionsResult = relatedQuestionsAgent.stream({
                 messages: allMessages
-              })
-
-              // Capture research message from the stream
-              researchResult.toUIMessageStream({
-                onFinish: ({ responseMessage }) => {
-                  researchMessage = responseMessage
-                }
               })
 
               // Merge related questions stream
