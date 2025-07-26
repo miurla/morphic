@@ -137,11 +137,11 @@ export async function createChatStreamResponse(
                     await saveSingleMessage(chatId, researchMessage)
                   }
                 })
-                .catch(error => {
+                .catch(async error => {
                   console.error('Related questions error:', error)
                   // Save research message even if related questions fail
                   if (researchMessage) {
-                    saveSingleMessage(chatId, researchMessage)
+                    await saveSingleMessage(chatId, researchMessage)
                   }
                 })
             } catch (error) {
