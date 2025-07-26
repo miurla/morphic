@@ -4,11 +4,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
 import { useRouter } from 'next/navigation'
 
-import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
+import { UseChatHelpers } from '@ai-sdk/react'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { UploadedFile } from '@/lib/types'
+import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 
@@ -26,7 +27,7 @@ interface ChatPanelProps {
   input: string
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
-  status: UseChatHelpers['status']
+  status: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   messages: UIMessage[]
   setMessages: (messages: UIMessage[]) => void
   query?: string
@@ -93,8 +94,12 @@ export function ChatPanel({
     const lastPart = parts[parts.length - 1]
 
     return (
-      lastPart?.type === 'tool-invocation' &&
-      lastPart?.toolInvocation?.state === 'call'
+      (lastPart?.type === 'tool-search' ||
+        lastPart?.type === 'tool-retrieve' ||
+        lastPart?.type === 'tool-videoSearch' ||
+        lastPart?.type === 'tool-askQuestion') &&
+      ((lastPart as any)?.state === 'input-streaming' ||
+        (lastPart as any)?.state === 'input-available')
     )
   }
 

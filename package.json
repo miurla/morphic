@@ -16,15 +16,15 @@
     "test:watch": "vitest --watch"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "2.0.0-alpha.2",
-    "@ai-sdk/azure": "2.0.0-alpha.2",
-    "@ai-sdk/deepseek": "1.0.0-alpha.2",
-    "@ai-sdk/fireworks": "1.0.0-alpha.2",
-    "@ai-sdk/google": "2.0.0-alpha.2",
-    "@ai-sdk/groq": "2.0.0-alpha.2",
-    "@ai-sdk/openai": "2.0.0-alpha.2",
-    "@ai-sdk/react": "2.0.0-alpha.2",
-    "@ai-sdk/xai": "2.0.0-alpha.2",
+    "@ai-sdk/anthropic": "^2.0.0-beta.8",
+    "@ai-sdk/azure": "^2.0.0-beta.11",
+    "@ai-sdk/deepseek": "^1.0.0-beta.8",
+    "@ai-sdk/fireworks": "^1.0.0-beta.8",
+    "@ai-sdk/google": "^2.0.0-beta.13",
+    "@ai-sdk/groq": "^2.0.0-beta.6",
+    "@ai-sdk/openai": "^2.0.0-beta.11",
+    "@ai-sdk/react": "^2.0.0-beta.25",
+    "@ai-sdk/xai": "^2.0.0-beta.10",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.1.9",
     "@radix-ui/react-checkbox": "^1.0.4",
@@ -48,7 +48,7 @@
     "@tailwindcss/typography": "^0.5.12",
     "@upstash/redis": "^1.34.0",
     "@vercel/analytics": "^1.5.0",
-    "ai": "5.0.0-alpha.2",
+    "ai": "^5.0.0-beta.25",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
     "cmdk": "1.0.0",
@@ -80,7 +80,7 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
-    "zod": "^3.23.8"
+    "zod": "^4.0.5"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

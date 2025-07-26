@@ -1,17 +1,16 @@
 'use client'
 
-import type { ToolInvocation } from 'ai'
-
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
+import type { ToolPart } from '@/lib/types/ai'
 
 import { SearchResults } from '@/components/search-results'
 import { SearchResultsImageSection } from '@/components/search-results-image'
 import { Section, ToolArgsSection } from '@/components/section'
 
-export function SearchArtifactContent({ tool }: { tool: ToolInvocation }) {
-  const searchResults: TypeSearchResults =
-    tool.state === 'result' ? tool.result : undefined
-  const query = tool.args?.query as string | undefined
+export function SearchArtifactContent({ tool }: { tool: ToolPart<'search'> }) {
+  const searchResults: TypeSearchResults | undefined =
+    tool.state === 'output-available' ? tool.output : undefined
+  const query = tool.input?.query
 
   if (!searchResults?.results) {
     return <div className="p-4">No search results</div>

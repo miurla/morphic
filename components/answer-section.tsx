@@ -3,6 +3,8 @@
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ChatRequestOptions } from 'ai'
 
+import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
 import { BotMessage } from './message'
@@ -15,7 +17,7 @@ export type AnswerSectionProps = {
   chatId?: string
   showActions?: boolean
   messageId: string
-  status?: UseChatHelpers['status']
+  status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   reload?: (
     messageId: string,
     options?: ChatRequestOptions

@@ -1,9 +1,9 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { ToolInvocation } from 'ai'
 
 import type { SerperSearchResults } from '@/lib/types'
+import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
 
@@ -13,10 +13,10 @@ import { Section, ToolArgsSection } from './section'
 import { VideoSearchResults } from './video-search-results'
 
 interface VideoSearchSectionProps {
-  tool: ToolInvocation
+  tool: ToolPart<'videoSearch'>
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  status?: UseChatHelpers['status']
+  status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
 }
 
 export function VideoSearchSection({
@@ -27,16 +27,17 @@ export function VideoSearchSection({
 }: VideoSearchSectionProps) {
   const isLoading = status === 'submitted' || status === 'streaming'
 
-  const isToolLoading = tool.state === 'call'
+  const isToolLoading =
+    tool.state === 'input-streaming' || tool.state === 'input-available'
   const videoResults: SerperSearchResults =
-    tool.state === 'result' ? tool.result : undefined
-  const query = tool.args?.query as string | undefined
+    tool.state === 'output-available' ? tool.output : undefined
+  const query = tool.input?.query
 
   const { open } = useArtifact()
   const header = (
     <button
       type="button"
-      onClick={() => open({ type: 'tool-invocation', toolInvocation: tool })}
+      onClick={() => open(tool)}
       className="flex items-center justify-between w-full text-left rounded-md p-1 -ml-1"
       title="Open details"
     >

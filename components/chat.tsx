@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useChat } from '@ai-sdk/react'
-import { defaultChatStore, FileUIPart, UIMessage } from 'ai'
+import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { deleteTrailingMessages } from '@/lib/actions/chat-db'
 import { UploadedFile } from '@/lib/types'
+import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { Model } from '@/lib/types/models'
 import { cn, generateUUID } from '@/lib/utils'
 
@@ -39,38 +40,24 @@ export function Chat({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-
-  const chatStore: any = defaultChatStore({
-    api: '/api/chat',
-    messageMetadataSchema: z.object({
-      createdAt: z.date()
-    }),
-    chats: {
-      [id]: {
-        messages: savedMessages
-      }
-    },
-    prepareRequestBody: (body: any) => {
-      return {
-        chatId: body.chatId,
-        message: body.messages.at(-1)
-      }
-    }
-  })
+  const [input, setInput] = useState('')
 
   const {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
     status,
     setMessages,
     stop,
-    append,
-    addToolResult,
-    reload
+    sendMessage,
+    regenerate,
+    addToolResult
   } = useChat({
-    chatId: id,
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: {
+        chatId: id
+      }
+    }),
+    messages: savedMessages,
     onFinish: () => {
       window.history.replaceState({}, '', `/search/${id}`)
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
@@ -79,9 +66,23 @@ export function Chat({
       toast.error(`Error in chat: ${error.message}`)
     },
     experimental_throttle: 100,
-    chatStore,
     generateId: generateUUID
   })
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value)
+  }
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (input.trim()) {
+      sendMessage({
+        role: 'user' as const,
+        parts: [{ type: 'text', text: input }]
+      })
+      setInput('')
+    }
+  }
 
   // Convert messages array to sections array
   const sections = useMemo<ChatSection[]>(() => {
@@ -151,10 +152,9 @@ export function Chat({
   }, [sections, messages])
 
   const onQuerySelect = (query: string) => {
-    append({
+    sendMessage({
       role: 'user',
-      parts: [{ type: 'text', text: query }],
-      id: generateUUID()
+      parts: [{ type: 'text', text: query }]
     })
   }
 
@@ -203,7 +203,7 @@ export function Chat({
       })
 
       await deleteTrailingMessages(id, pivotTimestamp)
-      await reload()
+      await regenerate()
     } catch (error) {
       console.error('Error during message edit and reload process:', error)
       toast.error(
@@ -252,8 +252,8 @@ export function Chat({
 
     const contentToResend =
       targetUserMessage.parts
-        ?.filter(p => p.type === 'text')
-        .map(p => p.text)
+        ?.filter((p: any) => p.type === 'text')
+        .map((p: any) => p.text)
         .join('') || ''
 
     try {
@@ -272,7 +272,7 @@ export function Chat({
       })
 
       await deleteTrailingMessages(id, deletionTimestamp)
-      await reload()
+      await regenerate()
     } catch (error) {
       console.error(
         `Error during reload from message preceding ${reloadFromFollowerMessageId}:`,
@@ -287,16 +287,27 @@ export function Chat({
 
     const uploaded = uploadedFiles.filter(f => f.status === 'uploaded')
 
-    const files: FileUIPart[] = uploaded.map(f => ({
-      type: 'file',
-      url: f.url!,
-      name: f.name!,
-      key: f.key!,
-      mediaType: f.file.type
-    }))
+    if (input.trim() || uploaded.length > 0) {
+      const parts: any[] = []
 
-    handleSubmit(e, { files })
-    setUploadedFiles([])
+      if (input.trim()) {
+        parts.push({ type: 'text', text: input })
+      }
+
+      uploaded.forEach(f => {
+        parts.push({
+          type: 'file',
+          url: f.url!,
+          name: f.name!,
+          key: f.key!,
+          mediaType: f.file.type
+        })
+      })
+
+      sendMessage({ role: 'user', parts })
+      setInput('')
+      setUploadedFiles([])
+    }
   }
 
   const { isDragging, handleDragOver, handleDragLeave, handleDrop } =
@@ -322,7 +333,15 @@ export function Chat({
         onQuerySelect={onQuerySelect}
         status={status}
         chatId={id}
-        addToolResult={addToolResult}
+        addToolResult={({
+          toolCallId,
+          result
+        }: {
+          toolCallId: string
+          result: any
+        }) => {
+          addToolResult({ toolCallId, output: result })
+        }}
         scrollContainerRef={scrollContainerRef}
         onUpdateMessage={handleUpdateAndReloadMessage}
         reload={handleReloadFrom}
@@ -337,7 +356,9 @@ export function Chat({
         setMessages={setMessages}
         stop={stop}
         query={query}
-        append={append}
+        append={(message: any) => {
+          sendMessage(message)
+        }}
         models={models}
         showScrollToBottomButton={!isAtBottom}
         uploadedFiles={uploadedFiles}

@@ -1,4 +1,6 @@
-import { UIMessage, UseChatHelpers } from '@ai-sdk/react'
+import { UseChatHelpers } from '@ai-sdk/react'
+
+import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { AnswerSection } from './answer-section'
 import { ReasoningSection } from './reasoning-section'
@@ -13,7 +15,7 @@ interface RenderMessageProps {
   onOpenChange: (id: string, open: boolean) => void
   onQuerySelect: (query: string) => void
   chatId?: string
-  status?: UseChatHelpers['status']
+  status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
@@ -34,7 +36,7 @@ export function RenderMessage({
   if (message.role === 'user') {
     return (
       <>
-        {message.parts?.map((part, index) => {
+        {message.parts?.map((part: any, index: number) => {
           switch (part.type) {
             case 'text':
               return (
@@ -66,10 +68,10 @@ export function RenderMessage({
 
   return (
     <>
-      {message.parts?.map((part, index) => {
+      {message.parts?.map((part: any, index: number) => {
         // Check if this is the last text part in the array
         const textParts =
-          message.parts?.filter(part => part.type === 'text') || []
+          message.parts?.filter((part: any) => part.type === 'text') || []
         const isLastTextPart =
           part.type === 'text' &&
           textParts.indexOf(part) === textParts.length - 1
@@ -78,19 +80,17 @@ export function RenderMessage({
         const hasNextPart = message.parts && index < message.parts.length - 1
 
         switch (part.type) {
-          case 'tool-invocation':
+          case 'tool-search':
+          case 'tool-retrieve':
+          case 'tool-videoSearch':
+          case 'tool-askQuestion':
+          case 'tool-relatedQuestions':
             return (
               <ToolSection
                 key={`${messageId}-tool-${index}`}
-                tool={part.toolInvocation}
-                isOpen={getIsOpen(
-                  part.toolInvocation.toolCallId,
-                  part.type,
-                  hasNextPart
-                )}
-                onOpenChange={open =>
-                  onOpenChange(part.toolInvocation.toolCallId, open)
-                }
+                tool={part as any}
+                isOpen={getIsOpen(part.toolCallId, part.type, hasNextPart)}
+                onOpenChange={open => onOpenChange(part.toolCallId, open)}
                 addToolResult={addToolResult}
                 status={status}
                 onQuerySelect={onQuerySelect}

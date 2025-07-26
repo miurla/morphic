@@ -1,7 +1,6 @@
 'use client'
 
-import type { ToolInvocation } from 'ai'
-
+import type { ToolPart } from '@/lib/types/ai'
 import type {
   SearchResultItem,
   SearchResults as TypeSearchResults
@@ -14,10 +13,14 @@ import { MemoizedReactMarkdown } from '../ui/markdown'
 
 const MAX_CONTENT_LENGTH = 1000
 
-export function RetrieveArtifactContent({ tool }: { tool: ToolInvocation }) {
+export function RetrieveArtifactContent({
+  tool
+}: {
+  tool: ToolPart<'retrieve'>
+}) {
   const searchResults: TypeSearchResults | undefined =
-    tool.state === 'result' ? tool.result : undefined
-  const url = tool.args?.url as string | undefined
+    tool.state === 'output-available' ? (tool.output ?? undefined) : undefined
+  const url = tool.input?.url
 
   if (!searchResults?.results) {
     return <div className="p-4">No retrieved content</div>

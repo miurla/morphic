@@ -23,10 +23,14 @@ export function InspectorPanel() {
   // Get the icon and title based on part type
   const getIconAndTitle = () => {
     switch (part.type) {
-      case 'tool-invocation':
+      case 'tool-search':
+      case 'tool-retrieve':
+      case 'tool-videoSearch':
+      case 'tool-askQuestion':
+        const toolName = part.type.replace('tool-', '')
         return {
           icon: <Wrench size={18} />,
-          title: part.toolInvocation.toolName
+          title: toolName
         }
       case 'reasoning':
         return {

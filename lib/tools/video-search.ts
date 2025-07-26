@@ -8,7 +8,7 @@ import { getSearchSchemaForModel } from '@/lib/schema/search'
 export function createVideoSearchTool(fullModel: string) {
   return tool({
     description: 'Search for videos from YouTube',
-    parameters: getSearchSchemaForModel(fullModel),
+    inputSchema: getSearchSchemaForModel(fullModel),
     execute: async ({ query }) => {
       try {
         const response = await fetch('https://google.serper.dev/videos', {
