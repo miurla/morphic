@@ -12,7 +12,6 @@ import { saveChatMessage, saveSingleMessage } from '../actions/chat-db'
 import { generateRelatedQuestions } from '../agents/generate-related-questions'
 import { generateChatTitle } from '../agents/title-generator'
 import { getChat, getChatMessages } from '../db/chat'
-import { generateUUID } from '../utils'
 import { getTextFromParts, mergeUIMessages } from '../utils/message-utils'
 
 import { BaseStreamConfig } from './types'
@@ -53,44 +52,110 @@ export async function createChatStreamResponse(
         }
 
         const previousMessages = await getChatMessages(chatId)
-        const messagesToModel = [...(previousMessages as any[]), message]
 
-        const result = researcher({
-          messages: convertToModelMessages(messagesToModel),
+        // Convert database messages to UIMessage format
+        const previousUIMessages: UIMessage[] = previousMessages.map(msg => ({
+          id: msg.id,
+          role: msg.role as 'user' | 'assistant',
+          parts: msg.parts as UIMessage['parts']
+        }))
+
+        const messagesToModel = [...previousUIMessages, message]
+
+        // Get the researcher agent
+        const researchAgent = researcher({
           model: modelId,
           searchMode
         })
 
-        // Create a variable to store the messages from the first callback
-        let firstResponseMessage: UIMessage | null = null
+        // Stream with the research agent
+        const researchResult = researchAgent.stream({
+          messages: convertToModelMessages(messagesToModel)
+        })
 
+        // Merge research stream without finishing
         writer.merge(
-          result.toUIMessageStream({
-            onFinish: ({ responseMessage }) => {
-              // Store the messages for later use
-              firstResponseMessage = responseMessage
-            }
+          researchResult.toUIMessageStream({
+            sendFinish: false
           })
         )
 
-        const relatedQuestions = generateRelatedQuestions(
-          (await result.response).messages,
-          modelId
-        )
-        writer.merge(
-          relatedQuestions.toUIMessageStream({
-            onFinish: ({ responseMessage }) => {
-              // If there is a first response message, merge it with the new message
-              if (firstResponseMessage) {
-                const mergedMessage = mergeUIMessages(
-                  firstResponseMessage,
-                  responseMessage
-                )
-                saveSingleMessage(chatId, mergedMessage)
-              }
+        // Store messages for merging
+        let researchMessage: UIMessage | null = null
+        let relatedQuestionsMessage: UIMessage | null = null
+
+        // After research completes, generate related questions
+        researchResult.response
+          .then(async researchData => {
+            // Check if request was aborted
+            if (researchData.messages.length === 0) {
+              return
+            }
+
+            try {
+              // Prepare messages for related questions agent
+              const allMessages = [
+                ...convertToModelMessages(messagesToModel),
+                ...researchData.messages
+              ]
+
+              // Get related questions agent
+              const relatedQuestionsAgent = generateRelatedQuestions(modelId)
+              const relatedQuestionsResult = relatedQuestionsAgent.stream({
+                messages: allMessages
+              })
+
+              // Capture research message from the stream
+              researchResult.toUIMessageStream({
+                onFinish: ({ responseMessage }) => {
+                  researchMessage = responseMessage
+                }
+              })
+
+              // Merge related questions stream
+              writer.merge(
+                relatedQuestionsResult.toUIMessageStream({
+                  sendStart: false,
+                  onFinish: ({ responseMessage }) => {
+                    relatedQuestionsMessage = responseMessage
+                  }
+                })
+              )
+
+              // Save the complete message after both agents finish
+              relatedQuestionsResult.response
+                .then(async () => {
+                  // Merge and save both messages
+                  if (researchMessage && relatedQuestionsMessage) {
+                    const mergedMessage = mergeUIMessages(
+                      researchMessage,
+                      relatedQuestionsMessage
+                    )
+                    await saveSingleMessage(chatId, mergedMessage)
+                  } else if (researchMessage) {
+                    // Save research message only if related questions failed
+                    await saveSingleMessage(chatId, researchMessage)
+                  }
+                })
+                .catch(error => {
+                  console.error('Related questions error:', error)
+                  // Save research message even if related questions fail
+                  if (researchMessage) {
+                    saveSingleMessage(chatId, researchMessage)
+                  }
+                })
+            } catch (error) {
+              console.error('Error generating related questions:', error)
             }
           })
-        )
+          .catch(error => {
+            // Handle abort errors gracefully
+            if (error.name === 'AbortError') {
+              console.log('Stream aborted by client')
+              return
+            }
+            console.error('Research agent error:', error)
+          })
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error // This error will be handled by the onError callback

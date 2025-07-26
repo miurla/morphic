@@ -1,4 +1,4 @@
-import { ModelMessage, smoothStream, streamText } from 'ai'
+import { Experimental_Agent as Agent, stepCountIs } from 'ai'
 
 import { createQuestionTool } from '../tools/question'
 import { retrieveTool } from '../tools/retrieve'
@@ -35,11 +35,9 @@ Citation Format:
 `
 
 export function researcher({
-  messages,
   model,
   searchMode
 }: {
-  messages: ModelMessage[]
   model: string
   searchMode: boolean
 }) {
@@ -51,26 +49,23 @@ export function researcher({
     const videoSearchTool = createVideoSearchTool(model)
     const askQuestionTool = createQuestionTool(model)
 
-    const config = {
+    // Return an agent instance
+    return new Agent({
       model: getModel(model),
       system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
-      messages,
       tools: {
         search: searchTool,
         retrieve: retrieveTool,
         videoSearch: videoSearchTool,
-        ask_question: askQuestionTool
+        askQuestion: askQuestionTool
       },
-      experimental_activeTools: searchMode
+      activeTools: searchMode
         ? ['search', 'retrieve', 'videoSearch']
-        : [],
-      maxSteps: searchMode ? 5 : 1,
-      experimental_transform: smoothStream()
-    }
-
-    return streamText(config)
+        : undefined,
+      stopWhen: searchMode ? stepCountIs(10) : stepCountIs(1)
+    })
   } catch (error) {
-    console.error('Error in chatResearcher:', error)
+    console.error('Error in researcher:', error)
     throw error
   }
 }
