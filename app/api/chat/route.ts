@@ -18,7 +18,19 @@ const DEFAULT_MODEL: Model = {
 
 export async function POST(req: Request) {
   try {
-    const { message, chatId } = await req.json()
+    const body = await req.json()
+    const { messages, chatId } = body
+
+    // Get the last message from the messages array (the new user message)
+    const message = messages?.[messages.length - 1]
+
+    if (!message) {
+      return new Response('No message provided', {
+        status: 400,
+        statusText: 'Bad Request'
+      })
+    }
+
     const referer = req.headers.get('referer')
     const isSharePage = referer?.includes('/share/')
     const userId = await getCurrentUserId()

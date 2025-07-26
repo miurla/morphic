@@ -34,8 +34,16 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
     tool.state === 'input-streaming' ||
     tool.state === 'input-available'
 
-  const data: Related | undefined =
-    tool.state === 'output-available' ? tool.output : undefined
+  let data: Related | undefined = undefined
+
+  if (tool.state === 'output-available' && tool.output) {
+    // Handle both array and object formats
+    if (Array.isArray(tool.output)) {
+      data = { questions: tool.output }
+    } else if (tool.output.questions) {
+      data = tool.output as Related
+    }
+  }
 
   if (!data && isLoading) {
     return (
@@ -71,7 +79,7 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
     >
       <Section title="Related" className="pt-0 pb-4">
         <div className="flex flex-col">
-          {Array.isArray(data?.questions) ? (
+          {data && data.questions && Array.isArray(data.questions) ? (
             data.questions.map((item, index) => (
               <div className="flex items-start w-full" key={index}>
                 <ArrowRight className="h-4 w-4 mr-2 mt-1.5 flex-shrink-0 text-accent-foreground/50" />
@@ -88,7 +96,7 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
               </div>
             ))
           ) : (
-            <div>Not an array</div>
+            <div>No data available</div>
           )}
         </div>
       </Section>

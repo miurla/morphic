@@ -1,55 +1,53 @@
-import { generateObject, ModelMessage, streamText, tool } from 'ai'
-import { z } from 'zod'
+import { Experimental_Agent as Agent, tool } from 'ai'
 
 import { relatedSchema } from '../schema/related'
 import { getModel } from '../utils/registry'
 
-export function generateRelatedQuestions(
-  messages: ModelMessage[],
-  model: string
-) {
-  const lastMessages = messages.slice(-1).map(message => ({
-    ...message,
-    role: 'user'
-  })) as ModelMessage[]
+export function generateRelatedQuestions(model: string) {
+  const systemPrompt = `You are a professional web researcher tasked with generating follow-up questions. Based on the conversation history and search results, create 3 DIFFERENT related questions that:
 
-  const systemPrompt = `As a professional web researcher, generate 3 related queries that explore the topic more deeply, based on the initial query and search results.
+1. Explore NEW aspects not covered in the original query
+2. Dig deeper into specific details mentioned in the search results
+3. Connect to broader implications or related topics
 
-    The queries should:
-    - Progress from general to specific aspects
-    - Cover implications and connected topics
-    - Match the user's language style and level
-    - Help build comprehensive understanding
-    - Be relevant and naturally follow from the context
+Guidelines:
+- NEVER repeat or rephrase the original question
+- Each question should explore a UNIQUE angle or aspect
+- Questions should build upon information found in the search results
+- Use natural, conversational language
+- Be specific and actionable
 
-    Example format for "Starship's third test flight key milestones":
-    - "What technical improvements were made for Starship's third test flight?"
-    - "How does the third flight's performance compare to previous launches?"
-    - "What are the implications of this test flight for future Starship missions?"`
+Example:
+Original: "Why is Nvidia growing rapidly?"
+Good follow-ups:
+- "What specific AI technologies is Nvidia developing that competitors lack?"
+- "How does Nvidia's data center revenue compare to its gaming division?"
+- "Which companies are Nvidia's biggest customers for AI chips?"
 
-  const result = streamText({
+Bad follow-ups (avoid these):
+- "Why is Nvidia growing so fast?" (rephrases original)
+- "Is Nvidia growing?" (less specific than original)
+- "Tell me about Nvidia" (too general)`
+
+  // Return an agent instance for related questions
+  return new Agent({
     model: getModel(model),
     system:
-      'Generate related questions.  Use the generateRelatedQuestions tool exactly once to provide the related questions.',
-    messages: lastMessages,
+      systemPrompt +
+      '\n\nGenerate 3 unique follow-up questions that explore different aspects of the topic.',
     tools: {
-      related_questions: tool({
-        description: 'Generate related questions',
-        inputSchema: z.object({}),
-        execute: async () => {
-          const questions = await generateObject({
-            model: getModel(model),
-            system: systemPrompt,
-            messages: lastMessages,
-            schema: relatedSchema
-          })
-
-          return questions.object
+      relatedQuestions: tool({
+        name: 'relatedQuestions',
+        description:
+          'Generate 3 unique follow-up questions that explore different aspects of the topic, avoiding repetition of the original query',
+        inputSchema: relatedSchema,
+        execute: async ({ questions }) => {
+          // Return the questions in the expected format
+          return { questions }
         }
       })
     },
+    activeTools: ['relatedQuestions'],
     toolChoice: 'required'
   })
-
-  return result
 }
