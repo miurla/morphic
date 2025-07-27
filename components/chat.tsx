@@ -8,10 +8,11 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { deleteTrailingMessages } from '@/lib/actions/chat-db'
+import { generateId } from '@/lib/db/schema'
 import { UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { Model } from '@/lib/types/models'
-import { cn, generateUUID } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
 
@@ -51,9 +52,10 @@ export function Chat({
     regenerate,
     addToolResult
   } = useChat({
+    id, // use the provided chatId
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      prepareSendMessagesRequest: ({ id, messages, trigger, messageId }) => {
+      prepareSendMessagesRequest: ({ messages, trigger, messageId }) => {
         switch (trigger) {
           case 'regenerate-assistant-message':
             // Only send messageId, not message data
@@ -61,8 +63,8 @@ export function Chat({
               body: {
                 trigger: 'regenerate-assistant-message',
                 chatId: id,
-                messageId,
-              },
+                messageId
+              }
             }
 
           case 'submit-user-message':
@@ -73,8 +75,8 @@ export function Chat({
                 trigger: 'submit-user-message',
                 chatId: id,
                 messages: [messages[messages.length - 1]],
-                messageId,
-              },
+                messageId
+              }
             }
         }
       }
@@ -88,22 +90,11 @@ export function Chat({
       toast.error(`Error in chat: ${error.message}`)
     },
     experimental_throttle: 100,
-    generateId: generateUUID
+    generateId
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
-  }
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (input.trim()) {
-      sendMessage({
-        role: 'user' as const,
-        parts: [{ type: 'text', text: input }]
-      })
-      setInput('')
-    }
   }
 
   // Convert messages array to sections array
@@ -216,7 +207,7 @@ export function Chat({
             : prevMessages
 
         const newUIMessage: UIMessage = {
-          id: generateUUID(),
+          id: generateId(),
           role: 'user',
           parts: [{ type: 'text', text: newContentText }]
         }
@@ -286,7 +277,7 @@ export function Chat({
         )
 
         const newResentUserMessage: UIMessage = {
-          id: generateUUID(),
+          id: generateId(),
           role: 'user',
           parts: [{ type: 'text', text: contentToResend }]
         }

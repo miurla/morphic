@@ -1,17 +1,54 @@
+import { generateId } from '@/lib/db/schema'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
-import type { DBMessagePart, DBMessagePartSelect, ToolState } from '@/lib/types/message-persistence'
+import type {
+  DBMessagePart,
+  DBMessagePartSelect,
+  ToolState
+} from '@/lib/types/message-persistence'
 
 // Define local types for message parts that are compatible with the AI SDK
 type TextUIPart = { type: 'text'; text: string; providerMetadata?: any }
-type ReasoningUIPart = { type: 'reasoning'; text: string; providerMetadata?: any }
-type FileUIPart = { type: 'file'; mediaType: string; filename?: string; url: string }
-type SourceUrlUIPart = { type: 'source-url'; sourceId: string; url: string; title: string } // title is required
-type SourceDocumentUIPart = { type: 'source-document'; sourceId: string; mediaType: string; title: string; filename: string; url: string; snippet: string } // all fields required
-type ToolCallPart = { type: 'tool-call'; toolCallId: string; toolName: string; args: any }
-type ToolResultPart = { type: 'tool-result'; toolCallId: string; result: any; isError?: boolean }
+type ReasoningUIPart = {
+  type: 'reasoning'
+  text: string
+  providerMetadata?: any
+}
+type FileUIPart = {
+  type: 'file'
+  mediaType: string
+  filename?: string
+  url: string
+}
+type SourceUrlUIPart = {
+  type: 'source-url'
+  sourceId: string
+  url: string
+  title: string
+} // title is required
+type SourceDocumentUIPart = {
+  type: 'source-document'
+  sourceId: string
+  mediaType: string
+  title: string
+  filename: string
+  url: string
+  snippet: string
+} // all fields required
+type ToolCallPart = {
+  type: 'tool-call'
+  toolCallId: string
+  toolName: string
+  args: any
+}
+type ToolResultPart = {
+  type: 'tool-result'
+  toolCallId: string
+  result: any
+  isError?: boolean
+}
 type DataPart = { type: string; [key: string]: any }
 
-type UIMessagePart = 
+type UIMessagePart =
   | TextUIPart
   | ReasoningUIPart
   | FileUIPart
@@ -32,21 +69,21 @@ export function mapUIMessagePartsToDBParts(
     const basePart = {
       messageId,
       order: index,
-      type: part.type,
+      type: part.type
     }
 
     switch (part.type) {
       case 'text':
         return {
           ...basePart,
-          text_text: part.text,
+          text_text: part.text
         }
 
       case 'reasoning':
         return {
           ...basePart,
           reasoning_text: part.text,
-          providerMetadata: part.providerMetadata,
+          providerMetadata: part.providerMetadata
         }
 
       case 'file':
@@ -54,7 +91,7 @@ export function mapUIMessagePartsToDBParts(
           ...basePart,
           file_mediaType: part.mediaType,
           file_filename: part.filename,
-          file_url: part.url,
+          file_url: part.url
         }
 
       case 'source-url':
@@ -62,7 +99,7 @@ export function mapUIMessagePartsToDBParts(
           ...basePart,
           source_url_sourceId: part.sourceId,
           source_url_url: part.url,
-          source_url_title: part.title,
+          source_url_title: part.title
         }
 
       case 'source-document':
@@ -73,33 +110,73 @@ export function mapUIMessagePartsToDBParts(
           source_document_title: part.title,
           source_document_filename: part.filename,
           source_document_url: part.url,
-          source_document_snippet: part.snippet,
+          source_document_snippet: part.snippet
         }
 
       // Tool parts
       case 'tool-call':
         const toolName = getToolNameFromType(part.toolName)
         const toolInputColumn = `tool_${toolName}_input` as keyof DBMessagePart
-        
+
         return {
           ...basePart,
           type: `tool-${toolName}`,
           tool_toolCallId: part.toolCallId,
           tool_state: 'input-available' as ToolState,
-          [toolInputColumn]: part.args,
+          [toolInputColumn]: part.args
         }
 
       case 'tool-result':
-        const resultToolName = getToolNameFromCallId(part.toolCallId, messageParts)
-        const toolOutputColumn = `tool_${resultToolName}_output` as keyof DBMessagePart
-        
+        const resultToolName = getToolNameFromCallId(
+          part.toolCallId,
+          messageParts
+        )
+        const toolOutputColumn =
+          `tool_${resultToolName}_output` as keyof DBMessagePart
+
         return {
           ...basePart,
           type: `tool-${resultToolName}`,
           tool_toolCallId: part.toolCallId,
-          tool_state: part.isError ? 'output-error' : 'output-available' as ToolState,
+          tool_state: part.isError
+            ? 'output-error'
+            : ('output-available' as ToolState),
           tool_errorText: part.isError ? String(part.result) : undefined,
-          [toolOutputColumn]: !part.isError ? part.result : undefined,
+          [toolOutputColumn]: !part.isError ? part.result : undefined
+        }
+
+      // Step parts (for UI tracking)
+      case 'step-start':
+      case 'step-result':
+      case 'step-continue':
+      case 'step-finish':
+        return {
+          ...basePart,
+          type: part.type,
+          data_prefix: part.type,
+          data_content: part
+        }
+
+      // Tool-specific parts that are not tool-call or tool-result
+      case 'tool-search':
+      case 'tool-retrieve':
+      case 'tool-question':
+      case 'tool-videoSearch':
+      case 'tool-relatedQuestions':
+        // These are tool parts with state tracking
+        const toolPartName = part.type.replace('tool-', '') // Remove 'tool-' prefix
+        const inputColumn = `tool_${toolPartName}_input` as keyof DBMessagePart
+        const outputColumn =
+          `tool_${toolPartName}_output` as keyof DBMessagePart
+
+        return {
+          ...basePart,
+          type: part.type,
+          tool_toolCallId: (part as any).toolCallId || generateId(),
+          tool_state: (part as any).state || ('input-available' as ToolState),
+          tool_errorText: (part as any).errorText,
+          [inputColumn]: (part as any).input,
+          [outputColumn]: (part as any).output
         }
 
       // Data parts
@@ -110,7 +187,7 @@ export function mapUIMessagePartsToDBParts(
             ...basePart,
             data_prefix: dataType,
             data_content: (part as any).data || part,
-            data_id: (part as any).id,
+            data_id: (part as any).id
           }
         }
 
@@ -118,7 +195,7 @@ export function mapUIMessagePartsToDBParts(
         return {
           ...basePart,
           data_prefix: part.type,
-          data_content: part,
+          data_content: part
         }
     }
   })
@@ -127,19 +204,21 @@ export function mapUIMessagePartsToDBParts(
 /**
  * Convert DB message parts to UI format
  */
-export function mapDBPartToUIMessagePart(part: DBMessagePartSelect): UIMessagePart {
+export function mapDBPartToUIMessagePart(
+  part: DBMessagePartSelect
+): UIMessagePart {
   switch (part.type) {
     case 'text':
       return {
         type: 'text',
-        text: part.text_text!,
+        text: part.text_text!
       }
 
     case 'reasoning':
       return {
         type: 'reasoning',
         text: part.reasoning_text!,
-        providerMetadata: part.providerMetadata,
+        providerMetadata: part.providerMetadata
       }
 
     case 'file':
@@ -147,7 +226,7 @@ export function mapDBPartToUIMessagePart(part: DBMessagePartSelect): UIMessagePa
         type: 'file',
         mediaType: part.file_mediaType!,
         filename: part.file_filename!,
-        url: part.file_url!,
+        url: part.file_url!
       }
 
     case 'source-url':
@@ -155,7 +234,7 @@ export function mapDBPartToUIMessagePart(part: DBMessagePartSelect): UIMessagePa
         type: 'source-url',
         sourceId: part.source_url_sourceId!,
         url: part.source_url_url!,
-        title: part.source_url_title || '', // Provide default empty string
+        title: part.source_url_title || '' // Provide default empty string
       }
 
     case 'source-document':
@@ -166,23 +245,48 @@ export function mapDBPartToUIMessagePart(part: DBMessagePartSelect): UIMessagePa
         title: part.source_document_title || '', // Provide defaults
         filename: part.source_document_filename || '',
         url: part.source_document_url || '',
-        snippet: part.source_document_snippet || '',
+        snippet: part.source_document_snippet || ''
       }
 
     default:
       // Tool parts
       if (part.type.startsWith('tool-')) {
         const toolName = part.type.substring(5) // Remove 'tool-' prefix
-        const inputColumn = `tool_${toolName}_input` as keyof DBMessagePartSelect
-        const outputColumn = `tool_${toolName}_output` as keyof DBMessagePartSelect
+        const inputColumn =
+          `tool_${toolName}_input` as keyof DBMessagePartSelect
+        const outputColumn =
+          `tool_${toolName}_output` as keyof DBMessagePartSelect
 
-        // Determine if this is a tool-call or tool-result based on state
-        if (part.tool_state === 'input-available' || part.tool_state === 'input-streaming') {
+        // Special handling for tool parts that maintain their type
+        if (
+          [
+            'search',
+            'retrieve',
+            'question',
+            'videoSearch',
+            'relatedQuestions'
+          ].includes(toolName)
+        ) {
+          return {
+            type: part.type as any,
+            toolCallId: part.tool_toolCallId!,
+            state: part.tool_state!,
+            input: part[inputColumn],
+            output: part[outputColumn],
+            errorText: part.tool_errorText
+          }
+        }
+
+        // Standard tool-call/tool-result pattern
+        if (
+          part.tool_state === 'input-available' ||
+          part.tool_state === 'input-streaming'
+        ) {
           return {
             type: 'tool-call',
             toolCallId: part.tool_toolCallId!,
             toolName: getOriginalToolName(toolName),
-            args: part[inputColumn] as any,
+            args: part[inputColumn] as any
           }
         } else {
           // output-available or output-error
@@ -190,9 +294,10 @@ export function mapDBPartToUIMessagePart(part: DBMessagePartSelect): UIMessagePa
             type: 'tool-result',
             toolCallId: part.tool_toolCallId!,
             isError: part.tool_state === 'output-error',
-            result: part.tool_state === 'output-error' 
-              ? part.tool_errorText 
-              : part[outputColumn],
+            result:
+              part.tool_state === 'output-error'
+                ? part.tool_errorText
+                : part[outputColumn]
           }
         }
       }
@@ -202,7 +307,7 @@ export function mapDBPartToUIMessagePart(part: DBMessagePartSelect): UIMessagePa
         return {
           type: `data-${part.data_prefix}`,
           ...(part.data_content as any),
-          ...(part.data_id ? { id: part.data_id } : {}),
+          ...(part.data_id ? { id: part.data_id } : {})
         }
       }
 
@@ -217,12 +322,13 @@ export function mapDBPartToUIMessagePart(part: DBMessagePartSelect): UIMessagePa
 function getToolNameFromType(toolName: string): string {
   // Map original tool names to DB column names
   const toolNameMap: Record<string, string> = {
-    'search': 'search',
-    'retrieve': 'retrieve',
-    'askQuestion': 'question',
-    'question': 'question',
-    'videoSearch': 'videoSearch',
+    search: 'search',
+    retrieve: 'retrieve',
+    askQuestion: 'question',
+    question: 'question',
+    videoSearch: 'videoSearch',
     'video-search': 'videoSearch',
+    relatedQuestions: 'relatedQuestions'
   }
 
   // For MCP tools
@@ -236,7 +342,10 @@ function getToolNameFromType(toolName: string): string {
 /**
  * Get tool name from tool-result
  */
-function getToolNameFromCallId(toolCallId: string, allParts: UIMessagePart[]): string {
+function getToolNameFromCallId(
+  toolCallId: string,
+  allParts: UIMessagePart[]
+): string {
   // Find tool-call part with the same toolCallId
   const toolCallPart = allParts.find(
     part => part.type === 'tool-call' && part.toolCallId === toolCallId
@@ -255,11 +364,11 @@ function getToolNameFromCallId(toolCallId: string, allParts: UIMessagePart[]): s
  */
 function getOriginalToolName(dbToolName: string): string {
   const reverseMap: Record<string, string> = {
-    'search': 'search',
-    'retrieve': 'retrieve',
-    'question': 'askQuestion',
-    'videoSearch': 'videoSearch',
-    'mcp': 'mcp', // For MCP, the actual tool name is included in the input
+    search: 'search',
+    retrieve: 'retrieve',
+    question: 'askQuestion',
+    videoSearch: 'videoSearch',
+    mcp: 'mcp' // For MCP, the actual tool name is included in the input
   }
 
   return reverseMap[dbToolName] || dbToolName
@@ -278,7 +387,7 @@ export function mapUIMessageToDBMessage(
   return {
     id: message.id,
     chatId: message.chatId,
-    role: message.role,
+    role: message.role
   }
 }
 
@@ -297,6 +406,8 @@ export function buildUIMessageFromDB(
     id: dbMessage.id,
     role: dbMessage.role as 'user' | 'assistant',
     parts: dbParts.map(mapDBPartToUIMessagePart) as UIMessage['parts'],
-    metadata: dbMessage.createdAt ? { createdAt: new Date(dbMessage.createdAt) } : undefined,
+    metadata: dbMessage.createdAt
+      ? { createdAt: new Date(dbMessage.createdAt) }
+      : undefined
   }
 }

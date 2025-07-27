@@ -1,6 +1,6 @@
 {
-  "id": "d4c5910e-59c9-4189-b010-22838368df2b",
-  "prevId": "93a8bb81-9754-43af-8fb2-abbedc59c89b",
+  "id": "00000000-0000-0000-0000-000000000002",
+  "prevId": "00000000-0000-0000-0000-000000000001",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -10,38 +10,80 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "varchar",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
+          "type": "varchar(191)",
           "primaryKey": false,
           "notNull": true,
-          "default": "now()"
+          "default": ""
         },
         "title": {
           "name": "title",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": ""
         },
         "user_id": {
           "name": "user_id",
-          "type": "varchar",
+          "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": ""
         },
         "visibility": {
           "name": "visibility",
-          "type": "varchar(256)",
+          "type": "visibility_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'private'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "'private'"
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "chats_user_id_idx": {
+          "name": "chats_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "chats_created_at_idx": {
+          "name": "chats_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -55,25 +97,29 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "varchar",
-          "primaryKey": true,
-          "notNull": true
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": ""
         },
         "chat_id": {
           "name": "chat_id",
-          "type": "varchar",
+          "type": "varchar(191)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": ""
         },
         "role": {
           "name": "role",
-          "type": "varchar(256)",
+          "type": "message_role",
+          "typeSchema": "public",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": ""
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp with time zone",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -95,15 +141,9 @@
           "method": "btree",
           "with": {}
         },
-        "messages_chat_id_created_at_idx": {
-          "name": "messages_chat_id_created_at_idx",
+        "messages_created_at_idx": {
+          "name": "messages_created_at_idx",
           "columns": [
-            {
-              "expression": "chat_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
             {
               "expression": "created_at",
               "isExpression": false,
@@ -118,14 +158,14 @@
         }
       },
       "foreignKeys": {
-        "messages_chat_id_chats_id_fk": {
-          "name": "messages_chat_id_chats_id_fk",
+        "messages_chat_id_fkey": {
+          "name": "messages_chat_id_fkey",
           "tableFrom": "messages",
           "tableTo": "chats",
           "columnsFrom": ["chat_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -140,217 +180,295 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "varchar",
-          "primaryKey": true,
-          "notNull": true
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": ""
         },
         "message_id": {
           "name": "message_id",
-          "type": "varchar",
+          "type": "varchar(191)",
           "primaryKey": false,
-          "notNull": true
-        },
-        "order": {
-          "name": "order",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": ""
         },
         "type": {
           "name": "type",
           "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": ""
         },
-        "text_text": {
-          "name": "text_text",
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": ""
+        },
+        "text": {
+          "name": "text",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "reasoning_text": {
           "name": "reasoning_text",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "file_media_type": {
           "name": "file_media_type",
           "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "file_filename": {
           "name": "file_filename",
-          "type": "varchar(1024)",
+          "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "file_url": {
           "name": "file_url",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "source_url_source_id": {
           "name": "source_url_source_id",
           "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "source_url_url": {
           "name": "source_url_url",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "source_url_title": {
           "name": "source_url_title",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "source_document_source_id": {
           "name": "source_document_source_id",
           "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "source_document_media_type": {
           "name": "source_document_media_type",
           "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "source_document_title": {
           "name": "source_document_title",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "source_document_filename": {
           "name": "source_document_filename",
-          "type": "varchar(1024)",
+          "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "source_document_url": {
           "name": "source_document_url",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "source_document_snippet": {
           "name": "source_document_snippet",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
+        },
+        "tool_call_id": {
+          "name": "tool_call_id",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": ""
+        },
+        "tool_name": {
+          "name": "tool_name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": ""
+        },
+        "tool_args": {
+          "name": "tool_args",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "default": ""
+        },
+        "result": {
+          "name": "result",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "default": ""
+        },
+        "is_error": {
+          "name": "is_error",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
         },
         "tool_tool_call_id": {
           "name": "tool_tool_call_id",
           "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "tool_state": {
           "name": "tool_state",
-          "type": "varchar(256)",
+          "type": "tool_state",
+          "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "tool_error_text": {
           "name": "tool_error_text",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "tool_search_input": {
           "name": "tool_search_input",
           "type": "json",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "tool_search_output": {
           "name": "tool_search_output",
           "type": "json",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "tool_retrieve_input": {
           "name": "tool_retrieve_input",
           "type": "json",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "tool_retrieve_output": {
           "name": "tool_retrieve_output",
           "type": "json",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "tool_question_input": {
           "name": "tool_question_input",
           "type": "json",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "tool_question_output": {
           "name": "tool_question_output",
           "type": "json",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "tool_video_search_input": {
           "name": "tool_video_search_input",
           "type": "json",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "tool_video_search_output": {
           "name": "tool_video_search_output",
           "type": "json",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
+        },
+        "tool_related_questions_input": {
+          "name": "tool_related_questions_input",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "default": ""
+        },
+        "tool_related_questions_output": {
+          "name": "tool_related_questions_output",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "default": ""
         },
         "tool_mcp_input": {
           "name": "tool_mcp_input",
           "type": "json",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "tool_mcp_output": {
           "name": "tool_mcp_output",
           "type": "json",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "data_prefix": {
           "name": "data_prefix",
           "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "data_content": {
           "name": "data_content",
           "type": "json",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "data_id": {
           "name": "data_id",
           "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
-        },
-        "provider_metadata": {
-          "name": "provider_metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": ""
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp with time zone",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -371,74 +489,49 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "parts_message_id_order_idx": {
-          "name": "parts_message_id_order_idx",
-          "columns": [
-            {
-              "expression": "message_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "order",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
-        "parts_message_id_messages_id_fk": {
-          "name": "parts_message_id_messages_id_fk",
+        "parts_message_id_fkey": {
+          "name": "parts_message_id_fkey",
           "tableFrom": "parts",
           "tableTo": "messages",
           "columnsFrom": ["message_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {
-        "text_text_required": {
-          "name": "text_text_required",
-          "value": "(type != 'text' OR text_text IS NOT NULL)"
-        },
-        "reasoning_text_required": {
-          "name": "reasoning_text_required",
-          "value": "(type != 'reasoning' OR reasoning_text IS NOT NULL)"
-        },
-        "file_fields_required": {
-          "name": "file_fields_required",
-          "value": "(type != 'file' OR (file_media_type IS NOT NULL AND file_filename IS NOT NULL AND file_url IS NOT NULL))"
-        },
-        "tool_state_valid": {
-          "name": "tool_state_valid",
-          "value": "(tool_state IS NULL OR tool_state IN ('input-streaming', 'input-available', 'output-available', 'output-error'))"
-        },
-        "tool_fields_required": {
-          "name": "tool_fields_required",
-          "value": "(type NOT LIKE 'tool-%' OR (tool_tool_call_id IS NOT NULL AND tool_state IS NOT NULL))"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     }
   },
-  "enums": {},
+  "enums": {
+    "public.message_role": {
+      "name": "message_role",
+      "schema": "public",
+      "values": ["user", "assistant", "system", "data"]
+    },
+    "public.tool_state": {
+      "name": "tool_state",
+      "schema": "public",
+      "values": [
+        "input-streaming",
+        "input-available",
+        "output-available",
+        "output-error"
+      ]
+    },
+    "public.visibility_type": {
+      "name": "visibility_type",
+      "schema": "public",
+      "values": ["public", "private"]
+    }
+  },
   "schemas": {},
-  "sequences": {},
-  "roles": {},
-  "policies": {},
-  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},

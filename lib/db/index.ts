@@ -17,8 +17,8 @@ const client = postgres(connectionString, {
   max: 20 // Max 20 connections
 })
 
-export const db = drizzle(client, { 
-  schema: { ...schema, ...relations } 
+export const db = drizzle(client, {
+  schema: { ...schema, ...relations }
 })
 
 // Helper type for all tables

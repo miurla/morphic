@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
     // Handle different triggers
     let message
-    
+
     if (trigger === 'regenerate-assistant-message') {
       // For regeneration, we'll fetch the messages from DB and use the last user message
       // This will be handled in createChatStreamResponse
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     } else {
       // Get the last message from the messages array (the new user message)
       message = messages?.[messages.length - 1]
-      
+
       if (!message) {
         return new Response('No message provided', {
           status: 400,

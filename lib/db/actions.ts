@@ -1,16 +1,17 @@
 'use server'
 
-import { and, asc, desc,eq, gt, inArray } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray } from 'drizzle-orm'
 
 import type { UIMessage } from '@/lib/types/ai'
 import type { PersistableUIMessage } from '@/lib/types/message-persistence'
-import { 
-  buildUIMessageFromDB, 
-  mapUIMessagePartsToDBParts, 
-  mapUIMessageToDBMessage} from '@/lib/utils/message-mapping'
+import {
+  buildUIMessageFromDB,
+  mapUIMessagePartsToDBParts,
+  mapUIMessageToDBMessage
+} from '@/lib/utils/message-mapping'
 
 import type { Chat, Message } from './schema'
-import { chats, generateId,messages, parts } from './schema'
+import { chats, generateId, messages, parts } from './schema'
 import { db } from '.'
 
 /**
@@ -75,7 +76,7 @@ export async function getChat(
 export async function upsertMessage(
   message: PersistableUIMessage & { chatId: string }
 ): Promise<Message> {
-  return await db.transaction(async (tx) => {
+  return await db.transaction(async tx => {
     // 1. Insert or update the message
     const messageData = mapUIMessageToDBMessage(message)
     const [dbMessage] = await tx
@@ -83,7 +84,7 @@ export async function upsertMessage(
       .values(messageData)
       .onConflictDoUpdate({
         target: messages.id,
-        set: { role: messageData.role },
+        set: { role: messageData.role }
       })
       .returning()
 
@@ -111,10 +112,10 @@ export async function loadChat(chatId: string): Promise<UIMessage[]> {
     where: eq(messages.chatId, chatId),
     with: {
       parts: {
-        orderBy: [asc(parts.order)],
-      },
+        orderBy: [asc(parts.order)]
+      }
     },
-    orderBy: [asc(messages.createdAt)],
+    orderBy: [asc(messages.createdAt)]
   })
 
   // Convert to UI format
@@ -151,7 +152,7 @@ export async function deleteMessagesAfter(
     )
 
   const messageIds = messagesToDelete.map(m => m.id)
-  
+
   if (messageIds.length > 0) {
     // Delete messages (parts will be cascade deleted)
     await db.delete(messages).where(inArray(messages.id, messageIds))
@@ -176,7 +177,7 @@ export async function deleteMessagesFromIndex(
 
   // Find the index of the target message
   const messageIndex = allMessages.findIndex(m => m.id === messageId)
-  
+
   if (messageIndex === -1) {
     return { count: 0 }
   }
@@ -247,4 +248,20 @@ export async function updateChatVisibility(
     .returning()
 
   return updatedChat
+}
+
+/**
+ * Update chat title
+ */
+export async function updateChatTitle(
+  chatId: string,
+  title: string
+): Promise<Chat | null> {
+  const [updatedChat] = await db
+    .update(chats)
+    .set({ title })
+    .where(eq(chats.id, chatId))
+    .returning()
+
+  return updatedChat || null
 }

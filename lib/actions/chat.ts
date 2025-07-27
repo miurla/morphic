@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidateTag, unstable_cache } from 'next/cache'
+import { revalidateTag } from 'next/cache'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
@@ -21,9 +21,9 @@ export async function getChats() {
 }
 
 /**
- * Get a single chat with caching
+ * Get a chat with messages (no cache)
  */
-const getChatUncached = async function (
+export async function getChat(
   chatId: string,
   requestingUserId?: string
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
@@ -36,26 +36,31 @@ const getChatUncached = async function (
   return { ...chat, messages }
 }
 
-// Create a cached version for each chatId
-const createCachedGetChat = (chatId: string) =>
-  unstable_cache(
-    (id: string, userId?: string) => getChatUncached(id, userId),
-    [`chat-${chatId}`],
-    {
-      revalidate: 300, // 5 minutes cache
-      tags: [`chat-${chatId}`, 'chat']
-    }
-  )
-
 /**
- * Get a chat with messages (cached)
+ * Create a new chat
  */
-export async function getChat(
-  chatId: string,
-  requestingUserId?: string
-): Promise<(Chat & { messages: UIMessage[] }) | null> {
-  const cachedGetChat = createCachedGetChat(chatId)
-  return cachedGetChat(chatId, requestingUserId)
+export async function createChat(id?: string, title?: string): Promise<Chat> {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    throw new Error('User not authenticated')
+  }
+
+  const chatId = id || generateId()
+  const chatTitle = title || 'New Chat'
+
+  // Create chat
+  const chat = await dbActions.createChat({
+    id: chatId,
+    title: chatTitle.substring(0, 255),
+    userId,
+    visibility: 'private'
+  })
+
+  // Revalidate cache
+  revalidateTag(`chat-${chatId}`)
+  revalidateTag('chat')
+
+  return chat
 }
 
 /**
@@ -74,7 +79,8 @@ export async function createChatAndSaveMessage(
   const messageId = message.id || generateId()
 
   // Extract title from message if not provided
-  const chatTitle = title || getTextFromParts(message.parts as any[]) || 'New Chat'
+  const chatTitle =
+    title || getTextFromParts(message.parts as any[]) || 'New Chat'
 
   // Create chat
   const chat = await dbActions.createChat({
@@ -138,7 +144,7 @@ export async function deleteChat(chatId: string) {
   }
 
   const result = await dbActions.deleteChat(chatId, userId)
-  
+
   if (result.success) {
     revalidateTag(`chat-${chatId}`)
     revalidateTag('chat')
@@ -157,7 +163,7 @@ export async function clearChats() {
   }
 
   const chats = await dbActions.getChats(userId)
-  
+
   for (const chat of chats) {
     await dbActions.deleteChat(chat.id, userId)
   }
@@ -169,10 +175,7 @@ export async function clearChats() {
 /**
  * Delete messages after a specific message
  */
-export async function deleteMessagesAfter(
-  chatId: string,
-  messageId: string
-) {
+export async function deleteMessagesAfter(chatId: string, messageId: string) {
   const userId = await getCurrentUserId()
   if (!userId) {
     return { error: 'User not authenticated' }
@@ -185,9 +188,9 @@ export async function deleteMessagesAfter(
   }
 
   const result = await dbActions.deleteMessagesAfter(chatId, messageId)
-  
+
   revalidateTag(`chat-${chatId}`)
-  
+
   return { success: true, count: result.count }
 }
 
@@ -200,8 +203,12 @@ export async function shareChat(chatId: string) {
     return null
   }
 
-  const updatedChat = await dbActions.updateChatVisibility(chatId, userId, 'public')
-  
+  const updatedChat = await dbActions.updateChatVisibility(
+    chatId,
+    userId,
+    'public'
+  )
+
   if (updatedChat) {
     revalidateTag(`chat-${chatId}`)
   }
@@ -228,8 +235,8 @@ export async function deleteMessagesFromIndex(
   }
 
   const result = await dbActions.deleteMessagesFromIndex(chatId, messageId)
-  
+
   revalidateTag(`chat-${chatId}`)
-  
+
   return { success: true, count: result.count }
 }

@@ -19,7 +19,11 @@ export type DBMessagePart = typeof parts.$inferInsert
 export type DBMessagePartSelect = typeof parts.$inferSelect
 
 // Tool states
-export type ToolState = 'input-streaming' | 'input-available' | 'output-available' | 'output-error'
+export type ToolState =
+  | 'input-streaming'
+  | 'input-available'
+  | 'output-available'
+  | 'output-error'
 
 // MCP tool type definitions
 export type MCPToolInput = {
