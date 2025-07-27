@@ -65,7 +65,10 @@ export function Chat({
                 chatId: id,
                 messageId,
                 // Include the message if it's a user message (for edit cases)
-                message: messageToRegenerate?.role === 'user' ? messageToRegenerate : undefined
+                message:
+                  messageToRegenerate?.role === 'user'
+                    ? messageToRegenerate
+                    : undefined
               }
             }
 

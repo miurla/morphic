@@ -84,13 +84,17 @@ export async function createChatStreamResponse(
               await saveMessage(chatId, message)
             }
             // Delete everything after this user message
-            const messagesToDelete = currentChat.messages.slice(messageIndex + 1)
+            const messagesToDelete = currentChat.messages.slice(
+              messageIndex + 1
+            )
             if (messagesToDelete.length > 0) {
               await deleteMessagesFromIndex(chatId, messagesToDelete[0].id)
             }
             // Get updated messages including the edited one
             const updatedChat = await getChatAction(chatId, userId)
-            messagesToModel = updatedChat?.messages || currentChat.messages.slice(0, messageIndex + 1)
+            messagesToModel =
+              updatedChat?.messages ||
+              currentChat.messages.slice(0, messageIndex + 1)
           }
         } else {
           // Handle normal message submission
