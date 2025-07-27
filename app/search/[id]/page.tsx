@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 
 import { UIMessage } from 'ai'
 
-import { getChat } from '@/lib/actions/chat-db'
+import { getChat } from '@/lib/actions/chat'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { getModels } from '@/lib/config/models'
 
@@ -43,14 +43,7 @@ export default async function SearchPage(props: {
     redirect('/auth/login')
   }
 
-  const messages: UIMessage[] = chat.messages.map(message => ({
-    id: message.id,
-    parts: message.parts as UIMessage['parts'],
-    role: message.role as UIMessage['role'],
-    metadata: {
-      createdAt: new Date(message.createdAt)
-    }
-  }))
+  const messages: UIMessage[] = chat.messages
 
   const models = await getModels()
   return <Chat id={id} savedMessages={messages} models={models} />

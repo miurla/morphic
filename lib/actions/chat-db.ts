@@ -169,8 +169,8 @@ interface ClientChatInput {
 
 // Interface for new message input from the client
 interface ClientNewMessageInput {
-  role: DBMessage['role']
-  parts: DBMessage['parts']
+  role: UIMessage['role']
+  parts: UIMessage['parts']
 }
 
 // Save a single message

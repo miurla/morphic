@@ -53,8 +53,30 @@ export function Chat({
   } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      body: {
-        chatId: id
+      prepareSendMessagesRequest: ({ id, messages, trigger, messageId }) => {
+        switch (trigger) {
+          case 'regenerate-assistant-message':
+            // Only send messageId, not message data
+            return {
+              body: {
+                trigger: 'regenerate-assistant-message',
+                chatId: id,
+                messageId,
+              },
+            }
+
+          case 'submit-user-message':
+          default:
+            // Only send the last message
+            return {
+              body: {
+                trigger: 'submit-user-message',
+                chatId: id,
+                messages: [messages[messages.length - 1]],
+                messageId,
+              },
+            }
+        }
       }
     }),
     messages: savedMessages,

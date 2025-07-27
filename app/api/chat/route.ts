@@ -19,16 +19,25 @@ const DEFAULT_MODEL: Model = {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { messages, chatId } = body
+    const { messages, chatId, trigger, messageId } = body
 
-    // Get the last message from the messages array (the new user message)
-    const message = messages?.[messages.length - 1]
-
-    if (!message) {
-      return new Response('No message provided', {
-        status: 400,
-        statusText: 'Bad Request'
-      })
+    // Handle different triggers
+    let message
+    
+    if (trigger === 'regenerate-assistant-message') {
+      // For regeneration, we'll fetch the messages from DB and use the last user message
+      // This will be handled in createChatStreamResponse
+      message = null
+    } else {
+      // Get the last message from the messages array (the new user message)
+      message = messages?.[messages.length - 1]
+      
+      if (!message) {
+        return new Response('No message provided', {
+          status: 400,
+          statusText: 'Bad Request'
+        })
+      }
     }
 
     const referer = req.headers.get('referer')
@@ -74,7 +83,9 @@ export async function POST(req: Request) {
       model: selectedModel,
       chatId,
       searchMode,
-      userId: userId!
+      userId: userId!,
+      trigger,
+      messageId
     })
   } catch (error) {
     console.error('API route error:', error)

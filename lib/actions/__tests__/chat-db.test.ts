@@ -63,8 +63,6 @@ const testMessageData: DBMessage = {
   id: commonMessageId,
   chatId: commonChatId,
   role: 'user',
-  parts: [{ type: 'text', content: 'Hello' }],
-  attachments: [], // Added attachments as it is non-nullable in schema
   createdAt: now
 }
 
@@ -348,8 +346,7 @@ describe('Chat Actions - saveSingleMessage', () => {
       ...testMessageData,
       id: messageId,
       chatId: chatId,
-      role: messageInput.role,
-      parts: messageInput.parts
+      role: messageInput.role
     }
   })
 
@@ -388,7 +385,7 @@ describe('Chat Actions - saveSingleMessage', () => {
 describe('Chat Actions - saveChatMessage', () => {
   let userId: string
   let chatId: string
-  let userMessageInput: { id: string; role: string; parts: any[] }
+  let userMessageInput: any
   let newChatData: DBChat
   let newMessageData: DBMessage
 
@@ -412,7 +409,6 @@ describe('Chat Actions - saveChatMessage', () => {
       ...testMessageData,
       id: userMessageInput.id,
       chatId: chatId,
-      parts: userMessageInput.parts,
       role: userMessageInput.role
     }
   })
