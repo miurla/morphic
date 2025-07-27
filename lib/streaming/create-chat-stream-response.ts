@@ -21,6 +21,9 @@ import { getTextFromParts, mergeUIMessages } from '../utils/message-utils'
 
 import { BaseStreamConfig } from './types'
 
+// Constants
+const DEFAULT_CHAT_TITLE = 'New Chat'
+
 export async function createChatStreamResponse(
   config: BaseStreamConfig
 ): Promise<Response> {
@@ -79,7 +82,7 @@ export async function createChatStreamResponse(
 
           // If chat doesn't exist, create it with a temporary title
           if (!chat) {
-            await createChat(chatId, 'New Chat')
+            await createChat(chatId, DEFAULT_CHAT_TITLE)
           }
 
           await saveMessage(chatId, messageWithId)

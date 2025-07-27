@@ -11,6 +11,12 @@ import {
   varchar
 } from 'drizzle-orm/pg-core'
 
+// Constants
+const ID_LENGTH = 191
+const USER_ID_LENGTH = 255
+const VARCHAR_LENGTH = 256
+const FILENAME_LENGTH = 1024
+
 // ID generation function
 export const generateId = () => createId()
 
@@ -18,14 +24,14 @@ export const generateId = () => createId()
 export const chats = pgTable(
   'chats',
   {
-    id: varchar('id', { length: 191 })
+    id: varchar('id', { length: ID_LENGTH })
       .primaryKey()
       .$defaultFn(() => generateId()),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     title: text('title').notNull(),
-    userId: varchar('user_id', { length: 255 }).notNull(),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
     visibility: varchar('visibility', {
-      length: 256,
+      length: VARCHAR_LENGTH,
       enum: ['public', 'private']
     })
       .notNull()
@@ -44,13 +50,13 @@ export type Chat = InferSelectModel<typeof chats>
 export const messages = pgTable(
   'messages',
   {
-    id: varchar('id', { length: 191 })
+    id: varchar('id', { length: ID_LENGTH })
       .primaryKey()
       .$defaultFn(() => generateId()),
-    chatId: varchar('chat_id', { length: 191 })
+    chatId: varchar('chat_id', { length: ID_LENGTH })
       .notNull()
       .references(() => chats.id, { onDelete: 'cascade' }),
-    role: varchar('role', { length: 256 }).notNull(),
+    role: varchar('role', { length: VARCHAR_LENGTH }).notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow()
   },
   table => ({
@@ -69,14 +75,14 @@ export type Message = InferSelectModel<typeof messages>
 export const parts = pgTable(
   'parts',
   {
-    id: varchar('id', { length: 191 })
+    id: varchar('id', { length: ID_LENGTH })
       .primaryKey()
       .$defaultFn(() => generateId()),
-    messageId: varchar('message_id', { length: 191 })
+    messageId: varchar('message_id', { length: ID_LENGTH })
       .notNull()
       .references(() => messages.id, { onDelete: 'cascade' }),
     order: integer('order').notNull(),
-    type: varchar('type', { length: 256 }).notNull(),
+    type: varchar('type', { length: VARCHAR_LENGTH }).notNull(),
 
     // Text parts
     text_text: text('text_text'),
@@ -85,32 +91,34 @@ export const parts = pgTable(
     reasoning_text: text('reasoning_text'),
 
     // File parts
-    file_mediaType: varchar('file_media_type', { length: 256 }),
-    file_filename: varchar('file_filename', { length: 1024 }),
+    file_mediaType: varchar('file_media_type', { length: VARCHAR_LENGTH }),
+    file_filename: varchar('file_filename', { length: FILENAME_LENGTH }),
     file_url: text('file_url'),
 
     // Source URL parts
-    source_url_sourceId: varchar('source_url_source_id', { length: 256 }),
+    source_url_sourceId: varchar('source_url_source_id', {
+      length: VARCHAR_LENGTH
+    }),
     source_url_url: text('source_url_url'),
     source_url_title: text('source_url_title'),
 
     // Source document parts
     source_document_sourceId: varchar('source_document_source_id', {
-      length: 256
+      length: VARCHAR_LENGTH
     }),
     source_document_mediaType: varchar('source_document_media_type', {
-      length: 256
+      length: VARCHAR_LENGTH
     }),
     source_document_title: text('source_document_title'),
     source_document_filename: varchar('source_document_filename', {
-      length: 1024
+      length: FILENAME_LENGTH
     }),
     source_document_url: text('source_document_url'),
     source_document_snippet: text('source_document_snippet'),
 
     // Tool parts (generic)
-    tool_toolCallId: varchar('tool_tool_call_id', { length: 256 }),
-    tool_state: varchar('tool_state', { length: 256 }),
+    tool_toolCallId: varchar('tool_tool_call_id', { length: VARCHAR_LENGTH }),
+    tool_state: varchar('tool_state', { length: VARCHAR_LENGTH }),
     tool_errorText: text('tool_error_text'),
 
     // Tool-specific columns (all Morphic tools)
@@ -132,9 +140,9 @@ export const parts = pgTable(
     tool_mcp_output: json('tool_mcp_output').$type<any>(),
 
     // Data parts (generic support)
-    data_prefix: varchar('data_prefix', { length: 256 }),
+    data_prefix: varchar('data_prefix', { length: VARCHAR_LENGTH }),
     data_content: json('data_content').$type<any>(),
-    data_id: varchar('data_id', { length: 256 }),
+    data_id: varchar('data_id', { length: VARCHAR_LENGTH }),
 
     // Provider metadata
     providerMetadata: json('provider_metadata').$type<Record<string, any>>(),

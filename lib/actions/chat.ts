@@ -9,6 +9,9 @@ import { generateId } from '@/lib/db/schema'
 import type { UIMessage } from '@/lib/types/ai'
 import { getTextFromParts } from '@/lib/utils/message-utils'
 
+// Constants
+const DEFAULT_CHAT_TITLE = 'New Chat'
+
 /**
  * Get all chats for the current user
  */
@@ -46,7 +49,7 @@ export async function createChat(id?: string, title?: string): Promise<Chat> {
   }
 
   const chatId = id || generateId()
-  const chatTitle = title || 'New Chat'
+  const chatTitle = title || DEFAULT_CHAT_TITLE
 
   // Create chat
   const chat = await dbActions.createChat({
@@ -80,7 +83,7 @@ export async function createChatAndSaveMessage(
 
   // Extract title from message if not provided
   const chatTitle =
-    title || getTextFromParts(message.parts as any[]) || 'New Chat'
+    title || getTextFromParts(message.parts as any[]) || DEFAULT_CHAT_TITLE
 
   // Create chat
   const chat = await dbActions.createChat({

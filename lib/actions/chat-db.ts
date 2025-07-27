@@ -9,6 +9,9 @@ import * as chatDb from '@/lib/db/chat'
 import { type Chat as DBChat, type Message as DBMessage } from '@/lib/db/schema' // Import DB schema types
 import { getTextFromParts } from '@/lib/utils/message-utils' // Corrected import path
 
+// Constants
+const DEFAULT_CHAT_TITLE = 'New Chat'
+
 // Get all chats for a user
 export async function getChats(userId: string) {
   return chatDb.getChats(userId)
@@ -211,7 +214,7 @@ export async function saveChatMessage(
     if (!existingChat) {
       // Use userMessage.parts for title generation
       const messageTextForTitle = getTextFromParts(userMessage.parts as any[])
-      const chatTitle = title || messageTextForTitle || 'New Chat'
+      const chatTitle = title || messageTextForTitle || DEFAULT_CHAT_TITLE
       const chatDataForDb: Partial<DBChat> = {
         id: chatId,
         title: chatTitle.substring(0, 255),

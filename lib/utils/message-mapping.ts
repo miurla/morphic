@@ -58,6 +58,43 @@ type UIMessagePart =
   | ToolResultPart
   | DataPart
 
+// Type guards
+function isToolCallPart(part: any): part is ToolCallPart {
+  return (
+    part.type === 'tool-call' &&
+    typeof part.toolCallId === 'string' &&
+    typeof part.toolName === 'string' &&
+    part.args !== undefined
+  )
+}
+
+function isToolResultPart(part: any): part is ToolResultPart {
+  return (
+    part.type === 'tool-result' &&
+    typeof part.toolCallId === 'string' &&
+    part.result !== undefined
+  )
+}
+
+// Type for tool-specific parts with extended properties
+type ExtendedToolPart = {
+  type: string
+  toolCallId?: string
+  state?: ToolState
+  errorText?: string
+  input?: any
+  output?: any
+}
+
+function isExtendedToolPart(part: any): part is ExtendedToolPart {
+  return (
+    typeof part === 'object' &&
+    part !== null &&
+    typeof part.type === 'string' &&
+    part.type.startsWith('tool-')
+  )
+}
+
 /**
  * Convert UI message parts to DB format
  */
@@ -115,6 +152,11 @@ export function mapUIMessagePartsToDBParts(
 
       // Tool parts
       case 'tool-call':
+        // Type guard ensures part has the required properties
+        if (!isToolCallPart(part)) {
+          console.error('Invalid tool-call part:', part)
+          return null
+        }
         const toolName = getToolNameFromType(part.toolName)
         const toolInputColumn = `tool_${toolName}_input` as keyof DBMessagePart
 
@@ -159,6 +201,10 @@ export function mapUIMessagePartsToDBParts(
       case 'tool-videoSearch':
       case 'tool-relatedQuestions':
         // These are tool parts with state tracking
+        if (!isExtendedToolPart(part)) {
+          console.error('Invalid extended tool part:', part)
+          return null
+        }
         const toolPartName = part.type.replace('tool-', '') // Remove 'tool-' prefix
         const inputColumn = `tool_${toolPartName}_input` as keyof DBMessagePart
         const outputColumn =
@@ -167,11 +213,11 @@ export function mapUIMessagePartsToDBParts(
         return {
           ...basePart,
           type: part.type,
-          tool_toolCallId: (part as any).toolCallId || generateId(),
-          tool_state: (part as any).state || ('input-available' as ToolState),
-          tool_errorText: (part as any).errorText,
-          [inputColumn]: (part as any).input,
-          [outputColumn]: (part as any).output
+          tool_toolCallId: part.toolCallId || generateId(),
+          tool_state: part.state || ('input-available' as ToolState),
+          tool_errorText: part.errorText,
+          [inputColumn]: part.input,
+          [outputColumn]: part.output
         }
 
       // Data parts
@@ -181,8 +227,8 @@ export function mapUIMessagePartsToDBParts(
           return {
             ...basePart,
             data_prefix: dataType,
-            data_content: (part as any).data || part,
-            data_id: (part as any).id
+            data_content: 'data' in part ? part.data : part,
+            data_id: 'id' in part ? part.id : undefined
           }
         }
 
@@ -211,38 +257,38 @@ export function mapDBPartToUIMessagePart(
     case 'text':
       return {
         type: 'text',
-        text: part.text_text!
+        text: part.text_text || ''
       }
 
     case 'reasoning':
       return {
         type: 'reasoning',
-        text: part.reasoning_text!,
+        text: part.reasoning_text || '',
         providerMetadata: part.providerMetadata
       }
 
     case 'file':
       return {
         type: 'file',
-        mediaType: part.file_mediaType!,
-        filename: part.file_filename!,
-        url: part.file_url!
+        mediaType: part.file_mediaType || '',
+        filename: part.file_filename || '',
+        url: part.file_url || ''
       }
 
     case 'source-url':
       return {
         type: 'source-url',
-        sourceId: part.source_url_sourceId!,
-        url: part.source_url_url!,
-        title: part.source_url_title || '' // Provide default empty string
+        sourceId: part.source_url_sourceId || '',
+        url: part.source_url_url || '',
+        title: part.source_url_title || ''
       }
 
     case 'source-document':
       return {
         type: 'source-document',
-        sourceId: part.source_document_sourceId!,
-        mediaType: part.source_document_mediaType!,
-        title: part.source_document_title || '', // Provide defaults
+        sourceId: part.source_document_sourceId || '',
+        mediaType: part.source_document_mediaType || '',
+        title: part.source_document_title || '',
         filename: part.source_document_filename || '',
         url: part.source_document_url || '',
         snippet: part.source_document_snippet || ''
@@ -269,8 +315,8 @@ export function mapDBPartToUIMessagePart(
         ) {
           return {
             type: part.type as any,
-            toolCallId: part.tool_toolCallId!,
-            state: part.tool_state!,
+            toolCallId: part.tool_toolCallId || '',
+            state: part.tool_state || 'input-available',
             input: part[inputColumn],
             output: part[outputColumn],
             errorText: part.tool_errorText
@@ -284,7 +330,7 @@ export function mapDBPartToUIMessagePart(
         ) {
           return {
             type: 'tool-call',
-            toolCallId: part.tool_toolCallId!,
+            toolCallId: part.tool_toolCallId || '',
             toolName: getOriginalToolName(toolName),
             args: part[inputColumn] as any
           }
@@ -292,7 +338,7 @@ export function mapDBPartToUIMessagePart(
           // output-available or output-error
           return {
             type: 'tool-result',
-            toolCallId: part.tool_toolCallId!,
+            toolCallId: part.tool_toolCallId || '',
             isError: part.tool_state === 'output-error',
             result:
               part.tool_state === 'output-error'
