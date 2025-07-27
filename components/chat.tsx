@@ -83,7 +83,6 @@ export function Chat({
     }),
     messages: savedMessages,
     onFinish: () => {
-      window.history.replaceState({}, '', `/search/${id}`)
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
     },
     onError: error => {
@@ -320,6 +319,12 @@ export function Chat({
       sendMessage({ role: 'user', parts })
       setInput('')
       setUploadedFiles([])
+
+      // Push URL state immediately after sending message (for new chats)
+      // Check if we're on the root path (new chat)
+      if (window.location.pathname === '/') {
+        window.history.pushState({}, '', `/search/${id}`)
+      }
     }
   }
 
