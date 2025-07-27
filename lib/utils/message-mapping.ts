@@ -65,12 +65,13 @@ export function mapUIMessagePartsToDBParts(
   messageParts: UIMessagePart[],
   messageId: string
 ): DBMessagePart[] {
-  return messageParts.map((part, index) => {
-    const basePart = {
-      messageId,
-      order: index,
-      type: part.type
-    }
+  return messageParts
+    .map((part, index) => {
+      const basePart = {
+        messageId,
+        order: index,
+        type: part.type
+      }
 
     switch (part.type) {
       case 'text':
@@ -150,12 +151,7 @@ export function mapUIMessagePartsToDBParts(
       case 'step-result':
       case 'step-continue':
       case 'step-finish':
-        return {
-          ...basePart,
-          type: part.type,
-          data_prefix: part.type,
-          data_content: part
-        }
+        return null // These are not persisted
 
       // Tool-specific parts that are not tool-call or tool-result
       case 'tool-search':
@@ -199,6 +195,8 @@ export function mapUIMessagePartsToDBParts(
         }
     }
   })
+  .filter((part): part is DBMessagePart => part !== null) // Filter out null values
+  .map((part, index) => ({ ...part, order: index })) // Re-index after filtering
 }
 
 /**
