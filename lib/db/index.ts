@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
+import * as relations from './relations'
 import * as schema from './schema'
 
 // For server-side usage only
@@ -16,7 +17,9 @@ const client = postgres(connectionString, {
   max: 20 // Max 20 connections
 })
 
-export const db = drizzle(client, { schema })
+export const db = drizzle(client, {
+  schema: { ...schema, ...relations }
+})
 
 // Helper type for all tables
 export type Schema = typeof schema

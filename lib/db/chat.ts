@@ -193,7 +193,7 @@ export async function deleteMessagesByChatIdAfterTimestamp(
       .where(
         and(
           eq(messages.chatId, chatId),
-          gte(messages.createdAt, timestamp) // Use ISO string directly
+          gte(messages.createdAt, new Date(timestamp)) // Convert string to Date
         )
       )
 

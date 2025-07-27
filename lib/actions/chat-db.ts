@@ -9,6 +9,9 @@ import * as chatDb from '@/lib/db/chat'
 import { type Chat as DBChat, type Message as DBMessage } from '@/lib/db/schema' // Import DB schema types
 import { getTextFromParts } from '@/lib/utils/message-utils' // Corrected import path
 
+// Constants
+const DEFAULT_CHAT_TITLE = 'New Chat'
+
 // Get all chats for a user
 export async function getChats(userId: string) {
   return chatDb.getChats(userId)
@@ -169,8 +172,8 @@ interface ClientChatInput {
 
 // Interface for new message input from the client
 interface ClientNewMessageInput {
-  role: DBMessage['role']
-  parts: DBMessage['parts']
+  role: UIMessage['role']
+  parts: UIMessage['parts']
 }
 
 // Save a single message
@@ -211,7 +214,7 @@ export async function saveChatMessage(
     if (!existingChat) {
       // Use userMessage.parts for title generation
       const messageTextForTitle = getTextFromParts(userMessage.parts as any[])
-      const chatTitle = title || messageTextForTitle || 'New Chat'
+      const chatTitle = title || messageTextForTitle || DEFAULT_CHAT_TITLE
       const chatDataForDb: Partial<DBChat> = {
         id: chatId,
         title: chatTitle.substring(0, 255),
@@ -344,8 +347,11 @@ export async function deleteTrailingMessages(
       return { error: 'Pivot message not found' }
     }
 
-    // The createdAt field from DBMessage is expected to be a string (ISO 8601 format)
-    const pivotTimestamp = pivotMessage.createdAt
+    // The createdAt field from DBMessage is now a Date object
+    const pivotTimestamp =
+      pivotMessage.createdAt instanceof Date
+        ? pivotMessage.createdAt.toISOString()
+        : pivotMessage.createdAt
 
     // 3. Call the database function to delete messages after the pivot message
     const deleteResult = await chatDb.deleteMessagesByChatIdAfterTimestamp(

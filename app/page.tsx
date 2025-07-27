@@ -1,10 +1,10 @@
 import { getModels } from '@/lib/config/models'
-import { generateUUID } from '@/lib/utils'
+import { generateId } from '@/lib/db/schema'
 
 import { Chat } from '@/components/chat'
 
 export default async function Page() {
-  const id = generateUUID()
+  const id = generateId()
   const models = await getModels()
   return <Chat id={id} models={models} />
 }
