@@ -21,9 +21,7 @@ export const chats = pgTable(
     id: varchar('id', { length: 191 })
       .primaryKey()
       .$defaultFn(() => generateId()),
-    createdAt: timestamp('created_at')
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
     title: text('title').notNull(),
     userId: varchar('user_id', { length: 255 }).notNull(),
     visibility: varchar('visibility', {
@@ -53,9 +51,7 @@ export const messages = pgTable(
       .notNull()
       .references(() => chats.id, { onDelete: 'cascade' }),
     role: varchar('role', { length: 256 }).notNull(),
-    createdAt: timestamp('created_at')
-      .notNull()
-      .defaultNow()
+    createdAt: timestamp('created_at').notNull().defaultNow()
   },
   table => ({
     chatIdIdx: index('messages_chat_id_idx').on(table.chatId),
@@ -143,9 +139,7 @@ export const parts = pgTable(
     // Provider metadata
     providerMetadata: json('provider_metadata').$type<Record<string, any>>(),
 
-    createdAt: timestamp('created_at')
-      .notNull()
-      .defaultNow()
+    createdAt: timestamp('created_at').notNull().defaultNow()
   },
   table => ({
     // Indexes

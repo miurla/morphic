@@ -345,9 +345,10 @@ export async function deleteTrailingMessages(
     }
 
     // The createdAt field from DBMessage is now a Date object
-    const pivotTimestamp = pivotMessage.createdAt instanceof Date 
-      ? pivotMessage.createdAt.toISOString() 
-      : pivotMessage.createdAt
+    const pivotTimestamp =
+      pivotMessage.createdAt instanceof Date
+        ? pivotMessage.createdAt.toISOString()
+        : pivotMessage.createdAt
 
     // 3. Call the database function to delete messages after the pivot message
     const deleteResult = await chatDb.deleteMessagesByChatIdAfterTimestamp(

@@ -65,13 +65,12 @@ export function mapUIMessagePartsToDBParts(
   messageParts: UIMessagePart[],
   messageId: string
 ): DBMessagePart[] {
-  const mappedParts = messageParts
-    .map((part, index): DBMessagePart | null => {
-      const basePart = {
-        messageId,
-        order: index,
-        type: part.type
-      }
+  const mappedParts = messageParts.map((part, index): DBMessagePart | null => {
+    const basePart = {
+      messageId,
+      order: index,
+      type: part.type
+    }
 
     switch (part.type) {
       case 'text':
@@ -408,7 +407,12 @@ export function buildUIMessageFromDB(
     role: dbMessage.role as 'user' | 'assistant',
     parts: dbParts.map(mapDBPartToUIMessagePart) as UIMessage['parts'],
     metadata: dbMessage.createdAt
-      ? { createdAt: dbMessage.createdAt instanceof Date ? dbMessage.createdAt : new Date(dbMessage.createdAt) }
+      ? {
+          createdAt:
+            dbMessage.createdAt instanceof Date
+              ? dbMessage.createdAt
+              : new Date(dbMessage.createdAt)
+        }
       : undefined
   }
 }
