@@ -18,14 +18,14 @@ export const generateId = () => createId()
 export const chats = pgTable(
   'chats',
   {
-    id: varchar('id')
+    id: varchar('id', { length: 191 })
       .primaryKey()
       .$defaultFn(() => generateId()),
-    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true })
+    createdAt: timestamp('created_at')
       .notNull()
       .defaultNow(),
     title: text('title').notNull(),
-    userId: varchar('user_id').notNull(),
+    userId: varchar('user_id', { length: 255 }).notNull(),
     visibility: varchar('visibility', {
       length: 256,
       enum: ['public', 'private']
@@ -46,14 +46,14 @@ export type Chat = InferSelectModel<typeof chats>
 export const messages = pgTable(
   'messages',
   {
-    id: varchar('id')
+    id: varchar('id', { length: 191 })
       .primaryKey()
       .$defaultFn(() => generateId()),
-    chatId: varchar('chat_id')
+    chatId: varchar('chat_id', { length: 191 })
       .notNull()
       .references(() => chats.id, { onDelete: 'cascade' }),
     role: varchar('role', { length: 256 }).notNull(),
-    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true })
+    createdAt: timestamp('created_at')
       .notNull()
       .defaultNow()
   },
@@ -73,10 +73,10 @@ export type Message = InferSelectModel<typeof messages>
 export const parts = pgTable(
   'parts',
   {
-    id: varchar('id')
+    id: varchar('id', { length: 191 })
       .primaryKey()
       .$defaultFn(() => generateId()),
-    messageId: varchar('message_id')
+    messageId: varchar('message_id', { length: 191 })
       .notNull()
       .references(() => messages.id, { onDelete: 'cascade' }),
     order: integer('order').notNull(),
@@ -143,7 +143,7 @@ export const parts = pgTable(
     // Provider metadata
     providerMetadata: json('provider_metadata').$type<Record<string, any>>(),
 
-    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true })
+    createdAt: timestamp('created_at')
       .notNull()
       .defaultNow()
   },

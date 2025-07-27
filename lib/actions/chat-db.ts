@@ -344,8 +344,10 @@ export async function deleteTrailingMessages(
       return { error: 'Pivot message not found' }
     }
 
-    // The createdAt field from DBMessage is expected to be a string (ISO 8601 format)
-    const pivotTimestamp = pivotMessage.createdAt
+    // The createdAt field from DBMessage is now a Date object
+    const pivotTimestamp = pivotMessage.createdAt instanceof Date 
+      ? pivotMessage.createdAt.toISOString() 
+      : pivotMessage.createdAt
 
     // 3. Call the database function to delete messages after the pivot message
     const deleteResult = await chatDb.deleteMessagesByChatIdAfterTimestamp(

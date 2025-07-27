@@ -49,7 +49,7 @@ export type DBMessage = {
   id: string
   chatId: string
   role: string
-  createdAt: string
+  createdAt: Date | string
 }
 
 // Extended UIMessage type (persistence support)

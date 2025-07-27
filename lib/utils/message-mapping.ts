@@ -65,8 +65,8 @@ export function mapUIMessagePartsToDBParts(
   messageParts: UIMessagePart[],
   messageId: string
 ): DBMessagePart[] {
-  return messageParts
-    .map((part, index) => {
+  const mappedParts = messageParts
+    .map((part, index): DBMessagePart | null => {
       const basePart = {
         messageId,
         order: index,
@@ -195,8 +195,11 @@ export function mapUIMessagePartsToDBParts(
         }
     }
   })
-  .filter((part): part is DBMessagePart => part !== null) // Filter out null values
-  .map((part, index) => ({ ...part, order: index })) // Re-index after filtering
+
+  // Filter out null values and re-index
+  return mappedParts
+    .filter((part): part is DBMessagePart => part !== null)
+    .map((part, index) => ({ ...part, order: index }))
 }
 
 /**
@@ -396,7 +399,7 @@ export function buildUIMessageFromDB(
   dbMessage: {
     id: string
     role: string
-    createdAt?: string
+    createdAt?: Date | string
   },
   dbParts: DBMessagePartSelect[]
 ): UIMessage {
@@ -405,7 +408,7 @@ export function buildUIMessageFromDB(
     role: dbMessage.role as 'user' | 'assistant',
     parts: dbParts.map(mapDBPartToUIMessagePart) as UIMessage['parts'],
     metadata: dbMessage.createdAt
-      ? { createdAt: new Date(dbMessage.createdAt) }
+      ? { createdAt: dbMessage.createdAt instanceof Date ? dbMessage.createdAt : new Date(dbMessage.createdAt) }
       : undefined
   }
 }

@@ -55,7 +55,7 @@ const testChatData: DBChat = {
   id: commonChatId,
   userId: commonUserId,
   title: 'Test Chat Title',
-  createdAt: now,
+  createdAt: new Date(now),
   visibility: 'private'
 }
 
@@ -63,7 +63,7 @@ const testMessageData: DBMessage = {
   id: commonMessageId,
   chatId: commonChatId,
   role: 'user',
-  createdAt: now
+  createdAt: new Date(now)
 }
 
 describe('Chat Actions - clearChats', () => {
