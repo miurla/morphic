@@ -92,9 +92,12 @@ export async function createChatStreamResponse(
             }
             // Get updated messages including the edited one
             const updatedChat = await getChatAction(chatId, userId)
-            messagesToModel =
-              updatedChat?.messages ||
-              currentChat.messages.slice(0, messageIndex + 1)
+            if (updatedChat?.messages) {
+              messagesToModel = updatedChat.messages
+            } else {
+              // Fallback: use current messages up to and including the edited message
+              messagesToModel = currentChat.messages.slice(0, messageIndex + 1)
+            }
           }
         } else {
           // Handle normal message submission

@@ -22,18 +22,20 @@ export async function POST(req: Request) {
     const { message, chatId, trigger, messageId } = body
 
     // Handle different triggers
-    if (trigger === 'regenerate-assistant-message' && !messageId) {
-      return new Response('messageId is required for regeneration', {
-        status: 400,
-        statusText: 'Bad Request'
-      })
-    }
-
-    if (trigger === 'submit-user-message' && !message) {
-      return new Response('message is required for submission', {
-        status: 400,
-        statusText: 'Bad Request'
-      })
+    if (trigger === 'regenerate-assistant-message') {
+      if (!messageId) {
+        return new Response('messageId is required for regeneration', {
+          status: 400,
+          statusText: 'Bad Request'
+        })
+      }
+    } else if (trigger === 'submit-user-message') {
+      if (!message) {
+        return new Response('message is required for submission', {
+          status: 400,
+          statusText: 'Bad Request'
+        })
+      }
     }
 
     const referer = req.headers.get('referer')
