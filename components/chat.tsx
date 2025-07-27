@@ -7,7 +7,6 @@ import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { deleteTrailingMessages } from '@/lib/actions/chat-db'
 import { generateId } from '@/lib/db/schema'
 import { UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
@@ -58,12 +57,15 @@ export function Chat({
       prepareSendMessagesRequest: ({ messages, trigger, messageId }) => {
         switch (trigger) {
           case 'regenerate-assistant-message':
-            // Only send messageId, not message data
+            // Find the message being regenerated
+            const messageToRegenerate = messages.find(m => m.id === messageId)
             return {
               body: {
                 trigger: 'regenerate-assistant-message',
                 chatId: id,
-                messageId
+                messageId,
+                // Include the message if it's a user message (for edit cases)
+                message: messageToRegenerate?.role === 'user' ? messageToRegenerate : undefined
               }
             }
 
@@ -74,7 +76,7 @@ export function Chat({
               body: {
                 trigger: 'submit-user-message',
                 chatId: id,
-                messages: [messages[messages.length - 1]],
+                message: messages[messages.length - 1],
                 messageId
               }
             }
@@ -182,40 +184,25 @@ export function Chat({
       return
     }
 
-    const pivotMessage = messages.find(m => m.id === editedMessageId)
-    if (!pivotMessage) {
-      toast.error('Original message not found to edit locally.')
-      console.error(
-        'handleUpdateAndReloadMessage: Pivot message not found for timestamp.'
-      )
-      return
-    }
-    const pivotTimestamp =
-      (
-        pivotMessage.metadata as { createdAt?: Date }
-      )?.createdAt?.toISOString() ?? new Date(0).toISOString()
-
     try {
+      // Update the message locally with the same ID
       setMessages(prevMessages => {
         const messageIndex = prevMessages.findIndex(
           m => m.id === editedMessageId
         )
-        const messagesBeforeEdited =
-          messageIndex !== -1
-            ? prevMessages.slice(0, messageIndex)
-            : prevMessages
+        if (messageIndex === -1) return prevMessages
 
-        const newUIMessage: UIMessage = {
-          id: generateId(),
-          role: 'user',
+        const updatedMessages = [...prevMessages]
+        updatedMessages[messageIndex] = {
+          ...updatedMessages[messageIndex],
           parts: [{ type: 'text', text: newContentText }]
         }
 
-        return [...messagesBeforeEdited, newUIMessage]
+        return updatedMessages
       })
 
-      await deleteTrailingMessages(id, pivotTimestamp)
-      await regenerate()
+      // Regenerate from this message
+      await regenerate({ messageId: editedMessageId })
     } catch (error) {
       console.error('Error during message edit and reload process:', error)
       toast.error(
@@ -230,64 +217,12 @@ export function Chat({
       return
     }
 
-    const followerMessageIndex = messages.findIndex(
-      m => m.id === reloadFromFollowerMessageId
-    )
-
-    if (followerMessageIndex < 1) {
-      toast.error(
-        'Cannot reload: No preceding message found or message is the first.'
-      )
-      console.error(
-        `handleReloadFrom: No message found before id ${reloadFromFollowerMessageId} or it is the first message.`
-      )
-      return
-    }
-
-    const targetUserMessageIndex = followerMessageIndex - 1
-    const targetUserMessage = messages[targetUserMessageIndex]
-
-    if (targetUserMessage.role !== 'user') {
-      toast.error(
-        'Cannot reload: The message to resend must be a user message.'
-      )
-      console.error(
-        `handleReloadFrom: Preceding message (id: ${targetUserMessage.id}) is not a user message.`
-      )
-      return
-    }
-
-    const deletionTimestamp =
-      (
-        targetUserMessage.metadata as { createdAt?: Date }
-      )?.createdAt?.toISOString() ?? new Date(0).toISOString()
-
-    const contentToResend =
-      targetUserMessage.parts
-        ?.filter((p: any) => p.type === 'text')
-        .map((p: any) => p.text)
-        .join('') || ''
-
     try {
-      setMessages(prevMessages => {
-        const messagesBeforeTarget = prevMessages.slice(
-          0,
-          targetUserMessageIndex
-        )
-
-        const newResentUserMessage: UIMessage = {
-          id: generateId(),
-          role: 'user',
-          parts: [{ type: 'text', text: contentToResend }]
-        }
-        return [...messagesBeforeTarget, newResentUserMessage]
-      })
-
-      await deleteTrailingMessages(id, deletionTimestamp)
-      await regenerate()
+      // Use the SDK's regenerate function with the specific messageId
+      await regenerate({ messageId: reloadFromFollowerMessageId })
     } catch (error) {
       console.error(
-        `Error during reload from message preceding ${reloadFromFollowerMessageId}:`,
+        `Error during reload from message ${reloadFromFollowerMessageId}:`,
         error
       )
       toast.error(`Failed to reload conversation: ${(error as Error).message}`)

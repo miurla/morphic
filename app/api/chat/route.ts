@@ -19,25 +19,21 @@ const DEFAULT_MODEL: Model = {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { messages, chatId, trigger, messageId } = body
+    const { message, chatId, trigger, messageId } = body
 
     // Handle different triggers
-    let message
+    if (trigger === 'regenerate-assistant-message' && !messageId) {
+      return new Response('messageId is required for regeneration', {
+        status: 400,
+        statusText: 'Bad Request'
+      })
+    }
 
-    if (trigger === 'regenerate-assistant-message') {
-      // For regeneration, we'll fetch the messages from DB and use the last user message
-      // This will be handled in createChatStreamResponse
-      message = null
-    } else {
-      // Get the last message from the messages array (the new user message)
-      message = messages?.[messages.length - 1]
-
-      if (!message) {
-        return new Response('No message provided', {
-          status: 400,
-          statusText: 'Bad Request'
-        })
-      }
+    if (trigger === 'submit-user-message' && !message) {
+      return new Response('message is required for submission', {
+        status: 400,
+        statusText: 'Bad Request'
+      })
     }
 
     const referer = req.headers.get('referer')

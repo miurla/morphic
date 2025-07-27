@@ -58,16 +58,40 @@ export async function createChatStreamResponse(
 
         if (trigger === 'regenerate-assistant-message' && messageId) {
           // Handle regeneration
-          // Delete messages from the specified messageId onwards
-          await deleteMessagesFromIndex(chatId, messageId)
-
-          // Get updated messages
-          const updatedChat = await getChatAction(chatId, userId)
-          if (!updatedChat || !updatedChat.messages.length) {
-            throw new Error('No messages to regenerate')
+          // Find the message to regenerate from
+          const currentChat = await getChatAction(chatId, userId)
+          if (!currentChat || !currentChat.messages.length) {
+            throw new Error('No messages found')
           }
 
-          messagesToModel = updatedChat.messages
+          const messageIndex = currentChat.messages.findIndex(
+            m => m.id === messageId
+          )
+          if (messageIndex === -1) {
+            throw new Error(`Message ${messageId} not found`)
+          }
+
+          // Check if it's an assistant message that needs regeneration
+          const targetMessage = currentChat.messages[messageIndex]
+          if (targetMessage.role === 'assistant') {
+            // Delete from this assistant message onwards
+            await deleteMessagesFromIndex(chatId, messageId)
+            // Use messages up to (but not including) this assistant message
+            messagesToModel = currentChat.messages.slice(0, messageIndex)
+          } else {
+            // If it's a user message that was edited, save the updated message first
+            if (message && message.id === messageId) {
+              await saveMessage(chatId, message)
+            }
+            // Delete everything after this user message
+            const messagesToDelete = currentChat.messages.slice(messageIndex + 1)
+            if (messagesToDelete.length > 0) {
+              await deleteMessagesFromIndex(chatId, messagesToDelete[0].id)
+            }
+            // Get updated messages including the edited one
+            const updatedChat = await getChatAction(chatId, userId)
+            messagesToModel = updatedChat?.messages || currentChat.messages.slice(0, messageIndex + 1)
+          }
         } else {
           // Handle normal message submission
           if (!message) {
