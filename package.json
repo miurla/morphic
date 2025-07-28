@@ -55,7 +55,7 @@
     "cmdk": "1.0.0",
     "dotenv": "^16.5.0",
     "drizzle-kit": "^0.31.4",
-    "drizzle-orm": "^0.43.1",
+    "drizzle-orm": "^0.44.3",
     "embla-carousel-react": "^8.0.0",
     "exa-js": "^1.0.12",
     "jsdom": "^26.1.0",

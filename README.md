@@ -35,9 +35,8 @@ An AI-powered search engine with a generative UI.
 
 ### Chat & History
 
-- Chat history functionality (Optional)
+- Chat history stored in PostgreSQL database
 - Share search results (Optional)
-- Redis support (Local/Upstash)
 
 ### AI Providers
 
@@ -94,8 +93,7 @@ Models are configured in `public/config/models.json`. Each model requires its co
 
 ### Data Storage
 
-- [Upstash](https://upstash.com/) - Serverless Redis
-- [Redis](https://redis.io/) - Local Redis option
+- [Neon](https://neon.tech/) - Serverless PostgreSQL database
 
 ### UI & Styling
 
@@ -133,9 +131,10 @@ Fill in the required environment variables in `.env.local`:
 # Required for Core Functionality
 OPENAI_API_KEY=     # Get from https://platform.openai.com/api-keys
 TAVILY_API_KEY=     # Get from https://app.tavily.com/home
+DATABASE_URL=       # PostgreSQL connection string (Neon recommended)
 ```
 
-For optional features configuration (Redis, SearXNG, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
+For optional features configuration (SearXNG, alternative AI providers, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
 
 ### 4. Run app locally
 
