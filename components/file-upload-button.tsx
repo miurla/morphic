@@ -82,6 +82,7 @@ export function FileUploadButton({
         variant="outline"
         size="icon"
         className="rounded-full"
+        type="button"
         onClick={() => inputRef.current?.click()}
       >
         <Paperclip size={18} />
