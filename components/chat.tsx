@@ -248,8 +248,7 @@ export function Chat({
         parts.push({
           type: 'file',
           url: f.url!,
-          name: f.name!,
-          key: f.key!,
+          filename: f.name!,
           mediaType: f.file.type
         })
       })
