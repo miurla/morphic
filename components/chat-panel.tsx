@@ -255,7 +255,7 @@ export function ChatPanel({
                                   ...f,
                                   status: 'uploaded',
                                   url: uploaded.url,
-                                  name: uploaded.name,
+                                  name: uploaded.filename,
                                   key: uploaded.key
                                 }
                               : f
