@@ -369,9 +369,7 @@ export function mapDBPartToUIMessagePart(
 
         // Special handling for tool parts that maintain their type
         if (
-          ['search', 'retrieve', 'question', 'relatedQuestions'].includes(
-            toolName
-          )
+          ['search', 'fetch', 'question', 'relatedQuestions'].includes(toolName)
         ) {
           return {
             type: part.type as any,
@@ -435,7 +433,7 @@ function getToolNameFromType(toolName: string): string {
   // Map original tool names to DB column names
   const toolNameMap: Record<string, string> = {
     search: 'search',
-    retrieve: 'retrieve',
+    fetch: 'fetch',
     askQuestion: 'question',
     question: 'question',
     relatedQuestions: 'relatedQuestions'
@@ -475,7 +473,7 @@ function getToolNameFromCallId(
 function getOriginalToolName(dbToolName: string): string {
   const reverseMap: Record<string, string> = {
     search: 'search',
-    retrieve: 'retrieve',
+    fetch: 'fetch',
     question: 'askQuestion',
     dynamic: 'dynamic' // For dynamic tools, the actual tool name is stored separately
   }
