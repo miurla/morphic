@@ -13,6 +13,9 @@ import type { Part } from '@/lib/types/ai'
 
 import { useSidebar } from '../ui/sidebar'
 
+// Animation duration should match CSS transition duration
+const ANIMATION_DURATION = 300
+
 interface ArtifactState {
   part: Part | null
   isOpen: boolean
@@ -63,7 +66,7 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
     // Keep content for animation purposes, clear after transition
     setTimeout(() => {
       dispatch({ type: 'CLEAR_CONTENT' })
-    }, 300)
+    }, ANIMATION_DURATION)
   }, [])
 
   // Close artifact when sidebar opens

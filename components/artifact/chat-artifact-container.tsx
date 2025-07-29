@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -14,6 +14,7 @@ import { useArtifact } from './artifact-context'
 const DEFAULT_WIDTH = 500
 const MIN_WIDTH = 400
 const MAX_WIDTH = 800
+const RESIZE_OVERLAY_Z_INDEX = 9999
 
 export function ChatArtifactContainer({
   children
@@ -21,7 +22,14 @@ export function ChatArtifactContainer({
   children: React.ReactNode
 }) {
   const { state } = useArtifact()
-  const [width, setWidth] = useState(DEFAULT_WIDTH)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedWidth = localStorage.getItem('artifactPanelWidth')
+      return savedWidth ? parseInt(savedWidth, 10) : DEFAULT_WIDTH
+    }
+    return DEFAULT_WIDTH
+  })
   const [isResizing, setIsResizing] = useState(false)
   const { open, isMobile: isMobileSidebar } = useSidebar()
 
@@ -34,8 +42,13 @@ export function ChatArtifactContainer({
     if (!isResizing) return
 
     const handleMouseMove = (e: MouseEvent) => {
-      const newWidth = window.innerWidth - e.clientX
-      setWidth(Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth)))
+      const containerRect = containerRef.current?.getBoundingClientRect()
+      if (containerRect) {
+        const newWidth = containerRect.right - e.clientX
+        const clampedWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth))
+        setWidth(clampedWidth)
+        localStorage.setItem('artifactPanelWidth', clampedWidth.toString())
+      }
     }
 
     const handleMouseUp = () => {
@@ -60,7 +73,7 @@ export function ChatArtifactContainer({
       </div>
 
       {/* Desktop: Independent panels like morphic-studio */}
-      <div className="hidden md:flex flex-1 overflow-hidden">
+      <div ref={containerRef} className="hidden md:flex flex-1 overflow-hidden">
         {/* Chat Panel - Independent container */}
         <div className="flex-1 flex flex-col">{children}</div>
 
@@ -99,7 +112,7 @@ export function ChatArtifactContainer({
       {isResizing && (
         <div
           className="fixed inset-0 cursor-col-resize select-none"
-          style={{ zIndex: 9999 }}
+          style={{ zIndex: RESIZE_OVERLAY_Z_INDEX }}
         />
       )}
 
