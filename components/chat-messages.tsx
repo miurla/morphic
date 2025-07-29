@@ -43,6 +43,8 @@ export function ChatMessages({
   const [userModifiedStates, setUserModifiedStates] = useState<
     Record<string, boolean>
   >({})
+  // Cache tool counts for performance optimization
+  const [toolCountCache] = useState<Map<string, number>>(new Map())
   const isLoading = status === 'submitted' || status === 'streaming'
 
   if (!sections.length) return null
@@ -53,10 +55,51 @@ export function ChatMessages({
     sections.length > 0 &&
     sections[sections.length - 1].assistantMessages.length === 0
 
-  const getIsOpen = (id: string, partType?: string, hasNextPart?: boolean) => {
+  // Tool types definition - moved outside function for performance
+  const toolTypes = [
+    'tool-search',
+    'tool-fetch',
+    'tool-askQuestion',
+    'tool-relatedQuestions'
+  ]
+
+  // Helper function to get tool count with caching
+  const getToolCount = (message?: UIMessage): number => {
+    if (!message || !message.id) return 0
+
+    // Check cache first
+    const cached = toolCountCache.get(message.id)
+    if (cached !== undefined) {
+      return cached
+    }
+
+    // Calculate and cache
+    const count =
+      message.parts?.filter(part => toolTypes.includes(part.type)).length || 0
+    toolCountCache.set(message.id, count)
+    return count
+  }
+
+  const getIsOpen = (
+    id: string,
+    partType?: string,
+    hasNextPart?: boolean,
+    message?: UIMessage
+  ) => {
     // If user has explicitly modified this state, use that
     if (userModifiedStates.hasOwnProperty(id)) {
       return userModifiedStates[id]
+    }
+
+    // For tool types, check if there are multiple tools
+    if (partType && toolTypes.includes(partType)) {
+      const toolCount = getToolCount(message)
+      // If multiple tools exist, default to closed
+      if (toolCount > 1) {
+        return false
+      }
+      // Single tool defaults to open
+      return true
     }
 
     // For tool-invocations, default to open
@@ -108,7 +151,9 @@ export function ChatMessages({
               <RenderMessage
                 message={section.userMessage}
                 messageId={section.userMessage.id}
-                getIsOpen={getIsOpen}
+                getIsOpen={(id, partType, hasNextPart) =>
+                  getIsOpen(id, partType, hasNextPart, section.userMessage)
+                }
                 onOpenChange={handleOpenChange}
                 onQuerySelect={onQuerySelect}
                 chatId={chatId}
@@ -126,7 +171,9 @@ export function ChatMessages({
                 <RenderMessage
                   message={assistantMessage}
                   messageId={assistantMessage.id}
-                  getIsOpen={getIsOpen}
+                  getIsOpen={(id, partType, hasNextPart) =>
+                    getIsOpen(id, partType, hasNextPart, assistantMessage)
+                  }
                   onOpenChange={handleOpenChange}
                   onQuerySelect={onQuerySelect}
                   chatId={chatId}
