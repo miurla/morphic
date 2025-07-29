@@ -4,6 +4,7 @@ import { fetchSchema } from '@/lib/schema/fetch'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 
 const CONTENT_CHARACTER_LIMIT = 10000
+const TITLE_CHARACTER_LIMIT = 100
 
 async function fetchRegularData(
   url: string
@@ -41,7 +42,9 @@ async function fetchRegularData(
     const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
     const rawTitle = titleMatch ? titleMatch[1].trim() : new URL(url).hostname
     const title =
-      rawTitle.length > 100 ? rawTitle.substring(0, 100) + '...' : rawTitle
+      rawTitle.length > TITLE_CHARACTER_LIMIT
+        ? rawTitle.substring(0, TITLE_CHARACTER_LIMIT) + '...'
+        : rawTitle
 
     // Process HTML content
     let processedHtml = html
@@ -145,7 +148,7 @@ async function fetchTavilyExtractData(
     return {
       results: [
         {
-          title: content.slice(0, 100),
+          title: content.slice(0, TITLE_CHARACTER_LIMIT),
           content,
           url: result.url
         }
