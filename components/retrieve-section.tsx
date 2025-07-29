@@ -5,12 +5,7 @@ import { UseChatHelpers } from '@ai-sdk/react'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
-import { useArtifact } from '@/components/artifact/artifact-context'
-import { SearchResults } from '@/components/search-results'
-import { Section, ToolArgsSection } from '@/components/section'
-
-import { CollapsibleMessage } from './collapsible-message'
-import { DefaultSkeleton } from './default-skeleton'
+import { RetrievePreview } from './retrieve-preview'
 
 interface RetrieveSectionProps {
   tool: ToolPart<'retrieve'>
@@ -19,52 +14,50 @@ interface RetrieveSectionProps {
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
 }
 
-export function RetrieveSection({
-  tool,
-  isOpen,
-  onOpenChange,
-  status
-}: RetrieveSectionProps) {
-  const isToolLoading =
-    tool.state === 'input-streaming' || tool.state === 'input-available'
-  const isChatLoading = status === 'submitted' || status === 'streaming'
-  const isLoading = isToolLoading || isChatLoading
-
-  const data: SearchResultsType | undefined =
-    tool.state === 'output-available' ? tool.output || undefined : undefined
+export function RetrieveSection({ tool }: RetrieveSectionProps) {
   const url = tool.input?.url
-
-  const { open } = useArtifact()
-  const header = (
-    <button
-      type="button"
-      onClick={() => open(tool)}
-      className="flex items-center justify-between w-full text-left rounded-md p-1 -ml-1"
-      title="Open details"
-    >
-      <ToolArgsSection tool="retrieve" number={data?.results?.length}>
-        {url}
-      </ToolArgsSection>
-    </button>
-  )
+  
+  // Determine the fetch type based on the tool input
+  const fetchType = tool.input?.type === 'api' ? 'API Retrieve' : 'Regular Fetch'
+  
+  // Determine the status based on tool output availability
+  let displayStatus: 'fetching' | 'success' | 'error' = 'fetching'
+  let error: string | undefined
+  let title: string | undefined
+  let contentLength: number | undefined
+  
+  // Check if output is available
+  if (!tool.output) {
+    // Still fetching
+    displayStatus = 'fetching'
+  } else if (tool.state === 'output-error') {
+    // Error state
+    displayStatus = 'error'
+    error = tool.errorText || 'Failed to retrieve content'
+  } else {
+    // Success state - we have output
+    const data = tool.output as SearchResultsType
+    if (data?.results?.[0]) {
+      displayStatus = 'success'
+      title = data.results[0].title
+      contentLength = data.results[0].content?.length
+    } else {
+      displayStatus = 'error'
+      error = 'No content retrieved'
+    }
+  }
 
   return (
-    <CollapsibleMessage
-      role="assistant"
-      isCollapsible={true}
-      header={header}
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      showIcon={false}
-    >
-      {!isLoading && data ? (
-        <Section title="Sources">
-          <SearchResults results={data.results} />
-        </Section>
-      ) : (
-        <DefaultSkeleton />
-      )}
-    </CollapsibleMessage>
+    <div className="w-full">
+      <RetrievePreview
+        url={url || ''}
+        title={title}
+        contentLength={contentLength}
+        status={displayStatus}
+        error={error}
+        fetchType={fetchType}
+      />
+    </div>
   )
 }
 

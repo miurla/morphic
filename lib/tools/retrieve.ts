@@ -5,6 +5,88 @@ import { SearchResults as SearchResultsType } from '@/lib/types'
 
 const CONTENT_CHARACTER_LIMIT = 10000
 
+async function fetchRegularData(
+  url: string
+): Promise<SearchResultsType | null> {
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Morphic/1.0)',
+        Accept:
+          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      }
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const contentType = response.headers.get('content-type') || ''
+    if (
+      !contentType.includes('text/html') &&
+      !contentType.includes('text/plain')
+    ) {
+      throw new Error(`Unsupported content type: ${contentType}`)
+    }
+
+    const html = await response.text()
+
+    // Extract title
+    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
+    const rawTitle = titleMatch ? titleMatch[1].trim() : new URL(url).hostname
+    const title =
+      rawTitle.length > 100 ? rawTitle.substring(0, 100) + '...' : rawTitle
+
+    // Process HTML content
+    let processedHtml = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
+
+    // Replace img tags with alt text or [IMAGE] markers
+    processedHtml = processedHtml
+      .replace(/<img[^>]+alt\s*=\s*["']([^"']+)["'][^>]*>/gi, ' [IMAGE: $1] ')
+      .replace(/<img[^>]+src\s*=\s*["']([^"']+)["'][^>]*>/gi, ' [IMAGE] ')
+      .replace(/<img[^>]*>/gi, ' [IMAGE] ')
+
+    // Extract text content
+    const textContent = processedHtml
+      .replace(/<[^>]*>/g, ' ') // Remove remaining HTML tags
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim()
+
+    // Limit content length
+    const truncatedContent =
+      textContent.length > CONTENT_CHARACTER_LIMIT
+        ? textContent.substring(0, CONTENT_CHARACTER_LIMIT) + '...[truncated]'
+        : textContent
+
+    return {
+      results: [
+        {
+          title,
+          content: truncatedContent,
+          url
+        }
+      ],
+      query: '',
+      images: []
+    }
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('Request timeout after 10 seconds')
+      return null
+    }
+    console.error('Regular fetch error:', error)
+    return null
+  }
+}
+
 async function fetchJinaReaderData(
   url: string
 ): Promise<SearchResultsType | null> {
@@ -78,17 +160,22 @@ async function fetchTavilyExtractData(
 }
 
 export const retrieveTool = tool({
-  description: 'Retrieve content from the web',
+  description: 'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. Only use "api" type when you need: 1) PDF content extraction, 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina or Tavily API keys.',
   inputSchema: retrieveSchema,
-  execute: async ({ url }) => {
+  execute: async ({ url, type = 'regular' }) => {
     let results: SearchResultsType | null
 
-    // Use Jina if the API key is set, otherwise use Tavily
-    const useJina = process.env.JINA_API_KEY
-    if (useJina) {
-      results = await fetchJinaReaderData(url)
+    if (type === 'regular') {
+      // Use regular fetch for direct HTML retrieval
+      results = await fetchRegularData(url)
     } else {
-      results = await fetchTavilyExtractData(url)
+      // Use API-based extraction (Jina or Tavily)
+      const useJina = process.env.JINA_API_KEY
+      if (useJina) {
+        results = await fetchJinaReaderData(url)
+      } else {
+        results = await fetchTavilyExtractData(url)
+      }
     }
 
     if (!results) {
