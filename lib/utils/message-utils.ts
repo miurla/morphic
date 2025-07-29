@@ -115,3 +115,18 @@ export function mergeUIMessages(
     parts: [...primaryMessage.parts, ...secondaryMessage.parts]
   }
 }
+
+/**
+ * Checks if a UIMessage contains tool calls
+ * @param message The message to check for tool calls
+ * @returns true if the message contains tool calls, false otherwise
+ */
+export function hasToolCalls(message: UIMessage | null): boolean {
+  if (!message || !message.parts) return false
+  
+  return message.parts.some(
+    (part: any) =>
+      part.type &&
+      (part.type.startsWith('tool-') || part.type === 'tool-call')
+  )
+}

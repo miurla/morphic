@@ -9,123 +9,17 @@ import {
 import { researcher } from '@/lib/agents/researcher'
 
 import {
-  createChat,
-  deleteMessagesFromIndex,
   getChat as getChatAction,
-  saveMessage
-} from '../actions/chat'
+  saveChatTitle,
+  saveMessage} from '../actions/chat'
 import { generateRelatedQuestions } from '../agents/generate-related-questions'
-import { generateChatTitle } from '../agents/title-generator'
-import { generateId } from '../db/schema'
-import { getTextFromParts, mergeUIMessages } from '../utils/message-utils'
+import { hasToolCalls, mergeUIMessages } from '../utils/message-utils'
 
+import {
+  prepareMessagesForRegeneration,
+  prepareMessagesForSubmission
+} from './message-preparation'
 import { BaseStreamConfig } from './types'
-
-// Constants
-const DEFAULT_CHAT_TITLE = 'New Chat'
-
-// Helper function to check if a message contains tool calls
-function hasToolCalls(message: UIMessage | null): boolean {
-  if (!message || !message.parts) return false
-  
-  return message.parts.some(
-    (part: any) =>
-      part.type &&
-      (part.type.startsWith('tool-') || part.type === 'tool-call')
-  )
-}
-
-// Helper function to save chat title
-async function saveChatTitle(
-  chat: any,
-  chatId: string,
-  message: UIMessage | null,
-  modelId: string
-) {
-  if (!chat && message) {
-    const userContent = getTextFromParts(message.parts)
-    const title = await generateChatTitle({
-      userMessageContent: userContent,
-      modelId
-    })
-    const { updateChatTitle } = await import('../db/actions')
-    await updateChatTitle(chatId, title)
-  }
-}
-
-// Helper function to prepare messages for regeneration
-async function prepareMessagesForRegeneration(
-  chatId: string,
-  userId: string,
-  messageId: string,
-  message: UIMessage | null
-): Promise<UIMessage[]> {
-  const currentChat = await getChatAction(chatId, userId)
-  if (!currentChat || !currentChat.messages.length) {
-    throw new Error('No messages found')
-  }
-
-  const messageIndex = currentChat.messages.findIndex(m => m.id === messageId)
-  if (messageIndex === -1) {
-    throw new Error(`Message ${messageId} not found`)
-  }
-
-  const targetMessage = currentChat.messages[messageIndex]
-  
-  if (targetMessage.role === 'assistant') {
-    // Delete from this assistant message onwards
-    await deleteMessagesFromIndex(chatId, messageId)
-    // Use messages up to (but not including) this assistant message
-    return currentChat.messages.slice(0, messageIndex)
-  } else {
-    // If it's a user message that was edited, save the updated message first
-    if (message && message.id === messageId) {
-      await saveMessage(chatId, message)
-    }
-    // Delete everything after this user message
-    const messagesToDelete = currentChat.messages.slice(messageIndex + 1)
-    if (messagesToDelete.length > 0) {
-      await deleteMessagesFromIndex(chatId, messagesToDelete[0].id)
-    }
-    // Get updated messages including the edited one
-    const updatedChat = await getChatAction(chatId, userId)
-    if (updatedChat?.messages) {
-      return updatedChat.messages
-    } else {
-      // Fallback: use current messages up to and including the edited message
-      return currentChat.messages.slice(0, messageIndex + 1)
-    }
-  }
-}
-
-// Helper function to prepare messages for normal submission
-async function prepareMessagesForSubmission(
-  chatId: string,
-  userId: string,
-  message: UIMessage,
-  chat: any
-): Promise<UIMessage[]> {
-  if (!message) {
-    throw new Error('No message provided')
-  }
-
-  // Save the message
-  const messageWithId = {
-    ...message,
-    id: message.id || generateId()
-  }
-
-  // If chat doesn't exist, create it with a temporary title
-  if (!chat) {
-    await createChat(chatId, DEFAULT_CHAT_TITLE)
-  }
-
-  await saveMessage(chatId, messageWithId)
-
-  // Get all messages including the one just saved
-  const updatedChat = await getChatAction(chatId, userId)
-  return updatedChat?.messages || [messageWithId]
-}
 
 // Helper function to handle direct response (no tool calls)
 async function handleDirectResponse(
