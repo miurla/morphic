@@ -96,7 +96,6 @@ export function ChatPanel({
     return (
       (lastPart?.type === 'tool-search' ||
         lastPart?.type === 'tool-fetch' ||
-        lastPart?.type === 'tool-videoSearch' ||
         lastPart?.type === 'tool-askQuestion') &&
       ((lastPart as any)?.state === 'input-streaming' ||
         (lastPart as any)?.state === 'input-available')
