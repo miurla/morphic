@@ -1,15 +1,9 @@
 'use client'
 
-import { LightbulbIcon, MessageSquare, Minimize2, Wrench } from 'lucide-react'
+import { LightbulbIcon, MessageSquare, Minimize2, Search } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from '@/components/ui/tooltip'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { TooltipButton } from '@/components/ui/tooltip-button'
 
 import { ArtifactContent } from '@/components/artifact/artifact-content'
@@ -24,11 +18,10 @@ export function InspectorPanel() {
   const getIconAndTitle = () => {
     switch (part.type) {
       case 'tool-search':
-      case 'tool-fetch':
       case 'tool-askQuestion':
         const toolName = part.type.replace('tool-', '')
         return {
-          icon: <Wrench size={18} />,
+          icon: <Search size={18} />,
           title: toolName
         }
       case 'reasoning':
@@ -57,7 +50,7 @@ export function InspectorPanel() {
         <div className="flex flex-col h-full bg-background rounded-xl md:border overflow-hidden">
           <div className="flex items-center justify-between px-4 py-2">
             <h3 className="flex items-center gap-2">
-              <div className="bg-muted p-2 rounded-md flex items-center gap-2">
+              <div className="p-2 rounded-md flex items-center gap-2">
                 {icon}
               </div>
               <span className="text-sm font-medium capitalize">{title}</span>
