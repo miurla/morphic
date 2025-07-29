@@ -71,13 +71,6 @@ export function RenderMessage({
   return (
     <>
       {message.parts?.map((part: any, index: number) => {
-        // Check if this is the last text part in the array
-        const textParts =
-          message.parts?.filter((part: any) => part.type === 'text') || []
-        const isLastTextPart =
-          part.type === 'text' &&
-          textParts.indexOf(part) === textParts.length - 1
-
         // Check if there's a next part in this message
         const hasNextPart = message.parts && index < message.parts.length - 1
 
@@ -106,7 +99,18 @@ export function RenderMessage({
               />
             )
           case 'text':
-            // Only show actions if this is the last part and it's a text part
+            // Show actions if:
+            // 1. This is the last part and streaming is complete
+            // 2. Next part is relatedQuestions (or step-start then relatedQuestions)
+            const nextMessagePart = message.parts?.[index + 1]
+            const secondNextPart = message.parts?.[index + 2]
+            const isStreamingComplete =
+              status !== 'streaming' && status !== 'submitted'
+            const isLastPart = !hasNextPart
+            const shouldShowActions =
+              (isLastPart && isStreamingComplete) || // Last part and streaming done
+              (nextMessagePart?.type === 'step-start' &&
+                secondNextPart?.type === 'tool-relatedQuestions') // step-start then related questions
             return (
               <AnswerSection
                 key={`${messageId}-text-${index}`}
@@ -114,7 +118,7 @@ export function RenderMessage({
                 isOpen={getIsOpen(messageId, part.type, hasNextPart)}
                 onOpenChange={open => onOpenChange(messageId, open)}
                 chatId={chatId}
-                showActions={isLastTextPart}
+                showActions={shouldShowActions}
                 messageId={messageId}
                 reload={reload}
                 status={status}
