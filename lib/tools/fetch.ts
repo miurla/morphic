@@ -160,7 +160,8 @@ async function fetchTavilyExtractData(
 }
 
 export const fetchTool = tool({
-  description: 'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. Only use "api" type when you need: 1) PDF content extraction, 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina or Tavily API keys.',
+  description:
+    'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. Only use "api" type when you need: 1) PDF content extraction, 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina or Tavily API keys.',
   inputSchema: fetchSchema,
   execute: async ({ url, type = 'regular' }) => {
     let results: SearchResultsType | null

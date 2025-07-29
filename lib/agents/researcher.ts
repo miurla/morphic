@@ -1,7 +1,7 @@
 import { Experimental_Agent as Agent, stepCountIs } from 'ai'
 
-import { createQuestionTool } from '../tools/question'
 import { fetchTool } from '../tools/fetch'
+import { createQuestionTool } from '../tools/question'
 import { createSearchTool } from '../tools/search'
 import { createVideoSearchTool } from '../tools/video-search'
 import { getModel } from '../utils/registry'
@@ -59,9 +59,7 @@ export function researcher({
         videoSearch: videoSearchTool,
         askQuestion: askQuestionTool
       },
-      activeTools: searchMode
-        ? ['search', 'fetch', 'videoSearch']
-        : undefined,
+      activeTools: searchMode ? ['search', 'fetch', 'videoSearch'] : undefined,
       stopWhen: searchMode ? stepCountIs(10) : stepCountIs(1)
     })
   } catch (error) {

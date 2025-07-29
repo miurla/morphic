@@ -1,7 +1,7 @@
 import type { InferUITool, UIMessage as AIMessage } from 'ai'
 
-import { askQuestionTool } from '@/lib/tools/question'
 import { fetchTool } from '@/lib/tools/fetch'
+import { askQuestionTool } from '@/lib/tools/question'
 import { searchTool } from '@/lib/tools/search'
 import { videoSearchTool } from '@/lib/tools/video-search'
 

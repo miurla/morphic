@@ -16,16 +16,17 @@ interface FetchSectionProps {
 
 export function FetchSection({ tool }: FetchSectionProps) {
   const url = tool.input?.url
-  
+
   // Determine the fetch type based on the tool input
-  const fetchType = tool.input?.type === 'api' ? 'API Retrieve' : 'Regular Fetch'
-  
+  const fetchType =
+    tool.input?.type === 'api' ? 'API Retrieve' : 'Regular Fetch'
+
   // Determine the status based on tool output availability
   let displayStatus: 'fetching' | 'success' | 'error' = 'fetching'
   let error: string | undefined
   let title: string | undefined
   let contentLength: number | undefined
-  
+
   // Check if output is available
   if (!tool.output) {
     // Still fetching

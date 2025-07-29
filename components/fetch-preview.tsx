@@ -16,7 +16,7 @@ export function FetchPreview({
   status,
   error,
   fetchType = 'Retrieve'
-}: RetrievePreviewProps) {
+}: FetchPreviewProps) {
   const getPageTitle = () => {
     if (title) return title
     try {
