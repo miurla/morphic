@@ -10,6 +10,22 @@ export interface VideoSearchResultsProps {
   displayMode?: 'chat' | 'artifact'
 }
 
+// Utility function to ensure searchParameters are present
+export function createVideoSearchResults(
+  searchResults: any,
+  query: string | undefined
+): SerperSearchResults {
+  return {
+    ...searchResults,
+    videos: searchResults.videos || [],
+    searchParameters: searchResults.searchParameters || {
+      q: query || '',
+      type: 'video',
+      engine: 'google'
+    }
+  }
+}
+
 export function VideoSearchResults({
   results,
   displayMode = 'chat'

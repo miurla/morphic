@@ -6,7 +6,7 @@ import type { ToolPart } from '@/lib/types/ai'
 import { SearchResults } from '@/components/search-results'
 import { SearchResultsImageSection } from '@/components/search-results-image'
 import { Section, ToolArgsSection } from '@/components/section'
-import { VideoSearchResults } from '@/components/video-search-results'
+import { createVideoSearchResults,VideoSearchResults } from '@/components/video-search-results'
 
 export function SearchArtifactContent({ tool }: { tool: ToolPart<'search'> }) {
   const searchResults: TypeSearchResults | undefined =
@@ -45,15 +45,7 @@ export function SearchArtifactContent({ tool }: { tool: ToolPart<'search'> }) {
       {searchResults.videos && searchResults.videos.length > 0 && (
         <Section title="Videos">
           <VideoSearchResults
-            results={{
-              ...searchResults,
-              videos: searchResults.videos,
-              searchParameters: {
-                q: query || '',
-                type: 'video',
-                engine: 'google'
-              }
-            }}
+            results={createVideoSearchResults(searchResults, query)}
             displayMode="artifact"
           />
         </Section>

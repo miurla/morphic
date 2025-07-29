@@ -50,6 +50,15 @@ export class BraveSearchProvider implements SearchProvider {
     this.apiKey = process.env.BRAVE_SEARCH_API_KEY
   }
 
+  private getImageThumbnailUrl(result: BraveImageResult): string {
+    return (
+      result.thumbnail?.src ??
+      result.properties?.thumbnail ??
+      result.url ??
+      ''
+    )
+  }
+
   async search(
     query: string,
     maxResults: number = 10,
@@ -160,17 +169,17 @@ export class BraveSearchProvider implements SearchProvider {
 
       // Convert to SerperSearchResultItem format for compatibility
       results.videos = (data.results || []).slice(0, maxResults).map(
-        (result: BraveVideoResult) =>
+        (result: BraveVideoResult, index: number) =>
           ({
-            title: result.title || 'No title',
-            link: result.url || '',
-            snippet: result.description || 'No description available',
-            imageUrl: result.thumbnail?.src,
-            duration: result.video?.duration || result.duration,
-            source: result.publisher || '',
-            channel: result.publisher || '',
-            date: result.date || '',
-            position: 0
+            title: result.title ?? 'No title',
+            link: result.url ?? '',
+            snippet: result.description ?? 'No description available',
+            imageUrl: result.thumbnail?.src ?? '',
+            duration: result.video?.duration ?? result.duration ?? '',
+            source: result.publisher ?? '',
+            channel: result.publisher ?? '',
+            date: result.date ?? '',
+            position: index
           }) as SerperSearchResultItem
       )
     } catch (error) {
@@ -208,8 +217,7 @@ export class BraveSearchProvider implements SearchProvider {
           ({
             title: result.title || 'No title',
             link: result.url || result.source || '',
-            thumbnailUrl:
-              result.thumbnail?.src || result.properties?.thumbnail || ''
+            thumbnailUrl: this.getImageThumbnailUrl(result)
           }) as SearchImageItem
       )
     } catch (error) {

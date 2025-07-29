@@ -12,7 +12,7 @@ import { SearchSkeleton } from './default-skeleton'
 import { SearchResults } from './search-results'
 import { SearchResultsImageSection } from './search-results-image'
 import { Section, ToolArgsSection } from './section'
-import { VideoSearchResults } from './video-search-results'
+import { createVideoSearchResults,VideoSearchResults } from './video-search-results'
 
 interface SearchSectionProps {
   tool: ToolPart<'search'>
@@ -82,15 +82,7 @@ export function SearchSection({
         searchResults.videos.length > 0 && (
           <Section title="Videos">
             <VideoSearchResults
-              results={{
-                ...searchResults,
-                videos: searchResults.videos,
-                searchParameters: {
-                  q: query || '',
-                  type: 'video',
-                  engine: 'google'
-                }
-              }}
+              results={createVideoSearchResults(searchResults, query)}
             />
           </Section>
         )}
