@@ -112,7 +112,7 @@ export function ToolArgsSection({
       className="py-0 flex items-center justify-between w-full"
     >
       <ToolBadge tool={tool}>{children}</ToolBadge>
-      {number && (
+      {number && number > 0 && (
         <StatusIndicator icon={Check} iconClassName="text-green-500">
           {number} results
         </StatusIndicator>
