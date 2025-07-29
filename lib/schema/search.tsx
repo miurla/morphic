@@ -3,6 +3,20 @@ import { z } from 'zod'
 
 export const searchSchema = z.object({
   query: z.string().describe('The query to search for'),
+  type: z
+    .enum(['general', 'optimized'])
+    .optional()
+    .default('optimized')
+    .describe(
+      'Search type: general for Brave search (basic results, may need fetch for details), optimized for AI-focused providers with content snippets (Tavily/Exa/SearXNG)'
+    ),
+  content_types: z
+    .array(z.enum(['web', 'video', 'image', 'news']))
+    .optional()
+    .default(['web'])
+    .describe(
+      'Types of content to include in search results. Only applicable when type is "general". Ignored for "optimized" searches.'
+    ),
   max_results: z
     .number()
     .optional()
@@ -30,6 +44,16 @@ export const searchSchema = z.object({
 // Strict schema with all fields required
 export const strictSearchSchema = z.object({
   query: z.string().describe('The query to search for'),
+  type: z
+    .enum(['general', 'optimized'])
+    .describe(
+      'Search type: general for Brave search (basic results, may need fetch for details), optimized for AI-focused providers with content snippets (Tavily/Exa/SearXNG)'
+    ),
+  content_types: z
+    .array(z.enum(['web', 'video', 'image', 'news']))
+    .describe(
+      'Types of content to include in search results. Only applicable when type is "general". Ignored for "optimized" searches.'
+    ),
   max_results: z.number().describe('The maximum number of results to return.'),
   search_depth: z
     .enum(['basic', 'advanced'])

@@ -128,8 +128,6 @@ export const parts = pgTable(
     tool_fetch_output: json('tool_fetch_output').$type<any>(),
     tool_question_input: json('tool_question_input').$type<any>(),
     tool_question_output: json('tool_question_output').$type<any>(),
-    tool_videoSearch_input: json('tool_video_search_input').$type<any>(),
-    tool_videoSearch_output: json('tool_video_search_output').$type<any>(),
     tool_relatedQuestions_input: json(
       'tool_related_questions_input'
     ).$type<any>(),

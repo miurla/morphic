@@ -15,10 +15,13 @@ import {
  */
 export function createSearchTool(fullModel: string) {
   return tool({
-    description: 'Search the web for information',
+    description:
+      'Search the web for information. For YouTube/video content, use type="general" with content_types:["video"] for optimal visual presentation with thumbnails.',
     inputSchema: getSearchSchemaForModel(fullModel),
     execute: async ({
       query,
+      type = 'optimized',
+      content_types = ['web'],
       max_results = 20,
       search_depth = 'basic', // Default for standard schema
       include_domains = [],
@@ -35,8 +38,16 @@ export function createSearchTool(fullModel: string) {
       // Use the original query as is - any provider-specific handling will be done in the provider
       const filledQuery = query
       let searchResult: SearchResults
-      const searchAPI =
-        (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
+
+      // Determine which provider to use based on type
+      let searchAPI: SearchProviderType
+      if (type === 'general') {
+        searchAPI = 'brave'
+      } else {
+        // For 'optimized', use the configured provider
+        searchAPI =
+          (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
+      }
 
       const effectiveSearchDepthForAPI =
         searchAPI === 'searxng' &&
@@ -45,7 +56,7 @@ export function createSearchTool(fullModel: string) {
           : effectiveSearchDepth || 'basic'
 
       console.log(
-        `Using search API: ${searchAPI}, Search Depth: ${effectiveSearchDepthForAPI}`
+        `Using search API: ${searchAPI}, Type: ${type}, Search Depth: ${effectiveSearchDepthForAPI}`
       )
 
       try {
@@ -76,13 +87,31 @@ export function createSearchTool(fullModel: string) {
         } else {
           // Use the provider factory to get the appropriate search provider
           const searchProvider = createSearchProvider(searchAPI)
-          searchResult = await searchProvider.search(
-            filledQuery,
-            effectiveMaxResults,
-            effectiveSearchDepthForAPI,
-            include_domains,
-            exclude_domains
-          )
+
+          // Pass content_types only for Brave provider
+          if (searchAPI === 'brave') {
+            searchResult = await searchProvider.search(
+              filledQuery,
+              effectiveMaxResults,
+              effectiveSearchDepthForAPI,
+              include_domains,
+              exclude_domains,
+              {
+                type: type as 'general' | 'optimized',
+                content_types: content_types as Array<
+                  'web' | 'video' | 'image' | 'news'
+                >
+              }
+            )
+          } else {
+            searchResult = await searchProvider.search(
+              filledQuery,
+              effectiveMaxResults,
+              effectiveSearchDepthForAPI,
+              include_domains,
+              exclude_domains
+            )
+          }
         }
       } catch (error) {
         console.error('Search API error:', error)
@@ -114,6 +143,8 @@ export async function search(
     searchTool.execute?.(
       {
         query,
+        type: 'general',
+        content_types: ['web'],
         max_results: maxResults,
         search_depth: searchDepth,
         include_domains: includeDomains as any,
