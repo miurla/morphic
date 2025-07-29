@@ -1,6 +1,8 @@
 import { dynamicTool } from 'ai'
 import { z } from 'zod'
 
+import type { MCPClient } from '@/lib/types/dynamic-tools'
+
 /**
  * Creates a dynamic tool that can be used for runtime-defined tools
  * such as MCP tools or user-defined functions
@@ -32,7 +34,7 @@ export function createDynamicTool(
 export function createMCPTool(
   toolName: string,
   description: string,
-  mcpClient: any // Replace with actual MCP client type
+  mcpClient: MCPClient
 ) {
   return createDynamicTool(`mcp__${toolName}`, description, async input => {
     // Execute the MCP tool
@@ -46,7 +48,7 @@ export function createMCPTool(
 export function createCustomTool(
   name: string,
   description: string,
-  handler: (params: any) => Promise<any>
+  handler: (params: unknown) => Promise<unknown>
 ) {
   return createDynamicTool(`dynamic__${name}`, description, handler)
 }

@@ -45,12 +45,7 @@ Citation Format:
 [number](url)
 `
 
-interface DynamicToolConfig {
-  name: string
-  description: string
-  handler?: (params: any) => Promise<any>
-  mcpClient?: any // Replace with actual MCP client type
-}
+import type { DynamicToolConfig } from '@/lib/types/dynamic-tools'
 
 export function researcherWithDynamicTools({
   model,

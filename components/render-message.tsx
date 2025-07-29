@@ -1,6 +1,7 @@
 import { UseChatHelpers } from '@ai-sdk/react'
 
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 
 import { AnswerSection } from './answer-section'
 import { DynamicToolDisplay } from './dynamic-tool-display'
@@ -101,7 +102,7 @@ export function RenderMessage({
             return (
               <DynamicToolDisplay
                 key={`${messageId}-dynamic-tool-${index}`}
-                part={part as any}
+                part={part as DynamicToolPart}
               />
             )
           case 'text':

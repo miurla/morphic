@@ -1,5 +1,6 @@
 import { generateId } from '@/lib/db/schema'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import type {
   DBMessagePart,
   DBMessagePartSelect,
@@ -160,13 +161,13 @@ export function mapUIMessagePartsToDBParts(
         const toolName = getToolNameFromType(part.toolName)
         const toolInputColumn = `tool_${toolName}_input` as keyof DBMessagePart
 
-        const result: any = {
+        const result = {
           ...basePart,
           type: `tool-${toolName}`,
           tool_toolCallId: part.toolCallId,
           tool_state: 'input-available' as ToolState,
           [toolInputColumn]: part.args
-        }
+        } as DBMessagePart
 
         // Store additional metadata for dynamic tools
         if (toolName === 'dynamic') {
@@ -186,7 +187,7 @@ export function mapUIMessagePartsToDBParts(
         const toolOutputColumn =
           `tool_${resultToolName}_output` as keyof DBMessagePart
 
-        const toolResult: any = {
+        const toolResult = {
           ...basePart,
           type: `tool-${resultToolName}`,
           tool_toolCallId: part.toolCallId,
@@ -195,7 +196,7 @@ export function mapUIMessagePartsToDBParts(
             : ('output-available' as ToolState),
           tool_errorText: part.isError ? String(part.result) : undefined,
           [toolOutputColumn]: !part.isError ? part.result : undefined
-        }
+        } as DBMessagePart
 
         // Preserve dynamic tool metadata from the corresponding tool-call
         if (resultToolName === 'dynamic') {
@@ -224,7 +225,7 @@ export function mapUIMessagePartsToDBParts(
 
       // Dynamic tool parts from AI SDK v5
       case 'dynamic-tool':
-        const dynamicPart = part as any
+        const dynamicPart = part as DynamicToolPart
         return {
           ...basePart,
           type: 'tool-dynamic',
