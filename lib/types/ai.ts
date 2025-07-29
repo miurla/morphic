@@ -3,7 +3,6 @@ import type { InferUITool, UIMessage as AIMessage } from 'ai'
 import { fetchTool } from '@/lib/tools/fetch'
 import { askQuestionTool } from '@/lib/tools/question'
 import { searchTool } from '@/lib/tools/search'
-import { videoSearchTool } from '@/lib/tools/video-search'
 
 export type UIMessage<
   TMetadata = unknown,
@@ -18,7 +17,6 @@ export type UIDataTypes = {
 export type UITools = {
   search: InferUITool<typeof searchTool>
   fetch: InferUITool<typeof fetchTool>
-  videoSearch: InferUITool<typeof videoSearchTool>
   askQuestion: InferUITool<typeof askQuestionTool>
   // Dynamic tools will be added at runtime
   [key: string]: any

@@ -3,26 +3,41 @@ import { Experimental_Agent as Agent, stepCountIs } from 'ai'
 import { fetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
 import { createSearchTool } from '../tools/search'
-import { createVideoSearchTool } from '../tools/video-search'
 import { getModel } from '../utils/registry'
 
 const SYSTEM_PROMPT = `
 Instructions:
 
-You are a helpful AI assistant with access to real-time web search, content retrieval, video search capabilities, and the ability to ask clarifying questions.
+You are a helpful AI assistant with access to real-time web search, content retrieval, and the ability to ask clarifying questions.
 
 When asked a question, you should:
 1. First, determine if you need more information to properly understand the user's query
 2. **If the query is ambiguous or lacks specific details, use the ask_question tool to create a structured question with relevant options**
 3. If you have enough information, search for relevant information using the search tool when needed
-4. Use the fetch tool to get detailed content from specific URLs
-5. Use the video search tool when looking for video content
+4. For video content, use the search tool with content_types: ['video'] or ['web', 'video']
+5. Use the fetch tool to get detailed content from specific URLs
 6. Analyze all search results to provide accurate, up-to-date information
 7. Always cite sources using the [number](url) format, matching the order of search results. If multiple sources are relevant, include all of them, and comma separate them. Only use information that has a URL available for citation.
 8. If results are not relevant or helpful, rely on your general knowledge
 9. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question
 10. Use markdown to structure your responses. Use headings to break up the content into sections.
 11. **Use the fetch tool only with user-provided URLs.**
+
+Search tool usage:
+- **IMPORTANT: For video searches (YouTube, tutorials, etc.), ALWAYS use type="general" with content_types: ['video'] or ['web', 'video']**
+  - This enables specialized video display components with thumbnails and better formatting
+  - Even if the query doesn't explicitly mention "video", use this for YouTube-related content
+- Use type="general" with appropriate content_types when:
+  - Searching for videos (MANDATORY: content_types must include 'video')
+  - Searching for images (with content_types: ['image'] or ['web', 'image'])
+  - Looking for weather, news, or current events that need simple results + fetch
+  - Need latest/real-time information with follow-up fetches
+- Use type="optimized" for:
+  - Detailed research and fact-checking
+  - When you need content snippets without fetching
+  - Complex queries requiring in-depth analysis
+  - General knowledge questions
+- When mentioning YouTube or video content in your response, explain that you're using specialized video search to provide the best visual presentation
 
 When using the ask_question tool:
 - Create clear, concise questions
@@ -46,7 +61,6 @@ export function researcher({
 
     // Create model-specific tools
     const searchTool = createSearchTool(model)
-    const videoSearchTool = createVideoSearchTool(model)
     const askQuestionTool = createQuestionTool(model)
 
     // Return an agent instance
@@ -56,10 +70,9 @@ export function researcher({
       tools: {
         search: searchTool,
         fetch: fetchTool,
-        videoSearch: videoSearchTool,
         askQuestion: askQuestionTool
       },
-      activeTools: searchMode ? ['search', 'fetch', 'videoSearch'] : undefined,
+      activeTools: searchMode ? ['search', 'fetch'] : undefined,
       stopWhen: searchMode ? stepCountIs(10) : stepCountIs(1)
     })
   } catch (error) {

@@ -25,7 +25,6 @@ export function InspectorPanel() {
     switch (part.type) {
       case 'tool-search':
       case 'tool-fetch':
-      case 'tool-videoSearch':
       case 'tool-askQuestion':
         const toolName = part.type.replace('tool-', '')
         return {

@@ -1,6 +1,7 @@
 export type SearchResults = {
   images: SearchResultImage[]
   results: SearchResultItem[]
+  videos?: SerperSearchResultItem[]
   number_of_results?: number
   query: string
 }
@@ -53,6 +54,12 @@ export type SerperSearchResultItem = {
   channel: string
   date: string
   position: number
+}
+
+export type SearchImageItem = {
+  title: string
+  link: string
+  thumbnailUrl: string
 }
 
 export interface SearXNGResult {

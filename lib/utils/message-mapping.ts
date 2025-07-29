@@ -250,7 +250,6 @@ export function mapUIMessagePartsToDBParts(
       case 'tool-search':
       case 'tool-fetch':
       case 'tool-question':
-      case 'tool-videoSearch':
       case 'tool-relatedQuestions':
         // These are tool parts with state tracking
         if (!isExtendedToolPart(part)) {
@@ -370,13 +369,9 @@ export function mapDBPartToUIMessagePart(
 
         // Special handling for tool parts that maintain their type
         if (
-          [
-            'search',
-            'retrieve',
-            'question',
-            'videoSearch',
-            'relatedQuestions'
-          ].includes(toolName)
+          ['search', 'retrieve', 'question', 'relatedQuestions'].includes(
+            toolName
+          )
         ) {
           return {
             type: part.type as any,
@@ -443,8 +438,6 @@ function getToolNameFromType(toolName: string): string {
     retrieve: 'retrieve',
     askQuestion: 'question',
     question: 'question',
-    videoSearch: 'videoSearch',
-    'video-search': 'videoSearch',
     relatedQuestions: 'relatedQuestions'
   }
 
@@ -484,7 +477,6 @@ function getOriginalToolName(dbToolName: string): string {
     search: 'search',
     retrieve: 'retrieve',
     question: 'askQuestion',
-    videoSearch: 'videoSearch',
     dynamic: 'dynamic' // For dynamic tools, the actual tool name is stored separately
   }
 

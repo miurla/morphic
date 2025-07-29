@@ -8,7 +8,6 @@ import FetchSection from './fetch-section'
 import { QuestionConfirmation } from './question-confirmation'
 import { RelatedQuestions } from './related-questions'
 import { SearchSection } from './search-section'
-import { VideoSearchSection } from './video-search-section'
 
 interface ToolSectionProps {
   tool: ToolPart
@@ -70,15 +69,6 @@ export function ToolSection({
       return (
         <SearchSection
           tool={tool as ToolPart<'search'>}
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-          status={status}
-        />
-      )
-    case 'tool-videoSearch':
-      return (
-        <VideoSearchSection
-          tool={tool as ToolPart<'videoSearch'>}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           status={status}
