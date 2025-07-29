@@ -53,10 +53,35 @@ export function ChatMessages({
     sections.length > 0 &&
     sections[sections.length - 1].assistantMessages.length === 0
 
-  const getIsOpen = (id: string, partType?: string, hasNextPart?: boolean) => {
+  const getIsOpen = (
+    id: string,
+    partType?: string,
+    hasNextPart?: boolean,
+    message?: UIMessage
+  ) => {
     // If user has explicitly modified this state, use that
     if (userModifiedStates.hasOwnProperty(id)) {
       return userModifiedStates[id]
+    }
+
+    // Count tool parts in the message
+    const toolTypes = [
+      'tool-search',
+      'tool-fetch',
+      'tool-askQuestion',
+      'tool-relatedQuestions'
+    ]
+    const toolCount =
+      message?.parts?.filter(part => toolTypes.includes(part.type)).length || 0
+
+    // For tool types, check if there are multiple tools
+    if (toolTypes.includes(partType || '')) {
+      // If multiple tools exist, default to closed
+      if (toolCount > 1) {
+        return false
+      }
+      // Single tool defaults to open
+      return true
     }
 
     // For tool-invocations, default to open
@@ -108,7 +133,9 @@ export function ChatMessages({
               <RenderMessage
                 message={section.userMessage}
                 messageId={section.userMessage.id}
-                getIsOpen={getIsOpen}
+                getIsOpen={(id, partType, hasNextPart) =>
+                  getIsOpen(id, partType, hasNextPart, section.userMessage)
+                }
                 onOpenChange={handleOpenChange}
                 onQuerySelect={onQuerySelect}
                 chatId={chatId}
@@ -126,7 +153,9 @@ export function ChatMessages({
                 <RenderMessage
                   message={assistantMessage}
                   messageId={assistantMessage.id}
-                  getIsOpen={getIsOpen}
+                  getIsOpen={(id, partType, hasNextPart) =>
+                    getIsOpen(id, partType, hasNextPart, assistantMessage)
+                  }
                   onOpenChange={handleOpenChange}
                   onQuerySelect={onQuerySelect}
                   chatId={chatId}
