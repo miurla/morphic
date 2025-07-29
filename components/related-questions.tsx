@@ -81,7 +81,7 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
               ?.filter(item => item?.query !== '')
               .map((item, index) => (
                 <div className="flex items-start w-full" key={index}>
-                  <ArrowRight className="h-4 w-4 mr-2 mt-1 flex-shrink-0 text-accent-foreground/50" />
+                  <ArrowRight className="h-4 w-4 mr-2 mt-1 shrink-0 text-accent-foreground/50" />
                   <Button
                     variant="link"
                     className="flex-1 justify-start px-0 py-1 h-fit font-semibold text-accent-foreground/50 whitespace-normal text-left"
