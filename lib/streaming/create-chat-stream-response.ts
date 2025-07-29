@@ -17,7 +17,11 @@ import {
 import { generateRelatedQuestions } from '../agents/generate-related-questions'
 import { generateChatTitle } from '../agents/title-generator'
 import { generateId } from '../db/schema'
-import { getTextFromParts, mergeUIMessages } from '../utils/message-utils'
+import {
+  getTextFromParts,
+  hasToolCalls,
+  mergeUIMessages
+} from '../utils/message-utils'
 
 import { BaseStreamConfig } from './types'
 
@@ -164,16 +168,10 @@ export async function createChatStreamResponse(
         const validResearchMessage: UIMessage = researchMessage
 
         // Check if the research message contains tool calls
-        const hasToolCalls =
-          validResearchMessage.parts &&
-          validResearchMessage.parts.some(
-            (part: any) =>
-              part.type &&
-              (part.type.startsWith('tool-') || part.type === 'tool-call')
-          )
+        const hasToolCallsInMessage = hasToolCalls(validResearchMessage)
 
         // If no tool calls (just answering), skip related questions
-        if (!hasToolCalls) {
+        if (!hasToolCallsInMessage) {
           // Save research message
           await saveMessage(chatId, validResearchMessage)
 

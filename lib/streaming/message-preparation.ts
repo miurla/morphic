@@ -6,6 +6,7 @@ import {
   getChat as getChatAction,
   saveMessage
 } from '@/lib/actions/chat'
+import type { Chat } from '@/lib/db/schema'
 import { generateId } from '@/lib/db/schema'
 
 // Constants
@@ -75,7 +76,7 @@ export async function prepareMessagesForSubmission(
   chatId: string,
   userId: string,
   message: UIMessage,
-  chat: any
+  chat: Chat | null
 ): Promise<UIMessage[]> {
   if (!message) {
     throw new Error('No message provided')

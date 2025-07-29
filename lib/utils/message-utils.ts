@@ -125,7 +125,7 @@ export function hasToolCalls(message: UIMessage | null): boolean {
   if (!message || !message.parts) return false
 
   return message.parts.some(
-    (part: any) =>
+    part =>
       part.type && (part.type.startsWith('tool-') || part.type === 'tool-call')
   )
 }
