@@ -137,6 +137,14 @@ const config = {
             transform: 'translateX(100%)',
             opacity: '0'
           }
+        },
+        'fade-in': {
+          from: {
+            opacity: '0'
+          },
+          to: {
+            opacity: '1'
+          }
         }
       },
       animation: {
@@ -144,8 +152,9 @@ const config = {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'collapse-down': 'collapse-down 0.1s ease-in-out',
         'collapse-up': 'collapse-up 0.1s ease-in-out',
-        'slide-in-right': 'slide-in-right 0.2s ease-out',
-        'slide-out-right': 'slide-out-right 0.2s ease-out'
+        'slide-in-right': 'slide-in-right 0.3s ease-out',
+        'slide-out-right': 'slide-out-right 0.3s ease-out',
+        'fade-in': 'fade-in 0.3s ease-out'
       },
       fontFamily: {
         sans: ['var(--font-sans)', ...fontFamily.sans]

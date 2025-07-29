@@ -1,38 +1,68 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
-import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
 
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup
-} from '@/components/ui/resizable'
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 
 import { InspectorDrawer } from '@/components/inspector/inspector-drawer'
 import { InspectorPanel } from '@/components/inspector/inspector-panel'
 
 import { useArtifact } from './artifact-context'
+
+const DEFAULT_WIDTH = 500
+const MIN_WIDTH = 400
+const MAX_WIDTH = 800
+const RESIZE_OVERLAY_Z_INDEX = 9999
+
 export function ChatArtifactContainer({
   children
 }: {
   children: React.ReactNode
 }) {
   const { state } = useArtifact()
-  const isMobile = useMediaQuery('(max-width: 767px)') // Below md breakpoint
-  const [renderPanel, setRenderPanel] = useState(state.isOpen)
-  const { open, openMobile, isMobile: isMobileSidebar } = useSidebar()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedWidth = localStorage.getItem('artifactPanelWidth')
+      return savedWidth ? parseInt(savedWidth, 10) : DEFAULT_WIDTH
+    }
+    return DEFAULT_WIDTH
+  })
+  const [isResizing, setIsResizing] = useState(false)
+  const { open, isMobile: isMobileSidebar } = useSidebar()
+
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsResizing(true)
+  }, [])
 
   useEffect(() => {
-    if (state.isOpen) {
-      setRenderPanel(true)
-    } else {
-      setRenderPanel(false)
+    if (!isResizing) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const containerRect = containerRef.current?.getBoundingClientRect()
+      if (containerRect) {
+        const newWidth = containerRect.right - e.clientX
+        const clampedWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth))
+        setWidth(clampedWidth)
+        localStorage.setItem('artifactPanelWidth', clampedWidth.toString())
+      }
     }
-  }, [state.isOpen])
+
+    const handleMouseUp = () => {
+      setIsResizing(false)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizing])
 
   return (
     <div className="flex-1 min-h-0 h-screen flex">
@@ -41,49 +71,56 @@ export function ChatArtifactContainer({
           <SidebarTrigger className="animate-fade-in" />
         )}
       </div>
-      {/* Desktop: Resizable panels (Do not render on mobile) */}
-      {!isMobile && (
-        <ResizablePanelGroup
-          direction="horizontal"
-          className="flex flex-1 min-w-0 h-full" // Responsive classes removed
-        >
-          <ResizablePanel
-            className={cn(
-              'min-w-0',
-              state.isOpen && 'transition-[flex-basis] duration-200 ease-out'
-            )}
-          >
-            {children}
-          </ResizablePanel>
 
-          {renderPanel && (
-            <>
-              <ResizableHandle />
-              <ResizablePanel
-                className={cn('overflow-hidden', {
-                  'animate-slide-in-right': state.isOpen
-                })}
-                maxSize={50}
-                minSize={30}
-                defaultSize={40}
-              >
-                <InspectorPanel />
-              </ResizablePanel>
-            </>
+      {/* Desktop: Independent panels like morphic-studio */}
+      <div ref={containerRef} className="hidden md:flex flex-1 overflow-hidden">
+        {/* Chat Panel - Independent container */}
+        <div className="flex-1 flex flex-col">{children}</div>
+
+        {/* Resize Handle */}
+        <div
+          className={cn(
+            'w-1 mx-0.5 my-6 hover:bg-border transition-colors duration-200 cursor-col-resize select-none relative',
+            state.isOpen && state.part
+              ? 'opacity-100'
+              : 'opacity-0 pointer-events-none',
+            isResizing && 'bg-border/50'
           )}
-        </ResizablePanelGroup>
+          onMouseDown={startResize}
+        >
+          <div className="absolute inset-0 -left-2 -right-2" />
+        </div>
+
+        {/* Right Panel - Independent with own animation */}
+        <div
+          className={cn(
+            'bg-background overflow-hidden',
+            state.isOpen && state.part ? 'opacity-100' : 'w-0 opacity-0',
+            !isResizing && 'transition-all duration-300 ease-out'
+          )}
+          style={{
+            width: state.isOpen && state.part ? `${width}px` : '0px'
+          }}
+        >
+          <div className="h-full" style={{ width: `${width}px` }}>
+            {state.isOpen && state.part && <InspectorPanel />}
+          </div>
+        </div>
+      </div>
+
+      {/* Resize overlay to prevent text selection */}
+      {isResizing && (
+        <div
+          className="fixed inset-0 cursor-col-resize select-none"
+          style={{ zIndex: RESIZE_OVERLAY_Z_INDEX }}
+        />
       )}
 
-      {/* Mobile: full-width chat + drawer (Do not render on desktop) */}
-      {isMobile && (
-        <div className="flex-1 h-full">
-          {' '}
-          {/* Responsive classes removed */}
-          {children}
-          {/* ArtifactDrawer checks isMobile internally, no double check needed */}
-          <InspectorDrawer />
-        </div>
-      )}
+      {/* Mobile: full-width chat + drawer */}
+      <div className="md:hidden flex-1 h-full">
+        {children}
+        <InspectorDrawer />
+      </div>
     </div>
   )
 }
