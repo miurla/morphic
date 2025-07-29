@@ -369,12 +369,9 @@ export function mapDBPartToUIMessagePart(
 
         // Special handling for tool parts that maintain their type
         if (
-          [
-            'search',
-            'retrieve',
-            'question',
-            'relatedQuestions'
-          ].includes(toolName)
+          ['search', 'retrieve', 'question', 'relatedQuestions'].includes(
+            toolName
+          )
         ) {
           return {
             type: part.type as any,

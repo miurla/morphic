@@ -52,10 +52,7 @@ export class BraveSearchProvider implements SearchProvider {
 
   private getImageThumbnailUrl(result: BraveImageResult): string {
     return (
-      result.thumbnail?.src ??
-      result.properties?.thumbnail ??
-      result.url ??
-      ''
+      result.thumbnail?.src ?? result.properties?.thumbnail ?? result.url ?? ''
     )
   }
 

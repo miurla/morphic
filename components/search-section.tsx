@@ -12,7 +12,10 @@ import { SearchSkeleton } from './default-skeleton'
 import { SearchResults } from './search-results'
 import { SearchResultsImageSection } from './search-results-image'
 import { Section, ToolArgsSection } from './section'
-import { createVideoSearchResults,VideoSearchResults } from './video-search-results'
+import {
+  createVideoSearchResults,
+  VideoSearchResults
+} from './video-search-results'
 
 interface SearchSectionProps {
   tool: ToolPart<'search'>

@@ -6,7 +6,10 @@ import type { ToolPart } from '@/lib/types/ai'
 import { SearchResults } from '@/components/search-results'
 import { SearchResultsImageSection } from '@/components/search-results-image'
 import { Section, ToolArgsSection } from '@/components/section'
-import { createVideoSearchResults,VideoSearchResults } from '@/components/video-search-results'
+import {
+  createVideoSearchResults,
+  VideoSearchResults
+} from '@/components/video-search-results'
 
 export function SearchArtifactContent({ tool }: { tool: ToolPart<'search'> }) {
   const searchResults: TypeSearchResults | undefined =
