@@ -1,5 +1,6 @@
 import { generateId } from '@/lib/db/schema'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import type {
   DBMessagePart,
   DBMessagePartSelect,
@@ -160,13 +161,23 @@ export function mapUIMessagePartsToDBParts(
         const toolName = getToolNameFromType(part.toolName)
         const toolInputColumn = `tool_${toolName}_input` as keyof DBMessagePart
 
-        return {
+        const result = {
           ...basePart,
           type: `tool-${toolName}`,
           tool_toolCallId: part.toolCallId,
           tool_state: 'input-available' as ToolState,
           [toolInputColumn]: part.args
+        } as DBMessagePart
+
+        // Store additional metadata for dynamic tools
+        if (toolName === 'dynamic') {
+          result.tool_dynamic_name = part.toolName
+          result.tool_dynamic_type = part.toolName.startsWith('mcp__')
+            ? 'mcp'
+            : 'dynamic'
         }
+
+        return result
 
       case 'tool-result':
         const resultToolName = getToolNameFromCallId(
@@ -176,7 +187,7 @@ export function mapUIMessagePartsToDBParts(
         const toolOutputColumn =
           `tool_${resultToolName}_output` as keyof DBMessagePart
 
-        return {
+        const toolResult = {
           ...basePart,
           type: `tool-${resultToolName}`,
           tool_toolCallId: part.toolCallId,
@@ -185,7 +196,25 @@ export function mapUIMessagePartsToDBParts(
             : ('output-available' as ToolState),
           tool_errorText: part.isError ? String(part.result) : undefined,
           [toolOutputColumn]: !part.isError ? part.result : undefined
+        } as DBMessagePart
+
+        // Preserve dynamic tool metadata from the corresponding tool-call
+        if (resultToolName === 'dynamic') {
+          const toolCallPart = messageParts.find(
+            p => isToolCallPart(p) && p.toolCallId === part.toolCallId
+          ) as ToolCallPart | undefined
+
+          if (toolCallPart) {
+            toolResult.tool_dynamic_name = toolCallPart.toolName
+            toolResult.tool_dynamic_type = toolCallPart.toolName.startsWith(
+              'mcp__'
+            )
+              ? 'mcp'
+              : 'dynamic'
+          }
         }
+
+        return toolResult
 
       // Step parts (for UI tracking)
       case 'step-start':
@@ -193,6 +222,29 @@ export function mapUIMessagePartsToDBParts(
       case 'step-continue':
       case 'step-finish':
         return null // These are not persisted
+
+      // Dynamic tool parts from AI SDK v5
+      case 'dynamic-tool':
+        const dynamicPart = part as DynamicToolPart
+        return {
+          ...basePart,
+          type: 'tool-dynamic',
+          tool_toolCallId: dynamicPart.toolCallId || generateId(),
+          tool_state: dynamicPart.state as ToolState,
+          tool_dynamic_name: dynamicPart.toolName,
+          tool_dynamic_type: dynamicPart.toolName.startsWith('mcp__')
+            ? 'mcp'
+            : 'dynamic',
+          tool_dynamic_input: dynamicPart.input,
+          tool_dynamic_output:
+            dynamicPart.state === 'output-available'
+              ? dynamicPart.output
+              : undefined,
+          tool_errorText:
+            dynamicPart.state === 'output-error'
+              ? dynamicPart.errorText
+              : undefined
+        }
 
       // Tool-specific parts that are not tool-call or tool-result
       case 'tool-search':
@@ -303,6 +355,19 @@ export function mapDBPartToUIMessagePart(
         const outputColumn =
           `tool_${toolName}_output` as keyof DBMessagePartSelect
 
+        // Special handling for dynamic tools
+        if (toolName === 'dynamic') {
+          return {
+            type: 'dynamic-tool',
+            toolCallId: part.tool_toolCallId || '',
+            toolName: part.tool_dynamic_name || '',
+            state: part.tool_state as any, // Maps directly to AI SDK states
+            input: part.tool_dynamic_input,
+            output: part.tool_dynamic_output,
+            errorText: part.tool_errorText
+          }
+        }
+
         // Special handling for tool parts that maintain their type
         if (
           [
@@ -328,10 +393,16 @@ export function mapDBPartToUIMessagePart(
           part.tool_state === 'input-available' ||
           part.tool_state === 'input-streaming'
         ) {
+          // For dynamic tools, use the stored original name
+          const originalToolName =
+            toolName === 'dynamic' && part.tool_dynamic_name
+              ? part.tool_dynamic_name
+              : getOriginalToolName(toolName)
+
           return {
             type: 'tool-call',
             toolCallId: part.tool_toolCallId || '',
-            toolName: getOriginalToolName(toolName),
+            toolName: originalToolName,
             args: part[inputColumn] as any
           }
         } else {
@@ -377,9 +448,9 @@ function getToolNameFromType(toolName: string): string {
     relatedQuestions: 'relatedQuestions'
   }
 
-  // For MCP tools
-  if (toolName.startsWith('mcp__')) {
-    return 'mcp'
+  // For dynamic tools (MCP and others)
+  if (toolName.startsWith('mcp__') || toolName.startsWith('dynamic__')) {
+    return 'dynamic'
   }
 
   return toolNameMap[toolName] || toolName
@@ -414,7 +485,7 @@ function getOriginalToolName(dbToolName: string): string {
     retrieve: 'retrieve',
     question: 'askQuestion',
     videoSearch: 'videoSearch',
-    mcp: 'mcp' // For MCP, the actual tool name is included in the input
+    dynamic: 'dynamic' // For dynamic tools, the actual tool name is stored separately
   }
 
   return reverseMap[dbToolName] || dbToolName

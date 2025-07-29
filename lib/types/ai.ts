@@ -20,6 +20,8 @@ export type UITools = {
   retrieve: InferUITool<typeof retrieveTool>
   videoSearch: InferUITool<typeof videoSearchTool>
   askQuestion: InferUITool<typeof askQuestionTool>
+  // Dynamic tools will be added at runtime
+  [key: string]: any
 }
 
 export type TextPart = {

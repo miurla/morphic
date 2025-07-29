@@ -25,13 +25,16 @@ export type ToolState =
   | 'output-available'
   | 'output-error'
 
-// MCP tool type definitions
-export type MCPToolInput = {
+// Dynamic tool type definitions (includes MCP and other runtime tools)
+export type DynamicToolInput = {
   toolName: string
   params: unknown
 }
 
-export type MCPToolOutput = unknown
+export type DynamicToolOutput = unknown
+
+// Dynamic tool type for storage
+export type DynamicToolType = 'mcp' | 'dynamic' | 'custom'
 
 // Common MCP tool type definition examples
 export type MCPGitHubInput = {

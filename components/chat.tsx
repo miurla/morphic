@@ -10,6 +10,11 @@ import { z } from 'zod'
 import { generateId } from '@/lib/db/schema'
 import { UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import {
+  isDynamicToolPart,
+  isToolCallPart,
+  isToolTypePart
+} from '@/lib/types/dynamic-tools'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 
@@ -56,7 +61,7 @@ export function Chat({
       api: '/api/chat',
       prepareSendMessagesRequest: ({ messages, trigger, messageId }) => {
         switch (trigger) {
-          case 'regenerate-assistant-message':
+          case 'regenerate-message':
             // Find the message being regenerated
             const messageToRegenerate = messages.find(m => m.id === messageId)
             return {
@@ -72,7 +77,7 @@ export function Chat({
               }
             }
 
-          case 'submit-user-message':
+          case 'submit-message':
           default:
             // Only send the last message
             return {
@@ -295,7 +300,34 @@ export function Chat({
           toolCallId: string
           result: any
         }) => {
-          addToolResult({ toolCallId, output: result })
+          // Find the tool name from the message parts
+          let toolName = 'unknown'
+
+          // Optimize by breaking early once found
+          outerLoop: for (const message of messages) {
+            if (!message.parts) continue
+
+            for (const part of message.parts) {
+              if (isToolCallPart(part) && part.toolCallId === toolCallId) {
+                toolName = part.toolName
+                break outerLoop
+              } else if (
+                isToolTypePart(part) &&
+                part.toolCallId === toolCallId
+              ) {
+                toolName = part.type.substring(5) // Remove 'tool-' prefix
+                break outerLoop
+              } else if (
+                isDynamicToolPart(part) &&
+                part.toolCallId === toolCallId
+              ) {
+                toolName = part.toolName
+                break outerLoop
+              }
+            }
+          }
+
+          addToolResult({ tool: toolName, toolCallId, output: result })
         }}
         scrollContainerRef={scrollContainerRef}
         onUpdateMessage={handleUpdateAndReloadMessage}
