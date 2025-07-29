@@ -142,79 +142,107 @@ export async function createChatStreamResponse(
         writer.merge(
           researchResult.toUIMessageStream({
             sendFinish: false,
-            onFinish: ({ responseMessage }) => {
+            onFinish: async ({ responseMessage }) => {
               researchMessage = responseMessage
+
+              // Check if the research message contains tool calls
+              const hasToolCalls =
+                responseMessage &&
+                responseMessage.parts &&
+                responseMessage.parts.some(
+                  (part: any) =>
+                    part.type &&
+                    (part.type.startsWith('tool-') || part.type === 'tool-call')
+                )
+
+              // If no tool calls (just answering), skip related questions
+              if (!hasToolCalls) {
+                // Save research message
+                await saveMessage(chatId, researchMessage)
+
+                // Generate proper title after conversation starts
+                if (!chat && message) {
+                  const userContent = getTextFromParts(message.parts)
+                  const title = await generateChatTitle({
+                    userMessageContent: userContent,
+                    modelId
+                  })
+                  // Update chat title
+                  const { updateChatTitle } = await import('../db/actions')
+                  await updateChatTitle(chatId, title)
+                }
+
+                // Send a finish message to complete the stream
+                writer.write({ type: 'finish' })
+                return
+              }
+
+              // If we have tool calls, proceed with related questions generation
+              try {
+                // Get the research data
+                const researchData = await researchResult.response
+
+                // Check if request was aborted
+                if (researchData.messages.length === 0) {
+                  return
+                }
+
+                // Prepare messages for related questions agent
+                const allMessages = [
+                  ...convertToModelMessages(messagesToModel),
+                  ...researchData.messages
+                ]
+
+                // Get related questions agent
+                const relatedQuestionsAgent = generateRelatedQuestions(modelId)
+                const relatedQuestionsResult = relatedQuestionsAgent.stream({
+                  messages: allMessages
+                })
+
+                // Merge related questions stream
+                writer.merge(
+                  relatedQuestionsResult.toUIMessageStream({
+                    sendStart: false,
+                    onFinish: async ({ responseMessage }) => {
+                      relatedQuestionsMessage = responseMessage
+
+                      // Save the complete message after both agents finish
+                      // Merge and save both messages
+                      if (researchMessage && relatedQuestionsMessage) {
+                        const mergedMessage = mergeUIMessages(
+                          researchMessage,
+                          relatedQuestionsMessage
+                        )
+                        await saveMessage(chatId, mergedMessage)
+                      } else if (researchMessage) {
+                        // Save research message only if related questions failed
+                        await saveMessage(chatId, researchMessage)
+                      }
+
+                      // Generate proper title after conversation starts
+                      if (!chat && message) {
+                        const userContent = getTextFromParts(message.parts)
+                        const title = await generateChatTitle({
+                          userMessageContent: userContent,
+                          modelId
+                        })
+                        // Update chat title
+                        const { updateChatTitle } = await import(
+                          '../db/actions'
+                        )
+                        await updateChatTitle(chatId, title)
+                      }
+                    }
+                  })
+                )
+              } catch (error) {
+                console.error('Error generating related questions:', error)
+                // Save research message even if related questions fail
+                await saveMessage(chatId, researchMessage)
+              }
             }
           })
         )
-
-        // After research completes, generate related questions
-        researchResult.response
-          .then(async researchData => {
-            // Check if request was aborted
-            if (researchData.messages.length === 0) {
-              return
-            }
-
-            try {
-              // Prepare messages for related questions agent
-              const allMessages = [
-                ...convertToModelMessages(messagesToModel),
-                ...researchData.messages
-              ]
-
-              // Get related questions agent
-              const relatedQuestionsAgent = generateRelatedQuestions(modelId)
-              const relatedQuestionsResult = relatedQuestionsAgent.stream({
-                messages: allMessages
-              })
-
-              // Merge related questions stream
-              writer.merge(
-                relatedQuestionsResult.toUIMessageStream({
-                  sendStart: false,
-                  onFinish: async ({ responseMessage }) => {
-                    relatedQuestionsMessage = responseMessage
-
-                    // Save the complete message after both agents finish
-                    // Merge and save both messages
-                    if (researchMessage && relatedQuestionsMessage) {
-                      const mergedMessage = mergeUIMessages(
-                        researchMessage,
-                        relatedQuestionsMessage
-                      )
-                      await saveMessage(chatId, mergedMessage)
-                    } else if (researchMessage) {
-                      // Save research message only if related questions failed
-                      await saveMessage(chatId, researchMessage)
-                    }
-
-                    // Generate proper title after conversation starts
-                    if (!chat && message) {
-                      const userContent = getTextFromParts(message.parts)
-                      const title = await generateChatTitle({
-                        userMessageContent: userContent,
-                        modelId
-                      })
-                      // Update chat title
-                      const { updateChatTitle } = await import('../db/actions')
-                      await updateChatTitle(chatId, title)
-                    }
-                  }
-                })
-              )
-            } catch (error) {
-              console.error('Error generating related questions:', error)
-            }
-          })
-          .catch(error => {
-            // Handle abort errors gracefully
-            if (error.name === 'AbortError') {
-              console.log('Stream aborted by client')
-              return
-            }
-            console.error('Research agent error:', error)
-          })
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error // This error will be handled by the onError callback
