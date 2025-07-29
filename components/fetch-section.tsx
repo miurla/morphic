@@ -5,16 +5,16 @@ import { UseChatHelpers } from '@ai-sdk/react'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
-import { RetrievePreview } from './retrieve-preview'
+import { FetchPreview } from './fetch-preview'
 
-interface RetrieveSectionProps {
-  tool: ToolPart<'retrieve'>
+interface FetchSectionProps {
+  tool: ToolPart<'fetch'>
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
 }
 
-export function RetrieveSection({ tool }: RetrieveSectionProps) {
+export function FetchSection({ tool }: FetchSectionProps) {
   const url = tool.input?.url
   
   // Determine the fetch type based on the tool input
@@ -49,7 +49,7 @@ export function RetrieveSection({ tool }: RetrieveSectionProps) {
 
   return (
     <div className="w-full">
-      <RetrievePreview
+      <FetchPreview
         url={url || ''}
         title={title}
         contentLength={contentLength}
@@ -61,4 +61,4 @@ export function RetrieveSection({ tool }: RetrieveSectionProps) {
   )
 }
 
-export default RetrieveSection
+export default FetchSection

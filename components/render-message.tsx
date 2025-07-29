@@ -83,7 +83,7 @@ export function RenderMessage({
 
         switch (part.type) {
           case 'tool-search':
-          case 'tool-retrieve':
+          case 'tool-fetch':
           case 'tool-videoSearch':
           case 'tool-askQuestion':
           case 'tool-relatedQuestions':

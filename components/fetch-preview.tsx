@@ -1,6 +1,6 @@
 import { ExternalLink, Globe } from 'lucide-react'
 
-interface RetrievePreviewProps {
+interface FetchPreviewProps {
   url: string
   title?: string
   contentLength?: number
@@ -9,7 +9,7 @@ interface RetrievePreviewProps {
   fetchType?: string
 }
 
-export function RetrievePreview({
+export function FetchPreview({
   url,
   title,
   contentLength,

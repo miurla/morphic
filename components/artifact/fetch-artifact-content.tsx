@@ -13,10 +13,10 @@ import { MemoizedReactMarkdown } from '../ui/markdown'
 
 const MAX_CONTENT_LENGTH = 1000
 
-export function RetrieveArtifactContent({
+export function FetchArtifactContent({
   tool
 }: {
-  tool: ToolPart<'retrieve'>
+  tool: ToolPart<'fetch'>
 }) {
   const searchResults: TypeSearchResults | undefined =
     tool.state === 'output-available' ? (tool.output ?? undefined) : undefined
@@ -38,7 +38,7 @@ export function RetrieveArtifactContent({
 
   return (
     <div className="space-y-2">
-      <ToolArgsSection tool="retrieve">{url}</ToolArgsSection>
+      <ToolArgsSection tool="fetch">{url}</ToolArgsSection>
 
       <Section title="Sources">
         <SearchResults results={truncatedResults} displayMode="list" />

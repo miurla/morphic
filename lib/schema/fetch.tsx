@@ -1,7 +1,7 @@
 import { DeepPartial } from 'ai'
 import { z } from 'zod'
 
-export const retrieveSchema = z.object({
+export const fetchSchema = z.object({
   url: z.string().describe('The URL to retrieve content from'),
   type: z
     .enum(['regular', 'api'])
@@ -11,4 +11,4 @@ export const retrieveSchema = z.object({
     )
 })
 
-export type PartialInquiry = DeepPartial<typeof retrieveSchema>
+export type PartialInquiry = DeepPartial<typeof fetchSchema>

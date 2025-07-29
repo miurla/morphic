@@ -248,7 +248,7 @@ export function mapUIMessagePartsToDBParts(
 
       // Tool-specific parts that are not tool-call or tool-result
       case 'tool-search':
-      case 'tool-retrieve':
+      case 'tool-fetch':
       case 'tool-question':
       case 'tool-videoSearch':
       case 'tool-relatedQuestions':
