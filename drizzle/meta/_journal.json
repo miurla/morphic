@@ -5,15 +5,29 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1753666852574,
-      "tag": "0000_perfect_ares",
+      "when": 1733333000000,
+      "tag": "0001_persistence_v5",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1753666852575,
-      "tag": "0001_rename_mcp_to_dynamic",
+      "when": 1733333001000,
+      "tag": "0003_rename_mcp_to_dynamic",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1733333002000,
+      "tag": "0004_rename_retrieve_to_fetch",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1733333003000,
+      "tag": "0005_remove_video_search",
       "breakpoints": true
     }
   ]
