@@ -21,8 +21,8 @@ export function InspectorDrawer() {
     switch (part.type) {
       case 'tool-search':
         return 'search'
-      case 'tool-retrieve':
-        return 'retrieve'
+      case 'tool-fetch':
+        return 'fetch'
       case 'tool-videoSearch':
         return 'videoSearch'
       case 'tool-askQuestion':

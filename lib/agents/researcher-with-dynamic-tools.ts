@@ -5,8 +5,8 @@ import {
   createDynamicTool,
   createMCPTool
 } from '../tools/dynamic'
+import { fetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
-import { retrieveTool } from '../tools/retrieve'
 import { createSearchTool } from '../tools/search'
 import { createVideoSearchTool } from '../tools/video-search'
 import { getModel } from '../utils/registry'
@@ -20,7 +20,7 @@ When asked a question, you should:
 1. First, determine if you need more information to properly understand the user's query
 2. **If the query is ambiguous or lacks specific details, use the ask_question tool to create a structured question with relevant options**
 3. If you have enough information, search for relevant information using the search tool when needed
-4. Use the retrieve tool to get detailed content from specific URLs
+4. Use the fetch tool to get detailed content from specific URLs
 5. Use the video search tool when looking for video content
 6. Use any available dynamic tools when they are relevant to the user's request
 7. Analyze all search results to provide accurate, up-to-date information
@@ -28,7 +28,7 @@ When asked a question, you should:
 9. If results are not relevant or helpful, rely on your general knowledge
 10. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question
 11. Use markdown to structure your responses. Use headings to break up the content into sections.
-12. **Use the retrieve tool only with user-provided URLs.**
+12. **Use the fetch tool only with user-provided URLs.**
 
 When using the ask_question tool:
 - Create clear, concise questions
@@ -67,7 +67,7 @@ export function researcherWithDynamicTools({
     // Create base tools object
     const tools: Record<string, any> = {
       search: searchTool,
-      retrieve: retrieveTool,
+      fetch: fetchTool,
       videoSearch: videoSearchTool,
       askQuestion: askQuestionTool
     }
@@ -100,7 +100,7 @@ export function researcherWithDynamicTools({
     const activeToolNames = searchMode
       ? allToolNames.filter(
           name =>
-            ['search', 'retrieve', 'videoSearch'].includes(name) ||
+            ['search', 'fetch', 'videoSearch'].includes(name) ||
             name.startsWith('mcp__') ||
             name.startsWith('dynamic__')
         )

@@ -4,9 +4,9 @@ import { UseChatHelpers } from '@ai-sdk/react'
 
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
+import FetchSection from './fetch-section'
 import { QuestionConfirmation } from './question-confirmation'
 import { RelatedQuestions } from './related-questions'
-import RetrieveSection from './retrieve-section'
 import { SearchSection } from './search-section'
 import { VideoSearchSection } from './video-search-section'
 
@@ -84,10 +84,10 @@ export function ToolSection({
           status={status}
         />
       )
-    case 'tool-retrieve':
+    case 'tool-fetch':
       return (
-        <RetrieveSection
-          tool={tool as ToolPart<'retrieve'>}
+        <FetchSection
+          tool={tool as ToolPart<'fetch'>}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           status={status}

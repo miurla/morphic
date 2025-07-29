@@ -10,7 +10,7 @@ export function ArtifactContent({ part }: { part: Part | null }) {
 
   switch (part.type) {
     case 'tool-search':
-    case 'tool-retrieve':
+    case 'tool-fetch':
     case 'tool-videoSearch':
     case 'tool-askQuestion':
       return <ToolInvocationContent part={part} />

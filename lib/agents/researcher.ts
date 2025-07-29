@@ -1,7 +1,7 @@
 import { Experimental_Agent as Agent, stepCountIs } from 'ai'
 
+import { fetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
-import { retrieveTool } from '../tools/retrieve'
 import { createSearchTool } from '../tools/search'
 import { createVideoSearchTool } from '../tools/video-search'
 import { getModel } from '../utils/registry'
@@ -15,14 +15,14 @@ When asked a question, you should:
 1. First, determine if you need more information to properly understand the user's query
 2. **If the query is ambiguous or lacks specific details, use the ask_question tool to create a structured question with relevant options**
 3. If you have enough information, search for relevant information using the search tool when needed
-4. Use the retrieve tool to get detailed content from specific URLs
+4. Use the fetch tool to get detailed content from specific URLs
 5. Use the video search tool when looking for video content
 6. Analyze all search results to provide accurate, up-to-date information
 7. Always cite sources using the [number](url) format, matching the order of search results. If multiple sources are relevant, include all of them, and comma separate them. Only use information that has a URL available for citation.
 8. If results are not relevant or helpful, rely on your general knowledge
 9. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question
 10. Use markdown to structure your responses. Use headings to break up the content into sections.
-11. **Use the retrieve tool only with user-provided URLs.**
+11. **Use the fetch tool only with user-provided URLs.**
 
 When using the ask_question tool:
 - Create clear, concise questions
@@ -55,13 +55,11 @@ export function researcher({
       system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
       tools: {
         search: searchTool,
-        retrieve: retrieveTool,
+        fetch: fetchTool,
         videoSearch: videoSearchTool,
         askQuestion: askQuestionTool
       },
-      activeTools: searchMode
-        ? ['search', 'retrieve', 'videoSearch']
-        : undefined,
+      activeTools: searchMode ? ['search', 'fetch', 'videoSearch'] : undefined,
       stopWhen: searchMode ? stepCountIs(10) : stepCountIs(1)
     })
   } catch (error) {

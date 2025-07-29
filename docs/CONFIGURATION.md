@@ -215,7 +215,7 @@ NEXT_PUBLIC_ENABLE_SHARE=true
 SERPER_API_KEY=[YOUR_API_KEY]
 ```
 
-### Alternative Retrieve Tool
+### Alternative Fetch Tool
 
 ```bash
 JINA_API_KEY=[YOUR_API_KEY]

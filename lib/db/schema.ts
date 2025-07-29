@@ -124,8 +124,8 @@ export const parts = pgTable(
     // Tool-specific columns (all Morphic tools)
     tool_search_input: json('tool_search_input').$type<any>(),
     tool_search_output: json('tool_search_output').$type<any>(),
-    tool_retrieve_input: json('tool_retrieve_input').$type<any>(),
-    tool_retrieve_output: json('tool_retrieve_output').$type<any>(),
+    tool_fetch_input: json('tool_fetch_input').$type<any>(),
+    tool_fetch_output: json('tool_fetch_output').$type<any>(),
     tool_question_input: json('tool_question_input').$type<any>(),
     tool_question_output: json('tool_question_output').$type<any>(),
     tool_videoSearch_input: json('tool_video_search_input').$type<any>(),

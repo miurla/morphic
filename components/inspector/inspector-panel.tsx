@@ -24,7 +24,7 @@ export function InspectorPanel() {
   const getIconAndTitle = () => {
     switch (part.type) {
       case 'tool-search':
-      case 'tool-retrieve':
+      case 'tool-fetch':
       case 'tool-videoSearch':
       case 'tool-askQuestion':
         const toolName = part.type.replace('tool-', '')
