@@ -2,6 +2,7 @@
 
 import { revalidateTag } from 'next/cache'
 
+import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
 import type { Chat, Message } from '@/lib/db/schema'
@@ -242,4 +243,28 @@ export async function deleteMessagesFromIndex(
   revalidateTag(`chat-${chatId}`)
 
   return { success: true, count: result.count }
+}
+
+/**
+ * Save or update chat title if it's the first conversation
+ * @param chat Existing chat object (null if new chat)
+ * @param chatId The chat ID
+ * @param message The user message to generate title from
+ * @param modelId The model ID to use for title generation
+ */
+export async function saveChatTitle(
+  chat: Chat | null,
+  chatId: string,
+  message: UIMessage | null,
+  modelId: string
+) {
+  if (!chat && message) {
+    const userContent = getTextFromParts(message.parts)
+    const title = await generateChatTitle({
+      userMessageContent: userContent,
+      modelId
+    })
+    await dbActions.updateChatTitle(chatId, title)
+    revalidateTag(`chat-${chatId}`)
+  }
 }

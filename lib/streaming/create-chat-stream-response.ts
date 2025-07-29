@@ -17,7 +17,11 @@ import {
 import { generateRelatedQuestions } from '../agents/generate-related-questions'
 import { generateChatTitle } from '../agents/title-generator'
 import { generateId } from '../db/schema'
-import { getTextFromParts, mergeUIMessages } from '../utils/message-utils'
+import {
+  getTextFromParts,
+  hasToolCalls,
+  mergeUIMessages
+} from '../utils/message-utils'
 
 import { BaseStreamConfig } from './types'
 
@@ -138,83 +142,123 @@ export async function createChatStreamResponse(
         let researchMessage: UIMessage | null = null
         let relatedQuestionsMessage: UIMessage | null = null
 
-        // Merge research stream without finishing and capture the message
-        writer.merge(
-          researchResult.toUIMessageStream({
-            sendFinish: false,
-            onFinish: ({ responseMessage }) => {
-              researchMessage = responseMessage
-            }
+        // Create a promise to track when research finishes
+        const researchPromise = new Promise<void>(resolve => {
+          writer.merge(
+            researchResult.toUIMessageStream({
+              sendFinish: false,
+              onFinish: ({ responseMessage }) => {
+                researchMessage = responseMessage
+                resolve()
+              }
+            })
+          )
+        })
+
+        // Wait for research to complete
+        await researchPromise
+
+        // Check if we have a valid research message
+        if (!researchMessage) {
+          writer.write({ type: 'finish' })
+          return
+        }
+
+        // At this point, TypeScript should know researchMessage is not null
+        const validResearchMessage: UIMessage = researchMessage
+
+        // Check if the research message contains tool calls
+        const hasToolCallsInMessage = hasToolCalls(validResearchMessage)
+
+        // If no tool calls (just answering), skip related questions
+        if (!hasToolCallsInMessage) {
+          // Save research message
+          await saveMessage(chatId, validResearchMessage)
+
+          // Generate proper title after conversation starts
+          if (!chat && message) {
+            const userContent = getTextFromParts(message.parts)
+            const title = await generateChatTitle({
+              userMessageContent: userContent,
+              modelId
+            })
+            // Update chat title
+            const { updateChatTitle } = await import('../db/actions')
+            await updateChatTitle(chatId, title)
+          }
+
+          // Send a finish message to complete the stream
+          writer.write({ type: 'finish' })
+          return
+        }
+
+        // If we have tool calls, proceed with related questions generation
+        try {
+          // Get the research data
+          const researchData = await researchResult.response
+
+          // Check if request was aborted
+          if (researchData.messages.length === 0) {
+            writer.write({ type: 'finish' })
+            return
+          }
+
+          // Prepare messages for related questions agent
+          const allMessages = [
+            ...convertToModelMessages(messagesToModel),
+            ...researchData.messages
+          ]
+
+          // Get related questions agent
+          const relatedQuestionsAgent = generateRelatedQuestions(modelId)
+          const relatedQuestionsResult = relatedQuestionsAgent.stream({
+            messages: allMessages
           })
-        )
 
-        // After research completes, generate related questions
-        researchResult.response
-          .then(async researchData => {
-            // Check if request was aborted
-            if (researchData.messages.length === 0) {
-              return
-            }
-
-            try {
-              // Prepare messages for related questions agent
-              const allMessages = [
-                ...convertToModelMessages(messagesToModel),
-                ...researchData.messages
-              ]
-
-              // Get related questions agent
-              const relatedQuestionsAgent = generateRelatedQuestions(modelId)
-              const relatedQuestionsResult = relatedQuestionsAgent.stream({
-                messages: allMessages
+          // Create a promise to track when related questions finish
+          const relatedQuestionsPromise = new Promise<void>(resolve => {
+            writer.merge(
+              relatedQuestionsResult.toUIMessageStream({
+                sendStart: false,
+                onFinish: ({ responseMessage }) => {
+                  relatedQuestionsMessage = responseMessage
+                  resolve()
+                }
               })
-
-              // Merge related questions stream
-              writer.merge(
-                relatedQuestionsResult.toUIMessageStream({
-                  sendStart: false,
-                  onFinish: async ({ responseMessage }) => {
-                    relatedQuestionsMessage = responseMessage
-
-                    // Save the complete message after both agents finish
-                    // Merge and save both messages
-                    if (researchMessage && relatedQuestionsMessage) {
-                      const mergedMessage = mergeUIMessages(
-                        researchMessage,
-                        relatedQuestionsMessage
-                      )
-                      await saveMessage(chatId, mergedMessage)
-                    } else if (researchMessage) {
-                      // Save research message only if related questions failed
-                      await saveMessage(chatId, researchMessage)
-                    }
-
-                    // Generate proper title after conversation starts
-                    if (!chat && message) {
-                      const userContent = getTextFromParts(message.parts)
-                      const title = await generateChatTitle({
-                        userMessageContent: userContent,
-                        modelId
-                      })
-                      // Update chat title
-                      const { updateChatTitle } = await import('../db/actions')
-                      await updateChatTitle(chatId, title)
-                    }
-                  }
-                })
-              )
-            } catch (error) {
-              console.error('Error generating related questions:', error)
-            }
+            )
           })
-          .catch(error => {
-            // Handle abort errors gracefully
-            if (error.name === 'AbortError') {
-              console.log('Stream aborted by client')
-              return
-            }
-            console.error('Research agent error:', error)
-          })
+
+          // Wait for related questions to complete
+          await relatedQuestionsPromise
+
+          // Save the complete message after both agents finish
+          if (validResearchMessage && relatedQuestionsMessage) {
+            const mergedMessage = mergeUIMessages(
+              validResearchMessage,
+              relatedQuestionsMessage
+            )
+            await saveMessage(chatId, mergedMessage)
+          } else if (validResearchMessage) {
+            // Save research message only if related questions failed
+            await saveMessage(chatId, validResearchMessage)
+          }
+
+          // Generate proper title after conversation starts
+          if (!chat && message) {
+            const userContent = getTextFromParts(message.parts)
+            const title = await generateChatTitle({
+              userMessageContent: userContent,
+              modelId
+            })
+            // Update chat title
+            const { updateChatTitle } = await import('../db/actions')
+            await updateChatTitle(chatId, title)
+          }
+        } catch (error) {
+          console.error('Error generating related questions:', error)
+          // Save research message even if related questions fail
+          await saveMessage(chatId, validResearchMessage)
+        }
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error // This error will be handled by the onError callback
