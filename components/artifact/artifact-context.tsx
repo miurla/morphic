@@ -18,7 +18,10 @@ interface ArtifactState {
   isOpen: boolean
 }
 
-type ArtifactAction = { type: 'OPEN'; payload: Part } | { type: 'CLOSE' }
+type ArtifactAction =
+  | { type: 'OPEN'; payload: Part }
+  | { type: 'CLOSE' }
+  | { type: 'CLEAR_CONTENT' }
 
 const initialState: ArtifactState = {
   part: null,
@@ -34,6 +37,8 @@ function artifactReducer(
       return { part: action.payload, isOpen: true }
     case 'CLOSE':
       return { ...state, isOpen: false }
+    case 'CLEAR_CONTENT':
+      return { part: null, isOpen: false }
     default:
       return state
   }
@@ -55,6 +60,10 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 
   const close = useCallback(() => {
     dispatch({ type: 'CLOSE' })
+    // Keep content for animation purposes, clear after transition
+    setTimeout(() => {
+      dispatch({ type: 'CLEAR_CONTENT' })
+    }, 300)
   }, [])
 
   // Close artifact when sidebar opens

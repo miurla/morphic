@@ -70,7 +70,6 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.0.1",
     "react-markdown": "^8.0.7",
-    "react-resizable-panels": "^3.0.0",
     "react-syntax-highlighter": "^15.5.0",
     "react-textarea-autosize": "^8.5.3",
     "redis": "^4.7.0",
