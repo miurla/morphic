@@ -43,6 +43,8 @@ export function ChatMessages({
   const [userModifiedStates, setUserModifiedStates] = useState<
     Record<string, boolean>
   >({})
+  // Cache tool counts for performance optimization
+  const [toolCountCache] = useState<Map<string, number>>(new Map())
   const isLoading = status === 'submitted' || status === 'streaming'
 
   if (!sections.length) return null
@@ -52,6 +54,31 @@ export function ChatMessages({
     isLoading &&
     sections.length > 0 &&
     sections[sections.length - 1].assistantMessages.length === 0
+
+  // Tool types definition - moved outside function for performance
+  const toolTypes = [
+    'tool-search',
+    'tool-fetch',
+    'tool-askQuestion',
+    'tool-relatedQuestions'
+  ]
+
+  // Helper function to get tool count with caching
+  const getToolCount = (message?: UIMessage): number => {
+    if (!message || !message.id) return 0
+
+    // Check cache first
+    const cached = toolCountCache.get(message.id)
+    if (cached !== undefined) {
+      return cached
+    }
+
+    // Calculate and cache
+    const count =
+      message.parts?.filter(part => toolTypes.includes(part.type)).length || 0
+    toolCountCache.set(message.id, count)
+    return count
+  }
 
   const getIsOpen = (
     id: string,
@@ -64,18 +91,9 @@ export function ChatMessages({
       return userModifiedStates[id]
     }
 
-    // Count tool parts in the message
-    const toolTypes = [
-      'tool-search',
-      'tool-fetch',
-      'tool-askQuestion',
-      'tool-relatedQuestions'
-    ]
-    const toolCount =
-      message?.parts?.filter(part => toolTypes.includes(part.type)).length || 0
-
     // For tool types, check if there are multiple tools
-    if (toolTypes.includes(partType || '')) {
+    if (partType && toolTypes.includes(partType)) {
+      const toolCount = getToolCount(message)
       // If multiple tools exist, default to closed
       if (toolCount > 1) {
         return false
