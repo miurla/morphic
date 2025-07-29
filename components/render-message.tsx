@@ -3,6 +3,7 @@ import { UseChatHelpers } from '@ai-sdk/react'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { AnswerSection } from './answer-section'
+import { DynamicToolDisplay } from './dynamic-tool-display'
 import { ReasoningSection } from './reasoning-section'
 import { ToolSection } from './tool-section'
 import { UserFileSection } from './user-file-section'
@@ -94,6 +95,13 @@ export function RenderMessage({
                 addToolResult={addToolResult}
                 status={status}
                 onQuerySelect={onQuerySelect}
+              />
+            )
+          case 'dynamic-tool':
+            return (
+              <DynamicToolDisplay
+                key={`${messageId}-dynamic-tool-${index}`}
+                part={part as any}
               />
             )
           case 'text':

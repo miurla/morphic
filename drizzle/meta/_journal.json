@@ -8,6 +8,13 @@
       "when": 1753666852574,
       "tag": "0000_perfect_ares",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1753666852575,
+      "tag": "0001_rename_mcp_to_dynamic",
+      "breakpoints": true
     }
   ]
 }

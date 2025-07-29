@@ -136,8 +136,12 @@ export const parts = pgTable(
     tool_relatedQuestions_output: json(
       'tool_related_questions_output'
     ).$type<any>(),
-    tool_mcp_input: json('tool_mcp_input').$type<any>(),
-    tool_mcp_output: json('tool_mcp_output').$type<any>(),
+
+    // Dynamic tools (includes MCP and other runtime-defined tools)
+    tool_dynamic_input: json('tool_dynamic_input').$type<any>(),
+    tool_dynamic_output: json('tool_dynamic_output').$type<any>(),
+    tool_dynamic_name: varchar('tool_dynamic_name', { length: VARCHAR_LENGTH }),
+    tool_dynamic_type: varchar('tool_dynamic_type', { length: VARCHAR_LENGTH }),
 
     // Data parts (generic support)
     data_prefix: varchar('data_prefix', { length: VARCHAR_LENGTH }),

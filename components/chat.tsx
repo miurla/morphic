@@ -56,7 +56,7 @@ export function Chat({
       api: '/api/chat',
       prepareSendMessagesRequest: ({ messages, trigger, messageId }) => {
         switch (trigger) {
-          case 'regenerate-assistant-message':
+          case 'regenerate-message':
             // Find the message being regenerated
             const messageToRegenerate = messages.find(m => m.id === messageId)
             return {
@@ -72,7 +72,7 @@ export function Chat({
               }
             }
 
-          case 'submit-user-message':
+          case 'submit-message':
           default:
             // Only send the last message
             return {
@@ -295,7 +295,31 @@ export function Chat({
           toolCallId: string
           result: any
         }) => {
-          addToolResult({ toolCallId, output: result })
+          // Find the tool name from the message parts
+          let toolName = 'unknown'
+          const allParts = messages.flatMap(m => m.parts || [])
+
+          for (const part of allParts) {
+            const p = part as any
+            if (p.type === 'tool-call' && p.toolCallId === toolCallId) {
+              toolName = p.toolName
+              break
+            } else if (
+              p.type?.startsWith('tool-') &&
+              p.toolCallId === toolCallId
+            ) {
+              toolName = p.type.substring(5) // Remove 'tool-' prefix
+              break
+            } else if (
+              p.type === 'dynamic-tool' &&
+              p.toolCallId === toolCallId
+            ) {
+              toolName = p.toolName
+              break
+            }
+          }
+
+          addToolResult({ tool: toolName, toolCallId, output: result })
         }}
         scrollContainerRef={scrollContainerRef}
         onUpdateMessage={handleUpdateAndReloadMessage}
