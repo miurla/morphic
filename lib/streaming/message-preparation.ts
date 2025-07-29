@@ -36,7 +36,7 @@ export async function prepareMessagesForRegeneration(
   }
 
   const targetMessage = currentChat.messages[messageIndex]
-  
+
   if (targetMessage.role === 'assistant') {
     // Delete from this assistant message onwards
     await deleteMessagesFromIndex(chatId, messageId)

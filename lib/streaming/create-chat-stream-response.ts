@@ -139,7 +139,7 @@ export async function createChatStreamResponse(
         let relatedQuestionsMessage: UIMessage | null = null
 
         // Create a promise to track when research finishes
-        const researchPromise = new Promise<void>((resolve) => {
+        const researchPromise = new Promise<void>(resolve => {
           writer.merge(
             researchResult.toUIMessageStream({
               sendFinish: false,
@@ -218,7 +218,7 @@ export async function createChatStreamResponse(
           })
 
           // Create a promise to track when related questions finish
-          const relatedQuestionsPromise = new Promise<void>((resolve) => {
+          const relatedQuestionsPromise = new Promise<void>(resolve => {
             writer.merge(
               relatedQuestionsResult.toUIMessageStream({
                 sendStart: false,
