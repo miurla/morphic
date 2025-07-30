@@ -2,6 +2,7 @@
 
 import { config as dotenvConfig } from 'dotenv'
 import { Readable } from 'stream'
+import type { ReadableStream as NodeReadableStream } from 'stream/web'
 
 // Load environment variables from .env.local
 dotenvConfig({ path: '.env.local' })
@@ -182,9 +183,10 @@ class ChatApiTester {
       console.log('📡 Response received, starting stream...\n')
 
       // Convert Web Streams API to Node.js stream
-      const nodeReadable = Readable.fromWeb(
-        response.body as ReadableStream<Uint8Array>
-      )
+      // Type assertion needed due to Node.js/Web Streams API type mismatch
+      // response.body is guaranteed to be a ReadableStream at this point
+      const webStream = response.body as unknown as NodeReadableStream<any>
+      const nodeReadable = Readable.fromWeb(webStream)
 
       // Create parser stream
 
