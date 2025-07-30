@@ -46,7 +46,23 @@ class ChatApiTester {
         parsed.hostname === 'localhost' ||
         parsed.hostname === '127.0.0.1' ||
         parsed.hostname.startsWith('192.168.') ||
-        parsed.hostname.startsWith('10.') ||
+        parsed.hostname.startsWith('10.0.') ||
+        parsed.hostname.startsWith('172.16.') ||
+        parsed.hostname.startsWith('172.17.') ||
+        parsed.hostname.startsWith('172.18.') ||
+        parsed.hostname.startsWith('172.19.') ||
+        parsed.hostname.startsWith('172.20.') ||
+        parsed.hostname.startsWith('172.21.') ||
+        parsed.hostname.startsWith('172.22.') ||
+        parsed.hostname.startsWith('172.23.') ||
+        parsed.hostname.startsWith('172.24.') ||
+        parsed.hostname.startsWith('172.25.') ||
+        parsed.hostname.startsWith('172.26.') ||
+        parsed.hostname.startsWith('172.27.') ||
+        parsed.hostname.startsWith('172.28.') ||
+        parsed.hostname.startsWith('172.29.') ||
+        parsed.hostname.startsWith('172.30.') ||
+        parsed.hostname.startsWith('172.31.') ||
         parsed.hostname.endsWith('.local')
       ) {
         return url
@@ -166,7 +182,9 @@ class ChatApiTester {
       console.log('📡 Response received, starting stream...\n')
 
       // Convert Web Streams API to Node.js stream
-      const nodeReadable = Readable.fromWeb(response.body as any)
+      const nodeReadable = Readable.fromWeb(
+        response.body as ReadableStream<Uint8Array>
+      )
 
       // Create parser stream
 
