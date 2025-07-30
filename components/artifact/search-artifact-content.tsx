@@ -28,14 +28,16 @@ export function SearchArtifactContent({ tool }: { tool: ToolPart<'search'> }) {
 
   return (
     <div className="space-y-2">
-      <ToolArgsSection
-        tool="search"
-        number={
-          (searchResults.results?.length || 0) +
-          (searchResults.videos?.length || 0) +
-          (searchResults.images?.length || 0)
-        }
-      >{`${query}`}</ToolArgsSection>
+      <div className="pb-2">
+        <ToolArgsSection
+          tool="search"
+          number={
+            (searchResults.results?.length || 0) +
+            (searchResults.videos?.length || 0) +
+            (searchResults.images?.length || 0)
+          }
+        >{`${query}`}</ToolArgsSection>
+      </div>
 
       {searchResults.images && searchResults.images.length > 0 && (
         <SearchResultsImageSection

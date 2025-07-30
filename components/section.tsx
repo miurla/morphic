@@ -109,13 +109,17 @@ export function ToolArgsSection({
   return (
     <Section
       size="sm"
-      className="py-0 flex items-center justify-between w-full"
+      className="py-0 flex items-center justify-between w-full gap-2"
     >
-      <ToolBadge tool={tool}>{children}</ToolBadge>
+      <div className="min-w-0 flex-1">
+        <ToolBadge tool={tool}>{children}</ToolBadge>
+      </div>
       {number && number > 0 && (
-        <StatusIndicator icon={Check} iconClassName="text-green-500">
-          {number} results
-        </StatusIndicator>
+        <div className="flex-shrink-0">
+          <StatusIndicator icon={Check} iconClassName="text-green-500">
+            {number} results
+          </StatusIndicator>
+        </div>
       )}
     </Section>
   )
