@@ -43,6 +43,12 @@ export function SearchSection({
     : ''
 
   const { open } = useArtifact()
+
+  const totalResults =
+    (searchResults?.results?.length || 0) +
+    (searchResults?.videos?.length || 0) +
+    (searchResults?.images?.length || 0)
+
   const header = (
     <button
       type="button"
@@ -52,11 +58,7 @@ export function SearchSection({
     >
       <ToolArgsSection
         tool="search"
-        number={
-          (searchResults?.results?.length || 0) +
-          (searchResults?.videos?.length || 0) +
-          (searchResults?.images?.length || 0)
-        }
+        number={searchResults ? totalResults : undefined}
       >{`${query}${includeDomainsString}`}</ToolArgsSection>
     </button>
   )
