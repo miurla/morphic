@@ -68,11 +68,31 @@ export async function createChatStreamResponse(
             throw new Error('No messages found')
           }
 
-          const messageIndex = currentChat.messages.findIndex(
+          let messageIndex = currentChat.messages.findIndex(
             m => m.id === messageId
           )
+
+          // Fallback: If message not found by ID, try to find by position
+          // This handles cases where AI SDK generates different IDs
           if (messageIndex === -1) {
-            throw new Error(`Message ${messageId} not found`)
+            // For assistant message regeneration: find the last assistant message
+            const lastAssistantIndex = currentChat.messages.findLastIndex(
+              m => m.role === 'assistant'
+            )
+
+            // For user message edit: find the last user message
+            const lastUserIndex = currentChat.messages.findLastIndex(
+              m => m.role === 'user'
+            )
+
+            // Use the most recent message (either user or assistant)
+            if (lastAssistantIndex >= 0 || lastUserIndex >= 0) {
+              messageIndex = Math.max(lastAssistantIndex, lastUserIndex)
+            } else {
+              throw new Error(
+                `Message ${messageId} not found and no fallback available`
+              )
+            }
           }
 
           // Check if it's an assistant message that needs regeneration
