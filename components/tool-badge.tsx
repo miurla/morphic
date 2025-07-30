@@ -21,7 +21,10 @@ export const ToolBadge: React.FC<ToolBadgeProps> = ({
   }
 
   return (
-    <Badge className={`inline-flex items-center max-w-full ${className || ''}`} variant={'secondary'}>
+    <Badge
+      className={`inline-flex items-center max-w-full ${className || ''}`}
+      variant={'secondary'}
+    >
       <span className="flex-shrink-0">{icon[tool]}</span>
       <span className="ml-1 truncate">{children}</span>
     </Badge>
