@@ -2,6 +2,8 @@ import React from 'react'
 
 import { Link, Search } from 'lucide-react'
 
+import { cn } from '@/lib/utils'
+
 import { Badge } from './ui/badge'
 
 type ToolBadgeProps = {
@@ -22,7 +24,7 @@ export const ToolBadge: React.FC<ToolBadgeProps> = ({
 
   return (
     <Badge
-      className={`inline-flex items-center max-w-full ${className || ''}`}
+      className={cn('inline-flex items-center max-w-full', className)}
       variant={'secondary'}
     >
       <span className="flex-shrink-0">{icon[tool]}</span>
