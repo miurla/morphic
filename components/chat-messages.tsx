@@ -61,7 +61,7 @@ export function ChatMessages({
       // Clear cache for all messages during streaming
       toolCountCacheRef.current.clear()
     }
-  }, [isLoading, sections])
+  }, [isLoading])
 
   if (!sections.length) return null
 
