@@ -7,6 +7,9 @@ import type { ReadableStream as NodeReadableStream } from 'stream/web'
 // Load environment variables from .env.local
 dotenvConfig({ path: '.env.local' })
 
+// Constants
+const DEFAULT_MESSAGE = 'Hello, how are you?'
+
 interface ChatApiConfig {
   apiUrl: string
   message: string
@@ -20,6 +23,8 @@ interface ChatApiConfig {
     toolCallType: string
   }
   searchMode?: boolean
+  trigger?: 'submit-user-message' | 'regenerate-assistant-message'
+  messageId?: string
 }
 
 interface UIMessage {
@@ -32,6 +37,13 @@ interface UIMessage {
     [key: string]: any
   }>
   createdAt: Date
+}
+
+interface ChatPayload {
+  chatId: string
+  trigger: 'submit-user-message' | 'regenerate-assistant-message'
+  message?: UIMessage
+  messageId?: string
 }
 
 class ChatApiTester {
@@ -80,7 +92,7 @@ class ChatApiTester {
     this.config = {
       apiUrl:
         this.validateUrl(config.apiUrl) || 'http://localhost:3000/api/chat',
-      message: config.message || 'Hello, how are you?',
+      message: config.message || DEFAULT_MESSAGE,
       chatId: config.chatId || this.generateId(),
       selectedModel: config.selectedModel || {
         id: 'gpt-4o-mini',
@@ -90,7 +102,9 @@ class ChatApiTester {
         enabled: true,
         toolCallType: 'native'
       },
-      searchMode: config.searchMode ?? true
+      searchMode: config.searchMode ?? true,
+      trigger: config.trigger || 'submit-user-message',
+      messageId: config.messageId
     }
   }
 
@@ -98,12 +112,12 @@ class ChatApiTester {
     return `chat_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
   }
 
-  private createUserMessage(text: string): UIMessage {
+  private createUserMessage(text: string, messageId?: string): UIMessage {
     // Limit message length for safety
     const sanitizedText = text.slice(0, 10000)
 
     return {
-      id: this.generateId(),
+      id: messageId || this.generateId(),
       role: 'user',
       content: sanitizedText,
       parts: [
@@ -125,15 +139,33 @@ class ChatApiTester {
   }
 
   async sendMessage(message?: string): Promise<void> {
-    const userMessage = this.createUserMessage(message || this.config.message)
-
     // Load cookies from env
     const cookies = this.loadCookiesFromEnv()
 
-    const payload = {
-      message: userMessage,
-      chatId: this.config.chatId,
-      trigger: 'submit-user-message'
+    const payload: ChatPayload = {
+      chatId: this.config.chatId!,
+      trigger: this.config.trigger || 'submit-user-message'
+    }
+
+    // Add message for submit trigger or messageId for regenerate
+    if (this.config.trigger === 'regenerate-assistant-message') {
+      if (!this.config.messageId) {
+        console.error('❌ Message ID is required for regeneration')
+        process.exit(1)
+      }
+      payload.messageId = this.config.messageId
+      // Only include message if we're editing a user message
+      if (message && message !== DEFAULT_MESSAGE) {
+        // Use the same messageId for the edited message
+        const userMessage = this.createUserMessage(
+          message,
+          this.config.messageId
+        )
+        payload.message = userMessage
+      }
+    } else {
+      const userMessage = this.createUserMessage(message || this.config.message)
+      payload.message = userMessage
     }
 
     console.log('🚀 Sending request to:', this.config.apiUrl)
@@ -328,6 +360,21 @@ function parseArgs(): Partial<ChatApiConfig> {
         }
         config.selectedModel = modelMap[modelId] || modelMap['gpt-4o-mini']
         break
+      case '-t':
+      case '--trigger':
+        const trigger = args[++i]
+        if (
+          trigger === 'regenerate' ||
+          trigger === 'regenerate-assistant-message'
+        ) {
+          config.trigger = 'regenerate-assistant-message'
+        } else {
+          config.trigger = 'submit-user-message'
+        }
+        break
+      case '--message-id':
+        config.messageId = args[++i]
+        break
       case '-h':
       case '--help':
         console.log(`
@@ -342,6 +389,8 @@ Options:
   -s, --search            Enable search mode (default: true)
   --no-search             Disable search mode
   --model <name>          Model to use: gpt-4o, gpt-4o-mini, claude-3-5-sonnet
+  -t, --trigger <type>    Trigger type: submit (default) or regenerate
+  --message-id <id>       Message ID (required for regenerate)
   -h, --help              Show this help message
 
 Examples:
@@ -356,6 +405,12 @@ Examples:
   
   # Continue existing chat
   bun scripts/chat-cli.ts -c "chat_123" -m "Tell me more"
+  
+  # Regenerate assistant message
+  bun scripts/chat-cli.ts -c "chat_123" -t regenerate --message-id "msg_123"
+  
+  # Edit user message and regenerate
+  bun scripts/chat-cli.ts -c "chat_123" -t regenerate --message-id "msg_123" -m "New message"
   
 Note: Without authentication, you may get "User not authenticated" errors.
 
@@ -383,7 +438,7 @@ async function main() {
   const config = parseArgs()
   const tester = new ChatApiTester(config)
 
-  await tester.sendMessage()
+  await tester.sendMessage(config.message)
 }
 
 // Run the script
