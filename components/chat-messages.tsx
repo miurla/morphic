@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { UseChatHelpers } from '@ai-sdk/react'
 
@@ -44,16 +44,8 @@ export function ChatMessages({
     Record<string, boolean>
   >({})
   // Cache tool counts for performance optimization
-  const [toolCountCache] = useState<Map<string, number>>(new Map())
+  const toolCountCacheRef = useRef<Map<string, number>>(new Map())
   const isLoading = status === 'submitted' || status === 'streaming'
-
-  if (!sections.length) return null
-
-  // Check if loading indicator should be shown
-  const showLoading =
-    isLoading &&
-    sections.length > 0 &&
-    sections[sections.length - 1].assistantMessages.length === 0
 
   // Tool types definition - moved outside function for performance
   const toolTypes = [
@@ -63,12 +55,35 @@ export function ChatMessages({
     'tool-relatedQuestions'
   ]
 
+  // Clear cache during streaming to ensure accurate tool counts
+  useEffect(() => {
+    if (isLoading) {
+      // Clear cache for all messages during streaming
+      toolCountCacheRef.current.clear()
+    }
+  }, [isLoading, sections])
+
+  if (!sections.length) return null
+
+  // Check if loading indicator should be shown
+  const showLoading =
+    isLoading &&
+    sections.length > 0 &&
+    sections[sections.length - 1].assistantMessages.length === 0
+
   // Helper function to get tool count with caching
   const getToolCount = (message?: UIMessage): number => {
     if (!message || !message.id) return 0
 
-    // Check cache first
-    const cached = toolCountCache.get(message.id)
+    // During streaming, always recalculate
+    if (isLoading) {
+      const count =
+        message.parts?.filter(part => toolTypes.includes(part.type)).length || 0
+      return count
+    }
+
+    // Check cache first when not streaming
+    const cached = toolCountCacheRef.current.get(message.id)
     if (cached !== undefined) {
       return cached
     }
@@ -76,7 +91,7 @@ export function ChatMessages({
     // Calculate and cache
     const count =
       message.parts?.filter(part => toolTypes.includes(part.type)).length || 0
-    toolCountCache.set(message.id, count)
+    toolCountCacheRef.current.set(message.id, count)
     return count
   }
 
