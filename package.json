@@ -13,7 +13,8 @@
     "format:check": "prettier --check .",
     "migrate": "bun run lib/db/migrate.ts",
     "test": "vitest",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "chat": "bun run scripts/chat-cli.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0-beta.8",
@@ -54,7 +55,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
     "cmdk": "1.0.0",
-    "dotenv": "^16.5.0",
+    "dotenv": "^17.2.1",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.3",
     "embla-carousel-react": "^8.0.0",
