@@ -202,8 +202,8 @@ export async function createChatStreamResponse(
           // Generate proper title after conversation starts
           if (!initialChat && message) {
             const userContent = getTextFromParts(message.parts)
-            saveOperations.push(
-              () => generateChatTitle({
+            saveOperations.push(() =>
+              generateChatTitle({
                 userMessageContent: userContent,
                 modelId
               }).then(async title => {
@@ -220,10 +220,7 @@ export async function createChatStreamResponse(
             // Retry critical save operations with backoff
             try {
               for (const operation of saveOperations) {
-                await retryDatabaseOperation(
-                  operation,
-                  'save message/title'
-                )
+                await retryDatabaseOperation(operation, 'save message/title')
               }
             } catch (retryError) {
               console.error(
@@ -296,8 +293,8 @@ export async function createChatStreamResponse(
           // Generate proper title after conversation starts
           if (!initialChat && message) {
             const userContent = getTextFromParts(message.parts)
-            saveOperations.push(
-              () => generateChatTitle({
+            saveOperations.push(() =>
+              generateChatTitle({
                 userMessageContent: userContent,
                 modelId
               }).then(async title => {
@@ -314,10 +311,7 @@ export async function createChatStreamResponse(
             // Retry critical save operations with backoff
             try {
               for (const operation of saveOperations) {
-                await retryDatabaseOperation(
-                  operation,
-                  'save message/title'
-                )
+                await retryDatabaseOperation(operation, 'save message/title')
               }
             } catch (retryError) {
               console.error(
