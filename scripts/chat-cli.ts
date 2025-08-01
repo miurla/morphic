@@ -175,16 +175,28 @@ class ChatApiTester {
     console.log('💬 Chat ID:', this.config.chatId)
     console.log('\n---\n')
 
+    // Build cookie string
+    let cookieString = ''
+    if (cookies) {
+      // If cookies from env exist, append our settings to them
+      cookieString = cookies
+      if (!cookieString.includes('selectedModel=')) {
+        cookieString += `; selectedModel=${encodeURIComponent(JSON.stringify(this.config.selectedModel))}`
+      }
+      if (!cookieString.includes('search-mode=')) {
+        cookieString += `; search-mode=${this.config.searchMode}`
+      }
+    } else {
+      // If no cookies from env, just use our settings
+      cookieString = [
+        `selectedModel=${encodeURIComponent(JSON.stringify(this.config.selectedModel))}`,
+        `search-mode=${this.config.searchMode}`
+      ].join('; ')
+    }
+
     const headers = {
       'Content-Type': 'application/json',
-      Cookie:
-        cookies ||
-        [
-          `selectedModel=${encodeURIComponent(JSON.stringify(this.config.selectedModel))}`,
-          `search-mode=${this.config.searchMode}`
-        ]
-          .filter(Boolean)
-          .join('; ')
+      Cookie: cookieString
     }
 
     // Only show headers in debug mode, without sensitive data
@@ -333,9 +345,9 @@ function parseArgs(): Partial<ChatApiConfig> {
         const modelId = args[++i]
         // Map common model names
         const modelMap: Record<string, any> = {
-          'gpt-4o': {
-            id: 'gpt-4o',
-            name: 'GPT-4o',
+          'gpt-4.1': {
+            id: 'gpt-4.1',
+            name: 'GPT-4.1',
             provider: 'OpenAI',
             providerId: 'openai',
             enabled: true,
@@ -349,9 +361,17 @@ function parseArgs(): Partial<ChatApiConfig> {
             enabled: true,
             toolCallType: 'native'
           },
-          'claude-3-5-sonnet': {
-            id: 'claude-3-5-sonnet-latest',
-            name: 'Claude 3.5 Sonnet',
+          'claude-4-0-sonnet': {
+            id: 'claude-4-0-sonnet',
+            name: 'Claude 4.0 Sonnet',
+            provider: 'Anthropic',
+            providerId: 'anthropic',
+            enabled: true,
+            toolCallType: 'native'
+          },
+          'claude-3-5-haiku-20241022': {
+            id: 'claude-3-5-haiku-20241022',
+            name: 'Claude 3.5 Haiku',
             provider: 'Anthropic',
             providerId: 'anthropic',
             enabled: true,

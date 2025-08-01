@@ -60,6 +60,7 @@
     "drizzle-orm": "^0.44.3",
     "embla-carousel-react": "^8.0.0",
     "exa-js": "^1.0.12",
+    "js-tiktoken": "^1.0.20",
     "jsdom": "^26.1.0",
     "katex": "^0.16.10",
     "lucide-react": "^0.507.0",

@@ -18,6 +18,11 @@ import { generateRelatedQuestions } from '../agents/generate-related-questions'
 import { generateChatTitle } from '../agents/title-generator'
 import { generateId } from '../db/schema'
 import {
+  getMaxAllowedTokens,
+  shouldTruncateMessages,
+  truncateMessages
+} from '../utils/context-window'
+import {
   getTextFromParts,
   hasToolCalls,
   mergeUIMessages
@@ -155,9 +160,24 @@ export async function createChatStreamResponse(
           searchMode
         })
 
+        // Convert to model messages and apply context window management
+        let modelMessages = convertToModelMessages(messagesToModel)
+
+        if (shouldTruncateMessages(modelMessages, model)) {
+          const maxTokens = getMaxAllowedTokens(model)
+          const originalCount = modelMessages.length
+          modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
+
+          if (process.env.NODE_ENV === 'development') {
+            console.log(
+              `Context window limit reached. Truncating from ${originalCount} to ${modelMessages.length} messages`
+            )
+          }
+        }
+
         // Stream with the research agent
         const researchResult = researchAgent.stream({
-          messages: convertToModelMessages(messagesToModel)
+          messages: modelMessages
         })
 
         // Store messages for merging
