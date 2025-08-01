@@ -55,7 +55,7 @@ class MemoryCache<T> {
   get(key: string): T | null {
     try {
       const item = this.cache.get(key)
-      
+
       if (!item) {
         this.stats.misses++
         return null
@@ -127,7 +127,10 @@ class MemoryCache<T> {
     return {
       ...this.stats,
       size: this.cache.size,
-      hitRate: this.stats.hits > 0 ? this.stats.hits / (this.stats.hits + this.stats.misses) : 0
+      hitRate:
+        this.stats.hits > 0
+          ? this.stats.hits / (this.stats.hits + this.stats.misses)
+          : 0
     }
   }
 }
@@ -136,20 +139,23 @@ class MemoryCache<T> {
 const getCacheConfig = () => {
   const ttl = process.env.CHAT_CACHE_TTL
   const maxEntries = process.env.CHAT_CACHE_MAX_ENTRIES
-  
+
   const ttlValue = ttl ? parseInt(ttl, 10) : 300 // Default: 5 minutes
   const maxEntriesValue = maxEntries ? parseInt(maxEntries, 10) : 1000 // Default: 1000 entries
-  
+
   // Validate configuration
   const validTtl = Math.max(10, Math.min(3600, ttlValue)) // Min: 10s, Max: 1 hour
   const validMaxEntries = Math.max(100, Math.min(10000, maxEntriesValue)) // Min: 100, Max: 10000
-  
+
   return { ttl: validTtl, maxEntries: validMaxEntries }
 }
 
 // Cache instances with configurable TTLs and size limits
 const config = getCacheConfig()
-export const chatCache = new MemoryCache<Chat & { messages: UIMessage[] }>(config.ttl, config.maxEntries)
+export const chatCache = new MemoryCache<Chat & { messages: UIMessage[] }>(
+  config.ttl,
+  config.maxEntries
+)
 
 // Store interval reference for cleanup
 let cleanupInterval: NodeJS.Timeout | null = null
@@ -158,11 +164,13 @@ let cleanupInterval: NodeJS.Timeout | null = null
 if (typeof setInterval !== 'undefined') {
   cleanupInterval = setInterval(() => {
     chatCache.cleanup()
-    
+
     // Log stats periodically in development
     if (process.env.NODE_ENV === 'development') {
       const stats = chatCache.getStats()
-      console.log(`Cache stats - Size: ${stats.size}, Hit rate: ${(stats.hitRate * 100).toFixed(2)}%`)
+      console.log(
+        `Cache stats - Size: ${stats.size}, Hit rate: ${(stats.hitRate * 100).toFixed(2)}%`
+      )
     }
   }, 60000) // Run cleanup every minute
 }

@@ -21,32 +21,32 @@ export async function retryWithBackoff<T>(
   } = options
 
   let lastError: any
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn()
     } catch (error) {
       lastError = error
-      
+
       if (attempt === maxRetries) {
         throw error
       }
-      
+
       // Calculate delay with exponential backoff
       const delay = Math.min(
         initialDelayMs * Math.pow(backoffMultiplier, attempt),
         maxDelayMs
       )
-      
+
       if (onRetry) {
         onRetry(error, attempt + 1)
       }
-      
+
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, delay))
     }
   }
-  
+
   throw lastError
 }
 
@@ -60,7 +60,10 @@ export async function retryDatabaseOperation<T>(
     initialDelayMs: 200,
     maxDelayMs: 2000,
     onRetry: (error, attempt) => {
-      console.log(`Retrying ${operationName} (attempt ${attempt}):`, error.message)
+      console.log(
+        `Retrying ${operationName} (attempt ${attempt}):`,
+        error.message
+      )
     }
   })
 }

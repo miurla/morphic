@@ -175,7 +175,9 @@ export async function loadChatWithMessages(
   }
 
   // Build result and cache it
-  const uiMessages = messagesResult.map(msg => buildUIMessageFromDB(msg, msg.parts))
+  const uiMessages = messagesResult.map(msg =>
+    buildUIMessageFromDB(msg, msg.parts)
+  )
   const result = { ...chat, messages: uiMessages }
   chatCache.set(cacheKey, result)
   return result
@@ -215,7 +217,7 @@ export async function deleteMessagesAfter(
   if (messageIds.length > 0) {
     // Delete messages (parts will be cascade deleted)
     await db.delete(messages).where(inArray(messages.id, messageIds))
-    
+
     // Invalidate cache for this chat
     chatCache.deletePattern(`${chatId}-`)
   }
@@ -250,7 +252,7 @@ export async function deleteMessagesFromIndex(
 
   if (messageIds.length > 0) {
     await db.delete(messages).where(inArray(messages.id, messageIds))
-    
+
     // Invalidate cache for this chat
     chatCache.deletePattern(`${chatId}-`)
   }
@@ -285,7 +287,7 @@ export async function deleteChat(
 
     // Delete the chat (messages and parts will cascade)
     await db.delete(chats).where(eq(chats.id, chatId))
-    
+
     // Invalidate cache for this chat
     chatCache.deletePattern(`${chatId}-`)
 

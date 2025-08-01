@@ -64,7 +64,8 @@ export async function createChatStreamResponse(
         if (trigger === 'regenerate-assistant-message' && messageId) {
           // Handle regeneration
           // Use cached chat data or fetch if not available
-          const currentChat = initialChat || await getChatAction(chatId, userId)
+          const currentChat =
+            initialChat || (await getChatAction(chatId, userId))
           if (!currentChat || !currentChat.messages.length) {
             throw new Error('No messages found')
           }
@@ -194,7 +195,9 @@ export async function createChatStreamResponse(
         // If no tool calls (just answering), skip related questions
         if (!hasToolCallsInMessage) {
           // Save research message and generate title in parallel
-          const savePromises: Promise<any>[] = [saveMessage(chatId, validResearchMessage)]
+          const savePromises: Promise<any>[] = [
+            saveMessage(chatId, validResearchMessage)
+          ]
 
           // Generate proper title after conversation starts
           if (!initialChat && message) {
@@ -213,7 +216,7 @@ export async function createChatStreamResponse(
           // Execute saves in background with exponential backoff retry
           Promise.all(savePromises).catch(async error => {
             console.error('Error saving message or title:', error)
-            
+
             // Retry critical save operations with backoff
             try {
               for (const promise of savePromises) {
@@ -223,7 +226,10 @@ export async function createChatStreamResponse(
                 )
               }
             } catch (retryError) {
-              console.error('Failed to save after retries with backoff:', retryError)
+              console.error(
+                'Failed to save after retries with backoff:',
+                retryError
+              )
               // Consider implementing alerting mechanism here
               // For now, we ensure the error is logged for monitoring
             }
@@ -275,7 +281,7 @@ export async function createChatStreamResponse(
 
           // Save the complete message after both agents finish
           const savePromises: Promise<any>[] = []
-          
+
           if (validResearchMessage && relatedQuestionsMessage) {
             const mergedMessage = mergeUIMessages(
               validResearchMessage,
@@ -304,7 +310,7 @@ export async function createChatStreamResponse(
           // Execute saves in background with exponential backoff retry
           Promise.all(savePromises).catch(async error => {
             console.error('Error saving message or title:', error)
-            
+
             // Retry critical save operations with backoff
             try {
               for (const promise of savePromises) {
@@ -314,7 +320,10 @@ export async function createChatStreamResponse(
                 )
               }
             } catch (retryError) {
-              console.error('Failed to save after retries with backoff:', retryError)
+              console.error(
+                'Failed to save after retries with backoff:',
+                retryError
+              )
               // Consider implementing alerting mechanism here
               // For now, we ensure the error is logged for monitoring
             }
