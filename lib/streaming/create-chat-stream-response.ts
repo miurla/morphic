@@ -22,6 +22,7 @@ import {
   hasToolCalls,
   mergeUIMessages
 } from '../utils/message-utils'
+import { retryDatabaseOperation } from '../utils/retry'
 
 import { BaseStreamConfig } from './types'
 
@@ -43,11 +44,11 @@ export async function createChatStreamResponse(
     })
   }
 
-  // Fetch chat data for authorization check
-  const chat = await getChatAction(chatId, userId)
+  // Fetch chat data for authorization check and cache it
+  let initialChat = await getChatAction(chatId, userId)
 
   // Authorization check: if chat exists, it must belong to the user
-  if (chat && chat.userId !== userId) {
+  if (initialChat && initialChat.userId !== userId) {
     return new Response('You are not allowed to access this chat', {
       status: 403,
       statusText: 'Forbidden'
@@ -62,8 +63,9 @@ export async function createChatStreamResponse(
 
         if (trigger === 'regenerate-assistant-message' && messageId) {
           // Handle regeneration
-          // Find the message to regenerate from
-          const currentChat = await getChatAction(chatId, userId)
+          // Use cached chat data or fetch if not available
+          const currentChat =
+            initialChat || (await getChatAction(chatId, userId))
           if (!currentChat || !currentChat.messages.length) {
             throw new Error('No messages found')
           }
@@ -136,7 +138,7 @@ export async function createChatStreamResponse(
           }
 
           // If chat doesn't exist, create it with a temporary title
-          if (!chat) {
+          if (!initialChat) {
             await createChat(chatId, DEFAULT_CHAT_TITLE)
           }
 
@@ -192,20 +194,43 @@ export async function createChatStreamResponse(
 
         // If no tool calls (just answering), skip related questions
         if (!hasToolCallsInMessage) {
-          // Save research message
-          await saveMessage(chatId, validResearchMessage)
+          // Save research message and generate title in parallel
+          const saveOperations: (() => Promise<any>)[] = [
+            () => saveMessage(chatId, validResearchMessage)
+          ]
 
           // Generate proper title after conversation starts
-          if (!chat && message) {
+          if (!initialChat && message) {
             const userContent = getTextFromParts(message.parts)
-            const title = await generateChatTitle({
-              userMessageContent: userContent,
-              modelId
-            })
-            // Update chat title
-            const { updateChatTitle } = await import('../db/actions')
-            await updateChatTitle(chatId, title)
+            saveOperations.push(() =>
+              generateChatTitle({
+                userMessageContent: userContent,
+                modelId
+              }).then(async title => {
+                const { updateChatTitle } = await import('../db/actions')
+                return updateChatTitle(chatId, title)
+              })
+            )
           }
+
+          // Execute saves in background with exponential backoff retry
+          Promise.all(saveOperations.map(op => op())).catch(async error => {
+            console.error('Error saving message or title:', error)
+
+            // Retry critical save operations with backoff
+            try {
+              for (const operation of saveOperations) {
+                await retryDatabaseOperation(operation, 'save message/title')
+              }
+            } catch (retryError) {
+              console.error(
+                'Failed to save after retries with backoff:',
+                retryError
+              )
+              // Consider implementing alerting mechanism here
+              // For now, we ensure the error is logged for monitoring
+            }
+          })
 
           // Send a finish message to complete the stream
           writer.write({ type: 'finish' })
@@ -252,28 +277,51 @@ export async function createChatStreamResponse(
           await relatedQuestionsPromise
 
           // Save the complete message after both agents finish
+          const saveOperations: (() => Promise<any>)[] = []
+
           if (validResearchMessage && relatedQuestionsMessage) {
             const mergedMessage = mergeUIMessages(
               validResearchMessage,
               relatedQuestionsMessage
             )
-            await saveMessage(chatId, mergedMessage)
+            saveOperations.push(() => saveMessage(chatId, mergedMessage))
           } else if (validResearchMessage) {
             // Save research message only if related questions failed
-            await saveMessage(chatId, validResearchMessage)
+            saveOperations.push(() => saveMessage(chatId, validResearchMessage))
           }
 
           // Generate proper title after conversation starts
-          if (!chat && message) {
+          if (!initialChat && message) {
             const userContent = getTextFromParts(message.parts)
-            const title = await generateChatTitle({
-              userMessageContent: userContent,
-              modelId
-            })
-            // Update chat title
-            const { updateChatTitle } = await import('../db/actions')
-            await updateChatTitle(chatId, title)
+            saveOperations.push(() =>
+              generateChatTitle({
+                userMessageContent: userContent,
+                modelId
+              }).then(async title => {
+                const { updateChatTitle } = await import('../db/actions')
+                return updateChatTitle(chatId, title)
+              })
+            )
           }
+
+          // Execute saves in background with exponential backoff retry
+          Promise.all(saveOperations.map(op => op())).catch(async error => {
+            console.error('Error saving message or title:', error)
+
+            // Retry critical save operations with backoff
+            try {
+              for (const operation of saveOperations) {
+                await retryDatabaseOperation(operation, 'save message/title')
+              }
+            } catch (retryError) {
+              console.error(
+                'Failed to save after retries with backoff:',
+                retryError
+              )
+              // Consider implementing alerting mechanism here
+              // For now, we ensure the error is logged for monitoring
+            }
+          })
         } catch (error) {
           console.error('Error generating related questions:', error)
           // Save research message even if related questions fail
