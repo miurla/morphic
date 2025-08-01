@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { generateUUID } from '@/lib/utils' // Import the UUID generator
-
-// Mock target modules first
+// Mock the chat database functions
 vi.mock('@/lib/db/chat', () => ({
   clearChats: vi.fn(),
   deleteChat: vi.fn(),
@@ -16,13 +14,17 @@ vi.mock('@/lib/db/chat', () => ({
   deleteTrailingMessages: vi.fn(),
   shareChatDb: vi.fn()
 }))
+
+// Mock auth functions
 vi.mock('@/lib/auth/get-current-user', () => ({
   getCurrentUserId: vi.fn()
 }))
 
+// Now safe to import modules that depend on database
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as chatDb from '@/lib/db/chat'
-import type { Chat as DBChat, Message as DBMessage } from '@/lib/db/schema' // Import DB schema types for test data
+import type { Chat as DBChat, Message as DBMessage } from '@/lib/db/schema'
+import { generateUUID } from '@/lib/utils'
 
 import {
   clearChats,
@@ -33,15 +35,15 @@ import {
   saveSingleMessage
 } from '../chat-db'
 
-const mockClearChats = chatDb.clearChats as any
-const mockDeleteChatDb = chatDb.deleteChat as any
-const mockGetChatsDb = chatDb.getChats as any
-const mockGetChatDb = chatDb.getChat as any
-const mockGetSharedChatDb = chatDb.getSharedChat as any
-const mockGetChatMessagesDb = chatDb.getChatMessages as any
-const mockAddMessageDb = chatDb.addMessage as any
-const mockSaveChatDb = chatDb.saveChat as any
-const mockGetCurrentUserId = getCurrentUserId as any
+const mockClearChats = vi.mocked(chatDb.clearChats)
+const mockDeleteChatDb = vi.mocked(chatDb.deleteChat)
+const mockGetChatsDb = vi.mocked(chatDb.getChats)
+const mockGetChatDb = vi.mocked(chatDb.getChat)
+const mockGetSharedChatDb = vi.mocked(chatDb.getSharedChat)
+const mockGetChatMessagesDb = vi.mocked(chatDb.getChatMessages)
+const mockAddMessageDb = vi.mocked(chatDb.addMessage)
+const mockSaveChatDb = vi.mocked(chatDb.saveChat)
+const mockGetCurrentUserId = vi.mocked(getCurrentUserId)
 
 const now = new Date().toISOString()
 
@@ -117,7 +119,7 @@ describe('Chat Actions - deleteChat', () => {
   })
 
   it('should delete a chat for an authenticated user and return success', async () => {
-    mockDeleteChatDb.mockResolvedValue({ deletedCount: 1 })
+    mockDeleteChatDb.mockResolvedValue({})
     const result = await deleteChat(chatId)
     expect(mockGetCurrentUserId).toHaveBeenCalledTimes(1)
     expect(mockDeleteChatDb).toHaveBeenCalledWith(chatId, userId)
