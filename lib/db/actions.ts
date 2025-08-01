@@ -2,6 +2,7 @@
 
 import { and, asc, desc, eq, gt, inArray } from 'drizzle-orm'
 
+import { chatCache } from '@/lib/cache/memory-cache'
 import type { UIMessage } from '@/lib/types/ai'
 import type { PersistableUIMessage } from '@/lib/types/message-persistence'
 import {
@@ -37,6 +38,9 @@ export async function createChat({
       visibility
     })
     .returning()
+
+  // Invalidate cache for this chat
+  chatCache.deletePattern(`${id}-`)
 
   return chat
 }
@@ -76,7 +80,7 @@ export async function getChat(
 export async function upsertMessage(
   message: PersistableUIMessage & { chatId: string }
 ): Promise<Message> {
-  return await db.transaction(async tx => {
+  const result = await db.transaction(async tx => {
     // 1. Insert or update the message
     const messageData = mapUIMessageToDBMessage(message)
     const [dbMessage] = await tx
@@ -101,6 +105,14 @@ export async function upsertMessage(
 
     return dbMessage
   })
+
+  // Invalidate cache after successful transaction
+  // Using setTimeout to ensure this happens after transaction commit
+  setTimeout(() => {
+    chatCache.deletePattern(`${message.chatId}-`)
+  }, 0)
+
+  return result
 }
 
 /**
@@ -120,6 +132,53 @@ export async function loadChat(chatId: string): Promise<UIMessage[]> {
 
   // Convert to UI format
   return result.map(msg => buildUIMessageFromDB(msg, msg.parts))
+}
+
+/**
+ * Load chat with messages in a single query (optimized)
+ */
+export async function loadChatWithMessages(
+  chatId: string,
+  userId?: string
+): Promise<(Chat & { messages: UIMessage[] }) | null> {
+  // Don't check cache yet - need to verify permissions first
+
+  // Get chat and messages in parallel
+  const [chatResult, messagesResult] = await Promise.all([
+    db.select().from(chats).where(eq(chats.id, chatId)).limit(1),
+    db.query.messages.findMany({
+      where: eq(messages.chatId, chatId),
+      with: {
+        parts: {
+          orderBy: [asc(parts.order)]
+        }
+      },
+      orderBy: [asc(messages.createdAt)]
+    })
+  ])
+
+  const chat = chatResult[0]
+  if (!chat) {
+    return null
+  }
+
+  // Permission check
+  if (chat.visibility === 'private' && (!userId || chat.userId !== userId)) {
+    return null
+  }
+
+  // Now check cache with visibility included in key
+  const cacheKey = `${chatId}-${userId || 'anonymous'}-${chat.visibility}`
+  const cached = chatCache.get(cacheKey)
+  if (cached) {
+    return cached
+  }
+
+  // Build result and cache it
+  const uiMessages = messagesResult.map(msg => buildUIMessageFromDB(msg, msg.parts))
+  const result = { ...chat, messages: uiMessages }
+  chatCache.set(cacheKey, result)
+  return result
 }
 
 /**
@@ -156,6 +215,9 @@ export async function deleteMessagesAfter(
   if (messageIds.length > 0) {
     // Delete messages (parts will be cascade deleted)
     await db.delete(messages).where(inArray(messages.id, messageIds))
+    
+    // Invalidate cache for this chat
+    chatCache.deletePattern(`${chatId}-`)
   }
 
   return { count: messageIds.length }
@@ -188,6 +250,9 @@ export async function deleteMessagesFromIndex(
 
   if (messageIds.length > 0) {
     await db.delete(messages).where(inArray(messages.id, messageIds))
+    
+    // Invalidate cache for this chat
+    chatCache.deletePattern(`${chatId}-`)
   }
 
   return { count: messageIds.length }
@@ -220,6 +285,9 @@ export async function deleteChat(
 
     // Delete the chat (messages and parts will cascade)
     await db.delete(chats).where(eq(chats.id, chatId))
+    
+    // Invalidate cache for this chat
+    chatCache.deletePattern(`${chatId}-`)
 
     return { success: true }
   } catch (error) {
@@ -247,6 +315,11 @@ export async function updateChatVisibility(
     .where(eq(chats.id, chatId))
     .returning()
 
+  // Invalidate cache for this chat
+  if (updatedChat) {
+    chatCache.deletePattern(`${chatId}-`)
+  }
+
   return updatedChat
 }
 
@@ -262,6 +335,11 @@ export async function updateChatTitle(
     .set({ title })
     .where(eq(chats.id, chatId))
     .returning()
+
+  // Invalidate cache for this chat
+  if (updatedChat) {
+    chatCache.deletePattern(`${chatId}-`)
+  }
 
   return updatedChat || null
 }

@@ -31,13 +31,8 @@ export async function getChat(
   chatId: string,
   requestingUserId?: string
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
-  const chat = await dbActions.getChat(chatId, requestingUserId)
-  if (!chat) {
-    return null
-  }
-
-  const messages = await dbActions.loadChat(chatId)
-  return { ...chat, messages }
+  // Use optimized function that loads both in parallel
+  return dbActions.loadChatWithMessages(chatId, requestingUserId)
 }
 
 /**
