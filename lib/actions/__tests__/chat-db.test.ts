@@ -119,7 +119,7 @@ describe('Chat Actions - deleteChat', () => {
   })
 
   it('should delete a chat for an authenticated user and return success', async () => {
-    mockDeleteChatDb.mockResolvedValue({ deletedCount: 1 })
+    mockDeleteChatDb.mockResolvedValue({})
     const result = await deleteChat(chatId)
     expect(mockGetCurrentUserId).toHaveBeenCalledTimes(1)
     expect(mockDeleteChatDb).toHaveBeenCalledWith(chatId, userId)
