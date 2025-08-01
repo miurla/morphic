@@ -5,12 +5,12 @@ import * as relations from './relations'
 import * as schema from './schema'
 
 // For server-side usage only
-if (!process.env.DATABASE_URL) {
+if (!process.env.DATABASE_URL && process.env.NODE_ENV !== 'test') {
   throw new Error('DATABASE_URL environment variable is not set')
 }
 
 // Connection with connection pooling for server environments
-const connectionString = process.env.DATABASE_URL
+const connectionString = process.env.DATABASE_URL!
 const client = postgres(connectionString, {
   ssl: { rejectUnauthorized: false },
   prepare: false,

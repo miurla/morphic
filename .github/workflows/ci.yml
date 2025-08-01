@@ -7,8 +7,9 @@ on:
     branches: [main, v0.5]
 
 jobs:
-  lint-typecheck-format:
+  lint:
     runs-on: ubuntu-latest
+    name: Lint
 
     steps:
       - name: Checkout repository
@@ -25,22 +26,87 @@ jobs:
       - name: Run linting
         run: bun lint
 
+  typecheck:
+    runs-on: ubuntu-latest
+    name: Type Check
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.12
+
+      - name: Install dependencies
+        run: bun install
+
       - name: Run type checking
         run: bun typecheck
+
+  format:
+    runs-on: ubuntu-latest
+    name: Format Check
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.12
+
+      - name: Install dependencies
+        run: bun install
 
       - name: Check formatting
         run: bun format:check
 
-      - name: Build application
-        run: bun run build
-        env:
-          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+  test:
+    runs-on: ubuntu-latest
+    name: Test
 
-      # Run tests only if test script exists (for v0.5 branch)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.12
+
+      - name: Install dependencies
+        run: bun install
+
       - name: Run tests
         run: |
           if [ -f "vitest.config.ts" ]; then
             bun run test
           fi
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+          NODE_ENV: test
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build
+    needs: [lint, typecheck, format, test]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.12
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build application
+        run: bun run build
         env:
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
