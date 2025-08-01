@@ -132,11 +132,23 @@ Fill in the required environment variables in `.env.local`:
 OPENAI_API_KEY=     # Get from https://platform.openai.com/api-keys
 TAVILY_API_KEY=     # Get from https://app.tavily.com/home
 DATABASE_URL=       # PostgreSQL connection string (Neon recommended)
+
+# Required for Authentication (Beta)
+NEXT_PUBLIC_SUPABASE_URL=     # Your Supabase project URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY= # Your Supabase anonymous key
 ```
 
 For optional features configuration (SearXNG, alternative AI providers, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
 
-### 4. Run app locally
+### 4. Run database migrations
+
+```bash
+bun run migrate
+```
+
+This command will create the necessary database tables.
+
+### 5. Run app locally
 
 #### Using Bun
 
