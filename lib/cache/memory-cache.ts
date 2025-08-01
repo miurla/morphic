@@ -190,14 +190,16 @@ if (typeof process !== 'undefined' && process.on) {
   process.on('SIGINT', () => {
     console.log('\nGracefully shutting down cache...')
     cleanupCacheInterval()
-    process.exit(0)
+    // Let the process exit naturally after cleanup
+    process.exitCode = 0
   })
 
   // Graceful shutdown on SIGTERM
   process.on('SIGTERM', () => {
     console.log('\nGracefully shutting down cache...')
     cleanupCacheInterval()
-    process.exit(0)
+    // Let the process exit naturally after cleanup
+    process.exitCode = 0
   })
 
   // Cleanup before exit

@@ -195,15 +195,15 @@ export async function createChatStreamResponse(
         // If no tool calls (just answering), skip related questions
         if (!hasToolCallsInMessage) {
           // Save research message and generate title in parallel
-          const savePromises: Promise<any>[] = [
-            saveMessage(chatId, validResearchMessage)
+          const saveOperations: (() => Promise<any>)[] = [
+            () => saveMessage(chatId, validResearchMessage)
           ]
 
           // Generate proper title after conversation starts
           if (!initialChat && message) {
             const userContent = getTextFromParts(message.parts)
-            savePromises.push(
-              generateChatTitle({
+            saveOperations.push(
+              () => generateChatTitle({
                 userMessageContent: userContent,
                 modelId
               }).then(async title => {
@@ -214,14 +214,14 @@ export async function createChatStreamResponse(
           }
 
           // Execute saves in background with exponential backoff retry
-          Promise.all(savePromises).catch(async error => {
+          Promise.all(saveOperations.map(op => op())).catch(async error => {
             console.error('Error saving message or title:', error)
 
             // Retry critical save operations with backoff
             try {
-              for (const promise of savePromises) {
+              for (const operation of saveOperations) {
                 await retryDatabaseOperation(
-                  () => promise,
+                  operation,
                   'save message/title'
                 )
               }
@@ -280,24 +280,24 @@ export async function createChatStreamResponse(
           await relatedQuestionsPromise
 
           // Save the complete message after both agents finish
-          const savePromises: Promise<any>[] = []
+          const saveOperations: (() => Promise<any>)[] = []
 
           if (validResearchMessage && relatedQuestionsMessage) {
             const mergedMessage = mergeUIMessages(
               validResearchMessage,
               relatedQuestionsMessage
             )
-            savePromises.push(saveMessage(chatId, mergedMessage))
+            saveOperations.push(() => saveMessage(chatId, mergedMessage))
           } else if (validResearchMessage) {
             // Save research message only if related questions failed
-            savePromises.push(saveMessage(chatId, validResearchMessage))
+            saveOperations.push(() => saveMessage(chatId, validResearchMessage))
           }
 
           // Generate proper title after conversation starts
           if (!initialChat && message) {
             const userContent = getTextFromParts(message.parts)
-            savePromises.push(
-              generateChatTitle({
+            saveOperations.push(
+              () => generateChatTitle({
                 userMessageContent: userContent,
                 modelId
               }).then(async title => {
@@ -308,14 +308,14 @@ export async function createChatStreamResponse(
           }
 
           // Execute saves in background with exponential backoff retry
-          Promise.all(savePromises).catch(async error => {
+          Promise.all(saveOperations.map(op => op())).catch(async error => {
             console.error('Error saving message or title:', error)
 
             // Retry critical save operations with backoff
             try {
-              for (const promise of savePromises) {
+              for (const operation of saveOperations) {
                 await retryDatabaseOperation(
-                  () => promise,
+                  operation,
                   'save message/title'
                 )
               }
