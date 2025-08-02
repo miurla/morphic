@@ -23,15 +23,24 @@ export function ChatArtifactContainer({
 }) {
   const { state } = useArtifact()
   const containerRef = useRef<HTMLDivElement>(null)
-  const [width, setWidth] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedWidth = localStorage.getItem('artifactPanelWidth')
-      return savedWidth ? parseInt(savedWidth, 10) : DEFAULT_WIDTH
-    }
-    return DEFAULT_WIDTH
-  })
+  const [width, setWidth] = useState(DEFAULT_WIDTH)
   const [isResizing, setIsResizing] = useState(false)
   const { open, isMobile: isMobileSidebar } = useSidebar()
+
+  // Load saved width after hydration
+  useEffect(() => {
+    const savedWidth = localStorage.getItem('artifactPanelWidth')
+    if (savedWidth) {
+      const parsedWidth = parseInt(savedWidth, 10)
+      if (
+        !isNaN(parsedWidth) &&
+        parsedWidth >= MIN_WIDTH &&
+        parsedWidth <= MAX_WIDTH
+      ) {
+        setWidth(parsedWidth)
+      }
+    }
+  }, [])
 
   const startResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
