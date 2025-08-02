@@ -1,4 +1,4 @@
-import { generateObject } from 'ai'
+import { convertToModelMessages, generateObject, type UIMessage } from 'ai'
 import { z } from 'zod'
 
 import { getModel } from '../utils/registry'
@@ -15,9 +15,11 @@ const relatedQuestionsSchema = z.object({
 
 export async function generateRelatedQuestions(
   model: string,
-  messages: any[],
+  messages: UIMessage[],
   abortSignal?: AbortSignal
 ) {
+  // Convert UIMessages to ModelMessages
+  const modelMessages = convertToModelMessages(messages)
   const systemPrompt = `You are a professional web researcher tasked with generating follow-up questions. Based on the conversation history and search results, create 3 DIFFERENT related questions that:
 
 1. Explore NEW aspects not covered in the original query
@@ -51,7 +53,7 @@ Bad follow-ups (avoid these):
       'Generate 3 unique follow-up questions that explore different aspects of the topic',
     system: systemPrompt,
     messages: [
-      ...messages,
+      ...modelMessages,
       {
         role: 'user',
         content:

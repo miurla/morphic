@@ -137,7 +137,7 @@ export function RenderMessage({
             return (
               <RelatedQuestions
                 key={`${messageId}-related-${index}`}
-                questions={part.data.questions}
+                data={part.data}
                 onQuerySelect={onQuerySelect}
               />
             )

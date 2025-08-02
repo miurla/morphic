@@ -413,7 +413,7 @@ export function mapDBPartToUIMessagePart(
       if (part.data_prefix) {
         return {
           type: `data-${part.data_prefix}`,
-          ...(part.data_content as any),
+          data: part.data_content,
           ...(part.data_id ? { id: part.data_id } : {})
         }
       }

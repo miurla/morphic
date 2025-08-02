@@ -12,6 +12,10 @@ export type UIMessage<
 
 export type UIDataTypes = {
   sources?: any[]
+  relatedQuestions?: {
+    status: 'loading' | 'success' | 'error'
+    questions?: Array<{ question: string }>
+  }
 }
 
 export type UITools = {

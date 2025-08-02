@@ -17,6 +17,7 @@ import {
 } from '../actions/chat'
 import { generateRelatedQuestions } from '../agents/generate-related-questions'
 import { generateChatTitle } from '../agents/title-generator'
+import { updateChatTitle } from '../db/actions'
 import { generateId } from '../db/schema'
 import {
   getMaxAllowedTokens,
@@ -65,12 +66,8 @@ export async function createChatStreamResponse(
     })
   }
 
-  // Track variables for abort handling
-  let researchMessage: UIMessage | null = null
-  let wasAborted = false
-
   // Create the stream
-  const stream = createUIMessageStream({
+  const stream = createUIMessageStream<UIMessage>({
     execute: async ({ writer }: { writer: UIMessageStreamWriter }) => {
       try {
         let messagesToModel: UIMessage[]
@@ -185,119 +182,99 @@ export async function createChatStreamResponse(
           }
         }
 
-        // Stream with the research agent
-        const researchResult = researchAgent.stream({
-          messages: modelMessages
-        })
-
-        // Messages are tracked at the top level now
-
-        // Create a promise to track when research finishes
-        const researchPromise = new Promise<void>(resolve => {
-          writer.merge(
-            researchResult.toUIMessageStream({
-              onFinish: async ({ responseMessage, isAborted }) => {
-                if (isAborted) {
-                  wasAborted = true
-                  resolve()
-                  return
-                }
-                researchMessage = responseMessage
-
-                // Generate related questions only if there are tool calls
-                if (responseMessage && hasToolCalls(responseMessage)) {
-                  try {
-                    // Get research data
-                    const researchData = await researchResult.response
-
-                    const allMessages = [
-                      ...convertToModelMessages(messagesToModel),
-                      ...researchData.messages
-                    ]
-
-                    const relatedQuestions = await generateRelatedQuestions(
-                      modelId,
-                      allMessages,
-                      abortSignal
-                    )
-
-                    // Send as data part
-                    writer.write({
-                      type: 'data-relatedQuestions',
-                      id: generateId(),
-                      data: relatedQuestions
-                    })
-                  } catch (error) {
-                    console.error('Error generating related questions:', error)
-                  }
-                }
-
-                resolve()
-              }
-            })
-          )
-        })
-
-        // Wait for research to complete
-        await researchPromise
-
-        // Check if we have a valid research message
-        if (!researchMessage) {
-          writer.write({ type: 'finish' })
-          return
-        }
-
-        // Check if aborted during research
-        if (wasAborted) {
-          writer.write({ type: 'finish' })
-          return
-        }
-
-        // At this point, TypeScript should know researchMessage is not null
-        const validResearchMessage: UIMessage = researchMessage
-
-        // Save message after research completes
-        if (validResearchMessage) {
-          // Save research message and generate title in parallel
-          const saveOperations: (() => Promise<any>)[] = [
-            () => saveMessage(chatId, validResearchMessage)
-          ]
-
-          // Generate proper title after conversation starts
-          if (!initialChat && message) {
-            const userContent = getTextFromParts(message.parts)
-            saveOperations.push(() =>
-              generateChatTitle({
-                userMessageContent: userContent,
-                modelId,
-                abortSignal
-              }).then(async title => {
-                const { updateChatTitle } = await import('../db/actions')
-                return updateChatTitle(chatId, title)
-              })
-            )
-          }
-
-          // Execute saves in background with exponential backoff retry
-          // Note: This is intentionally not awaited to avoid blocking the stream
-          Promise.all(saveOperations.map(op => op())).catch(async error => {
-            console.error('Error saving message or title:', error)
-
-            // Retry critical save operations with backoff
-            try {
-              for (const operation of saveOperations) {
-                await retryDatabaseOperation(operation, 'save message/title')
-              }
-            } catch (retryError) {
-              console.error(
-                'Failed to save after retries with backoff:',
-                retryError
-              )
-              // Consider implementing alerting mechanism here
-              // For now, we ensure the error is logged for monitoring
-            }
+        // Start title generation in parallel if it's a new chat
+        let titlePromise: Promise<string> | undefined
+        if (!initialChat && message) {
+          const userContent = getTextFromParts(message.parts)
+          titlePromise = generateChatTitle({
+            userMessageContent: userContent,
+            modelId,
+            abortSignal
+          }).catch(error => {
+            console.error('Error generating title:', error)
+            return DEFAULT_CHAT_TITLE
           })
         }
+
+        // Stream with the research agent
+        writer.merge(
+          researchAgent.stream({ messages: modelMessages }).toUIMessageStream({
+            onFinish: async ({ responseMessage, isAborted }) => {
+              if (isAborted || !responseMessage) return
+
+              // Generate related questions if there are tool calls
+              if (hasToolCalls(responseMessage)) {
+                const questionPartId = generateId()
+
+                try {
+                  // Send initial loading state
+                  writer.write({
+                    type: 'data-relatedQuestions',
+                    id: questionPartId,
+                    data: { status: 'loading' }
+                  })
+
+                  const relatedQuestions = await generateRelatedQuestions(
+                    modelId,
+                    [...messagesToModel, responseMessage],
+                    abortSignal
+                  )
+
+                  // Add to message parts for saving (with actual data)
+                  responseMessage.parts.push({
+                    type: 'data-relatedQuestions',
+                    id: questionPartId,
+                    data: {
+                      status: 'success',
+                      questions: relatedQuestions.questions
+                    }
+                  })
+
+                  // Update stream with actual data (same ID)
+                  writer.write({
+                    type: 'data-relatedQuestions',
+                    id: questionPartId,
+                    data: {
+                      status: 'success',
+                      questions: relatedQuestions.questions
+                    }
+                  })
+                } catch (error) {
+                  console.error('Error generating related questions:', error)
+                  // Send error state with same ID
+                  writer.write({
+                    type: 'data-relatedQuestions',
+                    id: questionPartId,
+                    data: { status: 'error' }
+                  })
+                }
+              }
+
+              // Wait for title generation if it was started
+              const chatTitle = titlePromise ? await titlePromise : undefined
+
+              // Save message with retry logic
+              saveMessage(chatId, responseMessage).catch(async error => {
+                console.error('Error saving message:', error)
+                try {
+                  await retryDatabaseOperation(
+                    () => saveMessage(chatId, responseMessage),
+                    'save message'
+                  )
+                } catch (retryError) {
+                  console.error('Failed to save after retries:', retryError)
+                }
+              })
+
+              // Update title after message is saved
+              if (chatTitle && chatTitle !== DEFAULT_CHAT_TITLE) {
+                updateChatTitle(chatId, chatTitle).catch(error =>
+                  console.error('Error updating title:', error)
+                )
+              }
+            }
+          })
+        )
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error // This error will be handled by the onError callback
