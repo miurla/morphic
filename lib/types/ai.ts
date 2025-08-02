@@ -20,6 +20,15 @@ export type UIDataTypes = {
   relatedQuestions?: RelatedQuestionsData
 }
 
+// Data part types for DataSection
+export type DataRelatedQuestionsPart = {
+  type: 'data-relatedQuestions'
+  id?: string
+  data: RelatedQuestionsData
+}
+
+export type DataPart = DataRelatedQuestionsPart
+
 export type UITools = {
   search: InferUITool<typeof searchTool>
   fetch: InferUITool<typeof fetchTool>

@@ -2,14 +2,12 @@
 
 import React from 'react'
 
+import type { DataPart } from '@/lib/types/ai'
+
 import { RelatedQuestions } from './related-questions'
 
 interface DataSectionProps {
-  part: {
-    type: string
-    data: any
-    id?: string
-  }
+  part: DataPart
   onQuerySelect?: (query: string) => void
 }
 
