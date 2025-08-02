@@ -4,9 +4,9 @@ import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 
 import { AnswerSection } from './answer-section'
+import { DataSection } from './data-section'
 import { DynamicToolDisplay } from './dynamic-tool-display'
 import { ReasoningSection } from './reasoning-section'
-import { RelatedQuestions } from './related-questions'
 import { ToolSection } from './tool-section'
 import { UserFileSection } from './user-file-section'
 import { UserTextSection } from './user-text-section'
@@ -135,13 +135,12 @@ export function RenderMessage({
             )
           case 'data-relatedQuestions':
             return (
-              <RelatedQuestions
-                key={`${messageId}-related-${index}`}
-                data={part.data}
+              <DataSection
+                key={`${messageId}-${part.type}-${index}`}
+                part={part}
                 onQuerySelect={onQuerySelect}
               />
             )
-          // Add other part types as needed
           default:
             return null
         }

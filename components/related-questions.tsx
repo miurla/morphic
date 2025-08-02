@@ -4,15 +4,12 @@ import React from 'react'
 
 import { ArrowRight } from 'lucide-react'
 
+import type { RelatedQuestionsData } from '@/lib/types/ai'
+
 import { Button } from './ui/button'
 import { Skeleton } from './ui/skeleton'
 import { CollapsibleMessage } from './collapsible-message'
 import { Section } from './section'
-
-interface RelatedQuestionsData {
-  status: 'loading' | 'success' | 'error'
-  questions?: Array<{ question: string }>
-}
 
 interface RelatedQuestionsProps {
   data: RelatedQuestionsData
