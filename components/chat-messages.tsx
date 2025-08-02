@@ -202,7 +202,9 @@ export function ChatMessages({
                 />
               </div>
             ))}
-            <ChatError error={error} />
+            {sectionIndex === sections.length - 1 && (
+              <ChatError error={error} />
+            )}
           </div>
         ))}
       </div>
