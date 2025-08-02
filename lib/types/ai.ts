@@ -10,8 +10,14 @@ export type UIMessage<
   TTools = UITools
 > = AIMessage
 
+export interface RelatedQuestionsData {
+  status: 'loading' | 'success' | 'error'
+  questions?: Array<{ question: string }>
+}
+
 export type UIDataTypes = {
   sources?: any[]
+  relatedQuestions?: RelatedQuestionsData
 }
 
 export type UITools = {

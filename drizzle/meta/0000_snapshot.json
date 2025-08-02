@@ -1,5 +1,5 @@
 {
-  "id": "c17090d9-fd3a-47e3-8fff-c4cee21d0506",
+  "id": "1a87e5a3-280e-4953-ac53-2221e33657b2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -296,18 +296,6 @@
         },
         "tool_question_output": {
           "name": "tool_question_output",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "tool_related_questions_input": {
-          "name": "tool_related_questions_input",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "tool_related_questions_output": {
-          "name": "tool_related_questions_output",
           "type": "json",
           "primaryKey": false,
           "notNull": false

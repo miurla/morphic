@@ -1,12 +1,25 @@
-import { Experimental_Agent as Agent, tool } from 'ai'
+import { convertToModelMessages, generateObject, type UIMessage } from 'ai'
+import { z } from 'zod'
 
-import { relatedSchema } from '../schema/related'
 import { getModel } from '../utils/registry'
 
-export function generateRelatedQuestions(
+const relatedQuestionsSchema = z.object({
+  questions: z
+    .array(
+      z.object({
+        question: z.string()
+      })
+    )
+    .length(3)
+})
+
+export async function generateRelatedQuestions(
   model: string,
+  messages: UIMessage[],
   abortSignal?: AbortSignal
 ) {
+  // Convert UIMessages to ModelMessages
+  const modelMessages = convertToModelMessages(messages)
   const systemPrompt = `You are a professional web researcher tasked with generating follow-up questions. Based on the conversation history and search results, create 3 DIFFERENT related questions that:
 
 1. Explore NEW aspects not covered in the original query
@@ -32,26 +45,23 @@ Bad follow-ups (avoid these):
 - "Is Nvidia growing?" (less specific than original)
 - "Tell me about Nvidia" (too general)`
 
-  // Return an agent instance for related questions
-  return new Agent({
+  const { object } = await generateObject({
     model: getModel(model),
-    system:
-      systemPrompt +
-      '\n\nGenerate 3 unique follow-up questions that explore different aspects of the topic.',
-    tools: {
-      relatedQuestions: tool({
-        name: 'relatedQuestions',
-        description:
-          'Generate 3 unique follow-up questions that explore different aspects of the topic, avoiding repetition of the original query',
-        inputSchema: relatedSchema,
-        execute: async ({ questions }) => {
-          // Return the questions in the expected format
-          return { questions }
-        }
-      })
-    },
-    activeTools: ['relatedQuestions'],
-    toolChoice: 'required',
+    schema: relatedQuestionsSchema,
+    schemaName: 'RelatedQuestions',
+    schemaDescription:
+      'Generate 3 unique follow-up questions that explore different aspects of the topic',
+    system: systemPrompt,
+    messages: [
+      ...modelMessages,
+      {
+        role: 'user',
+        content:
+          'Based on the conversation history and search results, generate 3 unique follow-up questions that would help the user explore different aspects of the topic. Focus on questions that dig deeper into specific findings or explore related areas not yet covered.'
+      }
+    ],
     abortSignal
   })
+
+  return object
 }
