@@ -7,6 +7,7 @@ import { UseChatHelpers } from '@ai-sdk/react'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
+import { ChatError } from './chat-error'
 import { DefaultSkeleton } from './default-skeleton'
 import { RenderMessage } from './render-message'
 
@@ -27,6 +28,7 @@ interface ChatMessagesProps {
   scrollContainerRef: React.RefObject<HTMLDivElement>
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
+  error?: Error | string | null | undefined
 }
 
 export function ChatMessages({
@@ -37,7 +39,8 @@ export function ChatMessages({
   addToolResult,
   scrollContainerRef,
   onUpdateMessage,
-  reload
+  reload,
+  error
 }: ChatMessagesProps) {
   // Track user-modified states (when user explicitly opens/closes)
   const [userModifiedStates, setUserModifiedStates] = useState<
@@ -199,6 +202,7 @@ export function ChatMessages({
                 />
               </div>
             ))}
+            <ChatError error={error} />
           </div>
         ))}
       </div>

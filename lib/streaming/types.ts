@@ -10,4 +10,5 @@ export interface BaseStreamConfig {
   userId: string
   trigger?: 'submit-user-message' | 'regenerate-assistant-message'
   messageId?: string
+  abortSignal?: AbortSignal
 }
