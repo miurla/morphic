@@ -6,6 +6,7 @@ import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import { AnswerSection } from './answer-section'
 import { DynamicToolDisplay } from './dynamic-tool-display'
 import { ReasoningSection } from './reasoning-section'
+import { RelatedQuestions } from './related-questions'
 import { ToolSection } from './tool-section'
 import { UserFileSection } from './user-file-section'
 import { UserTextSection } from './user-text-section'
@@ -78,7 +79,6 @@ export function RenderMessage({
           case 'tool-search':
           case 'tool-fetch':
           case 'tool-askQuestion':
-          case 'tool-relatedQuestions':
             return (
               <ToolSection
                 key={`${messageId}-tool-${index}`}
@@ -100,16 +100,14 @@ export function RenderMessage({
           case 'text':
             // Show actions if:
             // 1. This is the last part and streaming is complete
-            // 2. Next part is relatedQuestions (or step-start then relatedQuestions)
+            // 2. Next part is data-relatedQuestions
             const nextMessagePart = message.parts?.[index + 1]
-            const secondNextPart = message.parts?.[index + 2]
             const isStreamingComplete =
               status !== 'streaming' && status !== 'submitted'
             const isLastPart = !hasNextPart
             const shouldShowActions =
               (isLastPart && isStreamingComplete) || // Last part and streaming done
-              (nextMessagePart?.type === 'step-start' &&
-                secondNextPart?.type === 'tool-relatedQuestions') // step-start then related questions
+              nextMessagePart?.type === 'data-relatedQuestions' // Next part is related questions
             return (
               <AnswerSection
                 key={`${messageId}-text-${index}`}
@@ -133,6 +131,14 @@ export function RenderMessage({
                 }}
                 isOpen={getIsOpen(messageId, part.type, hasNextPart)}
                 onOpenChange={open => onOpenChange(messageId, open)}
+              />
+            )
+          case 'data-relatedQuestions':
+            return (
+              <RelatedQuestions
+                key={`${messageId}-related-${index}`}
+                questions={part.data.questions}
+                onQuerySelect={onQuerySelect}
               />
             )
           // Add other part types as needed

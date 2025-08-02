@@ -6,7 +6,6 @@ import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import FetchSection from './fetch-section'
 import { QuestionConfirmation } from './question-confirmation'
-import { RelatedQuestions } from './related-questions'
 import { SearchSection } from './search-section'
 
 interface ToolSectionProps {
@@ -81,16 +80,6 @@ export function ToolSection({
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           status={status}
-        />
-      )
-    case 'tool-relatedQuestions' as any:
-      return (
-        <RelatedQuestions
-          tool={tool}
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-          status={status}
-          onQuerySelect={onQuerySelect}
         />
       )
     default:

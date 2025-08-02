@@ -23,11 +23,7 @@ import {
   shouldTruncateMessages,
   truncateMessages
 } from '../utils/context-window'
-import {
-  getTextFromParts,
-  hasToolCalls,
-  mergeUIMessages
-} from '../utils/message-utils'
+import { getTextFromParts, hasToolCalls } from '../utils/message-utils'
 import { retryDatabaseOperation } from '../utils/retry'
 
 import { BaseStreamConfig } from './types'
@@ -71,7 +67,6 @@ export async function createChatStreamResponse(
 
   // Track variables for abort handling
   let researchMessage: UIMessage | null = null
-  let hasStartedProcessing = false
   let wasAborted = false
 
   // Create the stream
@@ -196,19 +191,47 @@ export async function createChatStreamResponse(
         })
 
         // Messages are tracked at the top level now
-        let relatedQuestionsMessage: UIMessage | null = null
-        hasStartedProcessing = true
 
         // Create a promise to track when research finishes
         const researchPromise = new Promise<void>(resolve => {
           writer.merge(
             researchResult.toUIMessageStream({
-              sendFinish: false,
-              onFinish: ({ responseMessage, isAborted }) => {
+              onFinish: async ({ responseMessage, isAborted }) => {
                 if (isAborted) {
                   wasAborted = true
+                  resolve()
+                  return
                 }
                 researchMessage = responseMessage
+
+                // Generate related questions only if there are tool calls
+                if (responseMessage && hasToolCalls(responseMessage)) {
+                  try {
+                    // Get research data
+                    const researchData = await researchResult.response
+
+                    const allMessages = [
+                      ...convertToModelMessages(messagesToModel),
+                      ...researchData.messages
+                    ]
+
+                    const relatedQuestions = await generateRelatedQuestions(
+                      modelId,
+                      allMessages,
+                      abortSignal
+                    )
+
+                    // Send as data part
+                    writer.write({
+                      type: 'data-relatedQuestions',
+                      id: generateId(),
+                      data: relatedQuestions
+                    })
+                  } catch (error) {
+                    console.error('Error generating related questions:', error)
+                  }
+                }
+
                 resolve()
               }
             })
@@ -233,11 +256,8 @@ export async function createChatStreamResponse(
         // At this point, TypeScript should know researchMessage is not null
         const validResearchMessage: UIMessage = researchMessage
 
-        // Check if the research message contains tool calls
-        const hasToolCallsInMessage = hasToolCalls(validResearchMessage)
-
-        // If no tool calls (just answering), skip related questions
-        if (!hasToolCallsInMessage) {
+        // Save message after research completes
+        if (validResearchMessage) {
           // Save research message and generate title in parallel
           const saveOperations: (() => Promise<any>)[] = [
             () => saveMessage(chatId, validResearchMessage)
@@ -277,115 +297,6 @@ export async function createChatStreamResponse(
               // For now, we ensure the error is logged for monitoring
             }
           })
-
-          // Send a finish message to complete the stream
-          writer.write({ type: 'finish' })
-          return
-        }
-
-        // If we have tool calls, proceed with related questions generation
-        try {
-          // Get the research data
-          const researchData = await researchResult.response
-
-          // Check if request was aborted
-          if (researchData.messages.length === 0) {
-            writer.write({ type: 'finish' })
-            return
-          }
-
-          // Prepare messages for related questions agent
-          const allMessages = [
-            ...convertToModelMessages(messagesToModel),
-            ...researchData.messages
-          ]
-
-          // Get related questions agent
-          const relatedQuestionsAgent = generateRelatedQuestions(
-            modelId,
-            abortSignal
-          )
-          const relatedQuestionsResult = relatedQuestionsAgent.stream({
-            messages: allMessages
-          })
-
-          // Create a promise to track when related questions finish
-          const relatedQuestionsPromise = new Promise<void>(resolve => {
-            writer.merge(
-              relatedQuestionsResult.toUIMessageStream({
-                sendStart: false,
-                onFinish: ({ responseMessage, isAborted }) => {
-                  if (isAborted) {
-                    wasAborted = true
-                  }
-                  relatedQuestionsMessage = responseMessage
-                  resolve()
-                }
-              })
-            )
-          })
-
-          // Wait for related questions to complete
-          await relatedQuestionsPromise
-
-          // Check if aborted during related questions
-          if (wasAborted) {
-            writer.write({ type: 'finish' })
-            return
-          }
-
-          // Save the complete message after both agents finish
-          const saveOperations: (() => Promise<any>)[] = []
-
-          if (validResearchMessage && relatedQuestionsMessage) {
-            const mergedMessage = mergeUIMessages(
-              validResearchMessage,
-              relatedQuestionsMessage
-            )
-            saveOperations.push(() => saveMessage(chatId, mergedMessage))
-          } else if (validResearchMessage) {
-            // Save research message only if related questions failed
-            saveOperations.push(() => saveMessage(chatId, validResearchMessage))
-          }
-
-          // Generate proper title after conversation starts
-          if (!initialChat && message) {
-            const userContent = getTextFromParts(message.parts)
-            saveOperations.push(() =>
-              generateChatTitle({
-                userMessageContent: userContent,
-                modelId,
-                abortSignal
-              }).then(async title => {
-                const { updateChatTitle } = await import('../db/actions')
-                return updateChatTitle(chatId, title)
-              })
-            )
-          }
-
-          // Execute saves in background with exponential backoff retry
-          // Note: This is intentionally not awaited to avoid blocking the stream
-          Promise.all(saveOperations.map(op => op())).catch(async error => {
-            console.error('Error saving message or title:', error)
-
-            // Retry critical save operations with backoff
-            try {
-              for (const operation of saveOperations) {
-                await retryDatabaseOperation(operation, 'save message/title')
-              }
-            } catch (retryError) {
-              console.error(
-                'Failed to save after retries with backoff:',
-                retryError
-              )
-              // Consider implementing alerting mechanism here
-              // For now, we ensure the error is logged for monitoring
-            }
-          })
-        } catch (error) {
-          console.error('Error generating related questions:', error)
-          // Save research message even if related questions fail
-          await saveMessage(chatId, validResearchMessage)
         }
       } catch (error) {
         console.error('Stream execution error:', error)

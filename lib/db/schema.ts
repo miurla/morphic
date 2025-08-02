@@ -128,12 +128,6 @@ export const parts = pgTable(
     tool_fetch_output: json('tool_fetch_output').$type<any>(),
     tool_question_input: json('tool_question_input').$type<any>(),
     tool_question_output: json('tool_question_output').$type<any>(),
-    tool_relatedQuestions_input: json(
-      'tool_related_questions_input'
-    ).$type<any>(),
-    tool_relatedQuestions_output: json(
-      'tool_related_questions_output'
-    ).$type<any>(),
 
     // Dynamic tools (includes MCP and other runtime-defined tools)
     tool_dynamic_input: json('tool_dynamic_input').$type<any>(),

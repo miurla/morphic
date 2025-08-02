@@ -250,7 +250,6 @@ export function mapUIMessagePartsToDBParts(
       case 'tool-search':
       case 'tool-fetch':
       case 'tool-question':
-      case 'tool-relatedQuestions':
         // These are tool parts with state tracking
         if (!isExtendedToolPart(part)) {
           console.error('Invalid extended tool part:', part)
@@ -368,9 +367,7 @@ export function mapDBPartToUIMessagePart(
         }
 
         // Special handling for tool parts that maintain their type
-        if (
-          ['search', 'fetch', 'question', 'relatedQuestions'].includes(toolName)
-        ) {
+        if (['search', 'fetch', 'question'].includes(toolName)) {
           return {
             type: part.type as any,
             toolCallId: part.tool_toolCallId || '',
@@ -435,8 +432,7 @@ function getToolNameFromType(toolName: string): string {
     search: 'search',
     fetch: 'fetch',
     askQuestion: 'question',
-    question: 'question',
-    relatedQuestions: 'relatedQuestions'
+    question: 'question'
   }
 
   // For dynamic tools (MCP and others)
