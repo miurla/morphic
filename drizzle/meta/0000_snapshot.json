@@ -1,5 +1,5 @@
 {
-  "id": "c17090d9-fd3a-47e3-8fff-c4cee21d0506",
+  "id": "1a87e5a3-280e-4953-ac53-2221e33657b2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -122,8 +122,12 @@
           "name": "messages_chat_id_chats_id_fk",
           "tableFrom": "messages",
           "tableTo": "chats",
-          "columnsFrom": ["chat_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "chat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -300,18 +304,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "tool_related_questions_input": {
-          "name": "tool_related_questions_input",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "tool_related_questions_output": {
-          "name": "tool_related_questions_output",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
         "tool_dynamic_input": {
           "name": "tool_dynamic_input",
           "type": "json",
@@ -411,8 +403,12 @@
           "name": "parts_message_id_messages_id_fk",
           "tableFrom": "parts",
           "tableTo": "messages",
-          "columnsFrom": ["message_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "message_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

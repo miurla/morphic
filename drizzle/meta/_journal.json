@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1733333000000,
-      "tag": "0001_persistence_v5",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1733333001000,
-      "tag": "0003_rename_mcp_to_dynamic",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1733333002000,
-      "tag": "0004_rename_retrieve_to_fetch",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1733333003000,
-      "tag": "0005_remove_video_search",
+      "when": 1754133183597,
+      "tag": "0000_rich_ravenous",
       "breakpoints": true
     }
   ]
