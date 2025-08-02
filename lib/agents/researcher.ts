@@ -51,10 +51,12 @@ Citation Format:
 
 export function researcher({
   model,
-  searchMode
+  searchMode,
+  abortSignal
 }: {
   model: string
   searchMode: boolean
+  abortSignal?: AbortSignal
 }) {
   try {
     const currentDate = new Date().toLocaleString()
@@ -73,7 +75,8 @@ export function researcher({
         askQuestion: askQuestionTool
       },
       activeTools: searchMode ? ['search', 'fetch'] : undefined,
-      stopWhen: searchMode ? stepCountIs(10) : stepCountIs(1)
+      stopWhen: searchMode ? stepCountIs(10) : stepCountIs(1),
+      abortSignal
     })
   } catch (error) {
     console.error('Error in researcher:', error)

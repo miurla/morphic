@@ -1,4 +1,5 @@
 import {
+  consumeStream,
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
@@ -32,13 +33,21 @@ import { retryDatabaseOperation } from '../utils/retry'
 import { BaseStreamConfig } from './types'
 
 // Constants
-const DEFAULT_CHAT_TITLE = 'New Chat'
+const DEFAULT_CHAT_TITLE = 'Untitled'
 
 export async function createChatStreamResponse(
   config: BaseStreamConfig
 ): Promise<Response> {
-  const { message, model, chatId, searchMode, userId, trigger, messageId } =
-    config
+  const {
+    message,
+    model,
+    chatId,
+    searchMode,
+    userId,
+    trigger,
+    messageId,
+    abortSignal
+  } = config
   const modelId = `${model.providerId}:${model.id}`
 
   // Verify that chatId is provided
@@ -59,6 +68,11 @@ export async function createChatStreamResponse(
       statusText: 'Forbidden'
     })
   }
+
+  // Track variables for abort handling
+  let researchMessage: UIMessage | null = null
+  let hasStartedProcessing = false
+  let wasAborted = false
 
   // Create the stream
   const stream = createUIMessageStream({
@@ -157,7 +171,8 @@ export async function createChatStreamResponse(
         // Get the researcher agent
         const researchAgent = researcher({
           model: modelId,
-          searchMode
+          searchMode,
+          abortSignal
         })
 
         // Convert to model messages and apply context window management
@@ -180,16 +195,19 @@ export async function createChatStreamResponse(
           messages: modelMessages
         })
 
-        // Store messages for merging
-        let researchMessage: UIMessage | null = null
+        // Messages are tracked at the top level now
         let relatedQuestionsMessage: UIMessage | null = null
+        hasStartedProcessing = true
 
         // Create a promise to track when research finishes
         const researchPromise = new Promise<void>(resolve => {
           writer.merge(
             researchResult.toUIMessageStream({
               sendFinish: false,
-              onFinish: ({ responseMessage }) => {
+              onFinish: ({ responseMessage, isAborted }) => {
+                if (isAborted) {
+                  wasAborted = true
+                }
                 researchMessage = responseMessage
                 resolve()
               }
@@ -202,6 +220,12 @@ export async function createChatStreamResponse(
 
         // Check if we have a valid research message
         if (!researchMessage) {
+          writer.write({ type: 'finish' })
+          return
+        }
+
+        // Check if aborted during research
+        if (wasAborted) {
           writer.write({ type: 'finish' })
           return
         }
@@ -225,7 +249,8 @@ export async function createChatStreamResponse(
             saveOperations.push(() =>
               generateChatTitle({
                 userMessageContent: userContent,
-                modelId
+                modelId,
+                abortSignal
               }).then(async title => {
                 const { updateChatTitle } = await import('../db/actions')
                 return updateChatTitle(chatId, title)
@@ -234,6 +259,7 @@ export async function createChatStreamResponse(
           }
 
           // Execute saves in background with exponential backoff retry
+          // Note: This is intentionally not awaited to avoid blocking the stream
           Promise.all(saveOperations.map(op => op())).catch(async error => {
             console.error('Error saving message or title:', error)
 
@@ -275,7 +301,10 @@ export async function createChatStreamResponse(
           ]
 
           // Get related questions agent
-          const relatedQuestionsAgent = generateRelatedQuestions(modelId)
+          const relatedQuestionsAgent = generateRelatedQuestions(
+            modelId,
+            abortSignal
+          )
           const relatedQuestionsResult = relatedQuestionsAgent.stream({
             messages: allMessages
           })
@@ -285,7 +314,10 @@ export async function createChatStreamResponse(
             writer.merge(
               relatedQuestionsResult.toUIMessageStream({
                 sendStart: false,
-                onFinish: ({ responseMessage }) => {
+                onFinish: ({ responseMessage, isAborted }) => {
+                  if (isAborted) {
+                    wasAborted = true
+                  }
                   relatedQuestionsMessage = responseMessage
                   resolve()
                 }
@@ -295,6 +327,12 @@ export async function createChatStreamResponse(
 
           // Wait for related questions to complete
           await relatedQuestionsPromise
+
+          // Check if aborted during related questions
+          if (wasAborted) {
+            writer.write({ type: 'finish' })
+            return
+          }
 
           // Save the complete message after both agents finish
           const saveOperations: (() => Promise<any>)[] = []
@@ -316,7 +354,8 @@ export async function createChatStreamResponse(
             saveOperations.push(() =>
               generateChatTitle({
                 userMessageContent: userContent,
-                modelId
+                modelId,
+                abortSignal
               }).then(async title => {
                 const { updateChatTitle } = await import('../db/actions')
                 return updateChatTitle(chatId, title)
@@ -325,6 +364,7 @@ export async function createChatStreamResponse(
           }
 
           // Execute saves in background with exponential backoff retry
+          // Note: This is intentionally not awaited to avoid blocking the stream
           Promise.all(saveOperations.map(op => op())).catch(async error => {
             console.error('Error saving message or title:', error)
 
@@ -358,5 +398,8 @@ export async function createChatStreamResponse(
     }
   })
 
-  return createUIMessageStreamResponse({ stream })
+  return createUIMessageStreamResponse({
+    stream,
+    consumeSseStream: consumeStream
+  })
 }

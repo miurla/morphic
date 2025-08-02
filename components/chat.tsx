@@ -5,11 +5,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
-import { z } from 'zod'
 
 import { generateId } from '@/lib/db/schema'
 import { UploadedFile } from '@/lib/types'
-import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import type { UIMessage } from '@/lib/types/ai'
 import {
   isDynamicToolPart,
   isToolCallPart,
@@ -54,7 +53,8 @@ export function Chat({
     stop,
     sendMessage,
     regenerate,
-    addToolResult
+    addToolResult,
+    error
   } = useChat({
     id, // use the provided chatId
     transport: new DefaultChatTransport({
@@ -332,6 +332,7 @@ export function Chat({
         scrollContainerRef={scrollContainerRef}
         onUpdateMessage={handleUpdateAndReloadMessage}
         reload={handleReloadFrom}
+        error={error}
       />
       <ChatPanel
         chatId={id}

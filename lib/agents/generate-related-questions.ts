@@ -3,7 +3,10 @@ import { Experimental_Agent as Agent, tool } from 'ai'
 import { relatedSchema } from '../schema/related'
 import { getModel } from '../utils/registry'
 
-export function generateRelatedQuestions(model: string) {
+export function generateRelatedQuestions(
+  model: string,
+  abortSignal?: AbortSignal
+) {
   const systemPrompt = `You are a professional web researcher tasked with generating follow-up questions. Based on the conversation history and search results, create 3 DIFFERENT related questions that:
 
 1. Explore NEW aspects not covered in the original query
@@ -48,6 +51,7 @@ Bad follow-ups (avoid these):
       })
     },
     activeTools: ['relatedQuestions'],
-    toolChoice: 'required'
+    toolChoice: 'required',
+    abortSignal
   })
 }

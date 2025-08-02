@@ -17,6 +17,8 @@ const DEFAULT_MODEL: Model = {
 }
 
 export async function POST(req: Request) {
+  const abortSignal = req.signal
+
   try {
     const body = await req.json()
     const { message, chatId, trigger, messageId } = body
@@ -83,7 +85,8 @@ export async function POST(req: Request) {
       searchMode,
       userId: userId!,
       trigger,
-      messageId
+      messageId,
+      abortSignal
     })
   } catch (error) {
     console.error('API route error:', error)

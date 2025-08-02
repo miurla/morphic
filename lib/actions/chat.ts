@@ -11,7 +11,7 @@ import type { UIMessage } from '@/lib/types/ai'
 import { getTextFromParts } from '@/lib/utils/message-utils'
 
 // Constants
-const DEFAULT_CHAT_TITLE = 'New Chat'
+const DEFAULT_CHAT_TITLE = 'Untitled'
 
 /**
  * Get all chats for the current user

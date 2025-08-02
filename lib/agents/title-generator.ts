@@ -5,6 +5,7 @@ import { getModel } from '../utils/registry'
 interface GenerateChatTitleParams {
   userMessageContent: string
   modelId: string
+  abortSignal?: AbortSignal
 }
 
 /**
@@ -15,7 +16,8 @@ interface GenerateChatTitleParams {
  */
 export async function generateChatTitle({
   userMessageContent,
-  modelId
+  modelId,
+  abortSignal
 }: GenerateChatTitleParams): Promise<string> {
   // Fallback title uses the first 75 characters of the message or a default string.
   const fallbackTitle = userMessageContent.substring(0, 75).trim() || 'New Chat'
@@ -26,7 +28,8 @@ export async function generateChatTitle({
     const { text: generatedTitle } = await generateText({
       model: getModel(modelId),
       system: systemPrompt,
-      prompt: userMessageContent
+      prompt: userMessageContent,
+      abortSignal
     })
 
     const cleanedTitle = generatedTitle.trim()
