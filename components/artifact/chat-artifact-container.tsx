@@ -32,7 +32,11 @@ export function ChatArtifactContainer({
     const savedWidth = localStorage.getItem('artifactPanelWidth')
     if (savedWidth) {
       const parsedWidth = parseInt(savedWidth, 10)
-      if (!isNaN(parsedWidth) && parsedWidth >= MIN_WIDTH && parsedWidth <= MAX_WIDTH) {
+      if (
+        !isNaN(parsedWidth) &&
+        parsedWidth >= MIN_WIDTH &&
+        parsedWidth <= MAX_WIDTH
+      ) {
         setWidth(parsedWidth)
       }
     }
