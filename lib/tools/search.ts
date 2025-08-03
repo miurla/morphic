@@ -18,15 +18,18 @@ export function createSearchTool(fullModel: string) {
     description:
       'Search the web for information. For YouTube/video content, use type="general" with content_types:["video"] for optimal visual presentation with thumbnails.',
     inputSchema: getSearchSchemaForModel(fullModel),
-    execute: async ({
-      query,
-      type = 'optimized',
-      content_types = ['web'],
-      max_results = 20,
-      search_depth = 'basic', // Default for standard schema
-      include_domains = [],
-      exclude_domains = []
-    }, context) => {
+    execute: async (
+      {
+        query,
+        type = 'optimized',
+        content_types = ['web'],
+        max_results = 20,
+        search_depth = 'basic', // Default for standard schema
+        include_domains = [],
+        exclude_domains = []
+      },
+      context
+    ) => {
       // Ensure max_results is at least 10
       const minResults = 10
       const effectiveMaxResults = Math.max(
@@ -131,16 +134,13 @@ export function createSearchTool(fullModel: string) {
         })
         searchResult.citationMap = citationMap
       }
-      
+
       // Add toolCallId from context
       if (context?.toolCallId) {
         searchResult.toolCallId = context.toolCallId
-        console.log('Search tool - toolCallId:', context.toolCallId)
-      } else {
-        console.log('Search tool - No toolCallId in context')
       }
 
-      console.log('completed search with citationMap:', searchResult.citationMap)
+      console.log('completed search')
       return searchResult
     }
   })

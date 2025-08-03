@@ -39,7 +39,6 @@ export function RenderMessage({
 }: RenderMessageProps) {
   // Extract citation maps from the message's tool outputs
   const citationMaps = extractCitationMaps(message)
-  console.log('RenderMessage - Extracted citationMaps:', citationMaps)
   if (message.role === 'user') {
     return (
       <>

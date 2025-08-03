@@ -25,9 +25,6 @@ export function BotMessage({
   className?: string
   citationMaps?: Record<string, Record<number, SearchResultItem>>
 }) {
-  console.log('BotMessage - citationMaps:', citationMaps)
-  console.log('BotMessage - original message:', message)
-  
   // Process citations to replace [number](#toolCallId) with [number](actual-url)
   const processedMessage = processCitations(message || '', citationMaps || {})
 
