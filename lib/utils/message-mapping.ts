@@ -218,10 +218,13 @@ export function mapUIMessagePartsToDBParts(
 
       // Step parts (for UI tracking)
       case 'step-start':
+        // Persist step-start to maintain message structure
+        return basePart
+
       case 'step-result':
       case 'step-continue':
       case 'step-finish':
-        return null // These are not persisted
+        return null // These are not needed for message structure
 
       // Dynamic tool parts from AI SDK v5
       case 'dynamic-tool':
@@ -367,14 +370,126 @@ export function mapDBPartToUIMessagePart(
         }
 
         // Special handling for tool parts that maintain their type
-        if (['search', 'fetch', 'question'].includes(toolName)) {
-          return {
-            type: part.type as any,
-            toolCallId: part.tool_toolCallId || '',
-            state: part.tool_state || 'input-available',
-            input: part[inputColumn],
-            output: part[outputColumn],
-            errorText: part.tool_errorText
+        if (toolName === 'search') {
+          if (!part.tool_state) {
+            throw new Error(`tool_state is undefined for ${toolName}`)
+          }
+
+          switch (part.tool_state) {
+            case 'input-streaming':
+              return {
+                type: 'tool-search',
+                state: 'input-streaming',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_search_input!
+              }
+            case 'input-available':
+              return {
+                type: 'tool-search',
+                state: 'input-available',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_search_input!
+              }
+            case 'output-available':
+              return {
+                type: 'tool-search',
+                state: 'output-available',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_search_input!,
+                output: part.tool_search_output!
+              }
+            case 'output-error':
+              return {
+                type: 'tool-search',
+                state: 'output-error',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_search_input!,
+                errorText: part.tool_errorText!
+              }
+            default:
+              throw new Error(`Unknown tool state: ${part.tool_state}`)
+          }
+        }
+
+        if (toolName === 'fetch') {
+          if (!part.tool_state) {
+            throw new Error(`tool_state is undefined for ${toolName}`)
+          }
+
+          switch (part.tool_state) {
+            case 'input-streaming':
+              return {
+                type: 'tool-fetch',
+                state: 'input-streaming',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_fetch_input!
+              }
+            case 'input-available':
+              return {
+                type: 'tool-fetch',
+                state: 'input-available',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_fetch_input!
+              }
+            case 'output-available':
+              return {
+                type: 'tool-fetch',
+                state: 'output-available',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_fetch_input!,
+                output: part.tool_fetch_output!
+              }
+            case 'output-error':
+              return {
+                type: 'tool-fetch',
+                state: 'output-error',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_fetch_input!,
+                errorText: part.tool_errorText!
+              }
+            default:
+              throw new Error(`Unknown tool state: ${part.tool_state}`)
+          }
+        }
+
+        if (toolName === 'question') {
+          if (!part.tool_state) {
+            throw new Error(`tool_state is undefined for ${toolName}`)
+          }
+
+          switch (part.tool_state) {
+            case 'input-streaming':
+              return {
+                type: 'tool-question',
+                state: 'input-streaming',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_question_input!
+              }
+            case 'input-available':
+              return {
+                type: 'tool-question',
+                state: 'input-available',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_question_input!
+              }
+            case 'output-available':
+              return {
+                type: 'tool-question',
+                state: 'output-available',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_question_input!,
+                output: part.tool_question_output!
+              }
+            case 'output-error':
+              return {
+                type: 'tool-question',
+                state: 'output-error',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_question_input!,
+                errorText: part.tool_errorText!
+              }
+            default:
+              throw new Error(`Unknown tool state: ${part.tool_state}`)
           }
         }
 
@@ -406,6 +521,13 @@ export function mapDBPartToUIMessagePart(
                 ? part.tool_errorText
                 : part[outputColumn]
           }
+        }
+      }
+
+      // Step parts
+      if (part.type === 'step-start') {
+        return {
+          type: 'step-start'
         }
       }
 
