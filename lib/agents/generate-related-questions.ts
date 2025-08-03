@@ -1,6 +1,7 @@
 import { convertToModelMessages, generateObject, type UIMessage } from 'ai'
 import { z } from 'zod'
 
+import { convertMessagesForAnthropic } from '../utils/anthropic-message-conversion'
 import { getModel } from '../utils/registry'
 
 const relatedQuestionsSchema = z.object({
@@ -19,7 +20,13 @@ export async function generateRelatedQuestions(
   abortSignal?: AbortSignal
 ) {
   // Convert UIMessages to ModelMessages
-  const modelMessages = convertToModelMessages(messages)
+  let modelMessages = convertToModelMessages(messages)
+
+  // Apply Anthropic-specific conversion if needed
+  if (model.startsWith('anthropic:')) {
+    modelMessages = convertMessagesForAnthropic(modelMessages)
+  }
+
   const systemPrompt = `You are a professional web researcher tasked with generating follow-up questions. Based on the conversation history and search results, create 3 DIFFERENT related questions that:
 
 1. Explore NEW aspects not covered in the original query
