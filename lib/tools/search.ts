@@ -135,9 +135,12 @@ export function createSearchTool(fullModel: string) {
       // Add toolCallId from context
       if (context?.toolCallId) {
         searchResult.toolCallId = context.toolCallId
+        console.log('Search tool - toolCallId:', context.toolCallId)
+      } else {
+        console.log('Search tool - No toolCallId in context')
       }
 
-      console.log('completed search')
+      console.log('completed search with citationMap:', searchResult.citationMap)
       return searchResult
     }
   })
