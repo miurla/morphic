@@ -48,10 +48,7 @@ export function AnswerSection({
 
   const message = content ? (
     <div className="flex flex-col gap-1">
-      <BotMessage 
-        message={content} 
-        citationMap={citationMap}
-      />
+      <BotMessage message={content} citationMap={citationMap} />
       {showActions && (
         <MessageActions
           message={content} // Keep original message content for copy

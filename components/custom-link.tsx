@@ -19,10 +19,11 @@ export function Citing({
   const { citationMap } = useCitation()
   const childrenText = children?.toString() || ''
   const isNumber = /^\d+$/.test(childrenText)
-  
+
   // Get citation data if this is a numbered citation
   const citationNumber = isNumber ? parseInt(childrenText) : null
-  const citationData = citationNumber && citationMap ? citationMap[citationNumber] : undefined
+  const citationData =
+    citationNumber && citationMap ? citationMap[citationNumber] : undefined
 
   return (
     <CitationLink

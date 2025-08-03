@@ -7,7 +7,11 @@ import type { SearchResultItem } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover'
 
 interface CitationLinkProps {
   href: string
@@ -34,7 +38,7 @@ export const CitationLink = memo(function CitationLink({
   const [open, setOpen] = useState(false)
   const childrenText = children?.toString() || ''
   const isNumber = /^\d+$/.test(childrenText)
-  
+
   const linkClasses = cn(
     isNumber
       ? 'text-[10px] bg-muted text-muted-foreground rounded-full w-4 h-4 px-0.5 inline-flex items-center justify-center hover:bg-muted/50 duration-200 no-underline -translate-y-0.5'
@@ -72,21 +76,21 @@ export const CitationLink = memo(function CitationLink({
             {children}
           </a>
         </PopoverTrigger>
-        <PopoverContent 
-          className="w-72 p-3 z-50" 
-          side="top" 
+        <PopoverContent
+          className="w-72 p-3 z-50"
+          side="top"
           align="center"
           sideOffset={8}
-          onPointerDownOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={e => e.preventDefault()}
         >
           {citationData ? (
             <div className="space-y-2">
               <div className="flex items-start space-x-2">
                 <Avatar className="h-4 w-4 mt-0.5 flex-shrink-0">
                   <AvatarImage
-                    src={`https://www.google.com/s2/favicons?domain=${
-                      getHostname(citationData.url)
-                    }`}
+                    src={`https://www.google.com/s2/favicons?domain=${getHostname(
+                      citationData.url
+                    )}`}
                     alt={getHostname(citationData.url)}
                   />
                   <AvatarFallback className="text-xs">
@@ -100,9 +104,7 @@ export const CitationLink = memo(function CitationLink({
                     rel="noopener noreferrer"
                     className="text-sm font-medium hover:underline block"
                   >
-                    <span className="line-clamp-2">
-                      {citationData.title}
-                    </span>
+                    <span className="line-clamp-2">{citationData.title}</span>
                   </Link>
                   <p className="text-xs text-muted-foreground line-clamp-2">
                     {citationData.content}

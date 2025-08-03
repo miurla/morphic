@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, ReactNode,useContext } from 'react'
+import { createContext, ReactNode, useContext } from 'react'
 
 import type { SearchResultItem } from '@/lib/types'
 
@@ -8,12 +8,14 @@ interface CitationContextValue {
   citationMap?: Record<number, SearchResultItem>
 }
 
-const CitationContext = createContext<CitationContextValue | undefined>(undefined)
+const CitationContext = createContext<CitationContextValue | undefined>(
+  undefined
+)
 
-export function CitationProvider({ 
-  children, 
+export function CitationProvider({
+  children,
   citationMap
-}: { 
+}: {
   children: ReactNode
   citationMap?: Record<number, SearchResultItem>
 }) {

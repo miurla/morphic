@@ -1,6 +1,5 @@
 'use client'
 
-
 import rehypeExternalLinks from 'rehype-external-links'
 import rehypeKatex from 'rehype-katex'
 import remarkGfm from 'remark-gfm'
@@ -28,7 +27,7 @@ export function BotMessage({
 }) {
   // Process citations to replace [number](#) with [number](actual-url)
   const processedMessage = processCitations(message || '', citationMap)
-  
+
   // Check if the content contains LaTeX patterns
   const containsLaTeX = /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/.test(
     processedMessage
@@ -42,12 +41,10 @@ export function BotMessage({
     code(props: any) {
       const { children, className, ...rest } = props
       const inline = !('data-language' in props)
-      
+
       if (children && typeof children === 'string') {
         if (children === '▍') {
-          return (
-            <span className="mt-1 cursor-default animate-pulse">▍</span>
-          )
+          return <span className="mt-1 cursor-default animate-pulse">▍</span>
         }
 
         const processedChildren = children.replace('`▍`', '▍')
@@ -83,10 +80,12 @@ export function BotMessage({
   if (containsLaTeX) {
     return (
       <CitationProvider citationMap={citationMap}>
-        <div className={cn(
-          'prose-sm prose-neutral prose-a:text-accent-foreground/50',
-          className
-        )}>
+        <div
+          className={cn(
+            'prose-sm prose-neutral prose-a:text-accent-foreground/50',
+            className
+          )}
+        >
           <MemoizedReactMarkdown
             rehypePlugins={[
               [rehypeExternalLinks, { target: '_blank' }],
@@ -107,10 +106,12 @@ export function BotMessage({
 
   return (
     <CitationProvider citationMap={citationMap}>
-      <div className={cn(
-        'prose-sm prose-neutral prose-a:text-accent-foreground/50',
-        className
-      )}>
+      <div
+        className={cn(
+          'prose-sm prose-neutral prose-a:text-accent-foreground/50',
+          className
+        )}
+      >
         <MemoizedReactMarkdown
           rehypePlugins={[[rehypeExternalLinks, { target: '_blank' }]]}
           remarkPlugins={[remarkGfm]}

@@ -1,7 +1,7 @@
 import { tool } from 'ai'
 
 import { getSearchSchemaForModel } from '@/lib/schema/search'
-import { SearchResultItem,SearchResults } from '@/lib/types'
+import { SearchResultItem, SearchResults } from '@/lib/types'
 import { getBaseUrlString } from '@/lib/utils/url'
 
 import {
