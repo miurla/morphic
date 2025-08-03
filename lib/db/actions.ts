@@ -178,7 +178,6 @@ export async function loadChatWithMessages(
   const uiMessages = messagesResult.map(msg =>
     buildUIMessageFromDB(msg, msg.parts)
   )
-
   const result = { ...chat, messages: uiMessages }
   chatCache.set(cacheKey, result)
   return result

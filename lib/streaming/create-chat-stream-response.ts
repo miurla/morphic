@@ -11,14 +11,12 @@ import { researcher } from '@/lib/agents/researcher'
 
 import { getChat as getChatAction } from '../actions/chat'
 import { generateChatTitle } from '../agents/title-generator'
-import { convertMessagesForAnthropic } from '../utils/anthropic-message-conversion'
 import {
   getMaxAllowedTokens,
   shouldTruncateMessages,
   truncateMessages
 } from '../utils/context-window'
 import { getTextFromParts } from '../utils/message-utils'
-import { isAnthropicModel } from '../utils/model-detection'
 
 import { handleStreamFinish } from './helpers/handle-stream-finish'
 import { prepareMessages } from './helpers/prepare-messages'
@@ -89,11 +87,6 @@ export async function createChatStreamResponse(
 
         // Convert to model messages and apply context window management
         let modelMessages = convertToModelMessages(messagesToModel)
-
-        // Apply Anthropic-specific conversion if needed
-        if (isAnthropicModel(model)) {
-          modelMessages = convertMessagesForAnthropic(modelMessages)
-        }
 
         if (shouldTruncateMessages(modelMessages, model)) {
           const maxTokens = getMaxAllowedTokens(model)
