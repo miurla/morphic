@@ -369,7 +369,7 @@ export function mapDBPartToUIMessagePart(
         // Special handling for tool parts that maintain their type
         if (['search', 'fetch', 'question'].includes(toolName)) {
           if (!part.tool_state) {
-            throw new Error(`${toolName}_state is undefined`)
+            throw new Error(`tool_state is undefined for ${toolName}`)
           }
 
           switch (part.tool_state) {

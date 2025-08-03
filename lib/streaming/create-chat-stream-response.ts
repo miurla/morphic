@@ -18,6 +18,7 @@ import {
   truncateMessages
 } from '../utils/context-window'
 import { getTextFromParts } from '../utils/message-utils'
+import { isAnthropicModel } from '../utils/model-detection'
 
 import { handleStreamFinish } from './helpers/handle-stream-finish'
 import { prepareMessages } from './helpers/prepare-messages'
@@ -90,7 +91,7 @@ export async function createChatStreamResponse(
         let modelMessages = convertToModelMessages(messagesToModel)
 
         // Apply Anthropic-specific conversion if needed
-        if (model.providerId === 'anthropic') {
+        if (isAnthropicModel(model)) {
           modelMessages = convertMessagesForAnthropic(modelMessages)
         }
 

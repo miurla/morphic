@@ -2,6 +2,7 @@ import { convertToModelMessages, generateObject, type UIMessage } from 'ai'
 import { z } from 'zod'
 
 import { convertMessagesForAnthropic } from '../utils/anthropic-message-conversion'
+import { isAnthropicModel } from '../utils/model-detection'
 import { getModel } from '../utils/registry'
 
 const relatedQuestionsSchema = z.object({
@@ -23,7 +24,7 @@ export async function generateRelatedQuestions(
   let modelMessages = convertToModelMessages(messages)
 
   // Apply Anthropic-specific conversion if needed
-  if (model.startsWith('anthropic:')) {
+  if (isAnthropicModel(model)) {
     modelMessages = convertMessagesForAnthropic(modelMessages)
   }
 
