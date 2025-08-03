@@ -84,7 +84,7 @@ export function researcher({
         askQuestion: askQuestionTool
       },
       activeTools: searchMode ? ['search', 'fetch'] : undefined,
-      stopWhen: searchMode ? stepCountIs(10) : stepCountIs(1),
+      stopWhen: searchMode ? stepCountIs(20) : stepCountIs(1),
       abortSignal
     })
   } catch (error) {
