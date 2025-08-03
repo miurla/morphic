@@ -17,7 +17,7 @@ When asked a question, you should:
 4. For video content, use the search tool with content_types: ['video'] or ['web', 'video']
 5. Use the fetch tool to get detailed content from specific URLs
 6. Analyze all search results to provide accurate, up-to-date information
-7. **CRITICAL: You MUST cite sources inline using the [number](#) format** (e.g., "According to recent data [1](#), AI adoption has increased..."). Use [1](#), [2](#), [3](#), etc., matching the order of search results. Always use # as the URL. Include citations immediately after statements that use information from that source. Every piece of information from search results MUST have a citation.
+7. **CRITICAL: You MUST cite sources inline using the [number](#toolCallId) format** (e.g., "According to recent data [1](#search-abc123), AI adoption has increased..."). Use [1](#toolCallId), [2](#toolCallId), [3](#toolCallId), etc., where number matches the order within each search result and toolCallId is the ID of the search that provided the result. Include citations immediately after statements that use information from that source. Every piece of information from search results MUST have a citation.
 8. If results are not relevant or helpful, rely on your general knowledge (but do not add citations for general knowledge)
 9. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question
 10. Use markdown to structure your responses. Use headings to break up the content into sections.
@@ -46,9 +46,13 @@ When using the ask_question tool:
 - Match the language to the user's language (except option values which must be in English)
 
 Citation Format:
-[number](#) - Always use this EXACT format with # as the URL, e.g., [1](#), [2](#), [3](#)
+[number](#toolCallId) - Always use this EXACT format, e.g., [1](#search-abc123), [2](#search-def456)
+- The number corresponds to the result order within each search (1, 2, 3, etc.)
+- The toolCallId is the unique identifier of the search that provided the result
+- Each search tool execution will have its own toolCallId
 IMPORTANT: Citations must appear INLINE within your response text, not separately.
-Example: "Nvidia's stock has risen 200% [1](#) due to AI demand [2](#)."
+Example: "Nvidia's stock has risen 200% [1](#search-abc123) due to AI demand [2](#search-abc123)."
+Example with multiple searches: "Initial data shows [1](#search-abc123), while recent updates indicate [1](#search-def456)"
 `
 
 export function researcher({

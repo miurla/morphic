@@ -26,7 +26,7 @@ export function createSearchTool(fullModel: string) {
       search_depth = 'basic', // Default for standard schema
       include_domains = [],
       exclude_domains = []
-    }) => {
+    }, context) => {
       // Ensure max_results is at least 10
       const minResults = 10
       const effectiveMaxResults = Math.max(
@@ -123,13 +123,18 @@ export function createSearchTool(fullModel: string) {
         }
       }
 
-      // Add citation mapping to search results
+      // Add citation mapping and toolCallId to search results
       if (searchResult.results && searchResult.results.length > 0) {
         const citationMap: Record<number, SearchResultItem> = {}
         searchResult.results.forEach((result, index) => {
           citationMap[index + 1] = result // Citation numbers start at 1
         })
         searchResult.citationMap = citationMap
+      }
+      
+      // Add toolCallId from context
+      if (context?.toolCallId) {
+        searchResult.toolCallId = context.toolCallId
       }
 
       console.log('completed search')

@@ -14,54 +14,61 @@ function isValidUrl(url: string): boolean {
 }
 
 /**
- * Extract citation map from a message's tool parts
- * Looks for search tool outputs and combines their citation maps
+ * Extract citation maps from a message's tool parts
+ * Returns a map of toolCallId to citation map
  */
-export function extractCitationMap(
+export function extractCitationMaps(
   message: UIMessage
-): Record<number, SearchResultItem> | undefined {
-  if (!message.parts) return undefined
+): Record<string, Record<number, SearchResultItem>> {
+  const citationMaps: Record<string, Record<number, SearchResultItem>> = {}
 
-  const citationMap: Record<number, SearchResultItem> = {}
+  if (!message.parts) return citationMaps
 
   message.parts.forEach((part: any) => {
     // Check for search tool output
     if (
       part.type === 'tool-search' &&
       part.state === 'output-available' &&
-      part.output
+      part.output &&
+      part.toolCallId
     ) {
       const searchResults = part.output as SearchResults
       if (searchResults.citationMap) {
-        // Merge citation maps from multiple search tools
-        Object.assign(citationMap, searchResults.citationMap)
+        // Store citation map with toolCallId as key
+        citationMaps[part.toolCallId] = searchResults.citationMap
       }
     }
   })
 
-  return Object.keys(citationMap).length > 0 ? citationMap : undefined
+  return citationMaps
 }
 
 /**
- * Process citations in content, replacing [number](#) with proper URLs
+ * Process citations in content, replacing [number](#toolCallId) with proper URLs
  * while keeping the display as just [number]
  */
 export function processCitations(
   content: string,
-  citationMap?: Record<number, SearchResultItem>
+  citationMaps: Record<string, Record<number, SearchResultItem>>
 ): string {
-  if (!citationMap || !content) {
+  if (!citationMaps || !content || Object.keys(citationMaps).length === 0) {
     return content || ''
   }
 
-  // Replace [number](#) with [number](actual-url)
+  // Replace [number](#toolCallId) with [number](actual-url)
   // Also handle cases with spaces: [ number ]
-  return content.replace(/\[\s*(\d+)\s*\]\(#\)/g, (match, num) => {
+  return content.replace(/\[\s*(\d+)\s*\]\(#([^)]+)\)/g, (match, num, toolCallId) => {
     const citationNum = parseInt(num, 10)
 
     // Validate citation number bounds
     if (isNaN(citationNum) || citationNum < 1 || citationNum > 100) {
       return match
+    }
+
+    // Get the citation map for this toolCallId
+    const citationMap = citationMaps[toolCallId]
+    if (!citationMap) {
+      return match // Keep original if no citation map found for this toolCallId
     }
 
     const citation = citationMap[citationNum]

@@ -19,14 +19,14 @@ import 'katex/dist/katex.min.css'
 export function BotMessage({
   message,
   className,
-  citationMap
+  citationMaps
 }: {
   message: string
   className?: string
-  citationMap?: Record<number, SearchResultItem>
+  citationMaps?: Record<string, Record<number, SearchResultItem>>
 }) {
-  // Process citations to replace [number](#) with [number](actual-url)
-  const processedMessage = processCitations(message || '', citationMap)
+  // Process citations to replace [number](#toolCallId) with [number](actual-url)
+  const processedMessage = processCitations(message || '', citationMaps || {})
 
   // Check if the content contains LaTeX patterns
   const containsLaTeX = /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/.test(
@@ -79,7 +79,7 @@ export function BotMessage({
 
   if (containsLaTeX) {
     return (
-      <CitationProvider citationMap={citationMap}>
+      <CitationProvider citationMaps={citationMaps}>
         <div
           className={cn(
             'prose-sm prose-neutral prose-a:text-accent-foreground/50',
@@ -105,7 +105,7 @@ export function BotMessage({
   }
 
   return (
-    <CitationProvider citationMap={citationMap}>
+    <CitationProvider citationMaps={citationMaps}>
       <div
         className={cn(
           'prose-sm prose-neutral prose-a:text-accent-foreground/50',

@@ -23,7 +23,7 @@ export type AnswerSectionProps = {
     messageId: string,
     options?: ChatRequestOptions
   ) => Promise<void | string | null | undefined>
-  citationMap?: Record<number, SearchResultItem>
+  citationMaps?: Record<string, Record<number, SearchResultItem>>
 }
 
 export function AnswerSection({
@@ -35,7 +35,7 @@ export function AnswerSection({
   messageId,
   status,
   reload,
-  citationMap
+  citationMaps
 }: AnswerSectionProps) {
   const enableShare = process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined
 
@@ -48,7 +48,7 @@ export function AnswerSection({
 
   const message = content ? (
     <div className="flex flex-col gap-1">
-      <BotMessage message={content} citationMap={citationMap} />
+      <BotMessage message={content} citationMaps={citationMaps} />
       {showActions && (
         <MessageActions
           message={content} // Keep original message content for copy

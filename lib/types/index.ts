@@ -4,6 +4,7 @@ export type SearchResults = {
   videos?: SerperSearchResultItem[]
   number_of_results?: number
   query: string
+  toolCallId?: string // ID of the search tool call
   citationMap?: Record<number, SearchResultItem> // Maps citation number to search result
 }
 
