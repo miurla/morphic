@@ -36,7 +36,7 @@ export function SearchSection({
     tool.state === 'input-streaming' || tool.state === 'input-available'
   const searchResults: TypeSearchResults | undefined =
     tool.state === 'output-available' ? tool.output : undefined
-  const query = tool.input?.query
+  const query = tool.input?.query || ''
   const includeDomains = tool.input?.include_domains
   const includeDomainsString = includeDomains
     ? ` [${includeDomains.join(', ')}]`
@@ -59,6 +59,7 @@ export function SearchSection({
       <ToolArgsSection
         tool="search"
         number={searchResults ? totalResults : undefined}
+        isLoading={isLoading && isToolLoading}
       >{`${query}${includeDomainsString}`}</ToolArgsSection>
     </button>
   )
