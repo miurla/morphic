@@ -1,7 +1,7 @@
 import { tool } from 'ai'
 
 import { getSearchSchemaForModel } from '@/lib/schema/search'
-import { SearchResults } from '@/lib/types'
+import { SearchResultItem, SearchResults } from '@/lib/types'
 import { getBaseUrlString } from '@/lib/utils/url'
 
 import {
@@ -18,15 +18,18 @@ export function createSearchTool(fullModel: string) {
     description:
       'Search the web for information. For YouTube/video content, use type="general" with content_types:["video"] for optimal visual presentation with thumbnails.',
     inputSchema: getSearchSchemaForModel(fullModel),
-    execute: async ({
-      query,
-      type = 'optimized',
-      content_types = ['web'],
-      max_results = 20,
-      search_depth = 'basic', // Default for standard schema
-      include_domains = [],
-      exclude_domains = []
-    }) => {
+    execute: async (
+      {
+        query,
+        type = 'optimized',
+        content_types = ['web'],
+        max_results = 20,
+        search_depth = 'basic', // Default for standard schema
+        include_domains = [],
+        exclude_domains = []
+      },
+      context
+    ) => {
       // Ensure max_results is at least 10
       const minResults = 10
       const effectiveMaxResults = Math.max(
@@ -121,6 +124,20 @@ export function createSearchTool(fullModel: string) {
           images: [],
           number_of_results: 0
         }
+      }
+
+      // Add citation mapping and toolCallId to search results
+      if (searchResult.results && searchResult.results.length > 0) {
+        const citationMap: Record<number, SearchResultItem> = {}
+        searchResult.results.forEach((result, index) => {
+          citationMap[index + 1] = result // Citation numbers start at 1
+        })
+        searchResult.citationMap = citationMap
+      }
+
+      // Add toolCallId from context
+      if (context?.toolCallId) {
+        searchResult.toolCallId = context.toolCallId
       }
 
       console.log('completed search')

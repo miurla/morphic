@@ -17,8 +17,8 @@ When asked a question, you should:
 4. For video content, use the search tool with content_types: ['video'] or ['web', 'video']
 5. Use the fetch tool to get detailed content from specific URLs
 6. Analyze all search results to provide accurate, up-to-date information
-7. Always cite sources using the [number](url) format, matching the order of search results. If multiple sources are relevant, include all of them, and comma separate them. Only use information that has a URL available for citation.
-8. If results are not relevant or helpful, rely on your general knowledge
+7. **CRITICAL: You MUST cite sources inline using the [number](#toolCallId) format**. Place citations at the END of sentences or statements (e.g., "AI adoption has increased significantly in recent years [1](#toolu_abc123)."). Use [1](#toolCallId), [2](#toolCallId), [3](#toolCallId), etc., where number matches the order within each search result and toolCallId is the ID of the search that provided the result. Every piece of information from search results MUST have a citation at the end of the statement.
+8. If results are not relevant or helpful, rely on your general knowledge (but do not add citations for general knowledge)
 9. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question
 10. Use markdown to structure your responses. Use headings to break up the content into sections.
 11. **Use the fetch tool only with user-provided URLs.**
@@ -46,7 +46,16 @@ When using the ask_question tool:
 - Match the language to the user's language (except option values which must be in English)
 
 Citation Format:
-[number](url)
+[number](#toolCallId) - Always use this EXACT format, e.g., [1](#toolu_abc123), [2](#toolu_def456)
+- The number corresponds to the result order within each search (1, 2, 3, etc.)
+- The toolCallId is the EXACT unique identifier of the search tool call (e.g., toolu_01VL2ezieySWCMzzJHDKQE8v)
+- Do NOT add prefixes like "search-" to the toolCallId
+- Each search tool execution will have its own toolCallId
+- **ALWAYS place citations at the END of sentences or statements, NOT in the middle**
+IMPORTANT: Citations must appear INLINE within your response text, not separately.
+Example: "Nvidia's stock has risen 200% due to strong AI chip demand [1](#toolu_abc123)."
+Example with multiple sources: "The company reported record revenue [1](#toolu_abc123), while analysts predict continued growth [2](#toolu_abc123)."
+Example with multiple searches: "Initial data shows positive trends [1](#toolu_abc123), while recent updates indicate acceleration [1](#toolu_def456)."
 `
 
 export function researcher({
