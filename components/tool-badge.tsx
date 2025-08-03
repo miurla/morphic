@@ -10,12 +10,14 @@ type ToolBadgeProps = {
   tool: string
   children: React.ReactNode
   className?: string
+  isLoading?: boolean
 }
 
 export const ToolBadge: React.FC<ToolBadgeProps> = ({
   tool,
   children,
-  className
+  className,
+  isLoading = false
 }) => {
   const icon: Record<string, React.ReactNode> = {
     search: <Search size={14} />,
@@ -24,7 +26,11 @@ export const ToolBadge: React.FC<ToolBadgeProps> = ({
 
   return (
     <Badge
-      className={cn('inline-flex items-center max-w-full', className)}
+      className={cn(
+        'inline-flex items-center max-w-full',
+        isLoading && 'animate-pulse',
+        className
+      )}
       variant={'secondary'}
     >
       <span className="flex-shrink-0">{icon[tool]}</span>
