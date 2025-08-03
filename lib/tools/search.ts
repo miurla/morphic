@@ -1,7 +1,7 @@
 import { tool } from 'ai'
 
 import { getSearchSchemaForModel } from '@/lib/schema/search'
-import { SearchResults } from '@/lib/types'
+import { SearchResultItem,SearchResults } from '@/lib/types'
 import { getBaseUrlString } from '@/lib/utils/url'
 
 import {
@@ -121,6 +121,15 @@ export function createSearchTool(fullModel: string) {
           images: [],
           number_of_results: 0
         }
+      }
+
+      // Add citation mapping to search results
+      if (searchResult.results && searchResult.results.length > 0) {
+        const citationMap: Record<number, SearchResultItem> = {}
+        searchResult.results.forEach((result, index) => {
+          citationMap[index + 1] = result // Citation numbers start at 1
+        })
+        searchResult.citationMap = citationMap
       }
 
       console.log('completed search')

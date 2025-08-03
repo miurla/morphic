@@ -4,6 +4,7 @@ export type SearchResults = {
   videos?: SerperSearchResultItem[]
   number_of_results?: number
   query: string
+  citationMap?: Record<number, SearchResultItem> // Maps citation number to search result
 }
 
 // If enabled the include_images_description is true, the images will be an array of { url: string, description: string }

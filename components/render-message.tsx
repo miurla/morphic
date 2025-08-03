@@ -2,6 +2,7 @@ import { UseChatHelpers } from '@ai-sdk/react'
 
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
+import { extractCitationMap } from '@/lib/utils/citation'
 
 import { AnswerSection } from './answer-section'
 import { DataSection } from './data-section'
@@ -36,6 +37,8 @@ export function RenderMessage({
   onUpdateMessage,
   reload
 }: RenderMessageProps) {
+  // Extract citation map from the message's tool outputs
+  const citationMap = extractCitationMap(message)
   if (message.role === 'user') {
     return (
       <>
@@ -119,6 +122,7 @@ export function RenderMessage({
                 messageId={messageId}
                 reload={reload}
                 status={status}
+                citationMap={citationMap}
               />
             )
           case 'reasoning':

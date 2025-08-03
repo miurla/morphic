@@ -3,6 +3,7 @@
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ChatRequestOptions } from 'ai'
 
+import type { SearchResultItem } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { CollapsibleMessage } from './collapsible-message'
@@ -22,6 +23,7 @@ export type AnswerSectionProps = {
     messageId: string,
     options?: ChatRequestOptions
   ) => Promise<void | string | null | undefined>
+  citationMap?: Record<number, SearchResultItem>
 }
 
 export function AnswerSection({
@@ -32,7 +34,8 @@ export function AnswerSection({
   showActions = true, // Default to true for backward compatibility
   messageId,
   status,
-  reload
+  reload,
+  citationMap
 }: AnswerSectionProps) {
   const enableShare = process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined
 
@@ -45,7 +48,10 @@ export function AnswerSection({
 
   const message = content ? (
     <div className="flex flex-col gap-1">
-      <BotMessage message={content} />
+      <BotMessage 
+        message={content} 
+        citationMap={citationMap}
+      />
       {showActions && (
         <MessageActions
           message={content} // Keep original message content for copy

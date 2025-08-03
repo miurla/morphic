@@ -5,91 +5,106 @@ import rehypeKatex from 'rehype-katex'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 
+import type { SearchResultItem } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { processCitations } from '@/lib/utils/citation'
 
 import { CodeBlock } from './ui/codeblock'
 import { MemoizedReactMarkdown } from './ui/markdown'
+import { CitationProvider } from './citation-context'
 import { Citing } from './custom-link'
 
 import 'katex/dist/katex.min.css'
 
 export function BotMessage({
   message,
-  className
+  className,
+  citationMap
 }: {
   message: string
   className?: string
+  citationMap?: Record<number, SearchResultItem>
 }) {
+  // Process citations to replace [number](#) with [number](actual-url)
+  const processedMessage = processCitations(message || '', citationMap)
+  
   // Check if the content contains LaTeX patterns
   const containsLaTeX = /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/.test(
-    message || ''
+    processedMessage
   )
 
   // Modify the content to render LaTeX equations if LaTeX patterns are found
-  const processedData = preprocessLaTeX(message || '')
+  const processedData = preprocessLaTeX(processedMessage)
 
   if (containsLaTeX) {
     return (
-      <MemoizedReactMarkdown
-        rehypePlugins={[
-          [rehypeExternalLinks, { target: '_blank' }],
-          [rehypeKatex]
-        ]}
-        remarkPlugins={[remarkGfm, remarkMath]}
-        className={cn(
-          'prose-sm prose-neutral prose-a:text-accent-foreground/50',
-          className
-        )}
-      >
-        {processedData}
-      </MemoizedReactMarkdown>
+      <CitationProvider citationMap={citationMap}>
+        <MemoizedReactMarkdown
+          rehypePlugins={[
+            [rehypeExternalLinks, { target: '_blank' }],
+            [rehypeKatex]
+          ]}
+          remarkPlugins={[remarkGfm, remarkMath]}
+          className={cn(
+            'prose-sm prose-neutral prose-a:text-accent-foreground/50',
+            className
+          )}
+          components={{
+            a: Citing
+          }}
+        >
+          {processedData}
+        </MemoizedReactMarkdown>
+      </CitationProvider>
     )
   }
 
   return (
-    <MemoizedReactMarkdown
-      rehypePlugins={[[rehypeExternalLinks, { target: '_blank' }]]}
-      remarkPlugins={[remarkGfm]}
-      className={cn(
-        'prose-sm prose-neutral prose-a:text-accent-foreground/50',
-        className
-      )}
-      components={{
-        code({ node, inline, className, children, ...props }) {
-          if (children.length) {
-            if (children[0] == '▍') {
+    <CitationProvider citationMap={citationMap}>
+      <MemoizedReactMarkdown
+        rehypePlugins={[[rehypeExternalLinks, { target: '_blank' }]]}
+        remarkPlugins={[remarkGfm]}
+        className={cn(
+          'prose-sm prose-neutral prose-a:text-accent-foreground/50',
+          className
+        )}
+        components={{
+          code({ node, inline, className, children, ...props }) {
+            if (children.length) {
+              if (children[0] == '▍') {
+                return (
+                  <span className="mt-1 cursor-default animate-pulse">▍</span>
+                )
+              }
+
+              children[0] = (children[0] as string).replace('`▍`', '▍')
+            }
+
+            const match = /language-(\w+)/.exec(className || '')
+
+            if (inline) {
               return (
-                <span className="mt-1 cursor-default animate-pulse">▍</span>
+                <code className={className} {...props}>
+                  {children}
+                </code>
               )
             }
 
-            children[0] = (children[0] as string).replace('`▍`', '▍')
-          }
-
-          const match = /language-(\w+)/.exec(className || '')
-
-          if (inline) {
             return (
-              <code className={className} {...props}>
-                {children}
-              </code>
+              <CodeBlock
+                key={Math.random()}
+                language={(match && match[1]) || ''}
+                value={String(children).replace(/\n$/, '')}
+                {...props}
+              />
             )
-          }
-
-          return (
-            <CodeBlock
-              key={Math.random()}
-              language={(match && match[1]) || ''}
-              value={String(children).replace(/\n$/, '')}
-              {...props}
-            />
-          )
-        },
-        a: Citing
-      }}
-    >
-      {message}
-    </MemoizedReactMarkdown>
+          },
+          a: Citing
+        }}
+      >
+        {processedMessage}
+      </MemoizedReactMarkdown>
+    </CitationProvider>
   )
 }
 
