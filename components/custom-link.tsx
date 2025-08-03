@@ -1,4 +1,4 @@
-import { AnchorHTMLAttributes, DetailedHTMLProps, ReactNode } from 'react'
+import { AnchorHTMLAttributes, DetailedHTMLProps } from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -8,9 +8,7 @@ import { CitationLink } from './citation-link'
 type CustomLinkProps = Omit<
   DetailedHTMLProps<AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement>,
   'ref'
-> & {
-  children: ReactNode
-}
+>
 
 export function Citing({
   href,
