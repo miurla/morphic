@@ -368,43 +368,13 @@ export function mapDBPartToUIMessagePart(
 
         // Special handling for tool parts that maintain their type
         if (['search', 'fetch', 'question'].includes(toolName)) {
-          if (!part.tool_state) {
-            throw new Error(`tool_state is undefined for ${toolName}`)
-          }
-
-          switch (part.tool_state) {
-            case 'input-streaming':
-              return {
-                type: part.type as any,
-                state: 'input-streaming',
-                toolCallId: part.tool_toolCallId || '',
-                input: part[inputColumn]
-              }
-            case 'input-available':
-              return {
-                type: part.type as any,
-                state: 'input-available',
-                toolCallId: part.tool_toolCallId || '',
-                input: part[inputColumn]
-              }
-            case 'output-available':
-              return {
-                type: part.type as any,
-                state: 'output-available',
-                toolCallId: part.tool_toolCallId || '',
-                input: part[inputColumn],
-                output: part[outputColumn]
-              }
-            case 'output-error':
-              return {
-                type: part.type as any,
-                state: 'output-error',
-                toolCallId: part.tool_toolCallId || '',
-                input: part[inputColumn],
-                errorText: part.tool_errorText
-              }
-            default:
-              throw new Error(`Unknown tool state: ${part.tool_state}`)
+          return {
+            type: part.type as any,
+            toolCallId: part.tool_toolCallId || '',
+            state: part.tool_state || 'input-available',
+            input: part[inputColumn],
+            output: part[outputColumn],
+            errorText: part.tool_errorText
           }
         }
 
