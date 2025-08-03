@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import type { ModelMessage } from 'ai'
+import { describe, expect, it } from 'vitest'
 
 import { convertMessagesForAnthropic } from '../anthropic-message-conversion'
 
@@ -34,7 +34,7 @@ describe('convertMessagesForAnthropic', () => {
             type: 'tool-call',
             toolCallId: 'call_123',
             toolName: 'search',
-            args: { query: 'test' }
+            input: { query: 'search query' }
           },
           { type: 'text', text: 'Based on the results...' }
         ]
@@ -46,7 +46,7 @@ describe('convertMessagesForAnthropic', () => {
             type: 'tool-result',
             toolCallId: 'call_123',
             toolName: 'search',
-            result: { data: 'results' }
+            output: { type: 'json', value: { data: 'results' } }
           }
         ]
       }
@@ -64,7 +64,7 @@ describe('convertMessagesForAnthropic', () => {
           type: 'tool-call',
           toolCallId: 'call_123',
           toolName: 'search',
-          args: { query: 'test' }
+          input: { query: 'search query' }
         }
       ]
     })
@@ -85,7 +85,7 @@ describe('convertMessagesForAnthropic', () => {
             type: 'tool-call',
             toolCallId: 'call_123',
             toolName: 'search',
-            args: { query: 'test' }
+            input: { query: 'search query' }
           }
         ]
       },
@@ -96,7 +96,7 @@ describe('convertMessagesForAnthropic', () => {
             type: 'tool-result',
             toolCallId: 'call_123',
             toolName: 'search',
-            result: { data: 'results' }
+            output: { type: 'json', value: { data: 'results' } }
           }
         ]
       }
@@ -116,13 +116,13 @@ describe('convertMessagesForAnthropic', () => {
             type: 'tool-call',
             toolCallId: 'call_123',
             toolName: 'search',
-            args: { query: 'test' }
+            input: { query: 'search query' }
           },
           {
             type: 'tool-call',
             toolCallId: 'call_456',
             toolName: 'fetch',
-            args: { url: 'http://example.com' }
+            input: { url: 'https://example.com' }
           },
           { type: 'text', text: 'Here are the results...' }
         ]
@@ -134,7 +134,7 @@ describe('convertMessagesForAnthropic', () => {
             type: 'tool-result',
             toolCallId: 'call_123',
             toolName: 'search',
-            result: { data: 'search results' }
+            output: { type: 'json', value: { data: 'search results' } }
           }
         ]
       }
@@ -160,7 +160,7 @@ describe('convertMessagesForAnthropic', () => {
             type: 'tool-call',
             toolCallId: 'call_123',
             toolName: 'search',
-            args: { query: 'test' }
+            input: { query: 'search query' }
           }
         ]
       },
@@ -171,7 +171,7 @@ describe('convertMessagesForAnthropic', () => {
             type: 'tool-result',
             toolCallId: 'call_123',
             toolName: 'search',
-            result: { data: 'results' }
+            output: { type: 'json', value: { data: 'results' } }
           }
         ]
       }
@@ -188,17 +188,13 @@ describe('convertMessagesForAnthropic', () => {
         content: [{ type: 'text', text: 'Hello' }]
       },
       {
-        role: 'system',
-        content: [{ type: 'text', text: 'You are a helpful assistant' }]
-      },
-      {
         role: 'tool',
         content: [
           {
             type: 'tool-result',
             toolCallId: 'call_123',
             toolName: 'search',
-            result: { data: 'results' }
+            output: { type: 'json', value: { data: 'results' } }
           }
         ]
       }
@@ -230,7 +226,7 @@ describe('convertMessagesForAnthropic', () => {
             type: 'tool-call',
             toolCallId: 'call_123',
             toolName: 'search',
-            args: { query: 'test' }
+            input: { query: 'search query' }
           },
           { type: 'text', text: 'Based on the results...' }
         ]
@@ -263,7 +259,7 @@ describe('convertMessagesForAnthropic', () => {
             type: 'tool-call',
             toolCallId: 'call_123',
             toolName: 'search',
-            args: { query: 'test' }
+            input: { query: 'search query' }
           },
           { type: 'text', text: '   \n\t   ' } // Only whitespace
         ]
@@ -275,14 +271,14 @@ describe('convertMessagesForAnthropic', () => {
             type: 'tool-result',
             toolCallId: 'call_123',
             toolName: 'search',
-            result: { data: 'results' }
+            output: { type: 'json', value: { data: 'results' } }
           }
         ]
       }
     ]
 
     const result = convertMessagesForAnthropic(messages)
-    
+
     // Should not split because text after tool-call is whitespace only
     expect(result).toEqual(messages)
   })
