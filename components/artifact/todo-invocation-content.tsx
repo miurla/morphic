@@ -65,7 +65,7 @@ export function TodoInvocationContent({ part }: TodoInvocationContentProps) {
     <div className="space-y-4">
       {/* Summary */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span className="truncate">{part.output?.message || 'Todo List'}</span>
+        <span>{part.output?.message || 'Todo List'}</span>
         <span className="font-medium whitespace-nowrap">
           ({completedCount}/{totalCount})
         </span>

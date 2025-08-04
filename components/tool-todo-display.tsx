@@ -1,6 +1,6 @@
 import { Check, ListTodo } from 'lucide-react'
 
-import { TodoItem } from '@/lib/types/ai'
+import { Part, TodoItem } from '@/lib/types/ai'
 
 import { useArtifact } from './artifact/artifact-context'
 
@@ -44,14 +44,15 @@ export function ToolTodoDisplay({
 
   const handleClick = () => {
     if (state === 'output-available' && output) {
-      openArtifact({
-        type:
-          tool === 'todoWrite' ? 'tool-todoWrite' : ('tool-todoRead' as any),
+      const partType = tool === 'todoWrite' ? 'tool-todoWrite' : 'tool-todoRead'
+      const part: Part = {
+        type: partType as 'tool-todoWrite' | 'tool-todoRead',
         toolCallId: toolCallId,
-        state: state as any,
+        state: state,
         input: { todos: output.todos || [] },
         output: output
-      })
+      }
+      openArtifact(part)
     }
   }
 

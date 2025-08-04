@@ -17,9 +17,6 @@ export const todoItemSchema = z.object({
 
 export type TodoItem = z.infer<typeof todoItemSchema>
 
-// Global todos storage (persists during the session)
-let globalTodos: TodoItem[] = []
-
 // Schema for todo write tool
 export const todoWriteInputSchema = z.object({
   todos: z.array(todoItemSchema).describe('The complete list of todos'),
@@ -37,15 +34,17 @@ export const todoReadOutputSchema = z.object({
   totalCount: z.number()
 })
 
-// Create todo tools
+// Create todo tools with session-scoped storage
 export function createTodoTools() {
+  // Session-scoped todos storage - isolated per tool instance
+  let sessionTodos: TodoItem[] = []
   const todoWrite = tool({
     description:
       'Create or update todos to track progress on complex tasks. Use this to maintain a list of action items.',
     inputSchema: todoWriteInputSchema,
     execute: async ({ todos, progressMessage }) => {
-      // Update global todos - ensure priority is always set
-      globalTodos = todos.map(todo => ({
+      // Update session todos - ensure priority is always set
+      sessionTodos = todos.map(todo => ({
         ...todo,
         priority: todo.priority || 'medium'
       }))
@@ -59,7 +58,7 @@ export function createTodoTools() {
         message: progressMessage || `Updated ${totalCount} todos`,
         completedCount,
         totalCount,
-        todos: globalTodos
+        todos: sessionTodos
       }
     }
   })
@@ -68,13 +67,13 @@ export function createTodoTools() {
     description: 'Read the current list of todos and their status',
     inputSchema: z.object({}),
     execute: async () => {
-      const completedCount = globalTodos.filter(
-        t => t.status === 'completed'
+      const completedCount = sessionTodos.filter(
+        (t: TodoItem) => t.status === 'completed'
       ).length
-      const totalCount = globalTodos.length
+      const totalCount = sessionTodos.length
 
       return {
-        todos: globalTodos,
+        todos: sessionTodos,
         summary:
           totalCount > 0
             ? `${completedCount} of ${totalCount} tasks completed`
