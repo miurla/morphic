@@ -87,18 +87,17 @@ export function ChatArtifactContainer({
         <div className="flex-1 flex flex-col">{children}</div>
 
         {/* Resize Handle */}
-        <div
-          className={cn(
-            'w-1 mx-0.5 my-6 hover:bg-border transition-colors duration-200 cursor-col-resize select-none relative',
-            state.isOpen && state.part
-              ? 'opacity-100'
-              : 'opacity-0 pointer-events-none',
-            isResizing && 'bg-border/50'
-          )}
-          onMouseDown={startResize}
-        >
-          <div className="absolute inset-0 -left-2 -right-2" />
-        </div>
+        {state.isOpen && state.part && (
+          <div
+            className={cn(
+              'w-1 mx-0.5 my-6 hover:bg-border transition-colors duration-200 cursor-col-resize select-none relative',
+              isResizing && 'bg-border/50'
+            )}
+            onMouseDown={startResize}
+          >
+            <div className="absolute inset-0 -left-2 -right-2" />
+          </div>
+        )}
 
         {/* Right Panel - Independent with own animation */}
         <div
