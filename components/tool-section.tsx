@@ -7,6 +7,7 @@ import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import FetchSection from './fetch-section'
 import { QuestionConfirmation } from './question-confirmation'
 import { SearchSection } from './search-section'
+import { ToolTodoDisplay } from './tool-todo-display'
 
 interface ToolSectionProps {
   tool: ToolPart
@@ -80,6 +81,28 @@ export function ToolSection({
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           status={status}
+        />
+      )
+    case 'tool-todoWrite':
+      return (
+        <ToolTodoDisplay
+          tool="todoWrite"
+          state={tool.state}
+          input={tool.input}
+          output={tool.output}
+          errorText={tool.errorText}
+          toolCallId={tool.toolCallId}
+        />
+      )
+    case 'tool-todoRead':
+      return (
+        <ToolTodoDisplay
+          tool="todoRead"
+          state={tool.state}
+          input={tool.input}
+          output={tool.output}
+          errorText={tool.errorText}
+          toolCallId={tool.toolCallId}
         />
       )
     default:

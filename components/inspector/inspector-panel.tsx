@@ -1,6 +1,12 @@
 'use client'
 
-import { LightbulbIcon, MessageSquare, Minimize2, Search } from 'lucide-react'
+import {
+  LightbulbIcon,
+  ListTodo,
+  MessageSquare,
+  Minimize2,
+  Search
+} from 'lucide-react'
 
 import { Separator } from '@/components/ui/separator'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -23,6 +29,12 @@ export function InspectorPanel() {
         return {
           icon: <Search size={18} />,
           title: toolName
+        }
+      case 'tool-todoWrite':
+      case 'tool-todoRead':
+        return {
+          icon: <ListTodo size={18} />,
+          title: 'Todo List'
         }
       case 'reasoning':
         return {

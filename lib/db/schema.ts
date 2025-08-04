@@ -129,6 +129,12 @@ export const parts = pgTable(
     tool_question_input: json('tool_question_input').$type<any>(),
     tool_question_output: json('tool_question_output').$type<any>(),
 
+    // Todo tool columns
+    tool_todoWrite_input: json('tool_todoWrite_input').$type<any>(),
+    tool_todoWrite_output: json('tool_todoWrite_output').$type<any>(),
+    tool_todoRead_input: json('tool_todoRead_input').$type<any>(),
+    tool_todoRead_output: json('tool_todoRead_output').$type<any>(),
+
     // Dynamic tools (includes MCP and other runtime-defined tools)
     tool_dynamic_input: json('tool_dynamic_input').$type<any>(),
     tool_dynamic_output: json('tool_dynamic_output').$type<any>(),

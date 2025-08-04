@@ -3,6 +3,10 @@ import type { InferUITool, UIMessage as AIMessage } from 'ai'
 import { fetchTool } from '@/lib/tools/fetch'
 import { askQuestionTool } from '@/lib/tools/question'
 import { searchTool } from '@/lib/tools/search'
+import { type TodoItem } from '@/lib/tools/todo'
+
+// Re-export TodoItem for external use
+export type { TodoItem }
 
 export type UIMessage<
   TMetadata = unknown,
@@ -60,4 +64,23 @@ export type ToolPart<T extends keyof UITools = keyof UITools> = {
   errorText?: string
 }
 
-export type Part = TextPart | ReasoningPart | ToolPart
+// Extended tool parts for specific tools
+export type TodoToolPart = {
+  type: 'tool-todoWrite' | 'tool-todoRead'
+  toolCallId: string
+  state:
+    | 'input-streaming'
+    | 'input-available'
+    | 'output-available'
+    | 'output-error'
+  input?: { todos?: TodoItem[] }
+  output?: {
+    todos?: TodoItem[]
+    message?: string
+    completedCount?: number
+    totalCount?: number
+  }
+  errorText?: string
+}
+
+export type Part = TextPart | ReasoningPart | ToolPart | TodoToolPart

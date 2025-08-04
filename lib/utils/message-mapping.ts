@@ -96,6 +96,26 @@ function isExtendedToolPart(part: any): part is ExtendedToolPart {
   )
 }
 
+// Helper function to create tool part mapping
+function createToolPartMapping(
+  basePart: Omit<DBMessagePart, 'type'>,
+  part: ExtendedToolPart,
+  toolName: string
+): DBMessagePart {
+  const inputColumn = `tool_${toolName}_input` as keyof DBMessagePart
+  const outputColumn = `tool_${toolName}_output` as keyof DBMessagePart
+
+  return {
+    ...basePart,
+    type: part.type,
+    tool_toolCallId: part.toolCallId || generateId(),
+    tool_state: part.state || ('input-available' as ToolState),
+    tool_errorText: part.errorText,
+    [inputColumn]: part.input,
+    [outputColumn]: part.output
+  } as DBMessagePart
+}
+
 /**
  * Convert UI message parts to DB format
  */
@@ -250,28 +270,41 @@ export function mapUIMessagePartsToDBParts(
         }
 
       // Tool-specific parts that are not tool-call or tool-result
+      // The following cases are tool parts with state tracking
       case 'tool-search':
-      case 'tool-fetch':
-      case 'tool-question':
-        // These are tool parts with state tracking
         if (!isExtendedToolPart(part)) {
           console.error('Invalid extended tool part:', part)
           return null
         }
-        const toolPartName = part.type.replace('tool-', '') // Remove 'tool-' prefix
-        const inputColumn = `tool_${toolPartName}_input` as keyof DBMessagePart
-        const outputColumn =
-          `tool_${toolPartName}_output` as keyof DBMessagePart
+        return createToolPartMapping(basePart, part, 'search')
 
-        return {
-          ...basePart,
-          type: part.type,
-          tool_toolCallId: part.toolCallId || generateId(),
-          tool_state: part.state || ('input-available' as ToolState),
-          tool_errorText: part.errorText,
-          [inputColumn]: part.input,
-          [outputColumn]: part.output
+      case 'tool-fetch':
+        if (!isExtendedToolPart(part)) {
+          console.error('Invalid extended tool part:', part)
+          return null
         }
+        return createToolPartMapping(basePart, part, 'fetch')
+
+      case 'tool-question':
+        if (!isExtendedToolPart(part)) {
+          console.error('Invalid extended tool part:', part)
+          return null
+        }
+        return createToolPartMapping(basePart, part, 'question')
+
+      case 'tool-todoWrite':
+        if (!isExtendedToolPart(part)) {
+          console.error('Invalid extended tool part:', part)
+          return null
+        }
+        return createToolPartMapping(basePart, part, 'todoWrite')
+
+      case 'tool-todoRead':
+        if (!isExtendedToolPart(part)) {
+          console.error('Invalid extended tool part:', part)
+          return null
+        }
+        return createToolPartMapping(basePart, part, 'todoRead')
 
       // Data parts
       default:
@@ -493,6 +526,88 @@ export function mapDBPartToUIMessagePart(
           }
         }
 
+        if (toolName === 'todoWrite') {
+          if (!part.tool_state) {
+            throw new Error(`tool_state is undefined for ${toolName}`)
+          }
+
+          switch (part.tool_state) {
+            case 'input-streaming':
+              return {
+                type: 'tool-todoWrite',
+                state: 'input-streaming',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_todoWrite_input!
+              }
+            case 'input-available':
+              return {
+                type: 'tool-todoWrite',
+                state: 'input-available',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_todoWrite_input!
+              }
+            case 'output-available':
+              return {
+                type: 'tool-todoWrite',
+                state: 'output-available',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_todoWrite_input!,
+                output: part.tool_todoWrite_output!
+              }
+            case 'output-error':
+              return {
+                type: 'tool-todoWrite',
+                state: 'output-error',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_todoWrite_input!,
+                errorText: part.tool_errorText!
+              }
+            default:
+              throw new Error(`Unknown tool state: ${part.tool_state}`)
+          }
+        }
+
+        if (toolName === 'todoRead') {
+          if (!part.tool_state) {
+            throw new Error(`tool_state is undefined for ${toolName}`)
+          }
+
+          switch (part.tool_state) {
+            case 'input-streaming':
+              return {
+                type: 'tool-todoRead',
+                state: 'input-streaming',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_todoRead_input!
+              }
+            case 'input-available':
+              return {
+                type: 'tool-todoRead',
+                state: 'input-available',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_todoRead_input!
+              }
+            case 'output-available':
+              return {
+                type: 'tool-todoRead',
+                state: 'output-available',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_todoRead_input!,
+                output: part.tool_todoRead_output!
+              }
+            case 'output-error':
+              return {
+                type: 'tool-todoRead',
+                state: 'output-error',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_todoRead_input!,
+                errorText: part.tool_errorText!
+              }
+            default:
+              throw new Error(`Unknown tool state: ${part.tool_state}`)
+          }
+        }
+
         // Standard tool-call/tool-result pattern
         if (
           part.tool_state === 'input-available' ||
@@ -554,7 +669,9 @@ function getToolNameFromType(toolName: string): string {
     search: 'search',
     fetch: 'fetch',
     askQuestion: 'question',
-    question: 'question'
+    question: 'question',
+    todoWrite: 'todoWrite',
+    todoRead: 'todoRead'
   }
 
   // For dynamic tools (MCP and others)
@@ -593,6 +710,8 @@ function getOriginalToolName(dbToolName: string): string {
     search: 'search',
     fetch: 'fetch',
     question: 'askQuestion',
+    todoWrite: 'todoWrite',
+    todoRead: 'todoRead',
     dynamic: 'dynamic' // For dynamic tools, the actual tool name is stored separately
   }
 
