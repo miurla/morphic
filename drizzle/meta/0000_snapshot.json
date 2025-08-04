@@ -1,5 +1,5 @@
 {
-  "id": "1a87e5a3-280e-4953-ac53-2221e33657b2",
+  "id": "bd2133a6-1281-44a1-8619-c1f0407dfb77",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -296,6 +296,30 @@
         },
         "tool_question_output": {
           "name": "tool_question_output",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tool_todoWrite_input": {
+          "name": "tool_todoWrite_input",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tool_todoWrite_output": {
+          "name": "tool_todoWrite_output",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tool_todoRead_input": {
+          "name": "tool_todoRead_input",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tool_todoRead_output": {
+          "name": "tool_todoRead_output",
           "type": "json",
           "primaryKey": false,
           "notNull": false

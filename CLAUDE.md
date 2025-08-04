@@ -133,6 +133,6 @@ Models are defined in `public/config/models.json` with:
 ## Database Management
 
 - Run `bun migrate` to apply database migrations
-- Migrations are located in `/lib/db/migrations/`
+- Migrations are located in `/drizzle/` directory
 - Schema changes should be made in `/lib/db/schema.ts`
 - Use Drizzle Kit for generating migrations
