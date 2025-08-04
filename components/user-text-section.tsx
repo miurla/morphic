@@ -49,7 +49,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
   return (
     <CollapsibleMessage role="user">
       <div
-        className="flex-1 break-words w-full group outline-none relative"
+        className="flex-1 break-words w-full group outline-hidden relative"
         tabIndex={0}
       >
         {isEditing ? (
@@ -58,7 +58,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
               value={editedContent}
               onChange={e => setEditedContent(e.target.value)}
               autoFocus
-              className="resize-none flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="resize-none flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
               minRows={2}
               maxRows={10}
             />

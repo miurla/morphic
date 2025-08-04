@@ -22,9 +22,9 @@ export const UploadedFileList = React.memo(function UploadedFileList({
         {files.map((it, index) => (
           <div
             key={index}
-            className="relative w-20 flex-shrink-0 flex flex-col items-center"
+            className="relative w-20 shrink-0 flex flex-col items-center"
           >
-            <div className="relative w-20 aspect-[7/5] rounded-lg overflow-hidden shadow border bg-muted/20 dark:bg-muted/10">
+            <div className="relative w-20 aspect-7/5 rounded-lg overflow-hidden shadow-sm border bg-muted/20 dark:bg-muted/10">
               {it.file.type.startsWith('image/') ? (
                 <Image
                   src={URL.createObjectURL(it.file)}

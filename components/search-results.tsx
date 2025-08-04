@@ -48,7 +48,7 @@ export function SearchResults({
           >
             <Card className="w-full hover:bg-muted/50 transition-colors">
               <CardContent className="p-2 flex items-start space-x-2">
-                <Avatar className="h-4 w-4 mt-1 flex-shrink-0">
+                <Avatar className="h-4 w-4 mt-1 shrink-0">
                   <AvatarImage
                     src={`https://www.google.com/s2/favicons?domain=${
                       new URL(result.url).hostname
@@ -59,7 +59,7 @@ export function SearchResults({
                     {new URL(result.url).hostname[0]}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-grow overflow-hidden space-y-0.5">
+                <div className="grow overflow-hidden space-y-0.5">
                   <p className="text-sm font-medium line-clamp-1">
                     {result.title || new URL(result.url).pathname}
                   </p>
@@ -89,7 +89,7 @@ export function SearchResults({
           <Link href={result.url} passHref target="_blank">
             <Card className="flex-1 h-full hover:bg-muted/50 transition-colors">
               <CardContent className="p-2 flex flex-col justify-between h-full">
-                <p className="text-xs line-clamp-2 min-h-[2rem]">
+                <p className="text-xs line-clamp-2 min-h-8">
                   {result.title || result.content}
                 </p>
                 <div className="mt-2 flex items-center space-x-1">

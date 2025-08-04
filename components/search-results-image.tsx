@@ -134,7 +134,7 @@ export const SearchResultsImageSection: React.FC<
                         src={image.url}
                         alt={`Image ${actualIndex + 1}`}
                         // Apply specific or default rounding
-                        className={`h-full w-full object-cover shadow ${cornerClasses}`}
+                        className={`h-full w-full object-cover shadow-sm ${cornerClasses}`}
                         onError={e =>
                           (e.currentTarget.src =
                             '/images/placeholder-image.png')
@@ -189,10 +189,10 @@ export const SearchResultsImageSection: React.FC<
                   </CarouselContent>
                   {convertedImages.length > 1 && (
                     <div className="absolute inset-8 flex items-center justify-between p-4">
-                      <CarouselPrevious className="w-10 h-10 rounded-full shadow focus:outline-none">
+                      <CarouselPrevious className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden">
                         <span className="sr-only">Previous</span>
                       </CarouselPrevious>
-                      <CarouselNext className="w-10 h-10 rounded-full shadow focus:outline-none">
+                      <CarouselNext className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden">
                         <span className="sr-only">Next</span>
                       </CarouselNext>
                     </div>

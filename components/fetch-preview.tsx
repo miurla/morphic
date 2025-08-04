@@ -41,7 +41,7 @@ export function FetchPreview({
       <div className="p-3 bg-card border border-border rounded-lg">
         <div className="flex items-center justify-between gap-2 w-full">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <Globe className="w-4 h-4 text-muted-foreground animate-pulse flex-shrink-0" />
+            <Globe className="w-4 h-4 text-muted-foreground animate-pulse shrink-0" />
             <span
               className="text-sm text-foreground font-medium block truncate min-w-0"
               title={getPageTitle()}
@@ -61,7 +61,7 @@ export function FetchPreview({
     return (
       <div className="p-3 bg-card border border-destructive rounded-lg">
         <div className="flex items-center gap-2 w-full">
-          <Globe className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
           <span className="text-sm text-destructive block flex-1 truncate min-w-0">
             Failed to retrieve: {error}
           </span>
@@ -84,7 +84,7 @@ export function FetchPreview({
             <img
               src={favicon}
               alt="Favicon"
-              className="w-4 h-4 flex-shrink-0"
+              className="w-4 h-4 shrink-0"
               onError={e => {
                 e.currentTarget.style.display = 'none'
                 e.currentTarget.nextElementSibling?.classList.remove('hidden')
@@ -92,7 +92,7 @@ export function FetchPreview({
             />
           )}
           <Globe
-            className={`w-4 h-4 text-muted-foreground flex-shrink-0 ${
+            className={`w-4 h-4 text-muted-foreground shrink-0 ${
               favicon ? 'hidden' : ''
             }`}
           />
@@ -103,7 +103,7 @@ export function FetchPreview({
             {getPageTitle()}
           </span>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+        <div className="flex items-center gap-2 shrink-0 ml-2">
           {contentLength && contentLength > 0 && (
             <span className="text-xs text-muted-foreground whitespace-nowrap">
               {contentLength > 1000
@@ -114,7 +114,7 @@ export function FetchPreview({
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             {fetchType}
           </span>
-          <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
         </div>
       </div>
     </div>

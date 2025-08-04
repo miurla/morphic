@@ -86,7 +86,7 @@ export const CitationLink = memo(function CitationLink({
           {citationData ? (
             <div className="space-y-2">
               <div className="flex items-start space-x-2">
-                <Avatar className="h-4 w-4 mt-0.5 flex-shrink-0">
+                <Avatar className="h-4 w-4 mt-0.5 shrink-0">
                   <AvatarImage
                     src={`https://www.google.com/s2/favicons?domain=${getHostname(
                       citationData.url

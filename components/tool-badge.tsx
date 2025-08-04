@@ -33,7 +33,7 @@ export const ToolBadge: React.FC<ToolBadgeProps> = ({
       )}
       variant={'secondary'}
     >
-      <span className="flex-shrink-0">{icon[tool]}</span>
+      <span className="shrink-0">{icon[tool]}</span>
       <span className="ml-1 truncate">{children}</span>
     </Badge>
   )
