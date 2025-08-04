@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1753666852574,
-      "tag": "0001_persistence_v5",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1753684227255,
-      "tag": "0003_rename_mcp_to_dynamic",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1753688930677,
-      "tag": "0004_rename_retrieve_to_fetch",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1753822953434,
-      "tag": "0005_remove_video_search",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1754133183602,
-      "tag": "0006_add_todo_tools",
+      "when": 1754303165189,
+      "tag": "0000_black_lifeguard",
       "breakpoints": true
     }
   ]
