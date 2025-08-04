@@ -82,7 +82,8 @@ export async function createChatStreamResponse(
         const researchAgent = researcher({
           model: context.modelId,
           searchMode,
-          abortSignal
+          abortSignal,
+          writer
         })
 
         // Convert to model messages and apply context window management

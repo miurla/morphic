@@ -3,6 +3,7 @@
 import { Part } from '@/lib/types/ai'
 
 import { ReasoningContent } from './reasoning-content'
+import { TodoInvocationContent } from './todo-invocation-content'
 import { ToolInvocationContent } from './tool-invocation-content'
 
 export function ArtifactContent({ part }: { part: Part | null }) {
@@ -13,6 +14,9 @@ export function ArtifactContent({ part }: { part: Part | null }) {
     case 'tool-fetch':
     case 'tool-askQuestion':
       return <ToolInvocationContent part={part} />
+    case 'tool-todoWrite':
+    case 'tool-todoRead':
+      return <TodoInvocationContent part={part as any} />
     case 'reasoning':
       return <ReasoningContent reasoning={part.text} />
     default:

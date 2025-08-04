@@ -3,6 +3,10 @@ import type { InferUITool, UIMessage as AIMessage } from 'ai'
 import { fetchTool } from '@/lib/tools/fetch'
 import { askQuestionTool } from '@/lib/tools/question'
 import { searchTool } from '@/lib/tools/search'
+import { type TodoItem } from '@/lib/tools/todo'
+
+// Re-export TodoItem for external use
+export type { TodoItem }
 
 export type UIMessage<
   TMetadata = unknown,

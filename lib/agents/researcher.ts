@@ -3,6 +3,7 @@ import { Experimental_Agent as Agent, stepCountIs } from 'ai'
 import { fetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
 import { createSearchTool } from '../tools/search'
+import { createTodoTools } from '../tools/todo'
 import { getModel } from '../utils/registry'
 
 const SYSTEM_PROMPT = `
@@ -56,16 +57,25 @@ IMPORTANT: Citations must appear INLINE within your response text, not separatel
 Example: "Nvidia's stock has risen 200% due to strong AI chip demand [1](#toolu_abc123)."
 Example with multiple sources: "The company reported record revenue [1](#toolu_abc123), while analysts predict continued growth [2](#toolu_abc123)."
 Example with multiple searches: "Initial data shows positive trends [1](#toolu_abc123), while recent updates indicate acceleration [1](#toolu_def456)."
+
+TASK MANAGEMENT:
+For complex queries requiring systematic investigation:
+- Use todoWrite to create and track tasks ONLY for complex, multi-faceted research
+- Simple queries (2-3 searches) do NOT need task tracking
+- Update task progress after every 2-3 tool calls
+- Mark all tasks as completed before finishing your work
 `
 
 export function researcher({
   model,
   searchMode,
-  abortSignal
+  abortSignal,
+  writer
 }: {
   model: string
   searchMode: boolean
   abortSignal?: AbortSignal
+  writer?: any
 }) {
   try {
     const currentDate = new Date().toLocaleString()
@@ -74,16 +84,34 @@ export function researcher({
     const searchTool = createSearchTool(model)
     const askQuestionTool = createQuestionTool(model)
 
+    // Create todo tools if writer is provided
+    const todoTools = writer ? createTodoTools() : {}
+
+    // Build tools object
+    const tools = {
+      search: searchTool,
+      fetch: fetchTool,
+      askQuestion: askQuestionTool,
+      ...todoTools
+    }
+
+    // Build activeTools array based on available tools
+    type ToolNames = keyof typeof tools
+    const activeToolsList: ToolNames[] = []
+
+    if (searchMode) {
+      activeToolsList.push('search', 'fetch')
+      if (writer && 'todoWrite' in todoTools) {
+        activeToolsList.push('todoWrite' as ToolNames, 'todoRead' as ToolNames)
+      }
+    }
+
     // Return an agent instance
     return new Agent({
       model: getModel(model),
       system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
-      tools: {
-        search: searchTool,
-        fetch: fetchTool,
-        askQuestion: askQuestionTool
-      },
-      activeTools: searchMode ? ['search', 'fetch'] : undefined,
+      tools,
+      activeTools: searchMode ? activeToolsList : undefined,
       stopWhen: searchMode ? stepCountIs(20) : stepCountIs(1),
       abortSignal
     })

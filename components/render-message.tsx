@@ -82,6 +82,8 @@ export function RenderMessage({
           case 'tool-search':
           case 'tool-fetch':
           case 'tool-askQuestion':
+          case 'tool-todoWrite':
+          case 'tool-todoRead':
             return (
               <ToolSection
                 key={`${messageId}-tool-${index}`}
@@ -145,6 +147,9 @@ export function RenderMessage({
                 onQuerySelect={onQuerySelect}
               />
             )
+          case 'data-todos':
+            // Handled by TodoPanel in ChatPanel
+            return null
           default:
             return null
         }
