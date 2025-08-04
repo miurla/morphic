@@ -72,11 +72,11 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
             </div>
           </div>
         ) : (
-          <div className="flex justify-between items-start">
-            <div className="flex-1">{content}</div>
+          <div className="relative">
+            <div className="pr-10">{content}</div>
             <div
               className={cn(
-                'absolute top-1 right-1 transition-opacity ml-2',
+                'absolute top-0 right-0 transition-opacity',
                 'opacity-0',
                 'group-focus-within:opacity-100',
                 'md:opacity-0',
