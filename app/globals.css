@@ -113,3 +113,79 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Heading styles for prose */
+  .prose h1 {
+    @apply text-3xl font-bold tracking-tight mt-10 mb-6;
+  }
+
+  .prose-sm h1 {
+    @apply text-2xl font-bold tracking-tight mt-8 mb-4;
+  }
+
+  .prose h2 {
+    @apply text-2xl font-semibold tracking-tight mt-8 mb-4;
+  }
+
+  .prose-sm h2 {
+    @apply text-xl font-semibold tracking-tight mt-6 mb-3;
+  }
+
+  .prose h3 {
+    @apply text-xl font-semibold tracking-tight mt-6 mb-3;
+  }
+
+  .prose-sm h3 {
+    @apply text-lg font-semibold tracking-tight mt-5 mb-2;
+  }
+
+  .prose h4 {
+    @apply text-lg font-medium tracking-tight mt-5 mb-2;
+  }
+
+  .prose-sm h4 {
+    @apply text-base font-medium tracking-tight mt-4 mb-2;
+  }
+
+  .prose h5 {
+    @apply text-base font-medium mt-4 mb-2;
+  }
+
+  .prose-sm h5 {
+    @apply text-sm font-medium mt-3 mb-1;
+  }
+
+  .prose h6 {
+    @apply text-sm font-medium mt-4 mb-2;
+  }
+
+  .prose-sm h6 {
+    @apply text-xs font-medium mt-3 mb-1;
+  }
+
+  /* Neutral theme styling for all headings */
+  .prose-neutral h1 {
+    @apply text-foreground border-b-2 border-border/50 pb-3;
+  }
+
+  .prose-neutral h2 {
+    @apply text-foreground/90 border-b border-border/40 pb-2;
+  }
+
+  .prose-neutral h3 {
+    @apply text-foreground/85;
+  }
+
+  .prose-neutral h4 {
+    @apply text-foreground/80;
+  }
+
+  .prose-neutral h5 {
+    @apply text-foreground/75;
+  }
+
+  .prose-neutral h6 {
+    @apply text-foreground/70;
+  }
+}
