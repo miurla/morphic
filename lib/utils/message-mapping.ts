@@ -96,6 +96,26 @@ function isExtendedToolPart(part: any): part is ExtendedToolPart {
   )
 }
 
+// Helper function to create tool part mapping
+function createToolPartMapping(
+  basePart: Omit<DBMessagePart, 'type'>,
+  part: ExtendedToolPart,
+  toolName: string
+): DBMessagePart {
+  const inputColumn = `tool_${toolName}_input` as keyof DBMessagePart
+  const outputColumn = `tool_${toolName}_output` as keyof DBMessagePart
+
+  return {
+    ...basePart,
+    type: part.type,
+    tool_toolCallId: part.toolCallId || generateId(),
+    tool_state: part.state || ('input-available' as ToolState),
+    tool_errorText: part.errorText,
+    [inputColumn]: part.input,
+    [outputColumn]: part.output
+  } as DBMessagePart
+}
+
 /**
  * Convert UI message parts to DB format
  */
@@ -250,81 +270,41 @@ export function mapUIMessagePartsToDBParts(
         }
 
       // Tool-specific parts that are not tool-call or tool-result
+      // The following cases are tool parts with state tracking
       case 'tool-search':
-        // These are tool parts with state tracking
         if (!isExtendedToolPart(part)) {
           console.error('Invalid extended tool part:', part)
           return null
         }
-        return {
-          ...basePart,
-          type: part.type,
-          tool_toolCallId: part.toolCallId || generateId(),
-          tool_state: part.state || ('input-available' as ToolState),
-          tool_errorText: part.errorText,
-          tool_search_input: part.input,
-          tool_search_output: part.output
-        }
+        return createToolPartMapping(basePart, part, 'search')
 
       case 'tool-fetch':
         if (!isExtendedToolPart(part)) {
           console.error('Invalid extended tool part:', part)
           return null
         }
-        return {
-          ...basePart,
-          type: part.type,
-          tool_toolCallId: part.toolCallId || generateId(),
-          tool_state: part.state || ('input-available' as ToolState),
-          tool_errorText: part.errorText,
-          tool_fetch_input: part.input,
-          tool_fetch_output: part.output
-        }
+        return createToolPartMapping(basePart, part, 'fetch')
 
       case 'tool-question':
         if (!isExtendedToolPart(part)) {
           console.error('Invalid extended tool part:', part)
           return null
         }
-        return {
-          ...basePart,
-          type: part.type,
-          tool_toolCallId: part.toolCallId || generateId(),
-          tool_state: part.state || ('input-available' as ToolState),
-          tool_errorText: part.errorText,
-          tool_question_input: part.input,
-          tool_question_output: part.output
-        }
+        return createToolPartMapping(basePart, part, 'question')
 
       case 'tool-todoWrite':
         if (!isExtendedToolPart(part)) {
           console.error('Invalid extended tool part:', part)
           return null
         }
-        return {
-          ...basePart,
-          type: part.type,
-          tool_toolCallId: part.toolCallId || generateId(),
-          tool_state: part.state || ('input-available' as ToolState),
-          tool_errorText: part.errorText,
-          tool_todoWrite_input: part.input,
-          tool_todoWrite_output: part.output
-        }
+        return createToolPartMapping(basePart, part, 'todoWrite')
 
       case 'tool-todoRead':
         if (!isExtendedToolPart(part)) {
           console.error('Invalid extended tool part:', part)
           return null
         }
-        return {
-          ...basePart,
-          type: part.type,
-          tool_toolCallId: part.toolCallId || generateId(),
-          tool_state: part.state || ('input-available' as ToolState),
-          tool_errorText: part.errorText,
-          tool_todoRead_input: part.input,
-          tool_todoRead_output: part.output
-        }
+        return createToolPartMapping(basePart, part, 'todoRead')
 
       // Data parts
       default:

@@ -64,4 +64,23 @@ export type ToolPart<T extends keyof UITools = keyof UITools> = {
   errorText?: string
 }
 
-export type Part = TextPart | ReasoningPart | ToolPart
+// Extended tool parts for specific tools
+export type TodoToolPart = {
+  type: 'tool-todoWrite' | 'tool-todoRead'
+  toolCallId: string
+  state:
+    | 'input-streaming'
+    | 'input-available'
+    | 'output-available'
+    | 'output-error'
+  input?: { todos?: TodoItem[] }
+  output?: {
+    todos?: TodoItem[]
+    message?: string
+    completedCount?: number
+    totalCount?: number
+  }
+  errorText?: string
+}
+
+export type Part = TextPart | ReasoningPart | ToolPart | TodoToolPart

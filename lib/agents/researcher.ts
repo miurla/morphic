@@ -1,4 +1,8 @@
-import { Experimental_Agent as Agent, stepCountIs } from 'ai'
+import {
+  Experimental_Agent as Agent,
+  stepCountIs,
+  UIMessageStreamWriter
+} from 'ai'
 
 import { fetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
@@ -75,7 +79,7 @@ export function researcher({
   model: string
   searchMode: boolean
   abortSignal?: AbortSignal
-  writer?: any
+  writer?: UIMessageStreamWriter
 }) {
   try {
     const currentDate = new Date().toLocaleString()

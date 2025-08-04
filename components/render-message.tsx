@@ -147,9 +147,6 @@ export function RenderMessage({
                 onQuerySelect={onQuerySelect}
               />
             )
-          case 'data-todos':
-            // Handled by TodoPanel in ChatPanel
-            return null
           default:
             return null
         }
