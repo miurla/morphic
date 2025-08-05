@@ -59,9 +59,7 @@ export function ToolTodoDisplay({
   return (
     <div
       className={`rounded-lg border bg-card ${isLoading ? 'animate-pulse' : ''} ${
-        state === 'output-available' && output
-          ? 'cursor-pointer hover:bg-accent/50 transition-colors'
-          : ''
+        state === 'output-available' && output ? 'cursor-pointer' : ''
       }`}
       onClick={handleClick}
     >

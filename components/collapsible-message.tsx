@@ -32,7 +32,7 @@ export function CollapsibleMessage({
   showBorder = true,
   showIcon = true
 }: CollapsibleMessageProps) {
-  const content = <div className="flex-1">{children}</div>
+  const content = children
 
   return (
     <div className="flex">
@@ -49,18 +49,13 @@ export function CollapsibleMessage({
       )}
 
       {isCollapsible ? (
-        <div
-          className={cn(
-            'flex-1 rounded-2xl p-4',
-            showBorder && 'border border-border/50'
-          )}
-        >
+        <div className={cn('flex-1 rounded-lg border bg-card cursor-pointer')}>
           <Collapsible
             open={isOpen}
             onOpenChange={onOpenChange}
             className="w-full"
           >
-            <div className="flex items-center justify-between w-full gap-2">
+            <div className="flex items-center justify-between w-full gap-2 px-3 py-2">
               {header && <div className="text-sm w-full">{header}</div>}
               <CollapsibleTrigger asChild>
                 <button
@@ -73,8 +68,8 @@ export function CollapsibleMessage({
               </CollapsibleTrigger>
             </div>
             <CollapsibleContent className="data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down">
-              <Separator className="my-4 border-border/50" />
-              {content}
+              <Separator className="my-2 border-border/50" />
+              <div className="px-3 pb-2">{content}</div>
             </CollapsibleContent>
           </Collapsible>
         </div>
