@@ -53,7 +53,7 @@ export function SearchSection({
     <button
       type="button"
       onClick={() => open(tool)}
-      className="flex items-center justify-between w-full text-left rounded-md p-1 -ml-1"
+      className="flex items-center justify-between w-full text-left rounded-md p-0.5 -ml-0.5 cursor-pointer"
       title="Open details"
     >
       <ToolArgsSection
