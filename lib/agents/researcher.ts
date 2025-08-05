@@ -100,7 +100,7 @@ export function researcher({
     // Build activeTools array based on available tools
     type ToolNames = keyof typeof tools
     const activeToolsList: ToolNames[] = ['search', 'fetch']
-    
+
     if (writer && 'todoWrite' in todoTools) {
       activeToolsList.push('todoWrite' as ToolNames, 'todoRead' as ToolNames)
     }
