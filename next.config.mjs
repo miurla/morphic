@@ -21,6 +21,29 @@ const nextConfig = {
         pathname: '/**' // Brave search cached images
       }
     ]
+  },
+  webpack: (config, { isServer }) => {
+    // Handle ESM packages that cause issues
+    config.module.rules.push({
+      test: /\.m?js$/,
+      include: /node_modules/,
+      type: 'javascript/auto',
+      resolve: {
+        fullySpecified: false
+      }
+    })
+
+    // Add fallback for problematic modules
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false
+      }
+    }
+
+    return config
   }
 }
 
