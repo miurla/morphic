@@ -207,6 +207,15 @@
       "providerId": "openai-compatible",
       "enabled": true,
       "toolCallType": "native"
-    }
+    },
+    {
+    "id": "anthropic/claude-4-sonnet",
+    "name": "Vercel Gateway Grok 3",
+    "provider": "gateway",
+    "providerId": "gateway",
+    "enabled": true,
+    "toolCallType": "native"
+  }
+
   ]
 }
