@@ -6,7 +6,11 @@ const nextConfig = {
     'remark-math',
     'rehype-katex',
     'rehype-external-links',
-    'decode-named-character-reference'
+    'decode-named-character-reference',
+    'character-entities',
+    'mdast-util-from-markdown',
+    'micromark',
+    'remark-parse'
   ],
   images: {
     remotePatterns: [
@@ -29,6 +33,14 @@ const nextConfig = {
         pathname: '/**' // Brave search cached images
       }
     ]
+  },
+  webpack: (config) => {
+    config.resolve.extensionAlias = {
+      '.js': ['.js', '.ts', '.tsx'],
+      '.mjs': ['.mjs', '.mts'],
+      '.cjs': ['.cjs', '.cts']
+    }
+    return config
   }
 }
 
