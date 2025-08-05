@@ -33,7 +33,6 @@ export async function createChatStreamResponse(
     message,
     model,
     chatId,
-    searchMode,
     userId,
     trigger,
     messageId,
@@ -81,7 +80,6 @@ export async function createChatStreamResponse(
         // Get the researcher agent
         const researchAgent = researcher({
           model: context.modelId,
-          searchMode,
           abortSignal,
           writer
         })

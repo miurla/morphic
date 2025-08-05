@@ -72,12 +72,10 @@ For complex queries requiring systematic investigation:
 
 export function researcher({
   model,
-  searchMode,
   abortSignal,
   writer
 }: {
   model: string
-  searchMode: boolean
   abortSignal?: AbortSignal
   writer?: UIMessageStreamWriter
 }) {
@@ -101,13 +99,10 @@ export function researcher({
 
     // Build activeTools array based on available tools
     type ToolNames = keyof typeof tools
-    const activeToolsList: ToolNames[] = []
-
-    if (searchMode) {
-      activeToolsList.push('search', 'fetch')
-      if (writer && 'todoWrite' in todoTools) {
-        activeToolsList.push('todoWrite' as ToolNames, 'todoRead' as ToolNames)
-      }
+    const activeToolsList: ToolNames[] = ['search', 'fetch']
+    
+    if (writer && 'todoWrite' in todoTools) {
+      activeToolsList.push('todoWrite' as ToolNames, 'todoRead' as ToolNames)
     }
 
     // Return an agent instance
@@ -115,8 +110,8 @@ export function researcher({
       model: getModel(model),
       system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
       tools,
-      activeTools: searchMode ? activeToolsList : undefined,
-      stopWhen: searchMode ? stepCountIs(20) : stepCountIs(1),
+      activeTools: activeToolsList,
+      stopWhen: stepCountIs(20),
       abortSignal
     })
   } catch (error) {

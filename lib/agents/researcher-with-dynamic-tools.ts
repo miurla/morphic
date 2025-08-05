@@ -73,11 +73,9 @@ import type { DynamicToolConfig } from '@/lib/types/dynamic-tools'
 
 export function researcherWithDynamicTools({
   model,
-  searchMode,
   dynamicTools = []
 }: {
   model: string
-  searchMode: boolean
   dynamicTools?: DynamicToolConfig[]
 }) {
   try {
@@ -119,14 +117,12 @@ export function researcherWithDynamicTools({
 
     // Get list of all tool names for activeTools
     const allToolNames = Object.keys(tools)
-    const activeToolNames = searchMode
-      ? allToolNames.filter(
-          name =>
-            ['search', 'fetch'].includes(name) ||
-            name.startsWith('mcp__') ||
-            name.startsWith('dynamic__')
-        )
-      : undefined
+    const activeToolNames = allToolNames.filter(
+      name =>
+        ['search', 'fetch'].includes(name) ||
+        name.startsWith('mcp__') ||
+        name.startsWith('dynamic__')
+    )
 
     // Return an agent instance
     return new Agent({
@@ -134,7 +130,7 @@ export function researcherWithDynamicTools({
       system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
       tools,
       activeTools: activeToolNames,
-      stopWhen: searchMode ? stepCountIs(10) : stepCountIs(1)
+      stopWhen: stepCountIs(10)
     })
   } catch (error) {
     console.error('Error in researcher with dynamic tools:', error)
