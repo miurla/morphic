@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: [
+    'react-markdown',
+    'remark-gfm',
+    'remark-math',
+    'rehype-katex',
+    'rehype-external-links',
+    'decode-named-character-reference'
+  ],
   images: {
     remotePatterns: [
       {
