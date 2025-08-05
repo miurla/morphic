@@ -19,7 +19,6 @@ import { IconLogo } from './ui/icons'
 import { EmptyScreen } from './empty-screen'
 import { FileUploadButton } from './file-upload-button'
 import { ModelSelector } from './model-selector'
-import { SearchModeToggle } from './search-mode-toggle'
 import { UploadedFileList } from './uploaded-file-list'
 
 interface ChatPanelProps {
@@ -209,7 +208,6 @@ export function ChatPanel({
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
               <ModelSelector models={models || []} />
-              <SearchModeToggle />
             </div>
             <div className="flex items-center gap-2">
               {messages.length > 0 && (
