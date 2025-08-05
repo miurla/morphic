@@ -1,17 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: [
-    'react-markdown',
-    'remark-gfm',
-    'remark-math',
-    'rehype-katex',
-    'rehype-external-links',
-    'decode-named-character-reference',
-    'character-entities',
-    'mdast-util-from-markdown',
-    'micromark',
-    'remark-parse'
-  ],
   images: {
     remotePatterns: [
       {
@@ -34,12 +22,27 @@ const nextConfig = {
       }
     ]
   },
-  webpack: (config) => {
-    config.resolve.extensionAlias = {
-      '.js': ['.js', '.ts', '.tsx'],
-      '.mjs': ['.mjs', '.mts'],
-      '.cjs': ['.cjs', '.cts']
+  webpack: (config, { isServer }) => {
+    // Handle ESM packages that cause issues
+    config.module.rules.push({
+      test: /\.m?js$/,
+      include: /node_modules/,
+      type: 'javascript/auto',
+      resolve: {
+        fullySpecified: false
+      }
+    })
+
+    // Add fallback for problematic modules
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false
+      }
     }
+
     return config
   }
 }
