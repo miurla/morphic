@@ -29,16 +29,8 @@ const DEFAULT_CHAT_TITLE = 'Untitled'
 export async function createChatStreamResponse(
   config: BaseStreamConfig
 ): Promise<Response> {
-  const {
-    message,
-    model,
-    chatId,
-    searchMode,
-    userId,
-    trigger,
-    messageId,
-    abortSignal
-  } = config
+  const { message, model, chatId, userId, trigger, messageId, abortSignal } =
+    config
   const modelId = `${model.providerId}:${model.id}`
 
   // Verify that chatId is provided
@@ -81,7 +73,6 @@ export async function createChatStreamResponse(
         // Get the researcher agent
         const researchAgent = researcher({
           model: context.modelId,
-          searchMode,
           abortSignal,
           writer
         })
