@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 
-import { Check, ChevronsUpDown, Lightbulb } from 'lucide-react'
+import { Check, ChevronsUpDown } from 'lucide-react'
 
 import { Model } from '@/lib/types/models'
 import { getCookie, setCookie } from '@/lib/utils/cookies'
-import { isReasoningModel } from '@/lib/utils/registry'
 
 import { createModelId } from '../lib/utils'
 
@@ -23,19 +22,17 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 
 function groupModelsByProvider(models: Model[]) {
-  return models
-    .filter(model => model.enabled)
-    .reduce(
-      (groups, model) => {
-        const provider = model.provider
-        if (!groups[provider]) {
-          groups[provider] = []
-        }
-        groups[provider].push(model)
-        return groups
-      },
-      {} as Record<string, Model[]>
-    )
+  return models.reduce(
+    (groups, model) => {
+      const provider = model.provider
+      if (!groups[provider]) {
+        groups[provider] = []
+      }
+      groups[provider].push(model)
+      return groups
+    },
+    {} as Record<string, Model[]>
+  )
 }
 
 interface ModelSelectorProps {
@@ -96,9 +93,6 @@ export function ModelSelector({ models }: ModelSelectorProps) {
                 className="bg-white rounded-full border"
               />
               <span className="text-xs font-medium">{selectedModel.name}</span>
-              {isReasoningModel(selectedModel.id) && (
-                <Lightbulb size={12} className="text-accent-blue-foreground" />
-              )}
             </div>
           ) : (
             'Select model'
