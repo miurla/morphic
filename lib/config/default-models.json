@@ -207,6 +207,14 @@
       "providerId": "openai-compatible",
       "enabled": true,
       "toolCallType": "native"
+    },
+    {
+      "id": "anthropic/claude-4-sonnet",
+      "name": "Anthropic: Claude 4 Sonnet",
+      "provider": "Vercel AI Gateway",
+      "providerId": "gateway",
+      "enabled": true,
+      "toolCallType": "native"
     }
   ]
 }
