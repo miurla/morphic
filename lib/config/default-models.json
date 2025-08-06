@@ -4,73 +4,56 @@
       "id": "openai/gpt-oss-120b",
       "name": "OpenAI: GPT-OSS 120b",
       "provider": "Vercel AI Gateway",
-      "providerId": "gateway",
-      "enabled": true,
-      "toolCallType": "native"
+      "providerId": "gateway"
     },
     {
       "id": "openai/gpt-oss-20b",
       "name": "OpenAI: GPT-OSS 20b",
       "provider": "Vercel AI Gateway",
-      "providerId": "gateway",
-      "enabled": true,
-      "toolCallType": "native"
+      "providerId": "gateway"
     },
     {
       "id": "anthropic/claude-4-sonnet",
       "name": "Anthropic: Claude 4 Sonnet",
       "provider": "Vercel AI Gateway",
-      "providerId": "gateway",
-      "enabled": true,
-      "toolCallType": "native"
+      "providerId": "gateway"
     },
     {
       "id": "gpt-4.1",
       "name": "GPT-4.1",
       "provider": "OpenAI",
-      "providerId": "openai",
-      "enabled": true,
-      "toolCallType": "native"
+      "providerId": "openai"
     },
     {
       "id": "claude-opus-4-1-20250805",
       "name": "Claude Opus 4.1",
       "provider": "Anthropic",
-      "providerId": "anthropic",
-      "enabled": true,
-      "toolCallType": "native"
+      "providerId": "anthropic"
     },
     {
       "id": "claude-sonnet-4-20250514",
       "name": "Claude Sonnet 4",
       "provider": "Anthropic",
-      "providerId": "anthropic",
-      "enabled": true,
-      "toolCallType": "native"
+      "providerId": "anthropic"
     },
     {
       "id": "models/gemini-2.5-pro",
       "name": "Gemini 2.5 Pro",
       "provider": "Google",
-      "providerId": "google",
-      "enabled": true,
-      "toolCallType": "manual"
+      "providerId": "google"
     },
     {
       "id": "models/gemini-2.5-flash",
       "name": "Gemini 2.5 Flash",
       "provider": "Google",
-      "providerId": "google",
-      "enabled": true,
-      "toolCallType": "manual"
+      "providerId": "google"
     },
     {
       "id": "<OPENAI_COMPATIBLE_MODEL>",
       "name": "<OPENAI_COMPATIBLE_MODEL>",
       "provider": "OpenAI Compatible",
-      "providerId": "openai-compatible",
-      "enabled": true,
-      "toolCallType": "native"
+      "providerId": "openai-compatible"
     }
   ]
 }
+
