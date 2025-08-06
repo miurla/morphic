@@ -64,10 +64,7 @@ export async function POST(req: Request) {
       }
     }
 
-    if (
-      !isProviderEnabled(selectedModel.providerId) ||
-      selectedModel.enabled === false
-    ) {
+    if (!isProviderEnabled(selectedModel.providerId)) {
       return new Response(
         `Selected provider is not enabled ${selectedModel.providerId}`,
         {
