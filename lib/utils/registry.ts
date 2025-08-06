@@ -2,6 +2,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { deepseek } from '@ai-sdk/deepseek'
 import { createFireworks, fireworks } from '@ai-sdk/fireworks'
+import { createGateway } from '@ai-sdk/gateway'
 import { google } from '@ai-sdk/google'
 import { groq } from '@ai-sdk/groq'
 import { createOpenAI, openai } from '@ai-sdk/openai'
@@ -34,7 +35,11 @@ export const registry = createProviderRegistry({
     apiKey: process.env.OPENAI_COMPATIBLE_API_KEY,
     baseURL: process.env.OPENAI_COMPATIBLE_API_BASE_URL
   }),
-  xai
+  xai,
+  // Add AI Gateway provider
+  gateway: createGateway({
+    apiKey: process.env.AI_GATEWAY_API_KEY
+  })
 })
 
 export function getModel(model: string): LanguageModel {
@@ -91,6 +96,8 @@ export function isProviderEnabled(providerId: string): boolean {
         !!process.env.OPENAI_COMPATIBLE_API_KEY &&
         !!process.env.OPENAI_COMPATIBLE_API_BASE_URL
       )
+    case 'gateway':
+      return !!process.env.AI_GATEWAY_API_KEY
     default:
       return false
   }
@@ -114,6 +121,18 @@ export function getToolCallModel(model?: string) {
       return getModel(`ollama:${ollamaModel}`)
     case 'google':
       return getModel('google:gemini-2.0-flash')
+    case 'gateway':
+      // For gateway models, we need to determine the underlying provider
+      // and use an appropriate tool call model
+      if (modelName?.includes('openai')) {
+        return getModel('gateway:openai/gpt-4o-mini')
+      } else if (modelName?.includes('anthropic')) {
+        return getModel('gateway:anthropic/claude-3-5-sonnet-20241022')
+      } else if (modelName?.includes('groq')) {
+        return getModel('gateway:groq/llama-3.1-8b-instant')
+      } else {
+        return getModel('gateway:openai/gpt-4o-mini')
+      }
     default:
       return getModel('openai:gpt-4o-mini')
   }
@@ -129,6 +148,15 @@ export function isToolCallSupported(model?: string) {
 
   if (provider === 'google') {
     return false
+  }
+
+  // For gateway models, check the underlying provider
+  if (provider === 'gateway') {
+    if (modelName?.includes('google')) {
+      return false
+    }
+    // Most other providers support tool calling
+    return true
   }
 
   // Deepseek R1 is not supported
