@@ -209,13 +209,12 @@
       "toolCallType": "native"
     },
     {
-    "id": "anthropic/claude-4-sonnet",
-    "name": "Anthropic: Claude 4 Sonnet (Vercel Gateway)",
-    "provider": "gateway",
-    "providerId": "gateway",
-    "enabled": true,
-    "toolCallType": "native"
-  }
-
+      "id": "anthropic/claude-4-sonnet",
+      "name": "Anthropic: Claude 4 Sonnet (Vercel Gateway)",
+      "provider": "gateway",
+      "providerId": "gateway",
+      "enabled": true,
+      "toolCallType": "native"
+    }
   ]
 }
