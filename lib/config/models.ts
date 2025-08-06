@@ -21,7 +21,7 @@ const getModelsUncached = async function (baseUrl: string): Promise<Model[]> {
 
     try {
       const response = await fetch(modelUrl, {
-        next: { revalidate: 0 },
+        next: { revalidate: 3600 },
         headers: {
           Accept: 'application/json'
         }
