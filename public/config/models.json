@@ -210,7 +210,7 @@
     },
     {
     "id": "anthropic/claude-4-sonnet",
-    "name": "Vercel Gateway Grok 3",
+    "name": "Anthropic: Claude 4 Sonnet (Vercel Gateway)",
     "provider": "gateway",
     "providerId": "gateway",
     "enabled": true,
