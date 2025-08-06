@@ -4,4 +4,3 @@ export interface Model {
   provider: string
   providerId: string
 }
-

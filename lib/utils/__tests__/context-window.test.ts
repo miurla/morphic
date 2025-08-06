@@ -14,9 +14,7 @@ describe('context-window', () => {
     id: 'gpt-4o-mini',
     name: 'GPT-4o mini',
     provider: 'OpenAI',
-    providerId: 'openai',
-    enabled: true,
-    toolCallType: 'native'
+    providerId: 'openai'
   }
 
   const createMessage = (
