@@ -135,8 +135,14 @@ export function RenderMessage({
                   reasoning: part.text,
                   isDone: index !== (message.parts?.length ?? 0) - 1
                 }}
-                isOpen={getIsOpen(messageId, part.type, hasNextPart)}
-                onOpenChange={open => onOpenChange(messageId, open)}
+                isOpen={getIsOpen(
+                  `${messageId}-reasoning-${index}`,
+                  part.type,
+                  hasNextPart
+                )}
+                onOpenChange={open =>
+                  onOpenChange(`${messageId}-reasoning-${index}`, open)
+                }
               />
             )
           case 'data-relatedQuestions':
