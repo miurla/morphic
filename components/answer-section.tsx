@@ -8,7 +8,7 @@ import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
-import { BotMessage } from './message'
+import { MarkdownMessage } from './message'
 import { MessageActions } from './message-actions'
 
 export type AnswerSectionProps = {
@@ -48,7 +48,7 @@ export function AnswerSection({
 
   const message = content ? (
     <div className="flex flex-col gap-1">
-      <BotMessage message={content} citationMaps={citationMaps} />
+      <MarkdownMessage message={content} citationMaps={citationMaps} />
       {showActions && (
         <MessageActions
           message={content} // Keep original message content for copy

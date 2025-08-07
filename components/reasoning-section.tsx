@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReasoningPart } from '@ai-sdk/provider-utils'
 import { Lightbulb, Loader2 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
@@ -8,7 +9,7 @@ import { useArtifact } from '@/components/artifact/artifact-context'
 
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
-import { BotMessage } from './message'
+import { MarkdownMessage } from './message'
 
 interface ReasoningContent {
   reasoning: string
@@ -31,7 +32,7 @@ export function ReasoningSection({
     <button
       type="button"
       onClick={() =>
-        open({ type: 'reasoning', text: content.reasoning } as any)
+        open({ type: 'reasoning', text: content.reasoning } as ReasoningPart)
       }
       className="flex items-center gap-2 w-full text-left rounded-md p-0.5 -ml-0.5 cursor-pointer"
       title="Open details"
@@ -67,7 +68,7 @@ export function ReasoningSection({
         showIcon={false}
       >
         <div className="[&_p]:text-sm [&_p]:text-muted-foreground">
-          <BotMessage message={content.reasoning} />
+          <MarkdownMessage message={content.reasoning} />
         </div>
       </CollapsibleMessage>
     </div>

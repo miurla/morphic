@@ -16,7 +16,7 @@ import { Citing } from './custom-link'
 
 import 'katex/dist/katex.min.css'
 
-export function BotMessage({
+export function MarkdownMessage({
   message,
   className,
   citationMaps
