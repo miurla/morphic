@@ -67,7 +67,7 @@ export function ReasoningSection({
         showIcon={false}
       >
         <div className="[&_p]:text-sm [&_p]:text-muted-foreground">
-          <BotMessage message={content.reasoning} className="" />
+          <BotMessage message={content.reasoning} />
         </div>
       </CollapsibleMessage>
     </div>
