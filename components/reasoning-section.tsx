@@ -1,13 +1,15 @@
 'use client'
 
-import { Check, Lightbulb, Loader2 } from 'lucide-react'
+import type { ReasoningPart } from '@ai-sdk/provider-utils'
+import { Lightbulb, Loader2 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 
-import { StatusIndicator } from './ui/status-indicator'
+import { useArtifact } from '@/components/artifact/artifact-context'
+
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
-import { BotMessage } from './message'
+import { MarkdownMessage } from './message'
 
 interface ReasoningContent {
   reasoning: string
@@ -25,28 +27,31 @@ export function ReasoningSection({
   isOpen,
   onOpenChange
 }: ReasoningSectionProps) {
+  const { open } = useArtifact()
   const reasoningHeader = (
-    <div className="flex items-center gap-2 w-full">
+    <button
+      type="button"
+      onClick={() =>
+        open({ type: 'reasoning', text: content.reasoning } as ReasoningPart)
+      }
+      className="flex items-center gap-2 w-full text-left rounded-md p-0.5 -ml-0.5 cursor-pointer"
+      title="Open details"
+    >
       <div className="w-full flex flex-col">
         <div className="flex items-center justify-between">
           <Badge className="flex items-center gap-0.5" variant="secondary">
             <Lightbulb size={16} />
             {!content.isDone ? 'Thinking...' : 'Thoughts'}
           </Badge>
-          {!content.isDone ? (
+          {!content.isDone && (
             <Loader2
               size={16}
               className="animate-spin text-muted-foreground/50"
             />
-          ) : (
-            <StatusIndicator
-              icon={Check}
-              iconClassName="text-green-500"
-            ></StatusIndicator>
           )}
         </div>
       </div>
-    </div>
+    </button>
   )
 
   if (!content) return <DefaultSkeleton />
@@ -62,10 +67,9 @@ export function ReasoningSection({
         showBorder={true}
         showIcon={false}
       >
-        <BotMessage
-          message={content.reasoning}
-          className="prose-p:text-muted-foreground"
-        />
+        <div className="[&_p]:text-sm [&_p]:text-muted-foreground">
+          <MarkdownMessage message={content.reasoning} />
+        </div>
       </CollapsibleMessage>
     </div>
   )

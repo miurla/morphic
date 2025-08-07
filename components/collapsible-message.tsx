@@ -49,7 +49,7 @@ export function CollapsibleMessage({
       )}
 
       {isCollapsible ? (
-        <div className={cn('flex-1 rounded-lg border bg-card cursor-pointer')}>
+        <div className={cn('flex-1 rounded-lg border bg-card')}>
           <Collapsible
             open={isOpen}
             onOpenChange={onOpenChange}
@@ -68,7 +68,7 @@ export function CollapsibleMessage({
               </CollapsibleTrigger>
             </div>
             <CollapsibleContent className="data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down">
-              <Separator className="my-2 border-border/50" />
+              <Separator className="mb-2 border-border/50" />
               <div className="px-3 pb-2">{content}</div>
             </CollapsibleContent>
           </Collapsible>

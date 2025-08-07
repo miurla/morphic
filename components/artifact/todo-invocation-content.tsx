@@ -2,27 +2,11 @@
 
 import { AlertCircle, Check } from 'lucide-react'
 
-import { TodoItem } from '@/lib/types/ai'
+import { TodoItem, ToolPart } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
 interface TodoInvocationContentProps {
-  part: {
-    type: 'tool-todoWrite' | 'tool-todoRead'
-    toolCallId: string
-    state:
-      | 'input-streaming'
-      | 'input-available'
-      | 'output-available'
-      | 'output-error'
-    input?: { todos?: TodoItem[] }
-    output?: {
-      todos?: TodoItem[]
-      message?: string
-      completedCount?: number
-      totalCount?: number
-    }
-    errorText?: string
-  }
+  part: ToolPart<'todoWrite'> | ToolPart<'todoRead'>
 }
 
 export function TodoInvocationContent({ part }: TodoInvocationContentProps) {
@@ -65,7 +49,13 @@ export function TodoInvocationContent({ part }: TodoInvocationContentProps) {
     <div className="space-y-4">
       {/* Summary */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>{part.output?.message || 'Todo List'}</span>
+        <span>
+          {part.output && 'message' in part.output
+            ? part.output.message
+            : part.output && 'summary' in part.output
+              ? part.output.summary
+              : 'Todo List'}
+        </span>
         <span className="font-medium whitespace-nowrap">
           ({completedCount}/{totalCount})
         </span>

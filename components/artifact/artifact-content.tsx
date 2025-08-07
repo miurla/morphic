@@ -1,13 +1,15 @@
 'use client'
 
-import { Part, TodoToolPart } from '@/lib/types/ai'
+import { Part, ToolPart } from '@/lib/types/ai'
 
 import { ReasoningContent } from './reasoning-content'
 import { TodoInvocationContent } from './todo-invocation-content'
 import { ToolInvocationContent } from './tool-invocation-content'
 
-// Type guard for TodoToolPart
-function isTodoToolPart(part: Part): part is TodoToolPart {
+// Type guard for Todo tool parts
+function isTodoToolPart(
+  part: Part
+): part is ToolPart<'todoWrite'> | ToolPart<'todoRead'> {
   return part.type === 'tool-todoWrite' || part.type === 'tool-todoRead'
 }
 
