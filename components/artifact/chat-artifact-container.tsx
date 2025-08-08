@@ -12,8 +12,9 @@ import { InspectorPanel } from '@/components/inspector/inspector-panel'
 import { useArtifact } from './artifact-context'
 
 const DEFAULT_WIDTH = 500
-const MIN_WIDTH = 400
+const MIN_WIDTH = 320
 const MAX_WIDTH = 800
+const CHAT_MIN_WIDTH = 360
 const RESIZE_OVERLAY_Z_INDEX = 9999
 
 export function ChatArtifactContainer({
@@ -32,14 +33,41 @@ export function ChatArtifactContainer({
     const savedWidth = localStorage.getItem('artifactPanelWidth')
     if (savedWidth) {
       const parsedWidth = parseInt(savedWidth, 10)
-      if (
-        !isNaN(parsedWidth) &&
-        parsedWidth >= MIN_WIDTH &&
-        parsedWidth <= MAX_WIDTH
-      ) {
-        setWidth(parsedWidth)
+      if (!isNaN(parsedWidth) && parsedWidth >= 0 && parsedWidth <= MAX_WIDTH) {
+        // Clamp against available space considering chat minimum width
+        const containerRect = containerRef.current?.getBoundingClientRect()
+        if (containerRect) {
+          const available = Math.max(0, containerRect.width - CHAT_MIN_WIDTH)
+          const allowedMax = Math.min(MAX_WIDTH, available)
+          const allowedMin =
+            allowedMax > 0 ? Math.min(MIN_WIDTH, allowedMax) : 0
+          const clamped = Math.min(
+            Math.max(parsedWidth, allowedMin),
+            allowedMax
+          )
+          setWidth(clamped)
+        } else {
+          setWidth(parsedWidth)
+        }
       }
     }
+  }, [])
+
+  // Keep width in bounds when container resizes (e.g., window resize)
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const cr = entry.contentRect
+        const available = Math.max(0, cr.width - CHAT_MIN_WIDTH)
+        const allowedMax = Math.min(MAX_WIDTH, available)
+        const allowedMin = allowedMax > 0 ? Math.min(MIN_WIDTH, allowedMax) : 0
+        setWidth(prev => Math.min(Math.max(prev, allowedMin), allowedMax))
+      }
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
   }, [])
 
   const startResize = useCallback((e: React.MouseEvent) => {
@@ -54,7 +82,13 @@ export function ChatArtifactContainer({
       const containerRect = containerRef.current?.getBoundingClientRect()
       if (containerRect) {
         const newWidth = containerRect.right - e.clientX
-        const clampedWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth))
+        const available = Math.max(0, containerRect.width - CHAT_MIN_WIDTH)
+        const allowedMax = Math.min(MAX_WIDTH, available)
+        const allowedMin = allowedMax > 0 ? Math.min(MIN_WIDTH, allowedMax) : 0
+        const clampedWidth = Math.min(
+          Math.max(newWidth, allowedMin),
+          allowedMax
+        )
         setWidth(clampedWidth)
         localStorage.setItem('artifactPanelWidth', clampedWidth.toString())
       }
@@ -74,7 +108,7 @@ export function ChatArtifactContainer({
   }, [isResizing])
 
   return (
-    <div className="flex-1 min-h-0 h-screen flex">
+    <div className="flex-1 min-h-0 min-w-0 h-screen flex">
       <div className="absolute p-4 z-50 transition-opacity duration-1000">
         {(!open || isMobileSidebar) && (
           <SidebarTrigger className="animate-fade-in" showIconLogo />
@@ -82,9 +116,12 @@ export function ChatArtifactContainer({
       </div>
 
       {/* Desktop: Independent panels like morphic-studio */}
-      <div ref={containerRef} className="hidden md:flex flex-1 overflow-hidden">
+      <div
+        ref={containerRef}
+        className="hidden md:flex flex-1 min-w-0 overflow-hidden"
+      >
         {/* Chat Panel - Independent container */}
-        <div className="flex-1 flex flex-col">{children}</div>
+        <div className="flex-1 min-w-0 flex flex-col">{children}</div>
 
         {/* Resize Handle */}
         {state.isOpen && state.part && (
