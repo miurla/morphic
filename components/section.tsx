@@ -111,9 +111,9 @@ export function ToolArgsSection({
   return (
     <Section
       size="sm"
-      className="py-0 flex items-center justify-between w-full gap-2"
+      className="py-0 flex items-center justify-between w-full gap-2 overflow-hidden"
     >
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 overflow-hidden">
         <ToolBadge tool={tool} isLoading={isLoading}>
           {children}
         </ToolBadge>
