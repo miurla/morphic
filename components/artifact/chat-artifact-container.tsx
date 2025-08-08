@@ -17,6 +17,24 @@ const MAX_WIDTH = 800
 const CHAT_MIN_WIDTH = 360
 const RESIZE_OVERLAY_Z_INDEX = 9999
 
+// Helper function to calculate allowed width bounds
+function getAllowedWidthBounds(containerWidth: number): {
+  allowedMin: number
+  allowedMax: number
+} {
+  const available = Math.max(0, containerWidth - CHAT_MIN_WIDTH)
+  const allowedMax = Math.min(MAX_WIDTH, available)
+
+  // If there's no space available, hide the panel entirely
+  if (allowedMax === 0) {
+    return { allowedMin: 0, allowedMax: 0 }
+  }
+
+  // Ensure minimum width doesn't exceed available space
+  const allowedMin = Math.min(MIN_WIDTH, allowedMax)
+  return { allowedMin, allowedMax }
+}
+
 export function ChatArtifactContainer({
   children
 }: {
@@ -33,14 +51,18 @@ export function ChatArtifactContainer({
     const savedWidth = localStorage.getItem('artifactPanelWidth')
     if (savedWidth) {
       const parsedWidth = parseInt(savedWidth, 10)
-      if (!isNaN(parsedWidth) && parsedWidth >= 0 && parsedWidth <= MAX_WIDTH) {
+      // Ensure parsedWidth is at least MIN_WIDTH to prevent invalid panel states
+      if (
+        !isNaN(parsedWidth) &&
+        parsedWidth >= MIN_WIDTH &&
+        parsedWidth <= MAX_WIDTH
+      ) {
         // Clamp against available space considering chat minimum width
         const containerRect = containerRef.current?.getBoundingClientRect()
         if (containerRect) {
-          const available = Math.max(0, containerRect.width - CHAT_MIN_WIDTH)
-          const allowedMax = Math.min(MAX_WIDTH, available)
-          const allowedMin =
-            allowedMax > 0 ? Math.min(MIN_WIDTH, allowedMax) : 0
+          const { allowedMin, allowedMax } = getAllowedWidthBounds(
+            containerRect.width
+          )
           const clamped = Math.min(
             Math.max(parsedWidth, allowedMin),
             allowedMax
@@ -59,10 +81,9 @@ export function ChatArtifactContainer({
     if (!el) return
     const ro = new ResizeObserver(entries => {
       for (const entry of entries) {
-        const cr = entry.contentRect
-        const available = Math.max(0, cr.width - CHAT_MIN_WIDTH)
-        const allowedMax = Math.min(MAX_WIDTH, available)
-        const allowedMin = allowedMax > 0 ? Math.min(MIN_WIDTH, allowedMax) : 0
+        const { allowedMin, allowedMax } = getAllowedWidthBounds(
+          entry.contentRect.width
+        )
         setWidth(prev => Math.min(Math.max(prev, allowedMin), allowedMax))
       }
     })
@@ -82,9 +103,9 @@ export function ChatArtifactContainer({
       const containerRect = containerRef.current?.getBoundingClientRect()
       if (containerRect) {
         const newWidth = containerRect.right - e.clientX
-        const available = Math.max(0, containerRect.width - CHAT_MIN_WIDTH)
-        const allowedMax = Math.min(MAX_WIDTH, available)
-        const allowedMin = allowedMax > 0 ? Math.min(MIN_WIDTH, allowedMax) : 0
+        const { allowedMin, allowedMax } = getAllowedWidthBounds(
+          containerRect.width
+        )
         const clampedWidth = Math.min(
           Math.max(newWidth, allowedMin),
           allowedMax
