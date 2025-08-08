@@ -49,14 +49,16 @@ export function CollapsibleMessage({
       )}
 
       {isCollapsible ? (
-        <div className={cn('flex-1 rounded-lg border bg-card')}>
+        <div className={cn('flex-1 rounded-lg border bg-card overflow-hidden')}>
           <Collapsible
             open={isOpen}
             onOpenChange={onOpenChange}
             className="w-full"
           >
-            <div className="flex items-center justify-between w-full gap-2 px-3 py-2">
-              {header && <div className="text-sm w-full">{header}</div>}
+            <div className="flex items-center justify-between w-full gap-2 px-3 py-2 overflow-hidden">
+              {header && (
+                <div className="text-sm w-full overflow-hidden">{header}</div>
+              )}
               <CollapsibleTrigger asChild>
                 <button
                   type="button"
