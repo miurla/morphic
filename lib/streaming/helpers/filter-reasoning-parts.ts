@@ -13,7 +13,7 @@ import { UIMessage } from 'ai'
 export function filterReasoningParts(messages: UIMessage[]): UIMessage[] {
   return messages.map(msg => {
     if (msg.parts && Array.isArray(msg.parts)) {
-      const filteredParts = msg.parts.filter((part: any) => {
+      const filteredParts = msg.parts.filter(part => {
         // Remove all reasoning parts (including empty ones)
         // These are displayed in the UI but should not be sent to the API
         return part.type !== 'reasoning'
