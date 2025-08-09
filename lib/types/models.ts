@@ -3,4 +3,5 @@ export interface Model {
   name: string
   provider: string
   providerId: string
+  providerOptions?: Record<string, any>
 }

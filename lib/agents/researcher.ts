@@ -70,12 +70,16 @@ For complex queries requiring systematic investigation:
 - Mark all tasks as completed before finishing your work
 `
 
+import { Model } from '@/lib/types/models'
+
 export function researcher({
   model,
+  modelConfig,
   abortSignal,
   writer
 }: {
   model: string
+  modelConfig?: Model
   abortSignal?: AbortSignal
   writer?: UIMessageStreamWriter
 }) {
@@ -112,7 +116,10 @@ export function researcher({
       tools,
       activeTools: activeToolsList,
       stopWhen: stepCountIs(20),
-      abortSignal
+      abortSignal,
+      ...(modelConfig?.providerOptions && {
+        providerOptions: modelConfig.providerOptions
+      })
     })
   } catch (error) {
     console.error('Error in researcher:', error)
