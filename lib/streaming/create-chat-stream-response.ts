@@ -18,6 +18,7 @@ import {
 } from '../utils/context-window'
 import { getTextFromParts } from '../utils/message-utils'
 
+import { filterReasoningParts } from './helpers/filter-reasoning-parts'
 import { handleStreamFinish } from './helpers/handle-stream-finish'
 import { prepareMessages } from './helpers/prepare-messages'
 import type { StreamContext } from './helpers/types'
@@ -78,8 +79,12 @@ export async function createChatStreamResponse(
           writer
         })
 
+        // Filter out reasoning parts from messages before converting to model messages
+        // OpenAI API requires reasoning messages to be followed by assistant messages
+        const filteredMessages = filterReasoningParts(messagesToModel)
+
         // Convert to model messages and apply context window management
-        let modelMessages = convertToModelMessages(messagesToModel)
+        let modelMessages = convertToModelMessages(filteredMessages)
 
         if (shouldTruncateMessages(modelMessages, model)) {
           const maxTokens = getMaxAllowedTokens(model)
