@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReasoningPart } from '@ai-sdk/provider-utils'
-import { Lightbulb, Loader2 } from 'lucide-react'
+import { Lightbulb } from 'lucide-react'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
 
@@ -32,17 +32,11 @@ export function ReasoningSection({
       onClick={() =>
         open({ type: 'reasoning', text: content.reasoning } as ReasoningPart)
       }
-      className="flex items-center gap-1 w-full text-left text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+      className={`flex items-center gap-1 w-full text-left text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer ${!content.isDone ? 'animate-pulse' : ''}`}
       title="Open details"
     >
       <Lightbulb size={14} />
       <span>{!content.isDone ? 'Thinking...' : 'Thoughts'}</span>
-      {!content.isDone && (
-        <Loader2
-          size={14}
-          className="animate-spin text-muted-foreground/50 ml-auto"
-        />
-      )}
     </button>
   )
 

@@ -73,6 +73,7 @@ export async function createChatStreamResponse(
         // Get the researcher agent
         const researchAgent = researcher({
           model: context.modelId,
+          modelConfig: model,
           abortSignal,
           writer
         })
