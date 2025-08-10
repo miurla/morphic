@@ -63,7 +63,7 @@ Bad follow-ups (avoid these):
       }
     ],
     abortSignal,
-    experimental_telemetry: { 
+    experimental_telemetry: {
       isEnabled: isTracingEnabled(),
       functionId: 'related-questions',
       metadata: {

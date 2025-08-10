@@ -59,11 +59,11 @@ export async function createChatStreamResponse(
   // Create parent trace ID for grouping all operations
   let parentTraceId: string | undefined
   let langfuse: Langfuse | undefined
-  
+
   if (isTracingEnabled()) {
     parentTraceId = randomUUID()
     langfuse = new Langfuse()
-    
+
     // Create parent trace with name "research"
     langfuse.trace({
       id: parentTraceId,
