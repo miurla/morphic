@@ -1,9 +1,6 @@
-import { eq } from 'drizzle-orm'
 import { Langfuse } from 'langfuse'
 
-import { chatCache } from '@/lib/cache/memory-cache'
-import { db } from '@/lib/db'
-import { messages } from '@/lib/db/schema'
+import { updateMessageFeedback } from '@/lib/actions/feedback'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 export async function POST(req: Request) {
@@ -46,37 +43,12 @@ export async function POST(req: Request) {
     // Flush to ensure the score is sent
     await langfuse.flushAsync()
 
-    // Update the message metadata with the feedback score
+    // Update the message metadata with the feedback score using the action
     if (messageId) {
-      try {
-        // First get the current message to preserve existing metadata and get chatId
-        const [currentMessage] = await db
-          .select({
-            metadata: messages.metadata,
-            chatId: messages.chatId
-          })
-          .from(messages)
-          .where(eq(messages.id, messageId))
-          .limit(1)
-
-        // Merge the feedback score with existing metadata
-        const updatedMetadata = {
-          ...(currentMessage?.metadata || {}),
-          feedbackScore: score
-        }
-
-        // Update the message with the new metadata
-        await db
-          .update(messages)
-          .set({ metadata: updatedMetadata })
-          .where(eq(messages.id, messageId))
-
-        // Invalidate cache for this chat to ensure fresh data is loaded
-        if (currentMessage?.chatId) {
-          chatCache.deletePattern(`${currentMessage.chatId}-`)
-        }
-      } catch (dbError) {
-        console.error('Error updating message metadata:', dbError)
+      const result = await updateMessageFeedback(messageId, score)
+      
+      if (!result.success) {
+        console.error('Error updating message feedback:', result.error)
         // Continue even if database update fails
       }
     }
