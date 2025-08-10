@@ -94,13 +94,22 @@ export async function submitFeedback(data: {
           ]
         }
 
-        await fetch(slackWebhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(slackMessage)
-        })
+        // Add timeout to prevent hanging if Slack is unresponsive
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 10000) // 10 seconds
+
+        try {
+          await fetch(slackWebhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(slackMessage),
+            signal: controller.signal
+          })
+        } finally {
+          clearTimeout(timeout)
+        }
       } catch (slackError) {
         // Log Slack error but don't fail the request
         console.error('Failed to send Slack notification:', slackError)
