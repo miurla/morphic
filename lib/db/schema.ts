@@ -5,6 +5,7 @@ import {
   index,
   integer,
   json,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -57,7 +58,9 @@ export const messages = pgTable(
       .notNull()
       .references(() => chats.id, { onDelete: 'cascade' }),
     role: varchar('role', { length: VARCHAR_LENGTH }).notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow()
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at'),
+    metadata: jsonb('metadata').$type<Record<string, any>>()
   },
   table => ({
     chatIdIdx: index('messages_chat_id_idx').on(table.chatId),

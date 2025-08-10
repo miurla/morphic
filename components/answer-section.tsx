@@ -4,7 +4,12 @@ import { UseChatHelpers } from '@ai-sdk/react'
 import { ChatRequestOptions } from 'ai'
 
 import type { SearchResultItem } from '@/lib/types'
-import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import type {
+  UIDataTypes,
+  UIMessage,
+  UIMessageMetadata,
+  UITools
+} from '@/lib/types/ai'
 
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
@@ -18,6 +23,7 @@ export type AnswerSectionProps = {
   chatId?: string
   showActions?: boolean
   messageId: string
+  metadata?: UIMessageMetadata
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   reload?: (
     messageId: string,
@@ -33,6 +39,7 @@ export function AnswerSection({
   chatId,
   showActions = true, // Default to true for backward compatibility
   messageId,
+  metadata,
   status,
   reload,
   citationMaps
@@ -53,6 +60,8 @@ export function AnswerSection({
         <MessageActions
           message={content} // Keep original message content for copy
           messageId={messageId}
+          traceId={metadata?.traceId}
+          feedbackScore={metadata?.feedbackScore}
           chatId={chatId}
           enableShare={enableShare}
           reload={handleReload}

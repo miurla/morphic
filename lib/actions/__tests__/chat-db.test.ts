@@ -65,7 +65,9 @@ const testMessageData: DBMessage = {
   id: commonMessageId,
   chatId: commonChatId,
   role: 'user',
-  createdAt: new Date(now)
+  createdAt: new Date(now),
+  updatedAt: null,
+  metadata: null
 }
 
 describe('Chat Actions - clearChats', () => {

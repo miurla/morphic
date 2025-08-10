@@ -1,6 +1,11 @@
 import { UseChatHelpers } from '@ai-sdk/react'
 
-import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import type {
+  UIDataTypes,
+  UIMessage,
+  UIMessageMetadata,
+  UITools
+} from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import { extractCitationMaps } from '@/lib/utils/citation'
 
@@ -122,6 +127,7 @@ export function RenderMessage({
                 chatId={chatId}
                 showActions={shouldShowActions}
                 messageId={messageId}
+                metadata={message.metadata as UIMessageMetadata | undefined}
                 reload={reload}
                 status={status}
                 citationMaps={citationMaps}
