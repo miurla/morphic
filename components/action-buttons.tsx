@@ -15,6 +15,9 @@ import { cn } from '@/lib/utils'
 
 import { Button } from './ui/button'
 
+// Constants for timing delays
+const FOCUS_OUT_DELAY_MS = 100 // Delay to ensure focus has actually moved
+
 interface ActionCategory {
   icon: LucideIcon
   label: string
@@ -85,12 +88,14 @@ const promptSamples: Record<string, string[]> = {
 interface ActionButtonsProps {
   onSelectPrompt: (prompt: string) => void
   onCategoryClick: (category: string) => void
+  inputRef?: React.RefObject<HTMLTextAreaElement>
   className?: string
 }
 
 export function ActionButtons({
   onSelectPrompt,
   onCategoryClick,
+  inputRef,
   className
 }: ActionButtonsProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
@@ -125,8 +130,7 @@ export function ActionButtons({
       ) {
         if (activeCategory) {
           // Check if click is not on the input field
-          const input = document.querySelector('textarea[name="input"]')
-          if (!input?.contains(e.target as Node)) {
+          if (!inputRef?.current?.contains(e.target as Node)) {
             resetToButtons()
           }
         }
@@ -137,15 +141,14 @@ export function ActionButtons({
       // Check if focus is moving outside both the container and input
       setTimeout(() => {
         const activeElement = document.activeElement
-        const input = document.querySelector('textarea[name="input"]')
         if (
           activeCategory &&
           !containerRef.current?.contains(activeElement) &&
-          activeElement !== input
+          activeElement !== inputRef?.current
         ) {
           resetToButtons()
         }
-      }, 100) // Small delay to ensure focus has actually moved
+      }, FOCUS_OUT_DELAY_MS)
     }
 
     document.addEventListener('keydown', handleEscape)
@@ -157,7 +160,7 @@ export function ActionButtons({
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('focusout', handleFocusOut)
     }
-  }, [activeCategory])
+  }, [activeCategory, inputRef])
 
   // Calculate max height needed for samples (4 items * ~40px + padding)
   const containerHeight = 'h-[180px]'

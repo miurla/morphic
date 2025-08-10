@@ -21,6 +21,9 @@ import { FileUploadButton } from './file-upload-button'
 import { ModelSelector } from './model-selector'
 import { UploadedFileList } from './uploaded-file-list'
 
+// Constants for timing delays
+const INPUT_UPDATE_DELAY_MS = 10 // Delay to ensure input value is updated before form submission
+
 interface ChatPanelProps {
   chatId: string
   input: string
@@ -292,7 +295,7 @@ export function ChatPanel({
               // Submit the form after a small delay to ensure the input is updated
               setTimeout(() => {
                 inputRef.current?.form?.requestSubmit()
-              }, 10)
+              }, INPUT_UPDATE_DELAY_MS)
             }}
             onCategoryClick={category => {
               // Set the category in the input
@@ -302,6 +305,7 @@ export function ChatPanel({
               // Focus the input
               inputRef.current?.focus()
             }}
+            inputRef={inputRef}
             className="mt-2"
           />
         )}
