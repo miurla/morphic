@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     // Update the message metadata with the feedback score using the action
     if (messageId) {
       const result = await updateMessageFeedback(messageId, score)
-      
+
       if (!result.success) {
         console.error('Error updating message feedback:', result.error)
         // Continue even if database update fails

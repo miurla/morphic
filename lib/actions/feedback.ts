@@ -60,14 +60,17 @@ export async function updateMessageFeedback(
     return { success: true }
   } catch (error) {
     console.error('Error updating message feedback:', error)
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Failed to update feedback' 
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to update feedback'
     }
   }
 }
 
-export async function getMessageFeedback(messageId: string): Promise<number | null> {
+export async function getMessageFeedback(
+  messageId: string
+): Promise<number | null> {
   try {
     const [message] = await db
       .select({ metadata: messages.metadata })
