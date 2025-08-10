@@ -2,6 +2,7 @@ import { convertToModelMessages, generateObject, type UIMessage } from 'ai'
 import { z } from 'zod'
 
 import { getModel } from '../utils/registry'
+import { isTracingEnabled } from '../utils/telemetry'
 
 const relatedQuestionsSchema = z.object({
   questions: z
@@ -16,7 +17,8 @@ const relatedQuestionsSchema = z.object({
 export async function generateRelatedQuestions(
   model: string,
   messages: UIMessage[],
-  abortSignal?: AbortSignal
+  abortSignal?: AbortSignal,
+  parentTraceId?: string
 ) {
   // Convert UIMessages to ModelMessages
   const modelMessages = convertToModelMessages(messages)
@@ -60,7 +62,20 @@ Bad follow-ups (avoid these):
           'Based on the conversation history and search results, generate 3 unique follow-up questions that would help the user explore different aspects of the topic. Focus on questions that dig deeper into specific findings or explore related areas not yet covered.'
       }
     ],
-    abortSignal
+    abortSignal,
+    experimental_telemetry: { 
+      isEnabled: isTracingEnabled(),
+      functionId: 'related-questions',
+      metadata: {
+        modelId: model,
+        agentType: 'related-questions-generator',
+        messageCount: messages.length,
+        ...(parentTraceId && {
+          langfuseTraceId: parentTraceId,
+          langfuseUpdateParent: false
+        })
+      }
+    }
   })
 
   return object

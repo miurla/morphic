@@ -9,6 +9,7 @@ import { createQuestionTool } from '../tools/question'
 import { createSearchTool } from '../tools/search'
 import { createTodoTools } from '../tools/todo'
 import { getModel } from '../utils/registry'
+import { isTracingEnabled } from '../utils/telemetry'
 
 const SYSTEM_PROMPT = `
 Instructions:
@@ -76,12 +77,14 @@ export function researcher({
   model,
   modelConfig,
   abortSignal,
-  writer
+  writer,
+  parentTraceId
 }: {
   model: string
   modelConfig?: Model
   abortSignal?: AbortSignal
   writer?: UIMessageStreamWriter
+  parentTraceId?: string
 }) {
   try {
     const currentDate = new Date().toLocaleString()
@@ -119,7 +122,19 @@ export function researcher({
       abortSignal,
       ...(modelConfig?.providerOptions && {
         providerOptions: modelConfig.providerOptions
-      })
+      }),
+      experimental_telemetry: {
+        isEnabled: isTracingEnabled(),
+        functionId: 'research-agent',
+        metadata: {
+          modelId: model,
+          agentType: 'researcher',
+          ...(parentTraceId && {
+            langfuseTraceId: parentTraceId,
+            langfuseUpdateParent: false
+          })
+        }
+      }
     })
   } catch (error) {
     console.error('Error in researcher:', error)

@@ -1,11 +1,13 @@
 import { generateText } from 'ai'
 
 import { getModel } from '../utils/registry'
+import { isTracingEnabled } from '../utils/telemetry'
 
 interface GenerateChatTitleParams {
   userMessageContent: string
   modelId: string
   abortSignal?: AbortSignal
+  parentTraceId?: string
 }
 
 /**
@@ -17,7 +19,8 @@ interface GenerateChatTitleParams {
 export async function generateChatTitle({
   userMessageContent,
   modelId,
-  abortSignal
+  abortSignal,
+  parentTraceId
 }: GenerateChatTitleParams): Promise<string> {
   // Fallback title uses the first 75 characters of the message or a default string.
   const fallbackTitle = userMessageContent.substring(0, 75).trim() || 'New Chat'
@@ -29,7 +32,20 @@ export async function generateChatTitle({
       model: getModel(modelId),
       system: systemPrompt,
       prompt: userMessageContent,
-      abortSignal
+      abortSignal,
+      experimental_telemetry: {
+        isEnabled: isTracingEnabled(),
+        functionId: 'title-generation',
+        metadata: {
+          modelId: modelId,
+          agentType: 'title-generator',
+          promptLength: userMessageContent.length,
+          ...(parentTraceId && {
+            langfuseTraceId: parentTraceId,
+            langfuseUpdateParent: false
+          })
+        }
+      }
     })
 
     const cleanedTitle = generatedTitle.trim()

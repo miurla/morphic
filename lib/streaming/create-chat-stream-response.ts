@@ -6,8 +6,11 @@ import {
   UIMessage,
   UIMessageStreamWriter
 } from 'ai'
+import { randomUUID } from 'crypto'
+import { Langfuse } from 'langfuse'
 
 import { researcher } from '@/lib/agents/researcher'
+import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import { getChat as getChatAction } from '../actions/chat'
 import { generateChatTitle } from '../agents/title-generator'
@@ -53,7 +56,28 @@ export async function createChatStreamResponse(
     })
   }
 
-  // Create stream context
+  // Create parent trace ID for grouping all operations
+  let parentTraceId: string | undefined
+  let langfuse: Langfuse | undefined
+  
+  if (isTracingEnabled()) {
+    parentTraceId = randomUUID()
+    langfuse = new Langfuse()
+    
+    // Create parent trace with name "research"
+    langfuse.trace({
+      id: parentTraceId,
+      name: 'research',
+      metadata: {
+        chatId,
+        userId,
+        modelId: `${model.providerId}:${model.id}`,
+        trigger
+      }
+    })
+  }
+
+  // Create stream context with trace ID
   const context: StreamContext = {
     chatId,
     userId,
@@ -61,7 +85,8 @@ export async function createChatStreamResponse(
     messageId,
     trigger,
     initialChat,
-    abortSignal
+    abortSignal,
+    parentTraceId // Add parent trace ID to context
   }
 
   // Create the stream
@@ -71,12 +96,13 @@ export async function createChatStreamResponse(
         // Prepare messages for the model
         const messagesToModel = await prepareMessages(context, message)
 
-        // Get the researcher agent
+        // Get the researcher agent with parent trace ID
         const researchAgent = researcher({
           model: context.modelId,
           modelConfig: model,
           abortSignal,
-          writer
+          writer,
+          parentTraceId
         })
 
         // Filter out reasoning parts from messages before converting to model messages
@@ -105,7 +131,8 @@ export async function createChatStreamResponse(
           titlePromise = generateChatTitle({
             userMessageContent: userContent,
             modelId: context.modelId,
-            abortSignal
+            abortSignal,
+            parentTraceId
           }).catch(error => {
             console.error('Error generating title:', error)
             return DEFAULT_CHAT_TITLE
@@ -130,6 +157,11 @@ export async function createChatStreamResponse(
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error // This error will be handled by the onError callback
+      } finally {
+        // Flush Langfuse traces if enabled
+        if (langfuse) {
+          await langfuse.flushAsync()
+        }
       }
     },
     onError: (error: any) => {
