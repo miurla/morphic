@@ -6,6 +6,7 @@ import { Langfuse } from 'langfuse'
 import { chatCache } from '@/lib/cache/memory-cache'
 import { db } from '@/lib/db'
 import { messages } from '@/lib/db/schema'
+import type { UIMessageMetadata } from '@/lib/types/ai'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 export async function updateMessageFeedback(
@@ -40,7 +41,7 @@ export async function updateMessageFeedback(
       .where(eq(messages.id, messageId))
 
     // Send feedback to Langfuse if trace ID exists and tracing is enabled
-    const traceId = (currentMessage.metadata as any)?.traceId
+    const traceId = (currentMessage.metadata as UIMessageMetadata)?.traceId
     if (traceId && isTracingEnabled()) {
       const langfuse = new Langfuse()
       langfuse.score({
@@ -82,7 +83,7 @@ export async function getMessageFeedback(
       return null
     }
 
-    return (message.metadata as any)?.feedbackScore || null
+    return (message.metadata as UIMessageMetadata)?.feedbackScore || null
   } catch (error) {
     console.error('Error getting message feedback:', error)
     return null
