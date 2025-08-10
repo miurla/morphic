@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils/index'
 import { useIsMobile } from '@/hooks/use-mobile'
 
 import { Button } from '@/components/ui/button'
-import { IconLogo } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -302,10 +301,8 @@ Sidebar.displayName = 'Sidebar'
 
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
-  React.ComponentProps<typeof Button> & {
-    showIconLogo?: boolean
-  }
->(({ className, onClick, showIconLogo = false, ...props }, ref) => {
+  React.ComponentProps<typeof Button>
+>(({ className, onClick, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
 
   return (
@@ -314,21 +311,14 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn('size-6 group', className)}
+      className={cn('size-6', className)}
       onClick={event => {
         onClick?.(event)
         toggleSidebar()
       }}
       {...props}
     >
-      {showIconLogo ? (
-        <>
-          <IconLogo className="size-5 group-hover:hidden" />
-          <PanelLeft className="size-5 hidden group-hover:block" />
-        </>
-      ) : (
-        <PanelLeft size={18} />
-      )}
+      <PanelLeft size={18} />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
