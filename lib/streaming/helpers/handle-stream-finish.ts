@@ -20,6 +20,14 @@ export async function handleStreamFinish(
 ) {
   const { chatId, modelId, abortSignal, parentTraceId } = context
 
+  // Attach metadata to the response message if we have a traceId
+  if (parentTraceId) {
+    responseMessage.metadata = {
+      ...(responseMessage.metadata || {}),
+      traceId: parentTraceId
+    }
+  }
+
   // Generate related questions if there are tool calls
   if (hasToolCalls(responseMessage as UIMessage | null)) {
     const questionPartId = generateId()

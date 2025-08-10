@@ -8,6 +8,20 @@
       "when": 1754303165189,
       "tag": "0000_black_lifeguard",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1754819323396,
+      "tag": "0001_thin_supreme_intelligence",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1754822051273,
+      "tag": "0002_material_crystal",
+      "breakpoints": true
     }
   ]
 }

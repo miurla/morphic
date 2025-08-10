@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
+
 import { UseChatHelpers } from '@ai-sdk/react'
-import { Copy } from 'lucide-react'
+import { Copy, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { toast } from 'sonner'
 
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
@@ -14,6 +16,8 @@ import { RetryButton } from './retry-button'
 interface MessageActionsProps {
   message: string
   messageId: string
+  traceId?: string
+  feedbackScore?: number | null
   reload?: () => Promise<void | string | null | undefined>
   chatId?: string
   enableShare?: boolean
@@ -24,17 +28,57 @@ interface MessageActionsProps {
 export function MessageActions({
   message,
   messageId,
+  traceId,
+  feedbackScore: initialFeedbackScore,
   reload,
   chatId,
   enableShare,
   className,
   status
 }: MessageActionsProps) {
+  const [feedbackScore, setFeedbackScore] = useState<number | null>(
+    initialFeedbackScore ?? null
+  )
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const isLoading = status === 'submitted' || status === 'streaming'
 
   async function handleCopy() {
     await navigator.clipboard.writeText(message)
     toast.success('Message copied to clipboard')
+  }
+
+  async function handleFeedback(score: number) {
+    if (isSubmittingFeedback || !traceId) return
+
+    setIsSubmittingFeedback(true)
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          traceId,
+          score,
+          messageId
+        })
+      })
+
+      if (response.ok) {
+        setFeedbackScore(score)
+        toast.success(
+          score === 1
+            ? 'Thanks for the feedback!'
+            : 'Thanks for letting us know!'
+        )
+      } else {
+        console.error('Failed to submit feedback')
+        toast.error('Failed to submit feedback')
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error)
+      toast.error('Failed to submit feedback')
+    } finally {
+      setIsSubmittingFeedback(false)
+    }
   }
 
   return (
@@ -54,6 +98,38 @@ export function MessageActions({
       >
         <Copy size={14} />
       </Button>
+      {traceId && (
+        <>
+          {(feedbackScore === null || feedbackScore === 1) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleFeedback(1)}
+              disabled={isSubmittingFeedback || feedbackScore === 1}
+              className="rounded-full"
+            >
+              <ThumbsUp
+                size={14}
+                className={feedbackScore === 1 ? 'fill-current' : ''}
+              />
+            </Button>
+          )}
+          {(feedbackScore === null || feedbackScore === -1) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleFeedback(-1)}
+              disabled={isSubmittingFeedback || feedbackScore === -1}
+              className="rounded-full"
+            >
+              <ThumbsDown
+                size={14}
+                className={feedbackScore === -1 ? 'fill-current' : ''}
+              />
+            </Button>
+          )}
+        </>
+      )}
       {enableShare && chatId && <ChatShare chatId={chatId} />}
     </div>
   )

@@ -9,8 +9,15 @@ import { createTodoTools, type TodoItem } from '@/lib/tools/todo'
 // Re-export TodoItem for external use
 export type { TodoItem }
 
+// Define metadata type for messages
+export interface UIMessageMetadata {
+  traceId?: string
+  feedbackScore?: number | null
+  [key: string]: any
+}
+
 export type UIMessage<
-  TMetadata = unknown,
+  TMetadata = UIMessageMetadata,
   TDataTypes = UIDataTypes,
   TTools = UITools
 > = AIMessage

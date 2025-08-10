@@ -727,11 +727,13 @@ export function mapUIMessageToDBMessage(
   id: string
   chatId: string
   role: string
+  metadata?: Record<string, any> | null
 } {
   return {
     id: message.id,
     chatId: message.chatId,
-    role: message.role
+    role: message.role,
+    metadata: message.metadata as Record<string, any> | undefined
   }
 }
 
@@ -742,21 +744,26 @@ export function buildUIMessageFromDB(
   dbMessage: {
     id: string
     role: string
+    metadata?: Record<string, any> | null
     createdAt?: Date | string
   },
   dbParts: DBMessagePartSelect[]
 ): UIMessage {
+  // Merge metadata from DB with createdAt
+  const metadata: Record<string, any> = {
+    ...(dbMessage.metadata || {}),
+    ...(dbMessage.createdAt && {
+      createdAt:
+        dbMessage.createdAt instanceof Date
+          ? dbMessage.createdAt
+          : new Date(dbMessage.createdAt)
+    })
+  }
+
   return {
     id: dbMessage.id,
     role: dbMessage.role as 'user' | 'assistant',
     parts: dbParts.map(mapDBPartToUIMessagePart) as UIMessage['parts'],
-    metadata: dbMessage.createdAt
-      ? {
-          createdAt:
-            dbMessage.createdAt instanceof Date
-              ? dbMessage.createdAt
-              : new Date(dbMessage.createdAt)
-        }
-      : undefined
+    metadata: Object.keys(metadata).length > 0 ? metadata : undefined
   }
 }
