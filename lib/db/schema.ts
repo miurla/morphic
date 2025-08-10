@@ -189,3 +189,29 @@ export const parts = pgTable(
 
 export type Part = InferSelectModel<typeof parts>
 export type NewPart = typeof parts.$inferInsert
+
+// Feedback table
+export const feedback = pgTable(
+  'feedback',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }),
+    sentiment: varchar('sentiment', {
+      length: VARCHAR_LENGTH,
+      enum: ['positive', 'neutral', 'negative']
+    }).notNull(),
+    message: text('message').notNull(),
+    pageUrl: text('page_url').notNull(),
+    userAgent: text('user_agent'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => ({
+    userIdIdx: index('feedback_user_id_idx').on(table.userId),
+    createdAtIdx: index('feedback_created_at_idx').on(table.createdAt),
+    enableRls: true
+  })
+)
+
+export type Feedback = InferSelectModel<typeof feedback>

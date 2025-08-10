@@ -22,6 +22,13 @@
       "when": 1754822051273,
       "tag": "0002_material_crystal",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1754832999921,
+      "tag": "0003_heavy_whirlwind",
+      "breakpoints": true
     }
   ]
 }
