@@ -1,0 +1,14 @@
+{
+  "current": {
+    "version": "0.5.0",
+    "date": "2025-01-10",
+    "features": [
+      "AI model selection",
+      "Langfuse integration",
+      "Improved search results"
+    ],
+    "showUntil": "2025-01-20",
+    "dismissKey": "changelog-v0.5.0"
+  },
+  "history": []
+}
