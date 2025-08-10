@@ -6,4 +6,5 @@ export interface StreamContext {
   trigger?: string
   initialChat: any
   abortSignal?: AbortSignal
+  parentTraceId?: string
 }

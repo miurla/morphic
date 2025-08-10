@@ -251,13 +251,15 @@ export async function saveChatTitle(
   chat: Chat | null,
   chatId: string,
   message: UIMessage | null,
-  modelId: string
+  modelId: string,
+  parentTraceId?: string
 ) {
   if (!chat && message) {
     const userContent = getTextFromParts(message.parts)
     const title = await generateChatTitle({
       userMessageContent: userContent,
-      modelId
+      modelId,
+      parentTraceId
     })
     await dbActions.updateChatTitle(chatId, title)
     revalidateTag(`chat-${chatId}`)

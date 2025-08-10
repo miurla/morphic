@@ -18,7 +18,7 @@ export async function handleStreamFinish(
   context: StreamContext,
   titlePromise?: Promise<string>
 ) {
-  const { chatId, modelId, abortSignal } = context
+  const { chatId, modelId, abortSignal, parentTraceId } = context
 
   // Generate related questions if there are tool calls
   if (hasToolCalls(responseMessage as UIMessage | null)) {
@@ -34,7 +34,8 @@ export async function handleStreamFinish(
       const relatedQuestions = await generateRelatedQuestions(
         modelId,
         [...messagesToModel, responseMessage],
-        abortSignal
+        abortSignal,
+        parentTraceId
       )
 
       responseMessage.parts.push({
