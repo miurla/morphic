@@ -1,5 +1,10 @@
 import { generateId } from '@/lib/db/schema'
-import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import type {
+  UIDataTypes,
+  UIMessage,
+  UIMessageMetadata,
+  UITools
+} from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import type {
   DBMessagePart,
@@ -727,13 +732,13 @@ export function mapUIMessageToDBMessage(
   id: string
   chatId: string
   role: string
-  metadata?: Record<string, any> | null
+  metadata?: UIMessageMetadata | null
 } {
   return {
     id: message.id,
     chatId: message.chatId,
     role: message.role,
-    metadata: message.metadata as Record<string, any> | undefined
+    metadata: message.metadata || null
   }
 }
 
@@ -744,13 +749,13 @@ export function buildUIMessageFromDB(
   dbMessage: {
     id: string
     role: string
-    metadata?: Record<string, any> | null
+    metadata?: UIMessageMetadata | null
     createdAt?: Date | string
   },
   dbParts: DBMessagePartSelect[]
 ): UIMessage {
   // Merge metadata from DB with createdAt
-  const metadata: Record<string, any> = {
+  const metadata: UIMessageMetadata = {
     ...(dbMessage.metadata || {}),
     ...(dbMessage.createdAt && {
       createdAt:

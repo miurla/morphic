@@ -17,9 +17,10 @@ vi.mock('langfuse', () => ({
 }))
 
 // Import after mocking
+import { Langfuse } from 'langfuse'
+
 import { updateMessageFeedback } from '@/lib/actions/feedback'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
-import { Langfuse } from 'langfuse'
 
 import { POST } from '../route'
 
@@ -191,7 +192,9 @@ describe('Feedback API Route', () => {
           }) as any
       )
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation()
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
 
       const request = new Request('http://localhost:3000/api/feedback', {
         method: 'POST',
@@ -247,7 +250,9 @@ describe('Feedback API Route', () => {
     })
 
     it('should handle JSON parsing errors', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation()
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
 
       const request = new Request('http://localhost:3000/api/feedback', {
         method: 'POST',

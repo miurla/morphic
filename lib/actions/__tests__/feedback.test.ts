@@ -7,10 +7,11 @@ vi.mock('langfuse')
 vi.mock('@/lib/utils/telemetry')
 
 // Import after mocking
+import { Langfuse } from 'langfuse'
+
 import { chatCache } from '@/lib/cache/memory-cache'
 import { db } from '@/lib/db'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
-import { Langfuse } from 'langfuse'
 
 import { getMessageFeedback, updateMessageFeedback } from '../feedback'
 
