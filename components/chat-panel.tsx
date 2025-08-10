@@ -16,10 +16,13 @@ import { cn } from '@/lib/utils'
 import { useArtifact } from './artifact/artifact-context'
 import { Button } from './ui/button'
 import { IconLogo } from './ui/icons'
-import { EmptyScreen } from './empty-screen'
+import { ActionButtons } from './action-buttons'
 import { FileUploadButton } from './file-upload-button'
 import { ModelSelector } from './model-selector'
 import { UploadedFileList } from './uploaded-file-list'
+
+// Constants for timing delays
+const INPUT_UPDATE_DELAY_MS = 10 // Delay to ensure input value is updated before form submission
 
 interface ChatPanelProps {
   chatId: string
@@ -58,7 +61,6 @@ export function ChatPanel({
   setUploadedFiles,
   scrollContainerRef
 }: ChatPanelProps) {
-  const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isFirstRender = useRef(true)
@@ -175,15 +177,12 @@ export function ChatPanel({
             tabIndex={0}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}
-            placeholder="Ask a question..."
+            placeholder="Ask anything..."
             spellCheck={false}
             value={input}
             disabled={isLoading || isToolInvocationInProgress()}
             className="resize-none w-full min-h-12 bg-transparent border-0 p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
-            onChange={e => {
-              handleInputChange(e)
-              setShowEmptyScreen(e.target.value.length === 0)
-            }}
+            onChange={handleInputChange}
             onKeyDown={e => {
               if (
                 e.key === 'Enter' &&
@@ -200,8 +199,6 @@ export function ChatPanel({
                 textarea.form?.requestSubmit()
               }
             }}
-            onFocus={() => setShowEmptyScreen(true)}
-            onBlur={() => setShowEmptyScreen(false)}
           />
 
           {/* Bottom menu area */}
@@ -287,14 +284,29 @@ export function ChatPanel({
           </div>
         </div>
 
+        {/* Action buttons for prompt suggestions */}
         {messages.length === 0 && (
-          <EmptyScreen
-            submitMessage={message => {
+          <ActionButtons
+            onSelectPrompt={message => {
+              // Set the input value and submit
               handleInputChange({
                 target: { value: message }
               } as React.ChangeEvent<HTMLTextAreaElement>)
+              // Submit the form after a small delay to ensure the input is updated
+              setTimeout(() => {
+                inputRef.current?.form?.requestSubmit()
+              }, INPUT_UPDATE_DELAY_MS)
             }}
-            className={cn(showEmptyScreen ? 'visible' : 'invisible')}
+            onCategoryClick={category => {
+              // Set the category in the input
+              handleInputChange({
+                target: { value: category }
+              } as React.ChangeEvent<HTMLTextAreaElement>)
+              // Focus the input
+              inputRef.current?.focus()
+            }}
+            inputRef={inputRef}
+            className="mt-2"
           />
         )}
       </form>
