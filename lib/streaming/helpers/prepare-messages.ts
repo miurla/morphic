@@ -2,6 +2,7 @@ import { UIMessage } from 'ai'
 
 import {
   createChat,
+  createChatWithFirstMessage,
   deleteMessagesFromIndex,
   loadChat,
   upsertMessage
@@ -86,7 +87,6 @@ export async function prepareMessages(
     if (isNewChat) {
       // Use createChatWithFirstMessage for atomic operation
       const createStart = performance.now()
-      const { createChatWithFirstMessage } = await import('@/lib/actions/chat')
       await createChatWithFirstMessage(
         chatId,
         messageWithId,
