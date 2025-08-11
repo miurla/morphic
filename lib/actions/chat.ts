@@ -149,19 +149,15 @@ export async function createChatWithFirstMessage(
 
 /**
  * Upsert a message to a chat
- * @param userId - Required. Pass userId to avoid duplicate auth calls
+ * @param userId - Required but not used for access check (assumes already authorized)
  */
 export async function upsertMessage(
   chatId: string,
   message: UIMessage,
   userId: string
 ): Promise<Message> {
-  // Verify access
-  const chat = await dbActions.getChat(chatId, userId)
-  if (!chat) {
-    throw new Error('Chat not found or unauthorized')
-  }
-
+  // Skip access check - userId is required for audit/logging but not for authorization
+  // Caller is responsible for ensuring authorization
   const messageId = message.id || generateId()
   const dbMessage = await dbActions.upsertMessage({
     ...message,
