@@ -9,9 +9,11 @@ export function useAuthCheck() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Create a single Supabase client instance for this effect
+    const supabase = createClient()
+
     const checkAuth = async () => {
       try {
-        const supabase = createClient()
         const {
           data: { session }
         } = await supabase.auth.getSession()
@@ -26,8 +28,7 @@ export function useAuthCheck() {
 
     checkAuth()
 
-    // Subscribe to auth changes
-    const supabase = createClient()
+    // Subscribe to auth changes using the same client instance
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((event, session) => {

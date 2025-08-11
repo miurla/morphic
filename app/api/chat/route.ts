@@ -84,7 +84,7 @@ export async function POST(req: Request) {
       message,
       model: selectedModel,
       chatId,
-      userId: userId,
+      userId: userId, // userId is guaranteed to be non-null after authentication check above
       trigger,
       messageId,
       abortSignal
