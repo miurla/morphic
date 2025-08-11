@@ -149,6 +149,14 @@ export async function createChatWithFirstMessage(
 /**
  * Upsert a message to a chat
  * @param userId - Required but not used for access check (assumes already authorized)
+ * 
+ * IMPORTANT: This function assumes the caller has already performed authorization checks.
+ * It is only called from:
+ * 1. API routes after authentication (app/api/chat/route.ts)
+ * 2. Stream handlers after chat ownership verification
+ * 3. Internal functions that have already verified access
+ * 
+ * DO NOT call this function directly from untrusted contexts.
  */
 export async function upsertMessage(
   chatId: string,
@@ -156,7 +164,7 @@ export async function upsertMessage(
   userId: string
 ): Promise<Message> {
   // Skip access check - userId is required for audit/logging but not for authorization
-  // Caller is responsible for ensuring authorization
+  // Caller MUST ensure authorization before calling this function
   const messageId = message.id || generateId()
   const dbMessage = await dbActions.upsertMessage({
     ...message,

@@ -20,8 +20,10 @@ export async function POST(req: Request) {
   const startTime = performance.now()
   const abortSignal = req.signal
 
-  // Reset counters for new request
-  resetAllCounters()
+  // Reset counters for new request (development only)
+  if (process.env.ENABLE_PERF_LOGGING === 'true') {
+    resetAllCounters()
+  }
 
   try {
     const body = await req.json()
