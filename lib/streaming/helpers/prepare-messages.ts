@@ -16,7 +16,7 @@ export async function prepareMessages(
   context: StreamContext,
   message: UIMessage | null
 ): Promise<UIMessage[]> {
-  const { chatId, userId, trigger, messageId, initialChat } = context
+  const { chatId, userId, trigger, messageId, initialChat, isNewChat } = context
 
   if (trigger === 'regenerate-assistant-message' && messageId) {
     // Handle regeneration - use initialChat if available to avoid DB call
@@ -79,6 +79,15 @@ export async function prepareMessages(
       id: message.id || generateId()
     }
 
+    // Optimize for new chats: create chat and save message together
+    if (isNewChat) {
+      // Use createChatWithFirstMessage for atomic operation
+      const { createChatWithFirstMessage } = await import('@/lib/actions/chat')
+      await createChatWithFirstMessage(chatId, messageWithId, userId, DEFAULT_CHAT_TITLE)
+      return [messageWithId]
+    }
+
+    // For existing chats
     if (!initialChat) {
       await createChat(chatId, DEFAULT_CHAT_TITLE, userId)
     }

@@ -33,7 +33,7 @@ const DEFAULT_CHAT_TITLE = 'Untitled'
 export async function createChatStreamResponse(
   config: BaseStreamConfig
 ): Promise<Response> {
-  const { message, model, chatId, userId, trigger, messageId, abortSignal } =
+  const { message, model, chatId, userId, trigger, messageId, abortSignal, isNewChat } =
     config
   const modelId = `${model.providerId}:${model.id}`
 
@@ -86,7 +86,8 @@ export async function createChatStreamResponse(
     trigger,
     initialChat,
     abortSignal,
-    parentTraceId // Add parent trace ID to context
+    parentTraceId, // Add parent trace ID to context
+    isNewChat
   }
 
   // Create the stream

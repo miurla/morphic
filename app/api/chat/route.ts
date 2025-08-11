@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const { message, chatId, trigger, messageId } = body
+    const { message, chatId, trigger, messageId, isNewChat } = body
 
     // Handle different triggers
     if (trigger === 'regenerate-assistant-message') {
@@ -87,7 +87,8 @@ export async function POST(req: Request) {
       userId: userId, // userId is guaranteed to be non-null after authentication check above
       trigger,
       messageId,
-      abortSignal
+      abortSignal,
+      isNewChat
     })
   } catch (error) {
     console.error('API route error:', error)
