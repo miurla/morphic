@@ -18,7 +18,7 @@ export async function handleStreamFinish(
   context: StreamContext,
   titlePromise?: Promise<string>
 ) {
-  const { chatId, modelId, abortSignal, parentTraceId } = context
+  const { chatId, userId, modelId, abortSignal, parentTraceId } = context
 
   // Attach metadata to the response message if we have a traceId
   if (parentTraceId) {
@@ -77,11 +77,11 @@ export async function handleStreamFinish(
   const chatTitle = titlePromise ? await titlePromise : undefined
 
   // Save message with retry logic
-  upsertMessage(chatId, responseMessage).catch(async error => {
+  upsertMessage(chatId, responseMessage, userId).catch(async error => {
     console.error('Error saving message:', error)
     try {
       await retryDatabaseOperation(
-        () => upsertMessage(chatId, responseMessage),
+        () => upsertMessage(chatId, responseMessage, userId),
         'save message'
       )
     } catch (retryError) {

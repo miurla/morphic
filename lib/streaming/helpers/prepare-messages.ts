@@ -57,7 +57,7 @@ export async function prepareMessages(
     } else {
       // User message edit
       if (message && message.id === messageId) {
-        await upsertMessage(chatId, message)
+        await upsertMessage(chatId, message, userId)
       }
       const messagesToDelete = currentChat.messages.slice(messageIndex + 1)
       if (messagesToDelete.length > 0) {
@@ -80,10 +80,10 @@ export async function prepareMessages(
     }
 
     if (!initialChat) {
-      await createChat(chatId, DEFAULT_CHAT_TITLE)
+      await createChat(chatId, DEFAULT_CHAT_TITLE, userId)
     }
 
-    await upsertMessage(chatId, messageWithId)
+    await upsertMessage(chatId, messageWithId, userId)
 
     // If we have initialChat, append the new message instead of fetching all messages
     if (initialChat && initialChat.messages) {

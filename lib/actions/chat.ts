@@ -47,7 +47,9 @@ export async function getChat(
 }
 
 /**
- * Load a chat with messages (Vercel pattern)
+ * Load a chat with messages
+ * If requestingUserId is provided, it will be used for authorization
+ * Otherwise, no authorization check is performed (assumes already authorized)
  */
 export async function loadChat(
   chatId: string,
@@ -60,9 +62,14 @@ export async function loadChat(
 /**
  * Create a new chat
  */
-export async function createChat(id?: string, title?: string): Promise<Chat> {
-  const userId = await getCurrentUserId()
-  if (!userId) {
+export async function createChat(
+  id?: string,
+  title?: string,
+  userId?: string
+): Promise<Chat> {
+  // If userId is not provided, get it from auth
+  const uid = userId ?? (await getCurrentUserId())
+  if (!uid) {
     throw new Error('User not authenticated')
   }
 
@@ -73,7 +80,7 @@ export async function createChat(id?: string, title?: string): Promise<Chat> {
   const chat = await dbActions.createChat({
     id: chatId,
     title: chatTitle.substring(0, 255),
-    userId,
+    userId: uid,
     visibility: 'private'
   })
 
@@ -89,10 +96,12 @@ export async function createChat(id?: string, title?: string): Promise<Chat> {
  */
 export async function createChatAndSaveMessage(
   message: UIMessage,
-  title?: string
+  title?: string,
+  userId?: string
 ): Promise<{ chat: Chat; message: Message }> {
-  const userId = await getCurrentUserId()
-  if (!userId) {
+  // If userId is not provided, get it from auth
+  const uid = userId ?? (await getCurrentUserId())
+  if (!uid) {
     throw new Error('User not authenticated')
   }
 
@@ -102,6 +111,40 @@ export async function createChatAndSaveMessage(
   // Extract title from message if not provided
   const chatTitle =
     title || getTextFromParts(message.parts as any[]) || DEFAULT_CHAT_TITLE
+
+  // Create chat
+  const chat = await dbActions.createChat({
+    id: chatId,
+    title: chatTitle.substring(0, 255),
+    userId: uid,
+    visibility: 'private'
+  })
+
+  // Save message
+  const dbMessage = await dbActions.upsertMessage({
+    ...message,
+    id: messageId,
+    chatId
+  })
+
+  // Revalidate cache
+  revalidateTag(`chat-${chatId}`)
+
+  return { chat, message: dbMessage }
+}
+
+/**
+ * Create a new chat with the first message in a single transaction
+ * Optimized for new chat creation
+ */
+export async function createChatWithFirstMessage(
+  chatId: string,
+  message: UIMessage,
+  userId: string,
+  title?: string
+): Promise<{ chat: Chat; message: Message }> {
+  const messageId = message.id || generateId()
+  const chatTitle = title || DEFAULT_CHAT_TITLE
 
   // Create chat
   const chat = await dbActions.createChat({
@@ -120,6 +163,7 @@ export async function createChatAndSaveMessage(
 
   // Revalidate cache
   revalidateTag(`chat-${chatId}`)
+  revalidateTag('chat')
 
   return { chat, message: dbMessage }
 }
@@ -136,19 +180,21 @@ export async function saveMessage(
 }
 
 /**
- * Upsert a message to a chat (Vercel pattern)
+ * Upsert a message to a chat
  */
 export async function upsertMessage(
   chatId: string,
-  message: UIMessage
+  message: UIMessage,
+  userId?: string
 ): Promise<Message> {
-  const userId = await getCurrentUserId()
-  if (!userId) {
+  // If userId is not provided, get it from auth
+  const uid = userId ?? (await getCurrentUserId())
+  if (!uid) {
     throw new Error('User not authenticated')
   }
 
   // Verify access
-  const chat = await dbActions.getChat(chatId, userId)
+  const chat = await dbActions.getChat(chatId, uid)
   if (!chat) {
     throw new Error('Chat not found or unauthorized')
   }
