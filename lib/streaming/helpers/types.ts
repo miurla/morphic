@@ -10,4 +10,5 @@ export interface StreamContext {
   initialChat: (Chat & { messages: UIMessage[] }) | null
   abortSignal?: AbortSignal
   parentTraceId?: string
+  isNewChat?: boolean
 }

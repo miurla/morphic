@@ -36,9 +36,11 @@ export async function getChatsPage(limit = 20, offset = 0) {
 }
 
 /**
- * Get a chat with messages (no cache)
+ * Load a chat with messages
+ * If requestingUserId is provided, it will be used for authorization
+ * Otherwise, no authorization check is performed (assumes already authorized)
  */
-export async function getChat(
+export async function loadChat(
   chatId: string,
   requestingUserId?: string
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
@@ -48,13 +50,13 @@ export async function getChat(
 
 /**
  * Create a new chat
+ * @param userId - Required. Pass userId to avoid duplicate auth calls
  */
-export async function createChat(id?: string, title?: string): Promise<Chat> {
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    throw new Error('User not authenticated')
-  }
-
+export async function createChat(
+  id: string | undefined,
+  title: string | undefined,
+  userId: string
+): Promise<Chat> {
   const chatId = id || generateId()
   const chatTitle = title || DEFAULT_CHAT_TITLE
 
@@ -74,7 +76,7 @@ export async function createChat(id?: string, title?: string): Promise<Chat> {
 }
 
 /**
- * Create a new chat and save the first message
+ * Create a new chat and save the first message (public API with auth)
  */
 export async function createChatAndSaveMessage(
   message: UIMessage,
@@ -114,23 +116,55 @@ export async function createChatAndSaveMessage(
 }
 
 /**
- * Save a message to an existing chat
+ * Create a new chat with the first message in a single transaction
+ * Optimized for new chat creation
  */
-export async function saveMessage(
+export async function createChatWithFirstMessage(
   chatId: string,
-  message: UIMessage
+  message: UIMessage,
+  userId: string,
+  title?: string
+): Promise<{ chat: Chat; message: Message }> {
+  const messageId = message.id || generateId()
+  const chatTitle = title || DEFAULT_CHAT_TITLE
+
+  // Use transaction for atomic operation
+  const result = await dbActions.createChatWithFirstMessageTransaction({
+    chatId,
+    chatTitle,
+    userId,
+    message: {
+      ...message,
+      id: messageId
+    }
+  })
+
+  // Revalidate cache
+  revalidateTag(`chat-${chatId}`)
+  revalidateTag('chat')
+
+  return result
+}
+
+/**
+ * Upsert a message to a chat
+ * @param userId - Required but not used for access check (assumes already authorized)
+ *
+ * IMPORTANT: This function assumes the caller has already performed authorization checks.
+ * It is only called from:
+ * 1. API routes after authentication (app/api/chat/route.ts)
+ * 2. Stream handlers after chat ownership verification
+ * 3. Internal functions that have already verified access
+ *
+ * DO NOT call this function directly from untrusted contexts.
+ */
+export async function upsertMessage(
+  chatId: string,
+  message: UIMessage,
+  userId: string
 ): Promise<Message> {
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    throw new Error('User not authenticated')
-  }
-
-  // Verify access
-  const chat = await dbActions.getChat(chatId, userId)
-  if (!chat) {
-    throw new Error('Chat not found or unauthorized')
-  }
-
+  // Skip access check - userId is required for audit/logging but not for authorization
+  // Caller MUST ensure authorization before calling this function
   const messageId = message.id || generateId()
   const dbMessage = await dbActions.upsertMessage({
     ...message,

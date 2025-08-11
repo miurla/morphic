@@ -12,7 +12,7 @@ import { Langfuse } from 'langfuse'
 import { researcher } from '@/lib/agents/researcher'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
-import { getChat as getChatAction } from '../actions/chat'
+import { loadChat } from '../actions/chat'
 import { generateChatTitle } from '../agents/title-generator'
 import {
   getMaxAllowedTokens,
@@ -20,6 +20,7 @@ import {
   truncateMessages
 } from '../utils/context-window'
 import { getTextFromParts } from '../utils/message-utils'
+import { perfLog, perfTime } from '../utils/perf-logging'
 
 import { filterReasoningParts } from './helpers/filter-reasoning-parts'
 import { handleStreamFinish } from './helpers/handle-stream-finish'
@@ -33,8 +34,16 @@ const DEFAULT_CHAT_TITLE = 'Untitled'
 export async function createChatStreamResponse(
   config: BaseStreamConfig
 ): Promise<Response> {
-  const { message, model, chatId, userId, trigger, messageId, abortSignal } =
-    config
+  const {
+    message,
+    model,
+    chatId,
+    userId,
+    trigger,
+    messageId,
+    abortSignal,
+    isNewChat
+  } = config
   const modelId = `${model.providerId}:${model.id}`
 
   // Verify that chatId is provided
@@ -45,15 +54,23 @@ export async function createChatStreamResponse(
     })
   }
 
-  // Fetch chat data for authorization check and cache it
-  let initialChat = await getChatAction(chatId, userId)
+  // Skip loading chat for new chats optimization
+  let initialChat = null
+  if (!isNewChat) {
+    const loadChatStart = performance.now()
+    // Fetch chat data for authorization check and cache it
+    initialChat = await loadChat(chatId, userId)
+    perfTime('loadChat completed', loadChatStart)
 
-  // Authorization check: if chat exists, it must belong to the user
-  if (initialChat && initialChat.userId !== userId) {
-    return new Response('You are not allowed to access this chat', {
-      status: 403,
-      statusText: 'Forbidden'
-    })
+    // Authorization check: if chat exists, it must belong to the user
+    if (initialChat && initialChat.userId !== userId) {
+      return new Response('You are not allowed to access this chat', {
+        status: 403,
+        statusText: 'Forbidden'
+      })
+    }
+  } else {
+    perfLog('loadChat skipped for new chat')
   }
 
   // Create parent trace ID for grouping all operations
@@ -86,7 +103,8 @@ export async function createChatStreamResponse(
     trigger,
     initialChat,
     abortSignal,
-    parentTraceId // Add parent trace ID to context
+    parentTraceId, // Add parent trace ID to context
+    isNewChat
   }
 
   // Create the stream

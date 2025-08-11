@@ -9,6 +9,8 @@ import {
   mapUIMessagePartsToDBParts,
   mapUIMessageToDBMessage
 } from '@/lib/utils/message-mapping'
+import { perfLog, perfTime } from '@/lib/utils/perf-logging'
+import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
 
 import type { Chat, Message } from './schema'
 import { chats, generateId, messages, parts } from './schema'
@@ -76,6 +78,8 @@ export async function getChat(
 export async function upsertMessage(
   message: PersistableUIMessage & { chatId: string }
 ): Promise<Message> {
+  const count = incrementDbOperationCount()
+  perfLog(`DB - upsertMessage called - count: ${count}`)
   const result = await db.transaction(async tx => {
     // 1. Insert or update the message
     const messageData = mapUIMessageToDBMessage(message)
@@ -131,6 +135,8 @@ export async function loadChatWithMessages(
   chatId: string,
   userId?: string
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
+  const count = incrementDbOperationCount()
+  perfLog(`DB - loadChatWithMessages called - count: ${count}`)
   // Don't check cache yet - need to verify permissions first
 
   // Get chat and messages in parallel
@@ -335,4 +341,57 @@ export async function updateChatTitle(
     .returning()
 
   return updatedChat || null
+}
+
+/**
+ * Create a chat with the first message in a single transaction
+ * Optimized for new chat creation
+ */
+export async function createChatWithFirstMessageTransaction({
+  chatId,
+  chatTitle,
+  userId,
+  message
+}: {
+  chatId: string
+  chatTitle: string
+  userId: string
+  message: PersistableUIMessage
+}): Promise<{ chat: Chat; message: Message }> {
+  perfLog(`DB - createChatWithFirstMessageTransaction start`)
+  const dbStart = performance.now()
+  return await db.transaction(async tx => {
+    // 1. Create chat
+    const [chat] = await tx
+      .insert(chats)
+      .values({
+        id: chatId,
+        title: chatTitle.substring(0, 255),
+        userId,
+        visibility: 'private',
+        createdAt: new Date()
+      })
+      .returning()
+
+    // 2. Save message
+    const dbMessage = mapUIMessageToDBMessage({ ...message, chatId })
+    const [savedMessage] = await tx
+      .insert(messages)
+      .values(dbMessage)
+      .returning()
+
+    // 3. Save parts if they exist
+    if (message.parts && message.parts.length > 0) {
+      const partsData = mapUIMessagePartsToDBParts(
+        message.parts,
+        savedMessage.id
+      )
+      if (partsData.length > 0) {
+        await tx.insert(parts).values(partsData)
+      }
+    }
+
+    perfTime('DB - createChatWithFirstMessageTransaction completed', dbStart)
+    return { chat, message: savedMessage }
+  })
 }

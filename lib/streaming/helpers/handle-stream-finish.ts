@@ -1,10 +1,11 @@
 import { UIMessage, UIMessageStreamWriter } from 'ai'
 
-import { saveMessage } from '@/lib/actions/chat'
+import { upsertMessage } from '@/lib/actions/chat'
 import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
 import { updateChatTitle } from '@/lib/db/actions'
 import { generateId } from '@/lib/db/schema'
 import { hasToolCalls } from '@/lib/utils/message-utils'
+import { perfTime } from '@/lib/utils/perf-logging'
 import { retryDatabaseOperation } from '@/lib/utils/retry'
 
 import type { StreamContext } from './types'
@@ -18,7 +19,7 @@ export async function handleStreamFinish(
   context: StreamContext,
   titlePromise?: Promise<string>
 ) {
-  const { chatId, modelId, abortSignal, parentTraceId } = context
+  const { chatId, userId, modelId, abortSignal, parentTraceId } = context
 
   // Attach metadata to the response message if we have a traceId
   if (parentTraceId) {
@@ -77,17 +78,22 @@ export async function handleStreamFinish(
   const chatTitle = titlePromise ? await titlePromise : undefined
 
   // Save message with retry logic
-  saveMessage(chatId, responseMessage).catch(async error => {
-    console.error('Error saving message:', error)
-    try {
-      await retryDatabaseOperation(
-        () => saveMessage(chatId, responseMessage),
-        'save message'
-      )
-    } catch (retryError) {
-      console.error('Failed to save after retries:', retryError)
-    }
-  })
+  const saveStart = performance.now()
+  upsertMessage(chatId, responseMessage, userId)
+    .then(() => {
+      perfTime('upsertMessage (AI response) completed', saveStart)
+    })
+    .catch(async error => {
+      console.error('Error saving message:', error)
+      try {
+        await retryDatabaseOperation(
+          () => upsertMessage(chatId, responseMessage, userId),
+          'save message'
+        )
+      } catch (retryError) {
+        console.error('Failed to save after retries:', retryError)
+      }
+    })
 
   // Update title after message is saved
   if (chatTitle && chatTitle !== DEFAULT_CHAT_TITLE) {

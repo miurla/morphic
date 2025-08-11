@@ -3,6 +3,8 @@ import { cookies } from 'next/headers'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { Model } from '@/lib/types/models'
+import { perfLog, perfTime } from '@/lib/utils/perf-logging'
+import { resetAllCounters } from '@/lib/utils/perf-tracking'
 import { isProviderEnabled } from '@/lib/utils/registry'
 
 export const maxDuration = 30
@@ -15,11 +17,21 @@ const DEFAULT_MODEL: Model = {
 }
 
 export async function POST(req: Request) {
+  const startTime = performance.now()
   const abortSignal = req.signal
+
+  // Reset counters for new request (development only)
+  if (process.env.ENABLE_PERF_LOGGING === 'true') {
+    resetAllCounters()
+  }
 
   try {
     const body = await req.json()
-    const { message, chatId, trigger, messageId } = body
+    const { message, chatId, trigger, messageId, isNewChat } = body
+
+    perfLog(
+      `API Route - Start: chatId=${chatId}, trigger=${trigger}, isNewChat=${isNewChat}`
+    )
 
     // Handle different triggers
     if (trigger === 'regenerate-assistant-message') {
@@ -40,7 +52,10 @@ export async function POST(req: Request) {
 
     const referer = req.headers.get('referer')
     const isSharePage = referer?.includes('/share/')
+
+    const authStart = performance.now()
     const userId = await getCurrentUserId()
+    perfTime('Auth completed', authStart)
 
     if (isSharePage) {
       return new Response('Chat API is not available on share pages', {
@@ -80,15 +95,26 @@ export async function POST(req: Request) {
       )
     }
 
-    return await createChatStreamResponse({
+    const streamStart = performance.now()
+    const response = await createChatStreamResponse({
       message,
       model: selectedModel,
       chatId,
       userId: userId, // userId is guaranteed to be non-null after authentication check above
       trigger,
       messageId,
-      abortSignal
+      abortSignal,
+      isNewChat
     })
+
+    const totalTime = performance.now() - startTime
+    perfLog(`Total API route time: ${totalTime.toFixed(2)}ms`)
+    perfLog(`=== Summary ===`)
+    perfLog(`Chat Type: ${isNewChat ? 'NEW' : 'EXISTING'}`)
+    perfLog(`Total Time: ${totalTime.toFixed(2)}ms`)
+    perfLog(`================`)
+
+    return response
   } catch (error) {
     console.error('API route error:', error)
     return new Response('Error processing your request', {

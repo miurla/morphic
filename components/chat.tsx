@@ -100,7 +100,8 @@ export function Chat({
                 trigger: 'submit-user-message',
                 chatId: id,
                 message: messages[messages.length - 1],
-                messageId
+                messageId,
+                isNewChat: messages.length === 1
               }
             }
         }

@@ -2,11 +2,13 @@ import { UIMessage } from 'ai'
 
 import {
   createChat,
+  createChatWithFirstMessage,
   deleteMessagesFromIndex,
-  getChat as getChatAction,
-  saveMessage
+  loadChat,
+  upsertMessage
 } from '@/lib/actions/chat'
 import { generateId } from '@/lib/db/schema'
+import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 
 import type { StreamContext } from './types'
 
@@ -16,13 +18,15 @@ export async function prepareMessages(
   context: StreamContext,
   message: UIMessage | null
 ): Promise<UIMessage[]> {
-  const { chatId, userId, trigger, messageId, initialChat } = context
+  const { chatId, userId, trigger, messageId, initialChat, isNewChat } = context
+  const startTime = performance.now()
+  perfLog(`prepareMessages - Start: trigger=${trigger}, isNewChat=${isNewChat}`)
 
   if (trigger === 'regenerate-assistant-message' && messageId) {
     // Handle regeneration - use initialChat if available to avoid DB call
     let currentChat = initialChat
     if (!currentChat) {
-      currentChat = await getChatAction(chatId, userId)
+      currentChat = await loadChat(chatId, userId)
     }
     if (!currentChat || !currentChat.messages.length) {
       throw new Error('No messages found')
@@ -57,13 +61,13 @@ export async function prepareMessages(
     } else {
       // User message edit
       if (message && message.id === messageId) {
-        await saveMessage(chatId, message)
+        await upsertMessage(chatId, message, userId)
       }
       const messagesToDelete = currentChat.messages.slice(messageIndex + 1)
       if (messagesToDelete.length > 0) {
         await deleteMessagesFromIndex(chatId, messagesToDelete[0].id)
       }
-      const updatedChat = await getChatAction(chatId, userId)
+      const updatedChat = await loadChat(chatId, userId)
       return (
         updatedChat?.messages || currentChat.messages.slice(0, messageIndex + 1)
       )
@@ -79,19 +83,43 @@ export async function prepareMessages(
       id: message.id || generateId()
     }
 
-    if (!initialChat) {
-      await createChat(chatId, DEFAULT_CHAT_TITLE)
+    // Optimize for new chats: create chat and save message together
+    if (isNewChat) {
+      // Use createChatWithFirstMessage for atomic operation
+      const createStart = performance.now()
+      await createChatWithFirstMessage(
+        chatId,
+        messageWithId,
+        userId,
+        DEFAULT_CHAT_TITLE
+      )
+      perfTime('createChatWithFirstMessage completed', createStart)
+      perfTime('prepareMessages - Total', startTime)
+      return [messageWithId]
     }
 
-    await saveMessage(chatId, messageWithId)
+    // For existing chats
+    if (!initialChat) {
+      const createStart = performance.now()
+      await createChat(chatId, DEFAULT_CHAT_TITLE, userId)
+      perfTime('createChat completed', createStart)
+    }
+
+    const upsertStart = performance.now()
+    await upsertMessage(chatId, messageWithId, userId)
+    perfTime('upsertMessage completed', upsertStart)
 
     // If we have initialChat, append the new message instead of fetching all messages
     if (initialChat && initialChat.messages) {
+      perfTime('prepareMessages - Total (using cached chat)', startTime)
       return [...initialChat.messages, messageWithId]
     }
 
     // Fallback to fetching if no initialChat
-    const updatedChat = await getChatAction(chatId, userId)
+    const loadStart = performance.now()
+    const updatedChat = await loadChat(chatId, userId)
+    perfTime('loadChat (fallback) completed', loadStart)
+    perfTime('prepareMessages - Total', startTime)
     return updatedChat?.messages || [messageWithId]
   }
 }
