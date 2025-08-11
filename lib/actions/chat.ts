@@ -128,26 +128,22 @@ export async function createChatWithFirstMessage(
   const messageId = message.id || generateId()
   const chatTitle = title || DEFAULT_CHAT_TITLE
 
-  // Create chat
-  const chat = await dbActions.createChat({
-    id: chatId,
-    title: chatTitle.substring(0, 255),
+  // Use transaction for atomic operation
+  const result = await dbActions.createChatWithFirstMessageTransaction({
+    chatId,
+    chatTitle,
     userId,
-    visibility: 'private'
-  })
-
-  // Save message
-  const dbMessage = await dbActions.upsertMessage({
-    ...message,
-    id: messageId,
-    chatId
+    message: {
+      ...message,
+      id: messageId
+    }
   })
 
   // Revalidate cache
   revalidateTag(`chat-${chatId}`)
   revalidateTag('chat')
 
-  return { chat, message: dbMessage }
+  return result
 }
 
 

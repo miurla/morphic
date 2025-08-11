@@ -336,3 +336,47 @@ export async function updateChatTitle(
 
   return updatedChat || null
 }
+
+/**
+ * Create a chat with the first message in a single transaction
+ * Optimized for new chat creation
+ */
+export async function createChatWithFirstMessageTransaction({
+  chatId,
+  chatTitle,
+  userId,
+  message
+}: {
+  chatId: string
+  chatTitle: string
+  userId: string
+  message: PersistableUIMessage
+}): Promise<{ chat: Chat; message: Message }> {
+  return await db.transaction(async tx => {
+    // 1. Create chat
+    const [chat] = await tx
+      .insert(chats)
+      .values({
+        id: chatId,
+        title: chatTitle.substring(0, 255),
+        userId,
+        visibility: 'private',
+        createdAt: new Date()
+      })
+      .returning()
+
+    // 2. Save message
+    const dbMessage = mapUIMessageToDBMessage({ ...message, chatId })
+    const [savedMessage] = await tx.insert(messages).values(dbMessage).returning()
+
+    // 3. Save parts if they exist
+    if (message.parts && message.parts.length > 0) {
+      const partsData = mapUIMessagePartsToDBParts(message.parts, savedMessage.id)
+      if (partsData.length > 0) {
+        await tx.insert(parts).values(partsData)
+      }
+    }
+
+    return { chat, message: savedMessage }
+  })
+}

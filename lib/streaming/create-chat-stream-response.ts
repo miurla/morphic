@@ -45,15 +45,19 @@ export async function createChatStreamResponse(
     })
   }
 
-  // Fetch chat data for authorization check and cache it
-  let initialChat = await loadChat(chatId, userId)
+  // Skip loading chat for new chats optimization
+  let initialChat = null
+  if (!isNewChat) {
+    // Fetch chat data for authorization check and cache it
+    initialChat = await loadChat(chatId, userId)
 
-  // Authorization check: if chat exists, it must belong to the user
-  if (initialChat && initialChat.userId !== userId) {
-    return new Response('You are not allowed to access this chat', {
-      status: 403,
-      statusText: 'Forbidden'
-    })
+    // Authorization check: if chat exists, it must belong to the user
+    if (initialChat && initialChat.userId !== userId) {
+      return new Response('You are not allowed to access this chat', {
+        status: 403,
+        statusText: 'Forbidden'
+      })
+    }
   }
 
   // Create parent trace ID for grouping all operations
