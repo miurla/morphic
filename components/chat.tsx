@@ -112,24 +112,33 @@ export function Chat({
     },
     onError: error => {
       // Handle rate limiting errors from Vercel WAF
-      if (
+      // Check for status codes in error message or specific rate limit indicators
+      const errorMessage = error.message?.toLowerCase() || ''
+      const isRateLimit =
         error.message?.includes('429') ||
-        error.message?.toLowerCase().includes('rate limit') ||
-        error.message?.toLowerCase().includes('too many requests')
-      ) {
+        errorMessage.includes('rate limit') ||
+        errorMessage.includes('too many requests')
+
+      if (isRateLimit) {
         setErrorModal({
           open: true,
           type: 'rate-limit',
           message: error.message,
           details: undefined
         })
-      } else if (error.message?.includes('401')) {
+      } else if (
+        error.message?.includes('401') ||
+        errorMessage.includes('unauthorized')
+      ) {
         setErrorModal({
           open: true,
           type: 'auth',
           message: error.message
         })
-      } else if (error.message?.includes('403')) {
+      } else if (
+        error.message?.includes('403') ||
+        errorMessage.includes('forbidden')
+      ) {
         setErrorModal({
           open: true,
           type: 'forbidden',

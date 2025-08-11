@@ -95,7 +95,7 @@ export function ErrorModal({
             </div>
           )}
         </DialogHeader>
-        <DialogFooter className="flex-col gap-2 sm:flex-col">
+        <DialogFooter className="flex-col gap-2">
           {onRetry && error.type !== 'rate-limit' && (
             <Button
               onClick={() => {
