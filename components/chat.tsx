@@ -24,6 +24,7 @@ import { AuthModal } from './auth-modal'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
 import { DragOverlay } from './drag-overlay'
+import { ErrorModal } from './error-modal'
 
 // Define section structure
 interface ChatSection {
@@ -48,6 +49,16 @@ export function Chat({
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [input, setInput] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [errorModal, setErrorModal] = useState<{
+    open: boolean
+    type: 'rate-limit' | 'auth' | 'forbidden' | 'general'
+    message: string
+    details?: string
+  }>({
+    open: false,
+    type: 'general',
+    message: ''
+  })
   const { isAuthenticated } = useAuthCheck()
 
   const {
@@ -100,7 +111,34 @@ export function Chat({
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
     },
     onError: error => {
-      toast.error(`Error in chat: ${error.message}`)
+      // Handle rate limiting errors from Vercel WAF
+      if (
+        error.message?.includes('429') ||
+        error.message?.toLowerCase().includes('rate limit') ||
+        error.message?.toLowerCase().includes('too many requests')
+      ) {
+        setErrorModal({
+          open: true,
+          type: 'rate-limit',
+          message: error.message,
+          details: undefined
+        })
+      } else if (error.message?.includes('401')) {
+        setErrorModal({
+          open: true,
+          type: 'auth',
+          message: error.message
+        })
+      } else if (error.message?.includes('403')) {
+        setErrorModal({
+          open: true,
+          type: 'forbidden',
+          message: error.message
+        })
+      } else {
+        // For general errors, still use toast for less intrusive notification
+        toast.error(`Error in chat: ${error.message}`)
+      }
     },
     experimental_throttle: 100,
     generateId
@@ -365,6 +403,26 @@ export function Chat({
       />
       <DragOverlay visible={isDragging} />
       <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+      <ErrorModal
+        open={errorModal.open}
+        onOpenChange={open => setErrorModal(prev => ({ ...prev, open }))}
+        error={errorModal}
+        onRetry={
+          errorModal.type !== 'rate-limit'
+            ? () => {
+                // Retry the last message if not rate limited
+                if (messages.length > 0) {
+                  const lastUserMessage = messages
+                    .filter(m => m.role === 'user')
+                    .pop()
+                  if (lastUserMessage) {
+                    sendMessage(lastUserMessage)
+                  }
+                }
+              }
+            : undefined
+        }
+      />
     </div>
   )
 }
