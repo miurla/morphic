@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { resetAllCounters } from '@/lib/utils/perf-tracking'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { Model } from '@/lib/types/models'
 import { isProviderEnabled } from '@/lib/utils/registry'
@@ -15,11 +16,17 @@ const DEFAULT_MODEL: Model = {
 }
 
 export async function POST(req: Request) {
+  const startTime = performance.now()
   const abortSignal = req.signal
+  
+  // Reset counters for new request
+  resetAllCounters()
 
   try {
     const body = await req.json()
     const { message, chatId, trigger, messageId, isNewChat } = body
+    
+    console.log(`[PERF] API Route - Start: chatId=${chatId}, trigger=${trigger}, isNewChat=${isNewChat}`)
 
     // Handle different triggers
     if (trigger === 'regenerate-assistant-message') {
@@ -40,7 +47,10 @@ export async function POST(req: Request) {
 
     const referer = req.headers.get('referer')
     const isSharePage = referer?.includes('/share/')
+    
+    const authStart = performance.now()
     const userId = await getCurrentUserId()
+    console.log(`[PERF] Auth completed: ${(performance.now() - authStart).toFixed(2)}ms`)
 
     if (isSharePage) {
       return new Response('Chat API is not available on share pages', {
@@ -80,7 +90,8 @@ export async function POST(req: Request) {
       )
     }
 
-    return await createChatStreamResponse({
+    const streamStart = performance.now()
+    const response = await createChatStreamResponse({
       message,
       model: selectedModel,
       chatId,
@@ -90,6 +101,17 @@ export async function POST(req: Request) {
       abortSignal,
       isNewChat
     })
+    
+    const totalTime = performance.now() - startTime
+    console.log(`[PERF] Total API route time: ${totalTime.toFixed(2)}ms`)
+    
+    // Print summary
+    console.log(`[PERF] === Summary ===`)
+    console.log(`[PERF] Chat Type: ${isNewChat ? 'NEW' : 'EXISTING'}`)
+    console.log(`[PERF] Total Time: ${totalTime.toFixed(2)}ms`)
+    console.log(`[PERF] ================`)
+    
+    return response
   } catch (error) {
     console.error('API route error:', error)
     return new Response('Error processing your request', {

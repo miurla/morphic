@@ -77,17 +77,22 @@ export async function handleStreamFinish(
   const chatTitle = titlePromise ? await titlePromise : undefined
 
   // Save message with retry logic
-  upsertMessage(chatId, responseMessage, userId).catch(async error => {
-    console.error('Error saving message:', error)
-    try {
-      await retryDatabaseOperation(
-        () => upsertMessage(chatId, responseMessage, userId),
-        'save message'
-      )
-    } catch (retryError) {
-      console.error('Failed to save after retries:', retryError)
-    }
-  })
+  const saveStart = performance.now()
+  upsertMessage(chatId, responseMessage, userId)
+    .then(() => {
+      console.log(`[PERF] upsertMessage (AI response) completed: ${(performance.now() - saveStart).toFixed(2)}ms`)
+    })
+    .catch(async error => {
+      console.error('Error saving message:', error)
+      try {
+        await retryDatabaseOperation(
+          () => upsertMessage(chatId, responseMessage, userId),
+          'save message'
+        )
+      } catch (retryError) {
+        console.error('Failed to save after retries:', retryError)
+      }
+    })
 
   // Update title after message is saved
   if (chatTitle && chatTitle !== DEFAULT_CHAT_TITLE) {

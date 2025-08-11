@@ -48,8 +48,10 @@ export async function createChatStreamResponse(
   // Skip loading chat for new chats optimization
   let initialChat = null
   if (!isNewChat) {
+    const loadChatStart = performance.now()
     // Fetch chat data for authorization check and cache it
     initialChat = await loadChat(chatId, userId)
+    console.log(`[PERF] loadChat completed: ${(performance.now() - loadChatStart).toFixed(2)}ms`)
 
     // Authorization check: if chat exists, it must belong to the user
     if (initialChat && initialChat.userId !== userId) {
@@ -58,6 +60,8 @@ export async function createChatStreamResponse(
         statusText: 'Forbidden'
       })
     }
+  } else {
+    console.log(`[PERF] loadChat skipped for new chat`)
   }
 
   // Create parent trace ID for grouping all operations

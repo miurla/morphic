@@ -17,6 +17,8 @@ export async function prepareMessages(
   message: UIMessage | null
 ): Promise<UIMessage[]> {
   const { chatId, userId, trigger, messageId, initialChat, isNewChat } = context
+  const startTime = performance.now()
+  console.log(`[PERF] prepareMessages - Start: trigger=${trigger}, isNewChat=${isNewChat}`)
 
   if (trigger === 'regenerate-assistant-message' && messageId) {
     // Handle regeneration - use initialChat if available to avoid DB call
@@ -82,25 +84,36 @@ export async function prepareMessages(
     // Optimize for new chats: create chat and save message together
     if (isNewChat) {
       // Use createChatWithFirstMessage for atomic operation
+      const createStart = performance.now()
       const { createChatWithFirstMessage } = await import('@/lib/actions/chat')
       await createChatWithFirstMessage(chatId, messageWithId, userId, DEFAULT_CHAT_TITLE)
+      console.log(`[PERF] createChatWithFirstMessage completed: ${(performance.now() - createStart).toFixed(2)}ms`)
+      console.log(`[PERF] prepareMessages - Total: ${(performance.now() - startTime).toFixed(2)}ms`)
       return [messageWithId]
     }
 
     // For existing chats
     if (!initialChat) {
+      const createStart = performance.now()
       await createChat(chatId, DEFAULT_CHAT_TITLE, userId)
+      console.log(`[PERF] createChat completed: ${(performance.now() - createStart).toFixed(2)}ms`)
     }
 
+    const upsertStart = performance.now()
     await upsertMessage(chatId, messageWithId, userId)
+    console.log(`[PERF] upsertMessage completed: ${(performance.now() - upsertStart).toFixed(2)}ms`)
 
     // If we have initialChat, append the new message instead of fetching all messages
     if (initialChat && initialChat.messages) {
+      console.log(`[PERF] prepareMessages - Total: ${(performance.now() - startTime).toFixed(2)}ms (using cached chat)`)
       return [...initialChat.messages, messageWithId]
     }
 
     // Fallback to fetching if no initialChat
+    const loadStart = performance.now()
     const updatedChat = await loadChat(chatId, userId)
+    console.log(`[PERF] loadChat (fallback) completed: ${(performance.now() - loadStart).toFixed(2)}ms`)
+    console.log(`[PERF] prepareMessages - Total: ${(performance.now() - startTime).toFixed(2)}ms`)
     return updatedChat?.messages || [messageWithId]
   }
 }

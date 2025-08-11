@@ -44,6 +44,7 @@ interface ChatPayload {
   trigger: 'submit-user-message' | 'regenerate-assistant-message'
   message?: UIMessage
   messageId?: string
+  isNewChat?: boolean
 }
 
 class ChatApiTester {
@@ -166,6 +167,8 @@ class ChatApiTester {
     } else {
       const userMessage = this.createUserMessage(message || this.config.message)
       payload.message = userMessage
+      // Add isNewChat flag - always true for CLI since we generate new chatId each time
+      payload.isNewChat = true
     }
 
     console.log('🚀 Sending request to:', this.config.apiUrl)
