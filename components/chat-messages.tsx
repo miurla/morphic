@@ -7,6 +7,7 @@ import { UseChatHelpers } from '@ai-sdk/react'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
+import { AnimatedLogo } from './ui/animated-logo'
 import { ChatError } from './chat-error'
 import { DefaultSkeleton } from './default-skeleton'
 import { RenderMessage } from './render-message'
@@ -69,10 +70,7 @@ export function ChatMessages({
   if (!sections.length) return null
 
   // Check if loading indicator should be shown
-  const showLoading =
-    isLoading &&
-    sections.length > 0 &&
-    sections[sections.length - 1].assistantMessages.length === 0
+  const showLoading = status === 'submitted' || status === 'streaming'
 
   // Helper function to get tool count with caching
   const getToolCount = (message?: UIMessage): number => {
@@ -180,7 +178,6 @@ export function ChatMessages({
                 onUpdateMessage={onUpdateMessage}
                 reload={reload}
               />
-              {showLoading && <DefaultSkeleton />}
             </div>
 
             {/* Assistant messages */}
@@ -202,6 +199,12 @@ export function ChatMessages({
                 />
               </div>
             ))}
+            {/* Show loading after assistant messages */}
+            {showLoading && sectionIndex === sections.length - 1 && (
+              <div className="flex justify-start py-4">
+                <AnimatedLogo className="h-10 w-10" />
+              </div>
+            )}
             {sectionIndex === sections.length - 1 && (
               <ChatError error={error} />
             )}

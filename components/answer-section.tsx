@@ -12,7 +12,6 @@ import type {
 } from '@/lib/types/ai'
 
 import { CollapsibleMessage } from './collapsible-message'
-import { DefaultSkeleton } from './default-skeleton'
 import { MarkdownMessage } from './message'
 import { MessageActions } from './message-actions'
 
@@ -53,25 +52,6 @@ export function AnswerSection({
     return Promise.resolve(undefined)
   }
 
-  const message = content ? (
-    <div className="flex flex-col gap-1">
-      <MarkdownMessage message={content} citationMaps={citationMaps} />
-      {showActions && (
-        <MessageActions
-          message={content} // Keep original message content for copy
-          messageId={messageId}
-          traceId={metadata?.traceId}
-          feedbackScore={metadata?.feedbackScore}
-          chatId={chatId}
-          enableShare={enableShare}
-          reload={handleReload}
-          status={status}
-        />
-      )}
-    </div>
-  ) : (
-    <DefaultSkeleton />
-  )
   return (
     <CollapsibleMessage
       role="assistant"
@@ -81,7 +61,23 @@ export function AnswerSection({
       showBorder={false}
       showIcon={false}
     >
-      {message}
+      {content && (
+        <div className="flex flex-col gap-1">
+          <MarkdownMessage message={content} citationMaps={citationMaps} />
+          {showActions && (
+            <MessageActions
+              message={content} // Keep original message content for copy
+              messageId={messageId}
+              traceId={metadata?.traceId}
+              feedbackScore={metadata?.feedbackScore}
+              chatId={chatId}
+              enableShare={enableShare}
+              reload={handleReload}
+              status={status}
+            />
+          )}
+        </div>
+      )}
     </CollapsibleMessage>
   )
 }
