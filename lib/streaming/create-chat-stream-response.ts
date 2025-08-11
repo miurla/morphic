@@ -14,6 +14,7 @@ import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import { loadChat } from '../actions/chat'
 import { generateChatTitle } from '../agents/title-generator'
+import { perfLog, perfTime } from '../utils/perf-logging'
 import {
   getMaxAllowedTokens,
   shouldTruncateMessages,
@@ -51,7 +52,7 @@ export async function createChatStreamResponse(
     const loadChatStart = performance.now()
     // Fetch chat data for authorization check and cache it
     initialChat = await loadChat(chatId, userId)
-    console.log(`[PERF] loadChat completed: ${(performance.now() - loadChatStart).toFixed(2)}ms`)
+    perfTime('loadChat completed', loadChatStart)
 
     // Authorization check: if chat exists, it must belong to the user
     if (initialChat && initialChat.userId !== userId) {
@@ -61,7 +62,7 @@ export async function createChatStreamResponse(
       })
     }
   } else {
-    console.log(`[PERF] loadChat skipped for new chat`)
+    perfLog('loadChat skipped for new chat')
   }
 
   // Create parent trace ID for grouping all operations

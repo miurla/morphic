@@ -13,6 +13,7 @@ import {
 import type { Chat, Message } from './schema'
 import { chats, generateId, messages, parts } from './schema'
 import { db } from '.'
+import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
 
 /**
@@ -78,7 +79,7 @@ export async function upsertMessage(
   message: PersistableUIMessage & { chatId: string }
 ): Promise<Message> {
   const count = incrementDbOperationCount()
-  console.log(`[PERF] DB - upsertMessage called - count: ${count}`)
+  perfLog(`DB - upsertMessage called - count: ${count}`)
   const result = await db.transaction(async tx => {
     // 1. Insert or update the message
     const messageData = mapUIMessageToDBMessage(message)
@@ -135,7 +136,7 @@ export async function loadChatWithMessages(
   userId?: string
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
   const count = incrementDbOperationCount()
-  console.log(`[PERF] DB - loadChatWithMessages called - count: ${count}`)
+  perfLog(`DB - loadChatWithMessages called - count: ${count}`)
   // Don't check cache yet - need to verify permissions first
 
   // Get chat and messages in parallel
@@ -357,7 +358,7 @@ export async function createChatWithFirstMessageTransaction({
   userId: string
   message: PersistableUIMessage
 }): Promise<{ chat: Chat; message: Message }> {
-  console.log(`[PERF] DB - createChatWithFirstMessageTransaction start`)
+  perfLog(`DB - createChatWithFirstMessageTransaction start`)
   const dbStart = performance.now()
   return await db.transaction(async tx => {
     // 1. Create chat
@@ -384,7 +385,7 @@ export async function createChatWithFirstMessageTransaction({
       }
     }
 
-    console.log(`[PERF] DB - createChatWithFirstMessageTransaction completed: ${(performance.now() - dbStart).toFixed(2)}ms`)
+    perfTime('DB - createChatWithFirstMessageTransaction completed', dbStart)
     return { chat, message: savedMessage }
   })
 }

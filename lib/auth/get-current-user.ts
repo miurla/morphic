@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { perfLog } from '@/lib/utils/perf-logging'
 import { incrementAuthCallCount } from '@/lib/utils/perf-tracking'
 
 export async function getCurrentUser() {
@@ -16,7 +17,7 @@ export async function getCurrentUser() {
 
 export async function getCurrentUserId() {
   const count = incrementAuthCallCount()
-  console.log(`[PERF] getCurrentUserId called - count: ${count}`)
+  perfLog(`getCurrentUserId called - count: ${count}`)
   const user = await getCurrentUser()
   return user?.id
 }

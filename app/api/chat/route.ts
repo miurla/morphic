@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { resetAllCounters } from '@/lib/utils/perf-tracking'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { Model } from '@/lib/types/models'
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { message, chatId, trigger, messageId, isNewChat } = body
     
-    console.log(`[PERF] API Route - Start: chatId=${chatId}, trigger=${trigger}, isNewChat=${isNewChat}`)
+    perfLog(`API Route - Start: chatId=${chatId}, trigger=${trigger}, isNewChat=${isNewChat}`)
 
     // Handle different triggers
     if (trigger === 'regenerate-assistant-message') {
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
     
     const authStart = performance.now()
     const userId = await getCurrentUserId()
-    console.log(`[PERF] Auth completed: ${(performance.now() - authStart).toFixed(2)}ms`)
+    perfTime('Auth completed', authStart)
 
     if (isSharePage) {
       return new Response('Chat API is not available on share pages', {
@@ -103,13 +104,11 @@ export async function POST(req: Request) {
     })
     
     const totalTime = performance.now() - startTime
-    console.log(`[PERF] Total API route time: ${totalTime.toFixed(2)}ms`)
-    
-    // Print summary
-    console.log(`[PERF] === Summary ===`)
-    console.log(`[PERF] Chat Type: ${isNewChat ? 'NEW' : 'EXISTING'}`)
-    console.log(`[PERF] Total Time: ${totalTime.toFixed(2)}ms`)
-    console.log(`[PERF] ================`)
+    perfLog(`Total API route time: ${totalTime.toFixed(2)}ms`)
+    perfLog(`=== Summary ===`)
+    perfLog(`Chat Type: ${isNewChat ? 'NEW' : 'EXISTING'}`)
+    perfLog(`Total Time: ${totalTime.toFixed(2)}ms`)
+    perfLog(`================`)
     
     return response
   } catch (error) {

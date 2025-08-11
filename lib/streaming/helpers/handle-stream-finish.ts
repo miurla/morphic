@@ -5,6 +5,7 @@ import { generateRelatedQuestions } from '@/lib/agents/generate-related-question
 import { updateChatTitle } from '@/lib/db/actions'
 import { generateId } from '@/lib/db/schema'
 import { hasToolCalls } from '@/lib/utils/message-utils'
+import { perfTime } from '@/lib/utils/perf-logging'
 import { retryDatabaseOperation } from '@/lib/utils/retry'
 
 import type { StreamContext } from './types'
@@ -80,7 +81,7 @@ export async function handleStreamFinish(
   const saveStart = performance.now()
   upsertMessage(chatId, responseMessage, userId)
     .then(() => {
-      console.log(`[PERF] upsertMessage (AI response) completed: ${(performance.now() - saveStart).toFixed(2)}ms`)
+      perfTime('upsertMessage (AI response) completed', saveStart)
     })
     .catch(async error => {
       console.error('Error saving message:', error)
