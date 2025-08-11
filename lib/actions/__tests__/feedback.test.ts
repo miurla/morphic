@@ -2,14 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock the modules before any imports
 vi.mock('@/lib/db')
-vi.mock('@/lib/cache/memory-cache')
 vi.mock('langfuse')
 vi.mock('@/lib/utils/telemetry')
 
 // Import after mocking
 import { Langfuse } from 'langfuse'
 
-import { chatCache } from '@/lib/cache/memory-cache'
 import { db } from '@/lib/db'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
@@ -42,9 +40,6 @@ describe('Feedback Actions', () => {
       const mockSet = vi.fn().mockReturnValue({ where: mockUpdateWhere })
       vi.mocked(db).update = vi.fn().mockReturnValue({ set: mockSet })
 
-      // Mock cache
-      vi.mocked(chatCache).deletePattern = vi.fn()
-
       // Mock tracing disabled
       vi.mocked(isTracingEnabled).mockReturnValue(false)
 
@@ -53,7 +48,6 @@ describe('Feedback Actions', () => {
       expect(result).toEqual({ success: true })
       expect(db.select).toHaveBeenCalled()
       expect(db.update).toHaveBeenCalled()
-      expect(chatCache.deletePattern).toHaveBeenCalledWith(`${chatId}-`)
     })
 
     it('should return error when message not found', async () => {
@@ -124,9 +118,6 @@ describe('Feedback Actions', () => {
       const mockUpdateWhere = vi.fn().mockResolvedValue(undefined)
       const mockSet = vi.fn().mockReturnValue({ where: mockUpdateWhere })
       vi.mocked(db).update = vi.fn().mockReturnValue({ set: mockSet })
-
-      // Mock cache
-      vi.mocked(chatCache).deletePattern = vi.fn()
 
       const result = await updateMessageFeedback(messageId, score)
 

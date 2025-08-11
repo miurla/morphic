@@ -29,6 +29,13 @@
       "when": 1754832999921,
       "tag": "0003_heavy_whirlwind",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1754894590844,
+      "tag": "0004_natural_wallow",
+      "breakpoints": true
     }
   ]
 }

@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { MoreHorizontal, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { deleteChat } from '@/lib/actions/chat-db'
+import { deleteChat } from '@/lib/actions/chat'
 import { Chat as DBChat } from '@/lib/db/schema'
 
 import {

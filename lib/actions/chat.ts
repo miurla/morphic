@@ -25,6 +25,17 @@ export async function getChats() {
 }
 
 /**
+ * Get chats with pagination for the current user
+ */
+export async function getChatsPage(limit = 20, offset = 0) {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return { chats: [], nextOffset: null }
+  }
+  return dbActions.getChatsPage(userId, limit, offset)
+}
+
+/**
  * Get a chat with messages (no cache)
  */
 export async function getChat(
@@ -139,7 +150,7 @@ export async function saveMessage(
 export async function deleteChat(chatId: string) {
   const userId = await getCurrentUserId()
   if (!userId) {
-    return { error: 'User not authenticated' }
+    return { success: false, error: 'User not authenticated' }
   }
 
   const result = await dbActions.deleteChat(chatId, userId)
@@ -158,7 +169,7 @@ export async function deleteChat(chatId: string) {
 export async function clearChats() {
   const userId = await getCurrentUserId()
   if (!userId) {
-    return { error: 'User not authenticated' }
+    return { success: false, error: 'User not authenticated' }
   }
 
   const chats = await dbActions.getChats(userId)
@@ -177,13 +188,13 @@ export async function clearChats() {
 export async function deleteMessagesAfter(chatId: string, messageId: string) {
   const userId = await getCurrentUserId()
   if (!userId) {
-    return { error: 'User not authenticated' }
+    return { success: false, error: 'User not authenticated' }
   }
 
   // Verify access
   const chat = await dbActions.getChat(chatId, userId)
   if (!chat || chat.userId !== userId) {
-    return { error: 'Unauthorized' }
+    return { success: false, error: 'Unauthorized' }
   }
 
   const result = await dbActions.deleteMessagesAfter(chatId, messageId)
@@ -224,13 +235,13 @@ export async function deleteMessagesFromIndex(
 ) {
   const userId = await getCurrentUserId()
   if (!userId) {
-    return { error: 'User not authenticated' }
+    return { success: false, error: 'User not authenticated' }
   }
 
   // Verify access
   const chat = await dbActions.getChat(chatId, userId)
   if (!chat || chat.userId !== userId) {
-    return { error: 'Unauthorized' }
+    return { success: false, error: 'Unauthorized' }
   }
 
   const result = await dbActions.deleteMessagesFromIndex(chatId, messageId)

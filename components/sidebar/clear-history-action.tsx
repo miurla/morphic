@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { MoreHorizontal, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { clearChats } from '@/lib/actions/chat-db'
+import { clearChats } from '@/lib/actions/chat'
 
 import {
   AlertDialog,

@@ -2,7 +2,6 @@
 
 import { and, asc, desc, eq, gt, inArray } from 'drizzle-orm'
 
-import { chatCache } from '@/lib/cache/memory-cache'
 import type { UIMessage } from '@/lib/types/ai'
 import type { PersistableUIMessage } from '@/lib/types/message-persistence'
 import {
@@ -38,9 +37,6 @@ export async function createChat({
       visibility
     })
     .returning()
-
-  // Invalidate cache for this chat
-  chatCache.deletePattern(`${id}-`)
 
   return chat
 }
@@ -106,12 +102,6 @@ export async function upsertMessage(
     return dbMessage
   })
 
-  // Invalidate cache after successful transaction
-  // Using setTimeout to ensure this happens after transaction commit
-  setTimeout(() => {
-    chatCache.deletePattern(`${message.chatId}-`)
-  }, 0)
-
   return result
 }
 
@@ -167,20 +157,11 @@ export async function loadChatWithMessages(
     return null
   }
 
-  // Now check cache with visibility included in key
-  const cacheKey = `${chatId}-${userId || 'anonymous'}-${chat.visibility}`
-  const cached = chatCache.get(cacheKey)
-  if (cached) {
-    return cached
-  }
-
-  // Build result and cache it
+  // Build result
   const uiMessages = messagesResult.map(msg =>
     buildUIMessageFromDB(msg, msg.parts)
   )
-  const result = { ...chat, messages: uiMessages }
-  chatCache.set(cacheKey, result)
-  return result
+  return { ...chat, messages: uiMessages }
 }
 
 /**
@@ -217,9 +198,6 @@ export async function deleteMessagesAfter(
   if (messageIds.length > 0) {
     // Delete messages (parts will be cascade deleted)
     await db.delete(messages).where(inArray(messages.id, messageIds))
-
-    // Invalidate cache for this chat
-    chatCache.deletePattern(`${chatId}-`)
   }
 
   return { count: messageIds.length }
@@ -252,9 +230,6 @@ export async function deleteMessagesFromIndex(
 
   if (messageIds.length > 0) {
     await db.delete(messages).where(inArray(messages.id, messageIds))
-
-    // Invalidate cache for this chat
-    chatCache.deletePattern(`${chatId}-`)
   }
 
   return { count: messageIds.length }
@@ -269,6 +244,35 @@ export async function getChats(userId: string): Promise<Chat[]> {
     .from(chats)
     .where(eq(chats.userId, userId))
     .orderBy(desc(chats.createdAt))
+}
+
+/**
+ * Get chats with pagination
+ */
+export async function getChatsPage(
+  userId: string,
+  limit = 20,
+  offset = 0
+): Promise<{ chats: Chat[]; nextOffset: number | null }> {
+  try {
+    const results = await db
+      .select()
+      .from(chats)
+      .where(eq(chats.userId, userId))
+      .orderBy(desc(chats.createdAt))
+      .limit(limit)
+      .offset(offset)
+
+    const nextOffset = results.length === limit ? offset + limit : null
+
+    return {
+      chats: results,
+      nextOffset
+    }
+  } catch (error) {
+    console.error('Error fetching chat page:', error)
+    return { chats: [], nextOffset: null }
+  }
 }
 
 /**
@@ -287,9 +291,6 @@ export async function deleteChat(
 
     // Delete the chat (messages and parts will cascade)
     await db.delete(chats).where(eq(chats.id, chatId))
-
-    // Invalidate cache for this chat
-    chatCache.deletePattern(`${chatId}-`)
 
     return { success: true }
   } catch (error) {
@@ -317,11 +318,6 @@ export async function updateChatVisibility(
     .where(eq(chats.id, chatId))
     .returning()
 
-  // Invalidate cache for this chat
-  if (updatedChat) {
-    chatCache.deletePattern(`${chatId}-`)
-  }
-
   return updatedChat
 }
 
@@ -337,11 +333,6 @@ export async function updateChatTitle(
     .set({ title })
     .where(eq(chats.id, chatId))
     .returning()
-
-  // Invalidate cache for this chat
-  if (updatedChat) {
-    chatCache.deletePattern(`${chatId}-`)
-  }
 
   return updatedChat || null
 }

@@ -19,8 +19,11 @@ export async function prepareMessages(
   const { chatId, userId, trigger, messageId, initialChat } = context
 
   if (trigger === 'regenerate-assistant-message' && messageId) {
-    // Handle regeneration
-    const currentChat = initialChat || (await getChatAction(chatId, userId))
+    // Handle regeneration - use initialChat if available to avoid DB call
+    let currentChat = initialChat
+    if (!currentChat) {
+      currentChat = await getChatAction(chatId, userId)
+    }
     if (!currentChat || !currentChat.messages.length) {
       throw new Error('No messages found')
     }
@@ -81,6 +84,13 @@ export async function prepareMessages(
     }
 
     await saveMessage(chatId, messageWithId)
+
+    // If we have initialChat, append the new message instead of fetching all messages
+    if (initialChat && initialChat.messages) {
+      return [...initialChat.messages, messageWithId]
+    }
+
+    // Fallback to fetching if no initialChat
     const updatedChat = await getChatAction(chatId, userId)
     return updatedChat?.messages || [messageWithId]
   }

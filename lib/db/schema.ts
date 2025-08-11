@@ -38,11 +38,18 @@ export const chats = pgTable(
       .notNull()
       .default('private')
   },
-  table => {
-    return {
-      enableRls: true
-    }
-  }
+  table => ({
+    // Index on userId for faster user-specific queries
+    userIdIdx: index('chats_user_id_idx').on(table.userId),
+    // Composite index on (userId, createdAt DESC) for optimized sorting
+    userIdCreatedAtIdx: index('chats_user_id_created_at_idx').on(
+      table.userId,
+      table.createdAt.desc()
+    ),
+    // Index on createdAt for time-based queries
+    createdAtIdx: index('chats_created_at_idx').on(table.createdAt.desc()),
+    enableRls: true
+  })
 )
 
 export type Chat = InferSelectModel<typeof chats>
