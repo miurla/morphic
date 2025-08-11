@@ -22,7 +22,7 @@ export async function prepareMessages(
   const startTime = performance.now()
   perfLog(`prepareMessages - Start: trigger=${trigger}, isNewChat=${isNewChat}`)
 
-  if (trigger === 'regenerate-assistant-message' && messageId) {
+  if (trigger === 'regenerate-message' && messageId) {
     // Handle regeneration - use initialChat if available to avoid DB call
     let currentChat = initialChat
     if (!currentChat) {

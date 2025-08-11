@@ -75,35 +75,27 @@ export function Chat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
       prepareSendMessagesRequest: ({ messages, trigger, messageId }) => {
-        switch (trigger) {
-          case 'regenerate-message':
-            // Find the message being regenerated
-            const messageToRegenerate = messages.find(m => m.id === messageId)
-            return {
-              body: {
-                trigger: 'regenerate-assistant-message',
-                chatId: id,
-                messageId,
-                // Include the message if it's a user message (for edit cases)
-                message:
-                  messageToRegenerate?.role === 'user'
-                    ? messageToRegenerate
-                    : undefined
-              }
-            }
+        // Simplify by passing AI SDK's default trigger values directly
+        const lastMessage = messages[messages.length - 1]
+        const messageToRegenerate =
+          trigger === 'regenerate-message'
+            ? messages.find(m => m.id === messageId)
+            : undefined
 
-          case 'submit-message':
-          default:
-            // Only send the last message
-            return {
-              body: {
-                trigger: 'submit-user-message',
-                chatId: id,
-                message: messages[messages.length - 1],
-                messageId,
-                isNewChat: messages.length === 1
-              }
-            }
+        return {
+          body: {
+            trigger, // Use AI SDK's default trigger value directly
+            chatId: id,
+            messageId,
+            message:
+              trigger === 'regenerate-message' &&
+              messageToRegenerate?.role === 'user'
+                ? messageToRegenerate
+                : trigger === 'submit-message'
+                  ? lastMessage
+                  : undefined,
+            isNewChat: trigger === 'submit-message' && messages.length === 1
+          }
         }
       }
     }),
