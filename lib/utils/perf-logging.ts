@@ -10,6 +10,8 @@ export function perfLog(message: string) {
 
 export function perfTime(label: string, startTime: number) {
   if (isPerfLoggingEnabled) {
-    console.log(`[PERF] ${label}: ${(performance.now() - startTime).toFixed(2)}ms`)
+    console.log(
+      `[PERF] ${label}: ${(performance.now() - startTime).toFixed(2)}ms`
+    )
   }
 }

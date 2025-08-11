@@ -14,13 +14,13 @@ import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import { loadChat } from '../actions/chat'
 import { generateChatTitle } from '../agents/title-generator'
-import { perfLog, perfTime } from '../utils/perf-logging'
 import {
   getMaxAllowedTokens,
   shouldTruncateMessages,
   truncateMessages
 } from '../utils/context-window'
 import { getTextFromParts } from '../utils/message-utils'
+import { perfLog, perfTime } from '../utils/perf-logging'
 
 import { filterReasoningParts } from './helpers/filter-reasoning-parts'
 import { handleStreamFinish } from './helpers/handle-stream-finish'
@@ -34,8 +34,16 @@ const DEFAULT_CHAT_TITLE = 'Untitled'
 export async function createChatStreamResponse(
   config: BaseStreamConfig
 ): Promise<Response> {
-  const { message, model, chatId, userId, trigger, messageId, abortSignal, isNewChat } =
-    config
+  const {
+    message,
+    model,
+    chatId,
+    userId,
+    trigger,
+    messageId,
+    abortSignal,
+    isNewChat
+  } = config
   const modelId = `${model.providerId}:${model.id}`
 
   // Verify that chatId is provided

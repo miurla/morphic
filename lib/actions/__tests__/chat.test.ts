@@ -1,4 +1,5 @@
 import { revalidateTag } from 'next/cache'
+
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
@@ -56,7 +57,7 @@ describe('Chat Actions', () => {
     })
 
     it('should return empty array for unauthenticated user', async () => {
-      vi.mocked(getCurrentUserId).mockResolvedValue(null)
+      vi.mocked(getCurrentUserId).mockResolvedValue(undefined)
 
       const result = await getChats()
 
@@ -91,7 +92,7 @@ describe('Chat Actions', () => {
     })
 
     it('should return empty result for unauthenticated user', async () => {
-      vi.mocked(getCurrentUserId).mockResolvedValue(null)
+      vi.mocked(getCurrentUserId).mockResolvedValue(undefined)
 
       const result = await getChatsPage()
 
@@ -214,7 +215,6 @@ describe('Chat Actions', () => {
       const message: UIMessage = {
         id: 'msg-1',
         role: 'user',
-        content: 'Hello',
         parts: [{ type: 'text', text: 'Hello' }]
       }
       const mockChat: Chat = {
@@ -229,7 +229,8 @@ describe('Chat Actions', () => {
         chatId: mockChat.id,
         role: 'user',
         metadata: {},
-        createdAt: new Date()
+        createdAt: new Date(),
+        updatedAt: null
       }
 
       vi.mocked(getCurrentUserId).mockResolvedValue(userId)
@@ -244,12 +245,11 @@ describe('Chat Actions', () => {
     })
 
     it('should throw error for unauthenticated user', async () => {
-      vi.mocked(getCurrentUserId).mockResolvedValue(null)
+      vi.mocked(getCurrentUserId).mockResolvedValue(undefined)
 
       const message: UIMessage = {
         id: 'msg-1',
         role: 'user',
-        content: 'Hello',
         parts: []
       }
 
@@ -267,7 +267,6 @@ describe('Chat Actions', () => {
       const message: UIMessage = {
         id: 'msg-1',
         role: 'user',
-        content: 'Hello',
         parts: [{ type: 'text', text: 'Hello' }]
       }
       const mockResult = {
@@ -283,7 +282,8 @@ describe('Chat Actions', () => {
           chatId,
           role: 'user' as const,
           metadata: {},
-          createdAt: new Date()
+          createdAt: new Date(),
+          updatedAt: null
         }
       }
 
@@ -305,11 +305,11 @@ describe('Chat Actions', () => {
         chatId,
         chatTitle: title,
         userId,
-        message: expect.objectContaining({
+        message: {
           id: 'msg-1',
           role: 'user',
-          content: 'Hello'
-        })
+          parts: [{ type: 'text', text: 'Hello' }]
+        }
       })
       expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
       expect(revalidateTag).toHaveBeenCalledWith('chat')
@@ -323,7 +323,6 @@ describe('Chat Actions', () => {
       const message: UIMessage = {
         id: 'msg-1',
         role: 'assistant',
-        content: 'Response',
         parts: []
       }
       const mockMessage: Message = {
@@ -331,7 +330,8 @@ describe('Chat Actions', () => {
         chatId,
         role: 'assistant',
         metadata: {},
-        createdAt: new Date()
+        createdAt: new Date(),
+        updatedAt: null
       }
 
       vi.mocked(dbActions.upsertMessage).mockResolvedValue(mockMessage)
@@ -351,16 +351,17 @@ describe('Chat Actions', () => {
       const chatId = 'chat-123'
       const userId = 'user-123'
       const message: UIMessage = {
+        id: '', // Empty string will trigger ID generation
         role: 'user',
-        content: 'Hello',
         parts: []
       }
       const mockMessage: Message = {
-        id: expect.any(String),
+        id: 'generated-id',
         chatId,
         role: 'user',
         metadata: {},
-        createdAt: new Date()
+        createdAt: new Date(),
+        updatedAt: null
       }
 
       vi.mocked(dbActions.upsertMessage).mockResolvedValue(mockMessage)
@@ -392,7 +393,7 @@ describe('Chat Actions', () => {
     })
 
     it('should return error for unauthenticated user', async () => {
-      vi.mocked(getCurrentUserId).mockResolvedValue(null)
+      vi.mocked(getCurrentUserId).mockResolvedValue(undefined)
 
       const result = await deleteChat('chat-123')
 
@@ -514,7 +515,7 @@ describe('Chat Actions', () => {
     })
 
     it('should return null for unauthenticated user', async () => {
-      vi.mocked(getCurrentUserId).mockResolvedValue(null)
+      vi.mocked(getCurrentUserId).mockResolvedValue(undefined)
 
       const result = await shareChat('chat-123')
 
@@ -559,7 +560,6 @@ describe('Chat Actions', () => {
       const message: UIMessage = {
         id: 'msg-1',
         role: 'user',
-        content: 'Hello, how are you?',
         parts: [{ type: 'text', text: 'Hello, how are you?' }]
       }
       const modelId = 'gpt-4'
@@ -599,7 +599,6 @@ describe('Chat Actions', () => {
       const message: UIMessage = {
         id: 'msg-1',
         role: 'user',
-        content: 'Hello',
         parts: []
       }
 

@@ -9,12 +9,12 @@ import {
   mapUIMessagePartsToDBParts,
   mapUIMessageToDBMessage
 } from '@/lib/utils/message-mapping'
+import { perfLog, perfTime } from '@/lib/utils/perf-logging'
+import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
 
 import type { Chat, Message } from './schema'
 import { chats, generateId, messages, parts } from './schema'
 import { db } from '.'
-import { perfLog, perfTime } from '@/lib/utils/perf-logging'
-import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
 
 /**
  * Create a new chat
@@ -375,11 +375,17 @@ export async function createChatWithFirstMessageTransaction({
 
     // 2. Save message
     const dbMessage = mapUIMessageToDBMessage({ ...message, chatId })
-    const [savedMessage] = await tx.insert(messages).values(dbMessage).returning()
+    const [savedMessage] = await tx
+      .insert(messages)
+      .values(dbMessage)
+      .returning()
 
     // 3. Save parts if they exist
     if (message.parts && message.parts.length > 0) {
-      const partsData = mapUIMessagePartsToDBParts(message.parts, savedMessage.id)
+      const partsData = mapUIMessagePartsToDBParts(
+        message.parts,
+        savedMessage.id
+      )
       if (partsData.length > 0) {
         await tx.insert(parts).values(partsData)
       }

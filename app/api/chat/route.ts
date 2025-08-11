@@ -1,10 +1,10 @@
 import { cookies } from 'next/headers'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import { perfLog, perfTime } from '@/lib/utils/perf-logging'
-import { resetAllCounters } from '@/lib/utils/perf-tracking'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { Model } from '@/lib/types/models'
+import { perfLog, perfTime } from '@/lib/utils/perf-logging'
+import { resetAllCounters } from '@/lib/utils/perf-tracking'
 import { isProviderEnabled } from '@/lib/utils/registry'
 
 export const maxDuration = 30
@@ -19,15 +19,17 @@ const DEFAULT_MODEL: Model = {
 export async function POST(req: Request) {
   const startTime = performance.now()
   const abortSignal = req.signal
-  
+
   // Reset counters for new request
   resetAllCounters()
 
   try {
     const body = await req.json()
     const { message, chatId, trigger, messageId, isNewChat } = body
-    
-    perfLog(`API Route - Start: chatId=${chatId}, trigger=${trigger}, isNewChat=${isNewChat}`)
+
+    perfLog(
+      `API Route - Start: chatId=${chatId}, trigger=${trigger}, isNewChat=${isNewChat}`
+    )
 
     // Handle different triggers
     if (trigger === 'regenerate-assistant-message') {
@@ -48,7 +50,7 @@ export async function POST(req: Request) {
 
     const referer = req.headers.get('referer')
     const isSharePage = referer?.includes('/share/')
-    
+
     const authStart = performance.now()
     const userId = await getCurrentUserId()
     perfTime('Auth completed', authStart)
@@ -102,14 +104,14 @@ export async function POST(req: Request) {
       abortSignal,
       isNewChat
     })
-    
+
     const totalTime = performance.now() - startTime
     perfLog(`Total API route time: ${totalTime.toFixed(2)}ms`)
     perfLog(`=== Summary ===`)
     perfLog(`Chat Type: ${isNewChat ? 'NEW' : 'EXISTING'}`)
     perfLog(`Total Time: ${totalTime.toFixed(2)}ms`)
     perfLog(`================`)
-    
+
     return response
   } catch (error) {
     console.error('API route error:', error)

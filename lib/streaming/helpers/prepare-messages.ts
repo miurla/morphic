@@ -87,7 +87,12 @@ export async function prepareMessages(
       // Use createChatWithFirstMessage for atomic operation
       const createStart = performance.now()
       const { createChatWithFirstMessage } = await import('@/lib/actions/chat')
-      await createChatWithFirstMessage(chatId, messageWithId, userId, DEFAULT_CHAT_TITLE)
+      await createChatWithFirstMessage(
+        chatId,
+        messageWithId,
+        userId,
+        DEFAULT_CHAT_TITLE
+      )
       perfTime('createChatWithFirstMessage completed', createStart)
       perfTime('prepareMessages - Total', startTime)
       return [messageWithId]

@@ -146,7 +146,6 @@ export async function createChatWithFirstMessage(
   return result
 }
 
-
 /**
  * Upsert a message to a chat
  * @param userId - Required but not used for access check (assumes already authorized)
@@ -170,7 +169,6 @@ export async function upsertMessage(
 
   return dbMessage
 }
-
 
 /**
  * Delete a chat
