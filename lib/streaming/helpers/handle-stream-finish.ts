@@ -1,6 +1,6 @@
 import { UIMessage, UIMessageStreamWriter } from 'ai'
 
-import { saveMessage } from '@/lib/actions/chat'
+import { upsertMessage } from '@/lib/actions/chat'
 import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
 import { updateChatTitle } from '@/lib/db/actions'
 import { generateId } from '@/lib/db/schema'
@@ -77,11 +77,11 @@ export async function handleStreamFinish(
   const chatTitle = titlePromise ? await titlePromise : undefined
 
   // Save message with retry logic
-  saveMessage(chatId, responseMessage).catch(async error => {
+  upsertMessage(chatId, responseMessage).catch(async error => {
     console.error('Error saving message:', error)
     try {
       await retryDatabaseOperation(
-        () => saveMessage(chatId, responseMessage),
+        () => upsertMessage(chatId, responseMessage),
         'save message'
       )
     } catch (retryError) {

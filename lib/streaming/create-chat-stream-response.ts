@@ -12,7 +12,7 @@ import { Langfuse } from 'langfuse'
 import { researcher } from '@/lib/agents/researcher'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
-import { getChat as getChatAction } from '../actions/chat'
+import { loadChat } from '../actions/chat'
 import { generateChatTitle } from '../agents/title-generator'
 import {
   getMaxAllowedTokens,
@@ -46,7 +46,7 @@ export async function createChatStreamResponse(
   }
 
   // Fetch chat data for authorization check and cache it
-  let initialChat = await getChatAction(chatId, userId)
+  let initialChat = await loadChat(chatId, userId)
 
   // Authorization check: if chat exists, it must belong to the user
   if (initialChat && initialChat.userId !== userId) {

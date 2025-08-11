@@ -37,8 +37,19 @@ export async function getChatsPage(limit = 20, offset = 0) {
 
 /**
  * Get a chat with messages (no cache)
+ * @deprecated Use loadChat instead
  */
 export async function getChat(
+  chatId: string,
+  requestingUserId?: string
+): Promise<(Chat & { messages: UIMessage[] }) | null> {
+  return loadChat(chatId, requestingUserId)
+}
+
+/**
+ * Load a chat with messages (Vercel pattern)
+ */
+export async function loadChat(
   chatId: string,
   requestingUserId?: string
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
@@ -114,9 +125,20 @@ export async function createChatAndSaveMessage(
 }
 
 /**
- * Save a message to an existing chat
+ * Upsert a message (insert or update)
+ * @deprecated Use upsertMessage instead
  */
 export async function saveMessage(
+  chatId: string,
+  message: UIMessage
+): Promise<Message> {
+  return upsertMessage(chatId, message)
+}
+
+/**
+ * Upsert a message to a chat (Vercel pattern)
+ */
+export async function upsertMessage(
   chatId: string,
   message: UIMessage
 ): Promise<Message> {

@@ -3,8 +3,8 @@ import { UIMessage } from 'ai'
 import {
   createChat,
   deleteMessagesFromIndex,
-  getChat as getChatAction,
-  saveMessage
+  loadChat,
+  upsertMessage
 } from '@/lib/actions/chat'
 import { generateId } from '@/lib/db/schema'
 
@@ -22,7 +22,7 @@ export async function prepareMessages(
     // Handle regeneration - use initialChat if available to avoid DB call
     let currentChat = initialChat
     if (!currentChat) {
-      currentChat = await getChatAction(chatId, userId)
+      currentChat = await loadChat(chatId, userId)
     }
     if (!currentChat || !currentChat.messages.length) {
       throw new Error('No messages found')
@@ -57,13 +57,13 @@ export async function prepareMessages(
     } else {
       // User message edit
       if (message && message.id === messageId) {
-        await saveMessage(chatId, message)
+        await upsertMessage(chatId, message)
       }
       const messagesToDelete = currentChat.messages.slice(messageIndex + 1)
       if (messagesToDelete.length > 0) {
         await deleteMessagesFromIndex(chatId, messagesToDelete[0].id)
       }
-      const updatedChat = await getChatAction(chatId, userId)
+      const updatedChat = await loadChat(chatId, userId)
       return (
         updatedChat?.messages || currentChat.messages.slice(0, messageIndex + 1)
       )
@@ -83,7 +83,7 @@ export async function prepareMessages(
       await createChat(chatId, DEFAULT_CHAT_TITLE)
     }
 
-    await saveMessage(chatId, messageWithId)
+    await upsertMessage(chatId, messageWithId)
 
     // If we have initialChat, append the new message instead of fetching all messages
     if (initialChat && initialChat.messages) {
@@ -91,7 +91,7 @@ export async function prepareMessages(
     }
 
     // Fallback to fetching if no initialChat
-    const updatedChat = await getChatAction(chatId, userId)
+    const updatedChat = await loadChat(chatId, userId)
     return updatedChat?.messages || [messageWithId]
   }
 }

@@ -3,8 +3,8 @@ import type { UIMessage } from 'ai'
 import {
   createChat,
   deleteMessagesFromIndex,
-  getChat as getChatAction,
-  saveMessage
+  loadChat,
+  upsertMessage
 } from '@/lib/actions/chat'
 import type { Chat } from '@/lib/db/schema'
 import { generateId } from '@/lib/db/schema'
@@ -26,7 +26,7 @@ export async function prepareMessagesForRegeneration(
   messageId: string,
   message: UIMessage | null
 ): Promise<UIMessage[]> {
-  const currentChat = await getChatAction(chatId, userId)
+  const currentChat = await loadChat(chatId, userId)
   if (!currentChat || !currentChat.messages.length) {
     throw new Error('No messages found')
   }
@@ -46,7 +46,7 @@ export async function prepareMessagesForRegeneration(
   } else {
     // If it's a user message that was edited, save the updated message first
     if (message && message.id === messageId) {
-      await saveMessage(chatId, message)
+      await upsertMessage(chatId, message)
     }
     // Delete everything after this user message
     const messagesToDelete = currentChat.messages.slice(messageIndex + 1)
@@ -54,7 +54,7 @@ export async function prepareMessagesForRegeneration(
       await deleteMessagesFromIndex(chatId, messagesToDelete[0].id)
     }
     // Get updated messages including the edited one
-    const updatedChat = await getChatAction(chatId, userId)
+    const updatedChat = await loadChat(chatId, userId)
     if (updatedChat?.messages) {
       return updatedChat.messages
     } else {
@@ -93,9 +93,9 @@ export async function prepareMessagesForSubmission(
     await createChat(chatId, DEFAULT_CHAT_TITLE)
   }
 
-  await saveMessage(chatId, messageWithId)
+  await upsertMessage(chatId, messageWithId)
 
   // Get all messages including the one just saved
-  const updatedChat = await getChatAction(chatId, userId)
+  const updatedChat = await loadChat(chatId, userId)
   return updatedChat?.messages || [messageWithId]
 }
