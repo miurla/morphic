@@ -5,7 +5,7 @@ import { useState, useTransition } from 'react'
 import { Share } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { shareChat } from '@/lib/actions/chat-db'
+import { shareChat } from '@/lib/actions/chat'
 import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { cn } from '@/lib/utils'
 

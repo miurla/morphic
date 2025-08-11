@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getChatsPage } from '@/lib/actions/chat-db'
-import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getChatsPage } from '@/lib/actions/chat'
 import { Chat as DBChat } from '@/lib/db/schema'
 
 interface ChatPageResponse {
@@ -19,13 +18,8 @@ export async function GET(request: NextRequest) {
   const offset = parseInt(searchParams.get('offset') || '0', 10)
   const limit = parseInt(searchParams.get('limit') || '20', 10)
 
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    return NextResponse.json<ChatPageResponse>({ chats: [], nextOffset: null })
-  }
-
   try {
-    const result = await getChatsPage(userId, limit, offset)
+    const result = await getChatsPage(limit, offset)
     return NextResponse.json<ChatPageResponse>(result)
   } catch (error) {
     console.error('API route error fetching chats:', error)

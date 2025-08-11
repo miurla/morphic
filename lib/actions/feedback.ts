@@ -3,7 +3,6 @@
 import { eq } from 'drizzle-orm'
 import { Langfuse } from 'langfuse'
 
-import { chatCache } from '@/lib/cache/memory-cache'
 import { db } from '@/lib/db'
 import { messages } from '@/lib/db/schema'
 import type { UIMessageMetadata } from '@/lib/types/ai'
@@ -51,11 +50,6 @@ export async function updateMessageFeedback(
         comment: score === 1 ? 'Thumbs up' : 'Thumbs down'
       })
       await langfuse.flushAsync()
-    }
-
-    // Invalidate cache for this chat to ensure fresh data is loaded
-    if (currentMessage.chatId) {
-      chatCache.deletePattern(`${currentMessage.chatId}-`)
     }
 
     return { success: true }
