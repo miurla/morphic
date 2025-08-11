@@ -46,7 +46,7 @@ export async function prepareMessagesForRegeneration(
   } else {
     // If it's a user message that was edited, save the updated message first
     if (message && message.id === messageId) {
-      await upsertMessage(chatId, message)
+      await upsertMessage(chatId, message, userId)
     }
     // Delete everything after this user message
     const messagesToDelete = currentChat.messages.slice(messageIndex + 1)
@@ -90,10 +90,10 @@ export async function prepareMessagesForSubmission(
 
   // If chat doesn't exist, create it with a temporary title
   if (!chat) {
-    await createChat(chatId, DEFAULT_CHAT_TITLE)
+    await createChat(chatId, DEFAULT_CHAT_TITLE, userId)
   }
 
-  await upsertMessage(chatId, messageWithId)
+  await upsertMessage(chatId, messageWithId, userId)
 
   // Get all messages including the one just saved
   const updatedChat = await loadChat(chatId, userId)

@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 
 import { UIMessage } from 'ai'
 
-import { getChat } from '@/lib/actions/chat'
+import { loadChat } from '@/lib/actions/chat'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { getModels } from '@/lib/config/models'
 
@@ -16,7 +16,7 @@ export async function generateMetadata(props: {
   const { id } = await props.params
   const userId = await getCurrentUserId()
 
-  const chat = await getChat(id, userId)
+  const chat = await loadChat(id, userId)
 
   if (!chat) {
     return { title: 'Search' }
@@ -33,7 +33,7 @@ export default async function SearchPage(props: {
   const { id } = await props.params
   const userId = await getCurrentUserId()
 
-  const chat = await getChat(id, userId)
+  const chat = await loadChat(id, userId)
 
   if (!chat) {
     notFound()
