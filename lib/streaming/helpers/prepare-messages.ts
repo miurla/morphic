@@ -18,9 +18,20 @@ export async function prepareMessages(
 ): Promise<UIMessage[]> {
   const { chatId, userId, trigger, messageId, initialChat } = context
 
+  // Performance logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[prepareMessages] Using initialChat:', !!initialChat)
+  }
+
   if (trigger === 'regenerate-assistant-message' && messageId) {
-    // Handle regeneration
-    const currentChat = initialChat || (await getChatAction(chatId, userId))
+    // Handle regeneration - use initialChat if available to avoid DB call
+    let currentChat = initialChat
+    if (!currentChat) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[prepareMessages] Fetching chat from DB (regeneration)')
+      }
+      currentChat = await getChatAction(chatId, userId)
+    }
     if (!currentChat || !currentChat.messages.length) {
       throw new Error('No messages found')
     }
@@ -81,6 +92,19 @@ export async function prepareMessages(
     }
 
     await saveMessage(chatId, messageWithId)
+    
+    // If we have initialChat, append the new message instead of fetching all messages
+    if (initialChat && initialChat.messages) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[prepareMessages] Using cached messages, skipping DB fetch')
+      }
+      return [...initialChat.messages, messageWithId]
+    }
+    
+    // Fallback to fetching if no initialChat
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[prepareMessages] No initialChat, fetching from DB')
+    }
     const updatedChat = await getChatAction(chatId, userId)
     return updatedChat?.messages || [messageWithId]
   }
