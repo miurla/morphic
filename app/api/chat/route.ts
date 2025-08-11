@@ -49,6 +49,14 @@ export async function POST(req: Request) {
       })
     }
 
+    // Check if user is authenticated
+    if (!userId) {
+      return new Response('Authentication required', {
+        status: 401,
+        statusText: 'Unauthorized'
+      })
+    }
+
     const cookieStore = await cookies()
     const modelJson = cookieStore.get('selectedModel')?.value
 
@@ -76,7 +84,7 @@ export async function POST(req: Request) {
       message,
       model: selectedModel,
       chatId,
-      userId: userId!,
+      userId: userId, // userId is guaranteed to be non-null after authentication check above
       trigger,
       messageId,
       abortSignal
