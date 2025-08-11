@@ -33,15 +33,15 @@ export async function POST(req: Request) {
       `API Route - Start: chatId=${chatId}, trigger=${trigger}, isNewChat=${isNewChat}`
     )
 
-    // Handle different triggers
-    if (trigger === 'regenerate-assistant-message') {
+    // Handle different triggers using AI SDK standard values
+    if (trigger === 'regenerate-message') {
       if (!messageId) {
         return new Response('messageId is required for regeneration', {
           status: 400,
           statusText: 'Bad Request'
         })
       }
-    } else if (trigger === 'submit-user-message') {
+    } else if (trigger === 'submit-message') {
       if (!message) {
         return new Response('message is required for submission', {
           status: 400,
