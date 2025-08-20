@@ -118,12 +118,8 @@ export function createSearchTool(fullModel: string) {
         }
       } catch (error) {
         console.error('Search API error:', error)
-        searchResult = {
-          results: [],
-          query: filledQuery,
-          images: [],
-          number_of_results: 0
-        }
+        // Re-throw the error to let AI SDK handle it properly
+        throw error instanceof Error ? error : new Error('Unknown search error')
       }
 
       // Add citation mapping and toolCallId to search results

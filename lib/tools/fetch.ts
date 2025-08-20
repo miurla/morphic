@@ -6,9 +6,7 @@ import { SearchResults as SearchResultsType } from '@/lib/types'
 const CONTENT_CHARACTER_LIMIT = 10000
 const TITLE_CHARACTER_LIMIT = 100
 
-async function fetchRegularData(
-  url: string
-): Promise<SearchResultsType | null> {
+async function fetchRegularData(url: string): Promise<SearchResultsType> {
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
@@ -82,17 +80,14 @@ async function fetchRegularData(
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      console.error('Request timeout after 10 seconds')
-      return null
+      throw new Error('Request timeout after 10 seconds')
     }
     console.error('Regular fetch error:', error)
-    return null
+    throw error instanceof Error ? error : new Error('Unknown fetch error')
   }
 }
 
-async function fetchJinaReaderData(
-  url: string
-): Promise<SearchResultsType | null> {
+async function fetchJinaReaderData(url: string): Promise<SearchResultsType> {
   try {
     const response = await fetch(`https://r.jina.ai/${url}`, {
       method: 'GET',
@@ -103,7 +98,7 @@ async function fetchJinaReaderData(
     })
     const json = await response.json()
     if (!json.data || json.data.length === 0) {
-      return null
+      throw new Error('No data returned from Jina Reader API')
     }
 
     const content = json.data.content.slice(0, CONTENT_CHARACTER_LIMIT)
@@ -121,13 +116,11 @@ async function fetchJinaReaderData(
     }
   } catch (error) {
     console.error('Jina Reader API error:', error)
-    return null
+    throw error instanceof Error ? error : new Error('Jina Reader API failed')
   }
 }
 
-async function fetchTavilyExtractData(
-  url: string
-): Promise<SearchResultsType | null> {
+async function fetchTavilyExtractData(url: string): Promise<SearchResultsType> {
   try {
     const apiKey = process.env.TAVILY_API_KEY
     const response = await fetch('https://api.tavily.com/extract', {
@@ -139,7 +132,7 @@ async function fetchTavilyExtractData(
     })
     const json = await response.json()
     if (!json.results || json.results.length === 0) {
-      return null
+      throw new Error('No results returned from Tavily Extract API')
     }
 
     const result = json.results[0]
@@ -158,7 +151,9 @@ async function fetchTavilyExtractData(
     }
   } catch (error) {
     console.error('Tavily Extract API error:', error)
-    return null
+    throw error instanceof Error
+      ? error
+      : new Error('Tavily Extract API failed')
   }
 }
 
@@ -167,7 +162,7 @@ export const fetchTool = tool({
     'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. Only use "api" type when you need: 1) PDF content extraction, 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina or Tavily API keys.',
   inputSchema: fetchSchema,
   execute: async ({ url, type = 'regular' }) => {
-    let results: SearchResultsType | null
+    let results: SearchResultsType
 
     if (type === 'regular') {
       // Use regular fetch for direct HTML retrieval
@@ -180,10 +175,6 @@ export const fetchTool = tool({
       } else {
         results = await fetchTavilyExtractData(url)
       }
-    }
-
-    if (!results) {
-      return null
     }
 
     return results
