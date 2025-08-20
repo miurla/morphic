@@ -83,9 +83,7 @@ async function fetchRegularData(url: string): Promise<SearchResultsType> {
       throw new Error('Request timeout after 10 seconds')
     }
     console.error('Regular fetch error:', error)
-    throw new Error(
-      `Failed to fetch URL: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
+    throw error instanceof Error ? error : new Error('Unknown fetch error')
   }
 }
 
@@ -118,9 +116,7 @@ async function fetchJinaReaderData(url: string): Promise<SearchResultsType> {
     }
   } catch (error) {
     console.error('Jina Reader API error:', error)
-    throw new Error(
-      `Jina Reader API failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
+    throw error instanceof Error ? error : new Error('Jina Reader API failed')
   }
 }
 
@@ -155,9 +151,9 @@ async function fetchTavilyExtractData(url: string): Promise<SearchResultsType> {
     }
   } catch (error) {
     console.error('Tavily Extract API error:', error)
-    throw new Error(
-      `Tavily Extract API failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
+    throw error instanceof Error
+      ? error
+      : new Error('Tavily Extract API failed')
   }
 }
 

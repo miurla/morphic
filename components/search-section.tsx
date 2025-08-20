@@ -96,7 +96,7 @@ export function SearchSection({
         )}
       {isError ? (
         <Section>
-          <div className="p-3 bg-card border border-destructive rounded-lg">
+          <div className="bg-card rounded-lg">
             <div className="flex items-center gap-2 w-full">
               <span className="text-sm text-destructive block flex-1 min-w-0">
                 {errorMessage}

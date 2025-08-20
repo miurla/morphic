@@ -27,14 +27,14 @@ export function FetchSection({ tool }: FetchSectionProps) {
   let title: string | undefined
   let contentLength: number | undefined
 
-  // Check if output is available
-  if (!tool.output) {
-    // Still fetching
-    displayStatus = 'fetching'
-  } else if (tool.state === 'output-error') {
+  // Check tool state first
+  if (tool.state === 'output-error') {
     // Error state
     displayStatus = 'error'
     error = tool.errorText || 'Failed to retrieve content'
+  } else if (!tool.output) {
+    // Still fetching
+    displayStatus = 'fetching'
   } else {
     // Success state - we have output
     const data = tool.output as SearchResultsType
