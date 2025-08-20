@@ -28,6 +28,7 @@ interface RenderMessageProps {
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
+  isLatestMessage?: boolean
 }
 
 export function RenderMessage({
@@ -40,7 +41,8 @@ export function RenderMessage({
   status,
   addToolResult,
   onUpdateMessage,
-  reload
+  reload,
+  isLatestMessage = false
 }: RenderMessageProps) {
   // Extract citation maps from the message's tool outputs
   const citationMaps = extractCitationMaps(message)
@@ -115,9 +117,12 @@ export function RenderMessage({
             const isStreamingComplete =
               status !== 'streaming' && status !== 'submitted'
             const isLastPart = !hasNextPart
-            const shouldShowActions =
-              (isLastPart && isStreamingComplete) || // Last part and streaming done
-              nextMessagePart?.type === 'data-relatedQuestions' // Next part is related questions
+            // For non-latest messages, always show actions
+            // For latest message, show actions only when streaming is complete
+            const shouldShowActions = isLatestMessage
+              ? (isLastPart && isStreamingComplete) || // Last part and streaming done for latest message
+                nextMessagePart?.type === 'data-relatedQuestions' // Next part is related questions
+              : true // Always show actions for non-latest messages
             return (
               <AnswerSection
                 key={`${messageId}-text-${index}`}
