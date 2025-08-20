@@ -6,6 +6,7 @@ import {
   integer,
   json,
   jsonb,
+  pgPolicy,
   pgTable,
   text,
   timestamp,
@@ -38,19 +39,16 @@ export const chats = pgTable(
       .notNull()
       .default('private')
   },
-  table => ({
-    // Index on userId for faster user-specific queries
-    userIdIdx: index('chats_user_id_idx').on(table.userId),
-    // Composite index on (userId, createdAt DESC) for optimized sorting
-    userIdCreatedAtIdx: index('chats_user_id_created_at_idx').on(
+  table => [
+    // Indexes
+    index('chats_user_id_idx').on(table.userId),
+    index('chats_user_id_created_at_idx').on(
       table.userId,
       table.createdAt.desc()
     ),
-    // Index on createdAt for time-based queries
-    createdAtIdx: index('chats_created_at_idx').on(table.createdAt.desc()),
-    enableRls: true
-  })
-)
+    index('chats_created_at_idx').on(table.createdAt.desc())
+  ]
+).enableRLS()
 
 export type Chat = InferSelectModel<typeof chats>
 
@@ -69,15 +67,14 @@ export const messages = pgTable(
     updatedAt: timestamp('updated_at'),
     metadata: jsonb('metadata').$type<Record<string, any>>()
   },
-  table => ({
-    chatIdIdx: index('messages_chat_id_idx').on(table.chatId),
-    chatIdCreatedAtIdx: index('messages_chat_id_created_at_idx').on(
+  table => [
+    index('messages_chat_id_idx').on(table.chatId),
+    index('messages_chat_id_created_at_idx').on(
       table.chatId,
       table.createdAt
-    ),
-    enableRls: true
-  })
-)
+    )
+  ]
+).enableRLS()
 
 export type Message = InferSelectModel<typeof messages>
 
@@ -161,38 +158,37 @@ export const parts = pgTable(
 
     createdAt: timestamp('created_at').notNull().defaultNow()
   },
-  table => ({
+  table => [
     // Indexes
-    messageIdIdx: index('parts_message_id_idx').on(table.messageId),
-    messageIdOrderIdx: index('parts_message_id_order_idx').on(
+    index('parts_message_id_idx').on(table.messageId),
+    index('parts_message_id_order_idx').on(
       table.messageId,
       table.order
     ),
-    enableRls: true,
 
     // Constraints
-    textTextRequired: check(
+    check(
       'text_text_required',
       sql`(type != 'text' OR text_text IS NOT NULL)`
     ),
-    reasoningTextRequired: check(
+    check(
       'reasoning_text_required',
       sql`(type != 'reasoning' OR reasoning_text IS NOT NULL)`
     ),
-    fileFieldsRequired: check(
+    check(
       'file_fields_required',
       sql`(type != 'file' OR (file_media_type IS NOT NULL AND file_filename IS NOT NULL AND file_url IS NOT NULL))`
     ),
-    toolStateValid: check(
+    check(
       'tool_state_valid',
       sql`(tool_state IS NULL OR tool_state IN ('input-streaming', 'input-available', 'output-available', 'output-error'))`
     ),
-    toolFieldsRequired: check(
+    check(
       'tool_fields_required',
       sql`(type NOT LIKE 'tool-%' OR (tool_tool_call_id IS NOT NULL AND tool_state IS NOT NULL))`
     )
-  })
-)
+  ]
+).enableRLS()
 
 export type Part = InferSelectModel<typeof parts>
 export type NewPart = typeof parts.$inferInsert
@@ -214,11 +210,18 @@ export const feedback = pgTable(
     userAgent: text('user_agent'),
     createdAt: timestamp('created_at').notNull().defaultNow()
   },
-  table => ({
-    userIdIdx: index('feedback_user_id_idx').on(table.userId),
-    createdAtIdx: index('feedback_created_at_idx').on(table.createdAt),
-    enableRls: true
-  })
+  table => [
+    // Indexes
+    index('feedback_user_id_idx').on(table.userId),
+    index('feedback_created_at_idx').on(table.createdAt),
+    
+    // RLS Policy - Allow anyone to insert feedback
+    pgPolicy('anyone_can_insert_feedback', {
+      for: 'insert',
+      to: 'public',
+      withCheck: sql`true`
+    })
+  ]
 )
 
 export type Feedback = InferSelectModel<typeof feedback>
