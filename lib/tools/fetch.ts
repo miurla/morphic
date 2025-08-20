@@ -6,9 +6,7 @@ import { SearchResults as SearchResultsType } from '@/lib/types'
 const CONTENT_CHARACTER_LIMIT = 10000
 const TITLE_CHARACTER_LIMIT = 100
 
-async function fetchRegularData(
-  url: string
-): Promise<SearchResultsType> {
+async function fetchRegularData(url: string): Promise<SearchResultsType> {
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
@@ -91,9 +89,7 @@ async function fetchRegularData(
   }
 }
 
-async function fetchJinaReaderData(
-  url: string
-): Promise<SearchResultsType> {
+async function fetchJinaReaderData(url: string): Promise<SearchResultsType> {
   try {
     const response = await fetch(`https://r.jina.ai/${url}`, {
       method: 'GET',
@@ -128,9 +124,7 @@ async function fetchJinaReaderData(
   }
 }
 
-async function fetchTavilyExtractData(
-  url: string
-): Promise<SearchResultsType> {
+async function fetchTavilyExtractData(url: string): Promise<SearchResultsType> {
   try {
     const apiKey = process.env.TAVILY_API_KEY
     const response = await fetch('https://api.tavily.com/extract', {
