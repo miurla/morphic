@@ -123,7 +123,7 @@ export function CollapsibleMessage({
       ) : (
         <div
           className={cn(
-            'flex-1 rounded-2xl',
+            'flex-1 rounded-2xl w-full',
             role === 'assistant' ? 'px-0' : 'px-3'
           )}
         >

@@ -40,7 +40,10 @@ export function MarkdownMessage({
   const customComponents = {
     code(props: any) {
       const { children, className, ...rest } = props
-      const inline = !('data-language' in props)
+      // Check if it's inline code or code block based on className presence
+      // Code blocks have className like "language-javascript", inline code has no className
+      const match = /language-(\w+)/.exec(className || '')
+      const inline = !match
 
       if (children && typeof children === 'string') {
         if (children === '▍') {
@@ -48,7 +51,6 @@ export function MarkdownMessage({
         }
 
         const processedChildren = children.replace('`▍`', '▍')
-        const match = /language-(\w+)/.exec(className || '')
 
         if (inline) {
           return (
