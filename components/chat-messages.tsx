@@ -78,8 +78,9 @@ export function ChatMessages({
       const headerHeight = 56 // pt-14 padding top
       const chatPanelEstimatedHeight = 120 // ChatPanel with input area
       const additionalPadding = 32 // Safety margin for better visibility
-      
-      const totalOffset = headerHeight + chatPanelEstimatedHeight + additionalPadding
+
+      const totalOffset =
+        headerHeight + chatPanelEstimatedHeight + additionalPadding
       setOffsetHeight(totalOffset)
     }
 
@@ -202,24 +203,32 @@ export function ChatMessages({
             </div>
 
             {/* Assistant messages */}
-            {section.assistantMessages.map(assistantMessage => (
-              <div key={assistantMessage.id} className="flex flex-col gap-4">
-                <RenderMessage
-                  message={assistantMessage}
-                  messageId={assistantMessage.id}
-                  getIsOpen={(id, partType, hasNextPart) =>
-                    getIsOpen(id, partType, hasNextPart, assistantMessage)
-                  }
-                  onOpenChange={handleOpenChange}
-                  onQuerySelect={onQuerySelect}
-                  chatId={chatId}
-                  status={status}
-                  addToolResult={addToolResult}
-                  onUpdateMessage={onUpdateMessage}
-                  reload={reload}
-                />
-              </div>
-            ))}
+            {section.assistantMessages.map((assistantMessage, messageIndex) => {
+              // Check if this is the latest assistant message in the latest section
+              const isLatestMessage =
+                sectionIndex === sections.length - 1 &&
+                messageIndex === section.assistantMessages.length - 1
+
+              return (
+                <div key={assistantMessage.id} className="flex flex-col gap-4">
+                  <RenderMessage
+                    message={assistantMessage}
+                    messageId={assistantMessage.id}
+                    getIsOpen={(id, partType, hasNextPart) =>
+                      getIsOpen(id, partType, hasNextPart, assistantMessage)
+                    }
+                    onOpenChange={handleOpenChange}
+                    onQuerySelect={onQuerySelect}
+                    chatId={chatId}
+                    status={status}
+                    addToolResult={addToolResult}
+                    onUpdateMessage={onUpdateMessage}
+                    reload={reload}
+                    isLatestMessage={isLatestMessage}
+                  />
+                </div>
+              )
+            })}
             {/* Show loading after assistant messages */}
             {showLoading && sectionIndex === sections.length - 1 && (
               <div className="flex justify-start py-4">
