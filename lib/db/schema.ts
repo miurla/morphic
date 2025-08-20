@@ -69,10 +69,7 @@ export const messages = pgTable(
   },
   table => [
     index('messages_chat_id_idx').on(table.chatId),
-    index('messages_chat_id_created_at_idx').on(
-      table.chatId,
-      table.createdAt
-    )
+    index('messages_chat_id_created_at_idx').on(table.chatId, table.createdAt)
   ]
 ).enableRLS()
 
@@ -161,16 +158,10 @@ export const parts = pgTable(
   table => [
     // Indexes
     index('parts_message_id_idx').on(table.messageId),
-    index('parts_message_id_order_idx').on(
-      table.messageId,
-      table.order
-    ),
+    index('parts_message_id_order_idx').on(table.messageId, table.order),
 
     // Constraints
-    check(
-      'text_text_required',
-      sql`(type != 'text' OR text_text IS NOT NULL)`
-    ),
+    check('text_text_required', sql`(type != 'text' OR text_text IS NOT NULL)`),
     check(
       'reasoning_text_required',
       sql`(type != 'reasoning' OR reasoning_text IS NOT NULL)`
@@ -214,7 +205,7 @@ export const feedback = pgTable(
     // Indexes
     index('feedback_user_id_idx').on(table.userId),
     index('feedback_created_at_idx').on(table.createdAt),
-    
+
     // RLS Policy - Allow anyone to insert feedback
     pgPolicy('anyone_can_insert_feedback', {
       for: 'insert',
