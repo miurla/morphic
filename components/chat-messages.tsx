@@ -50,6 +50,7 @@ export function ChatMessages({
   // Cache tool counts for performance optimization
   const toolCountCacheRef = useRef<Map<string, number>>(new Map())
   const isLoading = status === 'submitted' || status === 'streaming'
+  const [offsetHeight, setOffsetHeight] = useState(160) // Dynamic offset for minHeight calculation
 
   // Tool types definition - moved outside function for performance
   const toolTypes = [
@@ -66,6 +67,26 @@ export function ChatMessages({
       toolCountCacheRef.current.clear()
     }
   }, [isLoading])
+
+  // Calculate the offset height dynamically based on viewport and UI elements
+  useEffect(() => {
+    const calculateOffset = () => {
+      // Account for:
+      // - Header/navigation (estimated)
+      // - ChatPanel (input area)
+      // - Additional padding and margins
+      const headerHeight = 56 // pt-14 padding top
+      const chatPanelEstimatedHeight = 120 // ChatPanel with input area
+      const additionalPadding = 32 // Safety margin for better visibility
+      
+      const totalOffset = headerHeight + chatPanelEstimatedHeight + additionalPadding
+      setOffsetHeight(totalOffset)
+    }
+
+    calculateOffset()
+    window.addEventListener('resize', calculateOffset)
+    return () => window.removeEventListener('resize', calculateOffset)
+  }, [])
 
   if (!sections.length) return null
 
@@ -158,7 +179,7 @@ export function ChatMessages({
             className="chat-section mb-8"
             style={
               sectionIndex === sections.length - 1
-                ? { minHeight: 'calc(-228px + 100dvh)' }
+                ? { minHeight: `calc(100dvh - ${offsetHeight}px)` }
                 : {}
             }
           >
