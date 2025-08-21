@@ -339,11 +339,14 @@ describe('Chat Actions', () => {
       const result = await upsertMessage(chatId, message, userId)
 
       expect(result).toEqual(mockMessage)
-      expect(dbActions.upsertMessage).toHaveBeenCalledWith({
-        ...message,
-        id: 'msg-1',
-        chatId
-      })
+      expect(dbActions.upsertMessage).toHaveBeenCalledWith(
+        {
+          ...message,
+          id: 'msg-1',
+          chatId
+        },
+        userId
+      )
       expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
     })
 
@@ -368,11 +371,14 @@ describe('Chat Actions', () => {
 
       await upsertMessage(chatId, message, userId)
 
-      expect(dbActions.upsertMessage).toHaveBeenCalledWith({
-        ...message,
-        id: expect.any(String),
-        chatId
-      })
+      expect(dbActions.upsertMessage).toHaveBeenCalledWith(
+        {
+          ...message,
+          id: expect.any(String),
+          chatId
+        },
+        userId
+      )
     })
   })
 

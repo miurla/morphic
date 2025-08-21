@@ -14,6 +14,7 @@ import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
 
 import type { Chat, Message } from './schema'
 import { chats, generateId, messages, parts } from './schema'
+import { withOptionalRLS, withRLS } from './with-rls'
 import { db } from '.'
 
 /**
@@ -30,17 +31,19 @@ export async function createChat({
   userId: string
   visibility?: 'public' | 'private'
 }): Promise<Chat> {
-  const [chat] = await db
-    .insert(chats)
-    .values({
-      id,
-      title,
-      userId,
-      visibility
-    })
-    .returning()
+  return withRLS(userId, async tx => {
+    const [chat] = await tx
+      .insert(chats)
+      .values({
+        id,
+        title,
+        userId,
+        visibility
+      })
+      .returning()
 
-  return chat
+    return chat
+  })
 }
 
 /**
@@ -50,37 +53,49 @@ export async function getChat(
   chatId: string,
   userId?: string
 ): Promise<Chat | null> {
-  const [chat] = await db
-    .select()
-    .from(chats)
-    .where(eq(chats.id, chatId))
-    .limit(1)
+  // For public chats or when no userId, use regular db connection
+  // For private chats with userId, use RLS
+  return withOptionalRLS(userId || null, async tx => {
+    const [chat] = await tx
+      .select()
+      .from(chats)
+      .where(eq(chats.id, chatId))
+      .limit(1)
 
-  if (!chat) {
+    if (!chat) {
+      return null
+    }
+
+    // Additional permission check for backward compatibility
+    if (chat.visibility === 'public') {
+      return chat
+    }
+
+    if (chat.visibility === 'private' && userId && chat.userId === userId) {
+      return chat
+    }
+
     return null
-  }
-
-  // Permission check
-  if (chat.visibility === 'public') {
-    return chat
-  }
-
-  if (chat.visibility === 'private' && userId && chat.userId === userId) {
-    return chat
-  }
-
-  return null
+  })
 }
 
 /**
  * Upsert a message with its parts
+ * Note: This function should be called with appropriate userId context
  */
 export async function upsertMessage(
-  message: PersistableUIMessage & { chatId: string }
+  message: PersistableUIMessage & { chatId: string },
+  userId?: string
 ): Promise<Message> {
   const count = incrementDbOperationCount()
   perfLog(`DB - upsertMessage called - count: ${count}`)
-  const result = await db.transaction(async tx => {
+
+  // Use RLS if userId is provided, otherwise use regular db
+  const executeFn = userId
+    ? (callback: (tx: any) => Promise<Message>) => withRLS(userId, callback)
+    : (callback: (tx: any) => Promise<Message>) => db.transaction(callback)
+
+  const result = await executeFn(async tx => {
     // 1. Insert or update the message
     const messageData = mapUIMessageToDBMessage(message)
     const [dbMessage] = await tx
@@ -111,21 +126,27 @@ export async function upsertMessage(
 
 /**
  * Load chat messages with parts
+ * Note: Caller should verify chat access permissions before calling this
  */
-export async function loadChat(chatId: string): Promise<UIMessage[]> {
-  // Use Drizzle's query API with relations
-  const result = await db.query.messages.findMany({
-    where: eq(messages.chatId, chatId),
-    with: {
-      parts: {
-        orderBy: [asc(parts.order)]
-      }
-    },
-    orderBy: [asc(messages.createdAt)]
-  })
+export async function loadChat(
+  chatId: string,
+  userId?: string
+): Promise<UIMessage[]> {
+  return withOptionalRLS(userId || null, async tx => {
+    // Use Drizzle's query API with relations
+    const result = await tx.query.messages.findMany({
+      where: eq(messages.chatId, chatId),
+      with: {
+        parts: {
+          orderBy: [asc(parts.order)]
+        }
+      },
+      orderBy: [asc(messages.createdAt)]
+    })
 
-  // Convert to UI format
-  return result.map(msg => buildUIMessageFromDB(msg, msg.parts))
+    // Convert to UI format
+    return result.map(msg => buildUIMessageFromDB(msg, msg.parts))
+  })
 }
 
 /**
@@ -137,37 +158,38 @@ export async function loadChatWithMessages(
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
   const count = incrementDbOperationCount()
   perfLog(`DB - loadChatWithMessages called - count: ${count}`)
-  // Don't check cache yet - need to verify permissions first
 
-  // Get chat and messages in parallel
-  const [chatResult, messagesResult] = await Promise.all([
-    db.select().from(chats).where(eq(chats.id, chatId)).limit(1),
-    db.query.messages.findMany({
-      where: eq(messages.chatId, chatId),
-      with: {
-        parts: {
-          orderBy: [asc(parts.order)]
-        }
-      },
-      orderBy: [asc(messages.createdAt)]
-    })
-  ])
+  return withOptionalRLS(userId || null, async tx => {
+    // Get chat and messages in parallel
+    const [chatResult, messagesResult] = await Promise.all([
+      tx.select().from(chats).where(eq(chats.id, chatId)).limit(1),
+      tx.query.messages.findMany({
+        where: eq(messages.chatId, chatId),
+        with: {
+          parts: {
+            orderBy: [asc(parts.order)]
+          }
+        },
+        orderBy: [asc(messages.createdAt)]
+      })
+    ])
 
-  const chat = chatResult[0]
-  if (!chat) {
-    return null
-  }
+    const chat = chatResult[0]
+    if (!chat) {
+      return null
+    }
 
-  // Permission check
-  if (chat.visibility === 'private' && (!userId || chat.userId !== userId)) {
-    return null
-  }
+    // Permission check for backward compatibility
+    if (chat.visibility === 'private' && (!userId || chat.userId !== userId)) {
+      return null
+    }
 
-  // Build result
-  const uiMessages = messagesResult.map(msg =>
-    buildUIMessageFromDB(msg, msg.parts)
-  )
-  return { ...chat, messages: uiMessages }
+    // Build result
+    const uiMessages = messagesResult.map(msg =>
+      buildUIMessageFromDB(msg, msg.parts)
+    )
+    return { ...chat, messages: uiMessages }
+  })
 }
 
 /**
@@ -175,38 +197,41 @@ export async function loadChatWithMessages(
  */
 export async function deleteMessagesAfter(
   chatId: string,
-  messageId: string
+  messageId: string,
+  userId?: string
 ): Promise<{ count: number }> {
-  // Get the message's timestamp
-  const [targetMessage] = await db
-    .select({ createdAt: messages.createdAt })
-    .from(messages)
-    .where(eq(messages.id, messageId))
-    .limit(1)
+  return withOptionalRLS(userId || null, async tx => {
+    // Get the message's timestamp
+    const [targetMessage] = await tx
+      .select({ createdAt: messages.createdAt })
+      .from(messages)
+      .where(eq(messages.id, messageId))
+      .limit(1)
 
-  if (!targetMessage) {
-    return { count: 0 }
-  }
+    if (!targetMessage) {
+      return { count: 0 }
+    }
 
-  // Find messages to delete
-  const messagesToDelete = await db
-    .select({ id: messages.id })
-    .from(messages)
-    .where(
-      and(
-        eq(messages.chatId, chatId),
-        gt(messages.createdAt, targetMessage.createdAt)
+    // Find messages to delete
+    const messagesToDelete = await tx
+      .select({ id: messages.id })
+      .from(messages)
+      .where(
+        and(
+          eq(messages.chatId, chatId),
+          gt(messages.createdAt, targetMessage.createdAt)
+        )
       )
-    )
 
-  const messageIds = messagesToDelete.map(m => m.id)
+    const messageIds = messagesToDelete.map(m => m.id)
 
-  if (messageIds.length > 0) {
-    // Delete messages (parts will be cascade deleted)
-    await db.delete(messages).where(inArray(messages.id, messageIds))
-  }
+    if (messageIds.length > 0) {
+      // Delete messages (parts will be cascade deleted)
+      await tx.delete(messages).where(inArray(messages.id, messageIds))
+    }
 
-  return { count: messageIds.length }
+    return { count: messageIds.length }
+  })
 }
 
 /**
@@ -214,42 +239,47 @@ export async function deleteMessagesAfter(
  */
 export async function deleteMessagesFromIndex(
   chatId: string,
-  messageId: string
+  messageId: string,
+  userId?: string
 ): Promise<{ count: number }> {
-  // Get all messages for the chat
-  const allMessages = await db
-    .select({ id: messages.id, createdAt: messages.createdAt })
-    .from(messages)
-    .where(eq(messages.chatId, chatId))
-    .orderBy(asc(messages.createdAt))
+  return withOptionalRLS(userId || null, async tx => {
+    // Get all messages for the chat
+    const allMessages = await tx
+      .select({ id: messages.id, createdAt: messages.createdAt })
+      .from(messages)
+      .where(eq(messages.chatId, chatId))
+      .orderBy(asc(messages.createdAt))
 
-  // Find the index of the target message
-  const messageIndex = allMessages.findIndex(m => m.id === messageId)
+    // Find the index of the target message
+    const messageIndex = allMessages.findIndex(m => m.id === messageId)
 
-  if (messageIndex === -1) {
-    return { count: 0 }
-  }
+    if (messageIndex === -1) {
+      return { count: 0 }
+    }
 
-  // Get messages to delete (from index onwards)
-  const messagesToDelete = allMessages.slice(messageIndex)
-  const messageIds = messagesToDelete.map(m => m.id)
+    // Get messages to delete (from index onwards)
+    const messagesToDelete = allMessages.slice(messageIndex)
+    const messageIds = messagesToDelete.map(m => m.id)
 
-  if (messageIds.length > 0) {
-    await db.delete(messages).where(inArray(messages.id, messageIds))
-  }
+    if (messageIds.length > 0) {
+      await tx.delete(messages).where(inArray(messages.id, messageIds))
+    }
 
-  return { count: messageIds.length }
+    return { count: messageIds.length }
+  })
 }
 
 /**
  * Get all chats for a user
  */
 export async function getChats(userId: string): Promise<Chat[]> {
-  return db
-    .select()
-    .from(chats)
-    .where(eq(chats.userId, userId))
-    .orderBy(desc(chats.createdAt))
+  return withRLS(userId, async tx => {
+    return tx
+      .select()
+      .from(chats)
+      .where(eq(chats.userId, userId))
+      .orderBy(desc(chats.createdAt))
+  })
 }
 
 /**
@@ -261,20 +291,22 @@ export async function getChatsPage(
   offset = 0
 ): Promise<{ chats: Chat[]; nextOffset: number | null }> {
   try {
-    const results = await db
-      .select()
-      .from(chats)
-      .where(eq(chats.userId, userId))
-      .orderBy(desc(chats.createdAt))
-      .limit(limit)
-      .offset(offset)
+    return withRLS(userId, async tx => {
+      const results = await tx
+        .select()
+        .from(chats)
+        .where(eq(chats.userId, userId))
+        .orderBy(desc(chats.createdAt))
+        .limit(limit)
+        .offset(offset)
 
-    const nextOffset = results.length === limit ? offset + limit : null
+      const nextOffset = results.length === limit ? offset + limit : null
 
-    return {
-      chats: results,
-      nextOffset
-    }
+      return {
+        chats: results,
+        nextOffset
+      }
+    })
   } catch (error) {
     console.error('Error fetching chat page:', error)
     return { chats: [], nextOffset: null }
@@ -289,16 +321,23 @@ export async function deleteChat(
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Verify ownership
-    const chat = await getChat(chatId, userId)
-    if (!chat || chat.userId !== userId) {
-      return { success: false, error: 'Unauthorized' }
-    }
+    return withRLS(userId, async tx => {
+      // Verify ownership
+      const [chat] = await tx
+        .select()
+        .from(chats)
+        .where(eq(chats.id, chatId))
+        .limit(1)
 
-    // Delete the chat (messages and parts will cascade)
-    await db.delete(chats).where(eq(chats.id, chatId))
+      if (!chat || chat.userId !== userId) {
+        return { success: false, error: 'Unauthorized' }
+      }
 
-    return { success: true }
+      // Delete the chat (messages and parts will cascade)
+      await tx.delete(chats).where(eq(chats.id, chatId))
+
+      return { success: true }
+    })
   } catch (error) {
     console.error('Error deleting chat:', error)
     return { success: false, error: 'Failed to delete chat' }
@@ -313,18 +352,20 @@ export async function updateChatVisibility(
   userId: string,
   visibility: 'public' | 'private'
 ): Promise<Chat | null> {
-  const chat = await getChat(chatId, userId)
-  if (!chat || chat.userId !== userId) {
-    return null
-  }
+  return withRLS(userId, async tx => {
+    const chat = await getChat(chatId, userId)
+    if (!chat || chat.userId !== userId) {
+      return null
+    }
 
-  const [updatedChat] = await db
-    .update(chats)
-    .set({ visibility })
-    .where(eq(chats.id, chatId))
-    .returning()
+    const [updatedChat] = await tx
+      .update(chats)
+      .set({ visibility })
+      .where(eq(chats.id, chatId))
+      .returning()
 
-  return updatedChat
+    return updatedChat
+  })
 }
 
 /**
@@ -332,15 +373,18 @@ export async function updateChatVisibility(
  */
 export async function updateChatTitle(
   chatId: string,
-  title: string
+  title: string,
+  userId?: string
 ): Promise<Chat | null> {
-  const [updatedChat] = await db
-    .update(chats)
-    .set({ title })
-    .where(eq(chats.id, chatId))
-    .returning()
+  return withOptionalRLS(userId || null, async tx => {
+    const [updatedChat] = await tx
+      .update(chats)
+      .set({ title })
+      .where(eq(chats.id, chatId))
+      .returning()
 
-  return updatedChat || null
+    return updatedChat || null
+  })
 }
 
 /**
@@ -360,7 +404,7 @@ export async function createChatWithFirstMessageTransaction({
 }): Promise<{ chat: Chat; message: Message }> {
   perfLog(`DB - createChatWithFirstMessageTransaction start`)
   const dbStart = performance.now()
-  return await db.transaction(async tx => {
+  return await withRLS(userId, async tx => {
     // 1. Create chat
     const [chat] = await tx
       .insert(chats)
