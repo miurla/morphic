@@ -46,7 +46,22 @@ export const chats = pgTable(
       table.userId,
       table.createdAt.desc()
     ),
-    index('chats_created_at_idx').on(table.createdAt.desc())
+    index('chats_created_at_idx').on(table.createdAt.desc()),
+
+    // RLS Policies
+    pgPolicy('users_manage_own_chats', {
+      as: 'permissive',
+      for: 'all',
+      to: 'public',
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    }),
+    pgPolicy('public_chats_readable', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`visibility = 'public'`
+    })
   ]
 ).enableRLS()
 
@@ -69,7 +84,34 @@ export const messages = pgTable(
   },
   table => [
     index('messages_chat_id_idx').on(table.chatId),
-    index('messages_chat_id_created_at_idx').on(table.chatId, table.createdAt)
+    index('messages_chat_id_created_at_idx').on(table.chatId, table.createdAt),
+
+    // RLS Policies - allow access to messages if user owns the chat
+    pgPolicy('users_manage_chat_messages', {
+      as: 'permissive',
+      for: 'all',
+      to: 'public',
+      using: sql`EXISTS (
+        SELECT 1 FROM ${chats}
+        WHERE ${chats}.id = chat_id
+        AND ${chats}.user_id = current_setting('app.current_user_id', true)
+      )`,
+      withCheck: sql`EXISTS (
+        SELECT 1 FROM ${chats}
+        WHERE ${chats}.id = chat_id
+        AND ${chats}.user_id = current_setting('app.current_user_id', true)
+      )`
+    }),
+    pgPolicy('public_chat_messages_readable', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`EXISTS (
+        SELECT 1 FROM ${chats}
+        WHERE ${chats}.id = chat_id
+        AND ${chats}.visibility = 'public'
+      )`
+    })
   ]
 ).enableRLS()
 
@@ -177,7 +219,37 @@ export const parts = pgTable(
     check(
       'tool_fields_required',
       sql`(type NOT LIKE 'tool-%' OR (tool_tool_call_id IS NOT NULL AND tool_state IS NOT NULL))`
-    )
+    ),
+
+    // RLS Policies - allow access to parts if user owns the related chat
+    pgPolicy('users_manage_message_parts', {
+      as: 'permissive',
+      for: 'all',
+      to: 'public',
+      using: sql`EXISTS (
+        SELECT 1 FROM ${messages}
+        INNER JOIN ${chats} ON ${chats}.id = ${messages}.chat_id
+        WHERE ${messages}.id = message_id
+        AND ${chats}.user_id = current_setting('app.current_user_id', true)
+      )`,
+      withCheck: sql`EXISTS (
+        SELECT 1 FROM ${messages}
+        INNER JOIN ${chats} ON ${chats}.id = ${messages}.chat_id
+        WHERE ${messages}.id = message_id
+        AND ${chats}.user_id = current_setting('app.current_user_id', true)
+      )`
+    }),
+    pgPolicy('public_chat_parts_readable', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`EXISTS (
+        SELECT 1 FROM ${messages}
+        INNER JOIN ${chats} ON ${chats}.id = ${messages}.chat_id
+        WHERE ${messages}.id = message_id
+        AND ${chats}.visibility = 'public'
+      )`
+    })
   ]
 ).enableRLS()
 

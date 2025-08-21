@@ -166,11 +166,14 @@ export async function upsertMessage(
   // Skip access check - userId is required for audit/logging but not for authorization
   // Caller MUST ensure authorization before calling this function
   const messageId = message.id || generateId()
-  const dbMessage = await dbActions.upsertMessage({
-    ...message,
-    id: messageId,
-    chatId
-  })
+  const dbMessage = await dbActions.upsertMessage(
+    {
+      ...message,
+      id: messageId,
+      chatId
+    },
+    userId
+  )
 
   // Revalidate cache
   revalidateTag(`chat-${chatId}`)
