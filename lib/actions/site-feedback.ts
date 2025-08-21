@@ -2,6 +2,7 @@
 
 import { db } from '@/lib/db'
 import { feedback } from '@/lib/db/schema'
+import { withOptionalRLS } from '@/lib/db/with-rls'
 import { createClient } from '@/lib/supabase/server'
 
 export async function submitFeedback(data: {
@@ -30,17 +31,20 @@ export async function submitFeedback(data: {
     const headersList = await headers()
     const userAgent = headersList.get('user-agent') || undefined
 
-    // Save to database
-    const [newFeedback] = await db
-      .insert(feedback)
-      .values({
-        userId,
-        sentiment: data.sentiment,
-        message: data.message,
-        pageUrl: data.pageUrl,
-        userAgent
-      })
-      .returning()
+    // Save to database with RLS context
+    const [newFeedback] = await withOptionalRLS(userId || null, async tx => {
+      const result = await tx
+        .insert(feedback)
+        .values({
+          userId,
+          sentiment: data.sentiment,
+          message: data.message,
+          pageUrl: data.pageUrl,
+          userAgent
+        })
+        .returning()
+      return result
+    })
 
     // Send to Slack if webhook URL is configured
     const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL
