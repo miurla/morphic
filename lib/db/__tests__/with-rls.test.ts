@@ -1,10 +1,10 @@
 import { sql } from 'drizzle-orm'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Mock } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { db } from '@/lib/db'
-import { RLSViolationError, withOptionalRLS, withRLS } from '@/lib/db/with-rls'
 import type { TxInstance } from '@/lib/db/with-rls'
+import { RLSViolationError, withOptionalRLS, withRLS } from '@/lib/db/with-rls'
 
 // Mock the db module
 vi.mock('@/lib/db', () => ({
