@@ -83,10 +83,8 @@ if (process.env.DATABASE_RESTRICTED_URL && !isTest) {
         }
       } catch (error) {
         console.error('[DB] ✗ Failed to verify database connection:', error)
-        // Don't exit in production, just log the error
-        if (isDevelopment) {
-          process.exit(1)
-        }
+        // Log the error but don't terminate the application
+        // This allows development to continue even with connection issues
       }
     })()
   }
