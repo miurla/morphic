@@ -47,6 +47,8 @@ export const chats = pgTable(
       table.createdAt.desc()
     ),
     index('chats_created_at_idx').on(table.createdAt.desc()),
+    // Composite index for RLS subqueries in messages and parts tables
+    index('chats_id_user_id_idx').on(table.id, table.userId),
 
     // RLS Policies
     pgPolicy('users_manage_own_chats', {

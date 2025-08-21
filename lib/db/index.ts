@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
@@ -53,3 +54,40 @@ export const db = drizzle(client, {
 
 // Helper type for all tables
 export type Schema = typeof schema
+
+// Verify restricted user permissions on startup
+if (process.env.DATABASE_RESTRICTED_URL && !isTest) {
+  // Only run verification in server environments, not during build
+  if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
+    ;(async () => {
+      try {
+        const result = await db.execute<{ current_user: string }>(
+          sql`SELECT current_user`
+        )
+        const currentUser = result[0]?.current_user
+
+        if (isDevelopment) {
+          console.log('[DB] ✓ Connection verified as user:', currentUser)
+        }
+
+        // Verify it's the restricted user (app_user)
+        if (
+          currentUser &&
+          !currentUser.includes('app_user') &&
+          !currentUser.includes('neondb_owner')
+        ) {
+          console.warn(
+            '[DB] ⚠️ Warning: Expected app_user but connected as:',
+            currentUser
+          )
+        }
+      } catch (error) {
+        console.error('[DB] ✗ Failed to verify database connection:', error)
+        // Don't exit in production, just log the error
+        if (isDevelopment) {
+          process.exit(1)
+        }
+      }
+    })()
+  }
+}

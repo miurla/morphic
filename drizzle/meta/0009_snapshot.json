@@ -1,6 +1,6 @@
 {
-  "id": "c631d669-f529-4fda-8f77-1db7cc5310e4",
-  "prevId": "a1b15544-fb28-4c05-82c2-8e81ea3d5689",
+  "id": "09bf63d0-855c-4ef2-85b7-9f63220f2566",
+  "prevId": "c631d669-f529-4fda-8f77-1db7cc5310e4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -85,6 +85,27 @@
               "expression": "created_at",
               "isExpression": false,
               "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "chats_id_user_id_idx": {
+          "name": "chats_id_user_id_idx",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
               "nulls": "last"
             }
           ],

@@ -1,12 +1,10 @@
 import { sql } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 
 import { db } from '@/lib/db'
-import {
-  RLSViolationError,
-  withOptionalRLS,
-  withRLS
-} from '@/lib/db/with-rls'
+import { RLSViolationError, withOptionalRLS, withRLS } from '@/lib/db/with-rls'
+import type { TxInstance } from '@/lib/db/with-rls'
 
 // Mock the db module
 vi.mock('@/lib/db', () => ({
@@ -14,6 +12,14 @@ vi.mock('@/lib/db', () => ({
     transaction: vi.fn()
   }
 }))
+
+// Helper to create a minimal mock transaction
+function createMockTx(overrides: Partial<TxInstance> = {}): TxInstance {
+  return {
+    execute: vi.fn(),
+    ...overrides
+  } as unknown as TxInstance
+}
 
 describe('RLS Helper Functions', () => {
   beforeEach(() => {
@@ -24,9 +30,7 @@ describe('RLS Helper Functions', () => {
     it('should set user context and execute callback', async () => {
       const userId = 'user-123'
       const expectedResult = { id: 'result-1' }
-      const mockTx = {
-        execute: vi.fn()
-      }
+      const mockTx = createMockTx()
 
       // Mock the transaction
       vi.mocked(db.transaction).mockImplementation(async callback => {
@@ -51,9 +55,7 @@ describe('RLS Helper Functions', () => {
 
     it('should safely handle special characters in userId', async () => {
       const userId = "user'; DROP TABLE users; --"
-      const mockTx = {
-        execute: vi.fn()
-      }
+      const mockTx = createMockTx()
 
       vi.mocked(db.transaction).mockImplementation(async callback => {
         return callback(mockTx)
@@ -108,19 +110,18 @@ describe('RLS Helper Functions', () => {
 
     it('should execute callback with transaction result', async () => {
       const userId = 'user-123'
-      const mockTx = {
-        execute: vi.fn(),
-        select: vi.fn().mockReturnValue({
-          from: vi.fn().mockResolvedValue([{ id: 'chat-1' }])
-        })
-      }
+      const mockFrom = vi.fn().mockResolvedValue([{ id: 'chat-1' }])
+      const mockSelect = vi.fn().mockReturnValue({ from: mockFrom })
+      const mockTx = createMockTx({
+        select: mockSelect
+      })
 
       vi.mocked(db.transaction).mockImplementation(async callback => {
         return callback(mockTx)
       })
 
       const result = await withRLS(userId, async tx => {
-        return tx.select().from('chats')
+        return tx.select().from('chats' as never)
       })
 
       expect(result).toEqual([{ id: 'chat-1' }])
@@ -131,9 +132,7 @@ describe('RLS Helper Functions', () => {
     it('should use withRLS when userId is provided', async () => {
       const userId = 'user-123'
       const expectedResult = { id: 'result-1' }
-      const mockTx = {
-        execute: vi.fn()
-      }
+      const mockTx = createMockTx()
 
       vi.mocked(db.transaction).mockImplementation(async callback => {
         return callback(mockTx)

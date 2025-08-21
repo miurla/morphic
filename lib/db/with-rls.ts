@@ -3,8 +3,8 @@ import { sql } from 'drizzle-orm'
 import { db } from '.'
 
 // Type for transaction or database instance
-type DbInstance = typeof db
-type TxInstance = Parameters<Parameters<typeof db.transaction>[0]>[0]
+export type DbInstance = typeof db
+export type TxInstance = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
 /**
  * Custom error class for RLS violations

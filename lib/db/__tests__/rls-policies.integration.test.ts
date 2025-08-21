@@ -195,10 +195,7 @@ describe('RLS Policies Integration Tests', () => {
       const userId = fixtures.users.user1
       const chatId = fixtures.chats.privateChat1.id
 
-      const mockUpdateVisibility = vi.spyOn(
-        dbActions,
-        'updateChatVisibility'
-      )
+      const mockUpdateVisibility = vi.spyOn(dbActions, 'updateChatVisibility')
       mockUpdateVisibility.mockImplementation(async (cid, uid, visibility) => {
         if (cid === chatId && uid === userId) {
           return { ...fixtures.chats.privateChat1, visibility }
@@ -220,10 +217,7 @@ describe('RLS Policies Integration Tests', () => {
       const userId = fixtures.users.user1
       const chatId = fixtures.chats.privateChat2.id // User 2's chat
 
-      const mockUpdateVisibility = vi.spyOn(
-        dbActions,
-        'updateChatVisibility'
-      )
+      const mockUpdateVisibility = vi.spyOn(dbActions, 'updateChatVisibility')
       mockUpdateVisibility.mockImplementation(async (cid, uid, _visibility) => {
         // Simulate RLS blocking update
         if (cid === chatId && uid !== fixtures.users.user2) {
