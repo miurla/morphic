@@ -44,11 +44,9 @@ export async function withRLS<T>(
     return await db.transaction(async tx => {
       // Set the user ID for this transaction
       // Using SET LOCAL ensures it's only valid for this transaction
-      // Note: SET LOCAL doesn't support parameterized queries, so we use sql.raw
+      // Use pg_catalog.quote_literal for safe escaping
       await tx.execute(
-        sql.raw(
-          `SET LOCAL app.current_user_id = '${userId.replace(/'/g, "''")}'`
-        )
+        sql`SELECT set_config('app.current_user_id', ${userId}, true)`
       )
 
       // Execute the callback with the transaction

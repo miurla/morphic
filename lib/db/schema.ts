@@ -285,6 +285,6 @@ export const feedback = pgTable(
       withCheck: sql`true`
     })
   ]
-)
+).enableRLS()
 
 export type Feedback = InferSelectModel<typeof feedback>

@@ -57,6 +57,13 @@
       "when": 1755737289769,
       "tag": "0007_illegal_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1755739239041,
+      "tag": "0008_glamorous_riptide",
+      "breakpoints": true
     }
   ]
 }

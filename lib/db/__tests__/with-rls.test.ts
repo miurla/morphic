@@ -37,9 +37,9 @@ describe('RLS Helper Functions', () => {
 
       const result = await withRLS(userId, callback)
 
-      // Verify SET LOCAL was called with correct user ID
+      // Verify set_config was called with correct user ID
       expect(mockTx.execute).toHaveBeenCalledWith(
-        sql.raw(`SET LOCAL app.current_user_id = '${userId}'`)
+        sql`SELECT set_config('app.current_user_id', ${userId}, true)`
       )
 
       // Verify callback was called with transaction
@@ -49,9 +49,8 @@ describe('RLS Helper Functions', () => {
       expect(result).toEqual(expectedResult)
     })
 
-    it('should escape single quotes in userId to prevent SQL injection', async () => {
+    it('should safely handle special characters in userId', async () => {
       const userId = "user'; DROP TABLE users; --"
-      const escapedUserId = "user''; DROP TABLE users; --"
       const mockTx = {
         execute: vi.fn()
       }
@@ -62,9 +61,9 @@ describe('RLS Helper Functions', () => {
 
       await withRLS(userId, async () => {})
 
-      // Verify single quotes are escaped
+      // Verify set_config is called with parameterized query (safe from injection)
       expect(mockTx.execute).toHaveBeenCalledWith(
-        sql.raw(`SET LOCAL app.current_user_id = '${escapedUserId}'`)
+        sql`SELECT set_config('app.current_user_id', ${userId}, true)`
       )
     })
 
@@ -147,7 +146,7 @@ describe('RLS Helper Functions', () => {
       // Verify transaction was used (withRLS path)
       expect(db.transaction).toHaveBeenCalled()
       expect(mockTx.execute).toHaveBeenCalledWith(
-        sql.raw(`SET LOCAL app.current_user_id = '${userId}'`)
+        sql`SELECT set_config('app.current_user_id', ${userId}, true)`
       )
       expect(result).toEqual(expectedResult)
     })
