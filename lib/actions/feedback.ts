@@ -5,42 +5,53 @@ import { Langfuse } from 'langfuse'
 
 import { db } from '@/lib/db'
 import { messages } from '@/lib/db/schema'
+import { withOptionalRLS } from '@/lib/db/with-rls'
 import type { UIMessageMetadata } from '@/lib/types/ai'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 export async function updateMessageFeedback(
   messageId: string,
-  score: number
+  score: number,
+  userId: string | null = null
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Get the current message to preserve existing metadata and get chatId
-    const [currentMessage] = await db
-      .select({
-        metadata: messages.metadata,
-        chatId: messages.chatId
-      })
-      .from(messages)
-      .where(eq(messages.id, messageId))
-      .limit(1)
+    // Use RLS context for all database operations
+    const result = await withOptionalRLS(userId, async tx => {
+      // Get the current message to preserve existing metadata and get chatId
+      const [currentMessage] = await tx
+        .select({
+          metadata: messages.metadata,
+          chatId: messages.chatId
+        })
+        .from(messages)
+        .where(eq(messages.id, messageId))
+        .limit(1)
 
-    if (!currentMessage) {
-      return { success: false, error: 'Message not found' }
+      if (!currentMessage) {
+        return { success: false, error: 'Message not found' }
+      }
+
+      // Merge the feedback score with existing metadata
+      const updatedMetadata = {
+        ...(currentMessage.metadata || {}),
+        feedbackScore: score
+      }
+
+      // Update the message with the new feedback score
+      await tx
+        .update(messages)
+        .set({ metadata: updatedMetadata })
+        .where(eq(messages.id, messageId))
+
+      return { success: true, metadata: currentMessage.metadata }
+    })
+
+    if (!result.success) {
+      return result
     }
-
-    // Merge the feedback score with existing metadata
-    const updatedMetadata = {
-      ...(currentMessage.metadata || {}),
-      feedbackScore: score
-    }
-
-    // Update the message with the new feedback score
-    await db
-      .update(messages)
-      .set({ metadata: updatedMetadata })
-      .where(eq(messages.id, messageId))
 
     // Send feedback to Langfuse if trace ID exists and tracing is enabled
-    const traceId = (currentMessage.metadata as UIMessageMetadata)?.traceId
+    const traceId = (result.metadata as UIMessageMetadata)?.traceId
     if (traceId && isTracingEnabled()) {
       const langfuse = new Langfuse()
       langfuse.score({
@@ -64,20 +75,25 @@ export async function updateMessageFeedback(
 }
 
 export async function getMessageFeedback(
-  messageId: string
+  messageId: string,
+  userId: string | null = null
 ): Promise<number | null> {
   try {
-    const [message] = await db
-      .select({ metadata: messages.metadata })
-      .from(messages)
-      .where(eq(messages.id, messageId))
-      .limit(1)
+    const result = await withOptionalRLS(userId, async tx => {
+      const [message] = await tx
+        .select({ metadata: messages.metadata })
+        .from(messages)
+        .where(eq(messages.id, messageId))
+        .limit(1)
 
-    if (!message) {
-      return null
-    }
+      if (!message) {
+        return null
+      }
 
-    return (message.metadata as UIMessageMetadata)?.feedbackScore || null
+      return (message.metadata as UIMessageMetadata)?.feedbackScore || null
+    })
+
+    return result
   } catch (error) {
     console.error('Error getting message feedback:', error)
     return null
