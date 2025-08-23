@@ -79,26 +79,30 @@ export async function handleStreamFinish(
 
   // Save message with retry logic
   const saveStart = performance.now()
-  upsertMessage(chatId, responseMessage, userId)
-    .then(() => {
-      perfTime('upsertMessage (AI response) completed', saveStart)
-    })
-    .catch(async error => {
-      console.error('Error saving message:', error)
-      try {
-        await retryDatabaseOperation(
-          () => upsertMessage(chatId, responseMessage, userId),
-          'save message'
-        )
-      } catch (retryError) {
-        console.error('Failed to save after retries:', retryError)
-      }
-    })
+  try {
+    await upsertMessage(chatId, responseMessage, userId)
+    perfTime('upsertMessage (AI response) completed', saveStart)
+  } catch (error) {
+    console.error('Error saving message:', error)
+    try {
+      await retryDatabaseOperation(
+        () => upsertMessage(chatId, responseMessage, userId),
+        'save message'
+      )
+      perfTime('upsertMessage (AI response) completed after retry', saveStart)
+    } catch (retryError) {
+      console.error('Failed to save after retries:', retryError)
+      // Don't throw here to avoid breaking the stream
+    }
+  }
 
   // Update title after message is saved
   if (chatTitle && chatTitle !== DEFAULT_CHAT_TITLE) {
-    updateChatTitle(chatId, chatTitle, userId).catch(error =>
+    try {
+      await updateChatTitle(chatId, chatTitle, userId)
+    } catch (error) {
       console.error('Error updating title:', error)
-    )
+      // Don't throw here as title update is not critical
+    }
   }
 }
