@@ -14,7 +14,6 @@ import {
   isToolCallPart,
   isToolTypePart
 } from '@/lib/types/dynamic-tools'
-import { Model } from '@/lib/types/models'
 import { SearchMode } from '@/lib/types/search'
 import { cn } from '@/lib/utils'
 import { getCookie } from '@/lib/utils/cookies'
@@ -38,13 +37,11 @@ interface ChatSection {
 export function Chat({
   id,
   savedMessages = [],
-  query,
-  models
+  query
 }: {
   id: string
   savedMessages?: UIMessage[]
   query?: string
-  models?: Model[]
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
@@ -410,7 +407,6 @@ export function Chat({
         append={(message: any) => {
           sendMessage(message)
         }}
-        models={models}
         showScrollToBottomButton={!isAtBottom}
         uploadedFiles={uploadedFiles}
         setUploadedFiles={setUploadedFiles}

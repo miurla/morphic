@@ -10,7 +10,6 @@ import { toast } from 'sonner'
 
 import { UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
-import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 
 import { useArtifact } from './artifact/artifact-context'
@@ -36,7 +35,6 @@ interface ChatPanelProps {
   query?: string
   stop: () => void
   append: (message: any) => void
-  models?: Model[]
   /** Whether to show the scroll to bottom button */
   showScrollToBottomButton: boolean
   /** Reference to the scroll container */
@@ -56,7 +54,6 @@ export function ChatPanel({
   query,
   stop,
   append,
-  models,
   showScrollToBottomButton,
   uploadedFiles,
   setUploadedFiles,
