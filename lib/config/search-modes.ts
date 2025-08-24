@@ -1,0 +1,91 @@
+import { GitBranch, Sparkles, Zap } from 'lucide-react'
+
+import { Model } from '@/lib/types/models'
+import { SearchMode } from '@/lib/types/search'
+
+export interface SearchModeConfig {
+  value: SearchMode
+  label: string
+  description: string
+  icon: React.ComponentType<{ className?: string }>
+  color: string
+  displayModel: string // Model name shown in UI
+  actualModel: Model // Actual model configuration used by API
+}
+
+// Centralized search mode configuration
+export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
+  {
+    value: 'quick',
+    label: 'Quick',
+    description: 'Fast, concise responses',
+    icon: Zap,
+    color: 'text-yellow-500',
+    displayModel: 'MoonshotAI/Kimi K2',
+    actualModel: {
+      id: 'gpt-5-nano-2025-08-07',
+      name: 'GPT-5 nano',
+      provider: 'OpenAI',
+      providerId: 'openai',
+      providerOptions: {
+        openai: {
+          reasoningEffort: 'low',
+          reasoningSummary: 'detailed'
+        }
+      }
+    }
+  },
+  {
+    value: 'planning',
+    label: 'Planning',
+    description: 'Detailed, structured research',
+    icon: GitBranch,
+    color: 'text-blue-500',
+    displayModel: 'OpenAI GPT-5',
+    actualModel: {
+      id: 'gpt-5-2025-08-07',
+      name: 'GPT-5',
+      provider: 'OpenAI',
+      providerId: 'openai',
+      providerOptions: {
+        openai: {
+          reasoningEffort: 'low',
+          reasoningSummary: 'detailed'
+        }
+      }
+    }
+  },
+  {
+    value: 'auto',
+    label: 'Auto',
+    description: 'Balanced, adaptive approach',
+    icon: Sparkles,
+    color: 'text-purple-500',
+    displayModel: 'Auto',
+    actualModel: {
+      id: 'gpt-5-mini-2025-08-07',
+      name: 'GPT-5 mini',
+      provider: 'OpenAI',
+      providerId: 'openai',
+      providerOptions: {
+        openai: {
+          reasoningEffort: 'low',
+          reasoningSummary: 'detailed'
+        }
+      }
+    }
+  }
+]
+
+// Helper function to get model mapping for API use
+export function getSearchModeModels(): Record<SearchMode, Model> {
+  return SEARCH_MODE_CONFIGS.reduce((acc, config) => {
+    acc[config.value] = config.actualModel
+    return acc
+  }, {} as Record<SearchMode, Model>)
+}
+
+// Helper function to get a specific mode config
+export function getSearchModeConfig(mode: SearchMode): SearchModeConfig | undefined {
+  return SEARCH_MODE_CONFIGS.find(config => config.value === mode)
+}

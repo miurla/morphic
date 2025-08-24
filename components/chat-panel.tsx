@@ -202,8 +202,10 @@ export function ChatPanel({
           {/* Bottom menu area */}
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
-              <ModelSelector models={models || []} />
               <SearchModeSelector />
+              {process.env.NEXT_PUBLIC_SHOW_MODEL_SELECTOR === 'true' && (
+                <ModelSelector models={models || []} />
+              )}
             </div>
             <div className="flex items-center gap-2">
               {messages.length > 0 && (

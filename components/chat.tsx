@@ -6,7 +6,6 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 
-import { SearchMode } from '@/lib/agents/researcher'
 import { generateId } from '@/lib/db/schema'
 import { UploadedFile } from '@/lib/types'
 import type { UIMessage } from '@/lib/types/ai'
@@ -16,6 +15,7 @@ import {
   isToolTypePart
 } from '@/lib/types/dynamic-tools'
 import { Model } from '@/lib/types/models'
+import { SearchMode } from '@/lib/types/search'
 import { cn } from '@/lib/utils'
 import { getCookie } from '@/lib/utils/cookies'
 

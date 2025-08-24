@@ -1,7 +1,7 @@
 import { UIMessage } from '@ai-sdk/react'
 
-import { SearchMode } from '../agents/researcher'
 import { Model } from '../types/models'
+import { SearchMode } from '../types/search'
 
 export interface BaseStreamConfig {
   message: UIMessage | null

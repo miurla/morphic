@@ -2,19 +2,12 @@ import { cookies } from 'next/headers'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
-import { Model } from '@/lib/types/models'
+import { selectModel } from '@/lib/utils/model-selection'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { resetAllCounters } from '@/lib/utils/perf-tracking'
 import { isProviderEnabled } from '@/lib/utils/registry'
 
 export const maxDuration = 30
-
-const DEFAULT_MODEL: Model = {
-  id: 'gpt-4o-mini',
-  name: 'GPT-4o mini',
-  provider: 'OpenAI',
-  providerId: 'openai'
-}
 
 export async function POST(req: Request) {
   const startTime = performance.now()
@@ -73,17 +66,12 @@ export async function POST(req: Request) {
     }
 
     const cookieStore = await cookies()
-    const modelJson = cookieStore.get('selectedModel')?.value
-
-    let selectedModel = DEFAULT_MODEL
-
-    if (modelJson) {
-      try {
-        selectedModel = JSON.parse(modelJson) as Model
-      } catch (e) {
-        console.error('Failed to parse selected model:', e)
-      }
-    }
+    
+    // Select the appropriate model based on configuration and user preferences
+    const selectedModel = selectModel({
+      cookieStore,
+      searchModeFromRequest: searchMode
+    })
 
     if (!isProviderEnabled(selectedModel.providerId)) {
       return new Response(
@@ -95,7 +83,6 @@ export async function POST(req: Request) {
       )
     }
 
-    const streamStart = performance.now()
     const response = await createChatStreamResponse({
       message,
       model: selectedModel,

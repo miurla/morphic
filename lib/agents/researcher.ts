@@ -9,11 +9,9 @@ import { fetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
 import { createSearchTool } from '../tools/search'
 import { createTodoTools } from '../tools/todo'
+import { SearchMode } from '../types/search'
 import { getModel } from '../utils/registry'
 import { isTracingEnabled } from '../utils/telemetry'
-
-// Search mode type
-export type SearchMode = 'quick' | 'planning' | 'auto'
 
 // Quick Mode System Prompt - Minimal, direct responses
 const QUICK_MODE_PROMPT = `
