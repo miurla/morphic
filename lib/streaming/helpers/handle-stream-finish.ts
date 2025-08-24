@@ -40,8 +40,11 @@ export async function handleStreamFinish(
         data: { status: 'loading' }
       })
 
+      // Use RELATED_QUESTION_MODEL env var if set, otherwise use the main model
+      const questionModel = process.env.RELATED_QUESTION_MODEL || modelId
+
       const relatedQuestions = await generateRelatedQuestions(
-        modelId,
+        questionModel,
         [...messagesToModel, responseMessage],
         abortSignal,
         parentTraceId

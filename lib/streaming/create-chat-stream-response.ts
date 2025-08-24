@@ -45,7 +45,6 @@ export async function createChatStreamResponse(
     isNewChat,
     searchMode
   } = config
-  const modelId = `${model.providerId}:${model.id}`
 
   // Verify that chatId is provided
   if (!chatId) {
