@@ -166,7 +166,7 @@ export function ChatPanel({
           </Button>
         )}
 
-        <div className="relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input">
+        <div className="relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input focus-within:ring-1 focus-within:ring-ring/20 focus-within:ring-offset-1 focus-within:ring-offset-background/50 transition-shadow">
           <Textarea
             ref={inputRef}
             name="input"
