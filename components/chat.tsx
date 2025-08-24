@@ -6,6 +6,7 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 
+import { SearchMode } from '@/lib/agents/researcher'
 import { generateId } from '@/lib/db/schema'
 import { UploadedFile } from '@/lib/types'
 import type { UIMessage } from '@/lib/types/ai'
@@ -16,6 +17,7 @@ import {
 } from '@/lib/types/dynamic-tools'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
+import { getCookie } from '@/lib/utils/cookies'
 
 import { useAuthCheck } from '@/hooks/use-auth-check'
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
@@ -61,6 +63,16 @@ export function Chat({
   })
   const { isAuthenticated } = useAuthCheck()
 
+  // Get search mode from cookie
+  const [searchMode, setSearchMode] = useState<SearchMode>('auto')
+  
+  useEffect(() => {
+    const savedMode = getCookie('searchMode')
+    if (savedMode && ['quick', 'planning', 'auto'].includes(savedMode)) {
+      setSearchMode(savedMode as SearchMode)
+    }
+  }, [])
+
   const {
     messages,
     status,
@@ -94,7 +106,8 @@ export function Chat({
                 : trigger === 'submit-message'
                   ? lastMessage
                   : undefined,
-            isNewChat: trigger === 'submit-message' && messages.length === 1
+            isNewChat: trigger === 'submit-message' && messages.length === 1,
+            searchMode // Include search mode in the request
           }
         }
       }

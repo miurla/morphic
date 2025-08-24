@@ -19,6 +19,7 @@ import { IconLogo } from './ui/icons'
 import { ActionButtons } from './action-buttons'
 import { FileUploadButton } from './file-upload-button'
 import { ModelSelector } from './model-selector'
+import { SearchModeSelector } from './search-mode-selector'
 import { UploadedFileList } from './uploaded-file-list'
 
 // Constants for timing delays
@@ -202,6 +203,7 @@ export function ChatPanel({
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
               <ModelSelector models={models || []} />
+              <SearchModeSelector />
             </div>
             <div className="flex items-center gap-2">
               {messages.length > 0 && (

@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const { message, chatId, trigger, messageId, isNewChat } = body
+    const { message, chatId, trigger, messageId, isNewChat, searchMode } = body
 
     perfLog(
       `API Route - Start: chatId=${chatId}, trigger=${trigger}, isNewChat=${isNewChat}`
@@ -104,7 +104,8 @@ export async function POST(req: Request) {
       trigger,
       messageId,
       abortSignal,
-      isNewChat
+      isNewChat,
+      searchMode
     })
 
     const totalTime = performance.now() - startTime

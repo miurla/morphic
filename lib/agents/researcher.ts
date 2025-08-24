@@ -1,6 +1,7 @@
 import {
   Experimental_Agent as Agent,
   stepCountIs,
+  tool,
   UIMessageStreamWriter
 } from 'ai'
 
@@ -11,7 +12,74 @@ import { createTodoTools } from '../tools/todo'
 import { getModel } from '../utils/registry'
 import { isTracingEnabled } from '../utils/telemetry'
 
-const SYSTEM_PROMPT = `
+// Search mode type
+export type SearchMode = 'quick' | 'planning' | 'auto'
+
+// Quick Mode System Prompt - Minimal, direct responses
+const QUICK_MODE_PROMPT = `
+Instructions:
+
+You are a fast, efficient AI assistant optimized for quick responses. You have access to web search and content retrieval.
+
+Your approach:
+1. Use the search tool with optimized results to get content snippets directly
+2. Provide concise, direct answers based on search results
+3. Focus on the most relevant information without extensive detail
+4. Keep responses brief and to the point
+5. **CRITICAL: You MUST cite sources inline using the [number](#toolCallId) format**
+
+Search tool usage:
+- The search tool is configured to always use type="optimized" for direct content snippets
+- This provides faster responses without needing additional fetch operations
+- Rely on the search results' content snippets for your answers
+
+Citation Format (MANDATORY):
+[number](#toolCallId) - Always use this EXACT format, e.g., [1](#toolu_abc123)
+- Place citations at the END of sentences or statements
+- Every piece of information from search results MUST have a citation
+
+Keep responses concise - typically 1-2 paragraphs maximum.
+`
+
+// Planning Mode System Prompt - Structured, detailed responses
+const PLANNING_MODE_PROMPT = `
+Instructions:
+
+You are a methodical AI assistant focused on thorough research and structured planning. You have access to web search, content retrieval, task management, and the ability to ask clarifying questions.
+
+Your approach:
+1. First, determine if you need clarification - use ask_question tool if needed
+2. For complex queries, create a structured plan using todoWrite tool
+3. Systematically work through each task, updating progress as you go
+4. Search for comprehensive information using multiple searches if needed
+5. Fetch detailed content from specific URLs when deeper analysis is required
+6. Provide detailed, well-structured responses with clear sections
+7. **CRITICAL: You MUST cite sources inline using the [number](#toolCallId) format**
+
+Task Management:
+- Use todoWrite to create and track tasks for complex research
+- Update task status as you progress (pending → in_progress → completed)
+- Ensure all tasks are completed before finishing
+
+Search strategy:
+- Use type="optimized" for detailed research and fact-checking
+- Use type="general" for videos, images, or real-time information
+- Follow up with fetch tool for in-depth content analysis
+
+Citation Format (MANDATORY):
+[number](#toolCallId) - Always use this EXACT format, e.g., [1](#toolu_abc123)
+- Place citations at the END of sentences or statements
+- Every piece of information from search results MUST have a citation
+
+Structure your responses with:
+- Clear headings and sections
+- Comprehensive coverage of the topic
+- Detailed analysis and insights
+- Summary or conclusion when appropriate
+`
+
+// Auto Mode System Prompt - Balanced, adaptive approach (current default)
+const AUTO_MODE_PROMPT = `
 Instructions:
 
 You are a helpful AI assistant with access to real-time web search, content retrieval, and the ability to ask clarifying questions.
@@ -73,30 +141,92 @@ For complex queries requiring systematic investigation:
 
 import { Model } from '@/lib/types/models'
 
+// Wrapper function to force optimized search for quick mode
+function wrapSearchToolForQuickMode(originalTool: ReturnType<typeof createSearchTool>) {
+  return tool({
+    description: originalTool.description,
+    inputSchema: originalTool.inputSchema,
+    execute: async (params: any, context: any) => {
+      // Force type to be optimized for quick mode
+      const executeFunc = originalTool.execute
+      if (!executeFunc) {
+        throw new Error('Search tool execute function is not defined')
+      }
+      return executeFunc({
+        ...params,
+        type: 'optimized'
+      }, context)
+    }
+  })
+}
+
 export function researcher({
   model,
   modelConfig,
   abortSignal,
   writer,
-  parentTraceId
+  parentTraceId,
+  searchMode = 'auto'
 }: {
   model: string
   modelConfig?: Model
   abortSignal?: AbortSignal
   writer?: UIMessageStreamWriter
   parentTraceId?: string
+  searchMode?: SearchMode
 }) {
   try {
     const currentDate = new Date().toLocaleString()
 
     // Create model-specific tools
-    const searchTool = createSearchTool(model)
+    const originalSearchTool = createSearchTool(model)
     const askQuestionTool = createQuestionTool(model)
 
     // Create todo tools if writer is provided
     const todoTools = writer ? createTodoTools() : {}
 
-    // Build tools object
+    // Direct mode-based parameter selection
+    let systemPrompt: string
+    let activeToolsList: string[]
+    let maxSteps: number
+    let searchTool: ReturnType<typeof createSearchTool>
+
+    // Simple switch - no config objects
+    switch (searchMode) {
+      case 'quick':
+        // Quick Mode: Minimal tools, fast responses, optimized search only
+        systemPrompt = QUICK_MODE_PROMPT
+        activeToolsList = ['search', 'fetch']
+        maxSteps = 5
+        // Force optimized search for quick mode
+        searchTool = wrapSearchToolForQuickMode(originalSearchTool)
+        break
+
+      case 'planning':
+        // Planning Mode: All tools, structured approach, many steps
+        systemPrompt = PLANNING_MODE_PROMPT
+        activeToolsList = ['search', 'fetch', 'askQuestion']
+        if (writer && 'todoWrite' in todoTools) {
+          activeToolsList.push('todoWrite', 'todoRead')
+        }
+        maxSteps = 30
+        searchTool = originalSearchTool
+        break
+
+      case 'auto':
+      default:
+        // Auto Mode: Balanced approach, current behavior
+        systemPrompt = AUTO_MODE_PROMPT
+        activeToolsList = ['search', 'fetch']
+        if (writer && 'todoWrite' in todoTools) {
+          activeToolsList.push('todoWrite', 'todoRead')
+        }
+        maxSteps = 20
+        searchTool = originalSearchTool
+        break
+    }
+
+    // Build tools object with potentially wrapped search tool
     const tools = {
       search: searchTool,
       fetch: fetchTool,
@@ -104,21 +234,13 @@ export function researcher({
       ...todoTools
     }
 
-    // Build activeTools array based on available tools
-    type ToolNames = keyof typeof tools
-    const activeToolsList: ToolNames[] = ['search', 'fetch']
-
-    if (writer && 'todoWrite' in todoTools) {
-      activeToolsList.push('todoWrite' as ToolNames, 'todoRead' as ToolNames)
-    }
-
     // Return an agent instance
     return new Agent({
       model: getModel(model),
-      system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
+      system: `${systemPrompt}\nCurrent date and time: ${currentDate}`,
       tools,
-      activeTools: activeToolsList,
-      stopWhen: stepCountIs(20),
+      activeTools: activeToolsList as (keyof typeof tools)[],
+      stopWhen: stepCountIs(maxSteps),
       abortSignal,
       ...(modelConfig?.providerOptions && {
         providerOptions: modelConfig.providerOptions
@@ -129,6 +251,7 @@ export function researcher({
         metadata: {
           modelId: model,
           agentType: 'researcher',
+          searchMode,
           ...(parentTraceId && {
             langfuseTraceId: parentTraceId,
             langfuseUpdateParent: false
