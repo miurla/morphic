@@ -65,7 +65,7 @@ export function Chat({
 
   // Get search mode from cookie
   const [searchMode, setSearchMode] = useState<SearchMode>('auto')
-  
+
   useEffect(() => {
     const savedMode = getCookie('searchMode')
     if (savedMode && ['quick', 'planning', 'auto'].includes(savedMode)) {

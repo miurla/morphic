@@ -1,8 +1,8 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
-import { useRouter } from 'next/navigation'
 
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
@@ -13,13 +13,13 @@ import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 
-import { useArtifact } from './artifact/artifact-context'
-import { Button } from './ui/button'
-import { IconLogo } from './ui/icons'
 import { ActionButtons } from './action-buttons'
+import { useArtifact } from './artifact/artifact-context'
 import { FileUploadButton } from './file-upload-button'
 import { ModelSelector } from './model-selector'
 import { SearchModeSelector } from './search-mode-selector'
+import { Button } from './ui/button'
+import { IconLogo } from './ui/icons'
 import { UploadedFileList } from './uploaded-file-list'
 
 // Constants for timing delays
@@ -271,7 +271,6 @@ export function ChatPanel({
               <Button
                 type={isLoading ? 'button' : 'submit'}
                 size={'icon'}
-                variant={'outline'}
                 className={cn(isLoading && 'animate-pulse', 'rounded-full')}
                 disabled={
                   (input.length === 0 && !isLoading) ||

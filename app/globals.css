@@ -297,7 +297,11 @@
 @keyframes enter {
   from {
     opacity: var(--enter-opacity, 1);
-    transform: translate(var(--enter-translate-x, 0), var(--enter-translate-y, 0)) scale(var(--enter-scale, 1));
+    transform: translate(
+        var(--enter-translate-x, 0),
+        var(--enter-translate-y, 0)
+      )
+      scale(var(--enter-scale, 1));
   }
   to {
     opacity: 1;
@@ -312,7 +316,8 @@
   }
   to {
     opacity: var(--exit-opacity, 1);
-    transform: translate(var(--exit-translate-x, 0), var(--exit-translate-y, 0)) scale(var(--exit-scale, 1));
+    transform: translate(var(--exit-translate-x, 0), var(--exit-translate-y, 0))
+      scale(var(--exit-scale, 1));
   }
 }
 

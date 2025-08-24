@@ -22,7 +22,9 @@ import {
 } from './prompts/search-mode-prompts'
 
 // Wrapper function to force optimized search for quick mode
-function wrapSearchToolForQuickMode(originalTool: ReturnType<typeof createSearchTool>) {
+function wrapSearchToolForQuickMode(
+  originalTool: ReturnType<typeof createSearchTool>
+) {
   return tool({
     description: originalTool.description,
     inputSchema: originalTool.inputSchema,
@@ -32,10 +34,13 @@ function wrapSearchToolForQuickMode(originalTool: ReturnType<typeof createSearch
       if (!executeFunc) {
         throw new Error('Search tool execute function is not defined')
       }
-      return executeFunc({
-        ...params,
-        type: 'optimized'
-      }, context)
+      return executeFunc(
+        {
+          ...params,
+          type: 'optimized'
+        },
+        context
+      )
     }
   })
 }

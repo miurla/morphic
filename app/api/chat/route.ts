@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     }
 
     const cookieStore = await cookies()
-    
+
     // Select the appropriate model based on configuration and user preferences
     const selectedModel = selectModel({
       cookieStore,

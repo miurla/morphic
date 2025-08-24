@@ -34,7 +34,9 @@ export function SearchModeSelector() {
     setOpen(false)
   }
 
-  const selectedMode = SEARCH_MODE_CONFIGS.find(config => config.value === value)
+  const selectedMode = SEARCH_MODE_CONFIGS.find(
+    config => config.value === value
+  )
   const Icon = selectedMode?.icon
 
   return (
