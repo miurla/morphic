@@ -154,6 +154,7 @@ export function SearchModeSelector() {
                 >
                   <HoverCardTrigger asChild>
                     <button
+                      type="button"
                       ref={el => {
                         buttonsRef.current[index] = el
                       }}
