@@ -58,7 +58,7 @@ export function SearchModeSelector() {
           />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64" sideOffset={5}>
+      <DropdownMenuContent align="start" className="w-72" sideOffset={5}>
         {SEARCH_MODE_CONFIGS.map(config => {
           const ModeIcon = config.icon
           const isSelected = value === config.value

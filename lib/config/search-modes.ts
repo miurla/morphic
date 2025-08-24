@@ -1,4 +1,4 @@
-import { GitBranch, Sparkles, Zap } from 'lucide-react'
+import { ListChecks, Sparkles, Zap } from 'lucide-react'
 
 import { Model } from '@/lib/types/models'
 import { SearchMode } from '@/lib/types/search'
@@ -18,9 +18,9 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
   {
     value: 'quick',
     label: 'Quick',
-    description: 'Fast, concise responses',
+    description: 'Quick search with instant answers',
     icon: Zap,
-    color: 'text-yellow-500',
+    color: 'text-amber-500',
     displayModel: 'MoonshotAI/Kimi K2',
     actualModel: {
       id: 'gpt-5-nano-2025-08-07',
@@ -38,8 +38,8 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
   {
     value: 'planning',
     label: 'Planning',
-    description: 'Detailed, structured research',
-    icon: GitBranch,
+    description: 'Thorough search with task planning',
+    icon: ListChecks,
     color: 'text-blue-500',
     displayModel: 'OpenAI GPT-5',
     actualModel: {
@@ -58,9 +58,9 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
   {
     value: 'auto',
     label: 'Auto',
-    description: 'Balanced, adaptive approach',
+    description: 'Smart search with adaptive depth',
     icon: Sparkles,
-    color: 'text-purple-500',
+    color: 'text-violet-500',
     displayModel: 'Auto',
     actualModel: {
       id: 'gpt-5-mini-2025-08-07',
@@ -79,13 +79,18 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
 
 // Helper function to get model mapping for API use
 export function getSearchModeModels(): Record<SearchMode, Model> {
-  return SEARCH_MODE_CONFIGS.reduce((acc, config) => {
-    acc[config.value] = config.actualModel
-    return acc
-  }, {} as Record<SearchMode, Model>)
+  return SEARCH_MODE_CONFIGS.reduce(
+    (acc, config) => {
+      acc[config.value] = config.actualModel
+      return acc
+    },
+    {} as Record<SearchMode, Model>
+  )
 }
 
 // Helper function to get a specific mode config
-export function getSearchModeConfig(mode: SearchMode): SearchModeConfig | undefined {
+export function getSearchModeConfig(
+  mode: SearchMode
+): SearchModeConfig | undefined {
   return SEARCH_MODE_CONFIGS.find(config => config.value === mode)
 }
