@@ -52,7 +52,7 @@ export function SearchModeSelector() {
   }
 
   return (
-    <div className="relative inline-flex items-center rounded-full bg-background p-1">
+    <div className="relative inline-flex items-center rounded-full bg-background border p-1">
       {/* Animated background indicator */}
       <div
         className="absolute inset-y-1 rounded-full bg-muted transition-all duration-200 ease-out"
