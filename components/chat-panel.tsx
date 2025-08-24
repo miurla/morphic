@@ -18,7 +18,7 @@ import { Button } from './ui/button'
 import { IconLogo } from './ui/icons'
 import { ActionButtons } from './action-buttons'
 import { FileUploadButton } from './file-upload-button'
-import { ModelSelector } from './model-selector'
+import { ModelTypeSelector } from './model-type-selector'
 import { SearchModeSelector } from './search-mode-selector'
 import { UploadedFileList } from './uploaded-file-list'
 
@@ -251,9 +251,6 @@ export function ChatPanel({
                 }}
               />
               <SearchModeSelector />
-              {process.env.NEXT_PUBLIC_SHOW_MODEL_SELECTOR === 'true' && (
-                <ModelSelector models={models || []} />
-              )}
             </div>
             <div className="flex items-center gap-2">
               {messages.length > 0 && (
@@ -268,6 +265,7 @@ export function ChatPanel({
                   <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
                 </Button>
               )}
+              <ModelTypeSelector />
               <Button
                 type={isLoading ? 'button' : 'submit'}
                 size={'icon'}

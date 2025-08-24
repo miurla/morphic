@@ -67,10 +67,9 @@ export async function POST(req: Request) {
 
     const cookieStore = await cookies()
 
-    // Select the appropriate model based on configuration and user preferences
+    // Select the appropriate model based on model type preference
     const selectedModel = selectModel({
-      cookieStore,
-      searchModeFromRequest: searchMode
+      cookieStore
     })
 
     if (!isProviderEnabled(selectedModel.providerId)) {
