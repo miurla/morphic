@@ -1,4 +1,4 @@
-import { ListChecks, Sparkles, Zap } from 'lucide-react'
+import { ListChecks, Search, Sparkles } from 'lucide-react'
 
 import { Model } from '@/lib/types/models'
 import { SearchMode } from '@/lib/types/search'
@@ -16,15 +16,15 @@ export interface SearchModeConfig {
 // Centralized search mode configuration
 export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
   {
-    value: 'quick',
-    label: 'Quick',
-    description: 'Quick search with instant answers',
-    icon: Zap,
-    color: 'text-amber-500',
-    displayModel: 'MoonshotAI/Kimi K2',
+    value: 'adaptive',
+    label: 'Adaptive',
+    description: 'Automatically adjusts search strategy to match your needs',
+    icon: Sparkles,
+    color: 'text-violet-500',
+    displayModel: 'Auto',
     actualModel: {
-      id: 'gpt-5-nano-2025-08-07',
-      name: 'GPT-5 nano',
+      id: 'gpt-5-mini-2025-08-07',
+      name: 'GPT-5 mini',
       provider: 'OpenAI',
       providerId: 'openai',
       providerOptions: {
@@ -38,7 +38,7 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
   {
     value: 'planning',
     label: 'Planning',
-    description: 'Thorough search with task planning',
+    description: 'Structured multi-step approach for comprehensive research',
     icon: ListChecks,
     color: 'text-blue-500',
     displayModel: 'OpenAI GPT-5',
@@ -56,15 +56,15 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
     }
   },
   {
-    value: 'auto',
-    label: 'Auto',
-    description: 'Smart search with adaptive depth',
-    icon: Sparkles,
-    color: 'text-violet-500',
-    displayModel: 'Auto',
+    value: 'quick',
+    label: 'Quick',
+    description: 'Streamlined search for fast, concise responses',
+    icon: Search,
+    color: 'text-amber-500',
+    displayModel: 'MoonshotAI/Kimi K2',
     actualModel: {
-      id: 'gpt-5-mini-2025-08-07',
-      name: 'GPT-5 mini',
+      id: 'gpt-5-nano-2025-08-07',
+      name: 'GPT-5 nano',
       provider: 'OpenAI',
       providerId: 'openai',
       providerOptions: {

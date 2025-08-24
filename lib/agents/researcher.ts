@@ -51,7 +51,7 @@ export function researcher({
   abortSignal,
   writer,
   parentTraceId,
-  searchMode = 'auto'
+  searchMode = 'adaptive'
 }: {
   model: string
   modelConfig?: Model
@@ -98,9 +98,9 @@ export function researcher({
         searchTool = originalSearchTool
         break
 
-      case 'auto':
+      case 'adaptive':
       default:
-        // Auto Mode: Balanced approach, current behavior
+        // Adaptive Mode: Balanced approach, current behavior
         systemPrompt = AUTO_MODE_PROMPT
         activeToolsList = ['search', 'fetch']
         if (writer && 'todoWrite' in todoTools) {
