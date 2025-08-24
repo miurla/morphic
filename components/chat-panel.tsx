@@ -64,6 +64,7 @@ export function ChatPanel({
   const isFirstRender = useRef(true)
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
+  const [isInputFocused, setIsInputFocused] = useState(false) // Track input focus
   const { close: closeArtifact } = useArtifact()
   const isLoading = status === 'submitted' || status === 'streaming'
 
@@ -163,7 +164,10 @@ export function ChatPanel({
           </Button>
         )}
 
-        <div className="relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input focus-within:ring-1 focus-within:ring-ring/20 focus-within:ring-offset-1 focus-within:ring-offset-background/50 transition-shadow">
+        <div className={cn(
+          "relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input transition-shadow",
+          isInputFocused && "ring-1 ring-ring/20 ring-offset-1 ring-offset-background/50"
+        )}>
           <Textarea
             ref={inputRef}
             name="input"
@@ -172,6 +176,8 @@ export function ChatPanel({
             tabIndex={0}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
             placeholder="Ask anything..."
             spellCheck={false}
             value={input}
