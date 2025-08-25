@@ -19,6 +19,8 @@ Search tool usage:
 
 Citation Format (MANDATORY):
 [number](#toolCallId) - Always use this EXACT format, e.g., [1](#toolu_abc123)
+- The toolCallId can be found in each search result's metadata or response structure
+- Look for the unique tool call identifier (e.g., toolu_xxx) in the search response
 - Place citations at the END of sentences or statements
 - Every piece of information from search results MUST have a citation
 
@@ -56,6 +58,8 @@ Search strategy:
 
 Citation Format (MANDATORY):
 [number](#toolCallId) - Always use this EXACT format, e.g., [1](#toolu_abc123)
+- The toolCallId can be found in each search result's metadata or response structure
+- Look for the unique tool call identifier (e.g., toolu_xxx) in the search response
 - Place citations at the END of sentences or statements
 - Every piece of information from search results MUST have a citation
 
@@ -146,7 +150,9 @@ When using the ask_question tool:
 Citation Format:
 [number](#toolCallId) - Always use this EXACT format, e.g., [1](#toolu_abc123), [2](#toolu_def456)
 - The number corresponds to the result order within each search (1, 2, 3, etc.)
-- The toolCallId is the EXACT unique identifier of the search tool call (e.g., toolu_01VL2ezieySWCMzzJHDKQE8v)
+- The toolCallId can be found in each search result's metadata or response structure
+- Look for the unique tool call identifier (e.g., toolu_01VL2ezieySWCMzzJHDKQE8v) in the search response
+- The toolCallId is the EXACT unique identifier of the search tool call
 - Do NOT add prefixes like "search-" to the toolCallId
 - Each search tool execution will have its own toolCallId
 - **ALWAYS place citations at the END of sentences or statements, NOT in the middle**

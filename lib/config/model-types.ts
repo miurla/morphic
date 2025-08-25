@@ -4,14 +4,14 @@ import { Model } from '@/lib/types/models'
 // Model configurations for each model type
 export const MODEL_TYPE_CONFIGS: Record<ModelType, Model> = {
   speed: {
-    id: 'moonshotai/kimi-k2',
-    name: 'Kimi K2',
-    provider: 'Vercel AI Gateway',
-    providerId: 'gateway',
+    id: 'openai/gpt-5-mini',
+    name: 'GPT-5 mini',
+    provider: 'OpenAI',
+    providerId: 'openai',
     providerOptions: {
-      gateway: {
-        order: ['groq', 'deepinfra'],
-        only: ['groq']
+      openai: {
+        reasoningEffort: 'medium',
+        reasoningSummary: 'auto'
       }
     }
   },
