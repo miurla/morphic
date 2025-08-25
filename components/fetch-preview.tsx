@@ -6,7 +6,6 @@ interface FetchPreviewProps {
   contentLength?: number
   status: 'fetching' | 'success' | 'error'
   error?: string
-  fetchType?: string
 }
 
 export function FetchPreview({
@@ -14,8 +13,7 @@ export function FetchPreview({
   title,
   contentLength,
   status,
-  error,
-  fetchType = 'Retrieve'
+  error
 }: FetchPreviewProps) {
   const getPageTitle = () => {
     if (title) return title
@@ -50,7 +48,7 @@ export function FetchPreview({
             </span>
           </div>
           <span className="text-xs text-muted-foreground animate-pulse whitespace-nowrap">
-            {fetchType}...
+            Retrieving...
           </span>
         </div>
       </div>
@@ -111,9 +109,6 @@ export function FetchPreview({
                 : `${contentLength} chars`}
             </span>
           )}
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {fetchType}
-          </span>
           <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
         </div>
       </div>
