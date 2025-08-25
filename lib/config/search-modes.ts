@@ -1,4 +1,4 @@
-import { ListChecks, Search } from 'lucide-react'
+import { ListTodo, Search } from 'lucide-react'
 
 import { SearchMode } from '@/lib/types/search'
 
@@ -25,7 +25,7 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
     value: 'planning',
     label: 'Planning',
     description: 'Structured multi-step approach for comprehensive research',
-    icon: ListChecks,
+    icon: ListTodo,
     color: 'text-blue-500'
   },
   {
