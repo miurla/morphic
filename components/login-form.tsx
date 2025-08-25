@@ -19,6 +19,8 @@ import { IconLogo } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+import { PasswordInput } from './ui/password-input'
+
 export function LoginForm({
   className,
   ...props
@@ -129,7 +131,7 @@ export function LoginForm({
                     Forgot password?
                   </Link>
                 </div>
-                <Input
+                <PasswordInput
                   id="password"
                   type="password"
                   placeholder="********"
