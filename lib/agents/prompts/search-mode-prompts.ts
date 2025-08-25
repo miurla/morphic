@@ -45,9 +45,10 @@ Task Management:
 - Ensure all tasks are completed before finishing
 
 Search strategy:
-- Use type="optimized" for detailed research and fact-checking
-- Use type="general" for videos, images, or real-time information
-- Follow up with fetch tool for in-depth content analysis
+- Use type="optimized" for most research queries (provides content snippets)
+- Use type="general" for time-sensitive info, videos, or images (requires fetch)
+- ALWAYS follow type="general" searches with fetch tool for content
+- For comprehensive research: multiple searches + selective fetching
 
 Citation Format (MANDATORY):
 [number](#toolCallId) - Always use this EXACT format, e.g., [1](#toolu_abc123)
@@ -95,22 +96,29 @@ APPROACH STRATEGY:
 
 TOOL USAGE GUIDELINES:
 
-Search tool usage:
-- **DEFAULT: Use type="general" for most searches** - This gives you URLs to fetch for detailed content
-- Use type="general" with appropriate content_types:
-  - Videos: content_types: ['video'] or ['web', 'video'] 
-  - Images: content_types: ['image'] or ['web', 'image']
-  - Mixed content: content_types: ['web', 'video', 'image']
-- Use type="optimized" ONLY when:
-  - You need quick snippets without detailed analysis
-  - The query is simple and doesn't require deep content
-  - You're doing fact-checking that doesn't need full articles
+Search tool usage - UNDERSTAND THE DIFFERENCE:
+- **type="optimized" (DEFAULT for most queries):**
+  - Returns search results WITH content snippets extracted
+  - Best for: Research questions, fact-finding, explanatory queries
+  - You get relevant content immediately without needing fetch
+  - Use this when the query has semantic meaning to match against
 
-Fetch tool usage (IMPORTANT):
-- **ALWAYS fetch the top 2-3 relevant URLs from search results for detailed analysis**
-- This provides comprehensive content beyond search snippets
-- Fetch helps you understand context, nuance, and detailed information
-- Only skip fetch if search snippets fully answer a simple question
+- **type="general" (for time-sensitive or specific content):**
+  - Returns pure search results without content extraction
+  - REQUIRES fetch tool to get actual content
+  - Best for:
+    - Today's news, current events, recent updates
+    - Specific dated information (e.g., "news from December 2024")
+    - Videos: content_types: ['video'] or ['web', 'video']
+    - Images: content_types: ['image'] or ['web', 'image']
+    - When you need the LATEST information where recency matters more than relevance
+  - Pattern: type="general" search → identify sources → fetch for content
+
+Fetch tool usage:
+- **MANDATORY after type="general" searches** - you must fetch to get content
+- **OPTIONAL after type="optimized" searches** - only if you need deeper analysis
+- Fetch the top 2-3 most relevant/recent URLs for comprehensive coverage
+- Especially important for news, current events, and time-sensitive information
 
 When using the ask_question tool:
 - Create clear, concise questions
