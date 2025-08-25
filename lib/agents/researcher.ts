@@ -77,9 +77,14 @@ export function researcher({
     let searchTool: ReturnType<typeof createSearchTool>
 
     // Simple switch - no config objects
+    console.log(`[Researcher] Executing in ${searchMode} mode`)
+
     switch (searchMode) {
       case 'quick':
         // Quick Mode: Minimal tools, fast responses, optimized search only
+        console.log(
+          '[Researcher] Quick mode: maxSteps=5, tools=[search, fetch]'
+        )
         systemPrompt = QUICK_MODE_PROMPT
         activeToolsList = ['search', 'fetch']
         maxSteps = 5
@@ -94,6 +99,9 @@ export function researcher({
         if (writer && 'todoWrite' in todoTools) {
           activeToolsList.push('todoWrite', 'todoRead')
         }
+        console.log(
+          `[Researcher] Planning mode: maxSteps=30, tools=[${activeToolsList.join(', ')}]`
+        )
         maxSteps = 30
         searchTool = originalSearchTool
         break
@@ -106,6 +114,9 @@ export function researcher({
         if (writer && 'todoWrite' in todoTools) {
           activeToolsList.push('todoWrite', 'todoRead')
         }
+        console.log(
+          `[Researcher] Adaptive mode: maxSteps=20, tools=[${activeToolsList.join(', ')}]`
+        )
         maxSteps = 20
         searchTool = originalSearchTool
         break

@@ -60,15 +60,14 @@ export function Chat({
   })
   const { isAuthenticated } = useAuthCheck()
 
-  // Get search mode from cookie
-  const [searchMode, setSearchMode] = useState<SearchMode>('adaptive')
-
-  useEffect(() => {
+  // Get search mode from cookie - initialize with cookie value
+  const [searchMode] = useState<SearchMode>(() => {
     const savedMode = getCookie('searchMode')
     if (savedMode && ['quick', 'planning', 'adaptive'].includes(savedMode)) {
-      setSearchMode(savedMode as SearchMode)
+      return savedMode as SearchMode
     }
-  }, [])
+    return 'adaptive'
+  })
 
   const {
     messages,
