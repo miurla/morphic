@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
+import { SearchMode } from '@/lib/types/search'
 import { selectModel } from '@/lib/utils/model-selection'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { resetAllCounters } from '@/lib/utils/perf-tracking'
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const { message, chatId, trigger, messageId, isNewChat, searchMode } = body
+    const { message, chatId, trigger, messageId, isNewChat } = body
 
     perfLog(
       `API Route - Start: chatId=${chatId}, trigger=${trigger}, isNewChat=${isNewChat}`
@@ -71,6 +72,14 @@ export async function POST(req: Request) {
     const selectedModel = selectModel({
       cookieStore
     })
+
+    // Get search mode from cookie
+    const searchModeCookie = cookieStore.get('searchMode')?.value
+    const searchMode: SearchMode =
+      searchModeCookie &&
+      ['quick', 'planning', 'adaptive'].includes(searchModeCookie)
+        ? (searchModeCookie as SearchMode)
+        : 'adaptive'
 
     if (!isProviderEnabled(selectedModel.providerId)) {
       return new Response(

@@ -14,9 +14,7 @@ import {
   isToolCallPart,
   isToolTypePart
 } from '@/lib/types/dynamic-tools'
-import { SearchMode } from '@/lib/types/search'
 import { cn } from '@/lib/utils'
-import { getCookie } from '@/lib/utils/cookies'
 
 import { useAuthCheck } from '@/hooks/use-auth-check'
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
@@ -60,15 +58,6 @@ export function Chat({
   })
   const { isAuthenticated } = useAuthCheck()
 
-  // Get search mode from cookie - initialize with cookie value
-  const [searchMode] = useState<SearchMode>(() => {
-    const savedMode = getCookie('searchMode')
-    if (savedMode && ['quick', 'planning', 'adaptive'].includes(savedMode)) {
-      return savedMode as SearchMode
-    }
-    return 'adaptive'
-  })
-
   const {
     messages,
     status,
@@ -102,8 +91,10 @@ export function Chat({
                 : trigger === 'submit-message'
                   ? lastMessage
                   : undefined,
-            isNewChat: trigger === 'submit-message' && messages.length === 1,
-            searchMode // Include search mode in the request
+            isNewChat:
+              trigger === 'submit-message' &&
+              messages.length === 1 &&
+              savedMessages.length === 0
           }
         }
       }
