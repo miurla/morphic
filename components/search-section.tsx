@@ -40,9 +40,10 @@ export function SearchSection({
   const errorMessage = tool.errorText || 'Search failed'
   const query = tool.input?.query || ''
   const includeDomains = tool.input?.include_domains
-  const includeDomainsString = includeDomains
-    ? ` [${includeDomains.join(', ')}]`
-    : ''
+  const includeDomainsString =
+    includeDomains && includeDomains.length > 0
+      ? ` [${includeDomains.join(', ')}]`
+      : ''
 
   const { open } = useArtifact()
 
