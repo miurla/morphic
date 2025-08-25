@@ -1,6 +1,8 @@
-import { ListChecks, Search, Sparkles } from 'lucide-react'
+import { ListChecks, Search } from 'lucide-react'
 
 import { SearchMode } from '@/lib/types/search'
+
+import { IconLogo } from '@/components/ui/icons'
 
 export interface SearchModeConfig {
   value: SearchMode
@@ -16,7 +18,7 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
     value: 'adaptive',
     label: 'Adaptive',
     description: 'Automatically adjusts search strategy to match your needs',
-    icon: Sparkles,
+    icon: IconLogo,
     color: 'text-violet-500'
   },
   {
