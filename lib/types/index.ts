@@ -1,3 +1,6 @@
+// Re-export SearchMode for convenience
+export type { SearchMode } from './search'
+
 export type SearchResults = {
   images: SearchResultImage[]
   results: SearchResultItem[]

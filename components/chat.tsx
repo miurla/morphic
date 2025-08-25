@@ -14,7 +14,6 @@ import {
   isToolCallPart,
   isToolTypePart
 } from '@/lib/types/dynamic-tools'
-import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 
 import { useAuthCheck } from '@/hooks/use-auth-check'
@@ -36,13 +35,11 @@ interface ChatSection {
 export function Chat({
   id,
   savedMessages = [],
-  query,
-  models
+  query
 }: {
   id: string
   savedMessages?: UIMessage[]
   query?: string
-  models?: Model[]
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
@@ -94,7 +91,10 @@ export function Chat({
                 : trigger === 'submit-message'
                   ? lastMessage
                   : undefined,
-            isNewChat: trigger === 'submit-message' && messages.length === 1
+            isNewChat:
+              trigger === 'submit-message' &&
+              messages.length === 1 &&
+              savedMessages.length === 0
           }
         }
       }
@@ -397,7 +397,6 @@ export function Chat({
         append={(message: any) => {
           sendMessage(message)
         }}
-        models={models}
         showScrollToBottomButton={!isAtBottom}
         uploadedFiles={uploadedFiles}
         setUploadedFiles={setUploadedFiles}

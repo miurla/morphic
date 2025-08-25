@@ -42,9 +42,9 @@ export async function createChatStreamResponse(
     trigger,
     messageId,
     abortSignal,
-    isNewChat
+    isNewChat,
+    searchMode
   } = config
-  const modelId = `${model.providerId}:${model.id}`
 
   // Verify that chatId is provided
   if (!chatId) {
@@ -114,13 +114,14 @@ export async function createChatStreamResponse(
         // Prepare messages for the model
         const messagesToModel = await prepareMessages(context, message)
 
-        // Get the researcher agent with parent trace ID
+        // Get the researcher agent with parent trace ID and search mode
         const researchAgent = researcher({
           model: context.modelId,
           modelConfig: model,
           abortSignal,
           writer,
-          parentTraceId
+          parentTraceId,
+          searchMode
         })
 
         // Write metadata including traceId at the start of streaming

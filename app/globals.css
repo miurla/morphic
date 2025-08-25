@@ -249,6 +249,78 @@
   }
 }
 
+/* Animation utilities for dropdown menu */
+@utility animate-in {
+  animation-name: enter;
+  animation-duration: 150ms;
+  animation-fill-mode: both;
+}
+
+@utility animate-out {
+  animation-name: exit;
+  animation-duration: 150ms;
+  animation-fill-mode: both;
+}
+
+@utility fade-in-0 {
+  --enter-opacity: 0;
+}
+
+@utility fade-out-0 {
+  --exit-opacity: 0;
+}
+
+@utility zoom-in-95 {
+  --enter-scale: 0.95;
+}
+
+@utility zoom-out-95 {
+  --exit-scale: 0.95;
+}
+
+@utility slide-in-from-top-2 {
+  --enter-translate-y: -0.5rem;
+}
+
+@utility slide-in-from-bottom-2 {
+  --enter-translate-y: 0.5rem;
+}
+
+@utility slide-in-from-left-2 {
+  --enter-translate-x: -0.5rem;
+}
+
+@utility slide-in-from-right-2 {
+  --enter-translate-x: 0.5rem;
+}
+
+@keyframes enter {
+  from {
+    opacity: var(--enter-opacity, 1);
+    transform: translate(
+        var(--enter-translate-x, 0),
+        var(--enter-translate-y, 0)
+      )
+      scale(var(--enter-scale, 1));
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes exit {
+  from {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    opacity: var(--exit-opacity, 1);
+    transform: translate(var(--exit-translate-x, 0), var(--exit-translate-y, 0))
+      scale(var(--exit-scale, 1));
+  }
+}
+
 @utility container {
   margin-inline: auto;
   padding-inline: 2rem;

@@ -42,6 +42,9 @@ export function ReasoningSection({
 
   if (!content) return <DefaultSkeleton />
 
+  // Return null if done and reasoning text is empty
+  if (content.isDone && !content.reasoning?.trim()) return null
+
   return (
     <CollapsibleMessage
       role="assistant"

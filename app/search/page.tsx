@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 
-import { getModels } from '@/lib/config/models'
 import { generateUUID } from '@/lib/utils'
 
 import { Chat } from '@/components/chat'
@@ -16,6 +15,5 @@ export default async function SearchPage(props: {
   }
 
   const id = generateUUID()
-  const models = await getModels()
-  return <Chat id={id} query={q} models={models} />
+  return <Chat id={id} query={q} />
 }

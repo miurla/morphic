@@ -10,7 +10,6 @@ import { toast } from 'sonner'
 
 import { UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
-import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 
 import { useArtifact } from './artifact/artifact-context'
@@ -18,7 +17,8 @@ import { Button } from './ui/button'
 import { IconLogo } from './ui/icons'
 import { ActionButtons } from './action-buttons'
 import { FileUploadButton } from './file-upload-button'
-import { ModelSelector } from './model-selector'
+import { ModelTypeSelector } from './model-type-selector'
+import { SearchModeSelector } from './search-mode-selector'
 import { UploadedFileList } from './uploaded-file-list'
 
 // Constants for timing delays
@@ -35,7 +35,6 @@ interface ChatPanelProps {
   query?: string
   stop: () => void
   append: (message: any) => void
-  models?: Model[]
   /** Whether to show the scroll to bottom button */
   showScrollToBottomButton: boolean
   /** Reference to the scroll container */
@@ -55,7 +54,6 @@ export function ChatPanel({
   query,
   stop,
   append,
-  models,
   showScrollToBottomButton,
   uploadedFiles,
   setUploadedFiles,
@@ -66,6 +64,7 @@ export function ChatPanel({
   const isFirstRender = useRef(true)
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
+  const [isInputFocused, setIsInputFocused] = useState(false) // Track input focus
   const { close: closeArtifact } = useArtifact()
   const isLoading = status === 'submitted' || status === 'streaming'
 
@@ -165,7 +164,13 @@ export function ChatPanel({
           </Button>
         )}
 
-        <div className="relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input">
+        <div
+          className={cn(
+            'relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input transition-shadow',
+            isInputFocused &&
+              'ring-1 ring-ring/20 ring-offset-1 ring-offset-background/50'
+          )}
+        >
           <Textarea
             ref={inputRef}
             name="input"
@@ -174,6 +179,8 @@ export function ChatPanel({
             tabIndex={0}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
             placeholder="Ask anything..."
             spellCheck={false}
             value={input}
@@ -201,21 +208,6 @@ export function ChatPanel({
           {/* Bottom menu area */}
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
-              <ModelSelector models={models || []} />
-            </div>
-            <div className="flex items-center gap-2">
-              {messages.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleNewChat}
-                  className="shrink-0 rounded-full group"
-                  type="button"
-                  disabled={isLoading || isToolInvocationInProgress()}
-                >
-                  <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
-                </Button>
-              )}
               <FileUploadButton
                 onFileSelect={async files => {
                   const newFiles: UploadedFile[] = files.map(file => ({
@@ -264,10 +256,25 @@ export function ChatPanel({
                   )
                 }}
               />
+              <SearchModeSelector />
+            </div>
+            <div className="flex items-center gap-2">
+              {messages.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleNewChat}
+                  className="shrink-0 rounded-full group"
+                  type="button"
+                  disabled={isLoading || isToolInvocationInProgress()}
+                >
+                  <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
+                </Button>
+              )}
+              <ModelTypeSelector />
               <Button
                 type={isLoading ? 'button' : 'submit'}
                 size={'icon'}
-                variant={'outline'}
                 className={cn(isLoading && 'animate-pulse', 'rounded-full')}
                 disabled={
                   (input.length === 0 && !isLoading) ||
