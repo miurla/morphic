@@ -130,6 +130,10 @@ export function researcher({
       ...todoTools
     }
 
+    // Check if we should force todoWrite on first step
+    const shouldForceTodoWrite =
+      searchMode === 'planning' && writer && 'todoWrite' in todoTools
+
     // Return an agent instance
     return new Agent({
       model: getModel(model),
@@ -140,6 +144,17 @@ export function researcher({
       abortSignal,
       ...(modelConfig?.providerOptions && {
         providerOptions: modelConfig.providerOptions
+      }),
+      // Force todoWrite tool on first step for planning mode
+      ...(shouldForceTodoWrite && {
+        prepareStep: async ({ stepNumber }) => {
+          if (stepNumber === 0) {
+            return {
+              toolChoice: { type: 'tool', toolName: 'todoWrite' }
+            }
+          }
+          return undefined
+        }
       }),
       experimental_telemetry: {
         isEnabled: isTracingEnabled(),
