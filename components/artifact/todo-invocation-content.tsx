@@ -19,17 +19,17 @@ export function TodoInvocationContent({ part }: TodoInvocationContentProps) {
   const getStatusIcon = (status: TodoItem['status']) => {
     switch (status) {
       case 'completed':
-        return <Check className="h-4 w-4 text-green-600" />
+        return <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
       case 'in_progress':
         return (
-          <div className="relative h-4 w-4 flex items-center justify-center">
+          <div className="relative h-4 w-4 flex items-center justify-center flex-shrink-0">
             <div className="h-2 w-2 bg-blue-600 rounded-full animate-ping absolute" />
             <div className="h-2 w-2 bg-blue-600 rounded-full" />
           </div>
         )
       default:
         return (
-          <div className="h-4 w-4 flex items-center justify-center">
+          <div className="h-4 w-4 flex items-center justify-center flex-shrink-0">
             <div className="h-2 w-2 bg-muted-foreground rounded-full" />
           </div>
         )
