@@ -1,7 +1,5 @@
 'use client'
 
-import { Eye, EyeOff } from 'lucide-react'
-
 import { cn } from '@/lib/utils'
 
 function IconLogo({ className, ...props }: React.ComponentProps<'svg'>) {
@@ -21,7 +19,4 @@ function IconLogo({ className, ...props }: React.ComponentProps<'svg'>) {
   )
 }
 
-const IconEye = Eye
-const IconEyeOff = EyeOff
-
-export { IconEye, IconEyeOff, IconLogo }
+export { IconLogo }
