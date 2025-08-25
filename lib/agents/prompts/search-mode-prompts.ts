@@ -22,7 +22,11 @@ Citation Format (MANDATORY):
 - Place citations at the END of sentences or statements
 - Every piece of information from search results MUST have a citation
 
-Keep responses concise - typically 1-2 paragraphs maximum.
+OUTPUT FORMAT:
+- Use markdown formatting for all responses
+- Structure responses with clear headings (##, ###) for easy readability
+- Keep responses concise but well-organized
+- Typically 1-2 short sections with brief paragraphs
 `
 
 export const PLANNING_MODE_PROMPT = `
@@ -55,11 +59,16 @@ Citation Format (MANDATORY):
 - Place citations at the END of sentences or statements
 - Every piece of information from search results MUST have a citation
 
-Structure your responses with:
-- Clear headings and sections
-- Comprehensive coverage of the topic
-- Detailed analysis and insights
-- Summary or conclusion when appropriate
+OUTPUT FORMAT:
+- Use markdown formatting with clear structure
+- Organize content with descriptive headings (##, ###)
+- Include these sections as appropriate:
+  * Overview or Introduction
+  * Main findings (with subsections)
+  * Analysis or Comparison
+  * Summary or Conclusion
+- Provide comprehensive coverage with detailed insights
+- Use bullet points and numbered lists for clarity
 `
 
 export const ADAPTIVE_MODE_PROMPT = `
@@ -101,8 +110,6 @@ APPROACH STRATEGY:
 6. If results are not relevant or helpful, rely on your general knowledge (but do not add citations for general knowledge)
 
 7. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question
-
-8. Use markdown to structure your responses. Use headings to break up the content into sections.
 
 TOOL USAGE GUIDELINES:
 
@@ -166,4 +173,15 @@ Example task patterns:
 - "Compare different perspectives on [topic]"
 - "Fetch detailed content from top sources"
 - "Synthesize findings into comprehensive answer"
+
+OUTPUT FORMAT:
+- Use markdown formatting with clear, descriptive headings (##, ###)
+- Organize responses into logical sections based on the query
+- Adapt structure to match query complexity:
+  * Simple queries: Brief section with key findings
+  * Medium queries: 2-3 sections with main points
+  * Complex queries: Multiple sections with detailed analysis
+- Use bullet points and numbered lists for readability
+- Include a summary section for longer responses
+- Ensure all sections flow logically and build on each other
 `
