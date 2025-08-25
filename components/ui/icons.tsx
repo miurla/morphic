@@ -35,7 +35,7 @@ function IconLogoOutline({ className, ...props }: React.ComponentProps<'svg'>) {
         r="120"
         fill="none"
         stroke="currentColor"
-        strokeWidth="16"
+        strokeWidth="24"
       ></circle>
       <circle cx="102" cy="128" r="18" fill="currentColor"></circle>
       <circle cx="154" cy="128" r="18" fill="currentColor"></circle>
