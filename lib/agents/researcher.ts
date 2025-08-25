@@ -16,7 +16,7 @@ import { getModel } from '../utils/registry'
 import { isTracingEnabled } from '../utils/telemetry'
 
 import {
-  AUTO_MODE_PROMPT,
+  ADAPTIVE_MODE_PROMPT,
   PLANNING_MODE_PROMPT,
   QUICK_MODE_PROMPT
 } from './prompts/search-mode-prompts'
@@ -109,7 +109,7 @@ export function researcher({
       case 'adaptive':
       default:
         // Adaptive Mode: Balanced approach, current behavior
-        systemPrompt = AUTO_MODE_PROMPT
+        systemPrompt = ADAPTIVE_MODE_PROMPT
         activeToolsList = ['search', 'fetch']
         if (writer && 'todoWrite' in todoTools) {
           activeToolsList.push('todoWrite', 'todoRead')

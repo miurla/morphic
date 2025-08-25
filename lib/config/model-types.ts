@@ -10,7 +10,8 @@ export const MODEL_TYPE_CONFIGS: Record<ModelType, Model> = {
     providerId: 'gateway',
     providerOptions: {
       gateway: {
-        order: ['groq', 'deepinfra']
+        order: ['groq', 'deepinfra'],
+        only: ['groq']
       }
     }
   },
