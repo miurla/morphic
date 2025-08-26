@@ -2,6 +2,7 @@ import { UIMessage } from 'ai'
 
 import { upsertMessage } from '@/lib/actions/chat'
 import { updateChatTitle } from '@/lib/db/actions'
+import { SearchMode } from '@/lib/types/search'
 import { perfTime } from '@/lib/utils/perf-logging'
 import { retryDatabaseOperation } from '@/lib/utils/retry'
 
@@ -12,14 +13,16 @@ export async function persistStreamResults(
   chatId: string,
   userId: string,
   titlePromise?: Promise<string>,
-  parentTraceId?: string
+  parentTraceId?: string,
+  searchMode?: SearchMode,
+  modelId?: string
 ) {
-  // Attach metadata to the response message if we have a traceId
-  if (parentTraceId) {
-    responseMessage.metadata = {
-      ...(responseMessage.metadata || {}),
-      traceId: parentTraceId
-    }
+  // Attach metadata to the response message
+  responseMessage.metadata = {
+    ...(responseMessage.metadata || {}),
+    ...(parentTraceId && { traceId: parentTraceId }),
+    ...(searchMode && { searchMode }),
+    ...(modelId && { modelId })
   }
 
   // Wait for title generation if it was started
