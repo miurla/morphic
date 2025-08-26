@@ -23,8 +23,9 @@ import { getTextFromParts } from '../utils/message-utils'
 import { perfLog, perfTime } from '../utils/perf-logging'
 
 import { filterReasoningParts } from './helpers/filter-reasoning-parts'
-import { handleStreamFinish } from './helpers/handle-stream-finish'
+import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
+import { streamRelatedQuestions } from './helpers/stream-related-questions'
 import type { StreamContext } from './helpers/types'
 import { BaseStreamConfig } from './types'
 
@@ -107,6 +108,9 @@ export async function createChatStreamResponse(
     isNewChat
   }
 
+  // Declare titlePromise in outer scope for onFinish access
+  let titlePromise: Promise<string> | undefined
+
   // Create the stream
   const stream = createUIMessageStream<UIMessage>({
     execute: async ({ writer }: { writer: UIMessageStreamWriter }) => {
@@ -152,7 +156,6 @@ export async function createChatStreamResponse(
         }
 
         // Start title generation in parallel if it's a new chat
-        let titlePromise: Promise<string> | undefined
         if (!initialChat && message) {
           const userContent = getTextFromParts(message.parts)
           titlePromise = generateChatTitle({
@@ -166,21 +169,29 @@ export async function createChatStreamResponse(
           })
         }
 
+        const result = researchAgent.stream({ messages: modelMessages })
+        result.consumeStream()
         // Stream with the research agent
-        writer.merge(
-          researchAgent.stream({ messages: modelMessages }).toUIMessageStream({
-            onFinish: async ({ responseMessage, isAborted }) => {
-              if (isAborted || !responseMessage) return
-              await handleStreamFinish(
-                writer,
-                responseMessage,
-                messagesToModel,
-                context,
-                titlePromise
-              )
-            }
-          })
-        )
+        writer.merge(result.toUIMessageStream())
+
+        const responseMessages = (await result.response).messages
+        // Generate related questions
+        if (responseMessages && responseMessages.length > 0) {
+          // Find the last user message
+          const lastUserMessage = [...modelMessages]
+            .reverse()
+            .find(msg => msg.role === 'user')
+          const messagesForQuestions = lastUserMessage
+            ? [lastUserMessage, ...responseMessages]
+            : responseMessages
+
+          await streamRelatedQuestions(
+            writer,
+            messagesForQuestions,
+            abortSignal,
+            parentTraceId
+          )
+        }
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error // This error will be handled by the onError callback
@@ -194,6 +205,18 @@ export async function createChatStreamResponse(
     onError: (error: any) => {
       // console.error('Stream error:', error)
       return error instanceof Error ? error.message : String(error)
+    },
+    onFinish: async ({ responseMessage, isAborted }) => {
+      if (isAborted || !responseMessage) return
+
+      // Persist stream results to database
+      await persistStreamResults(
+        responseMessage,
+        chatId,
+        userId,
+        titlePromise,
+        parentTraceId
+      )
     }
   })
 

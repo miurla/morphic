@@ -1,4 +1,4 @@
-import { convertToModelMessages, generateObject, type UIMessage } from 'ai'
+import { generateObject, type ModelMessage } from 'ai'
 import { z } from 'zod'
 
 import { RELATED_QUESTIONS_MODEL_CONFIG } from '../config/model-types'
@@ -18,15 +18,12 @@ const relatedQuestionsSchema = z.object({
 })
 
 export async function generateRelatedQuestions(
-  messages: UIMessage[],
+  messages: ModelMessage[],
   abortSignal?: AbortSignal,
   parentTraceId?: string
 ) {
   // Use the related questions model configuration
   const modelId = `${RELATED_QUESTIONS_MODEL_CONFIG.providerId}:${RELATED_QUESTIONS_MODEL_CONFIG.id}`
-
-  // Convert UIMessages to ModelMessages
-  const modelMessages = convertToModelMessages(messages)
 
   const { object } = await generateObject({
     model: getModel(modelId),
@@ -36,7 +33,7 @@ export async function generateRelatedQuestions(
       'Generate 3 concise follow-up questions (max 10-12 words each)',
     system: RELATED_QUESTIONS_PROMPT,
     messages: [
-      ...modelMessages,
+      ...messages,
       {
         role: 'user',
         content:
