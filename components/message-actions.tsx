@@ -23,6 +23,7 @@ interface MessageActionsProps {
   enableShare?: boolean
   className?: string
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
+  visible?: boolean
 }
 
 export function MessageActions({
@@ -34,7 +35,8 @@ export function MessageActions({
   chatId,
   enableShare,
   className,
-  status
+  status,
+  visible = true
 }: MessageActionsProps) {
   const [feedbackScore, setFeedbackScore] = useState<number | null>(
     initialFeedbackScore ?? null
@@ -85,7 +87,7 @@ export function MessageActions({
     <div
       className={cn(
         'flex items-center gap-0.5 self-end transition-opacity duration-200',
-        isLoading ? 'opacity-0' : 'opacity-100',
+        !visible || isLoading ? 'opacity-0' : 'opacity-100',
         className
       )}
     >

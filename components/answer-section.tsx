@@ -64,18 +64,17 @@ export function AnswerSection({
       {content && (
         <div className="flex flex-col gap-1">
           <MarkdownMessage message={content} citationMaps={citationMaps} />
-          {showActions && (
-            <MessageActions
-              message={content} // Keep original message content for copy
-              messageId={messageId}
-              traceId={metadata?.traceId}
-              feedbackScore={metadata?.feedbackScore}
-              chatId={chatId}
-              enableShare={enableShare}
-              reload={handleReload}
-              status={status}
-            />
-          )}
+          <MessageActions
+            message={content} // Keep original message content for copy
+            messageId={messageId}
+            traceId={metadata?.traceId}
+            feedbackScore={metadata?.feedbackScore}
+            chatId={chatId}
+            enableShare={enableShare}
+            reload={handleReload}
+            status={status}
+            visible={showActions}
+          />
         </div>
       )}
     </CollapsibleMessage>
