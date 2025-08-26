@@ -128,16 +128,6 @@ export async function createChatStreamResponse(
           searchMode
         })
 
-        // Write metadata including traceId, searchMode, and modelId at the start of streaming
-        writer.write({
-          type: 'message-metadata',
-          messageMetadata: {
-            ...(parentTraceId && { traceId: parentTraceId }),
-            ...(searchMode && { searchMode }),
-            modelId: context.modelId
-          }
-        })
-
         // Filter out reasoning parts from messages before converting to model messages
         // OpenAI API requires reasoning messages to be followed by assistant messages
         const filteredMessages = filterReasoningParts(messagesToModel)
