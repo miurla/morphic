@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils/index'
@@ -95,6 +95,7 @@ export function SignUpForm({
                 </div>
                 <PasswordInput
                   id="password"
+                  type="password"
                   placeholder="********"
                   required
                   value={password}
