@@ -17,6 +17,11 @@ Search tool usage:
 - This provides faster responses without needing additional fetch operations
 - Rely on the search results' content snippets for your answers
 
+Fetch tool usage:
+- **ONLY use fetch tool when a URL is directly provided by the user in their query**
+- Do NOT use fetch to get more details from search results
+- This keeps responses fast and efficient
+
 Citation Format (MANDATORY):
 [number](#toolCallId) - Always use this EXACT format, e.g., [1](#toolu_abc123)
 - The toolCallId can be found in each search result's metadata or response structure
