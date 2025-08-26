@@ -1,75 +1,24 @@
-import { UIMessage, UIMessageStreamWriter } from 'ai'
+import { UIMessage } from 'ai'
 
 import { upsertMessage } from '@/lib/actions/chat'
-import { generateRelatedQuestions } from '@/lib/agents/generate-related-questions'
 import { updateChatTitle } from '@/lib/db/actions'
-import { generateId } from '@/lib/db/schema'
-import { hasToolCalls } from '@/lib/utils/message-utils'
 import { perfTime } from '@/lib/utils/perf-logging'
 import { retryDatabaseOperation } from '@/lib/utils/retry'
-
-import type { StreamContext } from './types'
 
 const DEFAULT_CHAT_TITLE = 'Untitled'
 
 export async function handleStreamFinish(
-  writer: UIMessageStreamWriter,
   responseMessage: UIMessage,
-  messagesToModel: UIMessage[],
-  context: StreamContext,
-  titlePromise?: Promise<string>
+  chatId: string,
+  userId: string,
+  titlePromise?: Promise<string>,
+  parentTraceId?: string
 ) {
-  const { chatId, userId, modelId, abortSignal, parentTraceId } = context
-
   // Attach metadata to the response message if we have a traceId
   if (parentTraceId) {
     responseMessage.metadata = {
       ...(responseMessage.metadata || {}),
       traceId: parentTraceId
-    }
-  }
-
-  // Generate related questions if there are tool calls
-  if (hasToolCalls(responseMessage as UIMessage | null)) {
-    const questionPartId = generateId()
-
-    try {
-      writer.write({
-        type: 'data-relatedQuestions',
-        id: questionPartId,
-        data: { status: 'loading' }
-      })
-
-      const relatedQuestions = await generateRelatedQuestions(
-        [...messagesToModel, responseMessage],
-        abortSignal,
-        parentTraceId
-      )
-
-      responseMessage.parts.push({
-        type: 'data-relatedQuestions',
-        id: questionPartId,
-        data: {
-          status: 'success',
-          questions: relatedQuestions.questions
-        }
-      })
-
-      writer.write({
-        type: 'data-relatedQuestions',
-        id: questionPartId,
-        data: {
-          status: 'success',
-          questions: relatedQuestions.questions
-        }
-      })
-    } catch (error) {
-      console.error('Error generating related questions:', error)
-      writer.write({
-        type: 'data-relatedQuestions',
-        id: questionPartId,
-        data: { status: 'error' }
-      })
     }
   }
 
