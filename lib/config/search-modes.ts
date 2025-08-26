@@ -17,7 +17,7 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
   {
     value: 'adaptive',
     label: 'Adaptive',
-    description: 'Automatically adjusts search strategy to match your needs',
+    description: 'Adaptive agentic search with intelligent query understanding',
     icon: IconLogoOutline,
     color: 'text-violet-500'
   },
