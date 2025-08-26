@@ -10,7 +10,7 @@ export const MODEL_TYPE_CONFIGS: Record<ModelType, Model> = {
     providerId: 'openai',
     providerOptions: {
       openai: {
-        reasoningEffort: 'medium',
+        reasoningEffort: 'low',
         reasoningSummary: 'auto'
       }
     }
@@ -26,6 +26,14 @@ export const MODEL_TYPE_CONFIGS: Record<ModelType, Model> = {
       }
     }
   }
+}
+
+// Model configuration for related questions generation
+export const RELATED_QUESTIONS_MODEL_CONFIG: Model = {
+  id: 'gemini-2.0-flash',
+  name: 'Gemini 2.0 Flash',
+  provider: 'Google',
+  providerId: 'google'
 }
 
 // Helper function to get model for a specific type
