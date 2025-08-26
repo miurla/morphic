@@ -3,7 +3,7 @@ import { tool } from 'ai'
 import { fetchSchema } from '@/lib/schema/fetch'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 
-const CONTENT_CHARACTER_LIMIT = 10000
+const CONTENT_CHARACTER_LIMIT = 50000
 const TITLE_CHARACTER_LIMIT = 100
 
 async function fetchRegularData(url: string): Promise<SearchResultsType> {
