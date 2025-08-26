@@ -95,7 +95,7 @@ export function researcher({
       case 'planning':
         // Planning Mode: All tools, structured approach, many steps
         systemPrompt = PLANNING_MODE_PROMPT
-        activeToolsList = ['search', 'fetch', 'askQuestion']
+        activeToolsList = ['search', 'fetch'] // Temporarily removed askQuestion until improvements
         if (writer && 'todoWrite' in todoTools) {
           activeToolsList.push('todoWrite', 'todoRead')
         }
