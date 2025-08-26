@@ -110,19 +110,19 @@ export function RenderMessage({
               />
             )
           case 'text':
-            // Show actions if:
-            // 1. This is the last part and streaming is complete
-            // 2. Next part is data-relatedQuestions
-            const nextMessagePart = message.parts?.[index + 1]
+            // Find if this is the last text part in this message
+            const remainingParts = message.parts?.slice(index + 1) || []
+            const hasMoreTextParts = remainingParts.some(p => p.type === 'text')
+            const isLastTextPart = !hasMoreTextParts
+
+            // Check if streaming is complete
             const isStreamingComplete =
               status !== 'streaming' && status !== 'submitted'
-            const isLastPart = !hasNextPart
-            // For non-latest messages, always show actions
-            // For latest message, show actions only when streaming is complete
-            const shouldShowActions = isLatestMessage
-              ? (isLastPart && isStreamingComplete) || // Last part and streaming done for latest message
-                nextMessagePart?.type === 'data-relatedQuestions' // Next part is related questions
-              : true // Always show actions for non-latest messages
+
+            // Show actions only on the last text part of each message
+            // For the latest message, also check if streaming is complete
+            const shouldShowActions =
+              isLastTextPart && (isLatestMessage ? isStreamingComplete : true)
             return (
               <AnswerSection
                 key={`${messageId}-text-${index}`}
