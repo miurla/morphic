@@ -5,6 +5,7 @@ import { fetchTool } from '@/lib/tools/fetch'
 import { askQuestionTool } from '@/lib/tools/question'
 import { searchTool } from '@/lib/tools/search'
 import { createTodoTools, type TodoItem } from '@/lib/tools/todo'
+import type { SearchMode } from '@/lib/types/search'
 
 // Re-export TodoItem for external use
 export type { TodoItem }
@@ -13,6 +14,8 @@ export type { TodoItem }
 export interface UIMessageMetadata {
   traceId?: string
   feedbackScore?: number | null
+  searchMode?: SearchMode
+  modelId?: string
   [key: string]: any
 }
 
