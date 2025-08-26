@@ -23,7 +23,7 @@ import { getTextFromParts } from '../utils/message-utils'
 import { perfLog, perfTime } from '../utils/perf-logging'
 
 import { filterReasoningParts } from './helpers/filter-reasoning-parts'
-import { handleStreamFinish } from './helpers/handle-stream-finish'
+import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
 import { streamRelatedQuestions } from './helpers/stream-related-questions'
 import type { StreamContext } from './helpers/types'
@@ -209,8 +209,8 @@ export async function createChatStreamResponse(
     onFinish: async ({ responseMessage, isAborted }) => {
       if (isAborted || !responseMessage) return
 
-      // Handle stream finish tasks like saving message and updating title
-      await handleStreamFinish(
+      // Persist stream results to database
+      await persistStreamResults(
         responseMessage,
         chatId,
         userId,

@@ -7,7 +7,7 @@ import { retryDatabaseOperation } from '@/lib/utils/retry'
 
 const DEFAULT_CHAT_TITLE = 'Untitled'
 
-export async function handleStreamFinish(
+export async function persistStreamResults(
   responseMessage: UIMessage,
   chatId: string,
   userId: string,
