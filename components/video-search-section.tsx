@@ -3,7 +3,6 @@
 import { useChat } from '@ai-sdk/react'
 import { ToolInvocation } from 'ai'
 
-import { CHAT_ID } from '@/lib/constants'
 import type { SerperSearchResults } from '@/lib/types'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
@@ -17,15 +16,17 @@ interface VideoSearchSectionProps {
   tool: ToolInvocation
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  chatId: string
 }
 
 export function VideoSearchSection({
   tool,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  chatId
 }: VideoSearchSectionProps) {
   const { status } = useChat({
-    id: CHAT_ID
+    id: chatId
   })
   const isLoading = status === 'submitted' || status === 'streaming'
 

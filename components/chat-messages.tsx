@@ -22,7 +22,7 @@ interface ChatMessagesProps {
   data: JSONValue[] | undefined
   onQuerySelect: (query: string) => void
   isLoading: boolean
-  chatId?: string
+  chatId: string
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for the scroll container */
   scrollContainerRef: React.RefObject<HTMLDivElement>
@@ -182,6 +182,7 @@ export function ChatMessages({
             isOpen={getIsOpen(manualToolCallId)}
             onOpenChange={open => handleOpenChange(manualToolCallId, open)}
             addToolResult={addToolResult}
+            chatId={chatId}
           />
         )}
       </div>

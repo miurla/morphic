@@ -6,8 +6,6 @@ import { useChat } from '@ai-sdk/react'
 import { JSONValue } from 'ai'
 import { ArrowRight } from 'lucide-react'
 
-import { CHAT_ID } from '@/lib/constants'
-
 import { Button } from './ui/button'
 import { Skeleton } from './ui/skeleton'
 import { CollapsibleMessage } from './collapsible-message'
@@ -18,6 +16,7 @@ export interface RelatedQuestionsProps {
   onQuerySelect: (query: string) => void
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  chatId: string
 }
 
 interface RelatedQuestionsAnnotation extends Record<string, JSONValue> {
@@ -31,10 +30,11 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   annotations,
   onQuerySelect,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  chatId
 }) => {
   const { status } = useChat({
-    id: CHAT_ID
+    id: chatId
   })
   const isLoading = status === 'submitted' || status === 'streaming'
 
