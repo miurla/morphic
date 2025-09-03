@@ -1,14 +1,12 @@
 {
   "current": {
-    "version": "0.5.0",
-    "date": "2025-01-10",
+    "version": "1.0.0 Beta.4",
+    "date": "2025-09-03",
     "features": [
-      "AI model selection",
-      "Langfuse integration",
-      "Improved search results"
+      "Morphic reborn - Now with powerful agentic search beyond quick answers"
     ],
-    "showUntil": "2025-01-20",
-    "dismissKey": "changelog-v0.5.0"
+    "showUntil": "2025-09-10",
+    "dismissKey": "changelog-v1.0.0"
   },
   "history": []
 }
