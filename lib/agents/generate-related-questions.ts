@@ -1,7 +1,7 @@
 import { generateObject, type ModelMessage } from 'ai'
 import { z } from 'zod'
 
-import { RELATED_QUESTIONS_MODEL_CONFIG } from '../config/model-types'
+import { getRelatedQuestionsModel } from '../config/model-types'
 import { getModel } from '../utils/registry'
 import { isTracingEnabled } from '../utils/telemetry'
 
@@ -22,8 +22,9 @@ export async function generateRelatedQuestions(
   abortSignal?: AbortSignal,
   parentTraceId?: string
 ) {
-  // Use the related questions model configuration
-  const modelId = `${RELATED_QUESTIONS_MODEL_CONFIG.providerId}:${RELATED_QUESTIONS_MODEL_CONFIG.id}`
+  // Use the related questions model configuration from JSON
+  const relatedModel = getRelatedQuestionsModel()
+  const modelId = `${relatedModel.providerId}:${relatedModel.id}`
 
   const { object } = await generateObject({
     model: getModel(modelId),
