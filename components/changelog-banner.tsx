@@ -4,6 +4,8 @@ import { X } from 'lucide-react'
 
 import { useChangelog } from '@/hooks/use-changelog'
 
+import { IconLogo } from '@/components/ui/icons'
+
 export function ChangelogBanner() {
   const { changelog, isVisible, dismiss } = useChangelog()
 
@@ -21,6 +23,7 @@ export function ChangelogBanner() {
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
+            <IconLogo className="h-4 w-4" />
             <span className="text-xs px-1.5 py-0.5 bg-muted rounded-md font-mono">
               v{changelog.version}
             </span>
