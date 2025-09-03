@@ -7,7 +7,6 @@ import { ChatRequestOptions } from 'ai'
 import { Message } from 'ai/react'
 import { toast } from 'sonner'
 
-import { CHAT_ID } from '@/lib/constants'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 
@@ -50,12 +49,16 @@ export function Chat({
     reload
   } = useChat({
     initialMessages: savedMessages,
-    id: CHAT_ID,
+    id: id, // Use unique chat ID for isolated streaming
     body: {
       id
     },
     onFinish: () => {
-      window.history.replaceState({}, '', `/search/${id}`)
+      // Only update URL if we're on the home page (new chat)
+      // Don't update if we're already on a search page to avoid hijacking navigation
+      if (window.location.pathname === '/') {
+        window.history.replaceState({}, '', `/search/${id}`)
+      }
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
     },
     onError: error => {
@@ -121,7 +124,12 @@ export function Chat({
 
   // Scroll to the section when a new user message is sent
   useEffect(() => {
-    if (sections.length > 0) {
+    // Only scroll if this chat is currently visible in the URL
+    const isCurrentChat =
+      window.location.pathname === `/search/${id}` ||
+      (window.location.pathname === '/' && sections.length > 0)
+
+    if (isCurrentChat && sections.length > 0) {
       const lastMessage = messages[messages.length - 1]
       if (lastMessage && lastMessage.role === 'user') {
         // If the last message is from user, find the corresponding section
@@ -132,7 +140,7 @@ export function Chat({
         })
       }
     }
-  }, [sections, messages])
+  }, [sections, messages, id])
 
   useEffect(() => {
     setMessages(savedMessages)

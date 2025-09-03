@@ -12,13 +12,15 @@ interface ToolSectionProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   addToolResult?: (params: { toolCallId: string; result: any }) => void
+  chatId?: string
 }
 
 export function ToolSection({
   tool,
   isOpen,
   onOpenChange,
-  addToolResult
+  addToolResult,
+  chatId
 }: ToolSectionProps) {
   // Special handling for ask_question tool
   if (tool.toolName === 'ask_question') {
@@ -62,6 +64,7 @@ export function ToolSection({
           tool={tool}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
+          chatId={chatId || ''}
         />
       )
     case 'videoSearch':
@@ -70,6 +73,7 @@ export function ToolSection({
           tool={tool}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
+          chatId={chatId || ''}
         />
       )
     case 'retrieve':
