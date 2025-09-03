@@ -125,9 +125,10 @@ export function Chat({
   // Scroll to the section when a new user message is sent
   useEffect(() => {
     // Only scroll if this chat is currently visible in the URL
-    const isCurrentChat = window.location.pathname === `/search/${id}` || 
-                         (window.location.pathname === '/' && sections.length > 0)
-    
+    const isCurrentChat =
+      window.location.pathname === `/search/${id}` ||
+      (window.location.pathname === '/' && sections.length > 0)
+
     if (isCurrentChat && sections.length > 0) {
       const lastMessage = messages[messages.length - 1]
       if (lastMessage && lastMessage.role === 'user') {
