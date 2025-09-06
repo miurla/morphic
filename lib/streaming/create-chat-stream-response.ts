@@ -163,8 +163,19 @@ export async function createChatStreamResponse(
 
         const result = researchAgent.stream({ messages: modelMessages })
         result.consumeStream()
-        // Stream with the research agent
-        writer.merge(result.toUIMessageStream())
+        // Stream with the research agent, including metadata
+        writer.merge(result.toUIMessageStream({
+          messageMetadata: ({ part }) => {
+            // Send metadata when streaming starts
+            if (part.type === 'start') {
+              return {
+                traceId: parentTraceId,
+                searchMode,
+                modelId: context.modelId
+              }
+            }
+          }
+        }))
 
         const responseMessages = (await result.response).messages
         // Generate related questions
