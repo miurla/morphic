@@ -100,9 +100,9 @@ export function researcher({
           activeToolsList.push('todoWrite', 'todoRead')
         }
         console.log(
-          `[Researcher] Planning mode: maxSteps=30, tools=[${activeToolsList.join(', ')}]`
+          `[Researcher] Planning mode: maxSteps=50, tools=[${activeToolsList.join(', ')}]`
         )
-        maxSteps = 30
+        maxSteps = 50
         searchTool = originalSearchTool
         break
 
@@ -115,9 +115,9 @@ export function researcher({
           activeToolsList.push('todoWrite', 'todoRead')
         }
         console.log(
-          `[Researcher] Adaptive mode: maxSteps=20, tools=[${activeToolsList.join(', ')}]`
+          `[Researcher] Adaptive mode: maxSteps=50, tools=[${activeToolsList.join(', ')}]`
         )
-        maxSteps = 20
+        maxSteps = 50
         searchTool = originalSearchTool
         break
     }

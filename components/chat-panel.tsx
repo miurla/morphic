@@ -266,7 +266,7 @@ export function ChatPanel({
                   onClick={handleNewChat}
                   className="shrink-0 rounded-full group"
                   type="button"
-                  disabled={isLoading || isToolInvocationInProgress()}
+                  disabled={isLoading}
                 >
                   <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
                 </Button>
@@ -276,10 +276,7 @@ export function ChatPanel({
                 type={isLoading ? 'button' : 'submit'}
                 size={'icon'}
                 className={cn(isLoading && 'animate-pulse', 'rounded-full')}
-                disabled={
-                  (input.length === 0 && !isLoading) ||
-                  isToolInvocationInProgress()
-                }
+                disabled={input.length === 0 && !isLoading}
                 onClick={isLoading ? stop : undefined}
               >
                 {isLoading ? <Square size={20} /> : <ArrowUp size={20} />}

@@ -15,13 +15,14 @@
         }
       },
       "quality": {
-        "id": "anthropic/claude-sonnet-4",
-        "name": "Claude Sonnet 4",
-        "provider": "Vercel AI Gateway",
-        "providerId": "gateway",
+        "id": "gpt-5",
+        "name": "GPT-5",
+        "provider": "OpenAI",
+        "providerId": "openai",
         "providerOptions": {
-          "gateway": {
-            "order": ["anthropic", "bedrock", "vertex"]
+          "openai": {
+            "reasoningEffort": "medium",
+            "reasoningSummary": "auto"
           }
         }
       }
