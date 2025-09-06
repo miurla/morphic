@@ -1,8 +1,8 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
-import { useRouter } from 'next/navigation'
 
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
@@ -12,13 +12,13 @@ import { UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
-import { useArtifact } from './artifact/artifact-context'
-import { Button } from './ui/button'
-import { IconLogo } from './ui/icons'
 import { ActionButtons } from './action-buttons'
+import { useArtifact } from './artifact/artifact-context'
 import { FileUploadButton } from './file-upload-button'
 import { ModelTypeSelector } from './model-type-selector'
 import { SearchModeSelector } from './search-mode-selector'
+import { Button } from './ui/button'
+import { IconLogo } from './ui/icons'
 import { UploadedFileList } from './uploaded-file-list'
 
 // Constants for timing delays
@@ -266,7 +266,7 @@ export function ChatPanel({
                   onClick={handleNewChat}
                   className="shrink-0 rounded-full group"
                   type="button"
-                  disabled={isLoading || isToolInvocationInProgress()}
+                  disabled={isLoading}
                 >
                   <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
                 </Button>
@@ -276,10 +276,7 @@ export function ChatPanel({
                 type={isLoading ? 'button' : 'submit'}
                 size={'icon'}
                 className={cn(isLoading && 'animate-pulse', 'rounded-full')}
-                disabled={
-                  (input.length === 0 && !isLoading) ||
-                  isToolInvocationInProgress()
-                }
+                disabled={input.length === 0 && !isLoading}
                 onClick={isLoading ? stop : undefined}
               >
                 {isLoading ? <Square size={20} /> : <ArrowUp size={20} />}
