@@ -1,8 +1,22 @@
+<div align="center">
+
 # Morphic
 
 An AI-powered search engine with a generative UI.
 
-![capture](/public/screenshot-2025-05-04.png)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-miurla%2Fmorphic-blue.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAyCAYAAAAnWDnqAAAAAXNSR0IArs4c6QAAA05JREFUaEPtmUtyEzEQhtWTQyQLHNak2AB7ZnyXZMEjXMGeK/AIi+QuHrMnbChYY7MIh8g01fJoopFb0uhhEqqcbWTp06/uv1saEDv4O3n3dV60RfP947Mm9/SQc0ICFQgzfc4CYZoTPAswgSJCCUJUnAAoRHOAUOcATwbmVLWdGoH//PB8mnKqScAhsD0kYP3j/Yt5LPQe2KvcXmGvRHcDnpxfL2zOYJ1mFwrryWTz0advv1Ut4CJgf5uhDuDj5eUcAUoahrdY/56ebRWeraTjMt/00Sh3UDtjgHtQNHwcRGOC98BJEAEymycmYcWwOprTgcB6VZ5JK5TAJ+fXGLBm3FDAmn6oPPjR4rKCAoJCal2eAiQp2x0vxTPB3ALO2CRkwmDy5WohzBDwSEFKRwPbknEggCPB/imwrycgxX2NzoMCHhPkDwqYMr9tRcP5qNrMZHkVnOjRMWwLCcr8ohBVb1OMjxLwGCvjTikrsBOiA6fNyCrm8V1rP93iVPpwaE+gO0SsWmPiXB+jikdf6SizrT5qKasx5j8ABbHpFTx+vFXp9EnYQmLx02h1QTTrl6eDqxLnGjporxl3NL3agEvXdT0WmEost648sQOYAeJS9Q7bfUVoMGnjo4AZdUMQku50McDcMWcBPvr0SzbTAFDfvJqwLzgxwATnCgnp4wDl6Aa+Ax283gghmj+vj7feE2KBBRMW3FzOpLOADl0Isb5587h/U4gGvkt5v60Z1VLG8BhYjbzRwyQZemwAd6cCR5/XFWLYZRIMpX39AR0tjaGGiGzLVyhse5C9RKC6ai42ppWPKiBagOvaYk8lO7DajerabOZP46Lby5wKjw1HCRx7p9sVMOWGzb/vA1hwiWc6jm3MvQDTogQkiqIhJV0nBQBTU+3okKCFDy9WwferkHjtxib7t3xIUQtHxnIwtx4mpg26/HfwVNVDb4oI9RHmx5WGelRVlrtiw43zboCLaxv46AZeB3IlTkwouebTr1y2NjSpHz68WNFjHvupy3q8TFn3Hos2IAk4Ju5dCo8B3wP7VPr/FGaKiG+T+v+TQqIrOqMTL1VdWV1DdmcbO8KXBz6esmYWYKPwDL5b5FA1a0hwapHiom0r/cKaoqr+27/XcrS5UwSMbQAAAABJRU5ErkJggg==)](https://deepwiki.com/miurla/morphic) [![GitHub stars](https://img.shields.io/github/stars/miurla/morphic?style=flat&colorA=000000&colorB=000000)](https://github.com/miurla/morphic/stargazers) [![GitHub forks](https://img.shields.io/github/forks/miurla/morphic?style=flat&colorA=000000&colorB=000000)](https://github.com/miurla/morphic/network/members)
+
+<a href="https://vercel.com/oss">
+  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
+</a>
+
+<br />
+
+<a href="https://trendshift.io/repositories/9207" target="_blank"><img src="https://trendshift.io/api/badge/repositories/9207" alt="miurla%2Fmorphic | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
+<img src="./public/screenshot-2025-05-04.png" />
+
+</div>
 
 ## 🗂️ Overview
 
@@ -23,61 +37,53 @@ An AI-powered search engine with a generative UI.
 
 - AI-powered search with GenerativeUI
 - Natural language question understanding
-- Multiple search providers support (Tavily, SearXNG, Exa)
-- Model selection from UI (switch between available AI models)
-  - Reasoning models with visible thought process
+- Multiple search providers support (Tavily, Brave, SearXNG, Exa)
+- Search modes: Quick, Planning, and Adaptive
+- Model type selection: Speed vs Quality
+- Inspector panel for tool execution and AI processing details
 
 ### Authentication
 
 - User authentication powered by [Supabase Auth](https://supabase.com/docs/guides/auth)
-- Supports Email/Password sign-up and sign-in
-- Supports Social Login with Google
 
 ### Chat & History
 
-- Chat history stored in PostgreSQL database
-- Share search results (Optional)
+- Chat history automatically stored in PostgreSQL database
+- Share search results with unique URLs
+- Message feedback system
+- File upload support
 
 ### AI Providers
 
-The following AI providers are supported:
-
 - OpenAI (Default)
-- Google Generative AI
-- Azure OpenAI
-- Anthropic
-- Ollama
-- Groq
-- DeepSeek
-- Fireworks
-- xAI (Grok)
-- OpenAI Compatible
+- Anthropic Claude
+- Google Gemini
+- Vercel AI Gateway
 
-Models are configured in `public/config/models.json`. Each model requires its corresponding API key to be set in the environment variables. See [Configuration Guide](docs/CONFIGURATION.md) for details.
+Models are configured in `config/models/*.json` with profile-based settings. When using non-OpenAI providers, update the model configuration files with compatible model IDs. See [Configuration Guide](docs/CONFIGURATION.md) for details.
 
 ### Search Capabilities
 
 - URL-specific search
-- Video search support (Optional)
-- SearXNG integration with:
-  - Customizable search depth (basic/advanced)
-  - Configurable engines
-  - Adjustable results limit
-  - Safe search options
-  - Custom time range filtering
+- Content extraction with Tavily or Jina
+- Citation tracking and display
+- Self-hosted search with SearXNG support
 
 ### Additional Features
 
 - Docker deployment ready
 - Browser search engine integration
+- LLM observability with Langfuse (optional)
+- Todo tracking for complex tasks
+- Changelog system for updates
 
 ## 🧱 Stack
 
 ### Core Framework
 
-- [Next.js](https://nextjs.org/) - App Router, React Server Components
-- [TypeScript](https://www.typescriptlang.org/) - Type safety
-- [Vercel AI SDK](https://sdk.vercel.ai/docs) - Text streaming / Generative UI
+- [Next.js](https://nextjs.org/) - React framework with App Router
+- [TypeScript](https://www.typescriptlang.org/) - Type-safe development
+- [Vercel AI SDK](https://sdk.vercel.ai/docs) - TypeScript toolkit for building AI-powered applications
 
 ### Authentication & Authorization (Updated Category)
 
@@ -85,15 +91,18 @@ Models are configured in `public/config/models.json`. Each model requires its co
 
 ### AI & Search
 
-- [OpenAI](https://openai.com/) - Default AI provider (Optional: Google AI, Anthropic, Groq, Ollama, Azure OpenAI, DeepSeek, Fireworks)
-- [Tavily AI](https://tavily.com/) - Default search provider
-- Alternative providers:
+- [OpenAI](https://openai.com/) - Default AI provider (Optional: Google AI, Anthropic)
+- [Tavily AI](https://tavily.com/) - AI-optimized search with context
+- [Brave Search](https://brave.com/search/api/) - Traditional web search results
+- Tavily alternatives:
   - [SearXNG](https://docs.searxng.org/) - Self-hosted search
-  - [Exa](https://exa.ai/) - Neural search
+  - [Exa](https://exa.ai/) - Meaning-based search powered by embeddings
 
 ### Data Storage
 
-- [Neon](https://neon.tech/) - Serverless PostgreSQL database
+- [PostgreSQL](https://www.postgresql.org/) - Primary database (supports Neon, Supabase, or standard PostgreSQL)
+- [Drizzle ORM](https://orm.drizzle.team/) - Type-safe database ORM
+- [Cloudflare R2](https://developers.cloudflare.com/r2/) - File storage (optional)
 
 ### UI & Styling
 
@@ -128,14 +137,13 @@ cp .env.local.example .env.local
 Fill in the required environment variables in `.env.local`:
 
 ```bash
-# Required for Core Functionality
-OPENAI_API_KEY=     # Get from https://platform.openai.com/api-keys
-TAVILY_API_KEY=     # Get from https://app.tavily.com/home
-DATABASE_URL=       # PostgreSQL connection string (Neon recommended)
-
-# Required for Authentication (Beta)
-NEXT_PUBLIC_SUPABASE_URL=     # Your Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY= # Your Supabase anonymous key
+# Required Configuration
+DATABASE_URL=                   # PostgreSQL connection string
+OPENAI_API_KEY=                 # Get from https://platform.openai.com/api-keys
+TAVILY_API_KEY=                 # Get from https://app.tavily.com/home
+BRAVE_SEARCH_API_KEY=           # Get from https://brave.com/search/api/
+NEXT_PUBLIC_SUPABASE_URL=       # Your Supabase project URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=  # Your Supabase anonymous key
 ```
 
 For optional features configuration (SearXNG, alternative AI providers, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
@@ -166,61 +174,11 @@ Visit http://localhost:3000 in your browser.
 
 ## 🌐 Deploy
 
-Host your own live version of Morphic with Vercel, Cloudflare Pages, or Docker.
+Host your own live version of Morphic with Vercel or Docker.
 
 ### Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN)
-
-### Docker Prebuilt Image
-
-Prebuilt Docker images are available on GitHub Container Registry:
-
-```bash
-docker pull ghcr.io/miurla/morphic:latest
-```
-
-You can use it with docker-compose:
-
-```yaml
-services:
-  morphic:
-    image: ghcr.io/miurla/morphic:latest
-    env_file: .env.local
-    ports:
-      - '3000:3000'
-    volumes:
-      - ./models.json:/app/public/config/models.json # Optional: Override default model configuration
-```
-
-The default model configuration is located at `public/config/models.json`. For Docker deployment, you can create `models.json` alongside `.env.local` to override the default configuration.
-
-## 🔎 Search Engine
-
-### Setting up the Search Engine in Your Browser
-
-If you want to use Morphic as a search engine in your browser, follow these steps:
-
-1. Open your browser settings.
-2. Navigate to the search engine settings section.
-3. Select "Manage search engines and site search".
-4. Under "Site search", click on "Add".
-5. Fill in the fields as follows:
-   - **Search engine**: Morphic
-   - **Shortcut**: morphic
-   - **URL with %s in place of query**: `https://morphic.sh/search?q=%s`
-6. Click "Add" to save the new search engine.
-7. Find "Morphic" in the list of site search, click on the three dots next to it, and select "Make default".
-
-This will allow you to use Morphic as your default search engine in the browser.
-
-## 💙 Sponsors
-
-This project is proudly supported by:
-
-<a href="https://vercel.com/oss">
-  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
-</a>
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=DATABASE_URL,OPENAI_API_KEY,TAVILY_API_KEY,BRAVE_SEARCH_API_KEY,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY)
 
 ## 👥 Contributing
 
