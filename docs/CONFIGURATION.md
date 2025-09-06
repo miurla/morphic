@@ -4,39 +4,9 @@ This guide covers the optional features and their configuration in Morphic.
 
 ## Table of Contents
 
-- [Chat History Storage](#chat-history-storage)
 - [Search Providers](#search-providers)
 - [Additional AI Providers](#additional-ai-providers)
 - [Other Features](#other-features)
-
-## Chat History Storage
-
-### Using Upstash Redis (Recommended for production)
-
-Follow the detailed setup guide at [Building your own RAG chatbot with Upstash](https://upstash.com/blog/rag-chatbot-upstash#setting-up-upstash-redis)
-
-1. Create a database at [Upstash Console](https://console.upstash.com/redis)
-2. Navigate to the Details tab and find the "Connect your database" section
-3. Copy the REST API credentials from the .env section
-4. Configure your `.env.local`:
-
-```bash
-NEXT_PUBLIC_ENABLE_SAVE_CHAT_HISTORY=true
-USE_LOCAL_REDIS=false
-UPSTASH_REDIS_REST_URL=[YOUR_UPSTASH_REDIS_REST_URL]
-UPSTASH_REDIS_REST_TOKEN=[YOUR_UPSTASH_REDIS_REST_TOKEN]
-```
-
-### Using Local Redis
-
-1. Ensure Redis is installed and running locally
-2. Configure your `.env.local`:
-
-```bash
-NEXT_PUBLIC_ENABLE_SAVE_CHAT_HISTORY=true
-USE_LOCAL_REDIS=true
-LOCAL_REDIS_URL=redis://localhost:6379
-```
 
 ## Search Providers
 
@@ -121,101 +91,96 @@ docker-compose logs searxng
 
 ## Additional AI Providers
 
-Models are configured in `public/config/models.json`. Each model requires its corresponding API key to be set in the environment variables.
+Models are configured in `config/models/*.json` files. Each provider requires its corresponding API key to be set in the environment variables.
 
 ### Model Configuration
 
-The `models.json` file contains an array of model configurations with the following structure:
+Model configuration files use the following structure:
 
 ```json
 {
-  "models": [
-    {
+  "version": 1,
+  "models": {
+    "types": {
+      "speed": {
+        "id": "model-id",
+        "name": "Model Name",
+        "provider": "Provider Name",
+        "providerId": "provider-id",
+        "providerOptions": {}
+      },
+      "quality": {
+        "id": "model-id",
+        "name": "Model Name",
+        "provider": "Provider Name",
+        "providerId": "provider-id",
+        "providerOptions": {}
+      }
+    },
+    "relatedQuestions": {
       "id": "model-id",
       "name": "Model Name",
       "provider": "Provider Name",
-      "providerId": "provider-id",
-      "enabled": true,
-      "toolCallType": "native|manual",
-      "toolCallModel": "tool-call-model-id" // optional, only needed if toolCallType is "manual" and you need to specify a different model for tool calls
+      "providerId": "provider-id"
     }
-  ]
+  }
 }
 ```
 
-### Provider API Keys
+### Supported Providers
 
-### Google Generative AI
+#### OpenAI (Default)
+
+```bash
+OPENAI_API_KEY=[YOUR_API_KEY]
+```
+
+#### Google Generative AI
 
 ```bash
 GOOGLE_GENERATIVE_AI_API_KEY=[YOUR_API_KEY]
 ```
 
-### Anthropic
+#### Anthropic
 
 ```bash
 ANTHROPIC_API_KEY=[YOUR_API_KEY]
 ```
 
-### Groq
+#### Vercel AI Gateway
+
+[Vercel AI Gateway](https://vercel.com/docs/ai-gateway) allows you to use multiple AI providers through a single endpoint with automatic failover and load balancing.
 
 ```bash
-GROQ_API_KEY=[YOUR_API_KEY]
-```
-
-### Ollama
-
-```bash
-OLLAMA_BASE_URL=http://localhost:11434
-```
-
-### Azure OpenAI
-
-```bash
-AZURE_API_KEY=[YOUR_API_KEY]
-AZURE_RESOURCE_NAME=[YOUR_RESOURCE_NAME]
-```
-
-### DeepSeek
-
-```bash
-DEEPSEEK_API_KEY=[YOUR_API_KEY]
-```
-
-### Fireworks
-
-```bash
-FIREWORKS_API_KEY=[YOUR_API_KEY]
-```
-
-### xAI
-
-```bash
-XAI_API_KEY=[YOUR_XAI_API_KEY]
-```
-
-### OpenAI Compatible Model
-
-```bash
-OPENAI_COMPATIBLE_API_KEY=[YOUR_API_KEY]
-OPENAI_COMPATIBLE_API_BASE_URL=[YOUR_API_BASE_URL]
+AI_GATEWAY_API_KEY=[YOUR_AI_GATEWAY_API_KEY]
 ```
 
 ## Other Features
 
-### Share Feature
+### LLM Observability
+
+Enable tracing and monitoring with Langfuse:
 
 ```bash
-NEXT_PUBLIC_ENABLE_SHARE=true
+LANGFUSE_SECRET_KEY=[YOUR_SECRET_KEY]
+LANGFUSE_PUBLIC_KEY=[YOUR_PUBLIC_KEY]
+LANGFUSE_HOST=https://cloud.langfuse.com
 ```
 
-### Video Search
+### File Upload
+
+Enable file upload with Cloudflare R2:
 
 ```bash
-SERPER_API_KEY=[YOUR_API_KEY]
+CLOUDFLARE_R2_ACCESS_KEY_ID=[YOUR_ACCESS_KEY]
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=[YOUR_SECRET_KEY]
+CLOUDFLARE_R2_ACCOUNT_ID=[YOUR_ACCOUNT_ID]
+CLOUDFLARE_R2_BUCKET_NAME=[YOUR_BUCKET_NAME]
 ```
 
 ### Alternative Fetch Tool
+
+Use Jina for enhanced content extraction:
 
 ```bash
 JINA_API_KEY=[YOUR_API_KEY]
