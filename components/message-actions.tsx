@@ -44,6 +44,15 @@ export function MessageActions({
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const isLoading = status === 'submitted' || status === 'streaming'
 
+  // Do not render at all when actions should be hidden or while loading.
+  // Previously we rendered with `opacity-0`, which still occupied layout
+  // space and caused an invisible actions row to be placed for the first
+  // text part. Returning null matches the intended behavior of not
+  // rendering at all.
+  if (!visible || isLoading) {
+    return null
+  }
+
   async function handleCopy() {
     await navigator.clipboard.writeText(message)
     toast.success('Message copied to clipboard')
@@ -87,7 +96,7 @@ export function MessageActions({
     <div
       className={cn(
         'flex items-center gap-0.5 self-end transition-opacity duration-200',
-        !visible || isLoading ? 'opacity-0' : 'opacity-100',
+        'opacity-100',
         className
       )}
     >
