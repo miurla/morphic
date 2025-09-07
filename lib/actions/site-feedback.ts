@@ -36,16 +36,14 @@ export async function submitFeedback(data: {
     // can cause INSERT ... RETURNING to return zero rows.
     const id = generateId()
     await withOptionalRLS(userId || null, async tx => {
-      await tx
-        .insert(feedback)
-        .values({
-          id,
-          userId,
-          sentiment: data.sentiment,
-          message: data.message,
-          pageUrl: data.pageUrl,
-          userAgent
-        })
+      await tx.insert(feedback).values({
+        id,
+        userId,
+        sentiment: data.sentiment,
+        message: data.message,
+        pageUrl: data.pageUrl,
+        userAgent
+      })
     })
 
     // Send to Slack if webhook URL is configured
