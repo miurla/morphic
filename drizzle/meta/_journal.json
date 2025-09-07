@@ -71,6 +71,13 @@
       "when": 1755739927534,
       "tag": "0009_thankful_may_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1757242257993,
+      "tag": "0010_lonely_kang",
+      "breakpoints": true
     }
   ]
 }
