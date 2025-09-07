@@ -280,6 +280,14 @@ export const feedback = pgTable(
     index('feedback_user_id_idx').on(table.userId),
     index('feedback_created_at_idx').on(table.createdAt),
 
+    // RLS Policies - Allow reads (for INSERT ... RETURNING and app visibility)
+    pgPolicy('feedback_select_policy', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`true`
+    }),
+
     // RLS Policy - Allow anyone to insert feedback
     pgPolicy('anyone_can_insert_feedback', {
       for: 'insert',

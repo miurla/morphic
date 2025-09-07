@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/lib/db'
-import { feedback } from '@/lib/db/schema'
+import { feedback, generateId } from '@/lib/db/schema'
 import { withOptionalRLS } from '@/lib/db/with-rls'
 import { createClient } from '@/lib/supabase/server'
 
@@ -32,18 +32,18 @@ export async function submitFeedback(data: {
     const userAgent = headersList.get('user-agent') || undefined
 
     // Save to database with RLS context
-    const [newFeedback] = await withOptionalRLS(userId || null, async tx => {
-      const result = await tx
-        .insert(feedback)
-        .values({
-          userId,
-          sentiment: data.sentiment,
-          message: data.message,
-          pageUrl: data.pageUrl,
-          userAgent
-        })
-        .returning()
-      return result
+    // Note: Avoid relying on RETURNING because RLS without a SELECT policy
+    // can cause INSERT ... RETURNING to return zero rows.
+    const id = generateId()
+    await withOptionalRLS(userId || null, async tx => {
+      await tx.insert(feedback).values({
+        id,
+        userId,
+        sentiment: data.sentiment,
+        message: data.message,
+        pageUrl: data.pageUrl,
+        userAgent
+      })
     })
 
     // Send to Slack if webhook URL is configured
@@ -120,7 +120,7 @@ export async function submitFeedback(data: {
       }
     }
 
-    return { success: true, id: newFeedback.id }
+    return { success: true, id }
   } catch (error) {
     console.error('Failed to save feedback:', error)
     return { success: false, error: 'Failed to save feedback' }
