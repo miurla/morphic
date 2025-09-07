@@ -44,12 +44,10 @@ export function MessageActions({
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const isLoading = status === 'submitted' || status === 'streaming'
 
-  // Do not render at all when actions should be hidden or while loading.
-  // Previously we rendered with `opacity-0`, which still occupied layout
-  // space and caused an invisible actions row to be placed for the first
-  // text part. Returning null matches the intended behavior of not
-  // rendering at all.
-  if (!visible || isLoading) {
+  // Do not render at all when actions should be hidden.
+  // Rendering while loading is allowed so previous messages keep their actions
+  // visible even during a new message's streaming.
+  if (!visible) {
     return null
   }
 
