@@ -1,0 +1,117 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # e.g. v1.0.0, v1.0.0-beta.5
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Select target branch and validate
+    runs-on: ubuntu-latest
+    outputs:
+      allowed: ${{ steps.check.outputs.allowed }}
+      prerelease: ${{ steps.check.outputs.prerelease }}
+      targetBranch: ${{ steps.check.outputs.targetBranch }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag and choose branch
+        id: check
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+
+          # Validate semver-like tag: vMAJOR.MINOR.PATCH[-PRERELEASE]
+          if [[ ! "$TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-.+)?$ ]]; then
+            echo "::error::Invalid semver tag: $TAG"; exit 1
+          fi
+
+          MAJOR="${BASH_REMATCH[1]}"
+          MINOR="${BASH_REMATCH[2]}"
+          PATCH="${BASH_REMATCH[3]}"
+          PRERE="${BASH_REMATCH[4]:-}"
+          BASE="v${MAJOR}.${MINOR}.${PATCH}"
+
+          if [[ -n "$PRERE" ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            # Candidate release branches for pre-releases (highest priority first)
+            CANDIDATES=(
+              "origin/${BASE}"
+              "origin/release/${BASE}"
+              "origin/v${MAJOR}.${MINOR}"
+              "origin/release/v${MAJOR}.${MINOR}"
+            )
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            CANDIDATES=("origin/main")
+          fi
+
+          git fetch --no-tags origin +refs/heads/*:refs/remotes/origin/*
+
+          TARGET=""
+          for ref in "${CANDIDATES[@]}"; do
+            if git rev-parse --verify -q "$ref" >/dev/null; then
+              if git merge-base --is-ancestor "$GITHUB_SHA" "$ref"; then
+                TARGET="$ref"; break
+              fi
+            fi
+          done
+
+          if [[ -z "$TARGET" ]]; then
+            echo "allowed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Tag $TAG is not contained in any target branch candidate (${CANDIDATES[*]}). Skipping release."
+          else
+            echo "allowed=true" >> "$GITHUB_OUTPUT"
+            echo "targetBranch=$TARGET" >> "$GITHUB_OUTPUT"
+            echo "Selected target: $TARGET"
+          fi
+
+  release:
+    name: Build and create GitHub Release
+    needs: gate
+    if: needs.gate.outputs.allowed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 'latest'
+
+      - name: Install deps
+        run: bun install
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build
+        run: bun run build
+
+      # Optional: attach build artifacts to the release
+      # - name: Archive Next.js build output
+      #   run: tar -czf next-build.tar.gz .next
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          generateReleaseNotes: true
+          prerelease: ${{ needs.gate.outputs.prerelease }}
+          # artifacts: next-build.tar.gz
