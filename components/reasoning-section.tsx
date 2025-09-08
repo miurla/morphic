@@ -32,11 +32,13 @@ export function ReasoningSection({
       onClick={() =>
         open({ type: 'reasoning', text: content.reasoning } as ReasoningPart)
       }
-      className={`flex items-center gap-1 w-full text-left text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer ${!content.isDone ? 'animate-pulse' : ''}`}
+      className={`inline-flex items-center gap-1 text-left text-xs leading-none text-muted-foreground hover:text-foreground transition-colors cursor-pointer py-0.5 ${!content.isDone ? 'animate-pulse' : ''}`}
       title="Open details"
     >
-      <Lightbulb size={14} />
-      <span>{!content.isDone ? 'Thinking...' : 'Thoughts'}</span>
+      <Lightbulb size={12} className="shrink-0" />
+      <span className="whitespace-nowrap">
+        {!content.isDone ? 'Thinking...' : 'Thoughts'}
+      </span>
     </button>
   )
 
