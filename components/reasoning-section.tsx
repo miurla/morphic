@@ -132,6 +132,7 @@ export function ReasoningSection({
         showIcon={showIcon}
         variant={variant}
         showSeparator={false}
+        headerClickBehavior="split"
       >
         <div className="flex">
           {/* Rail space - always reserved when grouped */}

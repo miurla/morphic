@@ -126,6 +126,7 @@ export function ToolTodoDisplay({
         showIcon={false}
         variant="default"
         showSeparator={false}
+        headerClickBehavior="split"
       >
         <div className="flex">
           {/* Rail space - always reserved when grouped */}

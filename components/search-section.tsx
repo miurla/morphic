@@ -106,6 +106,7 @@ export function SearchSection({
         showBorder={!borderless}
         variant="default"
         showSeparator={false}
+        headerClickBehavior="split"
       >
         <div className="flex">
           {/* Rail space - always reserved when grouped */}
