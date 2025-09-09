@@ -52,39 +52,74 @@ type Props = {
   parts?: MessagePart[]
 }
 
+/**
+ * Splits message parts into segments, where each segment contains
+ * non-text parts between text parts
+ * @param parts - Array of message parts to split
+ * @returns Array of segments (arrays of non-text parts)
+ */
 function splitByText(parts: MessagePart[]): MessagePart[][] {
   const segments: MessagePart[][] = []
-  let curr: MessagePart[] = []
-  for (const p of parts || []) {
-    if (isTextPart(p)) {
-      if (curr.length) (segments.push(curr), (curr = []))
+  let currentSegment: MessagePart[] = []
+
+  for (const part of parts || []) {
+    if (isTextPart(part)) {
+      // When we hit a text part, save the current segment if it has content
+      if (currentSegment.length > 0) {
+        segments.push(currentSegment)
+        currentSegment = []
+      }
     } else {
-      curr.push(p)
+      // Accumulate non-text parts
+      currentSegment.push(part)
     }
   }
-  if (curr.length) segments.push(curr)
+
+  // Don't forget the last segment
+  if (currentSegment.length > 0) {
+    segments.push(currentSegment)
+  }
+
   return segments
 }
 
-function groupTools(segment: MessagePart[]): MessagePart[][] {
+/**
+ * Groups consecutive tool parts of the same type together
+ * @param segment - Array of message parts within a segment
+ * @returns Array of grouped parts
+ */
+function groupConsecutiveParts(segment: MessagePart[]): MessagePart[][] {
+  if (segment.length === 0) return []
+
   const groups: MessagePart[][] = []
-  let i = 0
-  while (i < segment.length) {
-    const p = segment[i]
-    if (isToolPart(p)) {
-      const group: MessagePart[] = [p]
-      let j = i + 1
-      while (j < segment.length && segment[j].type === p.type) {
-        group.push(segment[j])
-        j++
+  let currentIndex = 0
+
+  while (currentIndex < segment.length) {
+    const currentPart = segment[currentIndex]
+
+    if (isToolPart(currentPart)) {
+      // Group consecutive tool parts of the same type
+      const toolGroup = [currentPart]
+      const toolType = currentPart.type
+
+      let nextIndex = currentIndex + 1
+      while (
+        nextIndex < segment.length &&
+        segment[nextIndex].type === toolType
+      ) {
+        toolGroup.push(segment[nextIndex] as ToolPart)
+        nextIndex++
       }
-      groups.push(group)
-      i = j
+
+      groups.push(toolGroup)
+      currentIndex = nextIndex
     } else {
-      groups.push([p])
-      i += 1
+      // Non-tool parts stay as single-item groups
+      groups.push([currentPart])
+      currentIndex++
     }
   }
+
   return groups
 }
 
@@ -124,7 +159,7 @@ export function ResearchProcessSection({
       message.parts?.slice(
         message.parts.findIndex(p => p === lastPartInSegment) + 1
       ) || []
-    return remainingParts.some(p => p.type === 'text')
+    return remainingParts.some(p => isTextPart(p))
   }
 
   // Handle accordion-style open/close for grouped sections
@@ -151,7 +186,7 @@ export function ResearchProcessSection({
   return (
     <div className="space-y-2">
       {segments.map((seg, sidx) => {
-        const groups = groupTools(seg)
+        const groups = groupConsecutiveParts(seg)
         const isSingle = groups.length === 1 && groups[0].length === 1
         const containerClass = cn(!isSingle && 'rounded-lg border bg-card')
 
