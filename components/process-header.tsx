@@ -27,7 +27,7 @@ export function ProcessHeader({
       onClick={onInspect}
       aria-expanded={ariaExpanded}
       className={cn(
-        'flex items-center justify-between w-full min-w-0 text-left text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+        'flex items-center justify-between w-full min-w-0 text-left text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
         isLoading && 'animate-pulse',
         className
       )}

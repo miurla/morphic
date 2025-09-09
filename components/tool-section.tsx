@@ -92,6 +92,8 @@ export function ToolSection({
           output={tool.output}
           errorText={tool.errorText}
           toolCallId={tool.toolCallId}
+          isOpen={isOpen}
+          onOpenChange={onOpenChange}
         />
       )
     case 'tool-todoRead':
@@ -103,6 +105,8 @@ export function ToolSection({
           output={tool.output}
           errorText={tool.errorText}
           toolCallId={tool.toolCallId}
+          isOpen={isOpen}
+          onOpenChange={onOpenChange}
         />
       )
     default:
