@@ -2,13 +2,44 @@
 
 import { useState } from 'react'
 
+import type { ReasoningPart } from '@ai-sdk/provider-utils'
 import { UseChatHelpers } from '@ai-sdk/react'
 
-import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
 import { ReasoningSection } from './reasoning-section'
 import { ToolSection } from './tool-section'
+
+// Message part types
+type TextPart = {
+  type: 'text'
+  text: string
+}
+
+type DataPart = {
+  type: string // starts with 'data-'
+  [key: string]: any
+}
+
+type MessagePart = ReasoningPart | ToolPart | TextPart | DataPart
+
+// Type guards
+function isReasoningPart(part: MessagePart): part is ReasoningPart {
+  return part.type === 'reasoning'
+}
+
+function isToolPart(part: MessagePart): part is ToolPart {
+  return part.type?.startsWith?.('tool-') ?? false
+}
+
+function isTextPart(part: MessagePart): part is TextPart {
+  return part.type === 'text'
+}
+
+function isDataPart(part: MessagePart): part is DataPart {
+  return part.type?.startsWith?.('data-') ?? false
+}
 
 type Props = {
   message: UIMessage
@@ -18,16 +49,14 @@ type Props = {
   onQuerySelect: (query: string) => void
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
-  parts?: AnyPart[]
+  parts?: MessagePart[]
 }
 
-type AnyPart = any
-
-function splitByText(parts: AnyPart[]): AnyPart[][] {
-  const segments: AnyPart[][] = []
-  let curr: AnyPart[] = []
+function splitByText(parts: MessagePart[]): MessagePart[][] {
+  const segments: MessagePart[][] = []
+  let curr: MessagePart[] = []
   for (const p of parts || []) {
-    if (p.type === 'text') {
+    if (isTextPart(p)) {
       if (curr.length) (segments.push(curr), (curr = []))
     } else {
       curr.push(p)
@@ -37,13 +66,13 @@ function splitByText(parts: AnyPart[]): AnyPart[][] {
   return segments
 }
 
-function groupTools(segment: AnyPart[]): AnyPart[][] {
-  const groups: AnyPart[][] = []
+function groupTools(segment: MessagePart[]): MessagePart[][] {
+  const groups: MessagePart[][] = []
   let i = 0
   while (i < segment.length) {
     const p = segment[i]
-    if (p.type?.startsWith?.('tool-')) {
-      const group: AnyPart[] = [p]
+    if (isToolPart(p)) {
+      const group: MessagePart[] = [p]
       let j = i + 1
       while (j < segment.length && segment[j].type === p.type) {
         group.push(segment[j])
@@ -72,9 +101,7 @@ export function ResearchProcessSection({
   const allParts = partsOverride ?? (message.parts || [])
 
   // Filter out empty reasoning parts to avoid incorrect grouping
-  const filteredParts = allParts.filter(
-    p => !(p.type === 'reasoning' && !p.text)
-  )
+  const filteredParts = allParts.filter(p => !(isReasoningPart(p) && !p.text))
 
   const segments = partsOverride ? [filteredParts] : splitByText(filteredParts)
 
@@ -140,7 +167,7 @@ export function ResearchProcessSection({
                 >
                   {grp.map((part, pidx) => {
                     const hasNext = pidx < grp.length - 1
-                    if (part.type === 'reasoning') {
+                    if (isReasoningPart(part)) {
                       const rid = `${messageId}-reasoning-${sidx}-${gidx}-${pidx}`
                       // Check if there's subsequent content (next part in group or next segment/text)
                       const hasSubsequent =
@@ -164,7 +191,7 @@ export function ResearchProcessSection({
                       )
                     }
 
-                    if (part.type?.startsWith?.('tool-')) {
+                    if (isToolPart(part)) {
                       const id = part.toolCallId
                       // Check if there's subsequent content (next part in group or next segment/text)
                       const hasSubsequent =
@@ -191,7 +218,7 @@ export function ResearchProcessSection({
                       )
                     }
 
-                    if (part.type?.startsWith?.('data-')) {
+                    if (isDataPart(part)) {
                       // For now, render nothing here; existing renderer handles data parts elsewhere
                       return null
                     }
