@@ -77,6 +77,22 @@ export function ResearchProcessSection({
 
   if (segments.length === 0) return null
 
+  // Check if there are subsequent text parts after this segment
+  const hasSubsequentContent = (segmentIndex: number): boolean => {
+    // Check if there are more segments after this one
+    if (segmentIndex < segments.length - 1) {
+      return true
+    }
+    // Check if there are text parts after the last segment
+    const remainingParts =
+      message.parts?.slice(
+        message.parts.findIndex(
+          p => p === segments[segmentIndex][segments[segmentIndex].length - 1]
+        ) + 1
+      ) || []
+    return remainingParts.some(p => p.type === 'text')
+  }
+
   // Handle accordion-style open/close for grouped sections
   const handleAccordionChange = (
     id: string,
@@ -119,8 +135,11 @@ export function ResearchProcessSection({
                     const hasNext = pidx < grp.length - 1
                     if (part.type === 'reasoning') {
                       const rid = `${messageId}-reasoning-${sidx}-${gidx}-${pidx}`
+                      // Check if there's subsequent content (next part in group or next segment/text)
+                      const hasSubsequent =
+                        hasNext || hasSubsequentContent(sidx)
                       const isOpen = isSingle
-                        ? getIsOpen(rid, 'reasoning', hasNext)
+                        ? getIsOpen(rid, 'reasoning', hasSubsequent)
                         : openSectionId === rid
 
                       return (
@@ -140,8 +159,11 @@ export function ResearchProcessSection({
 
                     if (part.type?.startsWith?.('tool-')) {
                       const id = part.toolCallId
+                      // Check if there's subsequent content (next part in group or next segment/text)
+                      const hasSubsequent =
+                        hasNext || hasSubsequentContent(sidx)
                       const isOpen = isSingle
-                        ? getIsOpen(id, part.type, hasNext)
+                        ? getIsOpen(id, part.type, hasSubsequent)
                         : openSectionId === id
 
                       return (

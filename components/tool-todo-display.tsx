@@ -135,8 +135,8 @@ export function ToolTodoDisplay({
               <div className="w-[16px] shrink-0 flex justify-center">
                 <div
                   className={cn(
-                    "w-px bg-border/50 transition-opacity duration-200",
-                    isOpen ? "opacity-100" : "opacity-0"
+                    'w-px bg-border/50 transition-opacity duration-200',
+                    isOpen ? 'opacity-100' : 'opacity-0'
                   )}
                   style={{
                     marginTop: isFirst ? '0' : '-1rem',
