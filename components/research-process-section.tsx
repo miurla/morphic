@@ -152,6 +152,91 @@ function useAccordionState(onOpenChange: (id: string, open: boolean) => void) {
 }
 
 /**
+ * Renders a single part (reasoning, tool, or data)
+ */
+function RenderPart({
+  part,
+  partId,
+  hasNext,
+  hasSubsequentContent,
+  isSingle,
+  isFirstGroup,
+  isLastGroup,
+  groupLength,
+  partIndex,
+  getIsOpen,
+  openSectionId,
+  handleAccordionChange,
+  status,
+  addToolResult,
+  onQuerySelect
+}: {
+  part: MessagePart
+  partId: string
+  hasNext: boolean
+  hasSubsequentContent: boolean
+  isSingle: boolean
+  isFirstGroup: boolean
+  isLastGroup: boolean
+  groupLength: number
+  partIndex: number
+  getIsOpen: (id: string, partType?: string, hasNextPart?: boolean) => boolean
+  openSectionId: string | null
+  handleAccordionChange: (id: string, open: boolean, isSingle: boolean) => void
+  status?: any
+  addToolResult?: (params: { toolCallId: string; result: any }) => void
+  onQuerySelect: (query: string) => void
+}) {
+  const hasSubsequent = hasNext || hasSubsequentContent
+
+  if (isReasoningPart(part)) {
+    const isOpen = isSingle
+      ? getIsOpen(partId, 'reasoning', hasSubsequent)
+      : openSectionId === partId
+
+    return (
+      <ReasoningSection
+        content={{ reasoning: part.text, isDone: !hasNext }}
+        isOpen={isOpen}
+        onOpenChange={open => handleAccordionChange(partId, open, isSingle)}
+        isSingle={isSingle}
+        isFirst={isFirstGroup && partIndex === 0}
+        isLast={isLastGroup && partIndex === groupLength - 1}
+      />
+    )
+  }
+
+  if (isToolPart(part)) {
+    const isOpen = isSingle
+      ? getIsOpen(part.toolCallId, part.type, hasSubsequent)
+      : openSectionId === part.toolCallId
+
+    return (
+      <ToolSection
+        tool={part}
+        isOpen={isOpen}
+        onOpenChange={open =>
+          handleAccordionChange(part.toolCallId, open, isSingle)
+        }
+        status={status}
+        addToolResult={addToolResult}
+        onQuerySelect={onQuerySelect}
+        borderless={!isSingle}
+        isFirst={isFirstGroup && partIndex === 0}
+        isLast={isLastGroup && partIndex === groupLength - 1}
+      />
+    )
+  }
+
+  if (isDataPart(part)) {
+    // For now, render nothing here; existing renderer handles data parts elsewhere
+    return null
+  }
+
+  return null
+}
+
+/**
  * Determines if there's content after a given segment
  * @param segmentIndex - The index of the current segment
  * @param segments - All segments
@@ -223,77 +308,39 @@ export function ResearchProcessSection({
 
         return (
           <div key={`${messageId}-seg-${sidx}`} className={containerClass}>
-            {groups.map((grp, gidx) => {
-              const isFirstGroup = gidx === 0
-              const isLastGroup = gidx === groups.length - 1
-              return (
-                <div
-                  key={`${messageId}-grp-${sidx}-${gidx}`}
-                  className={cn('space-y-1')}
-                >
-                  {grp.map((part, pidx) => {
-                    const hasNext = pidx < grp.length - 1
-                    if (isReasoningPart(part)) {
-                      const rid = `${messageId}-reasoning-${sidx}-${gidx}-${pidx}`
-                      // Check if there's subsequent content (next part in group or next segment/text)
-                      const hasSubsequent =
-                        hasNext || hasSubsequentContent(sidx)
-                      const isOpen = isSingle
-                        ? getIsOpen(rid, 'reasoning', hasSubsequent)
-                        : openSectionId === rid
+            {groups.map((grp, gidx) => (
+              <div
+                key={`${messageId}-grp-${sidx}-${gidx}`}
+                className={cn('space-y-1')}
+              >
+                {grp.map((part, pidx) => {
+                  const partId = isToolPart(part)
+                    ? part.toolCallId
+                    : `${messageId}-${part.type}-${sidx}-${gidx}-${pidx}`
 
-                      return (
-                        <ReasoningSection
-                          key={rid}
-                          content={{ reasoning: part.text, isDone: !hasNext }}
-                          isOpen={isOpen}
-                          onOpenChange={open =>
-                            handleAccordionChange(rid, open, isSingle)
-                          }
-                          isSingle={isSingle}
-                          isFirst={isFirstGroup && pidx === 0}
-                          isLast={isLastGroup && pidx === grp.length - 1}
-                        />
-                      )
-                    }
-
-                    if (isToolPart(part)) {
-                      const id = part.toolCallId
-                      // Check if there's subsequent content (next part in group or next segment/text)
-                      const hasSubsequent =
-                        hasNext || hasSubsequentContent(sidx)
-                      const isOpen = isSingle
-                        ? getIsOpen(id, part.type, hasSubsequent)
-                        : openSectionId === id
-
-                      return (
-                        <ToolSection
-                          key={id}
-                          tool={part}
-                          isOpen={isOpen}
-                          onOpenChange={open =>
-                            handleAccordionChange(id, open, isSingle)
-                          }
-                          status={status}
-                          addToolResult={addToolResult}
-                          onQuerySelect={onQuerySelect}
-                          borderless={!isSingle}
-                          isFirst={isFirstGroup && pidx === 0}
-                          isLast={isLastGroup && pidx === grp.length - 1}
-                        />
-                      )
-                    }
-
-                    if (isDataPart(part)) {
-                      // For now, render nothing here; existing renderer handles data parts elsewhere
-                      return null
-                    }
-
-                    return null
-                  })}
-                </div>
-              )
-            })}
+                  return (
+                    <RenderPart
+                      key={partId}
+                      part={part}
+                      partId={partId}
+                      hasNext={pidx < grp.length - 1}
+                      hasSubsequentContent={hasSubsequentContent(sidx)}
+                      isSingle={isSingle}
+                      isFirstGroup={gidx === 0}
+                      isLastGroup={gidx === groups.length - 1}
+                      groupLength={grp.length}
+                      partIndex={pidx}
+                      getIsOpen={getIsOpen}
+                      openSectionId={openSectionId}
+                      handleAccordionChange={handleAccordionChange}
+                      status={status}
+                      addToolResult={addToolResult}
+                      onQuerySelect={onQuerySelect}
+                    />
+                  )
+                })}
+              </div>
+            ))}
           </div>
         )
       })}
