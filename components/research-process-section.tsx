@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import type { ReasoningPart } from '@ai-sdk/provider-utils'
 import { UseChatHelpers } from '@ai-sdk/react'
@@ -123,6 +123,34 @@ function groupConsecutiveParts(segment: MessagePart[]): MessagePart[][] {
   return groups
 }
 
+/**
+ * Custom hook for managing accordion state in grouped sections
+ */
+function useAccordionState(onOpenChange: (id: string, open: boolean) => void) {
+  const [openSectionId, setOpenSectionId] = useState<string | null>(null)
+
+  const handleAccordionChange = useCallback(
+    (id: string, open: boolean, isSingle: boolean) => {
+      if (isSingle) {
+        // For single sections, use the original behavior
+        onOpenChange(id, open)
+      } else {
+        // For grouped sections, implement accordion behavior
+        if (open) {
+          setOpenSectionId(id)
+        } else {
+          setOpenSectionId(null)
+        }
+        // Still notify parent for tracking purposes
+        onOpenChange(id, open)
+      }
+    },
+    [onOpenChange]
+  )
+
+  return { openSectionId, handleAccordionChange }
+}
+
 export function ResearchProcessSection({
   message,
   messageId,
@@ -140,8 +168,9 @@ export function ResearchProcessSection({
 
   const segments = partsOverride ? [filteredParts] : splitByText(filteredParts)
 
-  // Track which section is open within grouped sections (accordion behavior)
-  const [openSectionId, setOpenSectionId] = useState<string | null>(null)
+  // Use custom hook for accordion state management
+  const { openSectionId, handleAccordionChange } =
+    useAccordionState(onOpenChange)
 
   if (segments.length === 0 || segments.every(seg => seg.length === 0))
     return null
@@ -160,27 +189,6 @@ export function ResearchProcessSection({
         message.parts.findIndex(p => p === lastPartInSegment) + 1
       ) || []
     return remainingParts.some(p => isTextPart(p))
-  }
-
-  // Handle accordion-style open/close for grouped sections
-  const handleAccordionChange = (
-    id: string,
-    open: boolean,
-    isSingle: boolean
-  ) => {
-    if (isSingle) {
-      // For single sections, use the original behavior
-      onOpenChange(id, open)
-    } else {
-      // For grouped sections, implement accordion behavior
-      if (open) {
-        setOpenSectionId(id)
-      } else {
-        setOpenSectionId(null)
-      }
-      // Still notify parent for tracking purposes
-      onOpenChange(id, open)
-    }
   }
 
   return (
