@@ -52,6 +52,7 @@ export function FetchSection({ tool }: FetchSectionProps) {
         contentLength={contentLength}
         status={displayStatus}
         error={error}
+        borderless={borderless}
       />
     </div>
   )

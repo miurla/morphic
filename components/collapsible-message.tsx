@@ -64,7 +64,8 @@ export function CollapsibleMessage({
         <div
           className={cn(
             'flex-1 overflow-hidden',
-            variant === 'default' && 'rounded-lg border bg-card',
+            variant === 'default' && showBorder && 'rounded-lg border bg-card',
+            variant === 'default' && !showBorder && 'rounded-lg bg-card',
             variant === 'process' && 'rounded-lg border bg-card',
             variant === 'process-sub' && 'rounded-md border bg-card/50'
           )}

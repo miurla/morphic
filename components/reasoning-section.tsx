@@ -20,12 +20,18 @@ export interface ReasoningSectionProps {
   content: ReasoningContent
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  showIcon?: boolean
+  variant?: 'default' | 'minimal' | 'process' | 'process-sub'
+  isSingle?: boolean  // Whether this is a single item or part of a group
 }
 
 export function ReasoningSection({
   content,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  showIcon = false,
+  variant = 'default',
+  isSingle = true
 }: ReasoningSectionProps) {
   const { open } = useArtifact()
   // Show a short preview when collapsed; switch to a generic label when expanded
@@ -70,7 +76,18 @@ export function ReasoningSection({
 
   const reasoningHeader = (
     <ProcessHeader
-      label={headerLabel}
+      label={
+        !isSingle ? (
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+            <div className="w-4 h-4 shrink-0 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+            </div>
+            <span className="truncate block min-w-0 max-w-full">{headerLabel}</span>
+          </div>
+        ) : (
+          headerLabel
+        )
+      }
       onInspect={() =>
         open({ type: 'reasoning', text: content.reasoning } as ReasoningPart)
       }
@@ -91,9 +108,9 @@ export function ReasoningSection({
       header={reasoningHeader}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      showBorder={true}
-      showIcon={false}
-      variant="default"
+      showBorder={isSingle}
+      showIcon={showIcon}
+      variant={variant}
       showSeparator={false}
     >
       <div className="[&_p]:text-xs [&_p]:text-muted-foreground/80">

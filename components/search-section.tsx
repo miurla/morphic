@@ -25,13 +25,15 @@ interface SearchSectionProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
+  borderless?: boolean
 }
 
 export function SearchSection({
   tool,
   isOpen,
   onOpenChange,
-  status
+  status,
+  borderless
 }: SearchSectionProps) {
   const isLoading = status === 'submitted' || status === 'streaming'
 
@@ -84,6 +86,8 @@ export function SearchSection({
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       showIcon={false}
+      showBorder={!borderless}
+      variant="default"
     >
       {searchResults &&
         searchResults.images &&

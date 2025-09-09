@@ -16,6 +16,7 @@ interface ToolSectionProps {
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onQuerySelect: (query: string) => void
+  borderless?: boolean
 }
 
 export function ToolSection({
@@ -24,7 +25,8 @@ export function ToolSection({
   onOpenChange,
   status,
   addToolResult,
-  onQuerySelect
+  onQuerySelect,
+  borderless = false
 }: ToolSectionProps) {
   // Special handling for ask_question tool
   if (tool.type === 'tool-askQuestion') {
@@ -72,6 +74,7 @@ export function ToolSection({
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           status={status}
+          borderless={borderless}
         />
       )
     case 'tool-fetch':
@@ -81,6 +84,7 @@ export function ToolSection({
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           status={status}
+          borderless={borderless}
         />
       )
     case 'tool-todoWrite':
@@ -94,6 +98,7 @@ export function ToolSection({
           toolCallId={tool.toolCallId}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
+          borderless={borderless}
         />
       )
     case 'tool-todoRead':
@@ -107,6 +112,7 @@ export function ToolSection({
           toolCallId={tool.toolCallId}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
+          borderless={borderless}
         />
       )
     default:

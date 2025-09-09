@@ -27,6 +27,7 @@ interface ToolTodoDisplayProps {
   toolCallId: string
   isOpen?: boolean
   onOpenChange?: (open: boolean) => void
+  borderless?: boolean
 }
 
 export function ToolTodoDisplay({
@@ -35,7 +36,8 @@ export function ToolTodoDisplay({
   output,
   toolCallId,
   isOpen = false,
-  onOpenChange
+  onOpenChange,
+  borderless = false
 }: ToolTodoDisplayProps) {
   const { open: openArtifact } = useArtifact()
   // Calculate counts for display
@@ -103,7 +105,7 @@ export function ToolTodoDisplay({
       header={header}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      showBorder={true}
+      showBorder={!borderless}
       showIcon={false}
       variant="default"
       showSeparator={false}
