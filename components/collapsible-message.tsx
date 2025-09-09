@@ -67,7 +67,9 @@ export function CollapsibleMessage({
             variant === 'default' && showBorder && 'rounded-lg border bg-card',
             variant === 'default' && !showBorder && 'rounded-lg bg-card',
             variant === 'process' && 'rounded-lg border bg-card',
-            variant === 'process-sub' && 'rounded-md border bg-card/50'
+            variant === 'process-sub' && 'rounded-md border bg-card/50',
+            // Add background highlight when open and no border (grouped sections)
+            isOpen && !showBorder && 'bg-accent/5'
           )}
         >
           <Collapsible
