@@ -70,12 +70,19 @@ export function ResearchProcessSection({
   parts: partsOverride
 }: Props) {
   const allParts = partsOverride ?? (message.parts || [])
-  const segments = partsOverride ? [allParts] : splitByText(allParts)
+
+  // Filter out empty reasoning parts to avoid incorrect grouping
+  const filteredParts = allParts.filter(
+    p => !(p.type === 'reasoning' && !p.text)
+  )
+
+  const segments = partsOverride ? [filteredParts] : splitByText(filteredParts)
 
   // Track which section is open within grouped sections (accordion behavior)
   const [openSectionId, setOpenSectionId] = useState<string | null>(null)
 
-  if (segments.length === 0) return null
+  if (segments.length === 0 || segments.every(seg => seg.length === 0))
+    return null
 
   // Check if there are subsequent text parts after this segment
   const hasSubsequentContent = (segmentIndex: number): boolean => {
@@ -83,12 +90,12 @@ export function ResearchProcessSection({
     if (segmentIndex < segments.length - 1) {
       return true
     }
-    // Check if there are text parts after the last segment
+    // Check if there are text parts after the last segment in the original message parts
+    const lastPartInSegment =
+      segments[segmentIndex][segments[segmentIndex].length - 1]
     const remainingParts =
       message.parts?.slice(
-        message.parts.findIndex(
-          p => p === segments[segmentIndex][segments[segmentIndex].length - 1]
-        ) + 1
+        message.parts.findIndex(p => p === lastPartInSegment) + 1
       ) || []
     return remainingParts.some(p => p.type === 'text')
   }
