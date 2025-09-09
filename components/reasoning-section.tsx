@@ -8,6 +8,7 @@ import { useArtifact } from '@/components/artifact/artifact-context'
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
 import { MarkdownMessage } from './message'
+import ProcessHeader from './process-header'
 
 interface ReasoningContent {
   reasoning: string
@@ -67,17 +68,14 @@ export function ReasoningSection({
         : 'Thoughts'
 
   const reasoningHeader = (
-    <button
-      type="button"
-      onClick={() =>
+    <ProcessHeader
+      label={headerLabel}
+      onInspect={() =>
         open({ type: 'reasoning', text: content.reasoning } as ReasoningPart)
       }
-      className={`inline-flex items-center gap-1 text-left text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer min-w-0 max-w-full w-full ${!content.isDone ? 'animate-pulse' : ''}`}
-      aria-expanded={isOpen}
-      title="Open details"
-    >
-      <span className="whitespace-nowrap truncate min-w-0 max-w-full">{headerLabel}</span>
-    </button>
+      isLoading={!content.isDone}
+      ariaExpanded={isOpen}
+    />
   )
 
   if (!content) return <DefaultSkeleton />
