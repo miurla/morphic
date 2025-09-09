@@ -26,6 +26,8 @@ interface SearchSectionProps {
   onOpenChange: (open: boolean) => void
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   borderless?: boolean
+  isFirst?: boolean
+  isLast?: boolean
 }
 
 export function SearchSection({
@@ -33,7 +35,9 @@ export function SearchSection({
   isOpen,
   onOpenChange,
   status,
-  borderless
+  borderless,
+  isFirst = false,
+  isLast = false
 }: SearchSectionProps) {
   const isLoading = status === 'submitted' || status === 'streaming'
 
@@ -79,52 +83,85 @@ export function SearchSection({
   )
 
   return (
-    <CollapsibleMessage
-      role="assistant"
-      isCollapsible={true}
-      header={header}
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      showIcon={false}
-      showBorder={!borderless}
-      variant="default"
-    >
-      {searchResults &&
-        searchResults.images &&
-        searchResults.images.length > 0 && (
-          <Section>
-            <SearchResultsImageSection
-              images={searchResults.images}
-              query={query}
-            />
-          </Section>
-        )}
-      {searchResults &&
-        searchResults.videos &&
-        searchResults.videos.length > 0 && (
-          <Section title="Videos">
-            <VideoSearchResults
-              results={createVideoSearchResults(searchResults, query)}
-            />
-          </Section>
-        )}
-      {isError ? (
-        <Section>
-          <div className="bg-card rounded-lg">
-            <div className="flex items-center gap-2 w-full">
-              <span className="text-sm text-destructive block flex-1 min-w-0">
-                {errorMessage}
-              </span>
+    <div className="relative">
+      {/* Rails for header - show based on position */}
+      {borderless && (
+        <>
+          {!isFirst && (
+            <div className="absolute left-[19.5px] w-px bg-border h-2 top-0" />
+          )}
+          {!isLast && (
+            <div className="absolute left-[19.5px] w-px bg-border h-2 bottom-0" />
+          )}
+        </>
+      )}
+      <CollapsibleMessage
+        role="assistant"
+        isCollapsible={true}
+        header={header}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        showIcon={false}
+        showBorder={!borderless}
+        variant="default"
+        showSeparator={false}
+      >
+      <div className="flex">
+        {/* Rail when expanded and in a group */}
+        {isOpen && borderless && (
+          <>
+            <div className="w-[16px] shrink-0 flex justify-center">
+              <div
+                className="w-px bg-border/50"
+                style={{
+                  marginTop: isFirst ? '0' : '-1rem',
+                  marginBottom: isLast ? '0' : '-1rem'
+                }}
+              />
             </div>
-          </div>
-        </Section>
-      ) : isLoading && isToolLoading ? (
-        <SearchSkeleton />
-      ) : searchResults?.results && searchResults.results.length > 0 ? (
-        <Section title="Sources">
-          <SearchResults results={searchResults.results} />
-        </Section>
-      ) : null}
+            <div className="w-2 shrink-0" />
+          </>
+        )}
+        <div className="flex-1">
+          {searchResults &&
+            searchResults.images &&
+            searchResults.images.length > 0 && (
+              <Section>
+                <SearchResultsImageSection
+                  images={searchResults.images}
+                  query={query}
+                />
+              </Section>
+            )}
+          {searchResults &&
+            searchResults.videos &&
+            searchResults.videos.length > 0 && (
+              <Section title="Videos">
+                <VideoSearchResults
+                  results={createVideoSearchResults(searchResults, query)}
+                />
+              </Section>
+            )}
+          {isError ? (
+            <Section>
+              <div className="bg-card rounded-lg">
+                <div className="flex items-center gap-2 w-full">
+                  <span className="text-sm text-destructive block flex-1 min-w-0">
+                    {errorMessage}
+                  </span>
+                </div>
+              </div>
+            </Section>
+          ) : isLoading && isToolLoading ? (
+            <SearchSkeleton />
+          ) : searchResults?.results && searchResults.results.length > 0 ? (
+            <Section title="Sources">
+              <SearchResults results={searchResults.results} />
+            </Section>
+          ) : null}
+        </div>
+      </div>
     </CollapsibleMessage>
+    </div>
   )
 }

@@ -113,10 +113,10 @@ export function ReasoningSection({
       {!isSingle && (
         <>
           {!isFirst && (
-            <div className="absolute left-[19.5px] w-px bg-border h-3 top-0" />
+            <div className="absolute left-[19.5px] w-px bg-border h-2 top-0" />
           )}
           {!isLast && (
-            <div className="absolute left-[19.5px] w-px bg-border h-3 bottom-0" />
+            <div className="absolute left-[19.5px] w-px bg-border h-2 bottom-0" />
           )}
         </>
       )}

@@ -12,9 +12,20 @@ interface FetchSectionProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
+  borderless?: boolean
+  isFirst?: boolean
+  isLast?: boolean
 }
 
-export function FetchSection({ tool }: FetchSectionProps) {
+export function FetchSection({ 
+  tool,
+  isOpen,
+  onOpenChange,
+  status,
+  borderless = false,
+  isFirst = false,
+  isLast = false 
+}: FetchSectionProps) {
   const url = tool.input?.url
 
   // Determine the status based on tool output availability
@@ -45,7 +56,18 @@ export function FetchSection({ tool }: FetchSectionProps) {
   }
 
   return (
-    <div className="w-full">
+    <div className="relative w-full">
+      {/* Rails for header - show based on position */}
+      {borderless && (
+        <>
+          {!isFirst && (
+            <div className="absolute left-[19.5px] w-px bg-border h-2 top-0" />
+          )}
+          {!isLast && (
+            <div className="absolute left-[19.5px] w-px bg-border h-2 bottom-0" />
+          )}
+        </>
+      )}
       <FetchPreview
         url={url || ''}
         title={title}

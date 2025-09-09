@@ -28,6 +28,8 @@ interface ToolTodoDisplayProps {
   isOpen?: boolean
   onOpenChange?: (open: boolean) => void
   borderless?: boolean
+  isFirst?: boolean
+  isLast?: boolean
 }
 
 export function ToolTodoDisplay({
@@ -37,7 +39,9 @@ export function ToolTodoDisplay({
   toolCallId,
   isOpen = false,
   onOpenChange,
-  borderless = false
+  borderless = false,
+  isFirst = false,
+  isLast = false
 }: ToolTodoDisplayProps) {
   const { open: openArtifact } = useArtifact()
   // Calculate counts for display
@@ -99,36 +103,68 @@ export function ToolTodoDisplay({
   )
 
   return (
-    <CollapsibleMessage
-      role="assistant"
-      isCollapsible={true}
-      header={header}
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      showBorder={!borderless}
-      showIcon={false}
-      variant="default"
-      showSeparator={false}
-    >
-      {state === 'output-available' ? (
-        <TodoListContent
-          todos={output?.todos}
-          message={
-            tool === 'todoRead'
-              ? (output as any)?.summary || output?.message
-              : output?.message
-          }
-          completedCount={completedCount}
-          totalCount={totalCount}
-          showSummary={false}
-          itemVariant="plain"
-          className="pb-1"
-        />
-      ) : state === 'output-error' ? (
-        <div className="px-3 pb-3 text-xs text-destructive">{`Todo tool failed${
-          (output as any)?.message ? `: ${(output as any).message}` : ''
-        }`}</div>
-      ) : null}
+    <div className="relative">
+      {/* Rails for header - show based on position */}
+      {borderless && (
+        <>
+          {!isFirst && (
+            <div className="absolute left-[19.5px] w-px bg-border h-2 top-0" />
+          )}
+          {!isLast && (
+            <div className="absolute left-[19.5px] w-px bg-border h-2 bottom-0" />
+          )}
+        </>
+      )}
+      <CollapsibleMessage
+        role="assistant"
+        isCollapsible={true}
+        header={header}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        showBorder={!borderless}
+        showIcon={false}
+        variant="default"
+        showSeparator={false}
+      >
+      <div className="flex">
+        {/* Rail when expanded and in a group */}
+        {isOpen && borderless && (
+          <>
+            <div className="w-[16px] shrink-0 flex justify-center">
+              <div
+                className="w-px bg-border/50"
+                style={{
+                  marginTop: isFirst ? '0' : '-1rem',
+                  marginBottom: isLast ? '0' : '-1rem'
+                }}
+              />
+            </div>
+            <div className="w-2 shrink-0" />
+          </>
+        )}
+        <div className="flex-1">
+          {state === 'output-available' ? (
+            <TodoListContent
+              todos={output?.todos}
+              message={
+                tool === 'todoRead'
+                  ? (output as any)?.summary || output?.message
+                  : output?.message
+              }
+              completedCount={completedCount}
+              totalCount={totalCount}
+              showSummary={false}
+              itemVariant="plain"
+              className="pb-1"
+            />
+          ) : state === 'output-error' ? (
+            <div className="px-3 pb-3 text-xs text-destructive">{`Todo tool failed${
+              (output as any)?.message ? `: ${(output as any).message}` : ''
+            }`}</div>
+          ) : null}
+        </div>
+      </div>
     </CollapsibleMessage>
+    </div>
   )
 }

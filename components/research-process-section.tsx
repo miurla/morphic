@@ -57,14 +57,6 @@ function groupTools(segment: AnyPart[]): AnyPart[][] {
   return groups
 }
 
-function getRailState(index: number, total: number): RailState {
-  if (total <= 1) return 'single'
-  if (index === 0) return 'first'
-  if (index === total - 1) return 'last'
-  return 'middle'
-}
-
-type RailState = 'single' | 'first' | 'middle' | 'last'
 
 export function ResearchProcessSection({
   message,
@@ -99,7 +91,6 @@ export function ResearchProcessSection({
                   className={cn('space-y-1')}
                 >
                   {grp.map((part, pidx) => {
-                    const railState = getRailState(pidx, grp.length)
                     const hasNext = pidx < grp.length - 1
                     if (part.type === 'reasoning') {
                       const rid = `${messageId}-reasoning-${sidx}-${gidx}-${pidx}`
@@ -119,36 +110,18 @@ export function ResearchProcessSection({
                     if (part.type?.startsWith?.('tool-')) {
                       const id = part.toolCallId
                       return (
-                        <div key={id} className="relative">
-                          {/* Rail connecting header icons */}
-                          {!isSingle && grp.length > 1 && (
-                            <div
-                              className="absolute left-[19px] w-px bg-border/50 pointer-events-none z-10"
-                              style={{
-                                top: railState === 'first' ? '24px' : '0',
-                                bottom:
-                                  railState === 'last'
-                                    ? 'calc(100% - 24px)'
-                                    : '0',
-                                height:
-                                  railState === 'last'
-                                    ? '24px'
-                                    : railState === 'first'
-                                      ? 'calc(100% - 24px)'
-                                      : '100%'
-                              }}
-                            />
-                          )}
-                          <ToolSection
-                            tool={part}
-                            isOpen={getIsOpen(id, part.type, hasNext)}
-                            onOpenChange={open => onOpenChange(id, open)}
-                            status={status}
-                            addToolResult={addToolResult}
-                            onQuerySelect={onQuerySelect}
-                            borderless={!isSingle}
-                          />
-                        </div>
+                        <ToolSection
+                          key={id}
+                          tool={part}
+                          isOpen={getIsOpen(id, part.type, hasNext)}
+                          onOpenChange={open => onOpenChange(id, open)}
+                          status={status}
+                          addToolResult={addToolResult}
+                          onQuerySelect={onQuerySelect}
+                          borderless={!isSingle}
+                          isFirst={isFirstGroup && pidx === 0}
+                          isLast={isLastGroup && pidx === grp.length - 1}
+                        />
                       )
                     }
 
