@@ -49,11 +49,11 @@ describe('ResearchProcessSection', () => {
         text: 'Test reasoning'
       }
 
-      const message: UIMessage = {
-        role: 'assistant',
-        content: '',
+      const message = {
+        id: 'test-message',
+        role: 'assistant' as const,
         parts: [reasoningPart]
-      }
+      } as unknown as UIMessage
 
       render(
         <ResearchProcessSection
@@ -76,11 +76,11 @@ describe('ResearchProcessSection', () => {
         state: 'output-available'
       }
 
-      const message: UIMessage = {
-        role: 'assistant',
-        content: '',
-        parts: [toolPart]
-      }
+      const message = {
+        id: 'test-message',
+        role: 'assistant' as const,
+        parts: [toolPart as any]
+      } as UIMessage
 
       render(
         <ResearchProcessSection
@@ -106,9 +106,9 @@ describe('ResearchProcessSection', () => {
         text: 'Valid reasoning'
       }
 
-      const message: UIMessage = {
-        role: 'assistant',
-        content: '',
+      const message = {
+        id: 'test-message',
+        role: 'assistant' as const,
         parts: [emptyReasoningPart, validReasoningPart]
       }
 
@@ -130,7 +130,7 @@ describe('ResearchProcessSection', () => {
 
   describe('Segmentation Logic', () => {
     test('splits parts by text correctly', () => {
-      const parts = [
+      const parts: any[] = [
         { type: 'reasoning', text: 'First reasoning' } as ReasoningPart,
         {
           type: 'tool-search',
@@ -143,8 +143,8 @@ describe('ResearchProcessSection', () => {
       ]
 
       const message: UIMessage = {
+        id: 'test-message',
         role: 'assistant',
-        content: '',
         parts
       }
 
@@ -167,7 +167,7 @@ describe('ResearchProcessSection', () => {
     })
 
     test('groups consecutive tool parts of same type', () => {
-      const parts = [
+      const parts: any[] = [
         {
           type: 'tool-search',
           toolCallId: 'tool-1',
@@ -189,8 +189,8 @@ describe('ResearchProcessSection', () => {
       ]
 
       const message: UIMessage = {
+        id: 'test-message',
         role: 'assistant',
-        content: '',
         parts
       }
 
@@ -211,14 +211,14 @@ describe('ResearchProcessSection', () => {
 
   describe('Accordion Behavior', () => {
     test('handles accordion state for grouped sections', () => {
-      const parts = [
+      const parts: any[] = [
         { type: 'reasoning', text: 'First' } as ReasoningPart,
         { type: 'reasoning', text: 'Second' } as ReasoningPart
       ]
 
       const message: UIMessage = {
+        id: 'test-message',
         role: 'assistant',
-        content: '',
         parts
       }
 
@@ -259,9 +259,9 @@ describe('ResearchProcessSection', () => {
         { type: 'reasoning', text: 'Single reasoning' } as ReasoningPart
       ]
 
-      const message: UIMessage = {
-        role: 'assistant',
-        content: '',
+      const message = {
+        id: 'test-message',
+        role: 'assistant' as const,
         parts: singlePart
       }
 
@@ -288,15 +288,15 @@ describe('ResearchProcessSection', () => {
 
   describe('Subsequent Content Detection', () => {
     test('detects subsequent content correctly', () => {
-      const parts = [
+      const parts: any[] = [
         { type: 'reasoning', text: 'First' } as ReasoningPart,
         { type: 'text', text: 'Text' },
         { type: 'reasoning', text: 'Second' } as ReasoningPart
       ]
 
       const message: UIMessage = {
+        id: 'test-message',
         role: 'assistant',
-        content: '',
         parts
       }
 
@@ -321,9 +321,9 @@ describe('ResearchProcessSection', () => {
 
   describe('Edge Cases', () => {
     test('returns null for empty segments', () => {
-      const message: UIMessage = {
-        role: 'assistant',
-        content: '',
+      const message = {
+        id: 'test-message',
+        role: 'assistant' as const,
         parts: []
       }
 
@@ -341,9 +341,9 @@ describe('ResearchProcessSection', () => {
     })
 
     test('handles parts override correctly', () => {
-      const message: UIMessage = {
-        role: 'assistant',
-        content: '',
+      const message = {
+        id: 'test-message',
+        role: 'assistant' as const,
         parts: [{ type: 'reasoning', text: 'Original' } as ReasoningPart]
       }
 
@@ -372,11 +372,11 @@ describe('ResearchProcessSection', () => {
     })
 
     test('handles data parts correctly', () => {
-      const parts = [{ type: 'data-test', data: 'test' }]
+      const parts: any[] = [{ type: 'data-test', data: 'test' }]
 
       const message: UIMessage = {
+        id: 'test-message',
         role: 'assistant',
-        content: '',
         parts
       }
 
@@ -406,11 +406,11 @@ describe('ResearchProcessSection', () => {
         state: 'output-available'
       }
 
-      const message: UIMessage = {
-        role: 'assistant',
-        content: '',
-        parts: [toolPart]
-      }
+      const message = {
+        id: 'test-message',
+        role: 'assistant' as const,
+        parts: [toolPart as any]
+      } as UIMessage
 
       render(
         <ResearchProcessSection
@@ -434,11 +434,11 @@ describe('ResearchProcessSection', () => {
         state: 'output-available'
       }
 
-      const message: UIMessage = {
-        role: 'assistant',
-        content: '',
-        parts: [toolPart]
-      }
+      const message = {
+        id: 'test-message',
+        role: 'assistant' as const,
+        parts: [toolPart as any]
+      } as UIMessage
 
       render(
         <ResearchProcessSection
