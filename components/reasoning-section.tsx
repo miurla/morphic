@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 
 import type { ReasoningPart } from '@ai-sdk/provider-utils'
 
+import { cn } from '@/lib/utils'
+
 import { useArtifact } from '@/components/artifact/artifact-context'
 
 import { CollapsibleMessage } from './collapsible-message'
@@ -132,12 +134,15 @@ export function ReasoningSection({
         showSeparator={false}
       >
         <div className="flex">
-          {/* Rail when expanded and in a group */}
-          {isOpen && !isSingle && (
+          {/* Rail space - always reserved when grouped */}
+          {!isSingle && (
             <>
               <div className="w-[16px] shrink-0 flex justify-center">
                 <div
-                  className="w-px bg-border/50"
+                  className={cn(
+                    "w-px bg-border/50 transition-opacity duration-200",
+                    isOpen ? "opacity-100" : "opacity-0"
+                  )}
                   style={{
                     marginTop: isFirst ? '0' : '-1rem',
                     marginBottom: isLast ? '0' : '-1rem'

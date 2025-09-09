@@ -5,6 +5,7 @@ import { Check, Search as SearchIcon } from 'lucide-react'
 
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import { cn } from '@/lib/utils'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
 
@@ -107,12 +108,15 @@ export function SearchSection({
         showSeparator={false}
       >
         <div className="flex">
-          {/* Rail when expanded and in a group */}
-          {isOpen && borderless && (
+          {/* Rail space - always reserved when grouped */}
+          {borderless && (
             <>
               <div className="w-[16px] shrink-0 flex justify-center">
                 <div
-                  className="w-px bg-border/50"
+                  className={cn(
+                    "w-px bg-border/50 transition-opacity duration-200",
+                    isOpen ? "opacity-100" : "opacity-0"
+                  )}
                   style={{
                     marginTop: isFirst ? '0' : '-1rem',
                     marginBottom: isLast ? '0' : '-1rem'
