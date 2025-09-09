@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import type { ReasoningPart } from '@ai-sdk/provider-utils'
 
 import { useArtifact } from '@/components/artifact/artifact-context'

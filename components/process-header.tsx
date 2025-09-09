@@ -37,7 +37,7 @@ export function ProcessHeader({
         </span>
       ) : null}
     </button>
-  )}
+  )
+}
 
 export default ProcessHeader
-
