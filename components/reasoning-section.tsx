@@ -1,7 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import type { ReasoningPart } from '@ai-sdk/provider-utils'
-import { Lightbulb } from 'lucide-react'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
 
@@ -26,19 +26,57 @@ export function ReasoningSection({
   onOpenChange
 }: ReasoningSectionProps) {
   const { open } = useArtifact()
+  // Show a short preview when collapsed; switch to a generic label when expanded
+  const HEADER_PREVIEW_CHARS = 120
+  const SANITIZE_MARKDOWN_PREVIEW = true
+  const [preview, setPreview] = useState<string | null>(null)
+
+  const toPreview = (text: string) => {
+    const firstLine = (text || '').split(/\r?\n/)[0] || ''
+    if (!SANITIZE_MARKDOWN_PREVIEW) return firstLine
+    return firstLine
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1') // links [text](url)
+      .replace(/`([^`]+)`/g, '$1') // inline code
+      .replace(/\*\*([^*]+)\*\*/g, '$1') // bold **text**
+      .replace(/__([^_]+)__/g, '$1') // bold __text__
+      .replace(/^#{1,6}\s*/, '') // heading markers at start
+  }
+
+  // Lock a preview during streaming to avoid frequent churn; refresh once when done
+  useEffect(() => {
+    const text = content?.reasoning || ''
+    if (!text) return
+    const prepared = toPreview(text)
+    if (!content.isDone) {
+      // Set once during streaming
+      if (!preview) setPreview(prepared.slice(0, HEADER_PREVIEW_CHARS))
+    } else {
+      // On completion, ensure preview reflects the final string (single update)
+      const finalPreview = prepared.slice(0, HEADER_PREVIEW_CHARS)
+      if (preview !== finalPreview) setPreview(finalPreview)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content.reasoning, content.isDone])
+
+  const headerLabel = isOpen
+    ? 'Thoughts'
+    : preview && preview.length > 0
+      ? preview
+      : !content.isDone
+        ? 'Thinking...'
+        : 'Thoughts'
+
   const reasoningHeader = (
     <button
       type="button"
       onClick={() =>
         open({ type: 'reasoning', text: content.reasoning } as ReasoningPart)
       }
-      className={`inline-flex items-center gap-1 text-left text-xs leading-none text-muted-foreground hover:text-foreground transition-colors cursor-pointer py-0.5 ${!content.isDone ? 'animate-pulse' : ''}`}
+      className={`inline-flex items-center gap-1 text-left text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer min-w-0 max-w-full w-full ${!content.isDone ? 'animate-pulse' : ''}`}
+      aria-expanded={isOpen}
       title="Open details"
     >
-      <Lightbulb size={12} className="shrink-0" />
-      <span className="whitespace-nowrap">
-        {!content.isDone ? 'Thinking...' : 'Thoughts'}
-      </span>
+      <span className="whitespace-nowrap truncate min-w-0 max-w-full">{headerLabel}</span>
     </button>
   )
 
@@ -54,9 +92,9 @@ export function ReasoningSection({
       header={reasoningHeader}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      showBorder={false}
+      showBorder={true}
       showIcon={false}
-      variant="minimal"
+      variant="default"
       showSeparator={false}
     >
       <div className="[&_p]:text-xs [&_p]:text-muted-foreground/80">
