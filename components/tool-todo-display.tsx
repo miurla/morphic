@@ -126,45 +126,45 @@ export function ToolTodoDisplay({
         variant="default"
         showSeparator={false}
       >
-      <div className="flex">
-        {/* Rail when expanded and in a group */}
-        {isOpen && borderless && (
-          <>
-            <div className="w-[16px] shrink-0 flex justify-center">
-              <div
-                className="w-px bg-border/50"
-                style={{
-                  marginTop: isFirst ? '0' : '-1rem',
-                  marginBottom: isLast ? '0' : '-1rem'
-                }}
+        <div className="flex">
+          {/* Rail when expanded and in a group */}
+          {isOpen && borderless && (
+            <>
+              <div className="w-[16px] shrink-0 flex justify-center">
+                <div
+                  className="w-px bg-border/50"
+                  style={{
+                    marginTop: isFirst ? '0' : '-1rem',
+                    marginBottom: isLast ? '0' : '-1rem'
+                  }}
+                />
+              </div>
+              <div className="w-2 shrink-0" />
+            </>
+          )}
+          <div className="flex-1">
+            {state === 'output-available' ? (
+              <TodoListContent
+                todos={output?.todos}
+                message={
+                  tool === 'todoRead'
+                    ? (output as any)?.summary || output?.message
+                    : output?.message
+                }
+                completedCount={completedCount}
+                totalCount={totalCount}
+                showSummary={false}
+                itemVariant="plain"
+                className="pb-1"
               />
-            </div>
-            <div className="w-2 shrink-0" />
-          </>
-        )}
-        <div className="flex-1">
-          {state === 'output-available' ? (
-            <TodoListContent
-              todos={output?.todos}
-              message={
-                tool === 'todoRead'
-                  ? (output as any)?.summary || output?.message
-                  : output?.message
-              }
-              completedCount={completedCount}
-              totalCount={totalCount}
-              showSummary={false}
-              itemVariant="plain"
-              className="pb-1"
-            />
-          ) : state === 'output-error' ? (
-            <div className="px-3 pb-3 text-xs text-destructive">{`Todo tool failed${
-              (output as any)?.message ? `: ${(output as any).message}` : ''
-            }`}</div>
-          ) : null}
+            ) : state === 'output-error' ? (
+              <div className="px-3 pb-3 text-xs text-destructive">{`Todo tool failed${
+                (output as any)?.message ? `: ${(output as any).message}` : ''
+              }`}</div>
+            ) : null}
+          </div>
         </div>
-      </div>
-    </CollapsibleMessage>
+      </CollapsibleMessage>
     </div>
   )
 }

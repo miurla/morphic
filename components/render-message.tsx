@@ -109,14 +109,20 @@ export function RenderMessage({
       const remainingParts = message.parts?.slice(index + 1) || []
       const hasMoreTextParts = remainingParts.some(p => p.type === 'text')
       const isLastTextPart = !hasMoreTextParts
-      const isStreamingComplete = status !== 'streaming' && status !== 'submitted'
-      const shouldShowActions = isLastTextPart && (isLatestMessage ? isStreamingComplete : true)
+      const isStreamingComplete =
+        status !== 'streaming' && status !== 'submitted'
+      const shouldShowActions =
+        isLastTextPart && (isLatestMessage ? isStreamingComplete : true)
 
       elements.push(
         <AnswerSection
           key={`${messageId}-text-${index}`}
           content={part.text}
-          isOpen={getIsOpen(messageId, part.type, index < (message.parts?.length ?? 0) - 1)}
+          isOpen={getIsOpen(
+            messageId,
+            part.type,
+            index < (message.parts?.length ?? 0) - 1
+          )}
           onOpenChange={open => onOpenChange(messageId, open)}
           chatId={chatId}
           showActions={shouldShowActions}

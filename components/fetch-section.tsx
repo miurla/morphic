@@ -17,14 +17,14 @@ interface FetchSectionProps {
   isLast?: boolean
 }
 
-export function FetchSection({ 
+export function FetchSection({
   tool,
   isOpen,
   onOpenChange,
   status,
   borderless = false,
   isFirst = false,
-  isLast = false 
+  isLast = false
 }: FetchSectionProps) {
   const url = tool.input?.url
 

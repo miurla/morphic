@@ -31,8 +31,13 @@ export function ProcessRail({
 
       {/* Connector line below */}
       {!isLast && (
-        <div className="absolute w-px bg-border/50" 
-          style={{ top: '1.125rem', bottom: '-100%', height: 'calc(100% + 100%)' }}
+        <div
+          className="absolute w-px bg-border/50"
+          style={{
+            top: '1.125rem',
+            bottom: '-100%',
+            height: 'calc(100% + 100%)'
+          }}
         />
       )}
     </div>

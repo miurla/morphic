@@ -59,7 +59,6 @@ function groupTools(segment: AnyPart[]): AnyPart[][] {
   return groups
 }
 
-
 export function ResearchProcessSection({
   message,
   messageId,
@@ -72,14 +71,18 @@ export function ResearchProcessSection({
 }: Props) {
   const allParts = partsOverride ?? (message.parts || [])
   const segments = partsOverride ? [allParts] : splitByText(allParts)
-  
+
   // Track which section is open within grouped sections (accordion behavior)
   const [openSectionId, setOpenSectionId] = useState<string | null>(null)
 
   if (segments.length === 0) return null
 
   // Handle accordion-style open/close for grouped sections
-  const handleAccordionChange = (id: string, open: boolean, isSingle: boolean) => {
+  const handleAccordionChange = (
+    id: string,
+    open: boolean,
+    isSingle: boolean
+  ) => {
     if (isSingle) {
       // For single sections, use the original behavior
       onOpenChange(id, open)
@@ -116,16 +119,18 @@ export function ResearchProcessSection({
                     const hasNext = pidx < grp.length - 1
                     if (part.type === 'reasoning') {
                       const rid = `${messageId}-reasoning-${sidx}-${gidx}-${pidx}`
-                      const isOpen = isSingle 
+                      const isOpen = isSingle
                         ? getIsOpen(rid, 'reasoning', hasNext)
                         : openSectionId === rid
-                      
+
                       return (
                         <ReasoningSection
                           key={rid}
                           content={{ reasoning: part.text, isDone: !hasNext }}
                           isOpen={isOpen}
-                          onOpenChange={open => handleAccordionChange(rid, open, isSingle)}
+                          onOpenChange={open =>
+                            handleAccordionChange(rid, open, isSingle)
+                          }
                           isSingle={isSingle}
                           isFirst={isFirstGroup && pidx === 0}
                           isLast={isLastGroup && pidx === grp.length - 1}
@@ -138,13 +143,15 @@ export function ResearchProcessSection({
                       const isOpen = isSingle
                         ? getIsOpen(id, part.type, hasNext)
                         : openSectionId === id
-                      
+
                       return (
                         <ToolSection
                           key={id}
                           tool={part}
                           isOpen={isOpen}
-                          onOpenChange={open => handleAccordionChange(id, open, isSingle)}
+                          onOpenChange={open =>
+                            handleAccordionChange(id, open, isSingle)
+                          }
                           status={status}
                           addToolResult={addToolResult}
                           onQuerySelect={onQuerySelect}
