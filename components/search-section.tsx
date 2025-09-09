@@ -61,10 +61,10 @@ export function SearchSection({
       isLoading={isLoading && isToolLoading}
       ariaExpanded={isOpen}
       label={
-        <span className="inline-flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 overflow-hidden">
           <SearchIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="truncate">{`${query}${includeDomainsString}`}</span>
-        </span>
+          <span className="truncate block min-w-0 max-w-full">{`${query}${includeDomainsString}`}</span>
+        </div>
       }
       meta={
         searchResults && totalResults > 0 ? (

@@ -1,10 +1,12 @@
 'use client'
 
+import type { ReactNode } from 'react'
+
 import { cn } from '@/lib/utils'
 
 export type ProcessHeaderProps = {
-  label: React.ReactNode
-  meta?: React.ReactNode
+  label: ReactNode
+  meta?: ReactNode
   onInspect?: () => void
   isLoading?: boolean
   ariaExpanded?: boolean
@@ -30,7 +32,7 @@ export function ProcessHeader({
         className
       )}
     >
-      <span className="min-w-0 max-w-full truncate">{label}</span>
+      <div className="min-w-0 max-w-full flex-1 overflow-hidden">{label}</div>
       {meta ? (
         <span className="shrink-0 ml-2 text-xs text-muted-foreground flex items-center gap-1">
           {meta}
