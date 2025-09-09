@@ -1,17 +1,20 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
+import { Check, Search as SearchIcon } from 'lucide-react'
 
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
 
+import { StatusIndicator } from './ui/status-indicator'
 import { CollapsibleMessage } from './collapsible-message'
 import { SearchSkeleton } from './default-skeleton'
+import ProcessHeader from './process-header'
 import { SearchResults } from './search-results'
 import { SearchResultsImageSection } from './search-results-image'
-import { Section, ToolArgsSection } from './section'
+import { Section } from './section'
 import {
   createVideoSearchResults,
   VideoSearchResults
@@ -53,18 +56,24 @@ export function SearchSection({
     (searchResults?.images?.length || 0)
 
   const header = (
-    <button
-      type="button"
-      onClick={() => open(tool)}
-      className="flex items-center justify-between w-full text-left rounded-md p-0.5 -ml-0.5 cursor-pointer overflow-hidden"
-      title="Open details"
-    >
-      <ToolArgsSection
-        tool="search"
-        number={searchResults ? totalResults : undefined}
-        isLoading={isLoading && isToolLoading}
-      >{`${query}${includeDomainsString}`}</ToolArgsSection>
-    </button>
+    <ProcessHeader
+      onInspect={() => open(tool)}
+      isLoading={isLoading && isToolLoading}
+      ariaExpanded={isOpen}
+      label={
+        <span className="inline-flex items-center gap-2 min-w-0">
+          <SearchIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="truncate">{`${query}${includeDomainsString}`}</span>
+        </span>
+      }
+      meta={
+        searchResults && totalResults > 0 ? (
+          <StatusIndicator icon={Check} iconClassName="text-green-500">
+            {totalResults} results
+          </StatusIndicator>
+        ) : undefined
+      }
+    />
   )
 
   return (
