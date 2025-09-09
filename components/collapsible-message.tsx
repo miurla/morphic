@@ -20,8 +20,11 @@ interface CollapsibleMessageProps {
   onOpenChange?: (open: boolean) => void
   showBorder?: boolean
   showIcon?: boolean
-  variant?: 'default' | 'minimal'
+  variant?: 'default' | 'minimal' | 'process' | 'process-sub'
   showSeparator?: boolean
+  renderLeft?: React.ReactNode
+  chevronSize?: 'sm' | 'md'
+  headerClickBehavior?: 'toggle' | 'inspect' | 'split'
 }
 
 export function CollapsibleMessage({
@@ -34,13 +37,18 @@ export function CollapsibleMessage({
   showBorder = true,
   showIcon = true,
   variant = 'default',
-  showSeparator = true
+  showSeparator = true,
+  renderLeft,
+  chevronSize = 'md',
+  headerClickBehavior = 'toggle'
 }: CollapsibleMessageProps) {
   const content = children
 
   return (
     <div className="flex">
-      {showIcon && (
+      {renderLeft ? (
+        renderLeft
+      ) : showIcon ? (
         <div className="relative flex flex-col items-center">
           <div className="w-5">
             {role === 'assistant' ? (
@@ -50,13 +58,15 @@ export function CollapsibleMessage({
             )}
           </div>
         </div>
-      )}
+      ) : null}
 
       {isCollapsible ? (
         <div
           className={cn(
             'flex-1 overflow-hidden',
-            variant === 'default' && 'rounded-lg border bg-card'
+            variant === 'default' && 'rounded-lg border bg-card',
+            variant === 'process' && 'rounded-lg border bg-card',
+            variant === 'process-sub' && 'rounded-md border bg-card/50'
           )}
         >
           <Collapsible
@@ -68,7 +78,9 @@ export function CollapsibleMessage({
               className={cn(
                 'flex items-center w-full gap-2 overflow-hidden',
                 variant === 'default' && 'justify-between px-3 py-2',
-                variant === 'minimal' && 'py-1'
+                variant === 'minimal' && 'py-1',
+                variant === 'process' && 'justify-between px-1.5 py-1',
+                variant === 'process-sub' && 'justify-between px-1 py-0.5'
               )}
             >
               {header && (
@@ -76,20 +88,43 @@ export function CollapsibleMessage({
                   className={cn(
                     'overflow-hidden',
                     variant === 'default' && 'text-sm flex-1',
-                    variant === 'minimal' && 'text-sm flex items-center gap-1'
+                    variant === 'minimal' && 'text-sm flex items-center gap-1',
+                    (variant === 'process' || variant === 'process-sub') &&
+                      'text-xs flex-1'
                   )}
+                  onClick={
+                    headerClickBehavior === 'inspect'
+                      ? undefined
+                      : headerClickBehavior === 'split'
+                        ? undefined
+                        : onOpenChange
+                          ? () => onOpenChange(!isOpen)
+                          : undefined
+                  }
                 >
                   {header}
                 </div>
               )}
-              {variant === 'minimal' && (
+              {(variant === 'minimal' ||
+                variant === 'process' ||
+                variant === 'process-sub') && (
                 <CollapsibleTrigger asChild>
                   <button
                     type="button"
-                    className="p-0.5 rounded-md group cursor-pointer hover:bg-accent/50"
+                    className={cn(
+                      'rounded-md group cursor-pointer hover:bg-accent/50',
+                      variant === 'minimal' && 'p-0.5',
+                      (variant === 'process' || variant === 'process-sub') &&
+                        'p-0.5'
+                    )}
                     aria-label={isOpen ? 'Collapse' : 'Expand'}
                   >
-                    <ChevronDown className="h-3 w-3 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                    <ChevronDown
+                      className={cn(
+                        'text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180',
+                        chevronSize === 'sm' ? 'h-3 w-3' : 'h-4 w-4'
+                      )}
+                    />
                   </button>
                 </CollapsibleTrigger>
               )}
@@ -112,7 +147,9 @@ export function CollapsibleMessage({
               <div
                 className={cn(
                   variant === 'default' && 'px-3 pb-2',
-                  variant === 'minimal' && 'pt-2'
+                  variant === 'minimal' && 'pt-2',
+                  variant === 'process' && 'px-1.5 pb-1',
+                  variant === 'process-sub' && 'px-1 pb-0.5'
                 )}
               >
                 {content}
