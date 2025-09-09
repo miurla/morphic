@@ -22,7 +22,9 @@ export interface ReasoningSectionProps {
   onOpenChange: (open: boolean) => void
   showIcon?: boolean
   variant?: 'default' | 'minimal' | 'process' | 'process-sub'
-  isSingle?: boolean  // Whether this is a single item or part of a group
+  isSingle?: boolean // Whether this is a single item or part of a group
+  isFirst?: boolean
+  isLast?: boolean
 }
 
 export function ReasoningSection({
@@ -31,7 +33,9 @@ export function ReasoningSection({
   onOpenChange,
   showIcon = false,
   variant = 'default',
-  isSingle = true
+  isSingle = true,
+  isFirst = false,
+  isLast = false
 }: ReasoningSectionProps) {
   const { open } = useArtifact()
   // Show a short preview when collapsed; switch to a generic label when expanded
@@ -78,11 +82,13 @@ export function ReasoningSection({
     <ProcessHeader
       label={
         !isSingle ? (
-          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-            <div className="w-4 h-4 shrink-0 flex items-center justify-center">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-4 h-4 shrink-0 flex items-center justify-center relative">
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
             </div>
-            <span className="truncate block min-w-0 max-w-full">{headerLabel}</span>
+            <span className="truncate block min-w-0 max-w-full">
+              {headerLabel}
+            </span>
           </div>
         ) : (
           headerLabel
@@ -102,20 +108,50 @@ export function ReasoningSection({
   if (content.isDone && !content.reasoning?.trim()) return null
 
   return (
-    <CollapsibleMessage
-      role="assistant"
-      isCollapsible={true}
-      header={reasoningHeader}
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      showBorder={isSingle}
-      showIcon={showIcon}
-      variant={variant}
-      showSeparator={false}
-    >
-      <div className="[&_p]:text-xs [&_p]:text-muted-foreground/80">
-        <MarkdownMessage message={content.reasoning} />
-      </div>
-    </CollapsibleMessage>
+    <div className="relative">
+      {/* Rails for header - show based on position */}
+      {!isSingle && (
+        <>
+          {!isFirst && (
+            <div className="absolute left-[19.5px] w-px bg-border h-3 top-0" />
+          )}
+          {!isLast && (
+            <div className="absolute left-[19.5px] w-px bg-border h-3 bottom-0" />
+          )}
+        </>
+      )}
+      <CollapsibleMessage
+        role="assistant"
+        isCollapsible={true}
+        header={reasoningHeader}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        showBorder={isSingle}
+        showIcon={showIcon}
+        variant={variant}
+        showSeparator={false}
+      >
+        <div className="flex">
+          {/* Rail when expanded and in a group */}
+          {isOpen && !isSingle && (
+            <>
+              <div className="w-[16px] shrink-0 flex justify-center">
+                <div
+                  className="w-px bg-border/50"
+                  style={{
+                    marginTop: isFirst ? '0' : '-1rem',
+                    marginBottom: isLast ? '0' : '-1rem'
+                  }}
+                />
+              </div>
+              <div className="w-2 shrink-0" />
+            </>
+          )}
+          <div className="[&_p]:text-xs [&_p]:text-muted-foreground/80 flex-1">
+            <MarkdownMessage message={content.reasoning} />
+          </div>
+        </div>
+      </CollapsibleMessage>
+    </div>
   )
 }

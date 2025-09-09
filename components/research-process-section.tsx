@@ -2,11 +2,7 @@
 
 import { UseChatHelpers } from '@ai-sdk/react'
 
-import type {
-  UIDataTypes,
-  UIMessage,
-  UITools
-} from '@/lib/types/ai'
+import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
 import { ReasoningSection } from './reasoning-section'
@@ -30,7 +26,7 @@ function splitByText(parts: AnyPart[]): AnyPart[][] {
   let curr: AnyPart[] = []
   for (const p of parts || []) {
     if (p.type === 'text') {
-      if (curr.length) segments.push(curr), (curr = [])
+      if (curr.length) (segments.push(curr), (curr = []))
     } else {
       curr.push(p)
     }
@@ -90,61 +86,58 @@ export function ResearchProcessSection({
       {segments.map((seg, sidx) => {
         const groups = groupTools(seg)
         const isSingle = groups.length === 1 && groups[0].length === 1
-        const containerClass = cn(
-          !isSingle && 'rounded-lg border bg-card'
-        )
+        const containerClass = cn(!isSingle && 'rounded-lg border bg-card')
 
         return (
           <div key={`${messageId}-seg-${sidx}`} className={containerClass}>
             {groups.map((grp, gidx) => {
-              const isToolGroup = grp[0].type?.startsWith?.('tool-') && grp.length > 1
-
+              const isFirstGroup = gidx === 0
+              const isLastGroup = gidx === groups.length - 1
               return (
-                <div key={`${messageId}-grp-${sidx}-${gidx}`} className={cn('space-y-1')}>
+                <div
+                  key={`${messageId}-grp-${sidx}-${gidx}`}
+                  className={cn('space-y-1')}
+                >
                   {grp.map((part, pidx) => {
                     const railState = getRailState(pidx, grp.length)
                     const hasNext = pidx < grp.length - 1
                     if (part.type === 'reasoning') {
                       const rid = `${messageId}-reasoning-${sidx}-${gidx}-${pidx}`
                       return (
-                        <div
+                        <ReasoningSection
                           key={rid}
-                          className="relative"
-                        >
-                          {/* rail inside content: using process variant to tighten paddings */}
-                          <div className="absolute left-1.5 top-0 bottom-0 w-px bg-transparent" />
-                          <ReasoningSection
-                            content={{ reasoning: part.text, isDone: !hasNext }}
-                            isOpen={getIsOpen(rid, 'reasoning', hasNext)}
-                            onOpenChange={open => onOpenChange(rid, open)}
-                            isSingle={isSingle}
-                          />
-                        </div>
+                          content={{ reasoning: part.text, isDone: !hasNext }}
+                          isOpen={getIsOpen(rid, 'reasoning', hasNext)}
+                          onOpenChange={open => onOpenChange(rid, open)}
+                          isSingle={isSingle}
+                          isFirst={isFirstGroup && pidx === 0}
+                          isLast={isLastGroup && pidx === grp.length - 1}
+                        />
                       )
                     }
 
                     if (part.type?.startsWith?.('tool-')) {
-                      // Render via ToolSection but borderless
                       const id = part.toolCallId
                       return (
-                        <div
-                          key={id}
-                          className="relative"
-                        >
-                          {/* Rail */}
-                          {isToolGroup && (
-                            <>
-                              <span
-                                className={cn(
-                                  'absolute left-1.5 w-px bg-border/50',
-                                  railState === 'single' && 'top-2 bottom-2',
-                                  railState === 'first' && 'top-2 bottom-0',
-                                  railState === 'middle' && 'top-0 bottom-0',
-                                  railState === 'last' && 'top-0 bottom-2'
-                                )}
-                              />
-                              <span className="absolute left-1 top-2 h-2 w-2 rounded-full bg-muted-foreground/70" />
-                            </>
+                        <div key={id} className="relative">
+                          {/* Rail connecting header icons */}
+                          {!isSingle && grp.length > 1 && (
+                            <div
+                              className="absolute left-[19px] w-px bg-border/50 pointer-events-none z-10"
+                              style={{
+                                top: railState === 'first' ? '24px' : '0',
+                                bottom:
+                                  railState === 'last'
+                                    ? 'calc(100% - 24px)'
+                                    : '0',
+                                height:
+                                  railState === 'last'
+                                    ? '24px'
+                                    : railState === 'first'
+                                      ? 'calc(100% - 24px)'
+                                      : '100%'
+                              }}
+                            />
                           )}
                           <ToolSection
                             tool={part}
