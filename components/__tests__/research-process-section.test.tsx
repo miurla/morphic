@@ -1,9 +1,10 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, expect, test, vi, beforeEach, Mock } from 'vitest'
-import type { ReasoningPart } from '@ai-sdk/provider-utils'
 import React from 'react'
 
-import type { UIMessage, ToolPart } from '@/lib/types/ai'
+import type { ReasoningPart } from '@ai-sdk/provider-utils'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, Mock, test, vi } from 'vitest'
+
+import type { ToolPart, UIMessage } from '@/lib/types/ai'
 
 import { ResearchProcessSection } from '../research-process-section'
 
@@ -47,7 +48,7 @@ describe('ResearchProcessSection', () => {
         type: 'reasoning',
         text: 'Test reasoning'
       }
-      
+
       const message: UIMessage = {
         role: 'assistant',
         content: '',
@@ -74,7 +75,7 @@ describe('ResearchProcessSection', () => {
         input: {},
         state: 'output-available'
       }
-      
+
       const message: UIMessage = {
         role: 'assistant',
         content: '',
@@ -99,12 +100,12 @@ describe('ResearchProcessSection', () => {
         type: 'reasoning',
         text: ''
       }
-      
+
       const validReasoningPart: ReasoningPart = {
         type: 'reasoning',
         text: 'Valid reasoning'
       }
-      
+
       const message: UIMessage = {
         role: 'assistant',
         content: '',
@@ -131,11 +132,16 @@ describe('ResearchProcessSection', () => {
     test('splits parts by text correctly', () => {
       const parts = [
         { type: 'reasoning', text: 'First reasoning' } as ReasoningPart,
-        { type: 'tool-search', toolCallId: 'tool-1', input: {}, state: 'output-available' } as ToolPart,
+        {
+          type: 'tool-search',
+          toolCallId: 'tool-1',
+          input: {},
+          state: 'output-available'
+        } as ToolPart,
         { type: 'text', text: 'Text separator' },
         { type: 'reasoning', text: 'Second reasoning' } as ReasoningPart
       ]
-      
+
       const message: UIMessage = {
         role: 'assistant',
         content: '',
@@ -162,11 +168,26 @@ describe('ResearchProcessSection', () => {
 
     test('groups consecutive tool parts of same type', () => {
       const parts = [
-        { type: 'tool-search', toolCallId: 'tool-1', input: {}, state: 'output-available' } as ToolPart,
-        { type: 'tool-search', toolCallId: 'tool-2', input: {}, state: 'output-available' } as ToolPart,
-        { type: 'tool-fetch', toolCallId: 'tool-3', input: {}, state: 'output-available' } as ToolPart
+        {
+          type: 'tool-search',
+          toolCallId: 'tool-1',
+          input: {},
+          state: 'output-available'
+        } as ToolPart,
+        {
+          type: 'tool-search',
+          toolCallId: 'tool-2',
+          input: {},
+          state: 'output-available'
+        } as ToolPart,
+        {
+          type: 'tool-fetch',
+          toolCallId: 'tool-3',
+          input: {},
+          state: 'output-available'
+        } as ToolPart
       ]
-      
+
       const message: UIMessage = {
         role: 'assistant',
         content: '',
@@ -194,7 +215,7 @@ describe('ResearchProcessSection', () => {
         { type: 'reasoning', text: 'First' } as ReasoningPart,
         { type: 'reasoning', text: 'Second' } as ReasoningPart
       ]
-      
+
       const message: UIMessage = {
         role: 'assistant',
         content: '',
@@ -212,16 +233,16 @@ describe('ResearchProcessSection', () => {
       )
 
       const buttons = screen.getAllByRole('button')
-      
+
       // Click first button to open
       fireEvent.click(buttons[0])
-      
+
       // Should call onOpenChange
       expect(mockOnOpenChange).toHaveBeenCalled()
-      
+
       // Update mock to return true for the clicked item
-      mockGetIsOpen.mockImplementation((id) => id.includes('reasoning-0-0-0'))
-      
+      mockGetIsOpen.mockImplementation(id => id.includes('reasoning-0-0-0'))
+
       rerender(
         <ResearchProcessSection
           message={message}
@@ -237,7 +258,7 @@ describe('ResearchProcessSection', () => {
       const singlePart = [
         { type: 'reasoning', text: 'Single reasoning' } as ReasoningPart
       ]
-      
+
       const message: UIMessage = {
         role: 'assistant',
         content: '',
@@ -272,7 +293,7 @@ describe('ResearchProcessSection', () => {
         { type: 'text', text: 'Text' },
         { type: 'reasoning', text: 'Second' } as ReasoningPart
       ]
-      
+
       const message: UIMessage = {
         role: 'assistant',
         content: '',
@@ -323,9 +344,7 @@ describe('ResearchProcessSection', () => {
       const message: UIMessage = {
         role: 'assistant',
         content: '',
-        parts: [
-          { type: 'reasoning', text: 'Original' } as ReasoningPart
-        ]
+        parts: [{ type: 'reasoning', text: 'Original' } as ReasoningPart]
       }
 
       const overrideParts = [
@@ -353,10 +372,8 @@ describe('ResearchProcessSection', () => {
     })
 
     test('handles data parts correctly', () => {
-      const parts = [
-        { type: 'data-test', data: 'test' }
-      ]
-      
+      const parts = [{ type: 'data-test', data: 'test' }]
+
       const message: UIMessage = {
         role: 'assistant',
         content: '',
@@ -374,7 +391,9 @@ describe('ResearchProcessSection', () => {
       )
 
       // Data parts should not render anything
-      expect(container.firstChild?.firstChild?.firstChild?.firstChild).toBeNull()
+      expect(
+        container.firstChild?.firstChild?.firstChild?.firstChild
+      ).toBeNull()
     })
   })
 
@@ -386,7 +405,7 @@ describe('ResearchProcessSection', () => {
         input: {},
         state: 'output-available'
       }
-      
+
       const message: UIMessage = {
         role: 'assistant',
         content: '',
@@ -414,7 +433,7 @@ describe('ResearchProcessSection', () => {
         input: {},
         state: 'output-available'
       }
-      
+
       const message: UIMessage = {
         role: 'assistant',
         content: '',

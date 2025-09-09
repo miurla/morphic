@@ -309,10 +309,7 @@ export function ResearchProcessSection({
         return (
           <div key={`${messageId}-seg-${sidx}`} className={containerClass}>
             {groups.map((grp, gidx) => (
-              <div
-                key={`${messageId}-grp-${sidx}-${gidx}`}
-                className={cn('space-y-1')}
-              >
+              <div key={`${messageId}-grp-${sidx}-${gidx}`}>
                 {grp.map((part, pidx) => {
                   const partId = isToolPart(part)
                     ? part.toolCallId
