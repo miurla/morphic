@@ -151,6 +151,42 @@ function useAccordionState(onOpenChange: (id: string, open: boolean) => void) {
   return { openSectionId, handleAccordionChange }
 }
 
+/**
+ * Determines if there's content after a given segment
+ * @param segmentIndex - The index of the current segment
+ * @param segments - All segments
+ * @param messageParts - Original message parts
+ * @returns true if there's subsequent content
+ */
+function useHasSubsequentContent(
+  segments: MessagePart[][],
+  messageParts: MessagePart[] | undefined
+) {
+  return useCallback(
+    (segmentIndex: number): boolean => {
+      // Check if there are more segments after this one
+      if (segmentIndex < segments.length - 1) {
+        return true
+      }
+
+      // Check if there are text parts after the last segment in the original message parts
+      const lastSegment = segments[segmentIndex]
+      if (!lastSegment || lastSegment.length === 0) {
+        return false
+      }
+
+      const lastPartInSegment = lastSegment[lastSegment.length - 1]
+      const remainingParts =
+        messageParts?.slice(
+          messageParts.findIndex(p => p === lastPartInSegment) + 1
+        ) || []
+
+      return remainingParts.some(p => isTextPart(p))
+    },
+    [segments, messageParts]
+  )
+}
+
 export function ResearchProcessSection({
   message,
   messageId,
@@ -172,24 +208,11 @@ export function ResearchProcessSection({
   const { openSectionId, handleAccordionChange } =
     useAccordionState(onOpenChange)
 
+  // Use custom hook for subsequent content detection
+  const hasSubsequentContent = useHasSubsequentContent(segments, message.parts)
+
   if (segments.length === 0 || segments.every(seg => seg.length === 0))
     return null
-
-  // Check if there are subsequent text parts after this segment
-  const hasSubsequentContent = (segmentIndex: number): boolean => {
-    // Check if there are more segments after this one
-    if (segmentIndex < segments.length - 1) {
-      return true
-    }
-    // Check if there are text parts after the last segment in the original message parts
-    const lastPartInSegment =
-      segments[segmentIndex][segments[segmentIndex].length - 1]
-    const remainingParts =
-      message.parts?.slice(
-        message.parts.findIndex(p => p === lastPartInSegment) + 1
-      ) || []
-    return remainingParts.some(p => isTextPart(p))
-  }
 
   return (
     <div className="space-y-2">
