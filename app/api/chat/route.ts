@@ -108,7 +108,6 @@ export async function POST(req: Request) {
     // This ensures the next load will get fresh data
     if (chatId) {
       revalidateTag(`chat-${chatId}`)
-      revalidateTag('chat')
     }
 
     const totalTime = performance.now() - startTime
