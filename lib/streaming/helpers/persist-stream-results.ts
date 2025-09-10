@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { UIMessage } from 'ai'
 
 import { upsertMessage } from '@/lib/actions/chat'
@@ -33,6 +34,8 @@ export async function persistStreamResults(
   try {
     await upsertMessage(chatId, responseMessage, userId)
     perfTime('upsertMessage (AI response) completed', saveStart)
+    // Invalidate cache after saving message
+    revalidateTag(`chat-${chatId}`)
   } catch (error) {
     console.error('Error saving message:', error)
     try {
@@ -41,6 +44,8 @@ export async function persistStreamResults(
         'save message'
       )
       perfTime('upsertMessage (AI response) completed after retry', saveStart)
+      // Invalidate cache after saving message
+      revalidateTag(`chat-${chatId}`)
     } catch (retryError) {
       console.error('Failed to save after retries:', retryError)
       // Don't throw here to avoid breaking the stream
@@ -51,6 +56,8 @@ export async function persistStreamResults(
   if (chatTitle && chatTitle !== DEFAULT_CHAT_TITLE) {
     try {
       await updateChatTitle(chatId, chatTitle, userId)
+      // Invalidate cache after updating title
+      revalidateTag(`chat-${chatId}`)
     } catch (error) {
       console.error('Error updating title:', error)
       // Don't throw here as title update is not critical

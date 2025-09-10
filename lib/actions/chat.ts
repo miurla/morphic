@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidateTag } from 'next/cache'
+import { revalidateTag, unstable_cache } from 'next/cache'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
@@ -12,6 +12,18 @@ import { getTextFromParts } from '@/lib/utils/message-utils'
 
 // Constants
 const DEFAULT_CHAT_TITLE = 'Untitled'
+
+// Cache individual chat loading for 60 seconds
+const getCachedChatWithMessages = unstable_cache(
+  async (chatId: string, requestingUserId?: string) => {
+    return dbActions.loadChatWithMessages(chatId, requestingUserId)
+  },
+  ['chat-with-messages'],
+  {
+    tags: (chatId) => [`chat-${chatId}`],
+    revalidate: 60
+  }
+)
 
 /**
  * Get all chats for the current user
@@ -44,8 +56,8 @@ export async function loadChat(
   chatId: string,
   requestingUserId?: string
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
-  // Use optimized function that loads both in parallel
-  return dbActions.loadChatWithMessages(chatId, requestingUserId)
+  // Use cached version for individual chat loading
+  return getCachedChatWithMessages(chatId, requestingUserId)
 }
 
 /**
