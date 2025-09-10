@@ -5,9 +5,17 @@ import { useCallback, useState } from 'react'
 import type { ReasoningPart } from '@ai-sdk/provider-utils'
 import { UseChatHelpers } from '@ai-sdk/react'
 
-import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import type {
+  DataPart as UIDataPart,
+  ToolPart,
+  UIDataTypes,
+  UIMessage,
+  UITools
+} from '@/lib/types/ai'
+import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import { cn } from '@/lib/utils'
 
+import { DataSection } from './data-section'
 import { ReasoningSection } from './reasoning-section'
 import { ToolSection } from './tool-section'
 
@@ -17,12 +25,14 @@ type TextPart = {
   text: string
 }
 
-type DataPart = {
-  type: string // starts with 'data-'
-  [key: string]: any
-}
+type DataPart = UIDataPart
 
-type MessagePart = ReasoningPart | ToolPart | TextPart | DataPart
+type MessagePart =
+  | ReasoningPart
+  | ToolPart
+  | TextPart
+  | DataPart
+  | DynamicToolPart
 
 // Type guards
 function isReasoningPart(part: MessagePart): part is ReasoningPart {
@@ -30,7 +40,9 @@ function isReasoningPart(part: MessagePart): part is ReasoningPart {
 }
 
 function isToolPart(part: MessagePart): part is ToolPart {
-  return part.type?.startsWith?.('tool-') ?? false
+  return (
+    (part.type?.startsWith?.('tool-') && part.type !== 'dynamic-tool') ?? false
+  )
 }
 
 function isTextPart(part: MessagePart): part is TextPart {
@@ -229,8 +241,7 @@ function RenderPart({
   }
 
   if (isDataPart(part)) {
-    // For now, render nothing here; existing renderer handles data parts elsewhere
-    return null
+    return <DataSection part={part} onQuerySelect={onQuerySelect} />
   }
 
   return null
@@ -282,7 +293,7 @@ export function ResearchProcessSection({
   addToolResult,
   parts: partsOverride
 }: Props) {
-  const allParts = partsOverride ?? (message.parts || [])
+  const allParts = (partsOverride ?? (message.parts || [])) as MessagePart[]
 
   // Filter out empty reasoning parts to avoid incorrect grouping
   const filteredParts = allParts.filter(p => !(isReasoningPart(p) && !p.text))
@@ -294,7 +305,10 @@ export function ResearchProcessSection({
     useAccordionState(onOpenChange)
 
   // Use custom hook for subsequent content detection
-  const hasSubsequentContent = useHasSubsequentContent(segments, message.parts)
+  const hasSubsequentContent = useHasSubsequentContent(
+    segments,
+    message.parts as MessagePart[] | undefined
+  )
 
   if (segments.length === 0 || segments.every(seg => seg.length === 0))
     return null

@@ -134,12 +134,8 @@ export function RenderMessage({
         />
       )
     } else if (
-      part.type === 'tool-search' ||
-      part.type === 'tool-fetch' ||
-      part.type === 'tool-askQuestion' ||
-      part.type === 'tool-todoWrite' ||
-      part.type === 'tool-todoRead' ||
       part.type === 'reasoning' ||
+      part.type?.startsWith?.('tool-') ||
       part.type?.startsWith?.('data-')
     ) {
       buffer.push(part)
