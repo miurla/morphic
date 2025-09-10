@@ -232,6 +232,7 @@ export async function clearChats() {
     await dbActions.deleteChat(chat.id, userId)
   }
 
+  // Clear all chat caches since we deleted all chats
   revalidateTag('chat')
   return { success: true }
 }
