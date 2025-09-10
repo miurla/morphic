@@ -90,7 +90,6 @@ export async function createChat(
 
   // Revalidate cache
   revalidateTag(`chat-${chatId}`)
-  revalidateTag('chat')
 
   return chat
 }
@@ -161,7 +160,6 @@ export async function createChatWithFirstMessage(
 
   // Revalidate cache
   revalidateTag(`chat-${chatId}`)
-  revalidateTag('chat')
 
   return result
 }
@@ -214,7 +212,6 @@ export async function deleteChat(chatId: string) {
 
   if (result.success) {
     revalidateTag(`chat-${chatId}`)
-    revalidateTag('chat')
   }
 
   return result
