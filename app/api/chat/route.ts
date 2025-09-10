@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { revalidateTag } from 'next/cache'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
@@ -102,6 +103,13 @@ export async function POST(req: Request) {
       isNewChat,
       searchMode
     })
+
+    // Invalidate the cache for this specific chat after creating the response
+    // This ensures the next load will get fresh data
+    if (chatId) {
+      revalidateTag(`chat-${chatId}`)
+      revalidateTag('chat')
+    }
 
     const totalTime = performance.now() - startTime
     perfLog(`Total API route time: ${totalTime.toFixed(2)}ms`)
