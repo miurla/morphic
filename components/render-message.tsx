@@ -13,6 +13,7 @@ import { AnswerSection } from './answer-section'
 import { DataSection } from './data-section'
 import { DynamicToolDisplay } from './dynamic-tool-display'
 import { ReasoningSection } from './reasoning-section'
+import ResearchProcessSection from './research-process-section'
 import { ToolSection } from './tool-section'
 import { UserFileSection } from './user-file-section'
 import { UserTextSection } from './user-text-section'
@@ -79,95 +80,77 @@ export function RenderMessage({
     )
   }
 
-  return (
-    <>
-      {message.parts?.map((part: any, index: number) => {
-        // Check if there's a next part in this message
-        const hasNextPart = message.parts && index < message.parts.length - 1
+  // New rendering: interleave text parts with grouped non-text segments
+  const elements: React.ReactNode[] = []
+  let buffer: any[] = []
+  const flushBuffer = (keySuffix: string) => {
+    if (buffer.length === 0) return
+    elements.push(
+      <ResearchProcessSection
+        key={`${messageId}-proc-${keySuffix}`}
+        message={message}
+        messageId={messageId}
+        parts={buffer}
+        getIsOpen={getIsOpen}
+        onOpenChange={onOpenChange}
+        onQuerySelect={onQuerySelect}
+        status={status}
+        addToolResult={addToolResult}
+      />
+    )
+    buffer = []
+  }
 
-        switch (part.type) {
-          case 'tool-search':
-          case 'tool-fetch':
-          case 'tool-askQuestion':
-          case 'tool-todoWrite':
-          case 'tool-todoRead':
-            return (
-              <ToolSection
-                key={`${messageId}-tool-${index}`}
-                tool={part as any}
-                isOpen={getIsOpen(part.toolCallId, part.type, hasNextPart)}
-                onOpenChange={open => onOpenChange(part.toolCallId, open)}
-                addToolResult={addToolResult}
-                status={status}
-                onQuerySelect={onQuerySelect}
-              />
-            )
-          case 'dynamic-tool':
-            return (
-              <DynamicToolDisplay
-                key={`${messageId}-dynamic-tool-${index}`}
-                part={part as DynamicToolPart}
-              />
-            )
-          case 'text':
-            // Find if this is the last text part in this message
-            const remainingParts = message.parts?.slice(index + 1) || []
-            const hasMoreTextParts = remainingParts.some(p => p.type === 'text')
-            const isLastTextPart = !hasMoreTextParts
+  message.parts?.forEach((part: any, index: number) => {
+    if (part.type === 'text') {
+      // Flush accumulated non-text first
+      flushBuffer(`seg-${index}`)
 
-            // Check if streaming is complete
-            const isStreamingComplete =
-              status !== 'streaming' && status !== 'submitted'
+      const remainingParts = message.parts?.slice(index + 1) || []
+      const hasMoreTextParts = remainingParts.some(p => p.type === 'text')
+      const isLastTextPart = !hasMoreTextParts
+      const isStreamingComplete =
+        status !== 'streaming' && status !== 'submitted'
+      const shouldShowActions =
+        isLastTextPart && (isLatestMessage ? isStreamingComplete : true)
 
-            // Show actions only on the last text part of each message
-            // For the latest message, also check if streaming is complete
-            const shouldShowActions =
-              isLastTextPart && (isLatestMessage ? isStreamingComplete : true)
-            return (
-              <AnswerSection
-                key={`${messageId}-text-${index}`}
-                content={part.text}
-                isOpen={getIsOpen(messageId, part.type, hasNextPart)}
-                onOpenChange={open => onOpenChange(messageId, open)}
-                chatId={chatId}
-                showActions={shouldShowActions}
-                messageId={messageId}
-                metadata={message.metadata as UIMessageMetadata | undefined}
-                reload={reload}
-                status={status}
-                citationMaps={citationMaps}
-              />
-            )
-          case 'reasoning':
-            return (
-              <ReasoningSection
-                key={`${messageId}-reasoning-${index}`}
-                content={{
-                  reasoning: part.text,
-                  isDone: index !== (message.parts?.length ?? 0) - 1
-                }}
-                isOpen={getIsOpen(
-                  `${messageId}-reasoning-${index}`,
-                  part.type,
-                  hasNextPart
-                )}
-                onOpenChange={open =>
-                  onOpenChange(`${messageId}-reasoning-${index}`, open)
-                }
-              />
-            )
-          case 'data-relatedQuestions':
-            return (
-              <DataSection
-                key={`${messageId}-${part.type}-${index}`}
-                part={part}
-                onQuerySelect={onQuerySelect}
-              />
-            )
-          default:
-            return null
-        }
-      })}
-    </>
-  )
+      elements.push(
+        <AnswerSection
+          key={`${messageId}-text-${index}`}
+          content={part.text}
+          isOpen={getIsOpen(
+            messageId,
+            part.type,
+            index < (message.parts?.length ?? 0) - 1
+          )}
+          onOpenChange={open => onOpenChange(messageId, open)}
+          chatId={chatId}
+          showActions={shouldShowActions}
+          messageId={messageId}
+          metadata={message.metadata as UIMessageMetadata | undefined}
+          reload={reload}
+          status={status}
+          citationMaps={citationMaps}
+        />
+      )
+    } else if (
+      part.type === 'reasoning' ||
+      part.type?.startsWith?.('tool-') ||
+      part.type?.startsWith?.('data-')
+    ) {
+      buffer.push(part)
+    } else if (part.type === 'dynamic-tool') {
+      flushBuffer(`seg-${index}`)
+      elements.push(
+        <DynamicToolDisplay
+          key={`${messageId}-dynamic-tool-${index}`}
+          part={part as DynamicToolPart}
+        />
+      )
+    }
+  })
+  // Flush tail
+  flushBuffer('tail')
+
+  return <>{elements}</>
 }

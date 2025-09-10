@@ -39,7 +39,7 @@ export function InspectorPanel() {
       case 'reasoning':
         return {
           icon: <LightbulbIcon size={18} />,
-          title: 'Reasoning'
+          title: 'Thoughts'
         }
       case 'text':
         return {

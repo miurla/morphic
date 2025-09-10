@@ -26,7 +26,7 @@ export function InspectorDrawer() {
       case 'tool-askQuestion':
         return 'askQuestion'
       case 'reasoning':
-        return 'Reasoning'
+        return 'Thoughts'
       case 'text':
         return 'Text'
       default:
