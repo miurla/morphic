@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidateTag } from 'next/cache'
+import { revalidateTag, unstable_cache } from 'next/cache'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
@@ -12,6 +12,26 @@ import { getTextFromParts } from '@/lib/utils/message-utils'
 
 // Constants
 const DEFAULT_CHAT_TITLE = 'Untitled'
+
+// Create cached version of loadChatWithMessages with dynamic tags per chat
+const getCachedChatWithMessages = (
+  chatId: string,
+  requestingUserId?: string
+) => {
+  // Create a unique cache instance for each chat
+  const cachedFunction = unstable_cache(
+    async () => {
+      return dbActions.loadChatWithMessages(chatId, requestingUserId)
+    },
+    ['chat-with-messages', chatId, requestingUserId || 'anonymous'], // cache key
+    {
+      tags: [`chat-${chatId}`, 'chat'], // both specific and general tags
+      revalidate: 60 // revalidate after 60 seconds
+    }
+  )
+
+  return cachedFunction()
+}
 
 /**
  * Get all chats for the current user
@@ -44,8 +64,8 @@ export async function loadChat(
   chatId: string,
   requestingUserId?: string
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
-  // Use optimized function that loads both in parallel
-  return dbActions.loadChatWithMessages(chatId, requestingUserId)
+  // Use cached version for individual chat loading
+  return getCachedChatWithMessages(chatId, requestingUserId)
 }
 
 /**
@@ -70,7 +90,6 @@ export async function createChat(
 
   // Revalidate cache
   revalidateTag(`chat-${chatId}`)
-  revalidateTag('chat')
 
   return chat
 }
@@ -141,7 +160,6 @@ export async function createChatWithFirstMessage(
 
   // Revalidate cache
   revalidateTag(`chat-${chatId}`)
-  revalidateTag('chat')
 
   return result
 }
@@ -194,7 +212,6 @@ export async function deleteChat(chatId: string) {
 
   if (result.success) {
     revalidateTag(`chat-${chatId}`)
-    revalidateTag('chat')
   }
 
   return result
@@ -215,6 +232,7 @@ export async function clearChats() {
     await dbActions.deleteChat(chat.id, userId)
   }
 
+  // Clear all chat caches since we deleted all chats
   revalidateTag('chat')
   return { success: true }
 }
