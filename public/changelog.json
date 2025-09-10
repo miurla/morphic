@@ -1,12 +1,22 @@
 {
   "current": {
-    "version": "1.0.0 Beta.4",
-    "date": "2025-09-03",
+    "version": "1.0.0 Beta.5",
+    "date": "2025-09-10",
     "features": [
-      "Morphic reborn - Now with powerful agentic search beyond quick answers"
+      "🎨 New Research Process UI with grouped sections",
+      "💭 Improved Thoughts display for better readability",
+      "📝 Enhanced TODO tracking with progress visualization"
     ],
-    "showUntil": "2025-09-10",
-    "dismissKey": "changelog-v1.0.0"
+    "showUntil": "2025-09-17",
+    "dismissKey": "changelog-v1.0.0-beta.5"
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0 Beta.4",
+      "date": "2025-09-03",
+      "features": [
+        "Morphic reborn - Now with powerful agentic search beyond quick answers"
+      ]
+    }
+  ]
 }
