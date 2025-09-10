@@ -13,18 +13,21 @@ import { getTextFromParts } from '@/lib/utils/message-utils'
 // Constants
 const DEFAULT_CHAT_TITLE = 'Untitled'
 
-// Create a wrapper function for dynamic cache tags per chat
+// Create cached version of loadChatWithMessages with dynamic tags per chat
 const getCachedChatWithMessages = (chatId: string, requestingUserId?: string) => {
-  return unstable_cache(
+  // Create a unique cache instance for each chat
+  const cachedFunction = unstable_cache(
     async () => {
       return dbActions.loadChatWithMessages(chatId, requestingUserId)
     },
-    ['chat-with-messages', chatId, requestingUserId || 'anonymous'],
+    ['chat-with-messages', chatId, requestingUserId || 'anonymous'], // cache key
     {
-      tags: [`chat-${chatId}`],
-      revalidate: 60
+      tags: [`chat-${chatId}`, 'chat'], // both specific and general tags
+      revalidate: 60 // revalidate after 60 seconds
     }
-  )()
+  )
+  
+  return cachedFunction()
 }
 
 /**
