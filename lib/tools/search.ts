@@ -1,4 +1,4 @@
-import { tool } from 'ai'
+import { tool, UIToolInvocation } from 'ai'
 
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { SearchResultItem, SearchResults } from '@/lib/types'
@@ -18,7 +18,7 @@ export function createSearchTool(fullModel: string) {
     description:
       'Search the web for information. For YouTube/video content, use type="general" with content_types:["video"] for optimal visual presentation with thumbnails.',
     inputSchema: getSearchSchemaForModel(fullModel),
-    execute: async (
+    async *execute(
       {
         query,
         type = 'optimized',
@@ -29,7 +29,12 @@ export function createSearchTool(fullModel: string) {
         exclude_domains = []
       },
       context
-    ) => {
+    ) {
+      // Yield initial searching state
+      yield {
+        state: 'searching' as const,
+        query
+      }
       // Ensure max_results is at least 10
       const minResults = 10
       const effectiveMaxResults = Math.max(
@@ -137,13 +142,21 @@ export function createSearchTool(fullModel: string) {
       }
 
       console.log('completed search')
-      return searchResult
+
+      // Yield final results with complete state
+      yield {
+        state: 'complete' as const,
+        ...searchResult
+      }
     }
   })
 }
 
 // Default export for backward compatibility, using a default model
 export const searchTool = createSearchTool('openai:gpt-4o-mini')
+
+// Export type for UI tool invocation
+export type SearchUIToolInvocation = UIToolInvocation<typeof searchTool>
 
 export async function search(
   query: string,
@@ -159,8 +172,8 @@ export async function search(
       content_types: ['web'],
       max_results: maxResults,
       search_depth: searchDepth,
-      include_domains: includeDomains as any,
-      exclude_domains: excludeDomains as any
+      include_domains: includeDomains,
+      exclude_domains: excludeDomains
     },
     {
       toolCallId: 'search',
@@ -177,7 +190,11 @@ export async function search(
     // Collect all results from the async iterable
     let searchResults: SearchResults | null = null
     for await (const chunk of result) {
-      searchResults = chunk
+      // Only assign when we get the complete result
+      if ('state' in chunk && chunk.state === 'complete') {
+        const { state, ...rest } = chunk
+        searchResults = rest as SearchResults
+      }
     }
     return (
       searchResults ?? { results: [], images: [], query, number_of_results: 0 }

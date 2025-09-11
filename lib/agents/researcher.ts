@@ -2,9 +2,16 @@ import {
   Experimental_Agent as Agent,
   stepCountIs,
   tool,
+  UIMessage,
   UIMessageStreamWriter
 } from 'ai'
 
+import type {
+  ResearcherAgent,
+  ResearcherRespondOptions,
+  ResearcherResponse,
+  ResearcherTools
+} from '@/lib/types/agent'
 import { Model } from '@/lib/types/models'
 
 import { fetchTool } from '../tools/fetch'
@@ -21,61 +28,54 @@ import {
   QUICK_MODE_PROMPT
 } from './prompts/search-mode-prompts'
 
-// Wrapper function to force optimized search for quick mode
-function wrapSearchToolForQuickMode(
-  originalTool: ReturnType<typeof createSearchTool>
-): ReturnType<typeof createSearchTool> {
+// Enhanced wrapper function with better type safety and streaming support
+function wrapSearchToolForQuickMode<
+  T extends ReturnType<typeof createSearchTool>
+>(originalTool: T): T {
   return tool({
     description: originalTool.description,
     inputSchema: originalTool.inputSchema,
-    execute: async (params: any, context: any) => {
-      // Force type to be optimized for quick mode
+    async *execute(params, context) {
       const executeFunc = originalTool.execute
       if (!executeFunc) {
         throw new Error('Search tool execute function is not defined')
       }
-      const result = await executeFunc(
-        {
-          ...params,
-          type: 'optimized'
-        },
-        context
-      )
 
-      // Handle AsyncIterable case
+      // Force optimized type for quick mode
+      const modifiedParams = {
+        ...params,
+        type: 'optimized' as const
+      }
+
+      // Execute the original tool and pass through all yielded values
+      const result = executeFunc(modifiedParams, context)
+
+      // Handle AsyncIterable (streaming) case
       if (
         result &&
         typeof result === 'object' &&
         Symbol.asyncIterator in result
       ) {
-        // Collect all results from the async iterable
-        let searchResults: any = null
         for await (const chunk of result) {
-          searchResults = chunk
+          yield chunk
         }
-        return (
-          searchResults || {
-            results: [],
-            images: [],
-            query: params.query,
-            number_of_results: 0
-          }
-        )
-      }
-
-      return (
-        result || {
+      } else {
+        // Fallback for non-streaming (shouldn't happen with new implementation)
+        const finalResult = await result
+        yield finalResult || {
+          state: 'complete' as const,
           results: [],
           images: [],
           query: params.query,
           number_of_results: 0
         }
-      )
+      }
     }
-  }) as ReturnType<typeof createSearchTool>
+  }) as T
 }
 
-export function researcher({
+// Enhanced researcher function with improved type safety
+export function createResearcher({
   model,
   modelConfig,
   abortSignal,
@@ -89,43 +89,35 @@ export function researcher({
   writer?: UIMessageStreamWriter
   parentTraceId?: string
   searchMode?: SearchMode
-}) {
+}): ResearcherAgent {
   try {
     const currentDate = new Date().toLocaleString()
 
-    // Create model-specific tools
+    // Create model-specific tools with proper typing
     const originalSearchTool = createSearchTool(model)
     const askQuestionTool = createQuestionTool(model)
-
-    // Create todo tools if writer is provided
     const todoTools = writer ? createTodoTools() : {}
 
-    // Direct mode-based parameter selection
     let systemPrompt: string
-    let activeToolsList: string[]
+    let activeToolsList: (keyof ResearcherTools)[] = []
     let maxSteps: number
-    let searchTool: ReturnType<typeof createSearchTool>
+    let searchTool = originalSearchTool
 
-    // Simple switch - no config objects
-    console.log(`[Researcher] Executing in ${searchMode} mode`)
-
+    // Configure based on search mode
     switch (searchMode) {
       case 'quick':
-        // Quick Mode: Minimal tools, fast responses, optimized search only
         console.log(
           '[Researcher] Quick mode: maxSteps=5, tools=[search, fetch]'
         )
         systemPrompt = QUICK_MODE_PROMPT
         activeToolsList = ['search', 'fetch']
         maxSteps = 5
-        // Force optimized search for quick mode
         searchTool = wrapSearchToolForQuickMode(originalSearchTool)
         break
 
       case 'planning':
-        // Planning Mode: All tools, structured approach, many steps
         systemPrompt = PLANNING_MODE_PROMPT
-        activeToolsList = ['search', 'fetch'] // Temporarily removed askQuestion until improvements
+        activeToolsList = ['search', 'fetch']
         if (writer && 'todoWrite' in todoTools) {
           activeToolsList.push('todoWrite', 'todoRead')
         }
@@ -138,7 +130,6 @@ export function researcher({
 
       case 'adaptive':
       default:
-        // Adaptive Mode: Balanced approach, current behavior
         systemPrompt = ADAPTIVE_MODE_PROMPT
         activeToolsList = ['search', 'fetch']
         if (writer && 'todoWrite' in todoTools) {
@@ -152,24 +143,24 @@ export function researcher({
         break
     }
 
-    // Build tools object with potentially wrapped search tool
-    const tools = {
+    // Build tools object with proper typing
+    const tools: ResearcherTools = {
       search: searchTool,
       fetch: fetchTool,
       askQuestion: askQuestionTool,
       ...todoTools
-    }
+    } as ResearcherTools
 
     // Check if we should force todoWrite on first step
     const shouldForceTodoWrite =
       searchMode === 'planning' && writer && 'todoWrite' in todoTools
 
-    // Return an agent instance
-    return new Agent({
+    // Create and return the agent with enhanced type safety
+    const agent = new Agent<ResearcherTools>({
       model: getModel(model),
       system: `${systemPrompt}\nCurrent date and time: ${currentDate}`,
       tools,
-      activeTools: activeToolsList as (keyof typeof tools)[],
+      activeTools: activeToolsList,
       stopWhen: stepCountIs(maxSteps),
       abortSignal,
       ...(modelConfig?.providerOptions && {
@@ -200,8 +191,25 @@ export function researcher({
         }
       }
     })
+
+    return agent as ResearcherAgent
   } catch (error) {
-    console.error('Error in researcher:', error)
+    console.error('Error in createResearcher:', error)
     throw error
   }
 }
+
+// Helper function to access agent tools
+export function getResearcherTools(agent: ResearcherAgent): ResearcherTools {
+  return agent.tools
+}
+
+// Helper function to create a respond wrapper with type safety
+export function createResearcherRespond(agent: ResearcherAgent) {
+  return (options: ResearcherRespondOptions): ResearcherResponse => {
+    return agent.respond(options)
+  }
+}
+
+// Export the legacy function name for backward compatibility
+export const researcher = createResearcher
