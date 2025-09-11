@@ -152,22 +152,37 @@ export async function search(
   includeDomains: string[] = [],
   excludeDomains: string[] = []
 ): Promise<SearchResults> {
-  return (
-    searchTool.execute?.(
-      {
-        query,
-        type: 'general',
-        content_types: ['web'],
-        max_results: maxResults,
-        search_depth: searchDepth,
-        include_domains: includeDomains as any,
-        exclude_domains: excludeDomains as any
-      },
-      {
-        toolCallId: 'search',
-        messages: []
-      }
-    ) ??
-    Promise.resolve({ results: [], images: [], query, number_of_results: 0 })
+  const result = await searchTool.execute?.(
+    {
+      query,
+      type: 'general',
+      content_types: ['web'],
+      max_results: maxResults,
+      search_depth: searchDepth,
+      include_domains: includeDomains as any,
+      exclude_domains: excludeDomains as any
+    },
+    {
+      toolCallId: 'search',
+      messages: []
+    }
   )
+
+  if (!result) {
+    return { results: [], images: [], query, number_of_results: 0 }
+  }
+
+  // Handle AsyncIterable case
+  if (Symbol.asyncIterator in result) {
+    // Collect all results from the async iterable
+    let searchResults: SearchResults | null = null
+    for await (const chunk of result) {
+      searchResults = chunk
+    }
+    return (
+      searchResults ?? { results: [], images: [], query, number_of_results: 0 }
+    )
+  }
+
+  return result as SearchResults
 }

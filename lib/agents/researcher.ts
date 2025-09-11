@@ -24,7 +24,7 @@ import {
 // Wrapper function to force optimized search for quick mode
 function wrapSearchToolForQuickMode(
   originalTool: ReturnType<typeof createSearchTool>
-) {
+): ReturnType<typeof createSearchTool> {
   return tool({
     description: originalTool.description,
     inputSchema: originalTool.inputSchema,
@@ -34,15 +34,45 @@ function wrapSearchToolForQuickMode(
       if (!executeFunc) {
         throw new Error('Search tool execute function is not defined')
       }
-      return executeFunc(
+      const result = await executeFunc(
         {
           ...params,
           type: 'optimized'
         },
         context
       )
+
+      // Handle AsyncIterable case
+      if (
+        result &&
+        typeof result === 'object' &&
+        Symbol.asyncIterator in result
+      ) {
+        // Collect all results from the async iterable
+        let searchResults: any = null
+        for await (const chunk of result) {
+          searchResults = chunk
+        }
+        return (
+          searchResults || {
+            results: [],
+            images: [],
+            query: params.query,
+            number_of_results: 0
+          }
+        )
+      }
+
+      return (
+        result || {
+          results: [],
+          images: [],
+          query: params.query,
+          number_of_results: 0
+        }
+      )
     }
-  })
+  }) as ReturnType<typeof createSearchTool>
 }
 
 export function researcher({
