@@ -179,7 +179,9 @@ export async function search(
     for await (const chunk of result) {
       searchResults = chunk
     }
-    return searchResults ?? { results: [], images: [], query, number_of_results: 0 }
+    return (
+      searchResults ?? { results: [], images: [], query, number_of_results: 0 }
+    )
   }
 
   return result as SearchResults

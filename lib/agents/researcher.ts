@@ -43,16 +43,34 @@ function wrapSearchToolForQuickMode(
       )
 
       // Handle AsyncIterable case
-      if (result && typeof result === 'object' && Symbol.asyncIterator in result) {
+      if (
+        result &&
+        typeof result === 'object' &&
+        Symbol.asyncIterator in result
+      ) {
         // Collect all results from the async iterable
         let searchResults: any = null
         for await (const chunk of result) {
           searchResults = chunk
         }
-        return searchResults || { results: [], images: [], query: params.query, number_of_results: 0 }
+        return (
+          searchResults || {
+            results: [],
+            images: [],
+            query: params.query,
+            number_of_results: 0
+          }
+        )
       }
 
-      return result || { results: [], images: [], query: params.query, number_of_results: 0 }
+      return (
+        result || {
+          results: [],
+          images: [],
+          query: params.query,
+          number_of_results: 0
+        }
+      )
     }
   }) as ReturnType<typeof createSearchTool>
 }
