@@ -77,10 +77,16 @@ export function ToolTodoDisplay({
         <span className="inline-flex items-center gap-2 min-w-0 overflow-hidden">
           <ListTodo className="size-4 text-muted-foreground shrink-0" />
           <span className="truncate">
-            {state === 'output-available'
+            {state === 'output-available' && output
               ? tool === 'todoRead'
-                ? (output as any)?.summary || output?.message || 'Todo list'
-                : output?.message || 'Updated tasks'
+                ? (typeof output === 'object' &&
+                  'summary' in output &&
+                  typeof output.summary === 'string'
+                    ? output.summary
+                    : null) ||
+                  output.message ||
+                  'Todo list'
+                : output.message || 'Updated tasks'
               : tool === 'todoWrite'
                 ? 'Updating tasks...'
                 : 'Reading tasks...'}
@@ -153,7 +159,12 @@ export function ToolTodoDisplay({
                 todos={output?.todos}
                 message={
                   tool === 'todoRead'
-                    ? (output as any)?.summary || output?.message
+                    ? (output &&
+                      typeof output === 'object' &&
+                      'summary' in output &&
+                      typeof output.summary === 'string'
+                        ? output.summary
+                        : undefined) || output?.message
                     : output?.message
                 }
                 completedCount={completedCount}
@@ -164,7 +175,9 @@ export function ToolTodoDisplay({
               />
             ) : state === 'output-error' ? (
               <div className="px-3 pb-3 text-xs text-destructive">{`Todo tool failed${
-                (output as any)?.message ? `: ${(output as any).message}` : ''
+                output && 'message' in output && output.message
+                  ? `: ${output.message}`
+                  : ''
               }`}</div>
             ) : null}
           </div>

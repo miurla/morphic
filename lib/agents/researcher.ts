@@ -3,14 +3,15 @@ import {
   stepCountIs,
   tool,
   UIMessage,
-  UIMessageStreamWriter} from 'ai'
+  UIMessageStreamWriter
+} from 'ai'
 
 import type {
   ResearcherAgent,
   ResearcherRespondOptions,
   ResearcherResponse,
-  ResearcherTools,
-  ResearcherUIMessage} from '@/lib/types/agent'
+  ResearcherTools
+} from '@/lib/types/agent'
 import { Model } from '@/lib/types/models'
 
 import { fetchTool } from '../tools/fetch'
@@ -27,36 +28,48 @@ import {
   QUICK_MODE_PROMPT
 } from './prompts/search-mode-prompts'
 
-// Enhanced wrapper function with better type safety
+// Enhanced wrapper function with better type safety and streaming support
 function wrapSearchToolForQuickMode<
   T extends ReturnType<typeof createSearchTool>
 >(originalTool: T): T {
   return tool({
     description: originalTool.description,
     inputSchema: originalTool.inputSchema,
-    execute: async (params: any, context: any) => {
+    async *execute(params, context) {
       const executeFunc = originalTool.execute
       if (!executeFunc) {
         throw new Error('Search tool execute function is not defined')
       }
 
       // Force optimized type for quick mode
-      const result = await executeFunc(
-        {
-          ...params,
-          type: 'optimized'
-        },
-        context
-      )
+      const modifiedParams = {
+        ...params,
+        type: 'optimized' as const
+      }
 
-      return (
-        result || {
+      // Execute the original tool and pass through all yielded values
+      const result = executeFunc(modifiedParams, context)
+
+      // Handle AsyncIterable (streaming) case
+      if (
+        result &&
+        typeof result === 'object' &&
+        Symbol.asyncIterator in result
+      ) {
+        for await (const chunk of result) {
+          yield chunk
+        }
+      } else {
+        // Fallback for non-streaming (shouldn't happen with new implementation)
+        const finalResult = await result
+        yield finalResult || {
+          state: 'complete' as const,
           results: [],
           images: [],
           query: params.query,
           number_of_results: 0
         }
-      )
+      }
     }
   }) as T
 }

@@ -33,6 +33,11 @@ export function FetchSection({
   const isToolLoading =
     tool.state === 'input-streaming' || tool.state === 'input-available'
 
+  // Handle streaming output states
+  const output = tool.state === 'output-available' ? tool.output : undefined
+  const isFetching = output?.state === 'fetching'
+  const fetchResults = output?.state === 'complete' ? output : undefined
+
   // Determine the status based on tool output availability
   let displayStatus: 'fetching' | 'success' | 'error' = 'fetching'
   let error: string | undefined
@@ -43,11 +48,11 @@ export function FetchSection({
   if (tool.state === 'output-error') {
     displayStatus = 'error'
     error = tool.errorText || 'Failed to retrieve content'
-  } else if (!tool.output) {
+  } else if (!output || isFetching) {
     displayStatus = 'fetching'
-  } else {
-    // Success state - we have output
-    const data = tool.output as SearchResultsType
+  } else if (fetchResults) {
+    // Success state - we have complete output
+    const data = fetchResults as SearchResultsType
     if (data?.results?.[0]) {
       displayStatus = 'success'
       title = data.results[0].title

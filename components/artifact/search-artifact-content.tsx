@@ -12,8 +12,10 @@ import {
 } from '@/components/video-search-results'
 
 export function SearchArtifactContent({ tool }: { tool: ToolPart<'search'> }) {
+  // Handle streaming output states
+  const output = tool.state === 'output-available' ? tool.output : undefined
   const searchResults: TypeSearchResults | undefined =
-    tool.state === 'output-available' ? tool.output : undefined
+    output?.state === 'complete' ? output : undefined
   const query = tool.input?.query
 
   const hasResults =

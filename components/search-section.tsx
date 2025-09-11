@@ -44,11 +44,16 @@ export function SearchSection({
 
   const isToolLoading =
     tool.state === 'input-streaming' || tool.state === 'input-available'
+
+  // Handle streaming output states
+  const output = tool.state === 'output-available' ? tool.output : undefined
+  const isSearching = output?.state === 'searching'
   const searchResults: TypeSearchResults | undefined =
-    tool.state === 'output-available' ? tool.output : undefined
+    output?.state === 'complete' ? output : undefined
+
   const isError = tool.state === 'output-error'
   const errorMessage = tool.errorText || 'Search failed'
-  const query = tool.input?.query || ''
+  const query = tool.input?.query || output?.query || ''
   const includeDomains = tool.input?.include_domains
   const includeDomainsString =
     includeDomains && includeDomains.length > 0
@@ -65,7 +70,7 @@ export function SearchSection({
   const header = (
     <ProcessHeader
       onInspect={() => open(tool)}
-      isLoading={isLoading && isToolLoading}
+      isLoading={isLoading && (isToolLoading || isSearching)}
       ariaExpanded={isOpen}
       label={
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
@@ -157,7 +162,7 @@ export function SearchSection({
                   </div>
                 </div>
               </Section>
-            ) : isLoading && isToolLoading ? (
+            ) : (isLoading && isToolLoading) || isSearching ? (
               <SearchSkeleton />
             ) : searchResults?.results && searchResults.results.length > 0 ? (
               <Section title="Sources">

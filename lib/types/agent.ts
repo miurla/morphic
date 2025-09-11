@@ -3,7 +3,8 @@ import type {
   Experimental_InferAgentUIMessage as InferAgentUIMessage,
   InferUITools,
   UIMessage,
-  UIToolInvocation} from 'ai'
+  UIToolInvocation
+} from 'ai'
 
 import type { fetchTool } from '../tools/fetch'
 import type { createQuestionTool } from '../tools/question'
