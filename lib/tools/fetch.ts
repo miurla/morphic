@@ -1,4 +1,4 @@
-import { tool } from 'ai'
+import { tool, UIToolInvocation } from 'ai'
 
 import { fetchSchema } from '@/lib/schema/fetch'
 import { SearchResults as SearchResultsType } from '@/lib/types'
@@ -180,3 +180,6 @@ export const fetchTool = tool({
     return results
   }
 })
+
+// Export type for UI tool invocation
+export type FetchUIToolInvocation = UIToolInvocation<typeof fetchTool>

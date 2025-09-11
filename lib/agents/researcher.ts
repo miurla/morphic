@@ -40,6 +40,7 @@ function wrapSearchToolForQuickMode<
         throw new Error('Search tool execute function is not defined')
       }
 
+      // Force optimized type for quick mode
       const result = await executeFunc(
         {
           ...params,
@@ -47,26 +48,6 @@ function wrapSearchToolForQuickMode<
         },
         context
       )
-
-      // Handle AsyncIterable case with proper typing
-      if (
-        result &&
-        typeof result === 'object' &&
-        Symbol.asyncIterator in result
-      ) {
-        let searchResults: any = null
-        for await (const chunk of result) {
-          searchResults = chunk
-        }
-        return (
-          searchResults || {
-            results: [],
-            images: [],
-            query: params.query,
-            number_of_results: 0
-          }
-        )
-      }
 
       return (
         result || {

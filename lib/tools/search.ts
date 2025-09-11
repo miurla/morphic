@@ -1,4 +1,4 @@
-import { tool } from 'ai'
+import { tool, UIToolInvocation } from 'ai'
 
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { SearchResultItem, SearchResults } from '@/lib/types'
@@ -144,6 +144,9 @@ export function createSearchTool(fullModel: string) {
 
 // Default export for backward compatibility, using a default model
 export const searchTool = createSearchTool('openai:gpt-4o-mini')
+
+// Export type for UI tool invocation
+export type SearchUIToolInvocation = UIToolInvocation<typeof searchTool>
 
 export async function search(
   query: string,
