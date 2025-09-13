@@ -92,11 +92,12 @@ The script displays:
 ### Advanced Usage
 
 #### Message Regeneration
+
 You can regenerate the last assistant message in a conversation:
 
 ```bash
 # First, send a message and note the chat ID and message ID from the output
-bun chat -m "Tell me about AI" 
+bun chat -m "Tell me about AI"
 
 # Then regenerate the assistant's response
 bun chat -c "chat_123" -t regenerate --message-id "msg_456"
@@ -121,6 +122,7 @@ bun chat -c "chat_123" -t regenerate --message-id "msg_456" -m "Tell me about ma
 ### Troubleshooting
 
 #### Authentication Errors
+
 If you encounter "User not authenticated" errors:
 
 1. Ensure you're logged into Morphic in your browser
@@ -129,6 +131,7 @@ If you encounter "User not authenticated" errors:
 4. Cookies expire after ~1 hour, so refresh them if needed
 
 #### API Errors
+
 If you encounter "Selected provider is not enabled" errors:
 
 1. Check that the model type is correctly configured in your system
