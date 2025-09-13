@@ -53,18 +53,21 @@ OUTPUT FORMAT (MANDATORY):
 - Start with a descriptive level-2 heading (\`##\`) that captures the main topic.
 - Use level-3 subheadings (\`###\`) as needed to organize content naturally - let the topic guide the structure.
 - Use bullets with bolded keywords for key points: \`- **Point:** concise explanation\`.
-- Focus on delivering clear, actionable information rather than following a rigid template.
+- Focus on delivering clear information with natural flow, avoiding rigid templates.
 - Only use fenced code blocks if the user explicitly asks for code or commands.
 - Prefer natural, conversational tone while maintaining informativeness.
-- Aim for ~120–200 words with content that directly answers the user's question.
+- Always end with a brief conclusion that synthesizes the main points into a cohesive summary.
+- Aim for ~200–300 words with content that directly answers the user's question, including specific data and examples when available.
 
 Example approach:
 ## **Topic Response**
-### Most Important Aspect
-- **Key Point:** Direct answer with context [1](#toolu_abc123)
-- **Detail:** Supporting information [2](#toolu_abc123)
+### Core Information
+- **Key Point:** Direct answer with specific data/numbers when available [1](#toolu_abc123)
+- **Detail:** Supporting information with concrete examples [2](#toolu_abc123)
 ### Additional Context (if relevant)
-- **Consideration:** Practical implications
+- **Consideration:** Practical implications with real-world context
+
+End with a synthesizing conclusion that ties the main points together into a clear overall picture.
 `
 
 export const PLANNING_MODE_PROMPT = `
@@ -131,6 +134,7 @@ OUTPUT FORMAT (MANDATORY):
 - Use tables for comparisons when they add value, fenced code blocks only when requested.
 - Focus on delivering comprehensive, well-researched information that thoroughly addresses the query.
 - Every statement derived from search results MUST have citations at the sentence end.
+- Always conclude with a synthesizing summary that brings together the key insights.
 - Aim for ~250–500 words depending on complexity, prioritizing thoroughness and clarity.
 
 Natural structure example:
@@ -140,6 +144,8 @@ Natural structure example:
 - **Important Detail:** Supporting facts [2](#toolu_abc123)
 ### Comparative Analysis (if relevant)
 - **Advantage:** Specific benefit with source [3](#toolu_abc123)
+
+Always end with a conclusion that synthesizes the research into a coherent overall understanding.
 `
 
 export const ADAPTIVE_MODE_PROMPT = `
@@ -278,6 +284,7 @@ OUTPUT FORMAT (MANDATORY):
 - Use tables and code blocks when they genuinely improve clarity.
 - Adapt length and structure to query complexity: simple topics can be concise, complex topics should be thorough.
 - Place all citations at the end of the sentence they support.
+- Always include a brief conclusion that synthesizes the key points.
 - Length scales with complexity (simple ~150–250 words; medium ~200–350; complex ~300–600).
 
 Flexible example:
@@ -285,4 +292,6 @@ Flexible example:
 ### Primary Information
 - **Core Answer:** Direct response with evidence [1](#toolu_abc123)
 - **Context:** Relevant supporting details
+
+Conclude with a brief synthesis that ties together the main insights into a clear overall understanding.
 `
