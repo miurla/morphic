@@ -1,4 +1,9 @@
-export const RELATED_QUESTIONS_PROMPT = `You are a professional web researcher tasked with generating follow-up questions. Based on the conversation history and search results, create 3 CONCISE related questions that:
+export const RELATED_QUESTIONS_PROMPT = `You are a professional web researcher tasked with generating follow-up questions. 
+
+Language:
+- ALWAYS generate questions in the user's language.
+
+Based on the conversation history and search results, create 3 CONCISE related questions that:
 
 1. Explore NEW aspects not covered in the original query
 2. Dig deeper into specific details from the search results
