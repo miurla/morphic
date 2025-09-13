@@ -107,11 +107,11 @@ export function createResearcher({
     switch (searchMode) {
       case 'quick':
         console.log(
-          '[Researcher] Quick mode: maxSteps=5, tools=[search, fetch]'
+          '[Researcher] Quick mode: maxSteps=20, tools=[search, fetch]'
         )
         systemPrompt = QUICK_MODE_PROMPT
         activeToolsList = ['search', 'fetch']
-        maxSteps = 5
+        maxSteps = 20
         searchTool = wrapSearchToolForQuickMode(originalSearchTool)
         break
 
