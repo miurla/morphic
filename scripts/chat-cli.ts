@@ -173,12 +173,14 @@ class ChatApiTester {
         cookieString += `; modelType=${this.config.modelType}`
       }
       if (!cookieString.includes('searchMode=')) {
-        const searchModeValue = this.config.searchMode === false ? 'disabled' : this.config.searchMode
+        const searchModeValue =
+          this.config.searchMode === false ? 'disabled' : this.config.searchMode
         cookieString += `; searchMode=${searchModeValue}`
       }
     } else {
       // If no cookies from env, just use our settings
-      const searchModeValue = this.config.searchMode === false ? 'disabled' : this.config.searchMode
+      const searchModeValue =
+        this.config.searchMode === false ? 'disabled' : this.config.searchMode
       cookieString = [
         `modelType=${this.config.modelType}`,
         `searchMode=${searchModeValue}`
@@ -337,7 +339,9 @@ function parseArgs(): Partial<ChatApiConfig> {
         if (['quick', 'planning', 'adaptive'].includes(searchMode)) {
           config.searchMode = searchMode as 'quick' | 'planning' | 'adaptive'
         } else {
-          console.error('❌ Invalid search mode. Use: quick, planning, or adaptive')
+          console.error(
+            '❌ Invalid search mode. Use: quick, planning, or adaptive'
+          )
           process.exit(1)
         }
         break
@@ -353,10 +357,7 @@ function parseArgs(): Partial<ChatApiConfig> {
       case '-t':
       case '--trigger':
         const trigger = args[++i]
-        if (
-          trigger === 'regenerate' ||
-          trigger === 'regenerate-message'
-        ) {
+        if (trigger === 'regenerate' || trigger === 'regenerate-message') {
           config.trigger = 'regenerate-message'
         } else {
           config.trigger = 'submit-message'
