@@ -14,16 +14,9 @@ interface ChatApiConfig {
   apiUrl: string
   message: string
   chatId?: string
-  selectedModel?: {
-    id: string
-    name: string
-    provider: string
-    providerId: string
-    enabled: boolean
-    toolCallType: string
-  }
-  searchMode?: boolean
-  trigger?: 'submit-user-message' | 'regenerate-assistant-message'
+  modelType?: 'speed' | 'quality'
+  searchMode?: 'quick' | 'planning' | 'adaptive' | boolean
+  trigger?: 'submit-message' | 'regenerate-message'
   messageId?: string
 }
 
@@ -41,7 +34,7 @@ interface UIMessage {
 
 interface ChatPayload {
   chatId: string
-  trigger: 'submit-user-message' | 'regenerate-assistant-message'
+  trigger: 'submit-message' | 'regenerate-message'
   message?: UIMessage
   messageId?: string
   isNewChat?: boolean
@@ -95,16 +88,9 @@ class ChatApiTester {
         this.validateUrl(config.apiUrl) || 'http://localhost:3000/api/chat',
       message: config.message || DEFAULT_MESSAGE,
       chatId: config.chatId || this.generateId(),
-      selectedModel: config.selectedModel || {
-        id: 'gpt-4o-mini',
-        name: 'GPT-4o mini',
-        provider: 'OpenAI',
-        providerId: 'openai',
-        enabled: true,
-        toolCallType: 'native'
-      },
-      searchMode: config.searchMode ?? true,
-      trigger: config.trigger || 'submit-user-message',
+      modelType: config.modelType || 'speed',
+      searchMode: config.searchMode ?? 'adaptive',
+      trigger: config.trigger || 'submit-message',
       messageId: config.messageId
     }
   }
@@ -145,11 +131,11 @@ class ChatApiTester {
 
     const payload: ChatPayload = {
       chatId: this.config.chatId!,
-      trigger: this.config.trigger || 'submit-user-message'
+      trigger: this.config.trigger || 'submit-message'
     }
 
     // Add message for submit trigger or messageId for regenerate
-    if (this.config.trigger === 'regenerate-assistant-message') {
+    if (this.config.trigger === 'regenerate-message') {
       if (!this.config.messageId) {
         console.error('❌ Message ID is required for regeneration')
         process.exit(1)
@@ -173,7 +159,7 @@ class ChatApiTester {
 
     console.log('🚀 Sending request to:', this.config.apiUrl)
     console.log('📦 Payload:', JSON.stringify(payload, null, 2))
-    console.log('🤖 Selected Model:', this.config.selectedModel?.name)
+    console.log('🤖 Model Type:', this.config.modelType)
     console.log('🔍 Search Mode:', this.config.searchMode)
     console.log('💬 Chat ID:', this.config.chatId)
     console.log('\n---\n')
@@ -183,17 +169,19 @@ class ChatApiTester {
     if (cookies) {
       // If cookies from env exist, append our settings to them
       cookieString = cookies
-      if (!cookieString.includes('selectedModel=')) {
-        cookieString += `; selectedModel=${encodeURIComponent(JSON.stringify(this.config.selectedModel))}`
+      if (!cookieString.includes('modelType=')) {
+        cookieString += `; modelType=${this.config.modelType}`
       }
-      if (!cookieString.includes('search-mode=')) {
-        cookieString += `; search-mode=${this.config.searchMode}`
+      if (!cookieString.includes('searchMode=')) {
+        const searchModeValue = this.config.searchMode === false ? 'disabled' : this.config.searchMode
+        cookieString += `; searchMode=${searchModeValue}`
       }
     } else {
       // If no cookies from env, just use our settings
+      const searchModeValue = this.config.searchMode === false ? 'disabled' : this.config.searchMode
       cookieString = [
-        `selectedModel=${encodeURIComponent(JSON.stringify(this.config.selectedModel))}`,
-        `search-mode=${this.config.searchMode}`
+        `modelType=${this.config.modelType}`,
+        `searchMode=${searchModeValue}`
       ].join('; ')
     }
 
@@ -339,60 +327,39 @@ function parseArgs(): Partial<ChatApiConfig> {
         break
       case '-s':
       case '--search':
-        config.searchMode = true
+        config.searchMode = 'adaptive'
         break
       case '--no-search':
         config.searchMode = false
         break
-      case '--model':
-        const modelId = args[++i]
-        // Map common model names
-        const modelMap: Record<string, any> = {
-          'gpt-4.1': {
-            id: 'gpt-4.1',
-            name: 'GPT-4.1',
-            provider: 'OpenAI',
-            providerId: 'openai',
-            enabled: true,
-            toolCallType: 'native'
-          },
-          'gpt-4o-mini': {
-            id: 'gpt-4o-mini',
-            name: 'GPT-4o mini',
-            provider: 'OpenAI',
-            providerId: 'openai',
-            enabled: true,
-            toolCallType: 'native'
-          },
-          'claude-4-0-sonnet': {
-            id: 'claude-4-0-sonnet',
-            name: 'Claude 4.0 Sonnet',
-            provider: 'Anthropic',
-            providerId: 'anthropic',
-            enabled: true,
-            toolCallType: 'native'
-          },
-          'claude-3-5-haiku-20241022': {
-            id: 'claude-3-5-haiku-20241022',
-            name: 'Claude 3.5 Haiku',
-            provider: 'Anthropic',
-            providerId: 'anthropic',
-            enabled: true,
-            toolCallType: 'native'
-          }
+      case '--search-mode':
+        const searchMode = args[++i]
+        if (['quick', 'planning', 'adaptive'].includes(searchMode)) {
+          config.searchMode = searchMode as 'quick' | 'planning' | 'adaptive'
+        } else {
+          console.error('❌ Invalid search mode. Use: quick, planning, or adaptive')
+          process.exit(1)
         }
-        config.selectedModel = modelMap[modelId] || modelMap['gpt-4o-mini']
+        break
+      case '--model-type':
+        const modelType = args[++i]
+        if (['speed', 'quality'].includes(modelType)) {
+          config.modelType = modelType as 'speed' | 'quality'
+        } else {
+          console.error('❌ Invalid model type. Use: speed or quality')
+          process.exit(1)
+        }
         break
       case '-t':
       case '--trigger':
         const trigger = args[++i]
         if (
           trigger === 'regenerate' ||
-          trigger === 'regenerate-assistant-message'
+          trigger === 'regenerate-message'
         ) {
-          config.trigger = 'regenerate-assistant-message'
+          config.trigger = 'regenerate-message'
         } else {
-          config.trigger = 'submit-user-message'
+          config.trigger = 'submit-message'
         }
         break
       case '--message-id':
@@ -409,9 +376,10 @@ Options:
   -m, --message <text>    Message to send (default: "Hello, how are you?")
   -u, --url <url>         API URL (default: http://localhost:3000/api/chat)
   -c, --chat-id <id>      Chat ID (default: auto-generated)
-  -s, --search            Enable search mode (default: true)
+  -s, --search            Enable search mode with adaptive strategy (default)
   --no-search             Disable search mode
-  --model <name>          Model to use: gpt-4o, gpt-4o-mini, claude-3-5-sonnet
+  --search-mode <type>    Search strategy: quick, planning, or adaptive
+  --model-type <type>     Model type: speed (default) or quality
   -t, --trigger <type>    Trigger type: submit (default) or regenerate
   --message-id <id>       Message ID (required for regenerate)
   -h, --help              Show this help message
@@ -423,8 +391,8 @@ Examples:
   # Without search mode
   bun scripts/chat-cli.ts -m "Tell me a joke" --no-search
   
-  # With specific model
-  bun scripts/chat-cli.ts -m "Tell me a joke" --model claude-3-5-sonnet
+  # With quality model type
+  bun scripts/chat-cli.ts -m "Tell me a joke" --model-type quality
   
   # Continue existing chat
   bun scripts/chat-cli.ts -c "chat_123" -m "Tell me more"
