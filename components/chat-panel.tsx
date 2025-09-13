@@ -81,6 +81,9 @@ export function ChatPanel({
   const handleNewChat = () => {
     setMessages([])
     closeArtifact()
+    // Reset focus state when clearing chat
+    setIsInputFocused(false)
+    inputRef.current?.blur()
     router.push('/')
   }
 
@@ -147,7 +150,12 @@ export function ChatPanel({
         <UploadedFileList files={uploadedFiles} onRemove={handleFileRemove} />
       )}
       <form
-        onSubmit={handleSubmit}
+        onSubmit={e => {
+          handleSubmit(e)
+          // Reset focus state after submission
+          setIsInputFocused(false)
+          inputRef.current?.blur()
+        }}
         className={cn('max-w-3xl w-full mx-auto relative')}
       >
         {/* Scroll to bottom button - only shown when showScrollToBottomButton is true */}
@@ -201,6 +209,9 @@ export function ChatPanel({
                 e.preventDefault()
                 const textarea = e.target as HTMLTextAreaElement
                 textarea.form?.requestSubmit()
+                // Reset focus state after Enter key submission
+                setIsInputFocused(false)
+                textarea.blur()
               }
             }}
           />
@@ -296,6 +307,9 @@ export function ChatPanel({
               // Submit the form after a small delay to ensure the input is updated
               setTimeout(() => {
                 inputRef.current?.form?.requestSubmit()
+                // Reset focus state after action button submission
+                setIsInputFocused(false)
+                inputRef.current?.blur()
               }, INPUT_UPDATE_DELAY_MS)
             }}
             onCategoryClick={category => {
