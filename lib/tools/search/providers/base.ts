@@ -22,7 +22,7 @@ export abstract class BaseSearchProvider implements SearchProvider {
   protected validateApiKey(
     key: string | undefined,
     providerName: string
-  ): void {
+  ): asserts key is string {
     if (!key) {
       throw new Error(
         `${providerName}_API_KEY is not set in the environment variables`
