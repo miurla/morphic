@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
 import { Pencil } from 'lucide-react'
@@ -23,6 +23,17 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(content)
+  const [isComposing, setIsComposing] = useState(false)
+  const [enterDisabled, setEnterDisabled] = useState(false)
+  const enterResetTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (enterResetTimeoutRef.current) {
+        clearTimeout(enterResetTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleEditClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
@@ -46,6 +57,37 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
     }
   }
 
+  const handleTextareaKeyDown = (
+    event: React.KeyboardEvent<HTMLTextAreaElement>
+  ) => {
+    if (event.key !== 'Enter') {
+      return
+    }
+
+    if (event.shiftKey || isComposing || enterDisabled) {
+      return
+    }
+
+    event.preventDefault()
+    void handleSaveClick()
+  }
+
+  const handleCompositionStart = () => {
+    setIsComposing(true)
+  }
+
+  const handleCompositionEnd = () => {
+    setIsComposing(false)
+    setEnterDisabled(true)
+    if (enterResetTimeoutRef.current) {
+      clearTimeout(enterResetTimeoutRef.current)
+    }
+    enterResetTimeoutRef.current = setTimeout(() => {
+      setEnterDisabled(false)
+      enterResetTimeoutRef.current = null
+    }, 300)
+  }
+
   return (
     <CollapsibleMessage role="user">
       <div
@@ -58,6 +100,9 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
               value={editedContent}
               onChange={e => setEditedContent(e.target.value)}
               autoFocus
+              onCompositionStart={handleCompositionStart}
+              onCompositionEnd={handleCompositionEnd}
+              onKeyDown={handleTextareaKeyDown}
               className="resize-none flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
               minRows={2}
               maxRows={10}
