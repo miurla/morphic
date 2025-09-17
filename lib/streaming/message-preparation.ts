@@ -40,7 +40,7 @@ export async function prepareMessagesForRegeneration(
 
   if (targetMessage.role === 'assistant') {
     // Delete from this assistant message onwards
-    await deleteMessagesFromIndex(chatId, messageId)
+    await deleteMessagesFromIndex(chatId, messageId, userId)
     // Use messages up to (but not including) this assistant message
     return currentChat.messages.slice(0, messageIndex)
   } else {
@@ -51,7 +51,7 @@ export async function prepareMessagesForRegeneration(
     // Delete everything after this user message
     const messagesToDelete = currentChat.messages.slice(messageIndex + 1)
     if (messagesToDelete.length > 0) {
-      await deleteMessagesFromIndex(chatId, messagesToDelete[0].id)
+      await deleteMessagesFromIndex(chatId, messagesToDelete[0].id, userId)
     }
     // Get updated messages including the edited one
     const updatedChat = await loadChat(chatId, userId)
