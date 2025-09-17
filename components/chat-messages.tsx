@@ -7,10 +7,9 @@ import { UseChatHelpers } from '@ai-sdk/react'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
-import { AnimatedLogo } from './ui/animated-logo'
 import { ChatError } from './chat-error'
-import { DefaultSkeleton } from './default-skeleton'
 import { RenderMessage } from './render-message'
+import { AnimatedLogo } from './ui/animated-logo'
 
 // Import section structure interface
 interface ChatSection {
