@@ -1,4 +1,9 @@
-import { FirecrawlClient } from '@/lib/firecrawl'
+import {
+  FirecrawlClient,
+  FirecrawlImageResult,
+  FirecrawlNewsResult,
+  FirecrawlWebResult
+} from '@/lib/firecrawl'
 import { BaseSearchProvider } from '@/lib/tools/search/providers/base'
 import { SearchResults } from '@/lib/types'
 
@@ -25,22 +30,33 @@ export class FirecrawlSearchProvider extends BaseSearchProvider {
       query,
       sources,
       limit: maxResults
-      // TODO: check deep if we need to add these
-      // includeDomains: includeDomains.length > 0 ? includeDomains : undefined,
-      // excludeDomains: excludeDomains.length > 0 ? excludeDomains : undefined
+      // Note: Firecrawl Search API does not support includeDomains/excludeDomains yet...
     })
 
-    const results = [
+    const resources: (FirecrawlWebResult | FirecrawlNewsResult)[] = [
       ...(response.data?.web || []),
       ...(response.data?.news || [])
-    ].map((r: any) => ({
-      title: r.title || '',
-      url: r.url,
-      content: r.markdown?.slice(0, 1000) || r.snippet || r.description || ''
-    }))
+    ]
+
+    const results = resources.map(resource => {
+      if ('markdown' in resource) {
+        const markdown = resource.markdown.slice(0, 1000)
+        return {
+          title: resource.title || '',
+          url: resource.url,
+          content: markdown || resource.description || ''
+        }
+      }
+
+      return {
+        title: resource.title || '',
+        url: resource.url,
+        content: resource.snippet || ''
+      }
+    })
 
     const images =
-      response.data?.images?.map((img: any) => ({
+      response.data?.images?.map((img: FirecrawlImageResult) => ({
         url: img.imageUrl,
         description: img.title || ''
       })) || []
