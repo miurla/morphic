@@ -15,6 +15,13 @@ export interface SearchModeConfig {
 // Centralized search mode configuration
 export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
   {
+    value: 'quick',
+    label: 'Quick',
+    description: 'Streamlined search for fast, concise responses',
+    icon: Search,
+    color: 'text-amber-500'
+  },
+  {
     value: 'adaptive',
     label: 'Adaptive',
     description: 'Adaptive agentic search with intelligent query understanding',
@@ -27,13 +34,6 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
     description: 'Structured multi-step approach for comprehensive research',
     icon: ListTodo,
     color: 'text-blue-500'
-  },
-  {
-    value: 'quick',
-    label: 'Quick',
-    description: 'Streamlined search for fast, concise responses',
-    icon: Search,
-    color: 'text-amber-500'
   }
 ]
 
