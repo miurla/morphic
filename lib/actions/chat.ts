@@ -286,9 +286,10 @@ export async function shareChat(chatId: string) {
  */
 export async function deleteMessagesFromIndex(
   chatId: string,
-  messageId: string
+  messageId: string,
+  userIdOverride?: string
 ) {
-  const userId = await getCurrentUserId()
+  const userId = userIdOverride ?? (await getCurrentUserId())
   if (!userId) {
     return { success: false, error: 'User not authenticated' }
   }
@@ -299,7 +300,11 @@ export async function deleteMessagesFromIndex(
     return { success: false, error: 'Unauthorized' }
   }
 
-  const result = await dbActions.deleteMessagesFromIndex(chatId, messageId)
+  const result = await dbActions.deleteMessagesFromIndex(
+    chatId,
+    messageId,
+    userId
+  )
 
   revalidateTag(`chat-${chatId}`)
 

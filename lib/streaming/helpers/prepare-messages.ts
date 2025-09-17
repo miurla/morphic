@@ -56,7 +56,7 @@ export async function prepareMessages(
 
     const targetMessage = currentChat.messages[messageIndex]
     if (targetMessage.role === 'assistant') {
-      await deleteMessagesFromIndex(chatId, messageId)
+      await deleteMessagesFromIndex(chatId, messageId, userId)
       return currentChat.messages.slice(0, messageIndex)
     } else {
       // User message edit
@@ -65,7 +65,7 @@ export async function prepareMessages(
       }
       const messagesToDelete = currentChat.messages.slice(messageIndex + 1)
       if (messagesToDelete.length > 0) {
-        await deleteMessagesFromIndex(chatId, messagesToDelete[0].id)
+        await deleteMessagesFromIndex(chatId, messagesToDelete[0].id, userId)
       }
       const updatedChat = await loadChat(chatId, userId)
       return (
