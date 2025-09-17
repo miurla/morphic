@@ -15,7 +15,6 @@ export class FirecrawlSearchProvider extends BaseSearchProvider {
 
     const firecrawl = new FirecrawlClient(apiKey)
 
-    // Definindo quais fontes usar
     const sources: ('web' | 'news' | 'images')[] = ['web']
     if (searchDepth === 'advanced') {
       sources.push('news')
