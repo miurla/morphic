@@ -19,7 +19,7 @@ import {
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card'
 
 export function SearchModeSelector() {
-  const [value, setValue] = useState<SearchMode>('adaptive')
+  const [value, setValue] = useState<SearchMode>('quick')
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({})
   const [openHoverCard, setOpenHoverCard] = useState<string | null>(null)
   const [justSelected, setJustSelected] = useState(false)
