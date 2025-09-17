@@ -11,9 +11,9 @@ import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 import { processCitations } from '@/lib/utils/citation'
 
+import { Button } from './ui/button'
 import { ChatShare } from './chat-share'
 import { RetryButton } from './retry-button'
-import { Button } from './ui/button'
 
 interface MessageActionsProps {
   message: string

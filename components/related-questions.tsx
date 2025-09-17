@@ -6,10 +6,10 @@ import { ArrowRight } from 'lucide-react'
 
 import type { RelatedQuestionsData } from '@/lib/types/ai'
 
-import { CollapsibleMessage } from './collapsible-message'
-import { Section } from './section'
 import { Button } from './ui/button'
 import { Skeleton } from './ui/skeleton'
+import { CollapsibleMessage } from './collapsible-message'
+import { Section } from './section'
 
 interface RelatedQuestionsProps {
   data: RelatedQuestionsData
