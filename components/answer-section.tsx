@@ -65,7 +65,7 @@ export function AnswerSection({
         <div className="flex flex-col gap-1">
           <MarkdownMessage message={content} citationMaps={citationMaps} />
           <MessageActions
-            message={content} // Keep original message content for copy
+            message={content} // Provide original message; copy path remaps citations
             messageId={messageId}
             traceId={metadata?.traceId}
             feedbackScore={metadata?.feedbackScore}
@@ -74,6 +74,7 @@ export function AnswerSection({
             reload={handleReload}
             status={status}
             visible={showActions}
+            citationMaps={citationMaps}
           />
         </div>
       )}
