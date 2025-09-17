@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils'
 
 import { AnimatedLogo } from './ui/animated-logo'
 import { ChatError } from './chat-error'
-import { DefaultSkeleton } from './default-skeleton'
 import { RenderMessage } from './render-message'
 
 // Import section structure interface

@@ -10,11 +10,8 @@ import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import { extractCitationMaps } from '@/lib/utils/citation'
 
 import { AnswerSection } from './answer-section'
-import { DataSection } from './data-section'
 import { DynamicToolDisplay } from './dynamic-tool-display'
-import { ReasoningSection } from './reasoning-section'
 import ResearchProcessSection from './research-process-section'
-import { ToolSection } from './tool-section'
 import { UserFileSection } from './user-file-section'
 import { UserTextSection } from './user-text-section'
 

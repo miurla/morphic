@@ -97,6 +97,7 @@ Models are configured in `config/models/*.json` with profile-based settings. Whe
 - Tavily alternatives:
   - [SearXNG](https://docs.searxng.org/) - Self-hosted search
   - [Exa](https://exa.ai/) - Meaning-based search powered by embeddings
+  - [Firecrawl](https://firecrawl.dev/) - Web, news, and image search with crawling, scraping, LLM-ready extraction, and [open source](https://github.com/firecrawl/firecrawl).
 
 ### Data Storage
 

@@ -204,7 +204,12 @@ export function Chat({
 
   // Scroll to the section when a new user message is sent
   useEffect(() => {
-    if (sections.length > 0) {
+    // Only scroll if this chat is currently visible in the URL
+    const isCurrentChat =
+      window.location.pathname === `/search/${id}` ||
+      (window.location.pathname === '/' && sections.length > 0)
+
+    if (isCurrentChat && sections.length > 0) {
       const lastMessage = messages[messages.length - 1]
       if (lastMessage && lastMessage.role === 'user') {
         // If the last message is from user, find the corresponding section
@@ -215,7 +220,7 @@ export function Chat({
         })
       }
     }
-  }, [sections, messages])
+  }, [sections, messages, id])
 
   const onQuerySelect = (query: string) => {
     sendMessage({
