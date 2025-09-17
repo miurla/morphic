@@ -1,6 +1,6 @@
-import { SearchResults } from '@/lib/types'
-import { BaseSearchProvider } from './base'
 import { FirecrawlClient } from '@/lib/firecrawl'
+import { BaseSearchProvider } from '@/lib/tools/search/providers/base'
+import { SearchResults } from '@/lib/types'
 
 export class FirecrawlSearchProvider extends BaseSearchProvider {
   async search(
