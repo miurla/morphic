@@ -59,8 +59,17 @@ export async function generateChatTitle({
     // Remove any surrounding quotes that the model might have added
     return cleanedTitle.replace(/^[\"']|[\"']$/g, '')
   } catch (error) {
-    console.error('Error generating chat title with LLM:', error)
-    // If LLM generation fails, return the fallback title.
+    if (
+      error instanceof Error &&
+      (error.name === 'AbortError' || error.name === 'ResponseAborted')
+    ) {
+      if (process.env.NODE_ENV === 'development') {
+        console.info('Title generation aborted; using fallback title.')
+      }
+    } else {
+      console.error('Error generating chat title with LLM:', error)
+    }
+    // If LLM generation fails or is aborted, return the fallback title.
     return fallbackTitle
   }
 }
