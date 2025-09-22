@@ -1,23 +1,13 @@
-import { generateObject, type ModelMessage } from 'ai'
-import { z } from 'zod'
+import { type ModelMessage, streamObject } from 'ai'
 
 import { getRelatedQuestionsModel } from '../config/model-types'
+import { relatedQuestionSchema } from '../schema/related'
 import { getModel } from '../utils/registry'
 import { isTracingEnabled } from '../utils/telemetry'
 
 import { RELATED_QUESTIONS_PROMPT } from './prompts/related-questions-prompt'
 
-const relatedQuestionsSchema = z.object({
-  questions: z
-    .array(
-      z.object({
-        question: z.string()
-      })
-    )
-    .length(3)
-})
-
-export async function generateRelatedQuestions(
+export function createRelatedQuestionsStream(
   messages: ModelMessage[],
   abortSignal?: AbortSignal,
   parentTraceId?: string
@@ -26,12 +16,13 @@ export async function generateRelatedQuestions(
   const relatedModel = getRelatedQuestionsModel()
   const modelId = `${relatedModel.providerId}:${relatedModel.id}`
 
-  const { object } = await generateObject({
+  return streamObject({
     model: getModel(modelId),
-    schema: relatedQuestionsSchema,
-    schemaName: 'RelatedQuestions',
+    output: 'array',
+    schema: relatedQuestionSchema,
+    schemaName: 'RelatedQuestion',
     schemaDescription:
-      'Generate 3 concise follow-up questions (max 10-12 words each)',
+      'Generate a concise follow-up question (max 10-12 words)',
     system: RELATED_QUESTIONS_PROMPT,
     messages: [
       ...messages,
@@ -56,6 +47,4 @@ export async function generateRelatedQuestions(
       }
     }
   })
-
-  return object
 }
