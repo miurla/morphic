@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       searchModeCookie &&
       ['quick', 'planning', 'adaptive'].includes(searchModeCookie)
         ? (searchModeCookie as SearchMode)
-        : 'adaptive'
+        : 'quick'
 
     if (!isProviderEnabled(selectedModel.providerId)) {
       return new Response(
