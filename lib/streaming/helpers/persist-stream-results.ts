@@ -1,6 +1,6 @@
 import { UIMessage } from 'ai'
 
-import { upsertMessage } from '@/lib/actions/chat'
+import { createChatWithFirstMessage, upsertMessage } from '@/lib/actions/chat'
 import { updateChatTitle } from '@/lib/db/actions'
 import { SearchMode } from '@/lib/types/search'
 import { perfTime } from '@/lib/utils/perf-logging'
@@ -15,7 +15,9 @@ export async function persistStreamResults(
   titlePromise?: Promise<string>,
   parentTraceId?: string,
   searchMode?: SearchMode,
-  modelId?: string
+  modelId?: string,
+  initialSavePromise?: Promise<Awaited<ReturnType<typeof createChatWithFirstMessage>>>,
+  initialUserMessage?: UIMessage
 ) {
   // Attach metadata to the response message
   responseMessage.metadata = {
@@ -27,6 +29,34 @@ export async function persistStreamResults(
 
   // Wait for title generation if it was started
   const chatTitle = titlePromise ? await titlePromise : undefined
+
+  // Ensure the initial chat/message persistence finished before saving the response
+  if (initialSavePromise) {
+    const initialSaveStart = performance.now()
+    try {
+      await initialSavePromise
+      perfTime('initial chat persistence awaited', initialSaveStart)
+    } catch (error) {
+      console.error('Initial chat persistence failed:', error)
+      if (initialUserMessage) {
+        const fallbackStart = performance.now()
+        try {
+          await createChatWithFirstMessage(
+            chatId,
+            initialUserMessage,
+            userId,
+            DEFAULT_CHAT_TITLE
+          )
+          perfTime('initial chat persistence fallback completed', fallbackStart)
+        } catch (fallbackError) {
+          console.error('Fallback chat creation failed:', fallbackError)
+          return
+        }
+      } else {
+        return
+      }
+    }
+  }
 
   // Save message with retry logic
   const saveStart = performance.now()

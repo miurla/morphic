@@ -232,7 +232,9 @@ export async function createChatStreamResponse(
         titlePromise,
         parentTraceId,
         searchMode,
-        context.modelId
+        context.modelId,
+        context.pendingInitialSave,
+        context.pendingInitialUserMessage
       )
     }
   })
