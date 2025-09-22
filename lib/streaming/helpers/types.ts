@@ -1,4 +1,4 @@
-import type { Chat } from '@/lib/db/schema'
+import type { Chat, Message } from '@/lib/db/schema'
 import type { UIMessage } from '@/lib/types/ai'
 
 export interface StreamContext {
@@ -11,4 +11,6 @@ export interface StreamContext {
   abortSignal?: AbortSignal
   parentTraceId?: string
   isNewChat?: boolean
+  pendingInitialSave?: Promise<{ chat: Chat; message: Message }>
+  pendingInitialUserMessage?: UIMessage
 }

@@ -92,6 +92,11 @@ export async function POST(req: Request) {
       )
     }
 
+    const streamStart = performance.now()
+    perfLog(
+      `createChatStreamResponse - Start: model=${selectedModel.providerId}:${selectedModel.id}, searchMode=${searchMode}`
+    )
+
     const response = await createChatStreamResponse({
       message,
       model: selectedModel,
@@ -103,6 +108,8 @@ export async function POST(req: Request) {
       isNewChat,
       searchMode
     })
+
+    perfTime('createChatStreamResponse resolved', streamStart)
 
     // Invalidate the cache for this specific chat after creating the response
     // This ensures the next load will get fresh data
