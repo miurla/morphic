@@ -26,7 +26,7 @@ export type UIMessage<
 > = AIMessage
 
 export interface RelatedQuestionsData {
-  status: 'loading' | 'success' | 'error'
+  status: 'loading' | 'streaming' | 'success' | 'error'
   questions?: Array<{ question: string }>
 }
 
