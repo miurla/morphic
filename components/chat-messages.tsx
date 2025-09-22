@@ -177,7 +177,7 @@ export function ChatMessages({
           <div
             key={section.id}
             id={`section-${section.id}`}
-            className="chat-section mb-8"
+            className="chat-section pb-14"
             style={
               sectionIndex === sections.length - 1
                 ? { minHeight: `calc(100dvh - ${offsetHeight}px)` }
