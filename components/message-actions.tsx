@@ -45,6 +45,11 @@ export function MessageActions({
   const [feedbackScore, setFeedbackScore] = useState<number | null>(
     initialFeedbackScore ?? null
   )
+  const mappedMessage = useMemo(() => {
+    if (!message) return ''
+    return processCitations(message, citationMaps || {})
+  }, [message, citationMaps])
+
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const isLoading = status === 'submitted' || status === 'streaming'
 
@@ -52,11 +57,6 @@ export function MessageActions({
   if (!visible && !isLoading) {
     return null
   }
-
-  const mappedMessage = useMemo(() => {
-    if (!message) return ''
-    return processCitations(message, citationMaps || {})
-  }, [message, citationMaps])
 
   async function handleCopy() {
     await navigator.clipboard.writeText(mappedMessage)
@@ -102,9 +102,7 @@ export function MessageActions({
       aria-hidden={!visible}
       className={cn(
         'flex items-center gap-0.5 self-end transition-opacity duration-200',
-        visible
-          ? 'opacity-100'
-          : 'pointer-events-none opacity-0 invisible',
+        visible ? 'opacity-100' : 'pointer-events-none opacity-0 invisible',
         className
       )}
     >
