@@ -116,7 +116,12 @@ export async function createChatStreamResponse(
     execute: async ({ writer }: { writer: UIMessageStreamWriter }) => {
       try {
         // Prepare messages for the model
+        const prepareStart = performance.now()
+        perfLog(
+          `prepareMessages - Invoked: trigger=${trigger}, isNewChat=${isNewChat}`
+        )
         const messagesToModel = await prepareMessages(context, message)
+        perfTime('prepareMessages completed (stream)', prepareStart)
 
         // Get the researcher agent with parent trace ID and search mode
         const researchAgent = researcher({
@@ -161,6 +166,10 @@ export async function createChatStreamResponse(
           })
         }
 
+        const llmStart = performance.now()
+        perfLog(
+          `researchAgent.stream - Start: model=${context.modelId}, searchMode=${searchMode}`
+        )
         const result = researchAgent.stream({ messages: modelMessages })
         result.consumeStream()
         // Stream with the research agent, including metadata
@@ -180,6 +189,7 @@ export async function createChatStreamResponse(
         )
 
         const responseMessages = (await result.response).messages
+        perfTime('researchAgent.stream completed', llmStart)
         // Generate related questions
         if (responseMessages && responseMessages.length > 0) {
           // Find the last user message
