@@ -16,7 +16,9 @@ export async function persistStreamResults(
   parentTraceId?: string,
   searchMode?: SearchMode,
   modelId?: string,
-  initialSavePromise?: Promise<Awaited<ReturnType<typeof createChatWithFirstMessage>>>,
+  initialSavePromise?: Promise<
+    Awaited<ReturnType<typeof createChatWithFirstMessage>>
+  >,
   initialUserMessage?: UIMessage
 ) {
   // Attach metadata to the response message
