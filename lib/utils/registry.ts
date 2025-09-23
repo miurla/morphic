@@ -7,9 +7,9 @@ import { groq } from '@ai-sdk/groq'
 import { createOpenAI, openai } from '@ai-sdk/openai'
 import { xai } from '@ai-sdk/xai'
 import {
-  createProviderRegistry,
-  extractReasoningMiddleware,
-  wrapLanguageModel
+    createProviderRegistry,
+    extractReasoningMiddleware,
+    wrapLanguageModel
 } from 'ai'
 import { createOllama } from 'ollama-ai-provider'
 
@@ -147,7 +147,8 @@ export function isToolCallSupported(model?: string) {
   const modelName = modelNameParts.join(':')
 
   if (provider === 'ollama') {
-    return false
+    // Ollama models are dynamically checked for tools capability
+    return true
   }
 
   if (provider === 'google') {
