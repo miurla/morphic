@@ -1,16 +1,25 @@
 {
   "current": {
-    "version": "1.0.0 Beta.6",
-    "date": "2025-09-17",
+    "version": "1.0.0 Beta.7",
+    "date": "2025-09-24",
     "features": [
-      "⚡ Faster chat loading with improved caching",
-      "🔍 Quick search mode now default for better performance",
-      "✏️ Improved enter key handling in user text editor"
+      "⚡ Faster first replies",
+      "❓ Follow-ups stream sooner",
+      "🖼️ Broken thumbnails hidden"
     ],
-    "showUntil": "2025-09-24",
-    "dismissKey": "changelog-v1.0.0-beta.6"
+    "showUntil": "2025-10-01",
+    "dismissKey": "changelog-v1.0.0-beta.7"
   },
   "history": [
+    {
+      "version": "1.0.0 Beta.6",
+      "date": "2025-09-17",
+      "features": [
+        "⚡ Faster chat loading with improved caching",
+        "🔍 Quick search mode now default for better performance",
+        "✏️ Improved enter key handling in user text editor"
+      ]
+    },
     {
       "version": "1.0.0 Beta.5",
       "date": "2025-09-10",
