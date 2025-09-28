@@ -73,11 +73,13 @@ export async function getModels(): Promise<Model[]> {
 
     // Fetch Ollama models
     const ollamaModels = await fetchOllamaModels(baseUrlObj)
-    
+
     // Combine static and Ollama models
     const allModels = [...staticModels, ...ollamaModels]
-    
-    console.log(`Loaded ${staticModels.length} static models and ${ollamaModels.length} Ollama models`)
+
+    console.log(
+      `Loaded ${staticModels.length} static models and ${ollamaModels.length} Ollama models`
+    )
     return allModels
   } catch (error) {
     console.warn('Failed to load models:', error)
@@ -100,7 +102,10 @@ async function fetchOllamaModels(baseUrl: URL): Promise<Model[]> {
     }
 
     const ollamaApiUrl = new URL('/api/ollama/models', baseUrl)
-    console.log('Attempting to fetch Ollama models from:', ollamaApiUrl.toString())
+    console.log(
+      'Attempting to fetch Ollama models from:',
+      ollamaApiUrl.toString()
+    )
 
     const response = await fetch(ollamaApiUrl, {
       cache: 'no-store',
@@ -110,7 +115,9 @@ async function fetchOllamaModels(baseUrl: URL): Promise<Model[]> {
     })
 
     if (!response.ok) {
-      console.warn(`HTTP error when fetching Ollama models: ${response.status} ${response.statusText}`)
+      console.warn(
+        `HTTP error when fetching Ollama models: ${response.status} ${response.statusText}`
+      )
       return []
     }
 
@@ -126,4 +133,3 @@ async function fetchOllamaModels(baseUrl: URL): Promise<Model[]> {
     return []
   }
 }
-

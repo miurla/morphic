@@ -1,12 +1,17 @@
-import { OllamaModel, OllamaModelCapabilities, OllamaModelsResponse, OllamaShowResponse } from './types'
+import {
+  OllamaModel,
+  OllamaModelCapabilities,
+  OllamaModelsResponse,
+  OllamaShowResponse
+} from './types'
 
 export class OllamaClient {
   private baseUrl: string
-  
+
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl
   }
-  
+
   /**
    * Get all available models from Ollama instance
    * Uses GET /api/models endpoint for fast model listing
@@ -16,14 +21,16 @@ export class OllamaClient {
       const response = await fetch(`${this.baseUrl}/api/tags`, {
         cache: 'no-store',
         headers: {
-          'Accept': 'application/json'
+          Accept: 'application/json'
         }
       })
-      
+
       if (!response.ok) {
-        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`)
+        throw new Error(
+          `Ollama API error: ${response.status} ${response.statusText}`
+        )
       }
-      
+
       const data: OllamaModelsResponse = await response.json()
       return data.models || []
     } catch (error) {
@@ -31,26 +38,30 @@ export class OllamaClient {
       throw error
     }
   }
-  
+
   /**
    * Get detailed model capabilities from Ollama instance
    * Uses POST /api/show endpoint for detailed model information
    */
-  async getModelCapabilities(modelName: string): Promise<OllamaModelCapabilities> {
+  async getModelCapabilities(
+    modelName: string
+  ): Promise<OllamaModelCapabilities> {
     try {
       const response = await fetch(`${this.baseUrl}/api/show`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          Accept: 'application/json'
         },
         body: JSON.stringify({ name: modelName })
       })
-      
+
       if (!response.ok) {
-        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`)
+        throw new Error(
+          `Ollama API error: ${response.status} ${response.statusText}`
+        )
       }
-      
+
       const data: OllamaShowResponse = await response.json()
       return {
         name: data.name,
@@ -63,7 +74,7 @@ export class OllamaClient {
       throw error
     }
   }
-  
+
   /**
    * Check if Ollama instance is available
    */

@@ -11,7 +11,7 @@ export function transformOllamaModel(
   capabilities?: OllamaModelCapabilities
 ): Model | null {
   const hasTools = capabilities?.capabilities.includes('tools') || false
-  
+
   if (!hasTools) {
     return null
   }

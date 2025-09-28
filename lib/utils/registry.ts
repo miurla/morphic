@@ -7,9 +7,9 @@ import { groq } from '@ai-sdk/groq'
 import { createOpenAI, openai } from '@ai-sdk/openai'
 import { xai } from '@ai-sdk/xai'
 import {
-    createProviderRegistry,
-    extractReasoningMiddleware,
-    wrapLanguageModel
+  createProviderRegistry,
+  extractReasoningMiddleware,
+  wrapLanguageModel
 } from 'ai'
 import { createOllama } from 'ollama-ai-provider'
 

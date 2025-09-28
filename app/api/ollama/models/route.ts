@@ -12,7 +12,7 @@ export async function GET() {
   try {
     const client = new OllamaClient(ollamaUrl)
     const ollamaModels = await client.getModels()
-    
+
     const models = []
     for (const ollamaModel of ollamaModels) {
       try {
@@ -26,7 +26,7 @@ export async function GET() {
         continue
       }
     }
-    
+
     return NextResponse.json({ models })
   } catch {
     return NextResponse.json({ models: [] })
