@@ -159,24 +159,6 @@
       "toolCallType": "native"
     },
     {
-      "id": "deepseek-r1",
-      "name": "DeepSeek R1",
-      "provider": "Ollama",
-      "providerId": "ollama",
-      "enabled": true,
-      "toolCallType": "manual",
-      "toolCallModel": "phi4"
-    },
-    {
-      "id": "<OLLAMA_MODEL_ID>",
-      "name": "<OLLAMA_MODEL_NAME>",
-      "provider": "Ollama",
-      "providerId": "ollama",
-      "enabled": true,
-      "toolCallType": "manual",
-      "toolCallModel": "<OLLAMA_MODEL_ID>"
-    },
-    {
       "id": "grok-2-1212",
       "name": "Grok 2",
       "provider": "xAI",
