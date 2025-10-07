@@ -423,7 +423,7 @@
 
   /* Tailwind v4: Restore pointer cursor for buttons */
   button:not(:disabled),
-  [role="button"]:not(:disabled) {
+  [role='button']:not(:disabled) {
     cursor: pointer;
   }
 }

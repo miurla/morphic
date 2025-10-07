@@ -6,10 +6,10 @@ import {
   BookCheck,
   Check,
   File,
+  FileText,
   Film,
   Image,
   MessageCircleMore,
-  Newspaper,
   Repeat2,
   Search
 } from 'lucide-react'
@@ -50,7 +50,7 @@ export const Section: React.FC<SectionProps> = ({
       type = 'badge'
       break
     case 'Sources':
-      icon = <Newspaper size={iconSize} className={iconClassName} />
+      icon = <FileText size={iconSize} className={iconClassName} />
       type = 'badge'
       break
     case 'Answer':
