@@ -1,5 +1,6 @@
 import { UseChatHelpers } from '@ai-sdk/react'
 
+import type { SearchResultItem } from '@/lib/types'
 import type {
   UIDataTypes,
   UIMessage,
@@ -7,7 +8,6 @@ import type {
   UITools
 } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
-import { extractCitationMaps } from '@/lib/utils/citation'
 
 import { AnswerSection } from './answer-section'
 import { DynamicToolDisplay } from './dynamic-tool-display'
@@ -27,6 +27,7 @@ interface RenderMessageProps {
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
   isLatestMessage?: boolean
+  citationMaps?: Record<string, Record<number, SearchResultItem>>
 }
 
 export function RenderMessage({
@@ -40,10 +41,10 @@ export function RenderMessage({
   addToolResult,
   onUpdateMessage,
   reload,
-  isLatestMessage = false
+  isLatestMessage = false,
+  citationMaps = {}
 }: RenderMessageProps) {
-  // Extract citation maps from the message's tool outputs
-  const citationMaps = extractCitationMaps(message)
+  // Use provided citation maps (from all messages)
   if (message.role === 'user') {
     return (
       <>

@@ -69,11 +69,6 @@ export async function POST(req: Request) {
 
     const cookieStore = await cookies()
 
-    // Select the appropriate model based on model type preference
-    const selectedModel = selectModel({
-      cookieStore
-    })
-
     // Get search mode from cookie
     const searchModeCookie = cookieStore.get('searchMode')?.value
     const searchMode: SearchMode =
@@ -81,6 +76,12 @@ export async function POST(req: Request) {
       ['quick', 'planning', 'adaptive'].includes(searchModeCookie)
         ? (searchModeCookie as SearchMode)
         : 'quick'
+
+    // Select the appropriate model based on model type preference and search mode
+    const selectedModel = selectModel({
+      cookieStore,
+      searchMode
+    })
 
     if (!isProviderEnabled(selectedModel.providerId)) {
       return new Response(
