@@ -44,6 +44,27 @@ export function extractCitationMaps(
 }
 
 /**
+ * Extract citation maps from multiple messages
+ * Returns a combined map of toolCallId to citation map
+ */
+export function extractCitationMapsFromMessages(
+  messages: UIMessage[]
+): Record<string, Record<number, SearchResultItem>> {
+  const combinedCitationMaps: Record<
+    string,
+    Record<number, SearchResultItem>
+  > = {}
+
+  messages.forEach(message => {
+    const messageCitationMaps = extractCitationMaps(message)
+    // Merge citation maps from this message
+    Object.assign(combinedCitationMaps, messageCitationMaps)
+  })
+
+  return combinedCitationMaps
+}
+
+/**
  * Process citations in content, replacing [number](#toolCallId) with proper URLs
  * while keeping the display as just [number]
  */

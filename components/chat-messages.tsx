@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { UseChatHelpers } from '@ai-sdk/react'
 
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
+import { extractCitationMapsFromMessages } from '@/lib/utils/citation'
 
 import { AnimatedLogo } from './ui/animated-logo'
 import { ChatError } from './chat-error'
@@ -87,6 +88,16 @@ export function ChatMessages({
     window.addEventListener('resize', calculateOffset)
     return () => window.removeEventListener('resize', calculateOffset)
   }, [])
+
+  // Extract citation maps from all messages in all sections
+  const allCitationMaps = useMemo(() => {
+    const allMessages: UIMessage[] = []
+    sections.forEach(section => {
+      allMessages.push(section.userMessage)
+      allMessages.push(...section.assistantMessages)
+    })
+    return extractCitationMapsFromMessages(allMessages)
+  }, [sections])
 
   if (!sections.length) return null
 
@@ -199,6 +210,7 @@ export function ChatMessages({
                 addToolResult={addToolResult}
                 onUpdateMessage={onUpdateMessage}
                 reload={reload}
+                citationMaps={allCitationMaps}
               />
             </div>
 
@@ -225,6 +237,7 @@ export function ChatMessages({
                     onUpdateMessage={onUpdateMessage}
                     reload={reload}
                     isLatestMessage={isLatestMessage}
+                    citationMaps={allCitationMaps}
                   />
                 </div>
               )

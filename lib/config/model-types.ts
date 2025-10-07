@@ -1,15 +1,19 @@
 import { ModelType } from '@/lib/types/model-type'
 import { Model } from '@/lib/types/models'
+import { SearchMode } from '@/lib/types/search'
 
 import { getModelsConfig } from './load-models-config'
 
-// Get model for a specific type from JSON config
-export function getModelForType(type: ModelType): Model {
+// Retrieve the model assigned to a specific search mode and model type combination.
+export function getModelForModeAndType(
+  mode: SearchMode,
+  type: ModelType
+): Model | undefined {
   const cfg = getModelsConfig()
-  return cfg.models.types[type]
+  return cfg.models.byMode?.[mode]?.[type]
 }
 
-// Get model for related questions generation from JSON config
+// Accessor for the related questions model configuration.
 export function getRelatedQuestionsModel(): Model {
   const cfg = getModelsConfig()
   return cfg.models.relatedQuestions
