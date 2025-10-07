@@ -7,6 +7,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState
 } from 'react'
 
@@ -71,6 +72,7 @@ const normalizeImages = (images: SearchResultImage[]): NormalizedImage[] => {
 
 const useFilteredImages = (images: SearchResultImage[]) => {
   const normalizedImages = useMemo(() => normalizeImages(images), [images])
+  const previousIdsRef = useRef<string | null>(null)
 
   const [state, setState] = useState<FilteredImagesState>(() => ({
     status: normalizedImages.length === 0 ? 'empty' : 'loading',
@@ -78,15 +80,36 @@ const useFilteredImages = (images: SearchResultImage[]) => {
   }))
 
   useEffect(() => {
+    const normalizedKey = normalizedImages.map(image => image.id).join('|')
+
     if (normalizedImages.length === 0) {
       setState({ status: 'empty', images: [] })
+      previousIdsRef.current = normalizedKey
       return
     }
 
     if (typeof window === 'undefined') {
       setState({ status: 'ready', images: normalizedImages })
+      previousIdsRef.current = normalizedKey
       return
     }
+
+    if (previousIdsRef.current === normalizedKey) {
+      setState(prevState => {
+        if (prevState.status === 'ready') {
+          return prevState
+        }
+
+        return {
+          status: 'ready',
+          images:
+            prevState.images.length > 0 ? prevState.images : normalizedImages
+        }
+      })
+      return
+    }
+
+    previousIdsRef.current = normalizedKey
 
     let cancelled = false
     setState({ status: 'loading', images: [] })
