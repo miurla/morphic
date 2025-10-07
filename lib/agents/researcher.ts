@@ -1,9 +1,10 @@
 import {
-  Experimental_Agent as Agent,
+  type ModelMessage,
+  smoothStream,
   stepCountIs,
+  streamText,
   tool,
-  UIMessage,
-  UIMessageStreamWriter
+  type UIMessageStreamWriter
 } from 'ai'
 
 import type {
@@ -12,7 +13,7 @@ import type {
   ResearcherResponse,
   ResearcherTools
 } from '@/lib/types/agent'
-import { Model } from '@/lib/types/models'
+import { type Model } from '@/lib/types/models'
 
 import { fetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
@@ -155,23 +156,24 @@ export function createResearcher({
     const shouldForceTodoWrite =
       searchMode === 'planning' && writer && 'todoWrite' in todoTools
 
-    // Create and return the agent with enhanced type safety
-    const agent = new Agent<ResearcherTools>({
+    // Create streamText-based agent with smoothStream support
+    const agentConfig = {
       model: getModel(model),
       system: `${systemPrompt}\nCurrent date and time: ${currentDate}`,
       tools,
       activeTools: activeToolsList,
       stopWhen: stepCountIs(maxSteps),
       abortSignal,
+      experimental_transform: smoothStream({ chunking: 'word' }), // Enable smooth streaming
       ...(modelConfig?.providerOptions && {
         providerOptions: modelConfig.providerOptions
       }),
       // Force todoWrite tool on first step for planning mode
       ...(shouldForceTodoWrite && {
-        prepareStep: async ({ stepNumber }) => {
+        prepareStep: async ({ stepNumber }: { stepNumber: number }) => {
           if (stepNumber === 0) {
             return {
-              toolChoice: { type: 'tool', toolName: 'todoWrite' }
+              toolChoice: { type: 'tool', toolName: 'todoWrite' } as const
             }
           }
           return undefined
@@ -190,9 +192,20 @@ export function createResearcher({
           })
         }
       }
-    })
+    }
 
-    return agent as ResearcherAgent
+    // Create Agent-compatible wrapper with streamText
+    const agent: ResearcherAgent = {
+      tools,
+      stream: ({ messages }: { messages: ModelMessage[] }) => {
+        return streamText({
+          ...agentConfig,
+          messages
+        })
+      }
+    }
+
+    return agent
   } catch (error) {
     console.error('Error in createResearcher:', error)
     throw error
@@ -207,6 +220,9 @@ export function getResearcherTools(agent: ResearcherAgent): ResearcherTools {
 // Helper function to create a respond wrapper with type safety
 export function createResearcherRespond(agent: ResearcherAgent) {
   return (options: ResearcherRespondOptions): ResearcherResponse => {
+    if (!agent.respond) {
+      throw new Error('respond method not available - use stream instead')
+    }
     return agent.respond(options)
   }
 }
