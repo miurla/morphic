@@ -2,6 +2,7 @@ import { revalidateTag } from 'next/cache'
 import { cookies } from 'next/headers'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { checkAndEnforceQualityLimit } from '@/lib/rate-limit/quality-limit'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { SearchMode } from '@/lib/types/search'
 import { selectModel } from '@/lib/utils/model-selection'
@@ -92,6 +93,14 @@ export async function POST(req: Request) {
         }
       )
     }
+
+    // Check rate limit for quality mode
+    const modelTypeCookie = cookieStore.get('modelType')?.value
+    const rateLimitResponse = await checkAndEnforceQualityLimit(
+      userId,
+      modelTypeCookie === 'quality'
+    )
+    if (rateLimitResponse) return rateLimitResponse
 
     const streamStart = performance.now()
     perfLog(

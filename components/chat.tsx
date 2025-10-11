@@ -110,13 +110,35 @@ export function Chat({
       const isRateLimit =
         error.message?.includes('429') ||
         errorMessage.includes('rate limit') ||
-        errorMessage.includes('too many requests')
+        errorMessage.includes('too many requests') ||
+        errorMessage.includes('daily limit')
 
       if (isRateLimit) {
+        // Try to parse JSON error response for quality mode rate limit
+        let parsedError: {
+          error?: string
+          resetAt?: number
+          remaining?: number
+        } = {}
+        try {
+          // Extract JSON from error message if it exists
+          const jsonMatch = error.message?.match(/\{.*\}/)
+          if (jsonMatch) {
+            parsedError = JSON.parse(jsonMatch[0])
+          }
+        } catch {
+          // Ignore parse errors
+        }
+
+        // Use parsed error message or fallback
+        const userMessage =
+          parsedError.error ||
+          'You have reached your daily limit for quality mode chat requests.'
+
         setErrorModal({
           open: true,
           type: 'rate-limit',
-          message: error.message,
+          message: userMessage,
           details: undefined
         })
       } else if (

@@ -57,7 +57,10 @@ export function ErrorModal({
   const getErrorDescription = () => {
     switch (error.type) {
       case 'rate-limit':
-        return 'You have made too many requests. Please wait a moment before trying again.'
+        return (
+          error.message ||
+          'You have made too many requests. Please wait a moment before trying again.'
+        )
       case 'auth':
         return 'You need to sign in to continue using this feature.'
       case 'forbidden':
@@ -71,7 +74,7 @@ export function ErrorModal({
 
   const getErrorDetails = () => {
     if (error.type === 'rate-limit') {
-      return 'Our rate limiting helps ensure fair usage and maintain service quality for all users. The limit will reset shortly.'
+      return 'The limit will reset at midnight UTC. You can continue using speed mode without restrictions.'
     }
     return error.details
   }
