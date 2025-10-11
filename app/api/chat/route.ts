@@ -1,6 +1,8 @@
 import { revalidateTag } from 'next/cache'
 import { cookies } from 'next/headers'
 
+import { loadChat } from '@/lib/actions/chat'
+import { calculateConversationTurn, trackChatEvent } from '@/lib/analytics'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { checkAndEnforceQualityLimit } from '@/lib/rate-limit/quality-limit'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
@@ -120,6 +122,39 @@ export async function POST(req: Request) {
     })
 
     perfTime('createChatStreamResponse resolved', streamStart)
+
+    // Track analytics event (non-blocking)
+    // Calculate conversation turn by loading chat history
+    ;(async () => {
+      try {
+        let conversationTurn = 1 // Default for new chats
+
+        // For existing chats, load history and calculate turn number
+        if (!isNewChat) {
+          const chat = await loadChat(chatId, userId)
+          if (chat?.messages) {
+            // Add 1 to account for the current message being sent
+            conversationTurn = calculateConversationTurn(chat.messages) + 1
+          }
+        }
+
+        await trackChatEvent({
+          searchMode,
+          modelType: modelTypeCookie === 'quality' ? 'quality' : 'speed',
+          conversationTurn,
+          isNewChat: isNewChat ?? false,
+          trigger:
+            (trigger as 'submit-message' | 'regenerate-message') ??
+            'submit-message',
+          chatId,
+          userId,
+          modelId: selectedModel.id
+        })
+      } catch (error) {
+        // Log error but don't throw - analytics should never break the app
+        console.error('Analytics tracking failed:', error)
+      }
+    })()
 
     // Invalidate the cache for this specific chat after creating the response
     // This ensures the next load will get fresh data
