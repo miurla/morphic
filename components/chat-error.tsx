@@ -9,7 +9,20 @@ interface ChatErrorProps {
 export function ChatError({ error }: ChatErrorProps) {
   if (!error) return null
 
-  const errorMessage = error instanceof Error ? error.message : error
+  let errorMessage = error instanceof Error ? error.message : error
+
+  // Try to parse JSON error response and extract user-friendly message
+  try {
+    const jsonMatch = errorMessage?.match(/\{.*\}/)
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0])
+      if (parsed.error) {
+        errorMessage = parsed.error
+      }
+    }
+  } catch {
+    // If parsing fails, use the original error message
+  }
 
   return (
     <Card className="border-destructive bg-destructive/10 p-4">
