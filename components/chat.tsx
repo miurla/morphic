@@ -115,7 +115,11 @@ export function Chat({
 
       if (isRateLimit) {
         // Try to parse JSON error response for quality mode rate limit
-        let parsedError: { error?: string; resetAt?: number; remaining?: number } = {}
+        let parsedError: {
+          error?: string
+          resetAt?: number
+          remaining?: number
+        } = {}
         try {
           // Extract JSON from error message if it exists
           const jsonMatch = error.message?.match(/\{.*\}/)
@@ -127,7 +131,9 @@ export function Chat({
         }
 
         // Use parsed error message or fallback
-        const userMessage = parsedError.error || 'You have reached your daily limit for quality mode chat requests.'
+        const userMessage =
+          parsedError.error ||
+          'You have reached your daily limit for quality mode chat requests.'
 
         setErrorModal({
           open: true,

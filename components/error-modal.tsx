@@ -57,7 +57,10 @@ export function ErrorModal({
   const getErrorDescription = () => {
     switch (error.type) {
       case 'rate-limit':
-        return error.message || 'You have made too many requests. Please wait a moment before trying again.'
+        return (
+          error.message ||
+          'You have made too many requests. Please wait a moment before trying again.'
+        )
       case 'auth':
         return 'You need to sign in to continue using this feature.'
       case 'forbidden':
