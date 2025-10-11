@@ -123,7 +123,8 @@ export class BraveSearchProvider implements SearchProvider {
       )
 
       if (!response.ok) {
-        throw new Error(`Brave web search failed: ${response.statusText}`)
+        console.error(`Brave web search failed: ${response.statusText}`)
+        throw new Error('Search failed')
       }
 
       const data = await response.json()
@@ -159,7 +160,8 @@ export class BraveSearchProvider implements SearchProvider {
       )
 
       if (!response.ok) {
-        throw new Error(`Brave video search failed: ${response.statusText}`)
+        console.error(`Brave video search failed: ${response.statusText}`)
+        throw new Error('Search failed')
       }
 
       const data = await response.json()
@@ -205,7 +207,8 @@ export class BraveSearchProvider implements SearchProvider {
       )
 
       if (!response.ok) {
-        throw new Error(`Brave image search failed: ${response.statusText}`)
+        console.error(`Brave image search failed: ${response.statusText}`)
+        throw new Error('Search failed')
       }
 
       const data = await response.json()
