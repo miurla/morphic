@@ -45,7 +45,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   minimumScale: 1,
-  maximumScale: 1
+  maximumScale: 1,
+  viewportFit: 'cover'
 }
 
 export default async function RootLayout({
@@ -69,7 +70,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          'min-h-screen flex flex-col font-sans antialiased',
+          'h-full flex flex-col font-sans antialiased',
           fontSans.variable
         )}
       >

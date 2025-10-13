@@ -417,8 +417,14 @@
   * {
     @apply border-border;
   }
+
+  html,
   body {
     @apply bg-background text-foreground;
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
   }
 
   /* Tailwind v4: Restore pointer cursor for buttons */
