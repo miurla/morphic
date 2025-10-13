@@ -39,11 +39,13 @@ We're excited to announce the v1.0.0 pre-release is now available for beta testi
 ### About v1.0.0 Branch
 
 The `v1.0.0` branch is our pre-release branch featuring:
+
 - Latest features and improvements
 - Active bug fixes based on beta feedback
 - Preparation for stable release
 
 This branch will be merged into `main` once:
+
 - Beta testing phase is complete
 - Critical bugs are resolved
 - All planned features are stable
@@ -56,6 +58,7 @@ This branch will be merged into `main` once:
 ### Help Us Improve
 
 Found a bug or have suggestions? We'd love to hear from you:
+
 - 🐛 [Report issues on GitHub](https://github.com/miurla/morphic/issues)
 - 💬 Use the feedback button in the header at [beta.morphic.sh](https://beta.morphic.sh) for quick feedback
 - 🤝 Contribute to the beta testing effort
