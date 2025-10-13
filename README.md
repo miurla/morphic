@@ -17,6 +17,14 @@ An AI-powered search engine with a generative UI.
 
 📝 Explore AI-generated documentation on [DeepWiki](https://deepwiki.com/miurla/morphic)
 
+## 🧪 Try v1.0.0 Beta
+
+Want to experience the next generation of Morphic? The v1.0.0 beta is now available at [beta.morphic.sh](https://beta.morphic.sh)!
+
+This major update includes exciting new features like advanced search modes, PostgreSQL database, enhanced UI, and much more. Learn more about what's new in [PR #680](https://github.com/miurla/morphic/pull/680).
+
+Your feedback helps shape the future of Morphic!
+
 ## 🛠 Features
 
 ### Core Features
