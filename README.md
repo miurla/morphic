@@ -21,7 +21,7 @@ An AI-powered search engine with a generative UI.
 
 Want to experience the next generation of Morphic? The v1.0.0 beta is now available at [beta.morphic.sh](https://beta.morphic.sh)!
 
-This major update includes exciting new features like advanced search modes, PostgreSQL database, enhanced UI, and much more. Learn more about what's new in [PR #680](https://github.com/miurla/morphic/pull/680).
+This major update includes exciting new features like advanced search modes, PostgreSQL database, enhanced UI, and much more. Learn more about what's new in [Issue #680](https://github.com/miurla/morphic/issues/680).
 
 Your feedback helps shape the future of Morphic!
 
