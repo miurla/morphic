@@ -20,6 +20,7 @@ An AI-powered search engine with a generative UI.
 
 ## 🗂️ Overview
 
+- 🧪 [Beta Testing](#-beta-testing)
 - 🛠 [Features](#-features)
 - 🧱 [Stack](#-stack)
 - 🚀 [Quickstart](#-quickstart)
@@ -30,6 +31,36 @@ An AI-powered search engine with a generative UI.
 - 📄 [License](#-license)
 
 📝 Explore AI-generated documentation on [DeepWiki](https://deepwiki.com/miurla/morphic)
+
+## 🧪 Beta Testing
+
+We're excited to announce the v1.0.0 pre-release is now available for beta testing at [beta.morphic.sh](https://beta.morphic.sh)!
+
+### About v1.0.0 Branch
+
+The `v1.0.0` branch is our pre-release branch featuring:
+- Latest features and improvements
+- Active bug fixes based on beta feedback
+- Preparation for stable release
+
+This branch will be merged into `main` once:
+- Beta testing phase is complete
+- Critical bugs are resolved
+- All planned features are stable
+
+### Which Branch Should I Use?
+
+- **For production use**: Use the `main` branch (stable)
+- **For testing and feedback**: Use the `v1.0.0` branch or visit [beta.morphic.sh](https://beta.morphic.sh)
+
+### Help Us Improve
+
+Found a bug or have suggestions? We'd love to hear from you:
+- 🐛 [Report issues on GitHub](https://github.com/miurla/morphic/issues)
+- 💬 Use the feedback button in the header at [beta.morphic.sh](https://beta.morphic.sh) for quick feedback
+- 🤝 Contribute to the beta testing effort
+
+Your feedback helps make Morphic better for everyone!
 
 ## 🛠 Features
 
