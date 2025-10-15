@@ -5,7 +5,8 @@ import { createOpenAI, openai } from '@ai-sdk/openai'
 import { createProviderRegistry, LanguageModel } from 'ai'
 import { createOllama } from 'ollama-ai-provider-v2'
 
-export const registry = createProviderRegistry({
+// Build providers object conditionally
+const providers: Record<string, any> = {
   openai,
   anthropic,
   google,
@@ -15,13 +16,17 @@ export const registry = createProviderRegistry({
   }),
   gateway: createGateway({
     apiKey: process.env.AI_GATEWAY_API_KEY
-  }),
-  ollama: createOllama({
-    baseURL: process.env.OLLAMA_BASE_URL
-      ? `${process.env.OLLAMA_BASE_URL}/api`
-      : 'http://localhost:11434/api'
   })
-})
+}
+
+// Only add Ollama if OLLAMA_BASE_URL is configured
+if (process.env.OLLAMA_BASE_URL) {
+  providers.ollama = createOllama({
+    baseURL: `${process.env.OLLAMA_BASE_URL}/api`
+  })
+}
+
+export const registry = createProviderRegistry(providers)
 
 export function getModel(model: string): LanguageModel {
   return registry.languageModel(
