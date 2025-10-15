@@ -1,3 +1,4 @@
+import { loadModelsConfig } from '@/lib/config/load-models-config'
 import { OllamaClient } from '@/lib/ollama/client'
 import { Model } from '@/lib/types/models'
 
@@ -10,14 +11,11 @@ let validationError: Error | null = null
 
 /**
  * Extract all Ollama models from the configuration
- * Uses dynamic import to avoid bundling fs module
  */
 async function getConfiguredOllamaModels(): Promise<Model[]> {
   const ollamaModels: Model[] = []
 
   try {
-    // Dynamic import to avoid bundling server-only code
-    const { loadModelsConfig } = await import('@/lib/config/load-models-config')
     const config = await loadModelsConfig()
 
     // Check byMode models
