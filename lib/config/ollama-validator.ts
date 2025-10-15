@@ -59,6 +59,19 @@ export async function initializeOllamaValidation(): Promise<void> {
     console.log(
       `Ollama validation complete: ${validated.size} models with tools support`
     )
+
+    // Error if no models support tools
+    if (validated.size === 0) {
+      console.error(
+        '\n⚠️  ERROR: No Ollama models with tools support found!\n' +
+          'Morphic requires models with tools capability for web search functionality.\n' +
+          'Please install a model with tools support, for example:\n' +
+          '  ollama pull llama3.2\n' +
+          '  ollama pull qwen2.5\n' +
+          '  ollama pull mistral\n' +
+          'Models without tools support will not work with Morphic.\n'
+      )
+    }
   } catch (error) {
     validationError = error as Error
     console.error('Ollama validation failed:', error)
