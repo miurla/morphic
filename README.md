@@ -93,6 +93,7 @@ Your feedback helps make Morphic better for everyone!
 - Anthropic Claude
 - Google Gemini
 - Vercel AI Gateway
+- Ollama
 
 Models are configured in `config/models/*.json` with profile-based settings. When using non-OpenAI providers, update the model configuration files with compatible model IDs. See [Configuration Guide](docs/CONFIGURATION.md) for details.
 

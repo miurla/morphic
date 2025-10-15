@@ -191,6 +191,37 @@ ANTHROPIC_API_KEY=[YOUR_API_KEY]
 AI_GATEWAY_API_KEY=[YOUR_AI_GATEWAY_API_KEY]
 ```
 
+#### Ollama
+
+[Ollama](https://ollama.com/) enables you to run large language models locally on your own hardware.
+
+**Configuration:**
+
+```bash
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+Then update your `config/models/*.json` files to use Ollama models:
+
+```json
+{
+  "id": "qwen3:latest",
+  "name": "Qwen 3",
+  "provider": "Ollama",
+  "providerId": "ollama"
+}
+```
+
+**Important Notes:**
+
+- **Tools Capability**: Morphic requires models to support the `tools` capability for function calling. On server startup, Morphic validates configured models and logs the results. Note that even if a model reports tools support, actual tool calling performance depends on the model's capabilities and is not guaranteed.
+
+- **Validation Logs**: Check server logs on startup to verify your configured models:
+  ```
+  ✓ qwen3:latest (configured and tools supported)
+  ✗ deepseek-r1:latest (configured but lacks tools support)
+  ```
+
 ## Other Features
 
 ### LLM Observability
