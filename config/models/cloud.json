@@ -4,10 +4,10 @@
     "byMode": {
       "quick": {
         "speed": {
-          "id": "gemini-2.5-flash",
-          "name": "Gemini 2.5 Flash",
-          "provider": "Google",
-          "providerId": "google"
+          "id": "gpt-oss:20b",
+          "name": "GPT-OSS 20B",
+          "provider": "Ollama",
+          "providerId": "ollama"
         },
         "quality": {
           "id": "gpt-5-mini",

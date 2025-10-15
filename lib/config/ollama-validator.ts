@@ -1,4 +1,6 @@
 import { OllamaClient } from '@/lib/ollama/client'
+import { loadModelsConfig } from '@/lib/config/load-models-config'
+import { Model } from '@/lib/types/models'
 
 /**
  * Memory cache for validated Ollama models
@@ -8,8 +10,32 @@ let validatedModels: Set<string> | null = null
 let validationError: Error | null = null
 
 /**
+ * Extract all Ollama models from the configuration
+ */
+function getConfiguredOllamaModels(config: any): Model[] {
+  const ollamaModels: Model[] = []
+
+  // Check byMode models
+  for (const mode of Object.values(config.models.byMode)) {
+    for (const model of Object.values(mode as Record<string, Model>)) {
+      if (model.providerId === 'ollama') {
+        ollamaModels.push(model)
+      }
+    }
+  }
+
+  // Check relatedQuestions model
+  if (config.models.relatedQuestions?.providerId === 'ollama') {
+    ollamaModels.push(config.models.relatedQuestions)
+  }
+
+  return ollamaModels
+}
+
+/**
  * Initialize Ollama model validation on server startup
  * Checks which models support 'tools' capability required for Morphic
+ * Also validates that configured Ollama models support tools
  */
 export async function initializeOllamaValidation(): Promise<void> {
   // Skip validation if OLLAMA_BASE_URL is not configured
@@ -60,7 +86,44 @@ export async function initializeOllamaValidation(): Promise<void> {
       `Ollama validation complete: ${validated.size} models with tools support`
     )
 
-    // Error if no models support tools
+    // Check configured models against validated models
+    try {
+      const config = await loadModelsConfig()
+      const configuredOllamaModels = getConfiguredOllamaModels(config)
+
+      if (configuredOllamaModels.length > 0) {
+        console.log(
+          `\nValidating ${configuredOllamaModels.length} configured Ollama model(s)...`
+        )
+
+        const invalidModels: string[] = []
+        for (const model of configuredOllamaModels) {
+          if (!validated.has(model.id)) {
+            invalidModels.push(model.id)
+            console.error(`✗ ${model.id} (configured but lacks tools support)`)
+          } else {
+            console.log(`✓ ${model.id} (configured and tools supported)`)
+          }
+        }
+
+        if (invalidModels.length > 0) {
+          console.error(
+            '\n⚠️  ERROR: Configured Ollama models do not support tools!\n' +
+              `The following model(s) in your config/models/*.json do not support tools capability:\n` +
+              invalidModels.map(m => `  - ${m}`).join('\n') +
+              '\n\nMorphic requires models with tools capability for web search functionality.\n' +
+              'Please update your configuration to use models with tools support, for example:\n' +
+              '  ollama pull llama3.2\n' +
+              '  ollama pull qwen2.5\n' +
+              '  ollama pull mistral\n'
+          )
+        }
+      }
+    } catch (configError) {
+      console.warn('Failed to validate configured models:', configError)
+    }
+
+    // Error if no models support tools at all
     if (validated.size === 0) {
       console.error(
         '\n⚠️  ERROR: No Ollama models with tools support found!\n' +
