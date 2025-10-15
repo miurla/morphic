@@ -113,9 +113,9 @@ export async function initializeOllamaValidation(): Promise<void> {
               invalidModels.map(m => `  - ${m}`).join('\n') +
               '\n\nMorphic requires models with tools capability for web search functionality.\n' +
               'Please update your configuration to use models with tools support, for example:\n' +
-              '  ollama pull llama3.2\n' +
-              '  ollama pull qwen2.5\n' +
-              '  ollama pull mistral\n'
+              '  ollama pull qwen3\n' +
+              '  ollama pull gpt-oss\n' +
+              '  ollama pull deepseek-v3.1\n'
           )
         }
       }
@@ -129,9 +129,9 @@ export async function initializeOllamaValidation(): Promise<void> {
         '\n⚠️  ERROR: No Ollama models with tools support found!\n' +
           'Morphic requires models with tools capability for web search functionality.\n' +
           'Please install a model with tools support, for example:\n' +
-          '  ollama pull llama3.2\n' +
-          '  ollama pull qwen2.5\n' +
-          '  ollama pull mistral\n' +
+          '  ollama pull qwen3\n' +
+          '  ollama pull gpt-oss\n' +
+          '  ollama pull deepseek-v3.1\n' +
           'Models without tools support will not work with Morphic.\n'
       )
     }
