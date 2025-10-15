@@ -7,8 +7,8 @@ export async function register() {
     traceExporter: new LangfuseExporter()
   })
 
-  // Initialize Ollama validation on server startup (Node.js only)
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
+  // Initialize Ollama validation on server startup (only when configured)
+  if (process.env.OLLAMA_BASE_URL) {
     const { initializeOllamaValidation } = await import(
       '@/lib/config/ollama-validator'
     )
