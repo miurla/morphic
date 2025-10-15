@@ -193,7 +193,7 @@ ANTHROPIC_API_KEY=[YOUR_API_KEY]
 AI_GATEWAY_API_KEY=[YOUR_AI_GATEWAY_API_KEY]
 ```
 
-#### Ollama (Self-hosted)
+#### Ollama
 
 [Ollama](https://ollama.com/) enables you to run large language models locally on your own hardware.
 
