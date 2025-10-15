@@ -1,3 +1,5 @@
+'use server'
+
 import { loadModelsConfig } from '@/lib/config/load-models-config'
 import { OllamaClient } from '@/lib/ollama/client'
 import { Model } from '@/lib/types/models'
