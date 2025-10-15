@@ -207,8 +207,8 @@ Then update your `config/models/*.json` files to use Ollama models:
 
 ```json
 {
-  "id": "llama3.2:latest",
-  "name": "Llama 3.2",
+  "id": "qwen3:latest",
+  "name": "Qwen 3",
   "provider": "Ollama",
   "providerId": "ollama"
 }
@@ -220,8 +220,8 @@ Then update your `config/models/*.json` files to use Ollama models:
 
 - **Validation Logs**: Check server logs on startup to verify your configured models:
   ```
-  ✓ llama3.2:latest (configured and tools supported)
-  ✗ codellama:latest (configured but lacks tools support)
+  ✓ qwen3:latest (configured and tools supported)
+  ✗ deepseek-r1:latest (configured but lacks tools support)
   ```
 
 ## Other Features
