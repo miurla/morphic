@@ -193,6 +193,61 @@ ANTHROPIC_API_KEY=[YOUR_API_KEY]
 AI_GATEWAY_API_KEY=[YOUR_AI_GATEWAY_API_KEY]
 ```
 
+#### Ollama (Self-hosted)
+
+[Ollama](https://ollama.ai/) enables you to run large language models locally on your own hardware, providing privacy, cost savings, and offline capabilities.
+
+**Setup:**
+
+1. Install Ollama following the [official installation guide](https://ollama.ai/download)
+
+2. Pull a model with tools support (required for Morphic):
+
+```bash
+# Example: Pull Llama 3.2 with tools support
+ollama pull llama3.2
+
+# Or other models with tools capability:
+ollama pull qwen2.5
+ollama pull mistral
+```
+
+3. Configure your environment:
+
+```bash
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+**Important Notes:**
+
+- **Tools Capability Required**: Morphic requires models to support the `tools` capability for web search functionality. On server startup, Morphic will automatically check which of your Ollama models support tools and log the results.
+
+- **Model Configuration**: Update your `config/models/*.json` files to use Ollama models. Set `providerId` to `ollama` and use the model name from Ollama:
+
+```json
+{
+  "id": "llama3.2:latest",
+  "name": "Llama 3.2",
+  "provider": "Ollama",
+  "providerId": "ollama"
+}
+```
+
+- **Checking Model Capabilities**: To verify if a model supports tools, check the server logs on startup. Morphic will display which models passed validation:
+
+```
+✓ llama3.2:latest supports tools
+✗ codellama:latest does not support tools (skipped)
+```
+
+- **Performance**: For best performance, ensure your system meets Ollama's hardware requirements. GPU acceleration is recommended for larger models.
+
+**Troubleshooting:**
+
+- If Morphic can't connect to Ollama, verify it's running: `ollama list`
+- Check that `OLLAMA_BASE_URL` points to the correct host (use `http://host.docker.internal:11434` when running Morphic in Docker)
+- Review startup logs for model validation results
+
 ## Other Features
 
 ### LLM Observability

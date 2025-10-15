@@ -3,6 +3,7 @@ import { createGateway } from '@ai-sdk/gateway'
 import { google } from '@ai-sdk/google'
 import { createOpenAI, openai } from '@ai-sdk/openai'
 import { createProviderRegistry, LanguageModel } from 'ai'
+import { createOllama } from 'ollama-ai-provider-v2'
 
 export const registry = createProviderRegistry({
   openai,
@@ -14,6 +15,11 @@ export const registry = createProviderRegistry({
   }),
   gateway: createGateway({
     apiKey: process.env.AI_GATEWAY_API_KEY
+  }),
+  ollama: createOllama({
+    baseURL: process.env.OLLAMA_BASE_URL
+      ? `${process.env.OLLAMA_BASE_URL}/api`
+      : 'http://localhost:11434/api'
   })
 })
 
@@ -38,6 +44,8 @@ export function isProviderEnabled(providerId: string): boolean {
       )
     case 'gateway':
       return !!process.env.AI_GATEWAY_API_KEY
+    case 'ollama':
+      return !!process.env.OLLAMA_BASE_URL
     default:
       return false
   }
