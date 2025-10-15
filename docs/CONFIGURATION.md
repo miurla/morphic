@@ -195,11 +195,11 @@ AI_GATEWAY_API_KEY=[YOUR_AI_GATEWAY_API_KEY]
 
 #### Ollama (Self-hosted)
 
-[Ollama](https://ollama.ai/) enables you to run large language models locally on your own hardware, providing privacy, cost savings, and offline capabilities.
+[Ollama](https://ollama.com/) enables you to run large language models locally on your own hardware, providing privacy, cost savings, and offline capabilities.
 
 **Setup:**
 
-1. Install Ollama following the [official installation guide](https://ollama.ai/download)
+1. Install Ollama following the [official installation guide](https://ollama.com/download)
 
 2. Pull a model with tools support (required for Morphic):
 
