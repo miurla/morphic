@@ -93,6 +93,8 @@ docker-compose logs searxng
 
 Models are configured in `config/models/*.json` files. Each provider requires its corresponding API key to be set in the environment variables.
 
+> **Note:** Ollama models are discovered dynamically at runtime when an Ollama server is available. Only models that expose the `tools` capability will appear in Morphic, so you no longer need to keep placeholder Ollama entries in `models.json`.
+
 ### Model Configuration
 
 Model configuration files use the following structure:
