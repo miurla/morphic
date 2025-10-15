@@ -1,6 +1,3 @@
-'use server'
-
-import { loadModelsConfig } from '@/lib/config/load-models-config'
 import { OllamaClient } from '@/lib/ollama/client'
 import { Model } from '@/lib/types/models'
 
@@ -13,22 +10,31 @@ let validationError: Error | null = null
 
 /**
  * Extract all Ollama models from the configuration
+ * Uses dynamic import to avoid bundling fs module
  */
-function getConfiguredOllamaModels(config: any): Model[] {
+async function getConfiguredOllamaModels(): Promise<Model[]> {
   const ollamaModels: Model[] = []
 
-  // Check byMode models
-  for (const mode of Object.values(config.models.byMode)) {
-    for (const model of Object.values(mode as Record<string, Model>)) {
-      if (model.providerId === 'ollama') {
-        ollamaModels.push(model)
+  try {
+    // Dynamic import to avoid bundling server-only code
+    const { loadModelsConfig } = await import('@/lib/config/load-models-config')
+    const config = await loadModelsConfig()
+
+    // Check byMode models
+    for (const mode of Object.values(config.models.byMode)) {
+      for (const model of Object.values(mode as Record<string, Model>)) {
+        if (model.providerId === 'ollama') {
+          ollamaModels.push(model)
+        }
       }
     }
-  }
 
-  // Check relatedQuestions model
-  if (config.models.relatedQuestions?.providerId === 'ollama') {
-    ollamaModels.push(config.models.relatedQuestions)
+    // Check relatedQuestions model
+    if (config.models.relatedQuestions?.providerId === 'ollama') {
+      ollamaModels.push(config.models.relatedQuestions)
+    }
+  } catch (error) {
+    console.warn('Failed to load model configuration:', error)
   }
 
   return ollamaModels
@@ -90,8 +96,7 @@ export async function initializeOllamaValidation(): Promise<void> {
 
     // Check configured models against validated models
     try {
-      const config = await loadModelsConfig()
-      const configuredOllamaModels = getConfiguredOllamaModels(config)
+      const configuredOllamaModels = await getConfiguredOllamaModels()
 
       if (configuredOllamaModels.length > 0) {
         console.log(

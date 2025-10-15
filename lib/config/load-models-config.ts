@@ -1,6 +1,5 @@
-import fsSync from 'fs'
-import fs from 'fs/promises'
-import path from 'path'
+import cloudConfig from '@/config/models/cloud.json'
+import defaultConfig from '@/config/models/default.json'
 
 import { ModelType } from '@/lib/types/model-type'
 import { Model } from '@/lib/types/models'
@@ -19,14 +18,6 @@ let cachedProfile: string | null = null
 
 const VALID_MODEL_TYPES: ModelType[] = ['speed', 'quality']
 const VALID_SEARCH_MODES: SearchMode[] = ['quick', 'adaptive', 'planning']
-
-function resolveConfigPath(): string {
-  const profile =
-    process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true' ? 'cloud' : 'default'
-  const file = `${profile}.json`
-  const configPath = path.resolve(process.cwd(), 'config', 'models', file)
-  return configPath
-}
 
 function validateModelsConfigStructure(
   json: unknown
@@ -76,69 +67,29 @@ export async function loadModelsConfig(): Promise<ModelsConfig> {
     return cachedConfig
   }
 
-  const filePath = resolveConfigPath()
-  try {
-    const raw = await fs.readFile(filePath, 'utf-8')
-    const json = JSON.parse(raw)
+  const config = profile === 'cloud' ? cloudConfig : defaultConfig
+  validateModelsConfigStructure(config)
 
-    validateModelsConfigStructure(json)
-
-    cachedConfig = json as ModelsConfig
-    cachedProfile = profile
-    return cachedConfig
-  } catch (err) {
-    // If selected profile fails, try default as a safe fallback
-    if (profile !== 'default') {
-      const fallbackPath = path.resolve(
-        process.cwd(),
-        'config',
-        'models',
-        'default.json'
-      )
-      const raw = await fs.readFile(fallbackPath, 'utf-8')
-      const json = JSON.parse(raw)
-      validateModelsConfigStructure(json)
-      cachedConfig = json as ModelsConfig
-      cachedProfile = 'default'
-      return cachedConfig
-    }
-    throw err
-  }
+  cachedConfig = config as ModelsConfig
+  cachedProfile = profile
+  return cachedConfig
 }
 
 // Synchronous load (for code paths that need sync access)
 export function loadModelsConfigSync(): ModelsConfig {
   const profile =
     process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true' ? 'cloud' : 'default'
+
   if (cachedConfig && cachedProfile === profile) {
     return cachedConfig
   }
 
-  const filePath = resolveConfigPath()
-  try {
-    const raw = fsSync.readFileSync(filePath, 'utf-8')
-    const json = JSON.parse(raw)
-    validateModelsConfigStructure(json)
-    cachedConfig = json as ModelsConfig
-    cachedProfile = profile
-    return cachedConfig
-  } catch (err) {
-    if (profile !== 'default') {
-      const fallbackPath = path.resolve(
-        process.cwd(),
-        'config',
-        'models',
-        'default.json'
-      )
-      const raw = fsSync.readFileSync(fallbackPath, 'utf-8')
-      const json = JSON.parse(raw)
-      validateModelsConfigStructure(json)
-      cachedConfig = json as ModelsConfig
-      cachedProfile = 'default'
-      return cachedConfig
-    }
-    throw err
-  }
+  const config = profile === 'cloud' ? cloudConfig : defaultConfig
+  validateModelsConfigStructure(config)
+
+  cachedConfig = config as ModelsConfig
+  cachedProfile = profile
+  return cachedConfig
 }
 
 // Public accessor that ensures a config is available synchronously
