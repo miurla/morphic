@@ -203,6 +203,15 @@ export function Chat({
     return result
   }, [messages])
 
+  // Dispatch custom event when messages change
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('messages-changed', {
+        detail: { hasMessages: messages.length > 0 }
+      })
+    )
+  }, [messages.length])
+
   // Detect if scroll container is at the bottom
   useEffect(() => {
     const container = scrollContainerRef.current
