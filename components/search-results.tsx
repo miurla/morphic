@@ -85,15 +85,15 @@ export function SearchResults({
   return (
     <div className="flex flex-wrap -m-1">
       {displayedGridResults.map((result, index) => (
-        <div className="w-1/2 md:w-1/4 p-1" key={index}>
+        <div className="w-1/2 md:w-1/4 p-1 min-w-0" key={index}>
           <Link href={result.url} passHref target="_blank">
             <Card className="flex-1 h-full hover:bg-muted/50 transition-colors">
-              <CardContent className="p-2 flex flex-col justify-between h-full">
+              <CardContent className="p-2 flex flex-col justify-between h-full min-w-0">
                 <p className="text-xs line-clamp-2 min-h-8">
                   {result.title || result.content}
                 </p>
-                <div className="mt-2 flex items-center space-x-1">
-                  <Avatar className="h-4 w-4">
+                <div className="mt-2 flex items-center space-x-1 min-w-0">
+                  <Avatar className="h-4 w-4 shrink-0">
                     <AvatarImage
                       src={`https://www.google.com/s2/favicons?domain=${
                         new URL(result.url).hostname
@@ -104,7 +104,7 @@ export function SearchResults({
                       {new URL(result.url).hostname[0]}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="text-xs opacity-60 truncate">
+                  <div className="text-xs opacity-60 truncate min-w-0">
                     {`${displayUrlName(result.url)} - ${index + 1}`}
                   </div>
                 </div>
