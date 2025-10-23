@@ -17,7 +17,8 @@ export function BetaBadge() {
     }
 
     window.addEventListener('messages-changed', handleMessagesChanged)
-    return () => window.removeEventListener('messages-changed', handleMessagesChanged)
+    return () =>
+      window.removeEventListener('messages-changed', handleMessagesChanged)
   }, [])
 
   // Don't show if changelog is visible or if there are messages
