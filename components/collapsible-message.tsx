@@ -63,7 +63,7 @@ export function CollapsibleMessage({
       {isCollapsible ? (
         <div
           className={cn(
-            'flex-1 overflow-hidden',
+            'flex-1 overflow-hidden min-w-0',
             variant === 'default' && showBorder && 'rounded-lg border bg-card',
             variant === 'default' && !showBorder && 'rounded-lg bg-card',
             variant === 'process' && 'rounded-lg border bg-card',
@@ -88,7 +88,7 @@ export function CollapsibleMessage({
               {header && (
                 <div
                   className={cn(
-                    'overflow-hidden',
+                    'overflow-hidden min-w-0',
                     variant === 'default' && 'text-sm flex-1',
                     variant === 'minimal' && 'text-sm flex items-center gap-1',
                     (variant === 'process' || variant === 'process-sub') &&

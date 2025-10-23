@@ -182,7 +182,7 @@ export function ChatMessages({
         sections.length > 0 ? 'flex-1 overflow-y-auto' : ''
       )}
     >
-      <div className="relative mx-auto w-full max-w-3xl px-4">
+      <div className="relative mx-auto w-full max-w-full md:max-w-3xl px-4">
         {sections.map((section, sectionIndex) => (
           <div
             key={section.id}

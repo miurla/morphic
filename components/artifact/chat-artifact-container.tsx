@@ -183,7 +183,7 @@ export function ChatArtifactContainer({
       )}
 
       {/* Mobile: full-width chat + drawer */}
-      <div className="md:hidden flex-1 h-full">
+      <div className="md:hidden flex-1 h-full min-w-0">
         {children}
         <InspectorDrawer />
       </div>
