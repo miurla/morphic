@@ -9,9 +9,9 @@ import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 import { extractCitationMapsFromMessages } from '@/lib/utils/citation'
 
+import { AnimatedLogo } from './ui/animated-logo'
 import { ChatError } from './chat-error'
 import { RenderMessage } from './render-message'
-import { AnimatedLogo } from './ui/animated-logo'
 
 // Import section structure interface
 interface ChatSection {

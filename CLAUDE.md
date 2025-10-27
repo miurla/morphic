@@ -146,6 +146,7 @@ This project supports MCP for enhanced AI assistant integration with Next.js 16.
 Next.js 16 provides a built-in MCP server at `http://localhost:3000/_next/mcp` when the dev server is running.
 
 **Available Tools:**
+
 - `get_project_metadata` - Get project path and dev server URL
 - `get_errors` - Retrieve current error state (global errors, runtime errors, build errors)
 - `get_page_metadata` - Get runtime metadata about current page renders
@@ -153,6 +154,7 @@ Next.js 16 provides a built-in MCP server at `http://localhost:3000/_next/mcp` w
 - `get_server_action_by_id` - Locate Server Actions by ID
 
 **Usage:**
+
 1. Start the dev server: `bun dev`
 2. MCP endpoint is automatically available at `/_next/mcp`
 3. AI assistants can query real-time app state, errors, and logs
@@ -160,6 +162,7 @@ Next.js 16 provides a built-in MCP server at `http://localhost:3000/_next/mcp` w
 ### Next DevTools MCP (External)
 
 The project includes `.mcp.json` configuration for the Next DevTools MCP package, which provides:
+
 - Next.js knowledge base access
 - Automated migration tools
 - Cache optimization guides
@@ -169,6 +172,7 @@ The project includes `.mcp.json` configuration for the Next DevTools MCP package
 The `.mcp.json` file in the project root enables team-wide MCP tool sharing. AI assistants like Claude Code will prompt for approval before using project-scoped servers.
 
 **Benefits:**
+
 - Real-time access to application internal state
 - Improved debugging and error diagnostics
 - Context-aware code suggestions

@@ -62,7 +62,10 @@ export async function persistStreamResults(
             console.log(
               'Chat already exists (duplicate key), continuing with response save'
             )
-            perfTime('initial chat persistence - duplicate detected', fallbackStart)
+            perfTime(
+              'initial chat persistence - duplicate detected',
+              fallbackStart
+            )
           } else {
             // Other error - log and return
             console.error('Fallback chat creation failed:', fallbackError)
