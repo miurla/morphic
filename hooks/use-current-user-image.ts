@@ -7,12 +7,15 @@ export const useCurrentUserImage = () => {
 
   useEffect(() => {
     const fetchUserImage = async () => {
-      const { data, error } = await createClient().auth.getSession()
-      if (error) {
-        console.error(error)
+      try {
+        const { data, error } = await createClient().auth.getSession()
+        if (error) {
+          console.error(error)
+        }
+        setImage(data.session?.user.user_metadata.avatar_url ?? null)
+      } catch (error) {
+        // Supabase not configured, skip silently
       }
-
-      setImage(data.session?.user.user_metadata.avatar_url ?? null)
     }
     fetchUserImage()
   }, [])

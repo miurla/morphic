@@ -11,17 +11,26 @@ export function useAuthCheck() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Create a single Supabase client instance for this effect
-    const supabase = createClient()
+    let subscription: { unsubscribe: () => void } | null = null
 
     const checkAuth = async () => {
       try {
+        const supabase = createClient()
+
         const {
           data: { session }
         } = await supabase.auth.getSession()
         setUser(session?.user ?? null)
+
+        // Subscribe to auth changes
+        const {
+          data: { subscription: authSubscription }
+        } = supabase.auth.onAuthStateChange((event, session) => {
+          setUser(session?.user ?? null)
+        })
+        subscription = authSubscription
       } catch (error) {
-        console.error('Error checking auth:', error)
+        // Supabase not configured
         setUser(null)
       } finally {
         setLoading(false)
@@ -30,15 +39,8 @@ export function useAuthCheck() {
 
     checkAuth()
 
-    // Subscribe to auth changes using the same client instance
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-    })
-
     return () => {
-      subscription.unsubscribe()
+      subscription?.unsubscribe()
     }
   }, [])
 

@@ -173,16 +173,15 @@ cp .env.local.example .env.local
 Fill in the required environment variables in `.env.local`:
 
 ```bash
-# Required Configuration
-DATABASE_URL=                   # PostgreSQL connection string
-OPENAI_API_KEY=                 # Get from https://platform.openai.com/api-keys
-TAVILY_API_KEY=                 # Get from https://app.tavily.com/home
-BRAVE_SEARCH_API_KEY=           # Get from https://brave.com/search/api/
-NEXT_PUBLIC_SUPABASE_URL=       # Your Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=  # Your Supabase anonymous key
+DATABASE_URL=your_database_url
+OPENAI_API_KEY=your_openai_key
+TAVILY_API_KEY=your_tavily_key
+BRAVE_SEARCH_API_KEY=your_brave_key
 ```
 
-For optional features configuration (SearXNG, alternative AI providers, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
+**Note**: Authentication is disabled by default (`ENABLE_AUTH=false`).
+
+For optional features (authentication, SearXNG, alternative AI providers, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
 
 ### 4. Run database migrations
 
@@ -202,11 +201,54 @@ bun dev
 
 #### Using Docker
 
+1. Configure environment variables for Docker:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Edit `.env.local` and set the required variables:
+
+```bash
+DATABASE_URL=postgresql://morphic:morphic@postgres:5432/morphic
+OPENAI_API_KEY=your_openai_key
+TAVILY_API_KEY=your_tavily_key
+BRAVE_SEARCH_API_KEY=your_brave_key
+```
+
+**Note**: Authentication is disabled by default (`ENABLE_AUTH=false` in `.env.local.example`).
+
+**Optional**: Customize PostgreSQL credentials by setting environment variables in `.env.local`:
+
+```bash
+POSTGRES_USER=morphic      # Default: morphic
+POSTGRES_PASSWORD=morphic  # Default: morphic
+POSTGRES_DB=morphic        # Default: morphic
+POSTGRES_PORT=5432         # Default: 5432
+```
+
+2. Start the Docker containers:
+
 ```bash
 docker compose up -d
 ```
 
-Visit http://localhost:3000 in your browser.
+The application will:
+
+- Start PostgreSQL 17 with health checks
+- Start Redis for SearXNG search caching
+- Wait for the database to be ready
+- Run database migrations automatically
+- Start the Morphic application
+- Start SearXNG (optional search provider)
+
+3. Visit http://localhost:3000 in your browser.
+
+**Note**: Database data is persisted in a Docker volume. To reset the database, run:
+
+```bash
+docker compose down -v  # This will delete all data
+```
 
 ## 🌐 Deploy
 
@@ -214,7 +256,43 @@ Host your own live version of Morphic with Vercel or Docker.
 
 ### Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=DATABASE_URL,OPENAI_API_KEY,TAVILY_API_KEY,BRAVE_SEARCH_API_KEY,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=DATABASE_URL,OPENAI_API_KEY,TAVILY_API_KEY,BRAVE_SEARCH_API_KEY)
+
+**Note**: For Vercel deployments, set `ENABLE_AUTH=true` and configure Supabase authentication to secure your deployment.
+
+### Docker
+
+#### Using Prebuilt Image
+
+Prebuilt Docker images are automatically built and published to GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/miurla/morphic:latest
+```
+
+You can use it with docker-compose by setting the image in your `docker-compose.yaml`:
+
+```yaml
+services:
+  morphic:
+    image: ghcr.io/miurla/morphic:latest
+    env_file: .env.local
+    environment:
+      DATABASE_URL: postgresql://morphic:morphic@postgres:5432/morphic
+      DATABASE_SSL_DISABLED: 'true'
+      ENABLE_AUTH: 'false'
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres
+      - redis
+```
+
+**Note**: The prebuilt image uses default model configurations (statically bundled at build time). To customize models, you need to build from source - see [CONFIGURATION.md](./docs/CONFIGURATION.md) for details.
+
+#### Building from Source
+
+Or use Docker Compose for a complete setup with PostgreSQL, Redis, and SearXNG. See the [Using Docker](#using-docker) section for detailed instructions.
 
 ## 👥 Contributing
 

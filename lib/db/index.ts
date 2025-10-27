@@ -42,8 +42,17 @@ if (isDevelopment) {
       : 'Owner User (RLS Bypassed)'
   )
 }
+
+// SSL configuration: Use environment variable to control SSL
+// DATABASE_SSL_DISABLED=true disables SSL completely (for local/Docker PostgreSQL)
+// Default is to enable SSL with certificate verification (for cloud databases like Neon, Supabase)
+const sslConfig =
+  process.env.DATABASE_SSL_DISABLED === 'true'
+    ? false // Disable SSL entirely for local PostgreSQL
+    : { rejectUnauthorized: true } // Enable SSL with verification for cloud DBs
+
 const client = postgres(connectionString, {
-  ssl: { rejectUnauthorized: false },
+  ssl: sslConfig,
   prepare: false,
   max: 20 // Max 20 connections
 })

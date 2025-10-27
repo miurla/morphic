@@ -19,8 +19,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Docker
 
-- `docker compose up -d` - Run the application with Docker
+- `docker compose up -d` - Run the application with Docker (includes PostgreSQL 17, Redis, Morphic app, and SearXNG)
+- `docker compose down` - Stop all containers
+- `docker compose down -v` - Stop all containers and remove volumes (deletes database data)
 - `docker pull ghcr.io/miurla/morphic:latest` - Pull prebuilt Docker image
+
+#### Docker Authentication
+
+**Default Behavior**: Docker deployments run in **anonymous mode** (authentication disabled).
+
+When running with Docker Compose, `ENABLE_AUTH=false` is set by default, allowing personal use without Supabase setup. All users share a single anonymous user ID.
+
+**⚠️ Security Warning:**
+
+- Anonymous mode is **only for personal, single-user local environments**
+- All chat history is shared under one user ID
+- **NOT suitable** for multi-user or production deployments
+- Morphic Cloud deployments block `ENABLE_AUTH=false` automatically
+
+**Enabling Authentication:**
+To require Supabase authentication, set:
+
+```bash
+ENABLE_AUTH=true  # or remove ENABLE_AUTH from docker-compose.yaml
+NEXT_PUBLIC_SUPABASE_URL=[your-supabase-url]
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-supabase-anon-key]
+```
+
+**Implementation:**
+
+- Auth logic: [lib/auth/get-current-user.ts:22-40](lib/auth/get-current-user.ts#L22-L40)
+- Always warns when `ENABLE_AUTH=false` (except in tests)
+- Guards against `MORPHIC_CLOUD_DEPLOYMENT=true`
 
 ## Architecture Overview
 
@@ -30,8 +60,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **React 19.2.0** with TypeScript for type safety
 - **Vercel AI SDK 5.0.0-alpha.2** for AI streaming and GenerativeUI
 - **Supabase** for authentication and backend services
-- **PostgreSQL** with Drizzle ORM for database
-- **Redis** (Upstash or local) for chat history storage
+- **PostgreSQL** with Drizzle ORM for database and chat history storage
+- **Redis** (Upstash or local) for SearXNG advanced search caching
 - **Tailwind CSS** with shadcn/ui components
 
 ### Core Architecture
