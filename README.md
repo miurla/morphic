@@ -287,7 +287,7 @@ services:
       - redis
 ```
 
-**Note**: The prebuilt image uses default model configurations (statically bundled at build time). To customize models, you need to build from source - see below.
+**Note**: The prebuilt image uses default model configurations (statically bundled at build time). To customize models, you need to build from source - see [CONFIGURATION.md](./docs/CONFIGURATION.md) for details.
 
 #### Building from Source
 
