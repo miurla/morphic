@@ -1,6 +1,8 @@
-import { UploadedFile } from '@/lib/types'
 import { useCallback, useState } from 'react'
+
 import { toast } from 'sonner'
+
+import { UploadedFile } from '@/lib/types'
 
 type UseFileDropzoneProps = {
   uploadedFiles: UploadedFile[]

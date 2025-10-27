@@ -1,6 +1,7 @@
-import 'dotenv/config'
-import { defineConfig } from 'drizzle-kit'
 import * as dotenv from 'dotenv'
+import { defineConfig } from 'drizzle-kit'
+
+import 'dotenv/config'
 
 // Load from .env.local if DATABASE_URL is not set
 if (!process.env.DATABASE_URL) {

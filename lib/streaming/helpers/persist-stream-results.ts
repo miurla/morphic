@@ -51,8 +51,26 @@ export async function persistStreamResults(
           )
           perfTime('initial chat persistence fallback completed', fallbackStart)
         } catch (fallbackError) {
-          console.error('Fallback chat creation failed:', fallbackError)
-          return
+          // Check if the error is due to duplicate key (chat already exists)
+          const isDuplicateKey =
+            fallbackError instanceof Error &&
+            (fallbackError.message.includes('duplicate key') ||
+              fallbackError.message.includes('unique constraint'))
+
+          if (isDuplicateKey) {
+            // Chat already exists, this is fine - continue to save the response message
+            console.log(
+              'Chat already exists (duplicate key), continuing with response save'
+            )
+            perfTime(
+              'initial chat persistence - duplicate detected',
+              fallbackStart
+            )
+          } else {
+            // Other error - log and return
+            console.error('Fallback chat creation failed:', fallbackError)
+            return
+          }
         }
       } else {
         return

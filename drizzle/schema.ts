@@ -1,17 +1,17 @@
-import {
-  pgTable,
-  index,
-  pgPolicy,
-  varchar,
-  timestamp,
-  text,
-  foreignKey,
-  jsonb,
-  check,
-  integer,
-  json
-} from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
+import {
+  check,
+  foreignKey,
+  index,
+  integer,
+  json,
+  jsonb,
+  pgPolicy,
+  pgTable,
+  text,
+  timestamp,
+  varchar
+} from 'drizzle-orm/pg-core'
 
 export const chats = pgTable(
   'chats',

@@ -72,7 +72,7 @@ export function ChatMessages({
   // Calculate the offset height based on device type
   const offsetHeight = isMobile
     ? 208 // Mobile: larger offset for mobile header/input
-    : 170 // Desktop: smaller offset
+    : 140 // Desktop: smaller offset
 
   // Extract citation maps from all messages in all sections
   const allCitationMaps = useMemo(() => {

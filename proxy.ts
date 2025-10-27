@@ -1,7 +1,8 @@
-import { updateSession } from '@/lib/supabase/middleware'
 import { type NextRequest, NextResponse } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+import { updateSession } from '@/lib/supabase/middleware'
+
+export async function proxy(request: NextRequest) {
   // Get the protocol from X-Forwarded-Proto header or request protocol
   const protocol =
     request.headers.get('x-forwarded-proto') || request.nextUrl.protocol
