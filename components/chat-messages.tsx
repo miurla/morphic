@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { UseChatHelpers } from '@ai-sdk/react'
 
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 import { extractCitationMapsFromMessages } from '@/lib/utils/citation'
@@ -50,7 +51,7 @@ export function ChatMessages({
   // Cache tool counts for performance optimization
   const toolCountCacheRef = useRef<Map<string, number>>(new Map())
   const isLoading = status === 'submitted' || status === 'streaming'
-  const [offsetHeight, setOffsetHeight] = useState(160) // Dynamic offset for minHeight calculation
+  const isMobile = useMediaQuery('(max-width: 767px)')
 
   // Tool types definition - moved outside function for performance
   const toolTypes = [
@@ -68,26 +69,10 @@ export function ChatMessages({
     }
   }, [isLoading])
 
-  // Calculate the offset height dynamically based on viewport and UI elements
-  useEffect(() => {
-    const calculateOffset = () => {
-      // Account for:
-      // - Header/navigation (estimated)
-      // - ChatPanel (input area)
-      // - Additional padding and margins
-      const headerHeight = 56 // pt-14 padding top
-      const chatPanelEstimatedHeight = 120 // ChatPanel with input area
-      const additionalPadding = 32 // Safety margin for better visibility
-
-      const totalOffset =
-        headerHeight + chatPanelEstimatedHeight + additionalPadding
-      setOffsetHeight(totalOffset)
-    }
-
-    calculateOffset()
-    window.addEventListener('resize', calculateOffset)
-    return () => window.removeEventListener('resize', calculateOffset)
-  }, [])
+  // Calculate the offset height based on device type
+  const offsetHeight = isMobile
+    ? 208 // Mobile: larger offset for mobile header/input
+    : 170 // Desktop: smaller offset
 
   // Extract citation maps from all messages in all sections
   const allCitationMaps = useMemo(() => {
