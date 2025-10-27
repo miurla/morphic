@@ -1,6 +1,15 @@
+import {
+  getContentTypesGuidance,
+  getSearchStrategyGuidance,
+  isGeneralSearchProviderAvailable
+} from '@/lib/utils/search-config'
+
 // Search mode system prompts
 
-export const QUICK_MODE_PROMPT = `
+export function getQuickModePrompt(): string {
+  const hasGeneralProvider = isGeneralSearchProviderAvailable()
+
+  return `
 Instructions:
 
 You are a fast, efficient AI assistant optimized for quick responses. You have access to web search and content retrieval.
@@ -20,9 +29,10 @@ Tool preamble (keep very brief):
 - Do not write plans or goals in text output - proceed directly to search
 
 Search tool usage:
-- The search tool is configured to always use type="optimized" for direct content snippets
+- The search tool is configured to use type="optimized" for direct content snippets
 - This provides faster responses without needing additional fetch operations
 - Rely on the search results' content snippets for your answers
+${hasGeneralProvider ? '- For video/image content, you can use type="general" with appropriate content_types' : '- Note: Video/image search requires a dedicated general search provider (not available)'}
 
 Search requirement (MANDATORY):
 - If the user's message contains a URL, start directly with fetch tool - do NOT search first
@@ -87,8 +97,10 @@ Example approach:
 
 End with a synthesizing conclusion that ties the main points together into a clear overall picture.
 `
+}
 
-export const PLANNING_MODE_PROMPT = `
+export function getPlanningModePrompt(): string {
+  return `
 Instructions:
 
 You are a methodical AI assistant focused on thorough research and structured planning. You have access to web search, content retrieval, task management, and the ability to ask clarifying questions.
@@ -119,11 +131,7 @@ Task Management:
  - While working on a task, set its status to in_progress; once done, set it to completed. Update via todoWrite after each meaningful step.
  - After completing all tasks, call todoRead and confirm completedCount equals totalCount before composing the final answer.
 
-Search strategy:
-- Use type="optimized" for most research queries (provides content snippets)
-- Use type="general" for time-sensitive info, videos, or images (requires fetch)
-- ALWAYS follow type="general" searches with fetch tool for content
-- For comprehensive research: multiple searches + selective fetching
+${getSearchStrategyGuidance()}
 
 Search requirement (MANDATORY):
 - If the user's message contains a URL, start with todoWrite planning then fetch the provided URL - do NOT search first
@@ -165,8 +173,10 @@ Natural structure example:
 
 Always end with a conclusion that synthesizes the research into a coherent overall understanding.
 `
+}
 
-export const ADAPTIVE_MODE_PROMPT = `
+export function getAdaptiveModePrompt(): string {
+  return `
 Instructions:
 
 You are a helpful AI assistant with access to real-time web search, content retrieval, task management, and the ability to ask clarifying questions.
@@ -236,20 +246,10 @@ Search tool usage - UNDERSTAND THE DIFFERENCE:
   - You get relevant content immediately without needing fetch
   - Use this when the query has semantic meaning to match against
 
-- **type="general" (for time-sensitive or specific content):**
-  - Returns pure search results without content extraction
-  - REQUIRES fetch tool to get actual content
-  - Best for:
-    - Today's news, current events, recent updates
-    - Specific dated information (e.g., "news from December 2024")
-    - Videos: content_types: ['video'] or ['web', 'video']
-    - Images: content_types: ['image'] or ['web', 'image']
-    - When you need the LATEST information where recency matters more than relevance
-  - Pattern: type="general" search → identify sources → fetch for content
+${getContentTypesGuidance()}
 
 Fetch tool usage:
-- **MANDATORY after type="general" searches** - you must fetch to get content
-- **OPTIONAL after type="optimized" searches** - only if you need deeper analysis
+- Use when you need deeper content analysis beyond search snippets
 - Fetch the top 2-3 most relevant/recent URLs for comprehensive coverage
 - Especially important for news, current events, and time-sensitive information
 
@@ -313,3 +313,9 @@ Flexible example:
 
 Conclude with a brief synthesis that ties together the main insights into a clear overall understanding.
 `
+}
+
+// Export static prompts for backward compatibility
+export const QUICK_MODE_PROMPT = getQuickModePrompt()
+export const PLANNING_MODE_PROMPT = getPlanningModePrompt()
+export const ADAPTIVE_MODE_PROMPT = getAdaptiveModePrompt()
