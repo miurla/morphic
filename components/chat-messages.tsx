@@ -9,9 +9,9 @@ import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 import { extractCitationMapsFromMessages } from '@/lib/utils/citation'
 
-import { AnimatedLogo } from './ui/animated-logo'
 import { ChatError } from './chat-error'
 import { RenderMessage } from './render-message'
+import { AnimatedLogo } from './ui/animated-logo'
 
 // Import section structure interface
 interface ChatSection {
@@ -72,7 +72,7 @@ export function ChatMessages({
   // Calculate the offset height based on device type
   const offsetHeight = isMobile
     ? 208 // Mobile: larger offset for mobile header/input
-    : 170 // Desktop: smaller offset
+    : 140 // Desktop: smaller offset
 
   // Extract citation maps from all messages in all sections
   const allCitationMaps = useMemo(() => {

@@ -89,7 +89,7 @@ export async function createChat(
   })
 
   // Revalidate cache
-  revalidateTag(`chat-${chatId}`)
+  revalidateTag(`chat-${chatId}`, 'max')
 
   return chat
 }
@@ -129,7 +129,7 @@ export async function createChatAndSaveMessage(
   })
 
   // Revalidate cache
-  revalidateTag(`chat-${chatId}`)
+  revalidateTag(`chat-${chatId}`, 'max')
 
   return { chat, message: dbMessage }
 }
@@ -159,7 +159,7 @@ export async function createChatWithFirstMessage(
   })
 
   // Revalidate cache
-  revalidateTag(`chat-${chatId}`)
+  revalidateTag(`chat-${chatId}`, 'max')
 
   return result
 }
@@ -194,7 +194,7 @@ export async function upsertMessage(
   )
 
   // Revalidate cache
-  revalidateTag(`chat-${chatId}`)
+  revalidateTag(`chat-${chatId}`, 'max')
 
   return dbMessage
 }
@@ -211,7 +211,7 @@ export async function deleteChat(chatId: string) {
   const result = await dbActions.deleteChat(chatId, userId)
 
   if (result.success) {
-    revalidateTag(`chat-${chatId}`)
+    revalidateTag(`chat-${chatId}`, 'max')
   }
 
   return result
@@ -233,7 +233,7 @@ export async function clearChats() {
   }
 
   // Clear all chat caches since we deleted all chats
-  revalidateTag('chat')
+  revalidateTag('chat', 'max')
   return { success: true }
 }
 
@@ -254,7 +254,7 @@ export async function deleteMessagesAfter(chatId: string, messageId: string) {
 
   const result = await dbActions.deleteMessagesAfter(chatId, messageId)
 
-  revalidateTag(`chat-${chatId}`)
+  revalidateTag(`chat-${chatId}`, 'max')
 
   return { success: true, count: result.count }
 }
@@ -275,7 +275,7 @@ export async function shareChat(chatId: string) {
   )
 
   if (updatedChat) {
-    revalidateTag(`chat-${chatId}`)
+    revalidateTag(`chat-${chatId}`, 'max')
   }
 
   return updatedChat
@@ -306,7 +306,7 @@ export async function deleteMessagesFromIndex(
     userId
   )
 
-  revalidateTag(`chat-${chatId}`)
+  revalidateTag(`chat-${chatId}`, 'max')
 
   return { success: true, count: result.count }
 }
@@ -333,6 +333,6 @@ export async function saveChatTitle(
       parentTraceId
     })
     await dbActions.updateChatTitle(chatId, title)
-    revalidateTag(`chat-${chatId}`)
+    revalidateTag(`chat-${chatId}`, 'max')
   }
 }

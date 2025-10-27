@@ -159,7 +159,7 @@ export async function POST(req: Request) {
     // Invalidate the cache for this specific chat after creating the response
     // This ensures the next load will get fresh data
     if (chatId) {
-      revalidateTag(`chat-${chatId}`)
+      revalidateTag(`chat-${chatId}`, 'max')
     }
 
     const totalTime = performance.now() - startTime
