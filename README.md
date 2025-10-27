@@ -255,15 +255,41 @@ Host your own live version of Morphic with Vercel or Docker.
 
 ### Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=DATABASE_URL,OPENAI_API_KEY,TAVILY_API_KEY,BRAVE_SEARCH_API_KEY,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=DATABASE_URL,OPENAI_API_KEY,TAVILY_API_KEY,BRAVE_SEARCH_API_KEY)
+
+**Note**: For Vercel deployments, set `ENABLE_AUTH=true` and configure Supabase authentication to secure your deployment.
 
 ### Docker
 
-You can deploy Morphic using the prebuilt Docker image:
+#### Using Prebuilt Image
+
+Prebuilt Docker images are automatically built and published to GitHub Container Registry:
 
 ```bash
 docker pull ghcr.io/miurla/morphic:latest
 ```
+
+You can use it with docker-compose by setting the image in your `docker-compose.yaml`:
+
+```yaml
+services:
+  morphic:
+    image: ghcr.io/miurla/morphic:latest
+    env_file: .env.local
+    environment:
+      DATABASE_URL: postgresql://morphic:morphic@postgres:5432/morphic
+      DATABASE_SSL_DISABLED: 'true'
+      ENABLE_AUTH: 'false'
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres
+      - redis
+```
+
+**Note**: The prebuilt image uses default model configurations (statically bundled at build time). To customize models, you need to build from source - see below.
+
+#### Building from Source
 
 Or use Docker Compose for a complete setup with PostgreSQL, Redis, and SearXNG. See the [Using Docker](#using-docker) section for detailed instructions.
 
