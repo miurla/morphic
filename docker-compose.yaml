@@ -12,11 +12,36 @@ services:
         - morphic:builder
         - morphic:latest
     env_file: .env.local # Load environment variables
+    environment:
+      # Set NODE_ENV to development for local Docker environment
+      NODE_ENV: development
+      # Override DATABASE_URL for Docker Compose (without sslmode, handled by NODE_ENV)
+      DATABASE_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
     ports:
       - '3000:3000' # Maps port 3000 on the host to port 3000 in the container.
     depends_on:
-      - redis
-      - searxng
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      searxng:
+        condition: service_started
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-morphic}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-morphic}
+      POSTGRES_DB: ${POSTGRES_DB:-morphic}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-morphic}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:alpine
@@ -37,5 +62,6 @@ services:
       - searxng_data:/data
 
 volumes:
+  postgres_data:
   redis_data:
   searxng_data:

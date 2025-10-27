@@ -202,11 +202,56 @@ bun dev
 
 #### Using Docker
 
+1. Configure environment variables for Docker:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Edit `.env.local` and set the DATABASE_URL to use the Docker PostgreSQL service:
+
+```bash
+# Database Configuration for Docker
+DATABASE_URL=postgresql://morphic:morphic@postgres:5432/morphic
+
+# Required API Keys
+OPENAI_API_KEY=                 # Get from https://platform.openai.com/api-keys
+TAVILY_API_KEY=                 # Get from https://app.tavily.com/home
+BRAVE_SEARCH_API_KEY=           # Get from https://brave.com/search/api/
+NEXT_PUBLIC_SUPABASE_URL=       # Your Supabase project URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=  # Your Supabase anonymous key
+```
+
+**Optional**: Customize PostgreSQL credentials by setting environment variables in `.env.local`:
+
+```bash
+POSTGRES_USER=morphic      # Default: morphic
+POSTGRES_PASSWORD=morphic  # Default: morphic
+POSTGRES_DB=morphic        # Default: morphic
+POSTGRES_PORT=5432         # Default: 5432
+```
+
+2. Start the Docker containers:
+
 ```bash
 docker compose up -d
 ```
 
-Visit http://localhost:3000 in your browser.
+The application will:
+- Start PostgreSQL 17 with health checks
+- Start Redis for SearXNG search caching
+- Wait for the database to be ready
+- Run database migrations automatically
+- Start the Morphic application
+- Start SearXNG (optional search provider)
+
+3. Visit http://localhost:3000 in your browser.
+
+**Note**: Database data is persisted in a Docker volume. To reset the database, run:
+
+```bash
+docker compose down -v  # This will delete all data
+```
 
 ## 🌐 Deploy
 
@@ -215,6 +260,16 @@ Host your own live version of Morphic with Vercel or Docker.
 ### Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=DATABASE_URL,OPENAI_API_KEY,TAVILY_API_KEY,BRAVE_SEARCH_API_KEY,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY)
+
+### Docker
+
+You can deploy Morphic using the prebuilt Docker image:
+
+```bash
+docker pull ghcr.io/miurla/morphic:latest
+```
+
+Or use Docker Compose for a complete setup with PostgreSQL, Redis, and SearXNG. See the [Using Docker](#using-docker) section for detailed instructions.
 
 ## 👥 Contributing
 

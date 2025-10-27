@@ -14,10 +14,14 @@ const runMigrations = async () => {
   }
 
   const connectionString = process.env.DATABASE_URL
-  // For Supabase connections, we need to disable SSL verification in some environments
-  // and disable prepared statements for transaction pooling mode
+  // For production (Supabase, Neon, etc.), use SSL with rejectUnauthorized: false
+  // For development/local (Docker, localhost), disable SSL
+  // This follows Drizzle's best practice of environment-based configuration
   const sql = postgres(connectionString, {
-    ssl: { rejectUnauthorized: false },
+    ssl:
+      process.env.NODE_ENV === 'production'
+        ? { rejectUnauthorized: false }
+        : false,
     prepare: false
   })
 

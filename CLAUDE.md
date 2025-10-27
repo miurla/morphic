@@ -19,7 +19,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Docker
 
-- `docker compose up -d` - Run the application with Docker
+- `docker compose up -d` - Run the application with Docker (includes PostgreSQL 17, Redis, Morphic app, and SearXNG)
+- `docker compose down` - Stop all containers
+- `docker compose down -v` - Stop all containers and remove volumes (deletes database data)
 - `docker pull ghcr.io/miurla/morphic:latest` - Pull prebuilt Docker image
 
 ## Architecture Overview
@@ -30,8 +32,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **React 19.2.0** with TypeScript for type safety
 - **Vercel AI SDK 5.0.0-alpha.2** for AI streaming and GenerativeUI
 - **Supabase** for authentication and backend services
-- **PostgreSQL** with Drizzle ORM for database
-- **Redis** (Upstash or local) for chat history storage
+- **PostgreSQL** with Drizzle ORM for database and chat history storage
+- **Redis** (Upstash or local) for SearXNG advanced search caching
 - **Tailwind CSS** with shadcn/ui components
 
 ### Core Architecture
