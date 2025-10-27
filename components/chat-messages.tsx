@@ -70,9 +70,10 @@ export function ChatMessages({
   }, [isLoading])
 
   // Calculate the offset height based on device type
+  // Note: pt-14 (56px) on scroll-container must be included in desktop offset
   const offsetHeight = isMobile
     ? 208 // Mobile: larger offset for mobile header/input
-    : 140 // Desktop: smaller offset
+    : 196 // Desktop: smaller offset (140px) + pt-14 (56px)
 
   // Extract citation maps from all messages in all sections
   const allCitationMaps = useMemo(() => {
