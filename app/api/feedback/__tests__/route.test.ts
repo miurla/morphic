@@ -1,5 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Mock Next.js cookies API
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(() => ({
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    getAll: vi.fn(() => [])
+  }))
+}))
+
+// Mock Supabase
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getUser: vi.fn(() => Promise.resolve({ data: { user: null }, error: null }))
+    }
+  }))
+}))
+
 // Mock the modules
 vi.mock('@/lib/actions/feedback', () => ({
   updateMessageFeedback: vi.fn()
@@ -71,7 +90,7 @@ describe('Feedback API Route', () => {
         comment: 'Great!'
       })
       expect(mockFlush).toHaveBeenCalled()
-      expect(updateMessageFeedback).toHaveBeenCalledWith('test-message-id', 1)
+      expect(updateMessageFeedback).toHaveBeenCalledWith('test-message-id', 1, null)
     })
 
     it('should handle negative feedback', async () => {
