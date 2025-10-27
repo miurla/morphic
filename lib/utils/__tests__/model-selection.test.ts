@@ -39,9 +39,9 @@ const adaptiveQualityModel: Model = {
   providerId: 'provider-c'
 }
 
-const planningSpeedModel: Model = {
-  id: 'planning-speed',
-  name: 'Planning Speed',
+const adaptiveSpeedModel: Model = {
+  id: 'adaptive-speed',
+  name: 'Adaptive Speed',
   provider: 'Provider D',
   providerId: 'provider-d'
 }
@@ -74,10 +74,8 @@ describe('selectModel', () => {
         quality: quickQualityModel
       },
       adaptive: {
+        speed: adaptiveSpeedModel,
         quality: adaptiveQualityModel
-      },
-      planning: {
-        speed: planningSpeedModel
       }
     }
     setMatrixImplementation()
@@ -96,10 +94,10 @@ describe('selectModel', () => {
   it('falls back to speed model for the mode when cookie is absent', () => {
     const result = selectModel({
       cookieStore: createCookieStore(),
-      searchMode: 'planning'
+      searchMode: 'adaptive'
     })
 
-    expect(result).toEqual(planningSpeedModel)
+    expect(result).toEqual(adaptiveSpeedModel)
   })
 
   it('falls back to the other type within the same mode when preferred provider is disabled', () => {

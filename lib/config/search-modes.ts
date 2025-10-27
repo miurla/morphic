@@ -1,4 +1,4 @@
-import { ListTodo, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 
 import { SearchMode } from '@/lib/types/search'
 
@@ -27,13 +27,6 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
     description: 'Adaptive agentic search with intelligent query understanding',
     icon: IconLogoOutline,
     color: 'text-violet-500'
-  },
-  {
-    value: 'planning',
-    label: 'Planning',
-    description: 'Structured multi-step approach for comprehensive research',
-    icon: ListTodo,
-    color: 'text-blue-500'
   }
 ]
 

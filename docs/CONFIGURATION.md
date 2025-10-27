@@ -189,22 +189,6 @@ Model configuration files use the following structure:
           "providerId": "provider-id",
           "providerOptions": {}
         }
-      },
-      "planning": {
-        "speed": {
-          "id": "model-id",
-          "name": "Model Name",
-          "provider": "Provider Name",
-          "providerId": "provider-id",
-          "providerOptions": {}
-        },
-        "quality": {
-          "id": "model-id",
-          "name": "Model Name",
-          "provider": "Provider Name",
-          "providerId": "provider-id",
-          "providerOptions": {}
-        }
       }
     },
     "relatedQuestions": {
@@ -217,7 +201,7 @@ Model configuration files use the following structure:
 }
 ```
 
-Define all six combinations to control which model runs for every search mode (`quick`, `adaptive`, `planning`) and preference (`speed`, `quality`). For example, you can pair `quick/speed` with `gemini-2.5-flash-lite` while keeping `adaptive/quality` on GPT-5. The default config ships with OpenAI models for every slot so Morphic works out-of-the-box.
+Define all four combinations to control which model runs for every search mode (`quick`, `adaptive`) and preference (`speed`, `quality`). For example, you can pair `quick/speed` with `gemini-2.5-flash-lite` while keeping `adaptive/quality` on GPT-5. The default config ships with OpenAI models for every slot so Morphic works out-of-the-box.
 
 ### Supported Providers
 
