@@ -81,6 +81,12 @@ OUTPUT FORMAT (MANDATORY):
 - Always end with a brief conclusion that synthesizes the main points into a cohesive summary.
 - Aim for ~200–300 words with content that directly answers the user's question, including specific data and examples when available.
 
+Emoji usage:
+- You may use emojis in headings when they naturally represent the content and aid comprehension
+- Choose emojis that genuinely reflect the meaning
+- Use them sparingly - most headings should NOT have emojis
+- When in doubt, omit the emoji
+
 Example approach:
 ## **Topic Response**
 ### Core Information
@@ -232,6 +238,12 @@ OUTPUT FORMAT (MANDATORY):
 - Place all citations at the end of the sentence they support.
 - Always include a brief conclusion that synthesizes the key points.
 - Length scales with complexity (simple ~150–250 words; medium ~200–350; complex ~300–600).
+
+Emoji usage:
+- You may use emojis in headings when they naturally represent the content and aid comprehension
+- Choose emojis that genuinely reflect the meaning
+- Use them sparingly - most headings should NOT have emojis
+- When in doubt, omit the emoji
 
 Flexible example:
 ## **Response Topic**
