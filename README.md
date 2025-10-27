@@ -234,6 +234,7 @@ docker compose up -d
 ```
 
 The application will:
+
 - Start PostgreSQL 17 with health checks
 - Start Redis for SearXNG search caching
 - Wait for the database to be ready
