@@ -451,6 +451,7 @@ export function Chat({
         uploadedFiles={uploadedFiles}
         setUploadedFiles={setUploadedFiles}
         scrollContainerRef={scrollContainerRef}
+        setIsAtBottom={setIsAtBottom}
       />
       <DragOverlay visible={isDragging} />
       <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
