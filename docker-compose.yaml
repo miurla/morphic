@@ -13,10 +13,12 @@ services:
         - morphic:latest
     env_file: .env.local # Load environment variables
     environment:
-      # Set NODE_ENV to development for local Docker environment
-      NODE_ENV: development
-      # Override DATABASE_URL for Docker Compose (without sslmode, handled by NODE_ENV)
+      # Database connection for Docker Compose
       DATABASE_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
+      DATABASE_SSL_DISABLED: 'true' # Disable SSL for local Docker PostgreSQL
+      # Authentication settings (default: disabled for personal Docker use)
+      ENABLE_AUTH: ${ENABLE_AUTH:-false}
+      ANONYMOUS_USER_ID: ${ANONYMOUS_USER_ID:-docker-anonymous}
     ports:
       - '3000:3000' # Maps port 3000 on the host to port 3000 in the container.
     depends_on:

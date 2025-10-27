@@ -173,16 +173,15 @@ cp .env.local.example .env.local
 Fill in the required environment variables in `.env.local`:
 
 ```bash
-# Required Configuration
-DATABASE_URL=                   # PostgreSQL connection string
-OPENAI_API_KEY=                 # Get from https://platform.openai.com/api-keys
-TAVILY_API_KEY=                 # Get from https://app.tavily.com/home
-BRAVE_SEARCH_API_KEY=           # Get from https://brave.com/search/api/
-NEXT_PUBLIC_SUPABASE_URL=       # Your Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=  # Your Supabase anonymous key
+DATABASE_URL=your_database_url
+OPENAI_API_KEY=your_openai_key
+TAVILY_API_KEY=your_tavily_key
+BRAVE_SEARCH_API_KEY=your_brave_key
 ```
 
-For optional features configuration (SearXNG, alternative AI providers, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
+**Note**: Authentication is disabled by default (`ENABLE_AUTH=false`).
+
+For optional features (authentication, SearXNG, alternative AI providers, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
 
 ### 4. Run database migrations
 
@@ -208,19 +207,16 @@ bun dev
 cp .env.local.example .env.local
 ```
 
-Edit `.env.local` and set the DATABASE_URL to use the Docker PostgreSQL service:
+Edit `.env.local` and set the required variables:
 
 ```bash
-# Database Configuration for Docker
 DATABASE_URL=postgresql://morphic:morphic@postgres:5432/morphic
-
-# Required API Keys
-OPENAI_API_KEY=                 # Get from https://platform.openai.com/api-keys
-TAVILY_API_KEY=                 # Get from https://app.tavily.com/home
-BRAVE_SEARCH_API_KEY=           # Get from https://brave.com/search/api/
-NEXT_PUBLIC_SUPABASE_URL=       # Your Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=  # Your Supabase anonymous key
+OPENAI_API_KEY=your_openai_key
+TAVILY_API_KEY=your_tavily_key
+BRAVE_SEARCH_API_KEY=your_brave_key
 ```
+
+**Note**: Authentication is disabled by default (`ENABLE_AUTH=false` in `.env.local.example`).
 
 **Optional**: Customize PostgreSQL credentials by setting environment variables in `.env.local`:
 

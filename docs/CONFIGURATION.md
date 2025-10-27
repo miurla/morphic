@@ -4,9 +4,45 @@ This guide covers the optional features and their configuration in Morphic.
 
 ## Table of Contents
 
+- [Authentication](#authentication)
 - [Search Providers](#search-providers)
 - [Additional AI Providers](#additional-ai-providers)
 - [Other Features](#other-features)
+
+## Authentication
+
+By default, Morphic runs in **anonymous mode** with authentication disabled (`ENABLE_AUTH=false` in `.env.local.example`). This is ideal for personal use where all users share a single anonymous user ID.
+
+### Anonymous Mode (Default)
+
+No configuration needed. The default settings in `.env.local.example` include:
+
+```bash
+ENABLE_AUTH=false
+ANONYMOUS_USER_ID=anonymous-user
+```
+
+**⚠️ Important**: Anonymous mode is only suitable for personal, single-user environments. All chat history is shared under one user ID.
+
+### Enabling Supabase Authentication
+
+To enable user authentication with Supabase:
+
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+
+2. Set the following environment variables in `.env.local`:
+
+```bash
+ENABLE_AUTH=true
+NEXT_PUBLIC_SUPABASE_URL=[YOUR_SUPABASE_PROJECT_URL]
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR_SUPABASE_ANON_KEY]
+```
+
+3. Obtain your credentials from the Supabase dashboard:
+   - **Project URL**: Settings → API → Project URL
+   - **Anon Key**: Settings → API → Project API keys → anon/public
+
+With authentication enabled, users will need to sign up/login to use Morphic, and each user will have isolated chat history.
 
 ## Search Providers
 

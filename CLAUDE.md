@@ -24,6 +24,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `docker compose down -v` - Stop all containers and remove volumes (deletes database data)
 - `docker pull ghcr.io/miurla/morphic:latest` - Pull prebuilt Docker image
 
+#### Docker Authentication
+
+**Default Behavior**: Docker deployments run in **anonymous mode** (authentication disabled).
+
+When running with Docker Compose, `ENABLE_AUTH=false` is set by default, allowing personal use without Supabase setup. All users share a single anonymous user ID.
+
+**⚠️ Security Warning:**
+- Anonymous mode is **only for personal, single-user local environments**
+- All chat history is shared under one user ID
+- **NOT suitable** for multi-user or production deployments
+- Morphic Cloud deployments block `ENABLE_AUTH=false` automatically
+
+**Enabling Authentication:**
+To require Supabase authentication, set:
+```bash
+ENABLE_AUTH=true  # or remove ENABLE_AUTH from docker-compose.yaml
+NEXT_PUBLIC_SUPABASE_URL=[your-supabase-url]
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-supabase-anon-key]
+```
+
+**Implementation:**
+- Auth logic: [lib/auth/get-current-user.ts:22-40](lib/auth/get-current-user.ts#L22-L40)
+- Always warns when `ENABLE_AUTH=false` (except in tests)
+- Guards against `MORPHIC_CLOUD_DEPLOYMENT=true`
+
 ## Architecture Overview
 
 ### Tech Stack
