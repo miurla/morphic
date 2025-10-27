@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development
 
-- `bun dev` - Start development server with Next.js Turbo mode (http://localhost:3000)
+- `bun dev` - Start development server with Turbopack (http://localhost:3000)
 - `bun run build` - Create production build
 - `bun start` - Start production server
 - `bun lint` - Run ESLint for code quality checks and import sorting
@@ -26,8 +26,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Tech Stack
 
-- **Next.js 15.2.3** with App Router and React Server Components
-- **React 19.0.0** with TypeScript for type safety
+- **Next.js 16.0.0** with App Router, React Server Components, and Turbopack
+- **React 19.2.0** with TypeScript for type safety
 - **Vercel AI SDK 5.0.0-alpha.2** for AI streaming and GenerativeUI
 - **Supabase** for authentication and backend services
 - **PostgreSQL** with Drizzle ORM for database
@@ -136,3 +136,40 @@ Models are defined in `public/config/models.json` with:
 - Migrations are located in `/drizzle/` directory
 - Schema changes should be made in `/lib/db/schema.ts`
 - Use Drizzle Kit for generating migrations
+
+## MCP (Model Context Protocol) Integration
+
+This project supports MCP for enhanced AI assistant integration with Next.js 16.
+
+### Built-in Next.js MCP Server
+
+Next.js 16 provides a built-in MCP server at `http://localhost:3000/_next/mcp` when the dev server is running.
+
+**Available Tools:**
+- `get_project_metadata` - Get project path and dev server URL
+- `get_errors` - Retrieve current error state (global errors, runtime errors, build errors)
+- `get_page_metadata` - Get runtime metadata about current page renders
+- `get_logs` - Access Next.js development log file path
+- `get_server_action_by_id` - Locate Server Actions by ID
+
+**Usage:**
+1. Start the dev server: `bun dev`
+2. MCP endpoint is automatically available at `/_next/mcp`
+3. AI assistants can query real-time app state, errors, and logs
+
+### Next DevTools MCP (External)
+
+The project includes `.mcp.json` configuration for the Next DevTools MCP package, which provides:
+- Next.js knowledge base access
+- Automated migration tools
+- Cache optimization guides
+- Browser testing capabilities
+
+**Setup:**
+The `.mcp.json` file in the project root enables team-wide MCP tool sharing. AI assistants like Claude Code will prompt for approval before using project-scoped servers.
+
+**Benefits:**
+- Real-time access to application internal state
+- Improved debugging and error diagnostics
+- Context-aware code suggestions
+- Live application state querying
