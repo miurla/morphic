@@ -233,6 +233,20 @@ export function Chat({
     return () => container.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Check scroll position when messages change (during generation)
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const { scrollTop, scrollHeight, clientHeight } = container
+    const threshold = 50
+    if (scrollHeight - scrollTop - clientHeight < threshold) {
+      setIsAtBottom(true)
+    } else {
+      setIsAtBottom(false)
+    }
+  }, [messages])
+
   // Scroll to the section when a new user message is sent
   useEffect(() => {
     // Only scroll if this chat is currently visible in the URL
