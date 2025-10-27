@@ -136,6 +136,7 @@ BRAVE_SEARCH_API_KEY=[YOUR_BRAVE_SEARCH_API_KEY]
 Get your API key at: https://brave.com/search/api/
 
 **Features:**
+
 - Multiple content types in single search (web, video, image, news)
 - Optimized for multimedia content with thumbnails
 - Direct video duration and metadata support

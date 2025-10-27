@@ -48,9 +48,7 @@ export const searchSchema = z.object({
 // Strict schema with all fields required
 export const strictSearchSchema = z.object({
   query: z.string().describe('The query to search for'),
-  type: z
-    .enum(['general', 'optimized'])
-    .describe(getSearchTypeDescription()),
+  type: z.enum(['general', 'optimized']).describe(getSearchTypeDescription()),
   content_types: z
     .array(z.enum(['web', 'video', 'image', 'news']))
     .describe(
