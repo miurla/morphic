@@ -14,7 +14,9 @@ vi.mock('next/headers', () => ({
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: {
-      getUser: vi.fn(() => Promise.resolve({ data: { user: null }, error: null }))
+      getUser: vi.fn(() =>
+        Promise.resolve({ data: { user: null }, error: null })
+      )
     }
   }))
 }))
@@ -90,7 +92,11 @@ describe('Feedback API Route', () => {
         comment: 'Great!'
       })
       expect(mockFlush).toHaveBeenCalled()
-      expect(updateMessageFeedback).toHaveBeenCalledWith('test-message-id', 1, null)
+      expect(updateMessageFeedback).toHaveBeenCalledWith(
+        'test-message-id',
+        1,
+        null
+      )
     })
 
     it('should handle negative feedback', async () => {
