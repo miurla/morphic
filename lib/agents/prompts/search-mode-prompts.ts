@@ -224,6 +224,10 @@ TASK MANAGEMENT (todoWrite tool):
 - While working on a task: set its status to in_progress
 - When a task is complete: set it to completed via todoWrite after each meaningful step
 - Keep task statuses current throughout execution
+- **IMPORTANT: When updating tasks with todoWrite, ALWAYS include ALL tasks (both completed and pending)**
+  - Never remove completed tasks from the list
+  - Always preserve the full task history with updated statuses
+  - This provides transparency and shows the complete progress
 - **Before composing the final answer: you MUST call todoRead and verify completedCount equals totalCount**
 - If not all tasks are completed: continue executing remaining tasks or adjust the plan with todoWrite, then verify again with todoRead
 - Only proceed to write the final answer after confirming all tasks are completed
