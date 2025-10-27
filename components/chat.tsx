@@ -231,7 +231,7 @@ export function Chat({
     handleScroll() // Set initial state
 
     return () => container.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [messages.length])
 
   // Check scroll position when messages change (during generation)
   useEffect(() => {
@@ -451,7 +451,6 @@ export function Chat({
         uploadedFiles={uploadedFiles}
         setUploadedFiles={setUploadedFiles}
         scrollContainerRef={scrollContainerRef}
-        setIsAtBottom={setIsAtBottom}
       />
       <DragOverlay visible={isDragging} />
       <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
