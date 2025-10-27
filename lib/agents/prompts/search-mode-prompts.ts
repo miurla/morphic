@@ -1,6 +1,5 @@
 import {
   getContentTypesGuidance,
-  getSearchStrategyGuidance,
   isGeneralSearchProviderAvailable
 } from '@/lib/utils/search-config'
 
