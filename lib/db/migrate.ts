@@ -14,14 +14,15 @@ const runMigrations = async () => {
   }
 
   const connectionString = process.env.DATABASE_URL
-  // For production (Supabase, Neon, etc.), use SSL with rejectUnauthorized: false
-  // For development/local (Docker, localhost), disable SSL
-  // This follows Drizzle's best practice of environment-based configuration
+
+  // Respect DATABASE_SSL_DISABLED flag (used in Docker)
+  // For cloud databases (Supabase, Neon, etc.), use SSL with rejectUnauthorized: false
+  // For local databases (Docker, localhost), disable SSL
+  const sslDisabled = process.env.DATABASE_SSL_DISABLED === 'true'
+  const isProduction = process.env.NODE_ENV === 'production'
+
   const sql = postgres(connectionString, {
-    ssl:
-      process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: false }
-        : false,
+    ssl: sslDisabled ? false : isProduction ? { rejectUnauthorized: false } : false,
     prepare: false
   })
 
