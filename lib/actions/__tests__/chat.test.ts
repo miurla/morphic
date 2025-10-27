@@ -180,8 +180,7 @@ describe('Chat Actions', () => {
         userId,
         visibility: 'private'
       })
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
-      expect(revalidateTag).toHaveBeenCalledWith('chat')
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should generate ID and use default title when not provided', async () => {
@@ -311,8 +310,7 @@ describe('Chat Actions', () => {
           parts: [{ type: 'text', text: 'Hello' }]
         }
       })
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
-      expect(revalidateTag).toHaveBeenCalledWith('chat')
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
   })
 
@@ -347,7 +345,7 @@ describe('Chat Actions', () => {
         },
         userId
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should generate message ID if not provided', async () => {
@@ -394,8 +392,7 @@ describe('Chat Actions', () => {
 
       expect(result).toEqual({ success: true })
       expect(dbActions.deleteChat).toHaveBeenCalledWith(chatId, userId)
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
-      expect(revalidateTag).toHaveBeenCalledWith('chat')
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should return error for unauthenticated user', async () => {
@@ -441,7 +438,7 @@ describe('Chat Actions', () => {
       expect(dbActions.deleteChat).toHaveBeenCalledTimes(2)
       expect(dbActions.deleteChat).toHaveBeenCalledWith('chat-1', userId)
       expect(dbActions.deleteChat).toHaveBeenCalledWith('chat-2', userId)
-      expect(revalidateTag).toHaveBeenCalledWith('chat')
+      expect(revalidateTag).toHaveBeenCalledWith('chat', 'max')
     })
   })
 
@@ -469,7 +466,7 @@ describe('Chat Actions', () => {
         chatId,
         messageId
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should return error for unauthorized access', async () => {
@@ -517,7 +514,7 @@ describe('Chat Actions', () => {
         userId,
         'public'
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should return null for unauthenticated user', async () => {
@@ -554,9 +551,10 @@ describe('Chat Actions', () => {
       expect(result).toEqual({ success: true, count: 2 })
       expect(dbActions.deleteMessagesFromIndex).toHaveBeenCalledWith(
         chatId,
-        messageId
+        messageId,
+        userId
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
   })
 
@@ -591,7 +589,7 @@ describe('Chat Actions', () => {
         chatId,
         generatedTitle
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should not generate title for existing chat', async () => {
