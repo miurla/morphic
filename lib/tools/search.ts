@@ -2,6 +2,10 @@ import { tool, UIToolInvocation } from 'ai'
 
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { SearchResultItem, SearchResults } from '@/lib/types'
+import {
+  getGeneralSearchProviderType,
+  getSearchToolDescription
+} from '@/lib/utils/search-config'
 import { getBaseUrlString } from '@/lib/utils/url'
 
 import {
@@ -15,8 +19,7 @@ import {
  */
 export function createSearchTool(fullModel: string) {
   return tool({
-    description:
-      'Search the web for information. For YouTube/video content, use type="general" with content_types:["video"] for optimal visual presentation with thumbnails.',
+    description: getSearchToolDescription(),
     inputSchema: getSearchSchemaForModel(fullModel),
     async *execute(
       {
@@ -50,7 +53,18 @@ export function createSearchTool(fullModel: string) {
       // Determine which provider to use based on type
       let searchAPI: SearchProviderType
       if (type === 'general') {
-        searchAPI = 'brave'
+        // Try to use dedicated general search provider
+        const generalProvider = getGeneralSearchProviderType()
+        if (generalProvider) {
+          searchAPI = generalProvider
+        } else {
+          // Fallback to primary provider (optimized search provider)
+          searchAPI =
+            (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
+          console.log(
+            `[Search] type="general" requested but no dedicated provider available, using optimized search provider: ${searchAPI}`
+          )
+        }
       } else {
         // For 'optimized', use the configured provider
         searchAPI =

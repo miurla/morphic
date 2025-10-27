@@ -86,8 +86,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-supabase-anon-key]
    - Database actions in `/lib/actions/chat-db.ts`
 
 4. **Search System**
-   - Multiple providers: Tavily (default), SearXNG (self-hosted), Exa (neural)
-   - Video search support via Serper API
+   - Multiple providers: Tavily (default), SearXNG (self-hosted), Exa (neural), Brave (optional)
+   - Brave Search is optional; if API key is not provided, type="general" searches fall back to primary provider
+   - Video/image search support depends on configured providers (Brave provides best multimedia support)
    - URL-specific search capabilities
    - Configurable search depth and result limits
 

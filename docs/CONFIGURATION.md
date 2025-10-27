@@ -125,6 +125,25 @@ For detailed configuration options, refer to the [SearXNG documentation](https:/
 docker-compose logs searxng
 ```
 
+### Brave Search (Optional)
+
+Brave Search provides enhanced support for video and image searches when used as a general search provider:
+
+```bash
+BRAVE_SEARCH_API_KEY=[YOUR_BRAVE_SEARCH_API_KEY]
+```
+
+Get your API key at: https://brave.com/search/api/
+
+**Features:**
+- Multiple content types in single search (web, video, image, news)
+- Optimized for multimedia content with thumbnails
+- Direct video duration and metadata support
+- Used automatically when `type="general"` is specified in search queries
+
+**Fallback Behavior:**
+If `BRAVE_SEARCH_API_KEY` is not configured, `type="general"` searches will automatically fall back to your configured optimized search provider. Video and image searches will still work but may have limited multimedia support depending on the provider.
+
 ## Additional AI Providers
 
 Models are configured in `config/models/*.json` files. Each provider requires its corresponding API key to be set in the environment variables.

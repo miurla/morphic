@@ -176,12 +176,11 @@ Fill in the required environment variables in `.env.local`:
 DATABASE_URL=your_database_url
 OPENAI_API_KEY=your_openai_key
 TAVILY_API_KEY=your_tavily_key
-BRAVE_SEARCH_API_KEY=your_brave_key
 ```
 
 **Note**: Authentication is disabled by default (`ENABLE_AUTH=false`).
 
-For optional features (authentication, SearXNG, alternative AI providers, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
+For optional features (alternative search providers, authentication, alternative AI providers, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
 
 ### 4. Run database migrations
 
