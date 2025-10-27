@@ -41,8 +41,6 @@ interface ChatPanelProps {
   scrollContainerRef: React.RefObject<HTMLDivElement>
   uploadedFiles: UploadedFile[]
   setUploadedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>
-  /** Function to set whether the scroll is at the bottom */
-  setIsAtBottom: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export function ChatPanel({
@@ -59,8 +57,7 @@ export function ChatPanel({
   showScrollToBottomButton,
   uploadedFiles,
   setUploadedFiles,
-  scrollContainerRef,
-  setIsAtBottom
+  scrollContainerRef
 }: ChatPanelProps) {
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -134,8 +131,6 @@ export function ChatPanel({
         top: scrollContainer.scrollHeight,
         behavior: 'smooth'
       })
-      // Immediately hide the button when clicked
-      setIsAtBottom(true)
     }
   }
 
