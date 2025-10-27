@@ -25,7 +25,6 @@ import { isTracingEnabled } from '../utils/telemetry'
 
 import {
   ADAPTIVE_MODE_PROMPT,
-  PLANNING_MODE_PROMPT,
   QUICK_MODE_PROMPT
 } from './prompts/search-mode-prompts'
 
@@ -116,19 +115,6 @@ export function createResearcher({
         searchTool = wrapSearchToolForQuickMode(originalSearchTool)
         break
 
-      case 'planning':
-        systemPrompt = PLANNING_MODE_PROMPT
-        activeToolsList = ['search', 'fetch']
-        if (writer && 'todoWrite' in todoTools) {
-          activeToolsList.push('todoWrite', 'todoRead')
-        }
-        console.log(
-          `[Researcher] Planning mode: maxSteps=50, tools=[${activeToolsList.join(', ')}]`
-        )
-        maxSteps = 50
-        searchTool = originalSearchTool
-        break
-
       case 'adaptive':
       default:
         systemPrompt = ADAPTIVE_MODE_PROMPT
@@ -152,10 +138,6 @@ export function createResearcher({
       ...todoTools
     } as ResearcherTools
 
-    // Check if we should force todoWrite on first step
-    const shouldForceTodoWrite =
-      searchMode === 'planning' && writer && 'todoWrite' in todoTools
-
     // Create streamText-based agent with smoothStream support
     const agentConfig = {
       model: getModel(model),
@@ -167,17 +149,6 @@ export function createResearcher({
       experimental_transform: smoothStream({ chunking: 'word' }), // Enable smooth streaming
       ...(modelConfig?.providerOptions && {
         providerOptions: modelConfig.providerOptions
-      }),
-      // Force todoWrite tool on first step for planning mode
-      ...(shouldForceTodoWrite && {
-        prepareStep: async ({ stepNumber }: { stepNumber: number }) => {
-          if (stepNumber === 0) {
-            return {
-              toolChoice: { type: 'tool', toolName: 'todoWrite' } as const
-            }
-          }
-          return undefined
-        }
       }),
       experimental_telemetry: {
         isEnabled: isTracingEnabled(),
