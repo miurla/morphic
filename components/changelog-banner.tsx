@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
 import { X } from 'lucide-react'
 
 import { useChangelog } from '@/hooks/use-changelog'
@@ -8,8 +10,21 @@ import { IconLogo } from '@/components/ui/icons'
 
 export function ChangelogBanner() {
   const { changelog, isVisible, dismiss } = useChangelog()
+  const [hasMessages, setHasMessages] = useState(false)
 
-  if (!isVisible || !changelog) return null
+  useEffect(() => {
+    const handleMessagesChanged = (e: Event) => {
+      const customEvent = e as CustomEvent<{ hasMessages: boolean }>
+      setHasMessages(customEvent.detail.hasMessages)
+    }
+
+    window.addEventListener('messages-changed', handleMessagesChanged)
+    return () =>
+      window.removeEventListener('messages-changed', handleMessagesChanged)
+  }, [])
+
+  // Don't show if there are messages or if not visible
+  if (!isVisible || !changelog || hasMessages) return null
 
   return (
     <div className="fixed bottom-4 right-4 z-40 animate-in slide-in-from-bottom-5 duration-300">
