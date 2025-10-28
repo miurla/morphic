@@ -1,16 +1,25 @@
 {
   "current": {
-    "version": "1.0.0 Beta.7",
-    "date": "2025-09-24",
+    "version": "1.0.0 Beta.9",
+    "date": "2025-10-28",
     "features": [
-      "⚡ Faster first replies",
-      "❓ Follow-ups stream sooner",
-      "🖼️ Broken thumbnails hidden"
+      "✨ Smooth word-by-word streaming",
+      "🎯 Auto task breakdown in Adaptive mode",
+      "📱 Scroll and layout fixes"
     ],
-    "showUntil": "2025-10-01",
-    "dismissKey": "changelog-v1.0.0-beta.7"
+    "showUntil": "2025-11-04",
+    "dismissKey": "changelog-v1.0.0-beta.9"
   },
   "history": [
+    {
+      "version": "1.0.0 Beta.7",
+      "date": "2025-09-24",
+      "features": [
+        "⚡ Faster first replies",
+        "❓ Follow-ups stream sooner",
+        "🖼️ Broken thumbnails hidden"
+      ]
+    },
     {
       "version": "1.0.0 Beta.6",
       "date": "2025-09-17",
