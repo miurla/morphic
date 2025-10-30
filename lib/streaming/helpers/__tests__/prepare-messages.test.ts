@@ -84,6 +84,7 @@ describe('prepareMessages', () => {
       const context: StreamContext = {
         chatId,
         userId,
+        modelId: 'gpt-4',
         trigger: 'regenerate-message',
         messageId: 'msg-2',
         initialChat,
@@ -180,6 +181,7 @@ describe('prepareMessages', () => {
       const context: StreamContext = {
         chatId,
         userId,
+        modelId: 'gpt-4',
         trigger: 'regenerate-message',
         messageId: 'msg-4',
         initialChat,
@@ -282,6 +284,7 @@ describe('prepareMessages', () => {
       const context: StreamContext = {
         chatId,
         userId,
+        modelId: 'gpt-4',
         trigger: 'regenerate-message',
         messageId: 'msg-3',
         initialChat,
@@ -291,11 +294,7 @@ describe('prepareMessages', () => {
       const result = await prepareMessages(context, editedMessage)
 
       // Verify message was updated
-      expect(upsertMessage).toHaveBeenCalledWith(
-        chatId,
-        editedMessage,
-        userId
-      )
+      expect(upsertMessage).toHaveBeenCalledWith(chatId, editedMessage, userId)
 
       // Verify subsequent messages were deleted
       expect(deleteMessagesFromIndex).toHaveBeenCalledWith(
@@ -328,6 +327,7 @@ describe('prepareMessages', () => {
       const context: StreamContext = {
         chatId,
         userId,
+        modelId: 'gpt-4',
         trigger: 'regenerate-message',
         messageId: 'msg-1',
         initialChat: emptyChat,
@@ -380,6 +380,7 @@ describe('prepareMessages', () => {
       const context: StreamContext = {
         chatId,
         userId,
+        modelId: 'gpt-4',
         trigger: 'regenerate-message',
         messageId: 'non-existent-id',
         initialChat,
@@ -424,6 +425,7 @@ describe('prepareMessages', () => {
       const context: StreamContext = {
         chatId,
         userId,
+        modelId: 'gpt-4',
         trigger: 'submit-message',
         messageId: undefined,
         initialChat: null,
@@ -478,6 +480,7 @@ describe('prepareMessages', () => {
       const context: StreamContext = {
         chatId,
         userId,
+        modelId: 'gpt-4',
         trigger: 'submit-message',
         messageId: undefined,
         initialChat: existingChat,
