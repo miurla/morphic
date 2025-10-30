@@ -82,7 +82,7 @@ jobs:
 
       - name: Run tests
         run: |
-          if [ -f "vitest.config.ts" ]; then
+          if [ -f "vitest.config.ts" ] || [ -f "vitest.config.mts" ]; then
             bun run test
           fi
         env:

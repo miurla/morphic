@@ -14,8 +14,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun format` - Format code with Prettier
 - `bun format:check` - Check code formatting without modifying files
 - `bun migrate` - Run database migrations
-- `bun test` - Run tests with Vitest
-- `bun test:watch` - Run tests in watch mode
+- `bun run test` - Run tests with Vitest (use this, NOT `bun test`)
+- `bun run test:watch` - Run tests in watch mode
 
 ### Docker
 
@@ -133,8 +133,9 @@ DATABASE_URL=        # PostgreSQL connection string
 
 - Unit and integration tests with Vitest
 - Test files located alongside source files with `.test.ts` or `.test.tsx` extension
-- Run `bun test` to execute all tests
-- Run `bun test:watch` for development
+- **Run `bun run test` to execute all tests** (NOT `bun test` - that uses Bun's built-in test runner which lacks Vitest features)
+- Run `bun run test:watch` for development with watch mode
+- CI automatically runs `bun run test` to ensure all tests pass
 
 ## Pre-PR Requirements
 
@@ -144,7 +145,7 @@ Before creating a pull request, you MUST ensure all of the following checks pass
 2. **Type checking**: Run `bun typecheck` to ensure no TypeScript errors
 3. **Formatting**: Run `bun format:check` to verify code formatting (or `bun format` to auto-fix)
 4. **Build**: Run `bun run build` to ensure the application builds successfully
-5. **Tests**: Run `bun test` to ensure all tests pass
+5. **Tests**: Run `bun run test` to ensure all tests pass
 
 These checks are enforced in CI/CD and PRs will fail if any of these steps don't pass.
 
