@@ -97,15 +97,19 @@ export async function POST(req: Request) {
 
     // Check rate limit for quality mode
     const modelTypeCookie = cookieStore.get('modelType')?.value
+    const modelType =
+      modelTypeCookie === 'quality' || modelTypeCookie === 'speed'
+        ? modelTypeCookie
+        : undefined
     const rateLimitResponse = await checkAndEnforceQualityLimit(
       userId,
-      modelTypeCookie === 'quality'
+      modelType === 'quality'
     )
     if (rateLimitResponse) return rateLimitResponse
 
     const streamStart = performance.now()
     perfLog(
-      `createChatStreamResponse - Start: model=${selectedModel.providerId}:${selectedModel.id}, searchMode=${searchMode}`
+      `createChatStreamResponse - Start: model=${selectedModel.providerId}:${selectedModel.id}, searchMode=${searchMode}, modelType=${modelType}`
     )
 
     const response = await createChatStreamResponse({
@@ -117,7 +121,8 @@ export async function POST(req: Request) {
       messageId,
       abortSignal,
       isNewChat,
-      searchMode
+      searchMode,
+      modelType
     })
 
     perfTime('createChatStreamResponse resolved', streamStart)

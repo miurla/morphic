@@ -7,10 +7,8 @@ import { TodoInvocationContent } from './todo-invocation-content'
 import { ToolInvocationContent } from './tool-invocation-content'
 
 // Type guard for Todo tool parts
-function isTodoToolPart(
-  part: Part
-): part is ToolPart<'todoWrite'> | ToolPart<'todoRead'> {
-  return part.type === 'tool-todoWrite' || part.type === 'tool-todoRead'
+function isTodoToolPart(part: Part): part is ToolPart<'todoWrite'> {
+  return part.type === 'tool-todoWrite'
 }
 
 export function ArtifactContent({ part }: { part: Part | null }) {
@@ -22,7 +20,6 @@ export function ArtifactContent({ part }: { part: Part | null }) {
     case 'tool-askQuestion':
       return <ToolInvocationContent part={part} />
     case 'tool-todoWrite':
-    case 'tool-todoRead':
       if (isTodoToolPart(part)) {
         return <TodoInvocationContent part={part} />
       }

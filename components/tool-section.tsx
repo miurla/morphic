@@ -111,22 +111,6 @@ export function ToolSection({
           isLast={isLast}
         />
       )
-    case 'tool-todoRead':
-      return (
-        <ToolTodoDisplay
-          tool="todoRead"
-          state={tool.state}
-          input={tool.input}
-          output={tool.output}
-          errorText={tool.errorText}
-          toolCallId={tool.toolCallId}
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-          borderless={borderless}
-          isFirst={isFirst}
-          isLast={isLast}
-        />
-      )
     default:
       return null
   }

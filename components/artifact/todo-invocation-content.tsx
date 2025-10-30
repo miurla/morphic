@@ -5,7 +5,7 @@ import type { ToolPart } from '@/lib/types/ai'
 import TodoListContent from '../todo-list-content'
 
 interface TodoInvocationContentProps {
-  part: ToolPart<'todoWrite'> | ToolPart<'todoRead'>
+  part: ToolPart<'todoWrite'>
 }
 
 export function TodoInvocationContent({ part }: TodoInvocationContentProps) {
@@ -21,15 +21,15 @@ export function TodoInvocationContent({ part }: TodoInvocationContentProps) {
     )
   }
 
-  const summaryOrMessage =
-    (part.output && 'message' in part.output && part.output.message) ||
-    (part.output && 'summary' in part.output && part.output.summary) ||
-    undefined
+  const message =
+    part.output && 'message' in part.output
+      ? (part.output.message as string | undefined)
+      : undefined
 
   return (
     <TodoListContent
       todos={todos}
-      message={summaryOrMessage}
+      message={message}
       completedCount={completedCount}
       totalCount={totalCount}
       showSummary={true}

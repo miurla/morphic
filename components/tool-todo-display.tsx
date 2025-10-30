@@ -9,7 +9,7 @@ import ProcessHeader from './process-header'
 import TodoListContent from './todo-list-content'
 
 interface ToolTodoDisplayProps {
-  tool: 'todoWrite' | 'todoRead'
+  tool: 'todoWrite'
   state:
     | 'input-streaming'
     | 'input-available'
@@ -58,9 +58,8 @@ export function ToolTodoDisplay({
 
   const openInspector = () => {
     if (!(state === 'output-available' && output)) return
-    const partType = tool === 'todoWrite' ? 'tool-todoWrite' : 'tool-todoRead'
     const part: Part = {
-      type: partType as 'tool-todoWrite' | 'tool-todoRead',
+      type: 'tool-todoWrite',
       toolCallId,
       state,
       input: { todos: output.todos || [] },
@@ -78,18 +77,8 @@ export function ToolTodoDisplay({
           <ListTodo className="size-4 text-muted-foreground shrink-0" />
           <span className="truncate">
             {state === 'output-available' && output
-              ? tool === 'todoRead'
-                ? (typeof output === 'object' &&
-                  'summary' in output &&
-                  typeof output.summary === 'string'
-                    ? output.summary
-                    : null) ||
-                  output.message ||
-                  'Todo list'
-                : output.message || 'Updated tasks'
-              : tool === 'todoWrite'
-                ? 'Updating tasks...'
-                : 'Reading tasks...'}
+              ? output.message || 'Updated tasks'
+              : 'Updating tasks...'}
           </span>
         </span>
       }
@@ -157,16 +146,7 @@ export function ToolTodoDisplay({
             {state === 'output-available' ? (
               <TodoListContent
                 todos={output?.todos}
-                message={
-                  tool === 'todoRead'
-                    ? (output &&
-                      typeof output === 'object' &&
-                      'summary' in output &&
-                      typeof output.summary === 'string'
-                        ? output.summary
-                        : undefined) || output?.message
-                    : output?.message
-                }
+                message={output?.message}
                 completedCount={completedCount}
                 totalCount={totalCount}
                 showSummary={false}

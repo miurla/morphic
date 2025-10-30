@@ -1,5 +1,6 @@
 import { UIMessage } from '@ai-sdk/react'
 
+import { ModelType } from '../types/model-type'
 import { Model } from '../types/models'
 import { SearchMode } from '../types/search'
 
@@ -13,4 +14,5 @@ export interface BaseStreamConfig {
   abortSignal?: AbortSignal
   isNewChat?: boolean
   searchMode?: SearchMode
+  modelType?: ModelType
 }
