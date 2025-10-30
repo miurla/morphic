@@ -7,9 +7,7 @@ import { TodoInvocationContent } from './todo-invocation-content'
 import { ToolInvocationContent } from './tool-invocation-content'
 
 // Type guard for Todo tool parts
-function isTodoToolPart(
-  part: Part
-): part is ToolPart<'todoWrite'> {
+function isTodoToolPart(part: Part): part is ToolPart<'todoWrite'> {
   return part.type === 'tool-todoWrite'
 }
 
