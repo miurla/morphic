@@ -57,7 +57,11 @@ export async function prepareMessages(
     const targetMessage = currentChat.messages[messageIndex]
     if (targetMessage.role === 'assistant') {
       await deleteMessagesFromIndex(chatId, messageId, userId)
-      return currentChat.messages.slice(0, messageIndex)
+      // Reload chat to get the updated message list after deletion
+      const updatedChat = await loadChat(chatId, userId)
+      return (
+        updatedChat?.messages || currentChat.messages.slice(0, messageIndex)
+      )
     } else {
       // User message edit
       if (message && message.id === messageId) {
