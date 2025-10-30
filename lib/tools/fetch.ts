@@ -82,7 +82,7 @@ async function fetchRegularData(url: string): Promise<SearchResultsType> {
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('Request timeout after 10 seconds')
     }
-    console.error('Regular fetch error:', error)
+    console.error('Fetch error:', error)
     throw error instanceof Error ? error : new Error('Unknown fetch error')
   }
 }
@@ -115,7 +115,7 @@ async function fetchJinaReaderData(url: string): Promise<SearchResultsType> {
       images: []
     }
   } catch (error) {
-    console.error('Jina Reader API error:', error)
+    console.error('API Error:', error)
     throw error instanceof Error ? error : new Error('Jina Reader API failed')
   }
 }
@@ -150,7 +150,7 @@ async function fetchTavilyExtractData(url: string): Promise<SearchResultsType> {
       images: []
     }
   } catch (error) {
-    console.error('Tavily Extract API error:', error)
+    console.error('API Error:', error)
     throw error instanceof Error
       ? error
       : new Error('Tavily Extract API failed')
@@ -159,7 +159,7 @@ async function fetchTavilyExtractData(url: string): Promise<SearchResultsType> {
 
 export const fetchTool = tool({
   description:
-    'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. Only use "api" type when you need: 1) PDF content extraction, 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina or Tavily API keys.',
+    'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. IMPORTANT: "regular" type does NOT support PDFs and will fail on PDF URLs. Use "api" type when you need: 1) PDF content extraction (required for .pdf URLs), 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina or Tavily API keys and uses Jina Reader if available, otherwise falls back to Tavily Extract.',
   inputSchema: fetchSchema,
   async *execute({ url, type = 'regular' }) {
     // Yield initial fetching state

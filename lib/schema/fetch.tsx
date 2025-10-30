@@ -7,7 +7,7 @@ export const fetchSchema = z.object({
     .enum(['regular', 'api'])
     .default('regular')
     .describe(
-      'Fetch method: "regular" (default) = fast direct HTML fetch, "api" = advanced extraction for PDFs or complex pages (requires API keys)'
+      'Fetch method: "regular" (default) = fast direct HTML fetch for simple web pages (does NOT support PDFs), "api" = advanced extraction for PDFs and complex JavaScript-rendered pages (requires Jina or Tavily API keys)'
     )
 })
 
