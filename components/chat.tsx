@@ -46,14 +46,6 @@ export function Chat({
   // - Otherwise, generate a new ID (e.g., / homepage for new chats)
   const [chatId, setChatId] = useState(() => providedId || generateId())
 
-  // Update chatId if providedId changes (e.g., navigating to different chat)
-  useEffect(() => {
-    if (providedId && providedId !== chatId) {
-      setChatId(providedId)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [providedId])
-
   // Callback to reset chatId when user clicks "New" button
   const handleNewChat = () => {
     const newId = generateId()
