@@ -143,11 +143,14 @@ describe('processCitations', () => {
 
     expect(result).toContain('[google](https://www.google.com)')
     expect(result).toContain('[github](https://docs.github.com)')
-    expect(result).toContain('[stackoverflow](https://stackoverflow.com/questions/123)')
+    expect(result).toContain(
+      '[stackoverflow](https://stackoverflow.com/questions/123)'
+    )
   })
 
   it('handles citation numbers at edge cases', () => {
-    const content = 'Edge cases: [0](#toolCall1) [101](#toolCall1) [-1](#toolCall1)'
+    const content =
+      'Edge cases: [0](#toolCall1) [101](#toolCall1) [-1](#toolCall1)'
     const result = processCitations(content, mockCitationMaps)
 
     // 0 and 101 are out of bounds (1-100), so they're replaced with empty string
