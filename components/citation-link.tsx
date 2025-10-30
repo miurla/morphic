@@ -37,11 +37,12 @@ export const CitationLink = memo(function CitationLink({
 }: CitationLinkProps) {
   const [open, setOpen] = useState(false)
   const childrenText = children?.toString() || ''
-  const isNumber = /^\d+$/.test(childrenText)
+  // Match domain names (alphanumeric and hyphens) or numbers for backward compatibility
+  const isCitation = /^[\w-]+$/.test(childrenText)
 
   const linkClasses = cn(
-    isNumber
-      ? 'text-[10px] bg-muted text-muted-foreground rounded-full w-4 h-4 px-0.5 inline-flex items-center justify-center hover:bg-muted/50 duration-200 no-underline -translate-y-0.5'
+    isCitation
+      ? 'text-[10px] bg-muted/50 text-muted-foreground/60 rounded-full h-4 px-1.5 inline-flex items-center justify-center hover:bg-primary hover:text-primary-foreground duration-200 no-underline -translate-y-0.5 whitespace-nowrap'
       : 'hover:underline inline-flex items-center gap-1.5',
     className
   )
@@ -60,8 +61,8 @@ export const CitationLink = memo(function CitationLink({
     )
   }
 
-  // For numbered citations with data, show popover on hover
-  if (isNumber && citationData) {
+  // For citations with data, show popover on hover
+  if (isCitation && citationData) {
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
