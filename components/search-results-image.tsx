@@ -11,8 +11,6 @@ import {
   useState
 } from 'react'
 
-import { PlusCircle } from 'lucide-react'
-
 import { SearchResultImage } from '@/lib/types'
 
 import {
@@ -295,9 +293,6 @@ export const SearchResultsImageSection: React.FC<
           )
         }
 
-        const showPreviewOverlay =
-          displayMode === 'preview' && actualIndex === 3 && filteredCount > 4
-
         return (
           <Dialog key={image.id}>
             <DialogTrigger asChild>
@@ -315,11 +310,6 @@ export const SearchResultsImageSection: React.FC<
                     />
                   </div>
                 </div>
-                {!isLoading && showPreviewOverlay && (
-                  <div className="absolute inset-0 bg-black/30 rounded-md flex items-center justify-center text-white/80 text-sm">
-                    <PlusCircle size={24} />
-                  </div>
-                )}
               </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-auto">
