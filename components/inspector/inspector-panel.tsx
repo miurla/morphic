@@ -31,7 +31,6 @@ export function InspectorPanel() {
           title: toolName
         }
       case 'tool-todoWrite':
-      case 'tool-todoRead':
         return {
           icon: <ListTodo size={18} />,
           title: 'Todo List'

@@ -50,9 +50,6 @@ export type QuestionToolInvocation = UIToolInvocation<
 export type TodoWriteToolInvocation = UIToolInvocation<
   ResearcherTools['todoWrite']
 >
-export type TodoReadToolInvocation = UIToolInvocation<
-  ResearcherTools['todoRead']
->
 
 // Union type for all tool invocations
 export type ResearcherToolInvocation =
@@ -60,7 +57,6 @@ export type ResearcherToolInvocation =
   | FetchToolInvocation
   | QuestionToolInvocation
   | TodoWriteToolInvocation
-  | TodoReadToolInvocation
 
 // Helper type to extract tool names
 export type ResearcherToolName = keyof ResearcherTools

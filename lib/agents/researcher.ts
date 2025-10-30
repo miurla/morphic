@@ -124,7 +124,7 @@ export function createResearcher({
         activeToolsList = ['search', 'fetch']
         // Only enable todo tools for quality model type
         if (writer && 'todoWrite' in todoTools && modelType === 'quality') {
-          activeToolsList.push('todoWrite', 'todoRead')
+          activeToolsList.push('todoWrite')
         }
         console.log(
           `[Researcher] Adaptive mode: maxSteps=50, modelType=${modelType}, tools=[${activeToolsList.join(', ')}]`

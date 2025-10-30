@@ -52,7 +52,6 @@ export type UITools = {
   fetch: InferUITool<typeof fetchTool>
   askQuestion: InferUITool<typeof askQuestionTool>
   todoWrite: InferUITool<typeof todoTools.todoWrite>
-  todoRead: InferUITool<typeof todoTools.todoRead>
   // Dynamic tools will be added at runtime
   [key: string]: any
 }

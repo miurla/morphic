@@ -26,21 +26,13 @@ export const todoWriteInputSchema = z.object({
     .describe('A brief message about the current progress')
 })
 
-// Schema for todo read tool
-export const todoReadOutputSchema = z.object({
-  todos: z.array(todoItemSchema),
-  summary: z.string().describe('Summary of current progress'),
-  completedCount: z.number(),
-  totalCount: z.number()
-})
-
 // Create todo tools with session-scoped storage
 export function createTodoTools() {
   // Session-scoped todos storage - isolated per tool instance
   let sessionTodos: TodoItem[] = []
   const todoWrite = tool({
     description:
-      'Create or update todos to track progress on complex tasks. Use this to maintain a list of action items.',
+      'Create or update todos to track progress on complex tasks. Use this to maintain a list of action items. The response includes completedCount and totalCount to verify task completion.',
     inputSchema: todoWriteInputSchema,
     execute: async ({ todos, progressMessage }) => {
       // Update session todos - ensure priority is always set
@@ -63,26 +55,5 @@ export function createTodoTools() {
     }
   })
 
-  const todoRead = tool({
-    description: 'Read the current list of todos and their status',
-    inputSchema: z.object({}),
-    execute: async () => {
-      const completedCount = sessionTodos.filter(
-        (t: TodoItem) => t.status === 'completed'
-      ).length
-      const totalCount = sessionTodos.length
-
-      return {
-        todos: sessionTodos,
-        summary:
-          totalCount > 0
-            ? `${completedCount} of ${totalCount} tasks completed`
-            : 'No tasks created yet',
-        completedCount,
-        totalCount
-      }
-    }
-  })
-
-  return { todoWrite, todoRead }
+  return { todoWrite }
 }
