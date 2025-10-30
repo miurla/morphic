@@ -59,7 +59,9 @@ export async function prepareMessages(
       await deleteMessagesFromIndex(chatId, messageId, userId)
       // Reload chat to get the updated message list after deletion
       const updatedChat = await loadChat(chatId, userId)
-      return updatedChat?.messages || currentChat.messages.slice(0, messageIndex)
+      return (
+        updatedChat?.messages || currentChat.messages.slice(0, messageIndex)
+      )
     } else {
       // User message edit
       if (message && message.id === messageId) {
