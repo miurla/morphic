@@ -33,14 +33,33 @@ interface ChatSection {
 }
 
 export function Chat({
-  id,
+  id: providedId,
   savedMessages = [],
   query
 }: {
-  id: string
+  id?: string
   savedMessages?: UIMessage[]
   query?: string
 }) {
+  // Generate a stable chatId on the client side
+  // - If providedId exists (e.g., /search/[id]), use it for existing chats
+  // - Otherwise, generate a new ID (e.g., / homepage for new chats)
+  const [chatId, setChatId] = useState(() => providedId || generateId())
+
+  // Callback to reset chat state when user clicks "New" button
+  const handleNewChat = () => {
+    const newId = generateId()
+    setChatId(newId)
+    // Clear other chat-related state that persists due to Next.js 16 component caching
+    setInput('')
+    setUploadedFiles([])
+    setErrorModal({
+      open: false,
+      type: 'general',
+      message: ''
+    })
+  }
+
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
@@ -68,7 +87,7 @@ export function Chat({
     addToolResult,
     error
   } = useChat({
-    id, // use the provided chatId
+    id: chatId, // use the client-generated or provided chatId
     transport: new DefaultChatTransport({
       api: '/api/chat',
       prepareSendMessagesRequest: ({ messages, trigger, messageId }) => {
@@ -82,7 +101,7 @@ export function Chat({
         return {
           body: {
             trigger, // Use AI SDK's default trigger value directly
-            chatId: id,
+            chatId: chatId,
             messageId,
             message:
               trigger === 'regenerate-message' &&
@@ -251,7 +270,7 @@ export function Chat({
   useEffect(() => {
     // Only scroll if this chat is currently visible in the URL
     const isCurrentChat =
-      window.location.pathname === `/search/${id}` ||
+      window.location.pathname === `/search/${chatId}` ||
       (window.location.pathname === '/' && sections.length > 0)
 
     if (isCurrentChat && sections.length > 0) {
@@ -265,7 +284,7 @@ export function Chat({
         })
       }
     }
-  }, [sections, messages, id])
+  }, [sections, messages, chatId])
 
   const onQuerySelect = (query: string) => {
     sendMessage({
@@ -278,11 +297,9 @@ export function Chat({
     editedMessageId: string,
     newContentText: string
   ) => {
-    if (!id) {
+    if (!chatId) {
       toast.error('Chat ID is missing.')
-      console.error(
-        'handleUpdateAndReloadMessage: chatId (id prop) is undefined.'
-      )
+      console.error('handleUpdateAndReloadMessage: chatId is undefined.')
       return
     }
 
@@ -314,7 +331,7 @@ export function Chat({
   }
 
   const handleReloadFrom = async (reloadFromFollowerMessageId: string) => {
-    if (!id) {
+    if (!chatId) {
       toast.error('Chat ID is missing for reload.')
       return
     }
@@ -365,7 +382,7 @@ export function Chat({
       // Push URL state immediately after sending message (for new chats)
       // Check if we're on the root path (new chat)
       if (window.location.pathname === '/') {
-        window.history.pushState({}, '', `/search/${id}`)
+        window.history.pushState({}, '', `/search/${chatId}`)
       }
     }
   }
@@ -374,7 +391,7 @@ export function Chat({
     useFileDropzone({
       uploadedFiles,
       setUploadedFiles,
-      chatId: id
+      chatId: chatId
     })
 
   return (
@@ -392,7 +409,7 @@ export function Chat({
         sections={sections}
         onQuerySelect={onQuerySelect}
         status={status}
-        chatId={id}
+        chatId={chatId}
         addToolResult={({
           toolCallId,
           result
@@ -435,7 +452,7 @@ export function Chat({
         error={error}
       />
       <ChatPanel
-        chatId={id}
+        chatId={chatId}
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={onSubmit}
@@ -451,6 +468,7 @@ export function Chat({
         uploadedFiles={uploadedFiles}
         setUploadedFiles={setUploadedFiles}
         scrollContainerRef={scrollContainerRef}
+        onNewChat={handleNewChat}
       />
       <DragOverlay visible={isDragging} />
       <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />

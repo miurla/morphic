@@ -41,6 +41,8 @@ interface ChatPanelProps {
   scrollContainerRef: React.RefObject<HTMLDivElement>
   uploadedFiles: UploadedFile[]
   setUploadedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>
+  /** Callback to reset chatId when starting a new chat */
+  onNewChat?: () => void
 }
 
 export function ChatPanel({
@@ -57,7 +59,8 @@ export function ChatPanel({
   showScrollToBottomButton,
   uploadedFiles,
   setUploadedFiles,
-  scrollContainerRef
+  scrollContainerRef,
+  onNewChat
 }: ChatPanelProps) {
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -84,6 +87,8 @@ export function ChatPanel({
     // Reset focus state when clearing chat
     setIsInputFocused(false)
     inputRef.current?.blur()
+    // Reset chatId in parent component
+    onNewChat?.()
     router.push('/')
   }
 
