@@ -44,7 +44,8 @@ export async function createChatStreamResponse(
     messageId,
     abortSignal,
     isNewChat,
-    searchMode
+    searchMode,
+    modelType
   } = config
 
   // Verify that chatId is provided
@@ -123,14 +124,15 @@ export async function createChatStreamResponse(
         const messagesToModel = await prepareMessages(context, message)
         perfTime('prepareMessages completed (stream)', prepareStart)
 
-        // Get the researcher agent with parent trace ID and search mode
+        // Get the researcher agent with parent trace ID, search mode, and model type
         const researchAgent = researcher({
           model: context.modelId,
           modelConfig: model,
           abortSignal,
           writer,
           parentTraceId,
-          searchMode
+          searchMode,
+          modelType
         })
 
         // Filter out reasoning parts from messages before converting to model messages

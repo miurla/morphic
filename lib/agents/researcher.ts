@@ -13,6 +13,7 @@ import type {
   ResearcherResponse,
   ResearcherTools
 } from '@/lib/types/agent'
+import { type ModelType } from '@/lib/types/model-type'
 import { type Model } from '@/lib/types/models'
 
 import { fetchTool } from '../tools/fetch'
@@ -81,7 +82,8 @@ export function createResearcher({
   abortSignal,
   writer,
   parentTraceId,
-  searchMode = 'adaptive'
+  searchMode = 'adaptive',
+  modelType
 }: {
   model: string
   modelConfig?: Model
@@ -89,6 +91,7 @@ export function createResearcher({
   writer?: UIMessageStreamWriter
   parentTraceId?: string
   searchMode?: SearchMode
+  modelType?: ModelType
 }): ResearcherAgent {
   try {
     const currentDate = new Date().toLocaleString()
@@ -119,11 +122,12 @@ export function createResearcher({
       default:
         systemPrompt = ADAPTIVE_MODE_PROMPT
         activeToolsList = ['search', 'fetch']
-        if (writer && 'todoWrite' in todoTools) {
+        // Only enable todo tools for quality model type
+        if (writer && 'todoWrite' in todoTools && modelType === 'quality') {
           activeToolsList.push('todoWrite', 'todoRead')
         }
         console.log(
-          `[Researcher] Adaptive mode: maxSteps=50, tools=[${activeToolsList.join(', ')}]`
+          `[Researcher] Adaptive mode: maxSteps=50, modelType=${modelType}, tools=[${activeToolsList.join(', ')}]`
         )
         maxSteps = 50
         searchTool = originalSearchTool
