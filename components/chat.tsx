@@ -46,10 +46,18 @@ export function Chat({
   // - Otherwise, generate a new ID (e.g., / homepage for new chats)
   const [chatId, setChatId] = useState(() => providedId || generateId())
 
-  // Callback to reset chatId when user clicks "New" button
+  // Callback to reset chat state when user clicks "New" button
   const handleNewChat = () => {
     const newId = generateId()
     setChatId(newId)
+    // Clear other chat-related state that persists due to Next.js 16 component caching
+    setInput('')
+    setUploadedFiles([])
+    setErrorModal({
+      open: false,
+      type: 'general',
+      message: ''
+    })
   }
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
