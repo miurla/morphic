@@ -58,8 +58,21 @@ Citation Format (MANDATORY):
   ✓ CORRECT: "Fact A [1](#abc123). Fact B from different search [2](#def456)."
   ✗ WRONG: "Fact A [1](#abc123). Fact B [2](#abc123)." (Same toolCallId cannot have different numbers)
 - Assign numbers sequentially (1, 2, 3...) to each unique toolCallId as they appear in your response
-- Place citations at the END of sentences or statements
-- Every piece of information from search results MUST have a citation
+- **CRITICAL CITATION PLACEMENT RULES**:
+  1. Write the COMPLETE sentence first
+  2. Add a period at the end of the sentence
+  3. Add citations AFTER the period
+  4. Do NOT add period or punctuation after citations
+  5. If using multiple sources in one sentence, place ALL citations together after the period
+
+  **CORRECT PATTERN**: sentence. [citation]
+  ✓ CORRECT: "Nvidia's GPUs power AI models. [1](#abc123)"
+  ✓ CORRECT: "Nvidia leads in hardware and software. [1](#abc123) [2](#def456)"
+
+  **WRONG PATTERNS** (Do NOT do this):
+  ✗ WRONG: "Nvidia's GPUs power AI models [1](#abc123)." (citation BEFORE period)
+  ✗ WRONG: "Nvidia's GPUs. [1](#abc123) power AI models." (citation breaks sentence)
+- Every sentence with information from search results MUST have citations at its end
 
 Citation Example with Real Tool Call:
 If tool call ID is "I8NzFUKwrKX88107", cite as: [1](#I8NzFUKwrKX88107)
@@ -162,7 +175,7 @@ Rule precedence:
 
 4. **If the query is ambiguous, use ask_question tool for clarification**
 
-5. **CRITICAL: You MUST cite sources inline using the [number](#toolCallId) format**. Place citations at the END of sentences or statements (e.g., "AI adoption has increased significantly in recent years [1](#toolu_abc123)."). Use [1](#toolCallId), [2](#toolCallId), [3](#toolCallId), etc., where number matches the order within each search result and toolCallId is the ID of the search that provided the result. Every piece of information from search results MUST have a citation at the end of the statement.
+5. **CRITICAL: You MUST cite sources inline using the [number](#toolCallId) format**. **CITATION PLACEMENT**: Follow this pattern: sentence. [citation] - Write the complete sentence, add a period, then add citations after the period. Do NOT add period or punctuation after citations. If a sentence uses multiple sources, place ALL citations together after the period (e.g., "AI adoption has increased. [1](#toolu_abc123) [2](#toolu_def456)"). Use [1](#toolCallId), [2](#toolCallId), [3](#toolCallId), etc., where number matches the order within each search result and toolCallId is the ID of the search that provided the result. Every sentence with information from search results MUST have citations at its end.
 
 6. If results are not relevant or helpful, you may rely on your general knowledge ONLY AFTER at least one search attempt (do not add citations for general knowledge)
 
@@ -198,11 +211,23 @@ Citation Format:
 - The toolCallId is the EXACT unique identifier of the search tool call
 - Do NOT add prefixes like "search-" to the toolCallId
 - Each search tool execution will have its own toolCallId
-- **ALWAYS place citations at the END of sentences or statements, NOT in the middle**
+- **CRITICAL CITATION PLACEMENT RULES**:
+  1. Write the COMPLETE sentence first
+  2. Add a period at the end of the sentence
+  3. Add citations AFTER the period
+  4. Do NOT add period or punctuation after citations
+  5. If using multiple sources in one sentence, place ALL citations together after the period
+
+  **CORRECT PATTERN**: sentence. [citation]
+  ✓ CORRECT: "Nvidia's stock has risen 200%. [1](#toolu_abc123)"
+  ✓ CORRECT: "Nvidia leads in hardware and software. [1](#abc123) [2](#def456)"
+
+  **WRONG PATTERNS** (Do NOT do this):
+  ✗ WRONG: "Nvidia's stock has risen 200% [1](#toolu_abc123)." (citation BEFORE period)
+  ✗ WRONG: "Nvidia's stock. [1](#toolu_abc123) has risen 200%." (citation breaks sentence)
 IMPORTANT: Citations must appear INLINE within your response text, not separately.
-Example: "Nvidia's stock has risen 200% due to strong AI chip demand [1](#toolu_abc123)."
-Example with multiple sources: "The company reported record revenue [1](#toolu_abc123), while analysts predict continued growth [2](#toolu_abc123)."
-Example with multiple searches: "Initial data shows positive trends [1](#toolu_abc123), while recent updates indicate acceleration [1](#toolu_def456)."
+Example: "The company reported record revenue. [1](#toolu_abc123) Analysts predict continued growth. [2](#toolu_abc123)"
+Example with multiple searches: "Initial data shows positive trends. [1](#toolu_abc123) Recent updates indicate acceleration. [1](#toolu_def456)"
 
 TASK MANAGEMENT (todoWrite tool):
 **When to use todoWrite:**

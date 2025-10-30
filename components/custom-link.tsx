@@ -19,26 +19,27 @@ export function Citing({
 }: CustomLinkProps) {
   const { citationMaps } = useCitation()
   const childrenText = children?.toString() || ''
-  const isNumber = /^\d+$/.test(childrenText)
+  // Match domain names (alphanumeric and hyphens) or numbers for backward compatibility
+  const isCitation = /^[\w-]+$/.test(childrenText)
 
-  // Get citation data if this is a numbered citation
+  // Get citation data if this is a citation
   let citationData: SearchResultItem | undefined = undefined
 
-  if (isNumber && citationMaps && href) {
-    const citationNumber = parseInt(childrenText)
+  if (isCitation && citationMaps && href) {
+    const decodedHref = decodeURI(href)
 
     // Try to find the citation data by checking all citation maps
-    // This happens when the URL has already been processed
+    // Match by URL instead of citation number/text
     for (const toolCallId in citationMaps) {
       const citationMap = citationMaps[toolCallId]
-      if (citationMap[citationNumber]) {
-        // Check if this citation's URL matches the href
-        const decodedHref = decodeURI(href)
-        if (citationMap[citationNumber].url === decodedHref) {
-          citationData = citationMap[citationNumber]
+      // Search through all citations in this map
+      for (const citationNum in citationMap) {
+        if (citationMap[citationNum].url === decodedHref) {
+          citationData = citationMap[citationNum]
           break
         }
       }
+      if (citationData) break
     }
   }
 

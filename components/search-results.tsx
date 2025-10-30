@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 import { SearchResultItem } from '@/lib/types'
+import { displayUrlName } from '@/lib/utils/domain'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -28,11 +29,6 @@ export function SearchResults({
   // Logic for grid mode
   const displayedGridResults = showAllResults ? results : results.slice(0, 3)
   const additionalResultsCount = results.length > 3 ? results.length - 3 : 0
-  const displayUrlName = (url: string) => {
-    const hostname = new URL(url).hostname
-    const parts = hostname.split('.')
-    return parts.length > 2 ? parts.slice(1, -1).join('.') : parts[0]
-  }
 
   // --- List Mode Rendering ---
   if (displayMode === 'list') {
@@ -69,8 +65,7 @@ export function SearchResults({
                   <div className="text-xs text-muted-foreground/80 mt-1 truncate">
                     <span className="underline">
                       {new URL(result.url).hostname}
-                    </span>{' '}
-                    - {index + 1}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -105,7 +100,7 @@ export function SearchResults({
                     </AvatarFallback>
                   </Avatar>
                   <div className="text-xs opacity-60 truncate min-w-0">
-                    {`${displayUrlName(result.url)} - ${index + 1}`}
+                    {displayUrlName(result.url)}
                   </div>
                 </div>
               </CardContent>

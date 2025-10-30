@@ -1,5 +1,6 @@
 import type { SearchResultItem, SearchResults } from '@/lib/types'
 import type { UIMessage } from '@/lib/types/ai'
+import { displayUrlName } from '@/lib/utils/domain'
 
 /**
  * Validate if a string is a valid URL
@@ -65,8 +66,8 @@ export function extractCitationMapsFromMessages(
 }
 
 /**
- * Process citations in content, replacing [number](#toolCallId) with proper URLs
- * while keeping the display as just [number]
+ * Process citations in content, replacing [number](#toolCallId) with [domain](url)
+ * Display text uses domain name instead of number (e.g., [google](url))
  */
 export function processCitations(
   content: string,
@@ -76,31 +77,34 @@ export function processCitations(
     return content || ''
   }
 
-  // Replace [number](#toolCallId) with [number](actual-url)
+  // Replace [number](#toolCallId) with [domain](actual-url)
   // Also handle cases with spaces: [ number ]
   return content.replace(
     /\[\s*(\d+)\s*\]\(#([^)]+)\)/g,
-    (match, num, toolCallId) => {
+    (_match, num, toolCallId) => {
       const citationNum = parseInt(num, 10)
 
       // Validate citation number bounds
       if (isNaN(citationNum) || citationNum < 1 || citationNum > 100) {
-        return match
+        return '' // Return empty string for invalid citation numbers
       }
 
       // Get the citation map for this toolCallId
       const citationMap = citationMaps[toolCallId]
       if (!citationMap) {
-        return match // Keep original if no citation map found for this toolCallId
+        return '' // Return empty string if no citation map found
       }
 
       const citation = citationMap[citationNum]
-      if (citation && isValidUrl(citation.url)) {
-        // Encode URI to prevent injection attacks
-        return `[${num}](${encodeURI(citation.url)})`
+      if (!citation || !isValidUrl(citation.url)) {
+        return '' // Return empty string for invalid citations
       }
 
-      return match // Keep original if no valid citation found
+      // Extract domain name from URL (removes TLD and subdomain)
+      const domainName = displayUrlName(citation.url)
+
+      // Encode URI to prevent injection attacks
+      return `[${domainName}](${encodeURI(citation.url)})`
     }
   )
 }
