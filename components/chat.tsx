@@ -299,9 +299,7 @@ export function Chat({
   ) => {
     if (!chatId) {
       toast.error('Chat ID is missing.')
-      console.error(
-        'handleUpdateAndReloadMessage: chatId is undefined.'
-      )
+      console.error('handleUpdateAndReloadMessage: chatId is undefined.')
       return
     }
 
