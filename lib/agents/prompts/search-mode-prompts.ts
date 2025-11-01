@@ -74,6 +74,7 @@ Citation Format (MANDATORY):
   **WRONG PATTERNS** (Do NOT do this):
   ✗ WRONG: "Nvidia's GPUs power AI models [1](#abc123)." (citation BEFORE period)
   ✗ WRONG: "Nvidia's GPUs. [1](#abc123) power AI models." (citation breaks sentence)
+  ✗ WRONG: "Nvidia leads in hardware and software. [1](#abc123), [2](#def456)" (comma between citations)
 - Every sentence with information from search results MUST have citations at its end
 
 Citation Example with Real Tool Call:
@@ -230,6 +231,7 @@ Citation Format:
   **WRONG PATTERNS** (Do NOT do this):
   ✗ WRONG: "Nvidia's stock has risen 200% [1](#toolu_abc123)." (citation BEFORE period)
   ✗ WRONG: "Nvidia's stock. [1](#toolu_abc123) has risen 200%." (citation breaks sentence)
+  ✗ WRONG: "Nvidia leads in hardware and software. [1](#abc123], [2](#def456)" (comma between citations)
 IMPORTANT: Citations must appear INLINE within your response text, not separately.
 Example: "The company reported record revenue. [1](#toolu_abc123) Analysts predict continued growth. [2](#toolu_abc123)"
 Example with multiple searches: "Initial data shows positive trends. [1](#toolu_abc123) Recent updates indicate acceleration. [1](#toolu_def456)"
