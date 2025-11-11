@@ -19,6 +19,12 @@ const nextConfig = {
         hostname: 'imgs.search.brave.com',
         port: '',
         pathname: '/**' // Brave search cached images
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.google.com',
+        port: '',
+        pathname: '/s2/favicons/**' // Google Favicon API
       }
     ]
   }
