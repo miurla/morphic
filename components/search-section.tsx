@@ -16,6 +16,7 @@ import ProcessHeader from './process-header'
 import { SearchResults } from './search-results'
 import { SearchResultsImageSection } from './search-results-image'
 import { Section } from './section'
+import { SourceFavicons } from './source-favicons'
 import {
   createVideoSearchResults,
   VideoSearchResults
@@ -80,9 +81,14 @@ export function SearchSection({
       }
       meta={
         searchResults && totalResults > 0 ? (
-          <StatusIndicator icon={Check} iconClassName="text-green-500">
-            {totalResults} results
-          </StatusIndicator>
+          <div className="flex items-center gap-2">
+            <StatusIndicator icon={Check} iconClassName="text-green-500">
+              {totalResults} results
+            </StatusIndicator>
+            {searchResults.results && searchResults.results.length > 0 && (
+              <SourceFavicons results={searchResults.results} maxDisplay={3} />
+            )}
+          </div>
         ) : undefined
       }
     />
