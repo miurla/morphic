@@ -132,7 +132,7 @@ async function fetchTavilyExtractData(url: string): Promise<SearchResultsType> {
     })
     const json = await response.json()
     if (!json.results || json.results.length === 0) {
-      throw new Error('No results returned from Tavily Extract API')
+      throw new Error('No results returned from content extraction service')
     }
 
     const result = json.results[0]
@@ -153,7 +153,7 @@ async function fetchTavilyExtractData(url: string): Promise<SearchResultsType> {
     console.error('API Error:', error)
     throw error instanceof Error
       ? error
-      : new Error('Tavily Extract API failed')
+      : new Error('Content extraction service failed')
   }
 }
 
