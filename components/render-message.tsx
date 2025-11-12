@@ -101,8 +101,30 @@ export function RenderMessage({
 
   message.parts?.forEach((part: any, index: number) => {
     if (part.type === 'text') {
-      // Flush accumulated non-text first
-      flushBuffer(`seg-${index}`)
+      // Check if there's buffered content before this text part
+      const hasBufferedContent = buffer.length > 0
+
+      // Flush accumulated non-text first, marking that text follows
+      if (hasBufferedContent) {
+        // Create a custom flush that passes hasSubsequentText
+        if (buffer.length > 0) {
+          elements.push(
+            <ResearchProcessSection
+              key={`${messageId}-proc-seg-${index}`}
+              message={message}
+              messageId={messageId}
+              parts={buffer}
+              getIsOpen={getIsOpen}
+              onOpenChange={onOpenChange}
+              onQuerySelect={onQuerySelect}
+              status={status}
+              addToolResult={addToolResult}
+              hasSubsequentText={true}
+            />
+          )
+          buffer = []
+        }
+      }
 
       const remainingParts = message.parts?.slice(index + 1) || []
       const hasMoreTextParts = remainingParts.some(p => p.type === 'text')
@@ -147,7 +169,7 @@ export function RenderMessage({
       )
     }
   })
-  // Flush tail
+  // Flush tail (no subsequent text)
   flushBuffer('tail')
 
   return <>{elements}</>
