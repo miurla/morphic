@@ -405,7 +405,7 @@ export function ResearchProcessSection({
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent className="data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down">
-                <div className="p-2">{segmentContent}</div>
+                <div className="pt-2">{segmentContent}</div>
               </CollapsibleContent>
             </Collapsible>
           )
