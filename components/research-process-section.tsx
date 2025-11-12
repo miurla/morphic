@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react'
 
 import type { ReasoningPart } from '@ai-sdk/provider-utils'
 import { UseChatHelpers } from '@ai-sdk/react'
+import { ChevronDown } from 'lucide-react'
 
 import type {
   DataPart as UIDataPart,
@@ -15,6 +16,11 @@ import type {
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import { cn } from '@/lib/utils'
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from './ui/collapsible'
 import { DataSection } from './data-section'
 import { ReasoningSection } from './reasoning-section'
 import { ToolSection } from './tool-section'
@@ -62,6 +68,7 @@ type Props = {
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   parts?: MessagePart[]
+  hasSubsequentText?: boolean
 }
 
 /**
@@ -291,7 +298,8 @@ export function ResearchProcessSection({
   onQuerySelect,
   status,
   addToolResult,
-  parts: partsOverride
+  parts: partsOverride,
+  hasSubsequentText = false
 }: Props) {
   const allParts = (partsOverride ?? (message.parts || [])) as MessagePart[]
 
@@ -310,6 +318,12 @@ export function ResearchProcessSection({
     message.parts as MessagePart[] | undefined
   )
 
+  // State for parent collapsible (when segment has 5+ parts)
+  // Auto-collapse when text generation starts (hasSubsequentText is true)
+  const [parentOpenStates, setParentOpenStates] = useState<
+    Record<string, boolean>
+  >({})
+
   if (segments.length === 0 || segments.every(seg => seg.length === 0))
     return null
 
@@ -320,8 +334,18 @@ export function ResearchProcessSection({
         const isSingle = groups.length === 1 && groups[0].length === 1
         const containerClass = cn(!isSingle && 'rounded-lg border bg-card')
 
-        return (
-          <div key={`${messageId}-seg-${sidx}`} className={containerClass}>
+        // Count total parts in this segment
+        const totalParts = seg.length
+        const needsParentCollapsible = totalParts >= 5
+
+        // Parent collapsible ID
+        const parentId = `${messageId}-parent-${sidx}`
+        // If user has explicitly set state, use that; otherwise auto-collapse when text follows
+        const isParentOpen =
+          parentOpenStates[parentId] ?? (hasSubsequentText ? false : true)
+
+        const segmentContent = (
+          <div className={containerClass}>
             {groups.map((grp, gidx) => (
               <div key={`${messageId}-grp-${sidx}-${gidx}`}>
                 {grp.map((part, pidx) => {
@@ -354,6 +378,40 @@ export function ResearchProcessSection({
             ))}
           </div>
         )
+
+        if (needsParentCollapsible) {
+          return (
+            <Collapsible
+              key={`${messageId}-seg-${sidx}`}
+              open={isParentOpen}
+              onOpenChange={open => {
+                setParentOpenStates(prev => ({ ...prev, [parentId]: open }))
+              }}
+            >
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center px-1 py-0.5 gap-2 text-sm hover:bg-accent/50 rounded-lg"
+                >
+                  <span className="font-medium text-muted-foreground">
+                    Research Process ({totalParts} steps)
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      'h-4 w-4 text-muted-foreground transition-transform duration-200',
+                      isParentOpen && 'rotate-180'
+                    )}
+                  />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down">
+                <div className="p-2">{segmentContent}</div>
+              </CollapsibleContent>
+            </Collapsible>
+          )
+        }
+
+        return <div key={`${messageId}-seg-${sidx}`}>{segmentContent}</div>
       })}
     </div>
   )

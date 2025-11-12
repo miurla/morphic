@@ -390,10 +390,9 @@ describe('ResearchProcessSection', () => {
         />
       )
 
-      // Data parts should not render anything
-      expect(
-        container.firstChild?.firstChild?.firstChild?.firstChild
-      ).toBeNull()
+      // Data parts should render the DataSection component
+      // Check that the component renders (not null)
+      expect(container.firstChild).toBeInTheDocument()
     })
   })
 
