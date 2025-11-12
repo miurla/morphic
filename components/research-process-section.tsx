@@ -391,14 +391,14 @@ export function ResearchProcessSection({
               <CollapsibleTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center px-1 py-0.5 gap-2 text-sm hover:text-foreground rounded-lg"
+                  className="flex items-center px-1 py-0.5 gap-2 text-sm rounded-lg group"
                 >
-                  <span className="font-medium text-muted-foreground">
+                  <span className="font-medium text-muted-foreground group-hover:text-muted-foreground/70">
                     Research Process ({totalParts} steps)
                   </span>
                   <ChevronDown
                     className={cn(
-                      'h-4 w-4 text-muted-foreground transition-transform duration-200',
+                      'h-4 w-4 text-muted-foreground group-hover:text-muted-foreground/70 transition-transform duration-200',
                       isParentOpen && 'rotate-180'
                     )}
                   />
