@@ -391,7 +391,7 @@ export function ResearchProcessSection({
               <CollapsibleTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center px-1 py-0.5 gap-2 text-sm hover:bg-accent/50 rounded-lg"
+                  className="flex items-center px-1 py-0.5 gap-2 text-sm hover:text-foreground rounded-lg"
                 >
                   <span className="font-medium text-muted-foreground">
                     Research Process ({totalParts} steps)
