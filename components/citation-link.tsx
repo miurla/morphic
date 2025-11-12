@@ -78,44 +78,44 @@ export const CitationLink = memo(function CitationLink({
           </a>
         </PopoverTrigger>
         <PopoverContent
-          className="w-72 p-3 z-50"
-          side="top"
-          align="center"
-          sideOffset={8}
+          className="w-80 p-0 z-50 shadow-xs"
+          side="bottom"
+          align="start"
+          sideOffset={4}
           onPointerDownOutside={e => e.preventDefault()}
         >
           {citationData ? (
-            <div className="space-y-2">
-              <div className="flex items-start space-x-2">
-                <Avatar className="h-4 w-4 mt-0.5 shrink-0">
-                  <AvatarImage
-                    src={`https://www.google.com/s2/favicons?domain=${getHostname(
-                      citationData.url
-                    )}`}
-                    alt={getHostname(citationData.url)}
-                  />
-                  <AvatarFallback className="text-xs">
-                    {getHostname(citationData.url)[0]?.toUpperCase() || '?'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0 space-y-1">
-                  <Link
-                    href={citationData.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium hover:underline block"
-                  >
-                    <span className="line-clamp-2">{citationData.title}</span>
-                  </Link>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {citationData.content}
-                  </p>
-                  <p className="text-xs text-muted-foreground/80 truncate">
+            <Link
+              href={citationData.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block p-3 hover:bg-accent/50 transition-colors"
+            >
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-4 w-4 shrink-0">
+                    <AvatarImage
+                      src={`https://www.google.com/s2/favicons?domain=${getHostname(
+                        citationData.url
+                      )}`}
+                      alt={getHostname(citationData.url)}
+                    />
+                    <AvatarFallback className="text-xs">
+                      {getHostname(citationData.url)[0]?.toUpperCase() || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-muted-foreground truncate">
                     {getHostname(citationData.url)}
-                  </p>
+                  </span>
                 </div>
+                <p className="text-sm font-medium line-clamp-1">
+                  {citationData.title}
+                </p>
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                  {citationData.content}
+                </p>
               </div>
-            </div>
+            </Link>
           ) : null}
         </PopoverContent>
       </Popover>
