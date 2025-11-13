@@ -1,7 +1,6 @@
-import { describe, expect, it } from 'vitest'
-
-import { pruneMessages } from 'ai'
 import type { ModelMessage } from 'ai'
+import { pruneMessages } from 'ai'
+import { describe, expect, it } from 'vitest'
 
 describe('pruneMessages integration', () => {
   it('should prune messages according to configuration', () => {
@@ -130,6 +129,6 @@ describe('pruneMessages integration', () => {
 
     // Should preserve conversation flow
     expect(pruned.length).toBeGreaterThan(0)
-    expect(pruned.every((msg) => msg.content)).toBe(true)
+    expect(pruned.every(msg => msg.content)).toBe(true)
   })
 })
