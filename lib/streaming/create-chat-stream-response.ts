@@ -3,6 +3,7 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  pruneMessages,
   UIMessage,
   UIMessageStreamWriter
 } from 'ai'
@@ -22,7 +23,6 @@ import {
 import { getTextFromParts } from '../utils/message-utils'
 import { perfLog, perfTime } from '../utils/perf-logging'
 
-import { filterReasoningParts } from './helpers/filter-reasoning-parts'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
 import { streamRelatedQuestions } from './helpers/stream-related-questions'
@@ -135,12 +135,17 @@ export async function createChatStreamResponse(
           modelType
         })
 
-        // Filter out reasoning parts from messages before converting to model messages
-        // OpenAI API requires reasoning messages to be followed by assistant messages
-        const filteredMessages = filterReasoningParts(messagesToModel)
-
         // Convert to model messages and apply context window management
-        let modelMessages = convertToModelMessages(filteredMessages)
+        let modelMessages = convertToModelMessages(messagesToModel)
+
+        // Prune messages to remove unnecessary reasoning, tool calls, and empty messages
+        // This reduces token usage while keeping recent context
+        modelMessages = pruneMessages({
+          messages: modelMessages,
+          reasoning: 'before-last-message', // Keep reasoning in last message for LLM context
+          toolCalls: 'before-last-2-messages', // Keep recent tool calls (last 2 messages)
+          emptyMessages: 'remove' // Remove messages that become empty after pruning
+        })
 
         if (shouldTruncateMessages(modelMessages, model)) {
           const maxTokens = getMaxAllowedTokens(model)
