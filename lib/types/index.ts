@@ -67,7 +67,7 @@ export interface Chat extends Record<string, any> {
   sharePath?: string
 }
 
-// ExtendedCoreMessage for saveing annotations
+// ExtendedCoreMessage for saving annotations
 export type ExtendedCoreMessage = Omit<CoreMessage, 'role' | 'content'> & {
   role: CoreMessage['role'] | 'data'
   content: CoreMessage['content'] | JSONValue
