@@ -119,6 +119,7 @@ export function RenderMessage({
           isOpen={getIsOpen(tool.toolCallId)}
           onOpenChange={open => onOpenChange(tool.toolCallId, open)}
           addToolResult={addToolResult}
+          chatId={chatId}
         />
       ))}
       {message.parts?.map((part, index) => {
@@ -136,6 +137,7 @@ export function RenderMessage({
                   onOpenChange(part.toolInvocation.toolCallId, open)
                 }
                 addToolResult={addToolResult}
+                chatId={chatId}
               />
             )
           case 'text':
@@ -175,6 +177,7 @@ export function RenderMessage({
           onQuerySelect={onQuerySelect}
           isOpen={getIsOpen(`${messageId}-related`)}
           onOpenChange={open => onOpenChange(`${messageId}-related`, open)}
+          chatId={chatId || ''}
         />
       )}
     </>

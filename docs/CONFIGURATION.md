@@ -123,6 +123,8 @@ docker-compose logs searxng
 
 Models are configured in `public/config/models.json`. Each model requires its corresponding API key to be set in the environment variables.
 
+> **Note:** Ollama models are discovered dynamically at runtime when an Ollama server is available. Only models that expose the `tools` capability will appear in Morphic, so you no longer need to keep placeholder Ollama entries in `models.json`.
+
 ### Model Configuration
 
 The `models.json` file contains an array of model configurations with the following structure:
@@ -168,6 +170,8 @@ GROQ_API_KEY=[YOUR_API_KEY]
 ```bash
 OLLAMA_BASE_URL=http://localhost:11434
 ```
+
+When this variable is set, Morphic will automatically discover Ollama models that advertise the `tools` capability. Models without this capability are ignored, and no static configuration in `models.json` is required unless you need to override specific settings.
 
 ### Azure OpenAI
 

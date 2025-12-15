@@ -147,7 +147,8 @@ export function isToolCallSupported(model?: string) {
   const modelName = modelNameParts.join(':')
 
   if (provider === 'ollama') {
-    return false
+    // Ollama models are dynamically checked for tools capability
+    return true
   }
 
   if (provider === 'google') {

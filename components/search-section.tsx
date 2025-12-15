@@ -3,7 +3,6 @@
 import { useChat } from '@ai-sdk/react'
 import { ToolInvocation } from 'ai'
 
-import { CHAT_ID } from '@/lib/constants'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
@@ -18,15 +17,17 @@ interface SearchSectionProps {
   tool: ToolInvocation
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  chatId: string
 }
 
 export function SearchSection({
   tool,
   isOpen,
-  onOpenChange
+  onOpenChange,
+  chatId
 }: SearchSectionProps) {
   const { status } = useChat({
-    id: CHAT_ID
+    id: chatId
   })
   const isLoading = status === 'submitted' || status === 'streaming'
 

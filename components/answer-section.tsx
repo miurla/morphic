@@ -45,7 +45,7 @@ export function AnswerSection({
         <MessageActions
           message={content} // Keep original message content for copy
           messageId={messageId}
-          chatId={chatId}
+          chatId={chatId || ''}
           enableShare={enableShare}
           reload={handleReload}
         />

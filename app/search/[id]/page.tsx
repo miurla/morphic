@@ -75,5 +75,5 @@ export default async function SearchPage(props: {
   }
 
   const models = await getModels()
-  return <Chat id={id} savedMessages={messages} models={models} />
+  return <Chat key={id} id={id} savedMessages={messages} models={models} />
 }
