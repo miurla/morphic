@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 import { AlertCircle, Clock, RefreshCw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -99,27 +101,40 @@ export function ErrorModal({
           )}
         </DialogHeader>
         <DialogFooter className="flex-col gap-2">
-          {onRetry && error.type !== 'rate-limit' && (
-            <Button
-              onClick={() => {
-                onRetry()
-                onOpenChange(false)
-              }}
-              className="w-full"
-            >
-              <RefreshCw className="mr-2 size-4" />
-              Try Again
-            </Button>
+          {error.type === 'auth' ? (
+            <>
+              <Button asChild className="w-full">
+                <Link href="/auth/sign-up">Sign Up</Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/auth/login">Sign In</Link>
+              </Button>
+            </>
+          ) : (
+            <>
+              {onRetry && error.type !== 'rate-limit' && (
+                <Button
+                  onClick={() => {
+                    onRetry()
+                    onOpenChange(false)
+                  }}
+                  className="w-full"
+                >
+                  <RefreshCw className="mr-2 size-4" />
+                  Try Again
+                </Button>
+              )}
+              <Button
+                variant={
+                  onRetry && error.type !== 'rate-limit' ? 'outline' : 'default'
+                }
+                onClick={() => onOpenChange(false)}
+                className="w-full"
+              >
+                {error.type === 'rate-limit' ? 'Understood' : 'Close'}
+              </Button>
+            </>
           )}
-          <Button
-            variant={
-              onRetry && error.type !== 'rate-limit' ? 'outline' : 'default'
-            }
-            onClick={() => onOpenChange(false)}
-            className="w-full"
-          >
-            {error.type === 'rate-limit' ? 'Understood' : 'Close'}
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
