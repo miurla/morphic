@@ -16,10 +16,8 @@ import {
 } from '@/lib/types/dynamic-tools'
 import { cn } from '@/lib/utils'
 
-import { useAuthCheck } from '@/hooks/use-auth-check'
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
 
-import { AuthModal } from './auth-modal'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
 import { DragOverlay } from './drag-overlay'
@@ -64,7 +62,6 @@ export function Chat({
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [input, setInput] = useState('')
-  const [showAuthModal, setShowAuthModal] = useState(false)
   const [errorModal, setErrorModal] = useState<{
     open: boolean
     type: 'rate-limit' | 'auth' | 'forbidden' | 'general'
@@ -75,7 +72,6 @@ export function Chat({
     type: 'general',
     message: ''
   })
-  const { isAuthenticated } = useAuthCheck()
 
   const {
     messages,
@@ -351,12 +347,6 @@ export function Chat({
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    // Check authentication before sending message
-    if (!isAuthenticated) {
-      setShowAuthModal(true)
-      return
-    }
-
     const uploaded = uploadedFiles.filter(f => f.status === 'uploaded')
 
     if (input.trim() || uploaded.length > 0) {
@@ -471,7 +461,6 @@ export function Chat({
         onNewChat={handleNewChat}
       />
       <DragOverlay visible={isDragging} />
-      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
       <ErrorModal
         open={errorModal.open}
         onOpenChange={open => setErrorModal(prev => ({ ...prev, open }))}
