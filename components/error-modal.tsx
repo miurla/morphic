@@ -23,14 +23,21 @@ interface ErrorModalProps {
     details?: string
   }
   onRetry?: () => void
+  onAuthClose?: () => void
 }
 
 export function ErrorModal({
   open,
   onOpenChange,
   error,
-  onRetry
+  onRetry,
+  onAuthClose
 }: ErrorModalProps) {
+  const handleAuthClose = () => {
+    onOpenChange(false)
+    onAuthClose?.()
+  }
+
   const getErrorIcon = () => {
     switch (error.type) {
       case 'rate-limit':
@@ -48,7 +55,7 @@ export function ErrorModal({
       case 'rate-limit':
         return 'Rate Limit Exceeded'
       case 'auth':
-        return 'Authentication Required'
+        return 'Continue with Morphic'
       case 'forbidden':
         return 'Access Denied'
       default:
@@ -64,7 +71,7 @@ export function ErrorModal({
           'You have made too many requests. Please wait a moment before trying again.'
         )
       case 'auth':
-        return 'You need to sign in to continue using this feature.'
+        return 'To use Morphic, sign in to your account or create a new one.'
       case 'forbidden':
         return 'You do not have permission to access this resource.'
       default:
@@ -82,7 +89,16 @@ export function ErrorModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={open => {
+        if (!open && error.type === 'auth') {
+          handleAuthClose()
+        } else {
+          onOpenChange(open)
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
