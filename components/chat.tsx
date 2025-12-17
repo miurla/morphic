@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
@@ -39,6 +40,8 @@ export function Chat({
   savedMessages?: UIMessage[]
   query?: string
 }) {
+  const router = useRouter()
+
   // Generate a stable chatId on the client side
   // - If providedId exists (e.g., /search/[id]), use it for existing chats
   // - Otherwise, generate a new ID (e.g., / homepage for new chats)
@@ -128,6 +131,12 @@ export function Chat({
         errorMessage.includes('too many requests') ||
         errorMessage.includes('daily limit')
 
+      // Check for authentication errors
+      const isAuthError =
+        error.message?.includes('401') ||
+        errorMessage.includes('unauthorized') ||
+        errorMessage.includes('authentication required')
+
       if (isRateLimit) {
         // Try to parse JSON error response for quality mode rate limit
         let parsedError: {
@@ -156,10 +165,7 @@ export function Chat({
           message: userMessage,
           details: undefined
         })
-      } else if (
-        error.message?.includes('401') ||
-        errorMessage.includes('unauthorized')
-      ) {
+      } else if (isAuthError) {
         setErrorModal({
           open: true,
           type: 'auth',
@@ -480,6 +486,11 @@ export function Chat({
               }
             : undefined
         }
+        onAuthClose={() => {
+          // Clear messages and navigate to root
+          setMessages([])
+          router.push('/')
+        }}
       />
     </div>
   )
