@@ -138,14 +138,18 @@ export async function createChatStreamResponse(
         // Convert to model messages and apply context window management
         let modelMessages = await convertToModelMessages(messagesToModel)
 
-        // Prune messages to remove unnecessary reasoning, tool calls, and empty messages
-        // This reduces token usage while keeping recent context
-        modelMessages = pruneMessages({
-          messages: modelMessages,
-          reasoning: 'before-last-message', // Keep reasoning in last message for LLM context
-          toolCalls: 'before-last-2-messages', // Keep recent tool calls (last 2 messages)
-          emptyMessages: 'remove' // Remove messages that become empty after pruning
-        })
+        // Prune messages to reduce token usage (skip for OpenAI due to reasoning model constraints)
+        // OpenAI reasoning models require reasoning and tool-call pairs to be kept together
+        // See: https://github.com/vercel/ai/issues/11036
+        const isOpenAI = context.modelId.startsWith('openai:')
+        if (!isOpenAI) {
+          modelMessages = pruneMessages({
+            messages: modelMessages,
+            reasoning: 'before-last-message',
+            toolCalls: 'before-last-2-messages',
+            emptyMessages: 'remove'
+          })
+        }
 
         if (shouldTruncateMessages(modelMessages, model)) {
           const maxTokens = getMaxAllowedTokens(model)
