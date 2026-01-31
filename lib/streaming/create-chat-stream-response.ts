@@ -27,6 +27,7 @@ import { perfLog, perfTime } from '../utils/perf-logging'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
 import { streamRelatedQuestions } from './helpers/stream-related-questions'
+import { stripReasoningParts } from './helpers/strip-reasoning-parts'
 import type { StreamContext } from './helpers/types'
 import { BaseStreamConfig } from './types'
 
@@ -135,18 +136,23 @@ export async function createChatStreamResponse(
           modelType
         })
 
-        // Convert to model messages and apply context window management
-        let modelMessages = await convertToModelMessages(messagesToModel)
+        // For OpenAI models, strip reasoning parts from UIMessages before conversion
+        // OpenAI's Responses API requires reasoning items and their following items to be kept together
+        // See: https://github.com/vercel/ai/issues/11036
+        const isOpenAI = context.modelId.startsWith('openai:')
+        const messagesToConvert = isOpenAI
+          ? stripReasoningParts(messagesToModel)
+          : messagesToModel
 
-        // Prune messages to remove unnecessary tool calls and empty messages
-        // This reduces token usage while keeping recent context
-        // Note: reasoning is kept ('none') for OpenAI reasoning model compatibility
-        // (removing reasoning without its paired tool-call causes API errors)
+        // Convert to model messages and apply context window management
+        let modelMessages = await convertToModelMessages(messagesToConvert)
+
+        // Prune messages to reduce token usage while keeping recent context
         modelMessages = pruneMessages({
           messages: modelMessages,
-          reasoning: 'none', // Keep all reasoning for OpenAI compatibility
-          toolCalls: 'before-last-2-messages', // Keep recent tool calls (last 2 messages)
-          emptyMessages: 'remove' // Remove messages that become empty after pruning
+          reasoning: 'before-last-message',
+          toolCalls: 'before-last-2-messages',
+          emptyMessages: 'remove'
         })
 
         if (shouldTruncateMessages(modelMessages, model)) {
