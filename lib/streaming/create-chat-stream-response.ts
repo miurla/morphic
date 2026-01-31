@@ -128,7 +128,6 @@ export async function createChatStreamResponse(
         const researchAgent = researcher({
           model: context.modelId,
           modelConfig: model,
-          abortSignal,
           writer,
           parentTraceId,
           searchMode,
@@ -136,7 +135,7 @@ export async function createChatStreamResponse(
         })
 
         // Convert to model messages and apply context window management
-        let modelMessages = convertToModelMessages(messagesToModel)
+        let modelMessages = await convertToModelMessages(messagesToModel)
 
         // Prune messages to remove unnecessary reasoning, tool calls, and empty messages
         // This reduces token usage while keeping recent context
@@ -177,7 +176,10 @@ export async function createChatStreamResponse(
         perfLog(
           `researchAgent.stream - Start: model=${context.modelId}, searchMode=${searchMode}`
         )
-        const result = researchAgent.stream({ messages: modelMessages })
+        const result = await researchAgent.stream({
+          messages: modelMessages,
+          abortSignal
+        })
         result.consumeStream()
         // Stream with the research agent, including metadata
         writer.merge(

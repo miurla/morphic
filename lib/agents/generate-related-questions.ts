@@ -1,4 +1,4 @@
-import { type ModelMessage, streamObject } from 'ai'
+import { type ModelMessage, Output, streamText } from 'ai'
 
 import { getRelatedQuestionsModel } from '../config/model-types'
 import { relatedQuestionSchema } from '../schema/related'
@@ -16,13 +16,13 @@ export function createRelatedQuestionsStream(
   const relatedModel = getRelatedQuestionsModel()
   const modelId = `${relatedModel.providerId}:${relatedModel.id}`
 
-  return streamObject({
+  return streamText({
     model: getModel(modelId),
-    output: 'array',
-    schema: relatedQuestionSchema,
-    schemaName: 'RelatedQuestion',
-    schemaDescription:
-      'Generate a concise follow-up question (max 10-12 words)',
+    output: Output.array({
+      element: relatedQuestionSchema,
+      name: 'RelatedQuestion',
+      description: 'Generate a concise follow-up question (max 10-12 words)'
+    }),
     system: RELATED_QUESTIONS_PROMPT,
     messages: [
       ...messages,
