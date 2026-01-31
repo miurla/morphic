@@ -1,9 +1,7 @@
 import type {
-  Experimental_Agent as Agent,
-  Experimental_InferAgentUIMessage as InferAgentUIMessage,
+  InferAgentUIMessage,
   InferUITools,
-  ModelMessage,
-  StreamTextResult,
+  ToolLoopAgent,
   UIMessage,
   UIToolInvocation
 } from 'ai'
@@ -20,23 +18,12 @@ export type ResearcherTools = {
   askQuestion: ReturnType<typeof createQuestionTool>
 } & ReturnType<typeof createTodoTools>
 
-// Type for the researcher agent (streamText-based)
-export type ResearcherAgent = {
-  tools: ResearcherTools
-  stream: (options: {
-    messages: ModelMessage[]
-  }) => StreamTextResult<any, never>
-  generate?: (options: {
-    messages?: ModelMessage[]
-    prompt?: string
-  }) => Promise<any>
-  respond?: (options: ResearcherRespondOptions) => ResearcherResponse
-}
+// Type alias for the researcher agent using ToolLoopAgent
+// ToolLoopAgent generic signature is <CALL_OPTIONS, TOOLS, OUTPUT>
+export type ResearcherAgent = ToolLoopAgent<never, ResearcherTools, never>
 
 // Infer UI message type for researcher agent
-// Note: Using Agent type for UI message inference
-type _AgentType = Agent<ResearcherTools>
-export type ResearcherUIMessage = InferAgentUIMessage<_AgentType>
+export type ResearcherUIMessage = InferAgentUIMessage<ResearcherAgent>
 
 // Infer UI tools type for researcher agent
 export type ResearcherUITools = InferUITools<ResearcherTools>

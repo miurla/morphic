@@ -60,7 +60,7 @@ export async function streamRelatedQuestions(
     let finalQuestions = collectedQuestions
 
     try {
-      const completedQuestions = await relatedQuestionsResult.object
+      const completedQuestions = await relatedQuestionsResult.output
       const parsedQuestions = relatedSchema.safeParse(completedQuestions)
 
       if (parsedQuestions.success) {
