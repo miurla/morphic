@@ -1,4 +1,9 @@
-import { stepCountIs, tool, ToolLoopAgent, type UIMessageStreamWriter } from 'ai'
+import {
+  stepCountIs,
+  tool,
+  ToolLoopAgent,
+  type UIMessageStreamWriter
+} from 'ai'
 
 import type { ResearcherTools } from '@/lib/types/agent'
 import { type ModelType } from '@/lib/types/model-type'

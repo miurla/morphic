@@ -4,6 +4,7 @@ import {
   createUIMessageStream,
   createUIMessageStreamResponse,
   pruneMessages,
+  smoothStream,
   UIMessage,
   UIMessageStreamWriter
 } from 'ai'
@@ -178,7 +179,8 @@ export async function createChatStreamResponse(
         )
         const result = await researchAgent.stream({
           messages: modelMessages,
-          abortSignal
+          abortSignal,
+          experimental_transform: smoothStream({ chunking: 'word' })
         })
         result.consumeStream()
         // Stream with the research agent, including metadata
