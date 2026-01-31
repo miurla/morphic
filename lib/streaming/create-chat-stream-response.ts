@@ -138,11 +138,13 @@ export async function createChatStreamResponse(
         // Convert to model messages and apply context window management
         let modelMessages = await convertToModelMessages(messagesToModel)
 
-        // Prune messages to remove unnecessary reasoning, tool calls, and empty messages
+        // Prune messages to remove unnecessary tool calls and empty messages
         // This reduces token usage while keeping recent context
+        // Note: reasoning is kept ('none') for OpenAI reasoning model compatibility
+        // (removing reasoning without its paired tool-call causes API errors)
         modelMessages = pruneMessages({
           messages: modelMessages,
-          reasoning: 'before-last-message', // Keep reasoning in last message for LLM context
+          reasoning: 'none', // Keep all reasoning for OpenAI compatibility
           toolCalls: 'before-last-2-messages', // Keep recent tool calls (last 2 messages)
           emptyMessages: 'remove' // Remove messages that become empty after pruning
         })
