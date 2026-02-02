@@ -149,6 +149,9 @@ export function ChatPanel({
       {messages.length === 0 && (
         <div className="mb-10 flex flex-col items-center gap-4">
           <IconLogo className="size-12 text-muted-foreground" />
+          <h1 className="text-2xl font-medium text-foreground">
+            What would you like to know?
+          </h1>
         </div>
       )}
       {uploadedFiles.length > 0 && (
