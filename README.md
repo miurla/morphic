@@ -80,6 +80,13 @@ Your feedback helps make Morphic better for everyone!
 
 - User authentication powered by [Supabase Auth](https://supabase.com/docs/guides/auth)
 
+### Guest Mode
+
+- Allow users to try the app without creating an account
+- No chat history stored for guests (ephemeral sessions)
+- Optional daily rate limit per IP address
+- Enable with `ENABLE_GUEST_CHAT=true`
+
 ### Chat & History
 
 - Chat history automatically stored in PostgreSQL database
