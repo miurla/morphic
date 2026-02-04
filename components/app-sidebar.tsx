@@ -20,11 +20,7 @@ import { ChatHistorySection } from './sidebar/chat-history-section'
 import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
 import { IconLogo } from './ui/icons'
 
-export default function AppSidebar({
-  hasUser = false
-}: {
-  hasUser?: boolean
-}) {
+export default function AppSidebar({ hasUser = false }: { hasUser?: boolean }) {
   return (
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
       <SidebarHeader className="flex flex-row justify-between items-center">

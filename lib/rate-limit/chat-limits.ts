@@ -186,7 +186,7 @@ export async function checkAndEnforceQualityLimit(
  * Returns a 429 Response if limit is exceeded, null if allowed
  */
 export async function checkAndEnforceOverallChatLimit(
-  userId: string,
+  userId: string
 ): Promise<Response | null> {
   const result = await checkOverallChatLimit(userId)
 

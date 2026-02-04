@@ -98,7 +98,9 @@ export async function POST(req: Request) {
     const modelCookieStore = isGuest
       ? ({
           get: (name: string) =>
-            name === 'modelType' ? ({ value: 'speed' } as const) : cookieStore.get(name)
+            name === 'modelType'
+              ? ({ value: 'speed' } as const)
+              : cookieStore.get(name)
         } as typeof cookieStore)
       : cookieStore
 

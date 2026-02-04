@@ -20,7 +20,11 @@ const MODEL_TYPE_OPTIONS: { value: ModelType; label: string }[] = [
   { value: 'quality', label: 'Quality' }
 ]
 
-export function ModelTypeSelector({ disabled = false }: { disabled?: boolean }) {
+export function ModelTypeSelector({
+  disabled = false
+}: {
+  disabled?: boolean
+}) {
   const [value, setValue] = useState<ModelType>('speed')
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
