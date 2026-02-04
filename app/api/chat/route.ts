@@ -95,9 +95,16 @@ export async function POST(req: Request) {
         ? (searchModeCookie as SearchMode)
         : 'quick'
 
+    const modelCookieStore = isGuest
+      ? ({
+          get: (name: string) =>
+            name === 'modelType' ? ({ value: 'speed' } as const) : cookieStore.get(name)
+        } as typeof cookieStore)
+      : cookieStore
+
     // Select the appropriate model based on model type preference and search mode
     const selectedModel = selectModel({
-      cookieStore,
+      cookieStore: modelCookieStore,
       searchMode
     })
 
