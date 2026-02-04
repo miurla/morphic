@@ -5,6 +5,7 @@ This guide covers the optional features and their configuration in Morphic.
 ## Table of Contents
 
 - [Authentication](#authentication)
+- [Guest Mode](#guest-mode)
 - [Search Providers](#search-providers)
 - [Additional AI Providers](#additional-ai-providers)
 - [Other Features](#other-features)
@@ -43,6 +44,57 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR_SUPABASE_ANON_KEY]
    - **Anon Key**: Settings → API → Project API keys → anon/public
 
 With authentication enabled, users will need to sign up/login to use Morphic, and each user will have isolated chat history.
+
+## Guest Mode
+
+Guest mode allows users to try Morphic without creating an account. Guest sessions are ephemeral - no chat history is stored in the database.
+
+### Enabling Guest Mode
+
+Set the following environment variable:
+
+```bash
+ENABLE_GUEST_CHAT=true
+```
+
+### Guest Mode Behavior
+
+When guest mode is enabled:
+
+- **No authentication required**: Users can start chatting immediately
+- **No chat history**: Messages are not saved to the database
+- **Full context per request**: The client sends all messages with each request to maintain conversation context
+- **No URL navigation**: Guests stay on the root path (no `/search/[id]` URLs)
+- **Disabled features**:
+  - File upload
+  - Quality mode (forced to "Speed")
+  - Chat sharing
+  - Sidebar history
+
+### Rate Limiting for Guests
+
+For cloud deployments, you can limit guest usage per IP address:
+
+```bash
+GUEST_CHAT_DAILY_LIMIT=10  # Maximum requests per IP per day (default: 10)
+```
+
+Rate limiting requires Redis (Upstash) configuration:
+
+```bash
+UPSTASH_REDIS_REST_URL=[YOUR_UPSTASH_URL]
+UPSTASH_REDIS_REST_TOKEN=[YOUR_UPSTASH_TOKEN]
+```
+
+**Note**: Rate limiting only applies when `MORPHIC_CLOUD_DEPLOYMENT=true`. For self-hosted deployments, rate limiting is disabled by default.
+
+### Recommended Setup
+
+| Environment    | Configuration                                |
+| -------------- | -------------------------------------------- |
+| Personal/Local | `ENABLE_AUTH=false` (anonymous mode)         |
+| Public Demo    | `ENABLE_GUEST_CHAT=true` with rate limiting  |
+| Production     | `ENABLE_AUTH=true` (Supabase authentication) |
 
 ## Search Providers
 
