@@ -25,6 +25,7 @@ interface ChatMessagesProps {
   onQuerySelect: (query: string) => void
   status: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   chatId?: string
+  isGuest?: boolean
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for the scroll container */
   scrollContainerRef: React.RefObject<HTMLDivElement>
@@ -38,6 +39,7 @@ export function ChatMessages({
   onQuerySelect,
   status,
   chatId,
+  isGuest = false,
   addToolResult,
   scrollContainerRef,
   onUpdateMessage,
@@ -191,6 +193,7 @@ export function ChatMessages({
                 onOpenChange={handleOpenChange}
                 onQuerySelect={onQuerySelect}
                 chatId={chatId}
+                isGuest={isGuest}
                 status={status}
                 addToolResult={addToolResult}
                 onUpdateMessage={onUpdateMessage}
@@ -217,6 +220,7 @@ export function ChatMessages({
                     onOpenChange={handleOpenChange}
                     onQuerySelect={onQuerySelect}
                     chatId={chatId}
+                    isGuest={isGuest}
                     status={status}
                     addToolResult={addToolResult}
                     onUpdateMessage={onUpdateMessage}

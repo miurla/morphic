@@ -34,11 +34,13 @@ interface ChatSection {
 export function Chat({
   id: providedId,
   savedMessages = [],
-  query
+  query,
+  isGuest = false
 }: {
   id?: string
   savedMessages?: UIMessage[]
   query?: string
+  isGuest?: boolean
 }) {
   const router = useRouter()
 
@@ -102,6 +104,7 @@ export function Chat({
             trigger, // Use AI SDK's default trigger value directly
             chatId: chatId,
             messageId,
+            ...(isGuest ? { messages } : {}),
             message:
               trigger === 'regenerate-message' &&
               messageToRegenerate?.role === 'user'
@@ -377,7 +380,7 @@ export function Chat({
 
       // Push URL state immediately after sending message (for new chats)
       // Check if we're on the root path (new chat)
-      if (window.location.pathname === '/') {
+      if (!isGuest && window.location.pathname === '/') {
         window.history.pushState({}, '', `/search/${chatId}`)
       }
     }
@@ -389,6 +392,21 @@ export function Chat({
       setUploadedFiles,
       chatId: chatId
     })
+  const guestDragHandlers = {
+    isDragging: false,
+    handleDragOver: (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault()
+    },
+    handleDragLeave: (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault()
+    },
+    handleDrop: (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault()
+    }
+  }
+  const dragHandlers = isGuest
+    ? guestDragHandlers
+    : { isDragging, handleDragOver, handleDragLeave, handleDrop }
 
   return (
     <div
@@ -397,15 +415,16 @@ export function Chat({
         messages.length === 0 ? 'items-center justify-center' : ''
       )}
       data-testid="full-chat"
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onDragOver={dragHandlers.handleDragOver}
+      onDragLeave={dragHandlers.handleDragLeave}
+      onDrop={dragHandlers.handleDrop}
     >
       <ChatMessages
         sections={sections}
         onQuerySelect={onQuerySelect}
         status={status}
         chatId={chatId}
+        isGuest={isGuest}
         addToolResult={({
           toolCallId,
           result
@@ -465,8 +484,9 @@ export function Chat({
         setUploadedFiles={setUploadedFiles}
         scrollContainerRef={scrollContainerRef}
         onNewChat={handleNewChat}
+        isGuest={isGuest}
       />
-      <DragOverlay visible={isDragging} />
+      <DragOverlay visible={dragHandlers.isDragging} />
       <ErrorModal
         open={errorModal.open}
         onOpenChange={open => setErrorModal(prev => ({ ...prev, open }))}

@@ -20,18 +20,24 @@ const MODEL_TYPE_OPTIONS: { value: ModelType; label: string }[] = [
   { value: 'quality', label: 'Quality' }
 ]
 
-export function ModelTypeSelector() {
+export function ModelTypeSelector({ disabled = false }: { disabled?: boolean }) {
   const [value, setValue] = useState<ModelType>('speed')
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   useEffect(() => {
+    if (disabled) {
+      setValue('speed')
+      setCookie('modelType', 'speed')
+      return
+    }
     const savedType = getCookie('modelType')
     if (savedType && ['speed', 'quality'].includes(savedType)) {
       setValue(savedType as ModelType)
     }
-  }, [])
+  }, [disabled])
 
   const handleTypeSelect = (type: ModelType) => {
+    if (disabled) return
     setValue(type)
     setCookie('modelType', type)
     setDropdownOpen(false)
@@ -45,6 +51,7 @@ export function ModelTypeSelector() {
         <Button
           variant="outline"
           className="text-sm rounded-full shadow-none gap-1 transition-all px-3 py-2 h-auto bg-muted border-none"
+          disabled={disabled}
         >
           <span className="text-xs font-medium">{selectedOption?.label}</span>
           <ChevronDown

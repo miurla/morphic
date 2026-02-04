@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 
+import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { generateUUID } from '@/lib/utils'
 
 import { Chat } from '@/components/chat'
@@ -15,5 +16,6 @@ export default async function SearchPage(props: {
   }
 
   const id = generateUUID()
-  return <Chat id={id} query={q} />
+  const userId = await getCurrentUserId()
+  return <Chat id={id} query={q} isGuest={!userId} />
 }

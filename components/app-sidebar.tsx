@@ -20,7 +20,11 @@ import { ChatHistorySection } from './sidebar/chat-history-section'
 import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
 import { IconLogo } from './ui/icons'
 
-export default function AppSidebar() {
+export default function AppSidebar({
+  hasUser = false
+}: {
+  hasUser?: boolean
+}) {
   return (
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
       <SidebarHeader className="flex flex-row justify-between items-center">
@@ -41,11 +45,13 @@ export default function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <div className="flex-1 overflow-y-auto">
-          <Suspense fallback={<ChatHistorySkeleton />}>
-            <ChatHistorySection />
-          </Suspense>
-        </div>
+        {hasUser && (
+          <div className="flex-1 overflow-y-auto">
+            <Suspense fallback={<ChatHistorySkeleton />}>
+              <ChatHistorySection />
+            </Suspense>
+          </div>
+        )}
       </SidebarContent>
       <SidebarRail />
     </Sidebar>

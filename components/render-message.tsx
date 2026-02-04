@@ -22,6 +22,7 @@ interface RenderMessageProps {
   onOpenChange: (id: string, open: boolean) => void
   onQuerySelect: (query: string) => void
   chatId?: string
+  isGuest?: boolean
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
@@ -37,6 +38,7 @@ export function RenderMessage({
   onOpenChange,
   onQuerySelect,
   chatId,
+  isGuest = false,
   status,
   addToolResult,
   onUpdateMessage,
@@ -145,6 +147,7 @@ export function RenderMessage({
           )}
           onOpenChange={open => onOpenChange(messageId, open)}
           chatId={chatId}
+          isGuest={isGuest}
           showActions={shouldShowActions}
           messageId={messageId}
           metadata={message.metadata as UIMessageMetadata | undefined}

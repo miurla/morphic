@@ -80,7 +80,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <SidebarProvider defaultOpen>
-            <AppSidebar />
+            <AppSidebar hasUser={!!user} />
             <div className="flex flex-col flex-1 min-w-0">
               <Header user={user} />
               <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">

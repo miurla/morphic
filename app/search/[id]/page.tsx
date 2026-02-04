@@ -44,5 +44,5 @@ export default async function SearchPage(props: {
 
   const messages: UIMessage[] = chat.messages
 
-  return <Chat id={id} savedMessages={messages} />
+  return <Chat id={id} savedMessages={messages} isGuest={!userId} />
 }
