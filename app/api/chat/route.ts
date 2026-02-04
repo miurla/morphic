@@ -4,8 +4,13 @@ import { cookies } from 'next/headers'
 import { loadChat } from '@/lib/actions/chat'
 import { calculateConversationTurn, trackChatEvent } from '@/lib/analytics'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import { checkAndEnforceQualityLimit } from '@/lib/rate-limit/quality-limit'
+import {
+  checkAndEnforceOverallChatLimit,
+  checkAndEnforceQualityLimit
+} from '@/lib/rate-limit/chat-limits'
+import { checkAndEnforceGuestLimit } from '@/lib/rate-limit/guest-limit'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
+import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-ephemeral-chat-stream-response'
 import { SearchMode } from '@/lib/types/search'
 import { selectModel } from '@/lib/utils/model-selection'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
@@ -25,7 +30,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const { message, chatId, trigger, messageId, isNewChat } = body
+    const { message, messages, chatId, trigger, messageId, isNewChat } = body
 
     perfLog(
       `API Route - Start: chatId=${chatId}, trigger=${trigger}, isNewChat=${isNewChat}`
@@ -62,12 +67,23 @@ export async function POST(req: Request) {
       })
     }
 
-    // Check if user is authenticated
-    if (!userId) {
+    const guestChatEnabled = process.env.ENABLE_GUEST_CHAT === 'true'
+    const isGuest = !userId
+    if (isGuest && !guestChatEnabled) {
       return new Response('Authentication required', {
         status: 401,
         statusText: 'Unauthorized'
       })
+    }
+
+    if (isGuest) {
+      const forwardedFor = req.headers.get('x-forwarded-for') || ''
+      const ip =
+        forwardedFor.split(',')[0]?.trim() ||
+        req.headers.get('x-real-ip') ||
+        null
+      const guestLimitResponse = await checkAndEnforceGuestLimit(ip)
+      if (guestLimitResponse) return guestLimitResponse
     }
 
     const cookieStore = await cookies()
@@ -79,9 +95,18 @@ export async function POST(req: Request) {
         ? (searchModeCookie as SearchMode)
         : 'quick'
 
+    const modelCookieStore = isGuest
+      ? ({
+          get: (name: string) =>
+            name === 'modelType'
+              ? ({ value: 'speed' } as const)
+              : cookieStore.get(name)
+        } as typeof cookieStore)
+      : cookieStore
+
     // Select the appropriate model based on model type preference and search mode
     const selectedModel = selectModel({
-      cookieStore,
+      cookieStore: modelCookieStore,
       searchMode
     })
 
@@ -97,33 +122,48 @@ export async function POST(req: Request) {
 
     // Check rate limit for quality mode
     const modelTypeCookie = cookieStore.get('modelType')?.value
-    const modelType =
+    const resolvedModelType =
       modelTypeCookie === 'quality' || modelTypeCookie === 'speed'
         ? modelTypeCookie
         : undefined
-    const rateLimitResponse = await checkAndEnforceQualityLimit(
-      userId,
-      modelType === 'quality'
-    )
-    if (rateLimitResponse) return rateLimitResponse
+    const modelType = isGuest ? 'speed' : resolvedModelType
+    if (!isGuest) {
+      const qualityLimitResponse = await checkAndEnforceQualityLimit(
+        userId,
+        modelType === 'quality'
+      )
+      if (qualityLimitResponse) return qualityLimitResponse
+
+      const overallLimitResponse = await checkAndEnforceOverallChatLimit(userId)
+      if (overallLimitResponse) return overallLimitResponse
+    }
 
     const streamStart = performance.now()
     perfLog(
       `createChatStreamResponse - Start: model=${selectedModel.providerId}:${selectedModel.id}, searchMode=${searchMode}, modelType=${modelType}`
     )
 
-    const response = await createChatStreamResponse({
-      message,
-      model: selectedModel,
-      chatId,
-      userId: userId, // userId is guaranteed to be non-null after authentication check above
-      trigger,
-      messageId,
-      abortSignal,
-      isNewChat,
-      searchMode,
-      modelType
-    })
+    const response = isGuest
+      ? await createEphemeralChatStreamResponse({
+          messages: Array.isArray(messages) ? messages : [],
+          model: selectedModel,
+          abortSignal,
+          searchMode,
+          modelType,
+          chatId
+        })
+      : await createChatStreamResponse({
+          message,
+          model: selectedModel,
+          chatId,
+          userId: userId, // userId is guaranteed to be non-null after authentication check above
+          trigger,
+          messageId,
+          abortSignal,
+          isNewChat,
+          searchMode,
+          modelType
+        })
 
     perfTime('createChatStreamResponse resolved', streamStart)
 
@@ -134,7 +174,7 @@ export async function POST(req: Request) {
         let conversationTurn = 1 // Default for new chats
 
         // For existing chats, load history and calculate turn number
-        if (!isNewChat) {
+        if (!isNewChat && !isGuest) {
           const chat = await loadChat(chatId, userId)
           if (chat?.messages) {
             // Add 1 to account for the current message being sent
@@ -142,18 +182,20 @@ export async function POST(req: Request) {
           }
         }
 
-        await trackChatEvent({
-          searchMode,
-          modelType: modelTypeCookie === 'quality' ? 'quality' : 'speed',
-          conversationTurn,
-          isNewChat: isNewChat ?? false,
-          trigger:
-            (trigger as 'submit-message' | 'regenerate-message') ??
-            'submit-message',
-          chatId,
-          userId,
-          modelId: selectedModel.id
-        })
+        if (!isGuest && userId) {
+          await trackChatEvent({
+            searchMode,
+            modelType: modelTypeCookie === 'quality' ? 'quality' : 'speed',
+            conversationTurn,
+            isNewChat: isNewChat ?? false,
+            trigger:
+              (trigger as 'submit-message' | 'regenerate-message') ??
+              'submit-message',
+            chatId,
+            userId,
+            modelId: selectedModel.id
+          })
+        }
       } catch (error) {
         // Log error but don't throw - analytics should never break the app
         console.error('Analytics tracking failed:', error)
@@ -162,7 +204,7 @@ export async function POST(req: Request) {
 
     // Invalidate the cache for this specific chat after creating the response
     // This ensures the next load will get fresh data
-    if (chatId) {
+    if (chatId && !isGuest) {
       revalidateTag(`chat-${chatId}`, 'max')
     }
 

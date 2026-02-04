@@ -43,6 +43,8 @@ interface ChatPanelProps {
   setUploadedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>
   /** Callback to reset chatId when starting a new chat */
   onNewChat?: () => void
+  /** Whether the current session is guest */
+  isGuest?: boolean
 }
 
 export function ChatPanel({
@@ -60,7 +62,8 @@ export function ChatPanel({
   uploadedFiles,
   setUploadedFiles,
   scrollContainerRef,
-  onNewChat
+  onNewChat,
+  isGuest = false
 }: ChatPanelProps) {
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -227,54 +230,56 @@ export function ChatPanel({
           {/* Bottom menu area */}
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-2">
-              <FileUploadButton
-                onFileSelect={async files => {
-                  const newFiles: UploadedFile[] = files.map(file => ({
-                    file,
-                    status: 'uploading'
-                  }))
-                  setUploadedFiles(prev => [...prev, ...newFiles])
-                  await Promise.all(
-                    newFiles.map(async uf => {
-                      const formData = new FormData()
-                      formData.append('file', uf.file)
-                      formData.append('chatId', chatId)
-                      try {
-                        const res = await fetch('/api/upload', {
-                          method: 'POST',
-                          body: formData
-                        })
+              {!isGuest && (
+                <FileUploadButton
+                  onFileSelect={async files => {
+                    const newFiles: UploadedFile[] = files.map(file => ({
+                      file,
+                      status: 'uploading'
+                    }))
+                    setUploadedFiles(prev => [...prev, ...newFiles])
+                    await Promise.all(
+                      newFiles.map(async uf => {
+                        const formData = new FormData()
+                        formData.append('file', uf.file)
+                        formData.append('chatId', chatId)
+                        try {
+                          const res = await fetch('/api/upload', {
+                            method: 'POST',
+                            body: formData
+                          })
 
-                        if (!res.ok) {
-                          throw new Error('Upload failed')
+                          if (!res.ok) {
+                            throw new Error('Upload failed')
+                          }
+
+                          const { file: uploaded } = await res.json()
+                          setUploadedFiles(prev =>
+                            prev.map(f =>
+                              f.file === uf.file
+                                ? {
+                                    ...f,
+                                    status: 'uploaded',
+                                    url: uploaded.url,
+                                    name: uploaded.filename,
+                                    key: uploaded.key
+                                  }
+                                : f
+                            )
+                          )
+                        } catch (e) {
+                          toast.error(`Failed to upload ${uf.file.name}`)
+                          setUploadedFiles(prev =>
+                            prev.map(f =>
+                              f.file === uf.file ? { ...f, status: 'error' } : f
+                            )
+                          )
                         }
-
-                        const { file: uploaded } = await res.json()
-                        setUploadedFiles(prev =>
-                          prev.map(f =>
-                            f.file === uf.file
-                              ? {
-                                  ...f,
-                                  status: 'uploaded',
-                                  url: uploaded.url,
-                                  name: uploaded.filename,
-                                  key: uploaded.key
-                                }
-                              : f
-                          )
-                        )
-                      } catch (e) {
-                        toast.error(`Failed to upload ${uf.file.name}`)
-                        setUploadedFiles(prev =>
-                          prev.map(f =>
-                            f.file === uf.file ? { ...f, status: 'error' } : f
-                          )
-                        )
-                      }
-                    })
-                  )
-                }}
-              />
+                      })
+                    )
+                  }}
+                />
+              )}
               <SearchModeSelector />
             </div>
             <div className="flex items-center gap-2">
@@ -290,7 +295,7 @@ export function ChatPanel({
                   <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
                 </Button>
               )}
-              <ModelTypeSelector />
+              <ModelTypeSelector disabled={isGuest} />
               <Button
                 type={isLoading ? 'button' : 'submit'}
                 size={'icon'}
