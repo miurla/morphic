@@ -4,11 +4,11 @@ import { cookies } from 'next/headers'
 import { loadChat } from '@/lib/actions/chat'
 import { calculateConversationTurn, trackChatEvent } from '@/lib/analytics'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import { checkAndEnforceGuestLimit } from '@/lib/rate-limit/guest-limit'
 import {
-  checkAndEnforceQualityLimit,
-  checkAndEnforceOverallChatLimit
+  checkAndEnforceOverallChatLimit,
+  checkAndEnforceQualityLimit
 } from '@/lib/rate-limit/chat-limits'
+import { checkAndEnforceGuestLimit } from '@/lib/rate-limit/guest-limit'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-ephemeral-chat-stream-response'
 import { SearchMode } from '@/lib/types/search'
