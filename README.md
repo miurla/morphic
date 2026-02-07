@@ -171,54 +171,7 @@ bun dev
 
 #### Using Docker
 
-1. Configure environment variables for Docker:
-
-```bash
-cp .env.local.example .env.local
-```
-
-Edit `.env.local` and set the required variables:
-
-```bash
-DATABASE_URL=postgresql://morphic:morphic@postgres:5432/morphic
-OPENAI_API_KEY=your_openai_key
-TAVILY_API_KEY=your_tavily_key
-BRAVE_SEARCH_API_KEY=your_brave_key
-```
-
-**Note**: Authentication is disabled by default (`ENABLE_AUTH=false` in `.env.local.example`).
-
-**Optional**: Customize PostgreSQL credentials by setting environment variables in `.env.local`:
-
-```bash
-POSTGRES_USER=morphic      # Default: morphic
-POSTGRES_PASSWORD=morphic  # Default: morphic
-POSTGRES_DB=morphic        # Default: morphic
-POSTGRES_PORT=5432         # Default: 5432
-```
-
-2. Start the Docker containers:
-
-```bash
-docker compose up -d
-```
-
-The application will:
-
-- Start PostgreSQL 17 with health checks
-- Start Redis for SearXNG search caching
-- Wait for the database to be ready
-- Run database migrations automatically
-- Start the Morphic application
-- Start SearXNG (optional search provider)
-
-3. Visit http://localhost:3000 in your browser.
-
-**Note**: Database data is persisted in a Docker volume. To reset the database, run:
-
-```bash
-docker compose down -v  # This will delete all data
-```
+See the [Docker Guide](./docs/DOCKER.md) for detailed instructions on running Morphic with Docker Compose.
 
 ## 🌐 Deploy
 
@@ -232,37 +185,7 @@ Host your own live version of Morphic with Vercel or Docker.
 
 ### Docker
 
-#### Using Prebuilt Image
-
-Prebuilt Docker images are automatically built and published to GitHub Container Registry:
-
-```bash
-docker pull ghcr.io/miurla/morphic:latest
-```
-
-You can use it with docker-compose by setting the image in your `docker-compose.yaml`:
-
-```yaml
-services:
-  morphic:
-    image: ghcr.io/miurla/morphic:latest
-    env_file: .env.local
-    environment:
-      DATABASE_URL: postgresql://morphic:morphic@postgres:5432/morphic
-      DATABASE_SSL_DISABLED: 'true'
-      ENABLE_AUTH: 'false'
-    ports:
-      - '3000:3000'
-    depends_on:
-      - postgres
-      - redis
-```
-
-**Note**: The prebuilt image runs in **anonymous mode only** (`ENABLE_AUTH=false`). Supabase authentication cannot be enabled because `NEXT_PUBLIC_*` environment variables are embedded at build time by Next.js. To enable authentication or customize model configurations, you need to build from source — see [CONFIGURATION.md](./docs/CONFIGURATION.md) for details.
-
-#### Building from Source
-
-Or use Docker Compose for a complete setup with PostgreSQL, Redis, and SearXNG. See the [Using Docker](#using-docker) section under Quickstart for detailed instructions.
+See the [Docker Guide](./docs/DOCKER.md) for prebuilt images, Docker Compose setup, and deployment instructions.
 
 ## 👥 Contributing
 
