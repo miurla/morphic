@@ -6,7 +6,11 @@ export interface SearchProvider {
     maxResults: number,
     searchDepth: 'basic' | 'advanced',
     includeDomains: string[],
-    excludeDomains: string[]
+    excludeDomains: string[],
+    options?: {
+      type?: 'general' | 'optimized'
+      content_types?: Array<'web' | 'video' | 'image' | 'news'>
+    }
   ): Promise<SearchResults>
 }
 
@@ -16,7 +20,11 @@ export abstract class BaseSearchProvider implements SearchProvider {
     maxResults: number,
     searchDepth: 'basic' | 'advanced',
     includeDomains: string[],
-    excludeDomains: string[]
+    excludeDomains: string[],
+    options?: {
+      type?: 'general' | 'optimized'
+      content_types?: Array<'web' | 'video' | 'image' | 'news'>
+    }
   ): Promise<SearchResults>
 
   protected validateApiKey(

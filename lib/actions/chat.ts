@@ -1,253 +1,338 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
+import { revalidateTag, unstable_cache } from 'next/cache'
 
-import { getRedisClient, RedisWrapper } from '@/lib/redis/config'
-import { type Chat } from '@/lib/types'
+import { generateChatTitle } from '@/lib/agents/title-generator'
+import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import * as dbActions from '@/lib/db/actions'
+import type { Chat, Message } from '@/lib/db/schema'
+import { generateId } from '@/lib/db/schema'
+import type { UIMessage } from '@/lib/types/ai'
+import { getTextFromParts } from '@/lib/utils/message-utils'
 
-async function getRedis(): Promise<RedisWrapper> {
-  return await getRedisClient()
+// Constants
+const DEFAULT_CHAT_TITLE = 'Untitled'
+
+// Create cached version of loadChatWithMessages with dynamic tags per chat
+const getCachedChatWithMessages = (
+  chatId: string,
+  requestingUserId?: string
+) => {
+  // Create a unique cache instance for each chat
+  const cachedFunction = unstable_cache(
+    async () => {
+      return dbActions.loadChatWithMessages(chatId, requestingUserId)
+    },
+    ['chat-with-messages', chatId, requestingUserId || 'anonymous'], // cache key
+    {
+      tags: [`chat-${chatId}`, 'chat'], // both specific and general tags
+      revalidate: 60 // revalidate after 60 seconds
+    }
+  )
+
+  return cachedFunction()
 }
 
-const CHAT_VERSION = 'v2'
-function getUserChatKey(userId: string) {
-  return `user:${CHAT_VERSION}:chat:${userId}`
-}
-
-export async function getChats(userId?: string | null) {
+/**
+ * Get all chats for the current user
+ */
+export async function getChats() {
+  const userId = await getCurrentUserId()
   if (!userId) {
     return []
   }
-
-  try {
-    const redis = await getRedis()
-    const chats = await redis.zrange(getUserChatKey(userId), 0, -1, {
-      rev: true
-    })
-
-    if (chats.length === 0) {
-      return []
-    }
-
-    const results = await Promise.all(
-      chats.map(async chatKey => {
-        const chat = await redis.hgetall(chatKey)
-        return chat
-      })
-    )
-
-    return results
-      .filter((result): result is Record<string, any> => {
-        if (result === null || Object.keys(result).length === 0) {
-          return false
-        }
-        return true
-      })
-      .map(chat => {
-        const plainChat = { ...chat }
-        if (typeof plainChat.messages === 'string') {
-          try {
-            plainChat.messages = JSON.parse(plainChat.messages)
-          } catch (error) {
-            plainChat.messages = []
-          }
-        }
-        if (plainChat.createdAt && !(plainChat.createdAt instanceof Date)) {
-          plainChat.createdAt = new Date(plainChat.createdAt)
-        }
-        return plainChat as Chat
-      })
-  } catch (error) {
-    return []
-  }
+  return dbActions.getChats(userId)
 }
 
-export async function getChatsPage(
-  userId: string,
-  limit = 20,
-  offset = 0
-): Promise<{ chats: Chat[]; nextOffset: number | null }> {
-  try {
-    const redis = await getRedis()
-    const userChatKey = getUserChatKey(userId)
-    const start = offset
-    const end = offset + limit - 1
-
-    const chatKeys = await redis.zrange(userChatKey, start, end, {
-      rev: true
-    })
-
-    if (chatKeys.length === 0) {
-      return { chats: [], nextOffset: null }
-    }
-
-    const results = await Promise.all(
-      chatKeys.map(async chatKey => {
-        const chat = await redis.hgetall(chatKey)
-        return chat
-      })
-    )
-
-    const chats = results
-      .filter((result): result is Record<string, any> => {
-        if (result === null || Object.keys(result).length === 0) {
-          return false
-        }
-        return true
-      })
-      .map(chat => {
-        const plainChat = { ...chat }
-        if (typeof plainChat.messages === 'string') {
-          try {
-            plainChat.messages = JSON.parse(plainChat.messages)
-          } catch (error) {
-            plainChat.messages = []
-          }
-        }
-        if (plainChat.createdAt && !(plainChat.createdAt instanceof Date)) {
-          plainChat.createdAt = new Date(plainChat.createdAt)
-        }
-        return plainChat as Chat
-      })
-
-    const nextOffset = chatKeys.length === limit ? offset + limit : null
-    return { chats, nextOffset }
-  } catch (error) {
-    console.error('Error fetching chat page:', error)
+/**
+ * Get chats with pagination for the current user
+ */
+export async function getChatsPage(limit = 20, offset = 0) {
+  const userId = await getCurrentUserId()
+  if (!userId) {
     return { chats: [], nextOffset: null }
   }
+  return dbActions.getChatsPage(userId, limit, offset)
 }
 
-export async function getChat(id: string, userId: string = 'anonymous') {
-  const redis = await getRedis()
-  const chat = await redis.hgetall<Chat>(`chat:${id}`)
+/**
+ * Load a chat with messages
+ * If requestingUserId is provided, it will be used for authorization
+ * Otherwise, no authorization check is performed (assumes already authorized)
+ */
+export async function loadChat(
+  chatId: string,
+  requestingUserId?: string
+): Promise<(Chat & { messages: UIMessage[] }) | null> {
+  // Use cached version for individual chat loading
+  return getCachedChatWithMessages(chatId, requestingUserId)
+}
 
-  if (!chat) {
-    return null
-  }
+/**
+ * Create a new chat
+ * @param userId - Required. Pass userId to avoid duplicate auth calls
+ */
+export async function createChat(
+  id: string | undefined,
+  title: string | undefined,
+  userId: string
+): Promise<Chat> {
+  const chatId = id || generateId()
+  const chatTitle = title || DEFAULT_CHAT_TITLE
 
-  // Parse the messages if they're stored as a string
-  if (typeof chat.messages === 'string') {
-    try {
-      chat.messages = JSON.parse(chat.messages)
-    } catch (error) {
-      chat.messages = []
-    }
-  }
+  // Create chat
+  const chat = await dbActions.createChat({
+    id: chatId,
+    title: chatTitle.substring(0, 255),
+    userId,
+    visibility: 'private'
+  })
 
-  // Ensure messages is always an array
-  if (!Array.isArray(chat.messages)) {
-    chat.messages = []
-  }
+  // Revalidate cache
+  revalidateTag(`chat-${chatId}`, 'max')
 
   return chat
 }
 
-export async function clearChats(
-  userId: string = 'anonymous'
-): Promise<{ error?: string }> {
-  const redis = await getRedis()
-  const userChatKey = getUserChatKey(userId)
-  const chats = await redis.zrange(userChatKey, 0, -1)
-  if (!chats.length) {
-    return { error: 'No chats to clear' }
+/**
+ * Create a new chat and save the first message (public API with auth)
+ */
+export async function createChatAndSaveMessage(
+  message: UIMessage,
+  title?: string
+): Promise<{ chat: Chat; message: Message }> {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    throw new Error('User not authenticated')
   }
-  const pipeline = redis.pipeline()
+
+  const chatId = generateId()
+  const messageId = message.id || generateId()
+
+  // Extract title from message if not provided
+  const chatTitle =
+    title || getTextFromParts(message.parts as any[]) || DEFAULT_CHAT_TITLE
+
+  // Create chat
+  const chat = await dbActions.createChat({
+    id: chatId,
+    title: chatTitle.substring(0, 255),
+    userId,
+    visibility: 'private'
+  })
+
+  // Save message
+  const dbMessage = await dbActions.upsertMessage({
+    ...message,
+    id: messageId,
+    chatId
+  })
+
+  // Revalidate cache
+  revalidateTag(`chat-${chatId}`, 'max')
+
+  return { chat, message: dbMessage }
+}
+
+/**
+ * Create a new chat with the first message in a single transaction
+ * Optimized for new chat creation
+ */
+export async function createChatWithFirstMessage(
+  chatId: string,
+  message: UIMessage,
+  userId: string,
+  title?: string
+): Promise<{ chat: Chat; message: Message }> {
+  const messageId = message.id || generateId()
+  const chatTitle = title || DEFAULT_CHAT_TITLE
+
+  // Use transaction for atomic operation
+  const result = await dbActions.createChatWithFirstMessageTransaction({
+    chatId,
+    chatTitle,
+    userId,
+    message: {
+      ...message,
+      id: messageId
+    }
+  })
+
+  // Revalidate cache
+  revalidateTag(`chat-${chatId}`, 'max')
+
+  return result
+}
+
+/**
+ * Upsert a message to a chat
+ * @param userId - Required but not used for access check (assumes already authorized)
+ *
+ * IMPORTANT: This function assumes the caller has already performed authorization checks.
+ * It is only called from:
+ * 1. API routes after authentication (app/api/chat/route.ts)
+ * 2. Stream handlers after chat ownership verification
+ * 3. Internal functions that have already verified access
+ *
+ * DO NOT call this function directly from untrusted contexts.
+ */
+export async function upsertMessage(
+  chatId: string,
+  message: UIMessage,
+  userId: string
+): Promise<Message> {
+  // Skip access check - userId is required for audit/logging but not for authorization
+  // Caller MUST ensure authorization before calling this function
+  const messageId = message.id || generateId()
+  const dbMessage = await dbActions.upsertMessage(
+    {
+      ...message,
+      id: messageId,
+      chatId
+    },
+    userId
+  )
+
+  // Revalidate cache
+  revalidateTag(`chat-${chatId}`, 'max')
+
+  return dbMessage
+}
+
+/**
+ * Delete a chat
+ */
+export async function deleteChat(chatId: string) {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return { success: false, error: 'User not authenticated' }
+  }
+
+  const result = await dbActions.deleteChat(chatId, userId)
+
+  if (result.success) {
+    revalidateTag(`chat-${chatId}`, 'max')
+  }
+
+  return result
+}
+
+/**
+ * Clear all chats for the current user
+ */
+export async function clearChats() {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return { success: false, error: 'User not authenticated' }
+  }
+
+  const chats = await dbActions.getChats(userId)
 
   for (const chat of chats) {
-    pipeline.del(chat)
-    pipeline.zrem(userChatKey, chat)
+    await dbActions.deleteChat(chat.id, userId)
   }
 
-  await pipeline.exec()
-
-  revalidatePath('/')
-  redirect('/')
+  // Clear all chat caches since we deleted all chats
+  revalidateTag('chat', 'max')
+  return { success: true }
 }
 
-export async function deleteChat(
-  chatId: string,
-  userId = 'anonymous'
-): Promise<{ error?: string }> {
-  try {
-    const redis = await getRedis()
-    const userKey = getUserChatKey(userId)
-    const chatKey = `chat:${chatId}`
-
-    const chatDetails = await redis.hgetall<Chat>(chatKey)
-    if (!chatDetails || Object.keys(chatDetails).length === 0) {
-      console.warn(`Attempted to delete non-existent chat: ${chatId}`)
-      return { error: 'Chat not found' }
-    }
-
-    // Optional: Check if the chat actually belongs to the user if userId is provided and matters
-    // if (chatDetails.userId !== userId) {
-    //  console.warn(`Unauthorized attempt to delete chat ${chatId} by user ${userId}`)
-    //  return { error: 'Unauthorized' }
-    // }
-
-    const pipeline = redis.pipeline()
-    pipeline.del(chatKey)
-    pipeline.zrem(userKey, chatKey) // Use chatKey consistently
-    await pipeline.exec()
-
-    // Revalidate the root path where the chat history is displayed
-    revalidatePath('/')
-
-    return {}
-  } catch (error) {
-    console.error(`Error deleting chat ${chatId}:`, error)
-    return { error: 'Failed to delete chat' }
-  }
-}
-
-export async function saveChat(chat: Chat, userId: string = 'anonymous') {
-  try {
-    const redis = await getRedis()
-    const pipeline = redis.pipeline()
-
-    const chatToSave = {
-      ...chat,
-      messages: JSON.stringify(chat.messages)
-    }
-
-    pipeline.hmset(`chat:${chat.id}`, chatToSave)
-    pipeline.zadd(getUserChatKey(userId), Date.now(), `chat:${chat.id}`)
-
-    const results = await pipeline.exec()
-
-    return results
-  } catch (error) {
-    throw error
-  }
-}
-
-export async function getSharedChat(id: string) {
-  const redis = await getRedis()
-  const chat = await redis.hgetall<Chat>(`chat:${id}`)
-
-  if (!chat || !chat.sharePath) {
-    return null
+/**
+ * Delete messages after a specific message
+ */
+export async function deleteMessagesAfter(chatId: string, messageId: string) {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return { success: false, error: 'User not authenticated' }
   }
 
-  return chat
-}
-
-export async function shareChat(id: string, userId: string = 'anonymous') {
-  const redis = await getRedis()
-  const chat = await redis.hgetall<Chat>(`chat:${id}`)
-
+  // Verify access
+  const chat = await dbActions.getChat(chatId, userId)
   if (!chat || chat.userId !== userId) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const result = await dbActions.deleteMessagesAfter(chatId, messageId)
+
+  revalidateTag(`chat-${chatId}`, 'max')
+
+  return { success: true, count: result.count }
+}
+
+/**
+ * Share a chat (make it public)
+ */
+export async function shareChat(chatId: string) {
+  const userId = await getCurrentUserId()
+  if (!userId) {
     return null
   }
 
-  const payload = {
-    ...chat,
-    sharePath: `/share/${id}`
+  const updatedChat = await dbActions.updateChatVisibility(
+    chatId,
+    userId,
+    'public'
+  )
+
+  if (updatedChat) {
+    revalidateTag(`chat-${chatId}`, 'max')
   }
 
-  await redis.hmset(`chat:${id}`, payload)
+  return updatedChat
+}
 
-  return payload
+/**
+ * Delete messages from a specific message index
+ */
+export async function deleteMessagesFromIndex(
+  chatId: string,
+  messageId: string,
+  userIdOverride?: string
+) {
+  const userId = userIdOverride ?? (await getCurrentUserId())
+  if (!userId) {
+    return { success: false, error: 'User not authenticated' }
+  }
+
+  // Verify access
+  const chat = await dbActions.getChat(chatId, userId)
+  if (!chat || chat.userId !== userId) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const result = await dbActions.deleteMessagesFromIndex(
+    chatId,
+    messageId,
+    userId
+  )
+
+  revalidateTag(`chat-${chatId}`, 'max')
+
+  return { success: true, count: result.count }
+}
+
+/**
+ * Save or update chat title if it's the first conversation
+ * @param chat Existing chat object (null if new chat)
+ * @param chatId The chat ID
+ * @param message The user message to generate title from
+ * @param modelId The model ID to use for title generation
+ */
+export async function saveChatTitle(
+  chat: Chat | null,
+  chatId: string,
+  message: UIMessage | null,
+  modelId: string,
+  parentTraceId?: string
+) {
+  if (!chat && message) {
+    const userContent = getTextFromParts(message.parts)
+    const title = await generateChatTitle({
+      userMessageContent: userContent,
+      modelId,
+      parentTraceId
+    })
+    await dbActions.updateChatTitle(chatId, title)
+    revalidateTag(`chat-${chatId}`, 'max')
+  }
 }

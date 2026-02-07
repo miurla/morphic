@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation'
 
-import { generateId } from 'ai'
-
-import { getModels } from '@/lib/config/models'
+import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { generateUUID } from '@/lib/utils'
 
 import { Chat } from '@/components/chat'
 
@@ -16,7 +15,7 @@ export default async function SearchPage(props: {
     redirect('/')
   }
 
-  const id = generateId()
-  const models = await getModels()
-  return <Chat id={id} query={q} models={models} />
+  const id = generateUUID()
+  const userId = await getCurrentUserId()
+  return <Chat id={id} query={q} isGuest={!userId} />
 }

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 import { SearchResultItem } from '@/lib/types'
+import { displayUrlName } from '@/lib/utils/domain'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -28,11 +29,6 @@ export function SearchResults({
   // Logic for grid mode
   const displayedGridResults = showAllResults ? results : results.slice(0, 3)
   const additionalResultsCount = results.length > 3 ? results.length - 3 : 0
-  const displayUrlName = (url: string) => {
-    const hostname = new URL(url).hostname
-    const parts = hostname.split('.')
-    return parts.length > 2 ? parts.slice(1, -1).join('.') : parts[0]
-  }
 
   // --- List Mode Rendering ---
   if (displayMode === 'list') {
@@ -48,7 +44,7 @@ export function SearchResults({
           >
             <Card className="w-full hover:bg-muted/50 transition-colors">
               <CardContent className="p-2 flex items-start space-x-2">
-                <Avatar className="h-4 w-4 mt-1 flex-shrink-0">
+                <Avatar className="h-4 w-4 mt-1 shrink-0">
                   <AvatarImage
                     src={`https://www.google.com/s2/favicons?domain=${
                       new URL(result.url).hostname
@@ -59,7 +55,7 @@ export function SearchResults({
                     {new URL(result.url).hostname[0]}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-grow overflow-hidden space-y-0.5">
+                <div className="grow overflow-hidden space-y-0.5">
                   <p className="text-sm font-medium line-clamp-1">
                     {result.title || new URL(result.url).pathname}
                   </p>
@@ -69,8 +65,7 @@ export function SearchResults({
                   <div className="text-xs text-muted-foreground/80 mt-1 truncate">
                     <span className="underline">
                       {new URL(result.url).hostname}
-                    </span>{' '}
-                    - {index + 1}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -85,15 +80,15 @@ export function SearchResults({
   return (
     <div className="flex flex-wrap -m-1">
       {displayedGridResults.map((result, index) => (
-        <div className="w-1/2 md:w-1/4 p-1" key={index}>
+        <div className="w-1/2 md:w-1/4 p-1 min-w-0" key={index}>
           <Link href={result.url} passHref target="_blank">
             <Card className="flex-1 h-full hover:bg-muted/50 transition-colors">
-              <CardContent className="p-2 flex flex-col justify-between h-full">
-                <p className="text-xs line-clamp-2 min-h-[2rem]">
+              <CardContent className="p-2 flex flex-col justify-between h-full min-w-0">
+                <p className="text-xs line-clamp-2 min-h-8">
                   {result.title || result.content}
                 </p>
-                <div className="mt-2 flex items-center space-x-1">
-                  <Avatar className="h-4 w-4">
+                <div className="mt-2 flex items-center space-x-1 min-w-0">
+                  <Avatar className="h-4 w-4 shrink-0">
                     <AvatarImage
                       src={`https://www.google.com/s2/favicons?domain=${
                         new URL(result.url).hostname
@@ -104,8 +99,8 @@ export function SearchResults({
                       {new URL(result.url).hostname[0]}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="text-xs opacity-60 truncate">
-                    {`${displayUrlName(result.url)} - ${index + 1}`}
+                  <div className="text-xs opacity-60 truncate min-w-0">
+                    {displayUrlName(result.url)}
                   </div>
                 </div>
               </CardContent>

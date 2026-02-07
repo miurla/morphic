@@ -7,9 +7,29 @@ import { VideoResultGrid } from './video-result-grid'
 
 export interface VideoSearchResultsProps {
   results: SerperSearchResults
+  displayMode?: 'chat' | 'artifact'
 }
 
-export function VideoSearchResults({ results }: VideoSearchResultsProps) {
+// Utility function to ensure searchParameters are present
+export function createVideoSearchResults(
+  searchResults: any,
+  query: string | undefined
+): SerperSearchResults {
+  return {
+    ...searchResults,
+    videos: searchResults.videos || [],
+    searchParameters: searchResults.searchParameters || {
+      q: query || '',
+      type: 'video',
+      engine: 'google'
+    }
+  }
+}
+
+export function VideoSearchResults({
+  results,
+  displayMode = 'chat'
+}: VideoSearchResultsProps) {
   const videos = results.videos.filter((video: SerperSearchResultItem) => {
     try {
       return new URL(video.link).pathname === '/watch'
@@ -25,5 +45,7 @@ export function VideoSearchResults({ results }: VideoSearchResultsProps) {
     return <div className="text-muted-foreground">No videos found</div>
   }
 
-  return <VideoResultGrid videos={videos} query={query} displayMode="chat" />
+  return (
+    <VideoResultGrid videos={videos} query={query} displayMode={displayMode} />
+  )
 }

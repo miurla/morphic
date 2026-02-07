@@ -1,76 +1,177 @@
-import { CoreMessage, smoothStream, streamText } from 'ai'
+import {
+  stepCountIs,
+  tool,
+  ToolLoopAgent,
+  type UIMessageStreamWriter
+} from 'ai'
 
+import type { ResearcherTools } from '@/lib/types/agent'
+import { type ModelType } from '@/lib/types/model-type'
+import { type Model } from '@/lib/types/models'
+
+import { fetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
-import { retrieveTool } from '../tools/retrieve'
 import { createSearchTool } from '../tools/search'
-import { createVideoSearchTool } from '../tools/video-search'
+import { createTodoTools } from '../tools/todo'
+import { SearchMode } from '../types/search'
 import { getModel } from '../utils/registry'
+import { isTracingEnabled } from '../utils/telemetry'
 
-const SYSTEM_PROMPT = `
-Instructions:
+import {
+  ADAPTIVE_MODE_PROMPT,
+  QUICK_MODE_PROMPT
+} from './prompts/search-mode-prompts'
 
-You are a helpful AI assistant with access to real-time web search, content retrieval, video search capabilities, and the ability to ask clarifying questions.
+// Enhanced wrapper function with better type safety and streaming support
+function wrapSearchToolForQuickMode<
+  T extends ReturnType<typeof createSearchTool>
+>(originalTool: T): T {
+  return tool({
+    description: originalTool.description,
+    inputSchema: originalTool.inputSchema,
+    async *execute(params, context) {
+      const executeFunc = originalTool.execute
+      if (!executeFunc) {
+        throw new Error('Search tool execute function is not defined')
+      }
 
-When asked a question, you should:
-1. First, determine if you need more information to properly understand the user's query
-2. **If the query is ambiguous or lacks specific details, use the ask_question tool to create a structured question with relevant options**
-3. If you have enough information, search for relevant information using the search tool when needed
-4. Use the retrieve tool to get detailed content from specific URLs
-5. Use the video search tool when looking for video content
-6. Analyze all search results to provide accurate, up-to-date information
-7. Always cite sources using the [number](url) format, matching the order of search results. If multiple sources are relevant, include all of them, and comma separate them. Only use information that has a URL available for citation.
-8. If results are not relevant or helpful, rely on your general knowledge
-9. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question
-10. Use markdown to structure your responses. Use headings to break up the content into sections.
-11. **Use the retrieve tool only with user-provided URLs.**
+      // Force optimized type for quick mode
+      const modifiedParams = {
+        ...params,
+        type: 'optimized' as const
+      }
 
-When using the ask_question tool:
-- Create clear, concise questions
-- Provide relevant predefined options
-- Enable free-form input when appropriate
-- Match the language to the user's language (except option values which must be in English)
+      // Execute the original tool and pass through all yielded values
+      const result = executeFunc(modifiedParams, context)
 
-Citation Format:
-[number](url)
-`
+      // Handle AsyncIterable (streaming) case
+      if (
+        result &&
+        typeof result === 'object' &&
+        Symbol.asyncIterator in result
+      ) {
+        for await (const chunk of result) {
+          yield chunk
+        }
+      } else {
+        // Fallback for non-streaming (shouldn't happen with new implementation)
+        const finalResult = await result
+        yield finalResult || {
+          state: 'complete' as const,
+          results: [],
+          images: [],
+          query: params.query,
+          number_of_results: 0
+        }
+      }
+    }
+  }) as T
+}
 
-type ResearcherReturn = Parameters<typeof streamText>[0]
-
-export function researcher({
-  messages,
+// Enhanced researcher function with improved type safety using ToolLoopAgent
+// Note: abortSignal should be passed to agent.stream() or agent.generate() calls, not to the agent constructor
+export function createResearcher({
   model,
-  searchMode
+  modelConfig,
+  writer,
+  parentTraceId,
+  searchMode = 'adaptive',
+  modelType
 }: {
-  messages: CoreMessage[]
   model: string
-  searchMode: boolean
-}): ResearcherReturn {
+  modelConfig?: Model
+  writer?: UIMessageStreamWriter
+  parentTraceId?: string
+  searchMode?: SearchMode
+  modelType?: ModelType
+}) {
   try {
     const currentDate = new Date().toLocaleString()
 
-    // Create model-specific tools
-    const searchTool = createSearchTool(model)
-    const videoSearchTool = createVideoSearchTool(model)
+    // Create model-specific tools with proper typing
+    const originalSearchTool = createSearchTool(model)
     const askQuestionTool = createQuestionTool(model)
+    const todoTools = writer ? createTodoTools() : {}
 
-    return {
-      model: getModel(model),
-      system: `${SYSTEM_PROMPT}\nCurrent date and time: ${currentDate}`,
-      messages,
-      tools: {
-        search: searchTool,
-        retrieve: retrieveTool,
-        videoSearch: videoSearchTool,
-        ask_question: askQuestionTool
-      },
-      experimental_activeTools: searchMode
-        ? ['search', 'retrieve', 'videoSearch', 'ask_question']
-        : [],
-      maxSteps: searchMode ? 5 : 1,
-      experimental_transform: smoothStream()
+    let systemPrompt: string
+    let activeToolsList: (keyof ResearcherTools)[] = []
+    let maxSteps: number
+    let searchTool = originalSearchTool
+
+    // Configure based on search mode
+    switch (searchMode) {
+      case 'quick':
+        console.log(
+          '[Researcher] Quick mode: maxSteps=20, tools=[search, fetch]'
+        )
+        systemPrompt = QUICK_MODE_PROMPT
+        activeToolsList = ['search', 'fetch']
+        maxSteps = 20
+        searchTool = wrapSearchToolForQuickMode(originalSearchTool)
+        break
+
+      case 'adaptive':
+      default:
+        systemPrompt = ADAPTIVE_MODE_PROMPT
+        activeToolsList = ['search', 'fetch']
+        // Only enable todo tools for quality model type
+        if (writer && 'todoWrite' in todoTools && modelType === 'quality') {
+          activeToolsList.push('todoWrite')
+        }
+        console.log(
+          `[Researcher] Adaptive mode: maxSteps=50, modelType=${modelType}, tools=[${activeToolsList.join(', ')}]`
+        )
+        maxSteps = 50
+        searchTool = originalSearchTool
+        break
     }
+
+    // Build tools object with proper typing
+    const tools: ResearcherTools = {
+      search: searchTool,
+      fetch: fetchTool,
+      askQuestion: askQuestionTool,
+      ...todoTools
+    } as ResearcherTools
+
+    // Create ToolLoopAgent with all configuration
+    const agent = new ToolLoopAgent({
+      model: getModel(model),
+      instructions: `${systemPrompt}\nCurrent date and time: ${currentDate}`,
+      tools,
+      activeTools: activeToolsList,
+      stopWhen: stepCountIs(maxSteps),
+      ...(modelConfig?.providerOptions && {
+        providerOptions: modelConfig.providerOptions
+      }),
+      experimental_telemetry: {
+        isEnabled: isTracingEnabled(),
+        functionId: 'research-agent',
+        metadata: {
+          modelId: model,
+          agentType: 'researcher',
+          searchMode,
+          ...(parentTraceId && {
+            langfuseTraceId: parentTraceId,
+            langfuseUpdateParent: false
+          })
+        }
+      }
+    })
+
+    return agent
   } catch (error) {
-    console.error('Error in chatResearcher:', error)
+    console.error('Error in createResearcher:', error)
     throw error
   }
 }
+
+// Helper function to access agent tools
+export function getResearcherTools(
+  agent: ToolLoopAgent<never, ResearcherTools, never>
+): ResearcherTools {
+  return agent.tools
+}
+
+// Export the legacy function name for backward compatibility
+export const researcher = createResearcher

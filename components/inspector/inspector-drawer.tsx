@@ -19,10 +19,14 @@ export function InspectorDrawer() {
   const getTitle = () => {
     if (!part) return 'Artifact' // Default title
     switch (part.type) {
-      case 'tool-invocation':
-        return part.toolInvocation.toolName
+      case 'tool-search':
+        return 'search'
+      case 'tool-fetch':
+        return 'fetch'
+      case 'tool-askQuestion':
+        return 'askQuestion'
       case 'reasoning':
-        return 'Reasoning'
+        return 'Thoughts'
       case 'text':
         return 'Text'
       default:

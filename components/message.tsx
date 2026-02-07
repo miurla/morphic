@@ -4,105 +4,53 @@ import rehypeExternalLinks from 'rehype-external-links'
 import rehypeKatex from 'rehype-katex'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
+import { Streamdown } from 'streamdown'
 
+import type { SearchResultItem } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { processCitations } from '@/lib/utils/citation'
 
-import { CodeBlock } from './ui/codeblock'
-import { MemoizedReactMarkdown } from './ui/markdown'
+import { CitationProvider } from './citation-context'
 import { Citing } from './custom-link'
 
 import 'katex/dist/katex.min.css'
 
-export function BotMessage({
+export function MarkdownMessage({
   message,
-  className
+  className,
+  citationMaps
 }: {
   message: string
   className?: string
+  citationMaps?: Record<string, Record<number, SearchResultItem>>
 }) {
-  // Check if the content contains LaTeX patterns
-  const containsLaTeX = /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/.test(
-    message || ''
-  )
+  // Process citations to replace [number](#toolCallId) with [number](actual-url)
+  const processedMessage = processCitations(message || '', citationMaps || {})
 
-  // Modify the content to render LaTeX equations if LaTeX patterns are found
-  const processedData = preprocessLaTeX(message || '')
+  // Define custom components for links (use Streamdown defaults for code blocks)
+  const customComponents = {
+    a: Citing
+  }
 
-  if (containsLaTeX) {
-    return (
-      <MemoizedReactMarkdown
-        rehypePlugins={[
-          [rehypeExternalLinks, { target: '_blank' }],
-          [rehypeKatex]
-        ]}
-        remarkPlugins={[remarkGfm, remarkMath]}
+  return (
+    <CitationProvider citationMaps={citationMaps}>
+      <div
         className={cn(
           'prose-sm prose-neutral prose-a:text-accent-foreground/50',
           className
         )}
       >
-        {processedData}
-      </MemoizedReactMarkdown>
-    )
-  }
-
-  return (
-    <MemoizedReactMarkdown
-      rehypePlugins={[[rehypeExternalLinks, { target: '_blank' }]]}
-      remarkPlugins={[remarkGfm]}
-      className={cn(
-        'prose-sm prose-neutral prose-a:text-accent-foreground/50',
-        className
-      )}
-      components={{
-        code({ node, inline, className, children, ...props }) {
-          if (children.length) {
-            if (children[0] == '▍') {
-              return (
-                <span className="mt-1 cursor-default animate-pulse">▍</span>
-              )
-            }
-
-            children[0] = (children[0] as string).replace('`▍`', '▍')
-          }
-
-          const match = /language-(\w+)/.exec(className || '')
-
-          if (inline) {
-            return (
-              <code className={className} {...props}>
-                {children}
-              </code>
-            )
-          }
-
-          return (
-            <CodeBlock
-              key={Math.random()}
-              language={(match && match[1]) || ''}
-              value={String(children).replace(/\n$/, '')}
-              {...props}
-            />
-          )
-        },
-        a: Citing
-      }}
-    >
-      {message}
-    </MemoizedReactMarkdown>
+        <Streamdown
+          rehypePlugins={[
+            [rehypeExternalLinks, { target: '_blank' }],
+            [rehypeKatex]
+          ]}
+          remarkPlugins={[remarkGfm, remarkMath]}
+          components={customComponents}
+        >
+          {processedMessage}
+        </Streamdown>
+      </div>
+    </CitationProvider>
   )
-}
-
-// Preprocess LaTeX equations to be rendered by KaTeX
-// ref: https://github.com/remarkjs/react-markdown/issues/785
-const preprocessLaTeX = (content: string) => {
-  const blockProcessedContent = content.replace(
-    /\\\[([\s\S]*?)\\\]/g,
-    (_, equation) => `$$${equation}$$`
-  )
-  const inlineProcessedContent = blockProcessedContent.replace(
-    /\\\(([\s\S]*?)\\\)/g,
-    (_, equation) => `$${equation}$`
-  )
-  return inlineProcessedContent
 }

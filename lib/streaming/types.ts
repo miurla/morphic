@@ -1,11 +1,18 @@
-import { Message } from 'ai'
+import { UIMessage } from '@ai-sdk/react'
 
+import { ModelType } from '../types/model-type'
 import { Model } from '../types/models'
+import { SearchMode } from '../types/search'
 
 export interface BaseStreamConfig {
-  messages: Message[]
+  message: UIMessage | null
   model: Model
   chatId: string
-  searchMode: boolean
   userId: string
+  trigger?: 'submit-user-message' | 'regenerate-assistant-message'
+  messageId?: string
+  abortSignal?: AbortSignal
+  isNewChat?: boolean
+  searchMode?: SearchMode
+  modelType?: ModelType
 }

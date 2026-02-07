@@ -1,15 +1,15 @@
 'use client'
 
-import { LightbulbIcon, MessageSquare, Minimize2, Wrench } from 'lucide-react'
-
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from '@/components/ui/tooltip'
+  LightbulbIcon,
+  ListTodo,
+  MessageSquare,
+  Minimize2,
+  Search
+} from 'lucide-react'
+
+import { Separator } from '@/components/ui/separator'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { TooltipButton } from '@/components/ui/tooltip-button'
 
 import { ArtifactContent } from '@/components/artifact/artifact-content'
@@ -23,15 +23,22 @@ export function InspectorPanel() {
   // Get the icon and title based on part type
   const getIconAndTitle = () => {
     switch (part.type) {
-      case 'tool-invocation':
+      case 'tool-search':
+      case 'tool-askQuestion':
+        const toolName = part.type.replace('tool-', '')
         return {
-          icon: <Wrench size={18} />,
-          title: part.toolInvocation.toolName
+          icon: <Search size={18} />,
+          title: toolName
+        }
+      case 'tool-todoWrite':
+        return {
+          icon: <ListTodo size={18} />,
+          title: 'Todo List'
         }
       case 'reasoning':
         return {
           icon: <LightbulbIcon size={18} />,
-          title: 'Reasoning'
+          title: 'Thoughts'
         }
       case 'text':
         return {
@@ -54,7 +61,7 @@ export function InspectorPanel() {
         <div className="flex flex-col h-full bg-background rounded-xl md:border overflow-hidden">
           <div className="flex items-center justify-between px-4 py-2">
             <h3 className="flex items-center gap-2">
-              <div className="bg-muted p-2 rounded-md flex items-center gap-2">
+              <div className="p-2 rounded-md flex items-center gap-2">
                 {icon}
               </div>
               <span className="text-sm font-medium capitalize">{title}</span>

@@ -4,39 +4,97 @@ This guide covers the optional features and their configuration in Morphic.
 
 ## Table of Contents
 
-- [Chat History Storage](#chat-history-storage)
+- [Authentication](#authentication)
+- [Guest Mode](#guest-mode)
 - [Search Providers](#search-providers)
 - [Additional AI Providers](#additional-ai-providers)
 - [Other Features](#other-features)
 
-## Chat History Storage
+## Authentication
 
-### Using Upstash Redis (Recommended for production)
+By default, Morphic runs in **anonymous mode** with authentication disabled (`ENABLE_AUTH=false` in `.env.local.example`). This is ideal for personal use where all users share a single anonymous user ID.
 
-Follow the detailed setup guide at [Building your own RAG chatbot with Upstash](https://upstash.com/blog/rag-chatbot-upstash#setting-up-upstash-redis)
+### Anonymous Mode (Default)
 
-1. Create a database at [Upstash Console](https://console.upstash.com/redis)
-2. Navigate to the Details tab and find the "Connect your database" section
-3. Copy the REST API credentials from the .env section
-4. Configure your `.env.local`:
+No configuration needed. The default settings in `.env.local.example` include:
 
 ```bash
-NEXT_PUBLIC_ENABLE_SAVE_CHAT_HISTORY=true
-USE_LOCAL_REDIS=false
-UPSTASH_REDIS_REST_URL=[YOUR_UPSTASH_REDIS_REST_URL]
-UPSTASH_REDIS_REST_TOKEN=[YOUR_UPSTASH_REDIS_REST_TOKEN]
+ENABLE_AUTH=false
+ANONYMOUS_USER_ID=anonymous-user
 ```
 
-### Using Local Redis
+**⚠️ Important**: Anonymous mode is only suitable for personal, single-user environments. All chat history is shared under one user ID.
 
-1. Ensure Redis is installed and running locally
-2. Configure your `.env.local`:
+### Enabling Supabase Authentication
+
+To enable user authentication with Supabase:
+
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+
+2. Set the following environment variables in `.env.local`:
 
 ```bash
-NEXT_PUBLIC_ENABLE_SAVE_CHAT_HISTORY=true
-USE_LOCAL_REDIS=true
-LOCAL_REDIS_URL=redis://localhost:6379
+ENABLE_AUTH=true
+NEXT_PUBLIC_SUPABASE_URL=[YOUR_SUPABASE_PROJECT_URL]
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR_SUPABASE_ANON_KEY]
 ```
+
+3. Obtain your credentials from the Supabase dashboard:
+   - **Project URL**: Settings → API → Project URL
+   - **Anon Key**: Settings → API → Project API keys → anon/public
+
+With authentication enabled, users will need to sign up/login to use Morphic, and each user will have isolated chat history.
+
+## Guest Mode
+
+Guest mode allows users to try Morphic without creating an account. Guest sessions are ephemeral - no chat history is stored in the database.
+
+### Enabling Guest Mode
+
+Set the following environment variable:
+
+```bash
+ENABLE_GUEST_CHAT=true
+```
+
+### Guest Mode Behavior
+
+When guest mode is enabled:
+
+- **No authentication required**: Users can start chatting immediately
+- **No chat history**: Messages are not saved to the database
+- **Full context per request**: The client sends all messages with each request to maintain conversation context
+- **No URL navigation**: Guests stay on the root path (no `/search/[id]` URLs)
+- **Disabled features**:
+  - File upload
+  - Quality mode (forced to "Speed")
+  - Chat sharing
+  - Sidebar history
+
+### Rate Limiting for Guests
+
+For cloud deployments, you can limit guest usage per IP address:
+
+```bash
+GUEST_CHAT_DAILY_LIMIT=10  # Maximum requests per IP per day (default: 10)
+```
+
+Rate limiting requires Redis (Upstash) configuration:
+
+```bash
+UPSTASH_REDIS_REST_URL=[YOUR_UPSTASH_URL]
+UPSTASH_REDIS_REST_TOKEN=[YOUR_UPSTASH_TOKEN]
+```
+
+**Note**: Rate limiting only applies when `MORPHIC_CLOUD_DEPLOYMENT=true`. For self-hosted deployments, rate limiting is disabled by default.
+
+### Recommended Setup
+
+| Environment    | Configuration                                |
+| -------------- | -------------------------------------------- |
+| Personal/Local | `ENABLE_AUTH=false` (anonymous mode)         |
+| Public Demo    | `ENABLE_GUEST_CHAT=true` with rate limiting  |
+| Production     | `ENABLE_AUTH=true` (Supabase authentication) |
 
 ## Search Providers
 
@@ -119,107 +177,169 @@ For detailed configuration options, refer to the [SearXNG documentation](https:/
 docker-compose logs searxng
 ```
 
+### Brave Search (Optional)
+
+Brave Search provides enhanced support for video and image searches when used as a general search provider:
+
+```bash
+BRAVE_SEARCH_API_KEY=[YOUR_BRAVE_SEARCH_API_KEY]
+```
+
+Get your API key at: https://brave.com/search/api/
+
+**Features:**
+
+- Multiple content types in single search (web, video, image, news)
+- Optimized for multimedia content with thumbnails
+- Direct video duration and metadata support
+- Used automatically when `type="general"` is specified in search queries
+
+**Fallback Behavior:**
+If `BRAVE_SEARCH_API_KEY` is not configured, `type="general"` searches will automatically fall back to your configured optimized search provider. Video and image searches will still work but may have limited multimedia support depending on the provider.
+
 ## Additional AI Providers
 
-Models are configured in `public/config/models.json`. Each model requires its corresponding API key to be set in the environment variables.
-
-> **Note:** Ollama models are discovered dynamically at runtime when an Ollama server is available. Only models that expose the `tools` capability will appear in Morphic, so you no longer need to keep placeholder Ollama entries in `models.json`.
+Models are configured in `config/models/*.json` files. Each provider requires its corresponding API key to be set in the environment variables.
 
 ### Model Configuration
 
-The `models.json` file contains an array of model configurations with the following structure:
+Model configuration files use the following structure:
 
 ```json
 {
-  "models": [
-    {
+  "version": 1,
+  "models": {
+    "byMode": {
+      "quick": {
+        "speed": {
+          "id": "model-id",
+          "name": "Model Name",
+          "provider": "Provider Name",
+          "providerId": "provider-id",
+          "providerOptions": {}
+        },
+        "quality": {
+          "id": "model-id",
+          "name": "Model Name",
+          "provider": "Provider Name",
+          "providerId": "provider-id",
+          "providerOptions": {}
+        }
+      },
+      "adaptive": {
+        "speed": {
+          "id": "model-id",
+          "name": "Model Name",
+          "provider": "Provider Name",
+          "providerId": "provider-id",
+          "providerOptions": {}
+        },
+        "quality": {
+          "id": "model-id",
+          "name": "Model Name",
+          "provider": "Provider Name",
+          "providerId": "provider-id",
+          "providerOptions": {}
+        }
+      }
+    },
+    "relatedQuestions": {
       "id": "model-id",
       "name": "Model Name",
       "provider": "Provider Name",
-      "providerId": "provider-id",
-      "enabled": true,
-      "toolCallType": "native|manual",
-      "toolCallModel": "tool-call-model-id" // optional, only needed if toolCallType is "manual" and you need to specify a different model for tool calls
+      "providerId": "provider-id"
     }
-  ]
+  }
 }
 ```
 
-### Provider API Keys
+Define all four combinations to control which model runs for every search mode (`quick`, `adaptive`) and preference (`speed`, `quality`). For example, you can pair `quick/speed` with `gemini-2.5-flash-lite` while keeping `adaptive/quality` on GPT-5. The default config ships with OpenAI models for every slot so Morphic works out-of-the-box.
 
-### Google Generative AI
+### Supported Providers
+
+#### OpenAI (Default)
+
+```bash
+OPENAI_API_KEY=[YOUR_API_KEY]
+```
+
+#### Google Generative AI
 
 ```bash
 GOOGLE_GENERATIVE_AI_API_KEY=[YOUR_API_KEY]
 ```
 
-### Anthropic
+#### Anthropic
 
 ```bash
 ANTHROPIC_API_KEY=[YOUR_API_KEY]
 ```
 
-### Groq
+#### Vercel AI Gateway
+
+[Vercel AI Gateway](https://vercel.com/docs/ai-gateway) allows you to use multiple AI providers through a single endpoint with automatic failover and load balancing.
 
 ```bash
-GROQ_API_KEY=[YOUR_API_KEY]
+AI_GATEWAY_API_KEY=[YOUR_AI_GATEWAY_API_KEY]
 ```
 
-### Ollama
+#### Ollama
+
+[Ollama](https://ollama.com/) enables you to run large language models locally on your own hardware.
+
+**Configuration:**
 
 ```bash
 OLLAMA_BASE_URL=http://localhost:11434
 ```
 
-When this variable is set, Morphic will automatically discover Ollama models that advertise the `tools` capability. Models without this capability are ignored, and no static configuration in `models.json` is required unless you need to override specific settings.
+Then update your `config/models/*.json` files to use Ollama models:
 
-### Azure OpenAI
-
-```bash
-AZURE_API_KEY=[YOUR_API_KEY]
-AZURE_RESOURCE_NAME=[YOUR_RESOURCE_NAME]
+```json
+{
+  "id": "qwen3:latest",
+  "name": "Qwen 3",
+  "provider": "Ollama",
+  "providerId": "ollama"
+}
 ```
 
-### DeepSeek
+**Important Notes:**
 
-```bash
-DEEPSEEK_API_KEY=[YOUR_API_KEY]
-```
+- **Tools Capability**: Morphic requires models to support the `tools` capability for function calling. On server startup, Morphic validates configured models and logs the results. Note that even if a model reports tools support, actual tool calling performance depends on the model's capabilities and is not guaranteed.
 
-### Fireworks
-
-```bash
-FIREWORKS_API_KEY=[YOUR_API_KEY]
-```
-
-### xAI
-
-```bash
-XAI_API_KEY=[YOUR_XAI_API_KEY]
-```
-
-### OpenAI Compatible Model
-
-```bash
-OPENAI_COMPATIBLE_API_KEY=[YOUR_API_KEY]
-OPENAI_COMPATIBLE_API_BASE_URL=[YOUR_API_BASE_URL]
-```
+- **Validation Logs**: Check server logs on startup to verify your configured models:
+  ```
+  ✓ qwen3:latest (configured and tools supported)
+  ✗ deepseek-r1:latest (configured but lacks tools support)
+  ```
 
 ## Other Features
 
-### Share Feature
+### LLM Observability
+
+Enable tracing and monitoring with Langfuse:
 
 ```bash
-NEXT_PUBLIC_ENABLE_SHARE=true
+LANGFUSE_SECRET_KEY=[YOUR_SECRET_KEY]
+LANGFUSE_PUBLIC_KEY=[YOUR_PUBLIC_KEY]
+LANGFUSE_HOST=https://cloud.langfuse.com
 ```
 
-### Video Search
+### File Upload
+
+Enable file upload with Cloudflare R2:
 
 ```bash
-SERPER_API_KEY=[YOUR_API_KEY]
+CLOUDFLARE_R2_ACCESS_KEY_ID=[YOUR_ACCESS_KEY]
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=[YOUR_SECRET_KEY]
+CLOUDFLARE_R2_ACCOUNT_ID=[YOUR_ACCOUNT_ID]
+CLOUDFLARE_R2_BUCKET_NAME=[YOUR_BUCKET_NAME]
 ```
 
-### Alternative Retrieve Tool
+### Alternative Fetch Tool
+
+Use Jina for enhanced content extraction:
 
 ```bash
 JINA_API_KEY=[YOUR_API_KEY]
