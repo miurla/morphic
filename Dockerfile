@@ -1,7 +1,10 @@
-# Base image
-FROM oven/bun:1.2.12 AS builder
+# Build stage - Use Node for Next.js 16 compatibility (Bun lacks worker_threads support on arm64)
+FROM node:22-slim AS builder
 
 WORKDIR /app
+
+# Install bun for dependency management
+RUN npm install -g bun
 
 # Install dependencies (separated for better cache utilization)
 COPY package.json bun.lock ./
@@ -9,8 +12,9 @@ RUN bun install
 
 # Copy source code and build
 COPY . .
-RUN bun next telemetry disable
-RUN bun run build
+RUN npx next telemetry disable
+ENV DATABASE_URL=postgresql://user:pass@localhost:5432/db
+RUN npm run build
 
 # Runtime stage
 FROM oven/bun:1.2.12 AS runner
