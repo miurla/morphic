@@ -233,6 +233,15 @@
       opacity: 1;
     }
   }
+  @keyframes blink {
+    0%,
+    100% {
+      ry: 18;
+    }
+    50% {
+      ry: 0;
+    }
+  }
   @keyframes lookAround {
     0%,
     100% {
@@ -248,6 +257,10 @@
       transform: translateX(-10px);
     }
   }
+}
+
+@utility animate-blink {
+  animation: blink 0.2s ease-in-out;
 }
 
 /* Animation utilities for dropdown menu */
