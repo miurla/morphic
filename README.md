@@ -11,6 +11,7 @@ An AI-powered search engine with a generative UI.
 </a>
 
 <br />
+<br />
 
 <a href="https://trendshift.io/repositories/9207" target="_blank"><img src="https://trendshift.io/api/badge/repositories/9207" alt="miurla%2Fmorphic | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
