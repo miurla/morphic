@@ -144,34 +144,19 @@ cp .env.local.example .env.local
 Fill in the required environment variables in `.env.local`:
 
 ```bash
-DATABASE_URL=your_database_url
 OPENAI_API_KEY=your_openai_key
 TAVILY_API_KEY=your_tavily_key
 ```
 
-**Note**: Authentication is disabled by default (`ENABLE_AUTH=false`).
-
-For optional features (alternative search providers, authentication, alternative AI providers, etc.), see [CONFIGURATION.md](./docs/CONFIGURATION.md)
-
-### 4. Run database migrations
-
-```bash
-bun run migrate
-```
-
-This command will create the necessary database tables.
-
-### 5. Run app locally
-
-#### Using Bun
+### 4. Run app locally
 
 ```bash
 bun dev
 ```
 
-#### Using Docker
+Visit http://localhost:3000 in your browser.
 
-See the [Docker Guide](./docs/DOCKER.md) for detailed instructions on running Morphic with Docker Compose.
+**Note**: By default, Morphic runs without a database or authentication. To enable chat history, authentication, and other features, see [CONFIGURATION.md](./docs/CONFIGURATION.md). For Docker setup, see the [Docker Guide](./docs/DOCKER.md).
 
 ## 🌐 Deploy
 
