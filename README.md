@@ -81,7 +81,6 @@ Models are configured in `config/models/*.json` with profile-based settings. Whe
 - Browser search engine integration
 - LLM observability with Langfuse (optional)
 - Todo tracking for complex tasks
-- Changelog system for updates
 
 ## 🧱 Stack
 
