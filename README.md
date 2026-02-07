@@ -14,56 +14,20 @@ An AI-powered search engine with a generative UI.
 
 <a href="https://trendshift.io/repositories/9207" target="_blank"><img src="https://trendshift.io/api/badge/repositories/9207" alt="miurla%2Fmorphic | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
-<img src="./public/screenshot-2025-05-04.png" />
+<img src="./public/screenshot-2026-02-07.png" />
 
 </div>
 
 ## 🗂️ Overview
 
-- 🧪 [Beta Testing](#-beta-testing)
 - 🛠 [Features](#-features)
 - 🧱 [Stack](#-stack)
 - 🚀 [Quickstart](#-quickstart)
 - 🌐 [Deploy](#-deploy)
-- 🔎 [Search Engine](#-search-engine)
-- 💙 [Sponsors](#-sponsors)
 - 👥 [Contributing](#-contributing)
 - 📄 [License](#-license)
 
 📝 Explore AI-generated documentation on [DeepWiki](https://deepwiki.com/miurla/morphic)
-
-## 🧪 Beta Testing
-
-We're excited to announce the v1.0.0 pre-release is now available for beta testing at [beta.morphic.sh](https://beta.morphic.sh)!
-
-### About v1.0.0 Branch
-
-The `v1.0.0` branch is our pre-release branch featuring:
-
-- Latest features and improvements
-- Active bug fixes based on beta feedback
-- Preparation for stable release
-
-This branch will be merged into `main` once:
-
-- Beta testing phase is complete
-- Critical bugs are resolved
-- All planned features are stable
-
-### Which Branch Should I Use?
-
-- **For production use**: Use the `main` branch (stable)
-- **For testing and feedback**: Use the `v1.0.0` branch or visit [beta.morphic.sh](https://beta.morphic.sh)
-
-### Help Us Improve
-
-Found a bug or have suggestions? We'd love to hear from you:
-
-- 🐛 [Report issues on GitHub](https://github.com/miurla/morphic/issues)
-- 💬 Use the feedback button in the header at [beta.morphic.sh](https://beta.morphic.sh) for quick feedback
-- 🤝 Contribute to the beta testing effort
-
-Your feedback helps make Morphic better for everyone!
 
 ## 🛠 Features
 
@@ -125,9 +89,9 @@ Models are configured in `config/models/*.json` with profile-based settings. Whe
 
 - [Next.js](https://nextjs.org/) - React framework with App Router
 - [TypeScript](https://www.typescriptlang.org/) - Type-safe development
-- [Vercel AI SDK](https://sdk.vercel.ai/docs) - TypeScript toolkit for building AI-powered applications
+- [Vercel AI SDK](https://ai-sdk.dev) - TypeScript toolkit for building AI-powered applications
 
-### Authentication & Authorization (Updated Category)
+### Authentication & Authorization
 
 - [Supabase](https://supabase.com/) - User authentication and backend services
 
@@ -294,11 +258,11 @@ services:
       - redis
 ```
 
-**Note**: The prebuilt image uses default model configurations (statically bundled at build time). To customize models, you need to build from source - see [CONFIGURATION.md](./docs/CONFIGURATION.md) for details.
+**Note**: The prebuilt image runs in **anonymous mode only** (`ENABLE_AUTH=false`). Supabase authentication cannot be enabled because `NEXT_PUBLIC_*` environment variables are embedded at build time by Next.js. To enable authentication or customize model configurations, you need to build from source — see [CONFIGURATION.md](./docs/CONFIGURATION.md) for details.
 
 #### Building from Source
 
-Or use Docker Compose for a complete setup with PostgreSQL, Redis, and SearXNG. See the [Using Docker](#using-docker) section for detailed instructions.
+Or use Docker Compose for a complete setup with PostgreSQL, Redis, and SearXNG. See the [Using Docker](#using-docker) section under Quickstart for detailed instructions.
 
 ## 👥 Contributing
 
