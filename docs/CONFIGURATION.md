@@ -4,11 +4,36 @@ This guide covers the optional features and their configuration in Morphic.
 
 ## Table of Contents
 
+- [Database](#database)
 - [Authentication](#authentication)
 - [Guest Mode](#guest-mode)
 - [Search Providers](#search-providers)
 - [Additional AI Providers](#additional-ai-providers)
 - [Other Features](#other-features)
+
+## Database
+
+Morphic uses PostgreSQL for chat history storage. A database is **optional** for basic usage — without it, Morphic runs in a stateless mode where chat history is not persisted.
+
+### Setting Up PostgreSQL
+
+Set the connection string in `.env.local`:
+
+```bash
+DATABASE_URL=postgresql://user:password@localhost:5432/morphic
+```
+
+Any PostgreSQL provider works: [Neon](https://neon.tech/), [Supabase](https://supabase.com/), or a local PostgreSQL instance.
+
+### Running Migrations
+
+After configuring your database, run migrations to create the necessary tables:
+
+```bash
+bun run migrate
+```
+
+This command applies all migrations from the `drizzle/` directory.
 
 ## Authentication
 
