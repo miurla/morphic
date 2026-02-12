@@ -16,8 +16,8 @@
           }
         },
         "quality": {
-          "id": "gpt-5",
-          "name": "GPT-5",
+          "id": "gpt-5.2",
+          "name": "GPT-5.2",
           "provider": "OpenAI",
           "providerId": "openai",
           "providerOptions": {
@@ -36,14 +36,14 @@
           "providerId": "openai",
           "providerOptions": {
             "openai": {
-              "reasoningEffort": "low",
+              "reasoningEffort": "medium",
               "reasoningSummary": "auto"
             }
           }
         },
         "quality": {
-          "id": "gpt-5",
-          "name": "GPT-5",
+          "id": "gpt-5.2",
+          "name": "GPT-5.2",
           "provider": "OpenAI",
           "providerId": "openai",
           "providerOptions": {
@@ -56,8 +56,8 @@
       }
     },
     "relatedQuestions": {
-      "id": "gpt-4o-mini",
-      "name": "GPT-4o mini",
+      "id": "gpt-4.1",
+      "name": "GPT-4.1",
       "provider": "OpenAI",
       "providerId": "openai"
     }

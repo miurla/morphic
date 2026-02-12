@@ -4,10 +4,7 @@ import { cookies } from 'next/headers'
 import { loadChat } from '@/lib/actions/chat'
 import { calculateConversationTurn, trackChatEvent } from '@/lib/analytics'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import {
-  checkAndEnforceOverallChatLimit,
-  checkAndEnforceQualityLimit
-} from '@/lib/rate-limit/chat-limits'
+import { checkAndEnforceOverallChatLimit } from '@/lib/rate-limit/chat-limits'
 import { checkAndEnforceGuestLimit } from '@/lib/rate-limit/guest-limit'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-ephemeral-chat-stream-response'
@@ -95,7 +92,9 @@ export async function POST(req: Request) {
         ? (searchModeCookie as SearchMode)
         : 'quick'
 
-    const modelCookieStore = isGuest
+    const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
+    const forceSpeed = isGuest || isCloudDeployment
+    const modelCookieStore = forceSpeed
       ? ({
           get: (name: string) =>
             name === 'modelType'
@@ -120,20 +119,14 @@ export async function POST(req: Request) {
       )
     }
 
-    // Check rate limit for quality mode
+    // Resolve model type from cookie (forced to speed for guests and cloud)
     const modelTypeCookie = cookieStore.get('modelType')?.value
     const resolvedModelType =
       modelTypeCookie === 'quality' || modelTypeCookie === 'speed'
         ? modelTypeCookie
         : undefined
-    const modelType = isGuest ? 'speed' : resolvedModelType
+    const modelType = forceSpeed ? 'speed' : resolvedModelType
     if (!isGuest) {
-      const qualityLimitResponse = await checkAndEnforceQualityLimit(
-        userId,
-        modelType === 'quality'
-      )
-      if (qualityLimitResponse) return qualityLimitResponse
-
       const overallLimitResponse = await checkAndEnforceOverallChatLimit(userId)
       if (overallLimitResponse) return overallLimitResponse
     }
