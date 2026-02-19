@@ -4,10 +4,10 @@
     "byMode": {
       "quick": {
         "speed": {
-          "id": "gpt-5-mini",
-          "name": "GPT-5 mini",
-          "provider": "OpenAI",
-          "providerId": "openai",
+          "id": "qwen3:latest",
+          "name": "Qwen 3",
+          "provider": "Ollama",
+          "providerId": "ollama",
           "providerOptions": {
             "openai": {
               "reasoningEffort": "low",
@@ -16,10 +16,10 @@
           }
         },
         "quality": {
-          "id": "gpt-5.2",
-          "name": "GPT-5.2",
-          "provider": "OpenAI",
-          "providerId": "openai",
+          "id": "qwen3:latest",
+          "name": "Qwen 3",
+          "provider": "Ollama",
+          "providerId": "ollama",
           "providerOptions": {
             "openai": {
               "reasoningEffort": "low",
@@ -30,10 +30,10 @@
       },
       "adaptive": {
         "speed": {
-          "id": "gpt-5-mini",
-          "name": "GPT-5 mini",
-          "provider": "OpenAI",
-          "providerId": "openai",
+          "id": "qwen3:latest",
+          "name": "Qwen 3",
+          "provider": "Ollama",
+          "providerId": "ollama",
           "providerOptions": {
             "openai": {
               "reasoningEffort": "medium",
@@ -42,10 +42,10 @@
           }
         },
         "quality": {
-          "id": "gpt-5.2",
-          "name": "GPT-5.2",
-          "provider": "OpenAI",
-          "providerId": "openai",
+          "id": "qwen3:latest",
+          "name": "Qwen 3",
+          "provider": "Ollama",
+          "providerId": "ollama",
           "providerOptions": {
             "openai": {
               "reasoningEffort": "medium",
@@ -56,10 +56,10 @@
       }
     },
     "relatedQuestions": {
-      "id": "gpt-4.1",
-      "name": "GPT-4.1",
-      "provider": "OpenAI",
-      "providerId": "openai"
+      "id": "qwen3:latest",
+      "name": "qwen 3",
+      "provider": "Ollama",
+      "providerId": "ollama"
     }
   }
 }
