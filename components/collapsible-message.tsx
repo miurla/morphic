@@ -20,6 +20,11 @@ interface CollapsibleMessageProps {
   onOpenChange?: (open: boolean) => void
   showBorder?: boolean
   showIcon?: boolean
+  variant?: 'default' | 'minimal' | 'process' | 'process-sub'
+  showSeparator?: boolean
+  renderLeft?: React.ReactNode
+  chevronSize?: 'sm' | 'md'
+  headerClickBehavior?: 'toggle' | 'inspect' | 'split'
 }
 
 export function CollapsibleMessage({
@@ -30,13 +35,20 @@ export function CollapsibleMessage({
   header,
   onOpenChange,
   showBorder = true,
-  showIcon = true
+  showIcon = true,
+  variant = 'default',
+  showSeparator = true,
+  renderLeft,
+  chevronSize = 'md',
+  headerClickBehavior = 'toggle'
 }: CollapsibleMessageProps) {
-  const content = <div className="flex-1">{children}</div>
+  const content = children
 
   return (
     <div className="flex">
-      {showIcon && (
+      {renderLeft ? (
+        renderLeft
+      ) : showIcon ? (
         <div className="relative flex flex-col items-center">
           <div className="w-5">
             {role === 'assistant' ? (
@@ -46,13 +58,17 @@ export function CollapsibleMessage({
             )}
           </div>
         </div>
-      )}
+      ) : null}
 
       {isCollapsible ? (
         <div
           className={cn(
-            'flex-1 rounded-2xl p-4',
-            showBorder && 'border border-border/50'
+            'flex-1 overflow-hidden min-w-0',
+            variant === 'default' && showBorder && 'rounded-lg border bg-card',
+            variant === 'default' && !showBorder && 'rounded-lg bg-card',
+            variant === 'process' && 'rounded-lg border bg-card',
+            variant === 'process-sub' && 'rounded-md border bg-card/50',
+            isOpen && !showBorder && 'bg-background'
           )}
         >
           <Collapsible
@@ -60,28 +76,93 @@ export function CollapsibleMessage({
             onOpenChange={onOpenChange}
             className="w-full"
           >
-            <div className="flex items-center justify-between w-full gap-2">
-              {header && <div className="text-sm w-full">{header}</div>}
-              <CollapsibleTrigger asChild>
-                <button
-                  type="button"
-                  className="rounded-md p-1 hover:bg-accent group"
-                  aria-label={isOpen ? 'Collapse' : 'Expand'}
+            <div
+              className={cn(
+                'flex items-center w-full gap-2 overflow-hidden',
+                variant === 'default' && 'justify-between px-3 py-2',
+                variant === 'minimal' && 'py-1',
+                variant === 'process' && 'justify-between px-1.5 py-1',
+                variant === 'process-sub' && 'justify-between px-1 py-0.5'
+              )}
+            >
+              {header && (
+                <div
+                  className={cn(
+                    'overflow-hidden min-w-0',
+                    variant === 'default' && 'text-sm flex-1',
+                    variant === 'minimal' && 'text-sm flex items-center gap-1',
+                    (variant === 'process' || variant === 'process-sub') &&
+                      'text-xs flex-1'
+                  )}
+                  onClick={
+                    headerClickBehavior === 'inspect'
+                      ? undefined
+                      : headerClickBehavior === 'split'
+                        ? undefined
+                        : onOpenChange
+                          ? () => onOpenChange(!isOpen)
+                          : undefined
+                  }
                 >
-                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                </button>
-              </CollapsibleTrigger>
+                  {header}
+                </div>
+              )}
+              {(variant === 'minimal' ||
+                variant === 'process' ||
+                variant === 'process-sub') && (
+                <CollapsibleTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      'rounded-md group cursor-pointer hover:bg-accent/50',
+                      variant === 'minimal' && 'p-0.5',
+                      (variant === 'process' || variant === 'process-sub') &&
+                        'p-0.5'
+                    )}
+                    aria-label={isOpen ? 'Collapse' : 'Expand'}
+                  >
+                    <ChevronDown
+                      className={cn(
+                        'text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180',
+                        chevronSize === 'sm' ? 'h-3 w-3' : 'h-4 w-4'
+                      )}
+                    />
+                  </button>
+                </CollapsibleTrigger>
+              )}
+              {variant === 'default' && (
+                <CollapsibleTrigger asChild>
+                  <button
+                    type="button"
+                    className="p-1 hover:bg-accent rounded-md transition-transform duration-200 group"
+                    aria-label={isOpen ? 'Collapse' : 'Expand'}
+                  >
+                    <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </button>
+                </CollapsibleTrigger>
+              )}
             </div>
             <CollapsibleContent className="data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down">
-              <Separator className="my-4 border-border/50" />
-              {content}
+              {showSeparator && variant === 'default' && (
+                <Separator className="mb-2 border-border/50" />
+              )}
+              <div
+                className={cn(
+                  variant === 'default' && 'px-3 pb-2',
+                  variant === 'minimal' && 'pt-2',
+                  variant === 'process' && 'px-1.5 pb-1',
+                  variant === 'process-sub' && 'px-1 pb-0.5'
+                )}
+              >
+                {content}
+              </div>
             </CollapsibleContent>
           </Collapsible>
         </div>
       ) : (
         <div
           className={cn(
-            'flex-1 rounded-2xl',
+            'flex-1 rounded-2xl w-full',
             role === 'assistant' ? 'px-0' : 'px-3'
           )}
         >

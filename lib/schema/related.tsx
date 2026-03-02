@@ -1,15 +1,10 @@
-import { DeepPartial } from 'ai'
 import { z } from 'zod'
 
-export const relatedSchema = z.object({
-  items: z
-    .array(
-      z.object({
-        query: z.string()
-      })
-    )
-    .length(3)
+export const relatedQuestionSchema = z.object({
+  question: z.string()
 })
-export type PartialRelated = DeepPartial<typeof relatedSchema>
 
+export const relatedSchema = z.array(relatedQuestionSchema).length(3)
+
+export type RelatedQuestion = z.infer<typeof relatedQuestionSchema>
 export type Related = z.infer<typeof relatedSchema>

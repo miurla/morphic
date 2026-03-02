@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 
-import { ToolInvocation } from 'ai'
 import { ArrowRight, Check, SkipForward } from 'lucide-react'
+
+import type { ToolPart } from '@/lib/types/ai'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 
 interface QuestionConfirmationProps {
-  toolInvocation: ToolInvocation
+  toolInvocation: ToolPart<'askQuestion'>
   onConfirm: (toolCallId: string, approved: boolean, response?: any) => void
   isCompleted?: boolean
 }
@@ -21,18 +22,38 @@ interface QuestionOption {
   label: string
 }
 
+interface QuestionInput {
+  question: string
+  options: QuestionOption[]
+  allowsInput?: boolean
+  inputLabel?: string
+  inputPlaceholder?: string
+}
+
+interface QuestionOutput {
+  selectedOptions?: string[]
+  inputText?: string
+  skipped?: boolean
+}
+
 export function QuestionConfirmation({
   toolInvocation,
   onConfirm,
   isCompleted = false
 }: QuestionConfirmationProps) {
-  const { question, options, allowsInput, inputLabel, inputPlaceholder } =
-    toolInvocation.args
+  const input = (toolInvocation.input || {}) as QuestionInput
+  const {
+    question = '',
+    options = [],
+    allowsInput = false,
+    inputLabel = '',
+    inputPlaceholder = ''
+  } = input
 
   // Get result data if available
   const resultData =
-    toolInvocation.state === 'result' && toolInvocation.result
-      ? toolInvocation.result
+    toolInvocation.state === 'output-available' && toolInvocation.output
+      ? toolInvocation.output
       : null
 
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
@@ -78,23 +99,26 @@ export function QuestionConfirmation({
 
   // Get options to display (from result or local state)
   const getDisplayedOptions = (): string[] => {
-    if (resultData && Array.isArray(resultData.selectedOptions)) {
-      return resultData.selectedOptions
+    const result = resultData as QuestionOutput | null
+    if (result && Array.isArray(result.selectedOptions)) {
+      return result.selectedOptions
     }
     return selectedOptions
   }
 
   // Get input text to display (from result or local state)
   const getDisplayedInputText = (): string => {
-    if (resultData && resultData.inputText) {
-      return resultData.inputText
+    const result = resultData as QuestionOutput | null
+    if (result && result.inputText) {
+      return result.inputText
     }
     return inputText
   }
 
   // Check if question was skipped
   const wasSkipped = (): boolean => {
-    if (resultData && resultData.skipped) {
+    const result = resultData as QuestionOutput | null
+    if (result && result.skipped) {
       return true
     }
     return skipped
@@ -119,7 +143,7 @@ export function QuestionConfirmation({
   }
 
   // Show result view if completed or if tool has result state
-  if (completed || toolInvocation.state === 'result') {
+  if (completed || toolInvocation.state === 'output-available') {
     const isSkipped = wasSkipped()
 
     return (

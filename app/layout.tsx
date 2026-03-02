@@ -69,7 +69,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          'min-h-screen flex flex-col font-sans antialiased',
+          'min-h-screen flex flex-col font-sans antialiased overflow-hidden',
           fontSans.variable
         )}
       >
@@ -80,10 +80,10 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <SidebarProvider defaultOpen>
-            <AppSidebar />
-            <div className="flex flex-col flex-1">
+            <AppSidebar hasUser={!!user} />
+            <div className="flex flex-col flex-1 min-w-0">
               <Header user={user} />
-              <main className="flex flex-1 min-h-0">
+              <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
                 <ArtifactRoot>{children}</ArtifactRoot>
               </main>
             </div>

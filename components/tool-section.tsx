@@ -1,34 +1,47 @@
 'use client'
 
-import { ToolInvocation } from 'ai'
+import { UseChatHelpers } from '@ai-sdk/react'
 
+import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+
+import FetchSection from './fetch-section'
 import { QuestionConfirmation } from './question-confirmation'
-import RetrieveSection from './retrieve-section'
 import { SearchSection } from './search-section'
-import { VideoSearchSection } from './video-search-section'
+import { ToolTodoDisplay } from './tool-todo-display'
 
 interface ToolSectionProps {
-  tool: ToolInvocation
+  tool: ToolPart
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
-  chatId?: string
+  onQuerySelect: (query: string) => void
+  borderless?: boolean
+  isFirst?: boolean
+  isLast?: boolean
 }
 
 export function ToolSection({
   tool,
   isOpen,
   onOpenChange,
+  status,
   addToolResult,
-  chatId
+  onQuerySelect,
+  borderless = false,
+  isFirst = false,
+  isLast = false
 }: ToolSectionProps) {
   // Special handling for ask_question tool
-  if (tool.toolName === 'ask_question') {
+  if (tool.type === 'tool-askQuestion') {
     // When waiting for user input
-    if (tool.state === 'call' && addToolResult) {
+    if (
+      (tool.state === 'input-streaming' || tool.state === 'input-available') &&
+      addToolResult
+    ) {
       return (
         <QuestionConfirmation
-          toolInvocation={tool}
+          toolInvocation={tool as ToolPart<'askQuestion'>}
           onConfirm={(toolCallId, approved, response) => {
             addToolResult({
               toolCallId,
@@ -46,10 +59,10 @@ export function ToolSection({
     }
 
     // When result is available, display the result
-    if (tool.state === 'result') {
+    if (tool.state === 'output-available') {
       return (
         <QuestionConfirmation
-          toolInvocation={tool}
+          toolInvocation={tool as ToolPart<'askQuestion'>}
           isCompleted={true}
           onConfirm={() => {}} // Not used in result display mode
         />
@@ -57,31 +70,45 @@ export function ToolSection({
     }
   }
 
-  switch (tool.toolName) {
-    case 'search':
+  switch (tool.type) {
+    case 'tool-search':
       return (
         <SearchSection
-          tool={tool}
+          tool={tool as ToolPart<'search'>}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
-          chatId={chatId || ''}
+          status={status}
+          borderless={borderless}
+          isFirst={isFirst}
+          isLast={isLast}
         />
       )
-    case 'videoSearch':
+    case 'tool-fetch':
       return (
-        <VideoSearchSection
-          tool={tool}
+        <FetchSection
+          tool={tool as ToolPart<'fetch'>}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
-          chatId={chatId || ''}
+          status={status}
+          borderless={borderless}
+          isFirst={isFirst}
+          isLast={isLast}
         />
       )
-    case 'retrieve':
+    case 'tool-todoWrite':
       return (
-        <RetrieveSection
-          tool={tool}
+        <ToolTodoDisplay
+          tool="todoWrite"
+          state={tool.state}
+          input={tool.input}
+          output={tool.output}
+          errorText={tool.errorText}
+          toolCallId={tool.toolCallId}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
+          borderless={borderless}
+          isFirst={isFirst}
+          isLast={isLast}
         />
       )
     default:

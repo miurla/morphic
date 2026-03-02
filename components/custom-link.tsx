@@ -1,13 +1,15 @@
-import { AnchorHTMLAttributes, DetailedHTMLProps, ReactNode } from 'react'
+import { AnchorHTMLAttributes, DetailedHTMLProps } from 'react'
 
+import type { SearchResultItem } from '@/lib/types'
 import { cn } from '@/lib/utils'
+
+import { useCitation } from './citation-context'
+import { CitationLink } from './citation-link'
 
 type CustomLinkProps = Omit<
   DetailedHTMLProps<AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement>,
   'ref'
-> & {
-  children: ReactNode
-}
+>
 
 export function Citing({
   href,
@@ -15,24 +17,40 @@ export function Citing({
   className,
   ...props
 }: CustomLinkProps) {
+  const { citationMaps } = useCitation()
   const childrenText = children?.toString() || ''
-  const isNumber = /^\d+$/.test(childrenText)
-  const linkClasses = cn(
-    isNumber
-      ? 'text-[10px] bg-muted text-muted-froreground rounded-full w-4 h-4 px-0.5 inline-flex items-center justify-center hover:bg-muted/50 duration-200 no-underline -translate-y-0.5'
-      : 'hover:underline inline-flex items-center gap-1.5',
-    className
-  )
+  // Match domain names (alphanumeric and hyphens) or numbers for backward compatibility
+  const isCitation = /^[\w-]+$/.test(childrenText)
+
+  // Get citation data if this is a citation
+  let citationData: SearchResultItem | undefined = undefined
+
+  if (isCitation && citationMaps && href) {
+    const decodedHref = decodeURI(href)
+
+    // Try to find the citation data by checking all citation maps
+    // Match by URL instead of citation number/text
+    for (const toolCallId in citationMaps) {
+      const citationMap = citationMaps[toolCallId]
+      // Search through all citations in this map
+      for (const citationNum in citationMap) {
+        if (citationMap[citationNum].url === decodedHref) {
+          citationData = citationMap[citationNum]
+          break
+        }
+      }
+      if (citationData) break
+    }
+  }
 
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={linkClasses}
+    <CitationLink
+      href={href || '#'}
+      className={className}
+      citationData={citationData}
       {...props}
     >
       {children}
-    </a>
+    </CitationLink>
   )
 }

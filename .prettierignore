@@ -35,3 +35,6 @@ build/
 # Temporary files
 tmp/
 temp/
+
+# Database
+lib/db/migrations/

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useCallback, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 
 import { MoreHorizontal, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -32,19 +33,48 @@ interface ClearHistoryActionProps {
 }
 
 export function ClearHistoryAction({ empty }: ClearHistoryActionProps) {
-  const [isPending, start] = useTransition()
-  const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isAlertOpen, setIsAlertOpen] = useState(false)
+  const router = useRouter()
 
-  const onClear = () =>
-    start(async () => {
+  const handleClearAction = useCallback(() => {
+    startTransition(async () => {
       const res = await clearChats()
-      res?.error ? toast.error(res.error) : toast.success('History cleared')
-      setOpen(false)
+      if (res?.success) {
+        toast.success('History cleared')
+        router.push('/')
+      } else if (res?.error) {
+        toast.error(res.error)
+      }
+      setIsAlertOpen(false)
+      setIsMenuOpen(false)
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
     })
+  }, [startTransition, router])
+
+  const handleAlertOpenChange = useCallback(
+    (open: boolean) => {
+      setIsAlertOpen(open)
+      if (!open) {
+        setIsMenuOpen(false)
+      }
+    },
+    [setIsAlertOpen, setIsMenuOpen]
+  )
+
+  const handleMenuOpenChange = useCallback(
+    (open: boolean) => {
+      setIsMenuOpen(open)
+      if (!open) {
+        setIsAlertOpen(false)
+      }
+    },
+    [setIsMenuOpen, setIsAlertOpen]
+  )
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isMenuOpen} onOpenChange={handleMenuOpenChange}>
       <DropdownMenuTrigger asChild>
         <SidebarGroupAction disabled={empty} className="static size-7 p-1">
           <MoreHorizontal size={16} />
@@ -53,12 +83,14 @@ export function ClearHistoryAction({ empty }: ClearHistoryActionProps) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end">
-        <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialog open={isAlertOpen} onOpenChange={handleAlertOpenChange}>
           <AlertDialogTrigger asChild>
             <DropdownMenuItem
               disabled={empty || isPending}
               className="gap-2 text-destructive focus:text-destructive"
-              onSelect={event => event.preventDefault()} // Prevent closing dropdown
+              onSelect={event => {
+                event.preventDefault()
+              }}
             >
               <Trash2 size={14} /> Clear History
             </DropdownMenuItem>
@@ -74,7 +106,13 @@ export function ClearHistoryAction({ empty }: ClearHistoryActionProps) {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-              <AlertDialogAction disabled={isPending} onClick={onClear}>
+              <AlertDialogAction
+                disabled={isPending}
+                onClick={event => {
+                  event.preventDefault()
+                  handleClearAction()
+                }}
+              >
                 {isPending ? <Spinner /> : 'Clear'}
               </AlertDialogAction>
             </AlertDialogFooter>

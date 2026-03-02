@@ -9,34 +9,22 @@ import {
   useReducer
 } from 'react'
 
-import type { ToolInvocation } from 'ai'
+import type { Part } from '@/lib/types/ai'
 
 import { useSidebar } from '../ui/sidebar'
 
-// Part types as seen in render-message.tsx
-export type TextPart = {
-  type: 'text'
-  text: string
-}
-
-export type ReasoningPart = {
-  type: 'reasoning'
-  reasoning: string
-}
-
-export type ToolInvocationPart = {
-  type: 'tool-invocation'
-  toolInvocation: ToolInvocation
-}
-
-export type Part = TextPart | ReasoningPart | ToolInvocationPart
+// Animation duration should match CSS transition duration
+const ANIMATION_DURATION = 300
 
 interface ArtifactState {
   part: Part | null
   isOpen: boolean
 }
 
-type ArtifactAction = { type: 'OPEN'; payload: Part } | { type: 'CLOSE' }
+type ArtifactAction =
+  | { type: 'OPEN'; payload: Part }
+  | { type: 'CLOSE' }
+  | { type: 'CLEAR_CONTENT' }
 
 const initialState: ArtifactState = {
   part: null,
@@ -52,6 +40,8 @@ function artifactReducer(
       return { part: action.payload, isOpen: true }
     case 'CLOSE':
       return { ...state, isOpen: false }
+    case 'CLEAR_CONTENT':
+      return { part: null, isOpen: false }
     default:
       return state
   }
@@ -73,6 +63,10 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 
   const close = useCallback(() => {
     dispatch({ type: 'CLOSE' })
+    // Keep content for animation purposes, clear after transition
+    setTimeout(() => {
+      dispatch({ type: 'CLEAR_CONTENT' })
+    }, ANIMATION_DURATION)
   }, [])
 
   // Close artifact when sidebar opens

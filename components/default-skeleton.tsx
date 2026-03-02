@@ -5,8 +5,9 @@ import { Skeleton } from './ui/skeleton'
 export const DefaultSkeleton = () => {
   return (
     <div className="flex flex-col gap-2 pb-4 pt-2">
-      <Skeleton className="h-6 w-48" />
-      <Skeleton className="w-full h-6" />
+      {[...Array(2)].map((_, index) => (
+        <Skeleton key={index} className="h-6 w-full" />
+      ))}
     </div>
   )
 }

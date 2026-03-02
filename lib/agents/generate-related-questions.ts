@@ -1,38 +1,50 @@
-import { CoreMessage, generateObject } from 'ai'
+import { type ModelMessage, Output, streamText } from 'ai'
 
-import { relatedSchema } from '@/lib/schema/related'
+import { getRelatedQuestionsModel } from '../config/model-types'
+import { relatedQuestionSchema } from '../schema/related'
+import { getModel } from '../utils/registry'
+import { isTracingEnabled } from '../utils/telemetry'
 
-import {
-  getModel,
-  getToolCallModel,
-  isToolCallSupported
-} from '../utils/registry'
+import { RELATED_QUESTIONS_PROMPT } from './prompts/related-questions-prompt'
 
-export async function generateRelatedQuestions(
-  messages: CoreMessage[],
-  model: string
+export function createRelatedQuestionsStream(
+  messages: ModelMessage[],
+  abortSignal?: AbortSignal,
+  parentTraceId?: string
 ) {
-  const lastMessages = messages.slice(-1).map(message => ({
-    ...message,
-    role: 'user'
-  })) as CoreMessage[]
+  // Use the related questions model configuration from JSON
+  const relatedModel = getRelatedQuestionsModel()
+  const modelId = `${relatedModel.providerId}:${relatedModel.id}`
 
-  const supportedModel = isToolCallSupported(model)
-  const currentModel = supportedModel
-    ? getModel(model)
-    : getToolCallModel(model)
-
-  const result = await generateObject({
-    model: currentModel,
-    system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
-
-    For instance, if the original query was "Starship's third test flight key milestones", your output should follow this format:
-
-    Aim to create queries that progressively delve into more specific aspects, implications, or adjacent topics related to the initial query. The goal is to anticipate the user's potential information needs and guide them towards a more comprehensive understanding of the subject matter.
-    Please match the language of the response to the user's language.`,
-    messages: lastMessages,
-    schema: relatedSchema
+  return streamText({
+    model: getModel(modelId),
+    output: Output.array({
+      element: relatedQuestionSchema,
+      name: 'RelatedQuestion',
+      description: 'Generate a concise follow-up question (max 10-12 words)'
+    }),
+    system: RELATED_QUESTIONS_PROMPT,
+    messages: [
+      ...messages,
+      {
+        role: 'user',
+        content:
+          'Based on the conversation history and search results, generate 3 unique follow-up questions that would help the user explore different aspects of the topic. Focus on questions that dig deeper into specific findings or explore related areas not yet covered.'
+      }
+    ],
+    abortSignal,
+    experimental_telemetry: {
+      isEnabled: isTracingEnabled(),
+      functionId: 'related-questions',
+      metadata: {
+        modelId,
+        agentType: 'related-questions-generator',
+        messageCount: messages.length,
+        ...(parentTraceId && {
+          langfuseTraceId: parentTraceId,
+          langfuseUpdateParent: false
+        })
+      }
+    }
   })
-
-  return result
 }

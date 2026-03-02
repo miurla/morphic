@@ -1,10 +1,14 @@
-import { CoreMessage, JSONValue, Message } from 'ai'
+// Re-export SearchMode for convenience
+export type { SearchMode } from './search'
 
 export type SearchResults = {
   images: SearchResultImage[]
   results: SearchResultItem[]
+  videos?: SerperSearchResultItem[]
   number_of_results?: number
   query: string
+  toolCallId?: string // ID of the search tool call
+  citationMap?: Record<number, SearchResultItem> // Maps citation number to search result
 }
 
 // If enabled the include_images_description is true, the images will be an array of { url: string, description: string }
@@ -57,37 +61,10 @@ export type SerperSearchResultItem = {
   position: number
 }
 
-export interface Chat extends Record<string, any> {
-  id: string
+export type SearchImageItem = {
   title: string
-  createdAt: Date
-  userId: string
-  path: string
-  messages: ExtendedCoreMessage[] // Note: Changed from AIMessage to ExtendedCoreMessage
-  sharePath?: string
-}
-
-// ExtendedCoreMessage for saveing annotations
-export type ExtendedCoreMessage = Omit<CoreMessage, 'role' | 'content'> & {
-  role: CoreMessage['role'] | 'data'
-  content: CoreMessage['content'] | JSONValue
-}
-
-export type AIMessage = {
-  role: 'user' | 'assistant' | 'system' | 'function' | 'data' | 'tool'
-  content: string
-  id: string
-  name?: string
-  type?:
-    | 'answer'
-    | 'related'
-    | 'skip'
-    | 'inquiry'
-    | 'input'
-    | 'input_related'
-    | 'tool'
-    | 'followup'
-    | 'end'
+  link: string
+  thumbnailUrl: string
 }
 
 export interface SearXNGResult {
@@ -112,4 +89,12 @@ export type SearXNGSearchResults = {
   results: SearchResultItem[]
   number_of_results?: number
   query: string
+}
+
+export type UploadedFile = {
+  file: File
+  status: 'uploading' | 'uploaded' | 'error'
+  url?: string
+  name?: string
+  key?: string
 }

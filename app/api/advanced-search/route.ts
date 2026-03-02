@@ -33,23 +33,31 @@ let redisClient: Redis | ReturnType<typeof createClient> | null = null
 async function initializeRedisClient() {
   if (redisClient) return redisClient
 
-  const useLocalRedis = process.env.USE_LOCAL_REDIS === 'true'
+  const upstashRedisRestUrl = process.env.UPSTASH_REDIS_REST_URL
+  const upstashRedisRestToken = process.env.UPSTASH_REDIS_REST_TOKEN
 
-  if (useLocalRedis) {
+  // Use Upstash Redis if credentials are provided
+  if (upstashRedisRestUrl && upstashRedisRestToken) {
+    redisClient = new Redis({
+      url: upstashRedisRestUrl,
+      token: upstashRedisRestToken
+    })
+    return redisClient
+  }
+
+  // Otherwise, try to use local Redis (for Docker/SearXNG usage)
+  try {
     const localRedisUrl =
       process.env.LOCAL_REDIS_URL || 'redis://localhost:6379'
-    redisClient = createClient({ url: localRedisUrl })
-    await redisClient.connect()
-  } else {
-    const upstashRedisRestUrl = process.env.UPSTASH_REDIS_REST_URL
-    const upstashRedisRestToken = process.env.UPSTASH_REDIS_REST_TOKEN
-
-    if (upstashRedisRestUrl && upstashRedisRestToken) {
-      redisClient = new Redis({
-        url: upstashRedisRestUrl,
-        token: upstashRedisRestToken
-      })
-    }
+    const client = createClient({ url: localRedisUrl })
+    await client.connect()
+    redisClient = client
+  } catch (error) {
+    console.warn(
+      'Failed to connect to local Redis. Advanced search caching disabled.',
+      error
+    )
+    redisClient = null
   }
 
   return redisClient

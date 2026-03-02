@@ -9,7 +9,7 @@ export function createQuestionTool(fullModel: string) {
   return tool({
     description:
       'Ask a clarifying question with multiple options when more information is needed',
-    parameters: getQuestionSchemaForModel(fullModel)
+    inputSchema: getQuestionSchemaForModel(fullModel)
     // execute function removed to enable frontend confirmation
   })
 }

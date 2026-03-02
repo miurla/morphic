@@ -105,10 +105,10 @@ export function VideoCarouselDialog({
               })}
             </CarouselContent>
             <div className="absolute inset-8 flex items-center justify-between p-4 pointer-events-none">
-              <CarouselPrevious className="w-10 h-10 rounded-full shadow focus:outline-none pointer-events-auto">
+              <CarouselPrevious className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
                 <span className="sr-only">Previous</span>
               </CarouselPrevious>
-              <CarouselNext className="w-10 h-10 rounded-full shadow focus:outline-none pointer-events-auto">
+              <CarouselNext className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
                 <span className="sr-only">Next</span>
               </CarouselNext>
             </div>

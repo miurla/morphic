@@ -28,8 +28,8 @@ export default function GuestMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Settings2 className="h-5 w-5" /> {/* Choose an icon */}
+        <Button variant="ghost" size="icon" className="h-6 w-6">
+          <Settings2 className="h-4 w-4" /> {/* Choose an icon */}
           <span className="sr-only">Open menu</span>
         </Button>
       </DropdownMenuTrigger>

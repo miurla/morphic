@@ -1,10 +1,18 @@
 'use client'
 
+import { UseChatHelpers } from '@ai-sdk/react'
 import { ChatRequestOptions } from 'ai'
 
+import type { SearchResultItem } from '@/lib/types'
+import type {
+  UIDataTypes,
+  UIMessage,
+  UIMessageMetadata,
+  UITools
+} from '@/lib/types/ai'
+
 import { CollapsibleMessage } from './collapsible-message'
-import { DefaultSkeleton } from './default-skeleton'
-import { BotMessage } from './message'
+import { MarkdownMessage } from './message'
 import { MessageActions } from './message-actions'
 
 export type AnswerSectionProps = {
@@ -14,10 +22,14 @@ export type AnswerSectionProps = {
   chatId?: string
   showActions?: boolean
   messageId: string
+  metadata?: UIMessageMetadata
+  status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   reload?: (
     messageId: string,
     options?: ChatRequestOptions
-  ) => Promise<string | null | undefined>
+  ) => Promise<void | string | null | undefined>
+  citationMaps?: Record<string, Record<number, SearchResultItem>>
+  isGuest?: boolean
 }
 
 export function AnswerSection({
@@ -27,9 +39,14 @@ export function AnswerSection({
   chatId,
   showActions = true, // Default to true for backward compatibility
   messageId,
-  reload
+  metadata,
+  status,
+  reload,
+  citationMaps,
+  isGuest = false
 }: AnswerSectionProps) {
-  const enableShare = process.env.NEXT_PUBLIC_ENABLE_SHARE === 'true'
+  const enableShare =
+    process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined && !isGuest
 
   const handleReload = () => {
     if (reload) {
@@ -38,22 +55,6 @@ export function AnswerSection({
     return Promise.resolve(undefined)
   }
 
-  const message = content ? (
-    <div className="flex flex-col gap-1">
-      <BotMessage message={content} />
-      {showActions && (
-        <MessageActions
-          message={content} // Keep original message content for copy
-          messageId={messageId}
-          chatId={chatId || ''}
-          enableShare={enableShare}
-          reload={handleReload}
-        />
-      )}
-    </div>
-  ) : (
-    <DefaultSkeleton />
-  )
   return (
     <CollapsibleMessage
       role="assistant"
@@ -63,7 +64,23 @@ export function AnswerSection({
       showBorder={false}
       showIcon={false}
     >
-      {message}
+      {content && (
+        <div className="flex flex-col gap-1">
+          <MarkdownMessage message={content} citationMaps={citationMaps} />
+          <MessageActions
+            message={content} // Provide original message; copy path remaps citations
+            messageId={messageId}
+            traceId={metadata?.traceId}
+            feedbackScore={metadata?.feedbackScore}
+            chatId={chatId}
+            enableShare={enableShare}
+            reload={handleReload}
+            status={status}
+            visible={showActions}
+            citationMaps={citationMaps}
+          />
+        </div>
+      )}
     </CollapsibleMessage>
   )
 }

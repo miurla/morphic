@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "models": {
+    "byMode": {
+      "quick": {
+        "speed": {
+          "id": "gpt-5-mini",
+          "name": "GPT-5 mini",
+          "provider": "OpenAI",
+          "providerId": "openai",
+          "providerOptions": {
+            "openai": {
+              "reasoningEffort": "low",
+              "reasoningSummary": "auto"
+            }
+          }
+        },
+        "quality": {
+          "id": "gpt-5.2",
+          "name": "GPT-5.2",
+          "provider": "OpenAI",
+          "providerId": "openai",
+          "providerOptions": {
+            "openai": {
+              "reasoningEffort": "low",
+              "reasoningSummary": "auto"
+            }
+          }
+        }
+      },
+      "adaptive": {
+        "speed": {
+          "id": "gpt-5-mini",
+          "name": "GPT-5 mini",
+          "provider": "OpenAI",
+          "providerId": "openai",
+          "providerOptions": {
+            "openai": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "auto"
+            }
+          }
+        },
+        "quality": {
+          "id": "gpt-5.2",
+          "name": "GPT-5.2",
+          "provider": "OpenAI",
+          "providerId": "openai",
+          "providerOptions": {
+            "openai": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "auto"
+            }
+          }
+        }
+      }
+    },
+    "relatedQuestions": {
+      "id": "gpt-4.1",
+      "name": "GPT-4.1",
+      "provider": "OpenAI",
+      "providerId": "openai"
+    }
+  }
+}

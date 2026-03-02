@@ -52,9 +52,7 @@ export class SearXNGSearchProvider extends BaseSearchProvider {
       if (!response.ok) {
         const errorText = await response.text()
         console.error(`SearXNG API error (${response.status}):`, errorText)
-        throw new Error(
-          `SearXNG API error: ${response.status} ${response.statusText} - ${errorText}`
-        )
+        throw new Error('Search failed')
       }
 
       const data: SearXNGResponse = await response.json()
