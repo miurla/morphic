@@ -138,7 +138,8 @@ export function Chat({
       const isAuthError =
         error.message?.includes('401') ||
         errorMessage.includes('unauthorized') ||
-        errorMessage.includes('authentication required')
+        errorMessage.includes('authentication required') ||
+        errorMessage.includes('sign in to continue')
 
       if (isRateLimit) {
         // Try to parse JSON error response for quality mode rate limit
