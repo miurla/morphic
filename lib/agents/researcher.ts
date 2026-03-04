@@ -18,7 +18,7 @@ import { getModel } from '../utils/registry'
 import { isTracingEnabled } from '../utils/telemetry'
 
 import {
-  ADAPTIVE_MODE_PROMPT,
+  getAdaptiveModePrompt,
   QUICK_MODE_PROMPT
 } from './prompts/search-mode-prompts'
 
@@ -91,37 +91,44 @@ export function createResearcher({
     // Create model-specific tools with proper typing
     const originalSearchTool = createSearchTool(model)
     const askQuestionTool = createQuestionTool(model)
-
-    // Only create todo tools for adaptive + quality to prevent AI SDK
-    // activeTools bug where models can call tools not in activeTools list
-    // See: https://github.com/vercel/ai/issues/8653
-    const enableTodo =
-      writer && searchMode === 'adaptive' && modelType === 'quality'
-    const todoTools = enableTodo ? createTodoTools() : {}
+    const todoTools = writer ? createTodoTools() : {}
 
     let systemPrompt: string
+    let activeToolsList: (keyof ResearcherTools)[] = []
     let maxSteps: number
     let searchTool = originalSearchTool
 
     // Configure based on search mode
     switch (searchMode) {
       case 'quick':
+        console.log(
+          '[Researcher] Quick mode: maxSteps=20, tools=[search, fetch]'
+        )
         systemPrompt = QUICK_MODE_PROMPT
+        activeToolsList = ['search', 'fetch']
         maxSteps = 20
         searchTool = wrapSearchToolForQuickMode(originalSearchTool)
         break
 
       case 'adaptive':
-      default:
-        systemPrompt = ADAPTIVE_MODE_PROMPT
+      default: {
+        const enableTodo =
+          writer && 'todoWrite' in todoTools && modelType === 'quality'
+        systemPrompt = getAdaptiveModePrompt({ enableTodo: !!enableTodo })
+        activeToolsList = ['search', 'fetch']
+        if (enableTodo) {
+          activeToolsList.push('todoWrite')
+        }
+      }
+        console.log(
+          `[Researcher] Adaptive mode: maxSteps=50, modelType=${modelType}, tools=[${activeToolsList.join(', ')}]`
+        )
         maxSteps = 50
         searchTool = originalSearchTool
         break
     }
 
-    // Build tools object - only include tools that should be available
-    // Do not rely on activeTools for filtering due to AI SDK bug
-    // See: https://github.com/vercel/ai/issues/8653
+    // Build tools object with proper typing
     const tools: ResearcherTools = {
       search: searchTool,
       fetch: fetchTool,
@@ -129,16 +136,12 @@ export function createResearcher({
       ...todoTools
     } as ResearcherTools
 
-    const toolNames = Object.keys(tools)
-    console.log(
-      `[Researcher] ${searchMode === 'quick' ? 'Quick' : 'Adaptive'} mode: maxSteps=${maxSteps}, modelType=${modelType}, tools=[${toolNames.join(', ')}]`
-    )
-
     // Create ToolLoopAgent with all configuration
     const agent = new ToolLoopAgent({
       model: getModel(model),
       instructions: `${systemPrompt}\nCurrent date and time: ${currentDate}`,
       tools,
+      activeTools: activeToolsList,
       stopWhen: stepCountIs(maxSteps),
       ...(modelConfig?.providerOptions && {
         providerOptions: modelConfig.providerOptions
