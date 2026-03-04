@@ -111,15 +111,16 @@ export function createResearcher({
         break
 
       case 'adaptive':
-      default: {
-        const enableTodo =
-          writer && 'todoWrite' in todoTools && modelType === 'quality'
-        systemPrompt = getAdaptiveModePrompt({ enableTodo: !!enableTodo })
-        activeToolsList = ['search', 'fetch']
-        if (enableTodo) {
-          activeToolsList.push('todoWrite')
+      default:
+        {
+          const enableTodo =
+            writer && 'todoWrite' in todoTools && modelType === 'quality'
+          systemPrompt = getAdaptiveModePrompt({ enableTodo: !!enableTodo })
+          activeToolsList = ['search', 'fetch']
+          if (enableTodo) {
+            activeToolsList.push('todoWrite')
+          }
         }
-      }
         console.log(
           `[Researcher] Adaptive mode: maxSteps=50, modelType=${modelType}, tools=[${activeToolsList.join(', ')}]`
         )
