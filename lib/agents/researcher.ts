@@ -18,7 +18,7 @@ import { getModel } from '../utils/registry'
 import { isTracingEnabled } from '../utils/telemetry'
 
 import {
-  ADAPTIVE_MODE_PROMPT,
+  getAdaptiveModePrompt,
   QUICK_MODE_PROMPT
 } from './prompts/search-mode-prompts'
 
@@ -112,11 +112,14 @@ export function createResearcher({
 
       case 'adaptive':
       default:
-        systemPrompt = ADAPTIVE_MODE_PROMPT
-        activeToolsList = ['search', 'fetch']
-        // Only enable todo tools for quality model type
-        if (writer && 'todoWrite' in todoTools && modelType === 'quality') {
-          activeToolsList.push('todoWrite')
+        {
+          const enableTodo =
+            writer && 'todoWrite' in todoTools && modelType === 'quality'
+          systemPrompt = getAdaptiveModePrompt({ enableTodo: !!enableTodo })
+          activeToolsList = ['search', 'fetch']
+          if (enableTodo) {
+            activeToolsList.push('todoWrite')
+          }
         }
         console.log(
           `[Researcher] Adaptive mode: maxSteps=50, modelType=${modelType}, tools=[${activeToolsList.join(', ')}]`

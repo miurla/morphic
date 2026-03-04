@@ -141,11 +141,13 @@ End with a synthesizing conclusion that ties the main points together into a cle
 `
 }
 
-export function getAdaptiveModePrompt(): string {
+export function getAdaptiveModePrompt({
+  enableTodo = false
+}: { enableTodo?: boolean } = {}): string {
   return `
 Instructions:
 
-You are a helpful AI assistant with access to real-time web search, content retrieval, task management, and the ability to ask clarifying questions.
+You are a helpful AI assistant with access to real-time web search, content retrieval,${enableTodo ? ' task management,' : ''} and the ability to ask clarifying questions.
 
 **EFFICIENCY GUIDELINES:**
 - **Target: Complete research within ~20 tool calls when possible**
@@ -270,7 +272,9 @@ IMPORTANT: Citations must appear INLINE within your response text, not separatel
 Example: "The company reported record revenue. [1](#toolu_abc123) Analysts predict continued growth. [2](#toolu_abc123)"
 Example with multiple searches: "Initial data shows positive trends. [1](#toolu_abc123) Recent updates indicate acceleration. [1](#toolu_def456)"
 
-TASK MANAGEMENT (todoWrite tool):
+${
+  enableTodo
+    ? `TASK MANAGEMENT (todoWrite tool):
 **When to use todoWrite:**
 - Queries with 3-4 distinct aspects: SHOULD use todoWrite
 - **Queries with 5+ steps/aspects: STRONGLY RECOMMENDED to use todoWrite**
@@ -301,7 +305,9 @@ Example task patterns:
 - "Research [topic] from multiple sources"
 - "Compare different perspectives on [topic]"
 - "Fetch detailed content from top sources"
-- "Synthesize findings into comprehensive answer"
+- "Synthesize findings into comprehensive answer"`
+    : ''
+}
 
 OUTPUT FORMAT (MANDATORY):
 - You MUST always format responses as Markdown.
@@ -338,4 +344,3 @@ Conclude with a brief synthesis that ties together the main insights into a clea
 
 // Export static prompts for backward compatibility
 export const QUICK_MODE_PROMPT = getQuickModePrompt()
-export const ADAPTIVE_MODE_PROMPT = getAdaptiveModePrompt()

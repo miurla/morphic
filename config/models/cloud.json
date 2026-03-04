@@ -4,30 +4,24 @@
     "byMode": {
       "quick": {
         "speed": {
-          "id": "gemini-3-flash-preview",
-          "name": "Gemini 3 Flash Preview",
+          "id": "gemini-3.1-flash-lite-preview",
+          "name": "Gemini 3.1 Flash Lite Preview",
           "provider": "Google",
           "providerId": "google"
         },
         "quality": {
-          "id": "gemini-3-pro",
-          "name": "Gemini 3 Pro",
+          "id": "gemini-3.1-pro-preview",
+          "name": "Gemini 3.1 Pro Preview",
           "provider": "Google",
           "providerId": "google"
         }
       },
       "adaptive": {
         "speed": {
-          "id": "gpt-5-mini",
-          "name": "GPT-5 mini",
-          "provider": "OpenAI",
-          "providerId": "openai",
-          "providerOptions": {
-            "openai": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto"
-            }
-          }
+          "id": "gemini-3-flash-preview",
+          "name": "Gemini 3 Flash Preview",
+          "provider": "Google",
+          "providerId": "google"
         },
         "quality": {
           "id": "gpt-5.2",
