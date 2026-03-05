@@ -4,6 +4,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { cn } from '@/lib/utils'
 
+import { useHasUser } from '@/lib/contexts/user-context'
+
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 
 import { InspectorDrawer } from '@/components/inspector/inspector-drawer'
@@ -44,6 +46,7 @@ export function ChatArtifactContainer({
   const containerRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(DEFAULT_WIDTH)
   const [isResizing, setIsResizing] = useState(false)
+  const hasUser = useHasUser()
   const { open, isMobile: isMobileSidebar } = useSidebar()
 
   // Load saved width after hydration
@@ -131,7 +134,7 @@ export function ChatArtifactContainer({
   return (
     <div className="flex-1 min-h-0 min-w-0 h-screen flex">
       <div className="absolute p-4 z-50 transition-opacity duration-1000">
-        {(!open || isMobileSidebar) && (
+        {hasUser && (!open || isMobileSidebar) && (
           <SidebarTrigger className="animate-fade-in" />
         )}
       </div>
