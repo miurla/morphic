@@ -3,6 +3,7 @@ import { Inter as FontSans } from 'next/font/google'
 
 import { Analytics } from '@vercel/analytics/next'
 
+import { UserProvider } from '@/lib/contexts/user-context'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 
@@ -79,15 +80,17 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider defaultOpen>
-            <AppSidebar hasUser={!!user} />
-            <div className="flex flex-col flex-1 min-w-0">
-              <Header user={user} />
-              <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
-                <ArtifactRoot>{children}</ArtifactRoot>
-              </main>
-            </div>
-          </SidebarProvider>
+          <UserProvider hasUser={!!user}>
+            <SidebarProvider defaultOpen={false}>
+              {user && <AppSidebar />}
+              <div className="flex flex-col flex-1 min-w-0">
+                <Header user={user} />
+                <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
+                  <ArtifactRoot>{children}</ArtifactRoot>
+                </main>
+              </div>
+            </SidebarProvider>
+          </UserProvider>
           <Toaster />
           <Analytics />
         </ThemeProvider>
