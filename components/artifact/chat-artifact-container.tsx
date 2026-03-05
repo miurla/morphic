@@ -2,9 +2,8 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
-import { cn } from '@/lib/utils'
-
 import { useHasUser } from '@/lib/contexts/user-context'
+import { cn } from '@/lib/utils'
 
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 

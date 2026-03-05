@@ -11,7 +11,7 @@ export function UserProvider({
   hasUser: boolean
   children: React.ReactNode
 }) {
-  return <UserContext value={hasUser}>{children}</UserContext>
+  return <UserContext.Provider value={hasUser}>{children}</UserContext.Provider>
 }
 
 export function useHasUser() {
