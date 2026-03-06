@@ -130,7 +130,6 @@ export async function createChatStreamResponse(
         const researchAgent = researcher({
           model: context.modelId,
           modelConfig: model,
-          writer,
           parentTraceId,
           searchMode,
           modelType

@@ -1,9 +1,4 @@
-import {
-  stepCountIs,
-  tool,
-  ToolLoopAgent,
-  type UIMessageStreamWriter
-} from 'ai'
+import { stepCountIs, tool, ToolLoopAgent } from 'ai'
 
 import type { ResearcherTools } from '@/lib/types/agent'
 import { type ModelType } from '@/lib/types/model-type'
@@ -73,14 +68,12 @@ function wrapSearchToolForQuickMode<
 export function createResearcher({
   model,
   modelConfig,
-  writer,
   parentTraceId,
   searchMode = 'adaptive',
   modelType
 }: {
   model: string
   modelConfig?: Model
-  writer?: UIMessageStreamWriter
   parentTraceId?: string
   searchMode?: SearchMode
   modelType?: ModelType
@@ -91,7 +84,7 @@ export function createResearcher({
     // Create model-specific tools with proper typing
     const originalSearchTool = createSearchTool(model)
     const askQuestionTool = createQuestionTool(model)
-    const todoTools = writer ? createTodoTools() : {}
+    const todoTools = createTodoTools()
 
     let systemPrompt: string
     let activeToolsList: (keyof ResearcherTools)[] = []
@@ -112,15 +105,8 @@ export function createResearcher({
 
       case 'adaptive':
       default:
-        {
-          const enableTodo =
-            writer && 'todoWrite' in todoTools && modelType === 'quality'
-          systemPrompt = getAdaptiveModePrompt({ enableTodo: !!enableTodo })
-          activeToolsList = ['search', 'fetch']
-          if (enableTodo) {
-            activeToolsList.push('todoWrite')
-          }
-        }
+        systemPrompt = getAdaptiveModePrompt()
+        activeToolsList = ['search', 'fetch', 'todoWrite']
         console.log(
           `[Researcher] Adaptive mode: maxSteps=50, modelType=${modelType}, tools=[${activeToolsList.join(', ')}]`
         )
