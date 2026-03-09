@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from 'react'
 
 import {
-  FileText,
-  HelpCircle,
+  BarChart2,
+  Globe,
   LucideIcon,
-  Newspaper,
   Scale,
-  Search
+  Search,
+  Sparkles
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -36,52 +36,52 @@ const actionCategories: ActionCategory[] = [
     key: 'compare'
   },
   {
-    icon: Newspaper,
-    label: 'Latest',
-    key: 'latest'
+    icon: Sparkles,
+    label: 'Trends',
+    key: 'trends'
   },
   {
-    icon: FileText,
-    label: 'Summarize',
-    key: 'summarize'
+    icon: BarChart2,
+    label: 'Market',
+    key: 'market'
   },
   {
-    icon: HelpCircle,
-    label: 'Explain',
-    key: 'explain'
+    icon: Globe,
+    label: 'Brands',
+    key: 'brands'
   }
 ]
 
 const promptSamples: Record<string, string[]> = {
   research: [
-    'Why is Nvidia growing so rapidly?',
-    'Research the latest AI developments',
-    'What are the key trends in robotics?',
-    'What are the latest breakthroughs in renewable energy?'
+    'What materials define Loro Piana\'s cashmere quality?',
+    'History and heritage of the Hermès Birkin bag',
+    'How does Brunello Cucinelli source its raw materials?',
+    'What sets Berluti\'s patina leather apart?'
   ],
   compare: [
-    'Tesla vs BYD vs Toyota comparison',
-    'Compare Next.js, Remix, and Astro',
-    'AWS vs GCP vs Azure',
-    'iPhone vs Android ecosystem comparison'
+    'Chanel vs Louis Vuitton brand positioning',
+    'Compare Rolex, Patek Philippe, and Audemars Piguet',
+    'Bottega Veneta vs Loewe craft and aesthetic',
+    'Savile Row tailoring vs Italian bespoke suits'
   ],
-  latest: [
-    'Latest news today',
-    'What happened in tech this week?',
-    'Recent breakthroughs in medicine',
-    'Latest AI model releases'
+  trends: [
+    'What are the key luxury fashion trends for SS25?',
+    'How is quiet luxury evolving in 2025?',
+    'Rising trends in sustainable luxury fashion',
+    'What colours and silhouettes are dominating luxury runways?'
   ],
-  summarize: [
-    'Summarize: https://arxiv.org/pdf/2504.19678',
-    "Summarize this week's business news",
-    'Create an executive summary of AI trends',
-    'Summarize recent climate change research'
+  market: [
+    'Which luxury brands are growing fastest in Asia?',
+    'How is the pre-owned luxury market performing?',
+    'Impact of Gen Z on luxury spending habits',
+    'Luxury fashion market outlook for 2025'
   ],
-  explain: [
-    'Explain neural networks simply',
-    'How does blockchain work?',
-    'What is quantum entanglement?',
-    'Explain CRISPR gene editing'
+  brands: [
+    'Overview of the LVMH brand portfolio',
+    'What brands does Kering own?',
+    'Emerging independent luxury brands to watch',
+    'Which heritage houses are seeing a revival?'
   ]
 }
 
