@@ -7,7 +7,8 @@ const TABS = [
   { id: 'runway', label: 'Runway' },
   { id: 'accessories', label: 'Accessories' },
   { id: 'brands', label: 'Brands' },
-  { id: 'sustainability', label: 'Sustainability' }
+  { id: 'sustainability', label: 'Sustainability' },
+  { id: 'business', label: 'Business of Fashion' }
 ]
 
 export function DiscoverTabs() {

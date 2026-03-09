@@ -12,7 +12,9 @@ const CATEGORY_QUERIES: Record<string, string> = {
   runway: 'runway show haute couture ready-to-wear fashion week 2025',
   accessories: 'luxury handbags shoes jewellery watches accessories 2025',
   brands: 'luxury fashion house heritage brand story designer 2025',
-  sustainability: 'sustainable luxury fashion ethical slow fashion 2025'
+  sustainability: 'sustainable luxury fashion ethical slow fashion 2025',
+  business:
+    'luxury fashion business mergers acquisitions LVMH Kering revenue earnings 2025'
 }
 
 function extractDomain(url: string): string {
