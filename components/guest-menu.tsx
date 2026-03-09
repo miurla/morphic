@@ -3,6 +3,7 @@
 import Link from 'next/link'
 
 import {
+  Compass,
   Link2,
   LogIn,
   Palette,
@@ -34,6 +35,12 @@ export default function GuestMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuItem asChild>
+          <Link href="/discover">
+            <Compass className="mr-2 h-4 w-4" />
+            <span>Discover</span>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/auth/login">
             <LogIn className="mr-2 h-4 w-4" />
