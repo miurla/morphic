@@ -4,7 +4,13 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { Plus, Search, Trash2 } from 'lucide-react'
+import {
+  FolderInput,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Trash2
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 import { deleteChat } from '@/lib/actions/chat'
@@ -22,8 +28,17 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+
+import { AssignProjectDialog } from '@/components/assign-project-dialog'
 
 interface ChatPageResponse {
   chats: DBChat[]
@@ -59,6 +74,7 @@ export function ChatsPageClient({ userName }: ChatsPageClientProps) {
   const [isSelecting, setIsSelecting] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [assignTarget, setAssignTarget] = useState<DBChat | null>(null)
   const [isPending, startTransition] = useTransition()
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -231,7 +247,7 @@ export function ChatsPageClient({ userName }: ChatsPageClientProps) {
         ) : (
           <div className="divide-y divide-border rounded-lg border overflow-hidden">
             {filteredChats.map(chat => (
-              <div key={chat.id} className="flex items-center">
+              <div key={chat.id} className="group flex items-center">
                 {isSelecting && (
                   <div className="pl-3 py-3">
                     <Checkbox
@@ -243,7 +259,7 @@ export function ChatsPageClient({ userName }: ChatsPageClientProps) {
                 )}
                 <Link
                   href={`/search/${chat.id}`}
-                  className="flex-1 px-4 py-3 hover:bg-muted/50 transition-colors"
+                  className="flex-1 px-4 py-3 hover:bg-muted/50 transition-colors min-w-0"
                   onClick={e => {
                     if (isSelecting) {
                       e.preventDefault()
@@ -258,6 +274,63 @@ export function ChatsPageClient({ userName }: ChatsPageClientProps) {
                     {getRelativeTime(chat.createdAt)}
                   </div>
                 </Link>
+                {!isSelecting && (
+                  <div className="pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
+                          onClick={e => e.preventDefault()}
+                        >
+                          <MoreHorizontal className="size-4" />
+                          <span className="sr-only">Chat actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          className="gap-2"
+                          onSelect={e => {
+                            e.preventDefault()
+                            setAssignTarget(chat)
+                          }}
+                        >
+                          <FolderInput className="size-3.5" />
+                          {chat.projectId
+                            ? 'Move to project'
+                            : 'Add to project'}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="gap-2 text-destructive focus:text-destructive"
+                          onSelect={e => {
+                            e.preventDefault()
+                            startTransition(async () => {
+                              const result = await deleteChat(chat.id)
+                              if (result?.success) {
+                                toast.success('Chat deleted.')
+                                window.dispatchEvent(
+                                  new CustomEvent('chat-history-updated')
+                                )
+                                setChats(prev =>
+                                  prev.filter(c => c.id !== chat.id)
+                                )
+                              } else {
+                                toast.error(
+                                  result?.error ?? 'Failed to delete chat.'
+                                )
+                              }
+                            })
+                          }}
+                        >
+                          <Trash2 className="size-3.5" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -270,6 +343,23 @@ export function ChatsPageClient({ userName }: ChatsPageClientProps) {
           </div>
         )}
       </div>
+
+      {/* Assign to project dialog */}
+      {assignTarget && (
+        <AssignProjectDialog
+          open={!!assignTarget}
+          onOpenChange={open => !open && setAssignTarget(null)}
+          chatId={assignTarget.id}
+          currentProjectId={assignTarget.projectId}
+          onAssigned={projectId => {
+            setChats(prev =>
+              prev.map(c =>
+                c.id === assignTarget.id ? { ...c, projectId } : c
+              )
+            )
+          }}
+        />
+      )}
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -4,7 +4,7 @@ import { useCallback, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 
-import { MoreHorizontal, Trash2 } from 'lucide-react'
+import { FolderInput, MoreHorizontal, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { deleteChat } from '@/lib/actions/chat'
@@ -25,6 +25,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import {
@@ -33,6 +34,7 @@ import {
   SidebarMenuItem
 } from '@/components/ui/sidebar'
 
+import { AssignProjectDialog } from '../assign-project-dialog'
 import { Spinner } from '../ui/spinner'
 
 interface ChatMenuItemProps {
@@ -85,6 +87,8 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
   const [isPending, startTransition] = useTransition()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isAlertOpen, setIsAlertOpen] = useState(false)
+  const [isAssignOpen, setIsAssignOpen] = useState(false)
+  const [projectId, setProjectId] = useState(chat.projectId)
 
   const handleDeleteChat = useCallback(() => {
     startTransition(async () => {
@@ -151,6 +155,20 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
           </SidebarMenuAction>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start">
+          <DropdownMenuItem
+            className="gap-2"
+            onSelect={e => {
+              e.preventDefault()
+              setIsMenuOpen(false)
+              setIsAssignOpen(true)
+            }}
+          >
+            <FolderInput size={14} />
+            {projectId ? 'Move to project' : 'Add to project'}
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
           <AlertDialog open={isAlertOpen} onOpenChange={handleAlertOpenChange}>
             <AlertDialogTrigger asChild>
               <DropdownMenuItem
@@ -196,6 +214,13 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
           </AlertDialog>
         </DropdownMenuContent>
       </DropdownMenu>
+      <AssignProjectDialog
+        open={isAssignOpen}
+        onOpenChange={setIsAssignOpen}
+        chatId={chat.id}
+        currentProjectId={projectId}
+        onAssigned={setProjectId}
+      />
     </SidebarMenuItem>
   )
 }
