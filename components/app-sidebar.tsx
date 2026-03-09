@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 
-import { Compass, Plus } from 'lucide-react'
+import { Compass, MessageSquare, Plus } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -37,6 +37,14 @@ export default function AppSidebar() {
               <Link href="/" className="flex items-center gap-2">
                 <Plus className="size-4" />
                 <span>New</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/chats" className="flex items-center gap-2">
+                <MessageSquare className="size-4" />
+                <span>Chats</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
