@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter as FontSans } from 'next/font/google'
+import { Bentham, Inter as FontSans } from 'next/font/google'
 
 import { Analytics } from '@vercel/analytics/next'
 
@@ -20,6 +20,12 @@ import './globals.css'
 const fontSans = FontSans({
   subsets: ['latin'],
   variable: '--font-sans'
+})
+
+const fontDisplay = Bentham({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-display'
 })
 
 const title = "Borsatti's"
@@ -70,7 +76,8 @@ export default async function RootLayout({
       <body
         className={cn(
           'min-h-screen flex flex-col font-sans antialiased overflow-hidden',
-          fontSans.variable
+          fontSans.variable,
+          fontDisplay.variable
         )}
       >
         <ThemeProvider

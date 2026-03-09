@@ -150,7 +150,7 @@ export function ChatPanel({
     >
       {messages.length === 0 && (
         <div className="mb-10 flex flex-col items-center gap-4">
-          <h1 className="text-2xl font-medium text-foreground">
+          <h1 className="text-2xl font-display text-foreground">
             Explore luxury fashion insights
           </h1>
         </div>

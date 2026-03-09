@@ -3,6 +3,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme inline {
+  --font-display: var(--font-display);
+}
+
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
 :root {
   --background: oklch(0.99 0 0);
   --foreground: oklch(0 0 0);
