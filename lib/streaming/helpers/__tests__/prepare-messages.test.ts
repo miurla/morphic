@@ -38,6 +38,7 @@ describe('prepareMessages', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        projectId: null,
         createdAt: new Date(),
         messages: [
           {
@@ -115,6 +116,7 @@ describe('prepareMessages', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        projectId: null,
         createdAt: new Date(),
         messages: [
           {
@@ -214,6 +216,7 @@ describe('prepareMessages', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        projectId: null,
         createdAt: new Date(),
         messages: [
           {
@@ -320,6 +323,7 @@ describe('prepareMessages', () => {
         title: 'Empty Chat',
         userId,
         visibility: 'private',
+        projectId: null,
         createdAt: new Date(),
         messages: []
       }
@@ -345,6 +349,7 @@ describe('prepareMessages', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        projectId: null,
         createdAt: new Date(),
         messages: [
           {
@@ -410,6 +415,7 @@ describe('prepareMessages', () => {
           title: 'Untitled',
           userId,
           visibility: 'private',
+          projectId: null,
           createdAt: new Date()
         },
         message: {
@@ -452,6 +458,7 @@ describe('prepareMessages', () => {
         title: 'Existing Chat',
         userId,
         visibility: 'private',
+        projectId: null,
         createdAt: new Date(),
         messages: [
           {

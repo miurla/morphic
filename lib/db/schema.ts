@@ -22,6 +22,38 @@ const FILENAME_LENGTH = 1024
 // ID generation function
 export const generateId = () => createId()
 
+// Projects table
+export const projects = pgTable(
+  'projects',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    name: text('name').notNull(),
+    description: text('description'),
+    instructions: text('instructions'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+  },
+  table => [
+    index('projects_user_id_idx').on(table.userId),
+    index('projects_user_id_created_at_idx').on(
+      table.userId,
+      table.createdAt.desc()
+    ),
+    pgPolicy('users_manage_own_projects', {
+      as: 'permissive',
+      for: 'all',
+      to: 'public',
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    })
+  ]
+).enableRLS()
+
+export type Project = InferSelectModel<typeof projects>
+
 // Chats table
 export const chats = pgTable(
   'chats',
@@ -37,7 +69,11 @@ export const chats = pgTable(
       enum: ['public', 'private']
     })
       .notNull()
-      .default('private')
+      .default('private'),
+    projectId: varchar('project_id', { length: ID_LENGTH }).references(
+      () => projects.id,
+      { onDelete: 'set null' }
+    )
   },
   table => [
     // Indexes

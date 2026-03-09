@@ -20,21 +20,24 @@ const fixtures = {
       title: 'User 1 Private Chat',
       userId: 'user-123',
       visibility: 'private' as const,
-      createdAt: new Date()
+      createdAt: new Date(),
+      projectId: null
     },
     privateChat2: {
       id: 'private-chat-2',
       title: 'User 2 Private Chat',
       userId: 'user-456',
       visibility: 'private' as const,
-      createdAt: new Date()
+      createdAt: new Date(),
+      projectId: null
     },
     publicChat: {
       id: 'public-chat-1',
       title: 'Public Chat',
       userId: 'user-123',
       visibility: 'public' as const,
-      createdAt: new Date()
+      createdAt: new Date(),
+      projectId: null
     }
   },
   messages: {
@@ -243,7 +246,8 @@ describe('RLS Policies Integration Tests', () => {
         id: 'new-chat-1',
         title: 'New Chat',
         userId,
-        visibility: 'private' as const
+        visibility: 'private' as const,
+        projectId: null
       }
 
       const mockCreateChat = vi.spyOn(dbActions, 'createChat')

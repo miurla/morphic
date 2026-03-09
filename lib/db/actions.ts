@@ -12,8 +12,8 @@ import {
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
 
-import type { Chat, Message } from './schema'
-import { chats, generateId, messages, parts } from './schema'
+import type { Chat, Message, Project } from './schema'
+import { chats, generateId, messages, parts, projects } from './schema'
 import { withOptionalRLS, withRLS } from './with-rls'
 import { db } from '.'
 
@@ -437,5 +437,135 @@ export async function createChatWithFirstMessageTransaction({
 
     perfTime('DB - createChatWithFirstMessageTransaction completed', dbStart)
     return { chat, message: savedMessage }
+  })
+}
+
+// ─── Projects ───────────────────────────────────────────────────────────────
+
+/**
+ * Create a new project
+ */
+export async function createProject({
+  id = generateId(),
+  name,
+  userId,
+  description,
+  instructions
+}: {
+  id?: string
+  name: string
+  userId: string
+  description?: string
+  instructions?: string
+}): Promise<Project> {
+  return withRLS(userId, async tx => {
+    const [project] = await tx
+      .insert(projects)
+      .values({ id, name, userId, description, instructions })
+      .returning()
+    return project
+  })
+}
+
+/**
+ * Get all projects for a user (newest first)
+ */
+export async function getProjects(userId: string): Promise<Project[]> {
+  return withRLS(userId, async tx => {
+    return tx
+      .select()
+      .from(projects)
+      .where(eq(projects.userId, userId))
+      .orderBy(desc(projects.createdAt))
+  })
+}
+
+/**
+ * Get a single project (with ownership check)
+ */
+export async function getProject(
+  projectId: string,
+  userId: string
+): Promise<Project | undefined> {
+  return withRLS(userId, async tx => {
+    const [project] = await tx
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    return project
+  })
+}
+
+/**
+ * Get a project together with its chats
+ */
+export async function getProjectWithChats(
+  projectId: string,
+  userId: string
+): Promise<{ project: Project; chats: Chat[] } | undefined> {
+  return withRLS(userId, async tx => {
+    const [project] = await tx
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    if (!project) return undefined
+    const projectChats = await tx
+      .select()
+      .from(chats)
+      .where(and(eq(chats.projectId, projectId), eq(chats.userId, userId)))
+      .orderBy(desc(chats.createdAt))
+    return { project, chats: projectChats }
+  })
+}
+
+/**
+ * Update a project
+ */
+export async function updateProject(
+  projectId: string,
+  userId: string,
+  updates: Partial<Pick<Project, 'name' | 'description' | 'instructions'>>
+): Promise<Project | undefined> {
+  return withRLS(userId, async tx => {
+    const [updated] = await tx
+      .update(projects)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+      .returning()
+    return updated
+  })
+}
+
+/**
+ * Delete a project (chats are kept, their projectId is set to null via FK cascade)
+ */
+export async function deleteProject(
+  projectId: string,
+  userId: string
+): Promise<{ success: boolean }> {
+  return withRLS(userId, async tx => {
+    const result = await tx
+      .delete(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+      .returning({ id: projects.id })
+    return { success: result.length > 0 }
+  })
+}
+
+/**
+ * Assign or remove a chat from a project
+ */
+export async function updateChatProject(
+  chatId: string,
+  userId: string,
+  projectId: string | null
+): Promise<Chat | undefined> {
+  return withRLS(userId, async tx => {
+    const [updated] = await tx
+      .update(chats)
+      .set({ projectId })
+      .where(and(eq(chats.id, chatId), eq(chats.userId, userId)))
+      .returning()
+    return updated
   })
 }

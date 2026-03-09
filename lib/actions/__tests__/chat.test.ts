@@ -43,6 +43,7 @@ describe('Chat Actions', () => {
           title: 'Chat 1',
           userId,
           visibility: 'private',
+          projectId: null,
           createdAt: new Date()
         }
       ]
@@ -76,6 +77,7 @@ describe('Chat Actions', () => {
             title: 'Chat 1',
             userId,
             visibility: 'private' as const,
+            projectId: null,
             createdAt: new Date()
           }
         ],
@@ -110,6 +112,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private' as const,
+        projectId: null,
         createdAt: new Date(),
         messages: [
           {
@@ -139,6 +142,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId: 'user-123',
         visibility: 'public' as const,
+        projectId: null,
         createdAt: new Date(),
         messages: []
       }
@@ -165,6 +169,7 @@ describe('Chat Actions', () => {
         title,
         userId,
         visibility: 'private',
+        projectId: null,
         createdAt: new Date()
       }
 
@@ -191,6 +196,7 @@ describe('Chat Actions', () => {
         title: 'Untitled',
         userId,
         visibility: 'private',
+        projectId: null,
         createdAt: new Date()
       }
 
@@ -221,6 +227,7 @@ describe('Chat Actions', () => {
         title: 'Hello',
         userId,
         visibility: 'private',
+        projectId: null,
         createdAt: new Date()
       }
       const mockMessage: Message = {
@@ -274,6 +281,7 @@ describe('Chat Actions', () => {
           title,
           userId,
           visibility: 'private' as const,
+          projectId: null,
           createdAt: new Date()
         },
         message: {
@@ -417,6 +425,7 @@ describe('Chat Actions', () => {
           title: 'Chat 1',
           userId,
           visibility: 'private',
+          projectId: null,
           createdAt: new Date()
         },
         {
@@ -424,6 +433,7 @@ describe('Chat Actions', () => {
           title: 'Chat 2',
           userId,
           visibility: 'private',
+          projectId: null,
           createdAt: new Date()
         }
       ]
@@ -452,6 +462,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        projectId: null,
         createdAt: new Date()
       }
 
@@ -478,6 +489,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId: 'other-user',
         visibility: 'private',
+        projectId: null,
         createdAt: new Date()
       }
 
@@ -500,6 +512,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId,
         visibility: 'public',
+        projectId: null,
         createdAt: new Date()
       }
 
@@ -537,6 +550,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        projectId: null,
         createdAt: new Date()
       }
 
@@ -575,6 +589,7 @@ describe('Chat Actions', () => {
         title: generatedTitle,
         userId: 'user-123',
         visibility: 'private',
+        projectId: null,
         createdAt: new Date()
       })
 
@@ -598,6 +613,7 @@ describe('Chat Actions', () => {
         title: 'Existing Chat',
         userId: 'user-123',
         visibility: 'private',
+        projectId: null,
         createdAt: new Date()
       }
       const message: UIMessage = {
