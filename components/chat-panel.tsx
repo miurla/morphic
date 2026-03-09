@@ -44,6 +44,8 @@ interface ChatPanelProps {
   onNewChat?: () => void
   /** Whether the current session is guest */
   isGuest?: boolean
+  /** Authenticated user's display name */
+  userName?: string | null
 }
 
 export function ChatPanel({
@@ -62,7 +64,8 @@ export function ChatPanel({
   setUploadedFiles,
   scrollContainerRef,
   onNewChat,
-  isGuest = false
+  isGuest = false,
+  userName = null
 }: ChatPanelProps) {
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -149,10 +152,15 @@ export function ChatPanel({
       )}
     >
       {messages.length === 0 && (
-        <div className="mb-10 flex flex-col items-center gap-4">
-          <h1 className="text-2xl font-display text-foreground">
-            Explore luxury fashion insights
+        <div className="mb-10 flex flex-col items-center gap-2">
+          <h1 className="text-4xl font-display text-foreground">
+            Borsatti&apos;s
           </h1>
+          <p className="text-sm text-muted-foreground font-sans">
+            {userName
+              ? `Welcome back, ${userName.split(' ')[0]}`
+              : 'Your luxury fashion research engine'}
+          </p>
         </div>
       )}
       {uploadedFiles.length > 0 && (

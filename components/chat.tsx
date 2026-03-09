@@ -35,12 +35,14 @@ export function Chat({
   id: providedId,
   savedMessages = [],
   query,
-  isGuest = false
+  isGuest = false,
+  userName = null
 }: {
   id?: string
   savedMessages?: UIMessage[]
   query?: string
   isGuest?: boolean
+  userName?: string | null
 }) {
   const router = useRouter()
 
@@ -486,6 +488,7 @@ export function Chat({
         scrollContainerRef={scrollContainerRef}
         onNewChat={handleNewChat}
         isGuest={isGuest}
+        userName={userName}
       />
       <DragOverlay visible={dragHandlers.isDragging} />
       <ErrorModal
