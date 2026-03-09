@@ -81,9 +81,7 @@ export async function fetchDiscoverArticles(
         source: extractDomain(result.url),
         publishedDate: result.published_date,
         image:
-          imageUrls.length > 0
-            ? imageUrls[index % imageUrls.length]
-            : undefined
+          imageUrls.length > 0 ? imageUrls[index % imageUrls.length] : undefined
       })
     )
   } catch {
