@@ -4,9 +4,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 const TABS = [
   { id: 'for-you', label: 'For You' },
-  { id: 'top-stories', label: 'Top Stories' },
-  { id: 'tech-science', label: 'Tech & Science' },
-  { id: 'business', label: 'Business' }
+  { id: 'runway', label: 'Runway' },
+  { id: 'accessories', label: 'Accessories' },
+  { id: 'brands', label: 'Brands' },
+  { id: 'sustainability', label: 'Sustainability' }
 ]
 
 export function DiscoverTabs() {

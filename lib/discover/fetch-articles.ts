@@ -9,10 +9,10 @@ export interface DiscoverArticle {
 
 const CATEGORY_QUERIES: Record<string, string> = {
   'for-you': 'luxury fashion haute couture designer news latest 2025',
-  'top-stories': 'top trending news today 2025',
-  'tech-science':
-    'fashion technology sustainable innovation wearable tech 2025',
-  business: 'luxury fashion industry market business revenue 2025'
+  runway: 'runway show haute couture ready-to-wear fashion week 2025',
+  accessories: 'luxury handbags shoes jewellery watches accessories 2025',
+  brands: 'luxury fashion house heritage brand story designer 2025',
+  sustainability: 'sustainable luxury fashion ethical slow fashion 2025'
 }
 
 function extractDomain(url: string): string {
@@ -78,7 +78,10 @@ export async function fetchDiscoverArticles(
         content: result.content,
         source: extractDomain(result.url),
         publishedDate: result.published_date,
-        image: imageUrls[index]
+        image:
+          imageUrls.length > 0
+            ? imageUrls[index % imageUrls.length]
+            : undefined
       })
     )
   } catch {
