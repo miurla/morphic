@@ -55,7 +55,7 @@ export function ErrorModal({
       case 'rate-limit':
         return 'Rate Limit Exceeded'
       case 'auth':
-        return 'Continue with Morphic'
+        return "Continue with Borsatti's"
       case 'forbidden':
         return 'Access Denied'
       default:
@@ -71,7 +71,7 @@ export function ErrorModal({
           'You have made too many requests. Please wait a moment before trying again.'
         )
       case 'auth':
-        return 'To use Morphic, sign in to your account or create a new one.'
+        return "To use Borsatti's, sign in to your account or create a new one."
       case 'forbidden':
         return 'You do not have permission to access this resource.'
       default:

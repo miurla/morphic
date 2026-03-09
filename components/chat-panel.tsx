@@ -153,7 +153,7 @@ export function ChatPanel({
         <div className="mb-10 flex flex-col items-center gap-4">
           <IconBlinkingLogo className="size-12" />
           <h1 className="text-2xl font-medium text-foreground">
-            What would you like to know?
+            Explore luxury fashion insights
           </h1>
         </div>
       )}
@@ -200,7 +200,7 @@ export function ChatPanel({
             onCompositionEnd={handleCompositionEnd}
             onFocus={() => setIsInputFocused(true)}
             onBlur={() => setIsInputFocused(false)}
-            placeholder="Ask anything..."
+            placeholder="Ask about trends, brands, collections..."
             spellCheck={false}
             value={input}
             disabled={isLoading || isToolInvocationInProgress()}

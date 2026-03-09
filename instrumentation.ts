@@ -3,7 +3,7 @@ import { LangfuseExporter } from 'langfuse-vercel'
 
 export async function register() {
   registerOTel({
-    serviceName: 'morphic-ai-search',
+    serviceName: 'borsattis-ai-search',
     traceExporter: new LangfuseExporter()
   })
 
