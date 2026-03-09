@@ -29,8 +29,7 @@ const fontDisplay = Bentham({
 })
 
 const title = "Borsatti's"
-const description =
-  'AI-powered insights & research engine for luxury fashion.'
+const description = 'AI-powered insights & research engine for luxury fashion.'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://borsattis.com'),

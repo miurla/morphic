@@ -29,8 +29,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
             Continue with Borsatti&apos;s
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            To use Borsatti&apos;s, sign in to your account or create a new
-            one.
+            To use Borsatti&apos;s, sign in to your account or create a new one.
           </DialogDescription>
         </DialogHeader>
         <div className="mt-6 space-y-3">

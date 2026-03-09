@@ -54,10 +54,10 @@ const actionCategories: ActionCategory[] = [
 
 const promptSamples: Record<string, string[]> = {
   research: [
-    'What materials define Loro Piana\'s cashmere quality?',
+    "What materials define Loro Piana's cashmere quality?",
     'History and heritage of the Hermès Birkin bag',
     'How does Brunello Cucinelli source its raw materials?',
-    'What sets Berluti\'s patina leather apart?'
+    "What sets Berluti's patina leather apart?"
   ],
   compare: [
     'Chanel vs Louis Vuitton brand positioning',
