@@ -1,211 +1,405 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides instructions for AI coding agents (OpenAI Codex, Claude Code, Cursor, Amp, Jules, etc.) working in this repository.
+
+## Project Identity
+
+**Borsatti's** is a luxury fashion AI research assistant, forked from the open-source [Morphic](https://github.com/miurla/morphic) project. It is rebranded and extended for a luxury fashion / editorial audience — think *Business of Fashion*, *Vogue Business*, and haute couture research.
+
+- Live URL: **https://borsattis.com** (deployed on Vercel)
+- Runtime: Next.js 16 (App Router) + Bun + Vercel AI SDK 5
+
+---
 
 ## Key Commands
 
-### Development
+| Command | Purpose |
+|---|---|
+| `bun dev` | Start dev server with Turbopack at `http://localhost:3000` |
+| `bun run build` | Production build |
+| `bun start` | Start production server |
+| `bun lint` | ESLint (includes import sorting — run `bun lint --fix` to auto-sort) |
+| `bun typecheck` | TypeScript type checking |
+| `bun format` | Prettier formatting |
+| `bun format:check` | Check formatting without modifying |
+| `bun migrate` | Run database migrations |
+| `bun run test` | Run tests with **Vitest** (do NOT use `bun test`) |
+| `bun run test:watch` | Tests in watch mode |
 
-- `bun dev` - Start development server with Turbopack (http://localhost:3000)
-- `bun run build` - Create production build
-- `bun start` - Start production server
-- `bun lint` - Run ESLint for code quality checks and import sorting
-- `bun typecheck` - Run TypeScript type checking
-- `bun format` - Format code with Prettier
-- `bun format:check` - Check code formatting without modifying files
-- `bun migrate` - Run database migrations
-- `bun run test` - Run tests with Vitest (use this, NOT `bun test`)
-- `bun run test:watch` - Run tests in watch mode
-
-### Docker
-
-- `docker compose up -d` - Run the application with Docker (includes PostgreSQL 17, Redis, Morphic app, and SearXNG)
-- `docker compose down` - Stop all containers
-- `docker compose down -v` - Stop all containers and remove volumes (deletes database data)
-- `docker pull ghcr.io/miurla/morphic:latest` - Pull prebuilt Docker image
-
-#### Docker Authentication
-
-**Default Behavior**: Docker deployments run in **anonymous mode** (authentication disabled).
-
-When running with Docker Compose, `ENABLE_AUTH=false` is set by default, allowing personal use without Supabase setup. All users share a single anonymous user ID.
-
-**⚠️ Security Warning:**
-
-- Anonymous mode is **only for personal, single-user local environments**
-- All chat history is shared under one user ID
-- **NOT suitable** for multi-user or production deployments
-- Morphic Cloud deployments block `ENABLE_AUTH=false` automatically
-
-**Enabling Authentication:**
-To require Supabase authentication, set:
+### Pre-PR Checklist (all must pass before opening a PR)
 
 ```bash
-ENABLE_AUTH=true  # or remove ENABLE_AUTH from docker-compose.yaml
+bun lint
+bun typecheck
+bun format:check
+bun run build
+bun run test
+```
+
+Run `bun lint --fix` and `bun format` to auto-fix lint/formatting issues.
+
+---
+
+## Repository Layout
+
+```
+/app                      # Next.js App Router pages & API routes
+  /api/                   # Backend: chat, search, auth endpoints
+  /auth/                  # Auth pages (login, signup, reset)
+  /chats/                 # Chats list page (custom Borsatti's feature)
+  /discover/              # Discover news feed (custom Borsatti's feature)
+  /projects/              # Projects feature (custom Borsatti's feature)
+  /projects/[id]/         # Individual project view
+  /search/[id]/           # Individual search/chat page
+  /share/                 # Shareable result pages
+
+/components               # React components
+  app-sidebar.tsx         # Left sidebar — no B logo, "Borsatti's" at text-xl
+  /artifact/              # Search result & AI response display
+  /sidebar/               # Chat history section
+  /ui/                    # shadcn/ui primitives
+
+/lib                      # Core logic
+  /agents/                # AI agents (research, question generation)
+  /auth/                  # Auth helpers — get-current-user.ts
+  /config/                # Model config management
+  /db/                    # PostgreSQL + Drizzle ORM
+    schema.ts             # Database schema (includes Projects table)
+    migrations/           # Drizzle migrations
+  /actions/               # Server actions (chat-db.ts)
+  /streaming/             # Vercel AI SDK stream handling
+  /tools/                 # Search & retrieval tools
+  /types/                 # TypeScript type definitions
+  /schema/                # Zod validation schemas
+
+/public/config/           # models.json — AI model definitions
+/drizzle/                 # Drizzle migration files
+```
+
+---
+
+## Tech Stack
+
+- **Next.js 16.0.0** — App Router, React Server Components, Turbopack
+- **React 19.2.0** + TypeScript (strict mode)
+- **Vercel AI SDK 5.0.0-alpha.2** — AI streaming + GenerativeUI
+- **Supabase** — Auth + backend services
+- **PostgreSQL 17** + Drizzle ORM — database + chat history
+- **Redis** (Upstash or local) — SearXNG advanced search caching
+- **Tailwind CSS** + shadcn/ui
+- **Bun** — package manager and runtime
+- **Vitest** — test runner
+
+---
+
+## Borsatti's Customisations (vs. upstream Morphic)
+
+These are intentional customisations on top of upstream Morphic. Do **not** revert them.
+
+### Branding & UI
+
+- Brand name is **"Borsatti's"** everywhere (upstream was "Morphic")
+- **Bentham** display font (`font-display`) for headings and brand name
+- **Sidebar** (`components/app-sidebar.tsx`): no B lettermark icon; brand text at `text-xl`
+- **Homepage** (`app/page.tsx`): personalised luxury fashion welcome and prompt categories
+- **Action buttons**: luxury fashion prompt categories (not generic topics)
+- **Navbar**: feedback button removed
+
+### Pages Added
+
+| Page | Route | Description |
+|---|---|---|
+| Chats | `/chats` | Full chats list with search, multi-select, and delete |
+| Projects | `/projects` | Project grouping with DB, API, and UI |
+| Project Detail | `/projects/[id]` | Individual project view |
+| Discover | `/discover` | News feed with luxury fashion category tabs (BoF, Vogue Business, etc.) |
+
+### Sidebar Navigation
+
+Four nav items: **New**, **Chats**, **Projects**, **Discover** — each with a Lucide icon.
+
+### Database
+
+Custom `projects` table added to the Morphic base schema. Run `bun migrate` after pulling to apply. Schema: `lib/db/schema.ts`. Migrations: `/drizzle/`.
+
+### Deployment
+
+- Vercel config: `vercel.json`
+- `bun migrate` runs automatically as part of the Vercel build step
+
+---
+
+## Database
+
+### Connection
+
+The app uses **PostgreSQL 17** via Drizzle ORM (`drizzle-orm/postgres-js`).
+
+```bash
+# Primary (owner user — RLS bypassed, use for migrations only)
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+
+# Restricted (app_user — RLS enforced, preferred for runtime)
+DATABASE_RESTRICTED_URL=postgresql://app_user:password@host/database?sslmode=require
+```
+
+- At runtime, `DATABASE_RESTRICTED_URL` is preferred over `DATABASE_URL` (if set)
+- SSL is enabled by default for cloud DBs; set `DATABASE_SSL_DISABLED=true` for local/Docker PostgreSQL
+- Connection pool: max 20 connections (`lib/db/index.ts`)
+- All DB operations go through `lib/db/index.ts` which exports `db` (Drizzle instance)
+
+### Row-Level Security (RLS)
+
+All tables have PostgreSQL RLS enabled. Every runtime query must be wrapped in `withRLS(userId, callback)` from `lib/db/with-rls.ts`, which sets `app.current_user_id` for the transaction scope:
+
+```typescript
+import { withRLS } from '@/lib/db/with-rls'
+
+const result = await withRLS(userId, async (tx) => {
+  return tx.select().from(chats)
+})
+```
+
+Use `withOptionalRLS(userId | null, callback)` for operations that may be public (e.g. reading shared chats).
+
+### Schema (`lib/db/schema.ts`)
+
+IDs are generated with `createId()` from `@paralleldrive/cuid2`.
+
+#### `projects`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | varchar(191) PK | cuid2 |
+| `user_id` | varchar(255) NOT NULL | owner |
+| `name` | text NOT NULL | project display name |
+| `description` | text | optional |
+| `instructions` | text | system prompt / instructions for the project |
+| `created_at` | timestamp NOT NULL | default now |
+| `updated_at` | timestamp | nullable |
+
+Indexes: `projects_user_id_idx`, `projects_user_id_created_at_idx`
+RLS: users can only access their own projects (`user_id = app.current_user_id`)
+
+#### `chats`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | varchar(191) PK | cuid2 |
+| `created_at` | timestamp NOT NULL | default now |
+| `title` | text NOT NULL | |
+| `user_id` | varchar(255) NOT NULL | owner |
+| `visibility` | varchar enum `public\|private` | default `private` |
+| `project_id` | varchar(191) FK → projects.id | nullable, SET NULL on delete |
+
+Indexes: `chats_user_id_idx`, `chats_user_id_created_at_idx`, `chats_created_at_idx`, `chats_id_user_id_idx`
+RLS: users manage own chats; `public` chats are readable by all
+
+#### `messages`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | varchar(191) PK | cuid2 |
+| `chat_id` | varchar(191) FK → chats.id | CASCADE DELETE |
+| `role` | varchar | `user`, `assistant`, `system`, `tool` |
+| `created_at` | timestamp NOT NULL | |
+| `updated_at` | timestamp | |
+| `metadata` | jsonb | arbitrary key-value metadata |
+
+Indexes: `messages_chat_id_idx`, `messages_chat_id_created_at_idx`
+RLS: accessible if user owns the parent chat
+
+#### `parts`
+Message parts (the actual content chunks of a message). One message has many ordered parts.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | varchar(191) PK | |
+| `message_id` | varchar(191) FK → messages.id | CASCADE DELETE |
+| `order` | integer NOT NULL | sort order within message |
+| `type` | varchar NOT NULL | see part types below |
+| `created_at` | timestamp NOT NULL | |
+
+**Part types and their columns:**
+
+| Type | Columns |
+|---|---|
+| `text` | `text_text` |
+| `reasoning` | `reasoning_text` |
+| `file` | `file_media_type`, `file_filename`, `file_url` |
+| `source-url` | `source_url_sourceId`, `source_url_url`, `source_url_title` |
+| `source-document` | `source_document_*` (sourceId, mediaType, title, filename, url, snippet) |
+| `tool-*` | `tool_toolCallId`, `tool_state`, `tool_errorText`, plus tool-specific input/output JSON |
+| `data` | `data_prefix`, `data_content`, `data_id` |
+
+Tool-specific columns: `tool_search_input/output`, `tool_fetch_input/output`, `tool_question_input/output`, `tool_todoWrite_input/output`, `tool_todoRead_input/output`, `tool_dynamic_*`
+
+Valid `tool_state` values: `input-streaming`, `input-available`, `output-available`, `output-error`
+
+Indexes: `parts_message_id_idx`, `parts_message_id_order_idx`
+RLS: accessible if user owns the parent chat (via messages join)
+
+#### `feedback`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | varchar(191) PK | |
+| `user_id` | varchar(255) | nullable |
+| `sentiment` | varchar enum `positive\|neutral\|negative` NOT NULL | |
+| `message` | text NOT NULL | |
+| `page_url` | text NOT NULL | |
+| `user_agent` | text | |
+| `created_at` | timestamp NOT NULL | |
+
+RLS: anyone can insert; anyone can select
+
+### Relations (`lib/db/relations.ts`)
+
+```
+projects  ──< chats  ──< messages  ──< parts
+```
+
+- `projects` → many `chats`
+- `chats` → one `project` (optional), many `messages`
+- `messages` → one `chat`, many `parts`
+- `parts` → one `message`
+
+### Database Actions
+
+| File | Purpose |
+|---|---|
+| `lib/db/actions.ts` | Low-level DB read/write operations |
+| `lib/actions/chat.ts` | Chat CRUD server actions |
+| `lib/actions/project.ts` | Project CRUD server actions |
+| `lib/actions/feedback.ts` | Feedback submission |
+| `lib/actions/site-feedback.ts` | Site-level feedback |
+
+### API Routes
+
+| Route | Method | Purpose |
+|---|---|---|
+| `/api/chat` | POST | Main chat/search endpoint (streaming) |
+| `/api/chats` | GET/DELETE | List and delete chats |
+| `/api/projects` | GET/POST | List and create projects |
+| `/api/projects/[id]` | GET/PUT/DELETE | Project detail operations |
+| `/api/discover` | GET | Discover feed articles |
+| `/api/advanced-search` | POST | Advanced search with SearXNG |
+| `/api/feedback` | POST | Submit feedback |
+| `/api/upload` | POST | File upload (Cloudflare R2) |
+
+### Migrations
+
+- Migration files: `/drizzle/*.sql`
+- Generate: `bunx drizzle-kit generate`
+- Apply: `bun migrate` (runs `lib/db/migrate.ts`)
+- Schema source of truth: `lib/db/schema.ts`
+- Latest migration: `0011_concerned_ben_parker.sql`
+- **Always run `bun migrate` after pulling schema changes**
+
+---
+
+## File Upload Integration (Cloudflare R2)
+
+Optional. Required env vars:
+
+```bash
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=user-uploads  # default
+R2_PUBLIC_URL=               # e.g. https://pub-xxx.r2.dev
+```
+
+---
+
+## AI & Search Configuration
+
+### Required Environment Variables
+
+```bash
+OPENAI_API_KEY=       # Default AI provider
+TAVILY_API_KEY=       # Default search provider
+DATABASE_URL=         # PostgreSQL connection string
+```
+
+### Search Providers
+
+| Provider | Env Var | Notes |
+|---|---|---|
+| Tavily (default) | `TAVILY_API_KEY` | Default |
+| Exa | `EXA_API_KEY` | Neural search alternative |
+| SearXNG | `SEARXNG_API_URL` | Self-hosted |
+| Brave | `BRAVE_SEARCH_API_KEY` | Optional; best for video/image |
+| Firecrawl | `FIRECRAWL_API_KEY` | Web scraping alternative |
+
+### AI Providers
+
+| Provider | Env Var |
+|---|---|
+| OpenAI (default) | `OPENAI_API_KEY` |
+| Anthropic | `ANTHROPIC_API_KEY` |
+| Google Gemini | `GOOGLE_GENERATIVE_AI_API_KEY` |
+| Ollama (local) | `OLLAMA_BASE_URL` |
+
+Model definitions live in `public/config/models.json` with fields: `id`, `provider`, `providerId`, `enabled`, `toolCallType`, `toolCallModel`.
+
+### Optional Features
+
+- Chat history persistence: `ENABLE_SAVE_CHAT_HISTORY=true` + Redis
+- Sharing: `NEXT_PUBLIC_ENABLE_SHARE=true`
+- Langfuse tracing: `ENABLE_LANGFUSE_TRACING=true`
+
+---
+
+## Authentication
+
+Default: **anonymous mode** (`ENABLE_AUTH=false`) — single shared user ID for personal use only. Auth logic: `lib/auth/get-current-user.ts:22-40`.
+
+To enable Supabase auth:
+
+```bash
+ENABLE_AUTH=true
 NEXT_PUBLIC_SUPABASE_URL=[your-supabase-url]
 NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-supabase-anon-key]
 ```
 
-**Implementation:**
+Anonymous mode is **not** suitable for multi-user or production deployments.
 
-- Auth logic: [lib/auth/get-current-user.ts:22-40](lib/auth/get-current-user.ts#L22-L40)
-- Always warns when `ENABLE_AUTH=false` (except in tests)
-- Guards against `MORPHIC_CLOUD_DEPLOYMENT=true`
+---
 
-## Architecture Overview
+## Testing
 
-### Tech Stack
+- Framework: **Vitest** — do NOT use `bun test` (that invokes Bun's built-in runner, which lacks Vitest features)
+- Run: `bun run test`
+- Test files: co-located with source, `.test.ts` / `.test.tsx` extension
+- CI runs `bun run test` on every PR
 
-- **Next.js 16.0.0** with App Router, React Server Components, and Turbopack
-- **React 19.2.0** with TypeScript for type safety
-- **Vercel AI SDK 5.0.0-alpha.2** for AI streaming and GenerativeUI
-- **Supabase** for authentication and backend services
-- **PostgreSQL** with Drizzle ORM for database and chat history storage
-- **Redis** (Upstash or local) for SearXNG advanced search caching
-- **Tailwind CSS** with shadcn/ui components
+---
 
-### Core Architecture
+## MCP (Model Context Protocol)
 
-1. **App Router Structure** (`/app`)
-   - `/api/` - Backend API routes for chat, search, and auth endpoints
-   - `/auth/` - Authentication pages (login, signup, password reset)
-   - `/search/` - Search functionality and results display
-   - `/share/` - Sharing functionality for search results
+Next.js 16 exposes a built-in MCP server at `http://localhost:3000/_next/mcp` when the dev server is running. No extra configuration needed.
 
-2. **AI Integration** (`/lib`)
-   - `/lib/agents/` - AI agents for research and question generation
-   - `/lib/config/` - Model configuration management
-   - `/lib/streaming/` - Stream handling for AI responses
-   - `/lib/tools/` - Search and retrieval tool implementations
-   - Models configured in `public/config/models.json`
+Available tools:
+- `get_errors` — current build/runtime errors
+- `get_project_metadata` — project path and dev URL
+- `get_page_metadata` — runtime page render info
+- `get_logs` — dev log file path
+- `get_server_action_by_id` — locate server actions by ID
 
-3. **Database** (`/lib/db`)
-   - PostgreSQL database with Drizzle ORM
-   - Schema defined in `/lib/db/schema.ts`
-   - Migrations in `/lib/db/migrations/`
-   - Database actions in `/lib/actions/chat-db.ts`
+The `.mcp.json` in the project root also enables the Next DevTools MCP package for AI assistants that support project-scoped MCP servers.
 
-4. **Search System**
-   - Multiple providers: Tavily (default), SearXNG (self-hosted), Exa (neural), Brave (optional)
-   - Brave Search is optional; if API key is not provided, type="general" searches fall back to primary provider
-   - Video/image search support depends on configured providers (Brave provides best multimedia support)
-   - URL-specific search capabilities
-   - Configurable search depth and result limits
+---
 
-5. **Component Organization** (`/components`)
-   - `/artifact/` - Search result and AI response display components
-   - `/sidebar/` - Chat history and navigation
-   - `/ui/` - Reusable UI components from shadcn/ui
-   - Feature-specific components (auth forms, chat interfaces)
+## Code Style & Conventions
 
-6. **State Management**
-   - Server-side state via React Server Components
-   - Client-side hooks in `/hooks/`
-   - Redis for persistent chat history
-   - Supabase for user data
+- **Imports**: sorted by `eslint-plugin-simple-import-sort`; run `bun lint --fix` to auto-sort
+- **Formatting**: Prettier; run `bun format` to fix
+- **Types**: strict TypeScript; avoid `any`
+- **Validation**: Zod for all external/user data (`/lib/schema/`)
+- **Components**: prefer React Server Components; use `"use client"` only when necessary
+- **No dead code**: remove unused imports, variables, and files when you encounter them
+- **No over-engineering**: minimal complexity for the task at hand; no premature abstraction
 
-## Environment Configuration
+## PR Messages
 
-### Required Variables
-
-```bash
-OPENAI_API_KEY=      # Default AI provider
-TAVILY_API_KEY=      # Default search provider
-DATABASE_URL=        # PostgreSQL connection string
-```
-
-### Optional Features
-
-- Chat history: Set `ENABLE_SAVE_CHAT_HISTORY=true` and configure Redis
-- Alternative AI providers: Add corresponding API keys (ANTHROPIC_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, etc.)
-- Alternative search: Configure SEARCH_API and provider-specific settings
-- Sharing: Set `NEXT_PUBLIC_ENABLE_SHARE=true`
-
-## Key Development Patterns
-
-1. **AI Streaming**: Uses Vercel AI SDK's streaming capabilities for real-time responses
-2. **GenerativeUI**: Dynamic UI components generated based on AI responses
-3. **Type Safety**: Strict TypeScript configuration with comprehensive type definitions in `/lib/types/`
-4. **Schema Validation**: Zod schemas in `/lib/schema/` for data validation
-5. **Error Handling**: Comprehensive error boundaries and fallback UI components
-
-## Testing Approach
-
-- Unit and integration tests with Vitest
-- Test files located alongside source files with `.test.ts` or `.test.tsx` extension
-- **Run `bun run test` to execute all tests** (NOT `bun test` - that uses Bun's built-in test runner which lacks Vitest features)
-- Run `bun run test:watch` for development with watch mode
-- CI automatically runs `bun run test` to ensure all tests pass
-
-## Pre-PR Requirements
-
-Before creating a pull request, you MUST ensure all of the following checks pass:
-
-1. **Linting**: Run `bun lint` and fix all ESLint errors and warnings (includes import sorting)
-2. **Type checking**: Run `bun typecheck` to ensure no TypeScript errors
-3. **Formatting**: Run `bun format:check` to verify code formatting (or `bun format` to auto-fix)
-4. **Build**: Run `bun run build` to ensure the application builds successfully
-5. **Tests**: Run `bun run test` to ensure all tests pass
-
-These checks are enforced in CI/CD and PRs will fail if any of these steps don't pass.
-
-Note: Import sorting is handled by ESLint using `eslint-plugin-simple-import-sort`. Run `bun lint --fix` to automatically sort imports according to the configured order.
-
-## Model Configuration
-
-Models are defined in `public/config/models.json` with:
-
-- `id`: Model identifier
-- `provider`: Display name
-- `providerId`: Provider key for API routing
-- `enabled`: Toggle availability
-- `toolCallType`: "native" or "manual" for function calling
-- `toolCallModel`: Optional override for tool calls
-
-## Database Management
-
-- Run `bun migrate` to apply database migrations
-- Migrations are located in `/drizzle/` directory
-- Schema changes should be made in `/lib/db/schema.ts`
-- Use Drizzle Kit for generating migrations
-
-## MCP (Model Context Protocol) Integration
-
-This project supports MCP for enhanced AI assistant integration with Next.js 16.
-
-### Built-in Next.js MCP Server
-
-Next.js 16 provides a built-in MCP server at `http://localhost:3000/_next/mcp` when the dev server is running.
-
-**Available Tools:**
-
-- `get_project_metadata` - Get project path and dev server URL
-- `get_errors` - Retrieve current error state (global errors, runtime errors, build errors)
-- `get_page_metadata` - Get runtime metadata about current page renders
-- `get_logs` - Access Next.js development log file path
-- `get_server_action_by_id` - Locate Server Actions by ID
-
-**Usage:**
-
-1. Start the dev server: `bun dev`
-2. MCP endpoint is automatically available at `/_next/mcp`
-3. AI assistants can query real-time app state, errors, and logs
-
-### Next DevTools MCP (External)
-
-The project includes `.mcp.json` configuration for the Next DevTools MCP package, which provides:
-
-- Next.js knowledge base access
-- Automated migration tools
-- Cache optimization guides
-- Browser testing capabilities
-
-**Setup:**
-The `.mcp.json` file in the project root enables team-wide MCP tool sharing. AI assistants like Claude Code will prompt for approval before using project-scoped servers.
-
-**Benefits:**
-
-- Real-time access to application internal state
-- Improved debugging and error diagnostics
-- Context-aware code suggestions
-- Live application state querying
+When creating a PR, include:
+1. Short title (≤70 chars) describing the change
+2. Summary of what changed and why
+3. Test plan — what was tested and how to verify
