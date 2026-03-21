@@ -42,45 +42,45 @@ export function ChatArtifactContainer({
   children: React.ReactNode
 }) {
   const { state } = useArtifact()
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerElement, setContainerElement] =
+    useState<HTMLDivElement | null>(null)
+  const hasAppliedSavedWidthRef = useRef(false)
   const [width, setWidth] = useState(DEFAULT_WIDTH)
   const [isResizing, setIsResizing] = useState(false)
   const hasUser = useHasUser()
   const { open, isMobile: isMobileSidebar } = useSidebar()
 
-  // Load saved width after hydration
-  useEffect(() => {
-    const savedWidth = localStorage.getItem('artifactPanelWidth')
-    if (savedWidth) {
-      const parsedWidth = parseInt(savedWidth, 10)
-      // Ensure parsedWidth is at least MIN_WIDTH to prevent invalid panel states
-      if (
-        !isNaN(parsedWidth) &&
-        parsedWidth >= MIN_WIDTH &&
-        parsedWidth <= MAX_WIDTH
-      ) {
-        // Clamp against available space considering chat minimum width
-        const containerRect = containerRef.current?.getBoundingClientRect()
-        if (containerRect) {
-          const { allowedMin, allowedMax } = getAllowedWidthBounds(
-            containerRect.width
-          )
-          const clamped = Math.min(
-            Math.max(parsedWidth, allowedMin),
-            allowedMax
-          )
-          setWidth(clamped)
-        } else {
-          setWidth(parsedWidth)
-        }
-      }
+  const setContainerRef = useCallback((node: HTMLDivElement | null) => {
+    setContainerElement(node)
+
+    if (!node || hasAppliedSavedWidthRef.current) {
+      return
     }
+
+    hasAppliedSavedWidthRef.current = true
+
+    const savedWidth = localStorage.getItem('artifactPanelWidth')
+    if (!savedWidth) {
+      return
+    }
+
+    const parsedWidth = parseInt(savedWidth, 10)
+    if (
+      isNaN(parsedWidth) ||
+      parsedWidth < MIN_WIDTH ||
+      parsedWidth > MAX_WIDTH
+    ) {
+      return
+    }
+
+    const { allowedMin, allowedMax } = getAllowedWidthBounds(node.clientWidth)
+    const clampedWidth = Math.min(Math.max(parsedWidth, allowedMin), allowedMax)
+    setWidth(clampedWidth)
   }, [])
 
   // Keep width in bounds when container resizes (e.g., window resize)
   useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
+    if (!containerElement) return
     const ro = new ResizeObserver(entries => {
       for (const entry of entries) {
         const { allowedMin, allowedMax } = getAllowedWidthBounds(
@@ -89,9 +89,9 @@ export function ChatArtifactContainer({
         setWidth(prev => Math.min(Math.max(prev, allowedMin), allowedMax))
       }
     })
-    ro.observe(el)
+    ro.observe(containerElement)
     return () => ro.disconnect()
-  }, [])
+  }, [containerElement])
 
   const startResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -102,7 +102,7 @@ export function ChatArtifactContainer({
     if (!isResizing) return
 
     const handleMouseMove = (e: MouseEvent) => {
-      const containerRect = containerRef.current?.getBoundingClientRect()
+      const containerRect = containerElement?.getBoundingClientRect()
       if (containerRect) {
         const newWidth = containerRect.right - e.clientX
         const { allowedMin, allowedMax } = getAllowedWidthBounds(
@@ -128,7 +128,7 @@ export function ChatArtifactContainer({
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isResizing])
+  }, [containerElement, isResizing])
 
   return (
     <div className="flex-1 min-h-0 min-w-0 h-screen flex">
@@ -140,7 +140,7 @@ export function ChatArtifactContainer({
 
       {/* Desktop: Independent panels like morphic-studio */}
       <div
-        ref={containerRef}
+        ref={setContainerRef}
         className="hidden md:flex flex-1 min-w-0 overflow-hidden"
       >
         {/* Chat Panel - Independent container */}

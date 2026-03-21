@@ -41,6 +41,7 @@ type NormalizedImage = { id: string; url: string; description: string }
 type FilterStatus = 'loading' | 'ready' | 'empty'
 
 interface FilteredImagesState {
+  key: string
   status: FilterStatus
   images: NormalizedImage[]
 }
@@ -70,47 +71,34 @@ const normalizeImages = (images: SearchResultImage[]): NormalizedImage[] => {
 
 const useFilteredImages = (images: SearchResultImage[]) => {
   const normalizedImages = useMemo(() => normalizeImages(images), [images])
-  const previousIdsRef = useRef<string | null>(null)
+  const normalizedKey = useMemo(
+    () => normalizedImages.map(image => image.id).join('|'),
+    [normalizedImages]
+  )
+  const [removedState, setRemovedState] = useState<{
+    key: string
+    ids: string[]
+  }>({
+    key: '',
+    ids: []
+  })
 
   const [state, setState] = useState<FilteredImagesState>(() => ({
+    key: '',
     status: normalizedImages.length === 0 ? 'empty' : 'loading',
     images: []
   }))
 
   useEffect(() => {
-    const normalizedKey = normalizedImages.map(image => image.id).join('|')
-
-    if (normalizedImages.length === 0) {
-      setState({ status: 'empty', images: [] })
-      previousIdsRef.current = normalizedKey
+    if (normalizedImages.length === 0 || typeof window === 'undefined') {
       return
     }
 
-    if (typeof window === 'undefined') {
-      setState({ status: 'ready', images: normalizedImages })
-      previousIdsRef.current = normalizedKey
+    if (state.key === normalizedKey) {
       return
     }
-
-    if (previousIdsRef.current === normalizedKey) {
-      setState(prevState => {
-        if (prevState.status === 'ready') {
-          return prevState
-        }
-
-        return {
-          status: 'ready',
-          images:
-            prevState.images.length > 0 ? prevState.images : normalizedImages
-        }
-      })
-      return
-    }
-
-    previousIdsRef.current = normalizedKey
 
     let cancelled = false
-    setState({ status: 'loading', images: [] })
 
     const preloadImage = (image: NormalizedImage) =>
       new Promise<NormalizedImage | null>(resolve => {
@@ -131,39 +119,51 @@ const useFilteredImages = (images: SearchResultImage[]) => {
       }
 
       const validImages = results.filter(Boolean) as NormalizedImage[]
-      if (validImages.length === 0) {
-        setState({ status: 'empty', images: [] })
-        return
-      }
-
-      setState({ status: 'ready', images: validImages })
+      setState({
+        key: normalizedKey,
+        status: validImages.length === 0 ? 'empty' : 'ready',
+        images: validImages
+      })
     })
 
     return () => {
       cancelled = true
     }
-  }, [normalizedImages])
+  }, [normalizedImages, normalizedKey, state.key])
 
-  const removeImage = useCallback((id: string) => {
-    setState(prevState => {
-      if (prevState.status === 'loading') {
-        return prevState
-      }
+  const removeImage = useCallback(
+    (id: string) => {
+      setRemovedState(prevState => {
+        const ids = prevState.key === normalizedKey ? prevState.ids : []
+        return ids.includes(id)
+          ? { key: normalizedKey, ids }
+          : { key: normalizedKey, ids: [...ids, id] }
+      })
+    },
+    [normalizedKey]
+  )
 
-      const remaining = prevState.images.filter(image => image.id !== id)
-      return {
-        status: remaining.length === 0 ? 'empty' : 'ready',
-        images: remaining
-      }
-    })
-  }, [])
-
-  const displayImages =
-    state.status === 'loading' ? normalizedImages : state.images
+  const sourceImages =
+    state.key === normalizedKey && state.status !== 'loading'
+      ? state.images
+      : normalizedImages
+  const removedIds = removedState.key === normalizedKey ? removedState.ids : []
+  const visibleImages = sourceImages.filter(
+    image => !removedIds.includes(image.id)
+  )
+  const status: FilterStatus =
+    visibleImages.length === 0
+      ? 'empty'
+      : state.key === normalizedKey && state.status !== 'loading'
+        ? state.status
+        : normalizedImages.length === 0
+          ? 'empty'
+          : 'loading'
+  const displayImages = status === 'loading' ? normalizedImages : visibleImages
 
   return {
-    status: state.status,
-    filteredImages: state.images,
+    status,
+    filteredImages: visibleImages,
     displayImages,
     removeImage
   }
@@ -180,17 +180,10 @@ const useCarouselMetrics = ({
   selectedIndex: number
   setSelectedIndex: Dispatch<SetStateAction<number>>
 }) => {
-  const [current, setCurrent] = useState(() =>
-    imageCount > 0 ? Math.min(selectedIndex + 1, imageCount) : 0
-  )
+  const [current, setCurrent] = useState<number | null>(null)
 
   useEffect(() => {
     if (!api) {
-      if (imageCount === 0) {
-        setCurrent(0)
-      } else {
-        setCurrent(Math.min(selectedIndex + 1, imageCount))
-      }
       return
     }
 
@@ -204,7 +197,7 @@ const useCarouselMetrics = ({
     return () => {
       api.off('select', handleSelect)
     }
-  }, [api, imageCount, selectedIndex])
+  }, [api])
 
   useEffect(() => {
     setSelectedIndex(prevIndex => {
@@ -217,9 +210,6 @@ const useCarouselMetrics = ({
 
   useEffect(() => {
     if (!api || imageCount === 0) {
-      if (imageCount === 0) {
-        setCurrent(0)
-      }
       return
     }
 
@@ -227,7 +217,10 @@ const useCarouselMetrics = ({
     api.scrollTo(clampedIndex, false)
   }, [api, selectedIndex, imageCount])
 
-  return { current }
+  const currentValue =
+    imageCount === 0 ? 0 : (current ?? Math.min(selectedIndex + 1, imageCount))
+
+  return { current: currentValue }
 }
 
 const cornerClassForIndex = (actualIndex: number, isFullMode: boolean) => {
