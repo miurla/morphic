@@ -37,7 +37,7 @@ An AI-powered search engine with a generative UI.
 - AI-powered search with GenerativeUI
 - Natural language question understanding
 - Multiple search providers support (Tavily, Brave, SearXNG, Exa)
-- Search modes: Quick, Planning, and Adaptive
+- Search modes: Quick and Adaptive
 - Model type selection: Speed vs Quality
 - Inspector panel for tool execution and AI processing details
 

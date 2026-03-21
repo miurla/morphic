@@ -56,7 +56,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-supabase-anon-key]
 
 ### Tech Stack
 
-- **Next.js 16.0.0** with App Router, React Server Components, and Turbopack
+- **Next.js 16.2.1** with App Router, React Server Components, and Turbopack
 - **React 19.2.0** with TypeScript for type safety
 - **Vercel AI SDK 5.0.0-alpha.2** for AI streaming and GenerativeUI
 - **Supabase** for authentication and backend services
