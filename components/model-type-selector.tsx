@@ -1,11 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 
 import { Check, ChevronDown } from 'lucide-react'
 
 import { ModelType } from '@/lib/types/model-type'
-import { getCookie, setCookie } from '@/lib/utils/cookies'
+import {
+  getCookie,
+  setCookie,
+  subscribeToCookieChange
+} from '@/lib/utils/cookies'
 
 import { Button } from './ui/button'
 import {
@@ -25,29 +29,32 @@ export function ModelTypeSelector({
 }: {
   disabled?: boolean
 }) {
-  const [value, setValue] = useState<ModelType>('speed')
+  const value = useSyncExternalStore(
+    subscribeToCookieChange,
+    () => {
+      const savedType = getCookie('modelType')
+      return savedType === 'quality' ? 'quality' : 'speed'
+    },
+    () => 'speed'
+  )
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   useEffect(() => {
     if (disabled) {
-      setValue('speed')
       setCookie('modelType', 'speed')
-      return
-    }
-    const savedType = getCookie('modelType')
-    if (savedType && ['speed', 'quality'].includes(savedType)) {
-      setValue(savedType as ModelType)
     }
   }, [disabled])
 
   const handleTypeSelect = (type: ModelType) => {
     if (disabled) return
-    setValue(type)
     setCookie('modelType', type)
     setDropdownOpen(false)
   }
 
-  const selectedOption = MODEL_TYPE_OPTIONS.find(opt => opt.value === value)
+  const selectedValue = disabled ? 'speed' : value
+  const selectedOption = MODEL_TYPE_OPTIONS.find(
+    opt => opt.value === selectedValue
+  )
 
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
@@ -71,7 +78,7 @@ export function ModelTypeSelector({
         sideOffset={5}
       >
         {MODEL_TYPE_OPTIONS.map(option => {
-          const isSelected = value === option.value
+          const isSelected = selectedValue === option.value
           return (
             <DropdownMenuItem
               key={option.value}

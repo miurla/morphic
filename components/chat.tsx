@@ -242,20 +242,23 @@ export function Chat({
     const container = scrollContainerRef.current
     if (!container) return
 
-    const handleScroll = () => {
+    const updateIsAtBottom = () => {
       const { scrollTop, scrollHeight, clientHeight } = container
       const threshold = 50 // threshold in pixels
-      if (scrollHeight - scrollTop - clientHeight < threshold) {
-        setIsAtBottom(true)
-      } else {
-        setIsAtBottom(false)
-      }
+      setIsAtBottom(scrollHeight - scrollTop - clientHeight < threshold)
+    }
+
+    const handleScroll = () => {
+      updateIsAtBottom()
     }
 
     container.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll() // Set initial state
+    const frame = requestAnimationFrame(updateIsAtBottom)
 
-    return () => container.removeEventListener('scroll', handleScroll)
+    return () => {
+      cancelAnimationFrame(frame)
+      container.removeEventListener('scroll', handleScroll)
+    }
   }, [messages.length])
 
   // Check scroll position when messages change (during generation)
@@ -263,13 +266,13 @@ export function Chat({
     const container = scrollContainerRef.current
     if (!container) return
 
-    const { scrollTop, scrollHeight, clientHeight } = container
-    const threshold = 50
-    if (scrollHeight - scrollTop - clientHeight < threshold) {
-      setIsAtBottom(true)
-    } else {
-      setIsAtBottom(false)
-    }
+    const frame = requestAnimationFrame(() => {
+      const { scrollTop, scrollHeight, clientHeight } = container
+      const threshold = 50
+      setIsAtBottom(scrollHeight - scrollTop - clientHeight < threshold)
+    })
+
+    return () => cancelAnimationFrame(frame)
   }, [messages])
 
   // Scroll to the section when a new user message is sent

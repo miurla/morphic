@@ -1,13 +1,17 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 
 import { Check, ChevronDown } from 'lucide-react'
 
 import { SEARCH_MODE_CONFIGS } from '@/lib/config/search-modes'
 import { SearchMode } from '@/lib/types/search'
 import { cn } from '@/lib/utils'
-import { getCookie, setCookie } from '@/lib/utils/cookies'
+import {
+  getCookie,
+  setCookie,
+  subscribeToCookieChange
+} from '@/lib/utils/cookies'
 
 import { Button } from './ui/button'
 import {
@@ -19,42 +23,27 @@ import {
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card'
 
 export function SearchModeSelector() {
-  const [value, setValue] = useState<SearchMode>('quick')
-  const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({})
+  const value = useSyncExternalStore(
+    subscribeToCookieChange,
+    () => {
+      const savedMode = getCookie('searchMode')
+      return savedMode === 'adaptive' ? 'adaptive' : 'quick'
+    },
+    () => 'quick'
+  )
   const [openHoverCard, setOpenHoverCard] = useState<string | null>(null)
   const [justSelected, setJustSelected] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const buttonsRef = useRef<(HTMLButtonElement | null)[]>([])
 
   useEffect(() => {
     const savedMode = getCookie('searchMode')
-    if (savedMode && ['quick', 'adaptive'].includes(savedMode)) {
-      setValue(savedMode as SearchMode)
-    } else if (savedMode) {
+    if (savedMode && !['quick', 'adaptive'].includes(savedMode)) {
       // Clean up invalid cookie value (e.g., old 'planning' mode)
       setCookie('searchMode', 'quick')
-      setValue('quick')
     }
   }, [])
 
-  useEffect(() => {
-    // Update indicator position when value changes
-    const selectedIndex = SEARCH_MODE_CONFIGS.findIndex(
-      config => config.value === value
-    )
-    const selectedButton = buttonsRef.current[selectedIndex]
-
-    if (selectedButton) {
-      const { offsetLeft, offsetWidth } = selectedButton
-      setIndicatorStyle({
-        transform: `translateX(${offsetLeft}px)`,
-        width: `${offsetWidth}px`
-      })
-    }
-  }, [value])
-
   const handleModeSelect = (mode: SearchMode) => {
-    setValue(mode)
     setCookie('searchMode', mode)
     setOpenHoverCard(null) // Close hover card on selection
     setDropdownOpen(false) // Close dropdown on selection
@@ -70,6 +59,14 @@ export function SearchModeSelector() {
     config => config.value === value
   )
   const SelectedIcon = selectedMode?.icon
+  const selectedIndex = Math.max(
+    SEARCH_MODE_CONFIGS.findIndex(config => config.value === value),
+    0
+  )
+  const indicatorStyle = {
+    width: `${100 / SEARCH_MODE_CONFIGS.length}%`,
+    transform: `translateX(${selectedIndex * 100}%)`
+  }
 
   return (
     <>
@@ -159,12 +156,9 @@ export function SearchModeSelector() {
                   <HoverCardTrigger asChild>
                     <button
                       type="button"
-                      ref={el => {
-                        buttonsRef.current[index] = el
-                      }}
                       onClick={() => handleModeSelect(config.value)}
                       className={cn(
-                        'relative z-10 flex items-center justify-center rounded-full px-3 py-2 transition-colors duration-200',
+                        'relative z-10 flex-1 items-center justify-center rounded-full px-3 py-2 transition-colors duration-200',
                         isSelected
                           ? 'text-foreground'
                           : 'text-muted-foreground hover:text-foreground/80'

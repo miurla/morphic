@@ -35,34 +35,37 @@ export function VideoCarouselDialog({
   initialIndex = 0 // Default to 0
 }: VideoCarouselDialogProps) {
   const [api, setApi] = useState<CarouselApi>()
-  const [current, setCurrent] = useState(initialIndex + 1) // Initialize with initialIndex
-  const [count, setCount] = useState(0)
+  const [current, setCurrent] = useState(initialIndex + 1)
   const videoRefs = useRef<(HTMLIFrameElement | null)[]>([])
+  const previousIndexRef = useRef(initialIndex)
 
-  // Update the current and count state when the carousel api is available
   useEffect(() => {
-    if (api) {
-      setCount(api.scrollSnapList().length)
-      // Initialize current based on initialIndex
-      setCurrent(api.selectedScrollSnap() + 1)
-
-      api.on('select', () => {
-        const newCurrent = api.selectedScrollSnap() + 1
-        if (current !== undefined && videoRefs.current[current - 1]) {
-          const prevVideo = videoRefs.current[current - 1]
-          prevVideo?.contentWindow?.postMessage(
-            '{"event":"command","func":"pauseVideo","args":""}',
-            '*'
-          )
-        }
-        setCurrent(newCurrent)
-      })
+    if (!api) {
+      return
     }
-  }, [api, current]) // Keep dependency on current to stop previous video
+
+    const handleSelect = () => {
+      const newIndex = api.selectedScrollSnap()
+      const prevVideo = videoRefs.current[previousIndexRef.current]
+      prevVideo?.contentWindow?.postMessage(
+        '{"event":"command","func":"pauseVideo","args":""}',
+        '*'
+      )
+      previousIndexRef.current = newIndex
+      setCurrent(newIndex + 1)
+    }
+
+    api.on('select', handleSelect)
+
+    return () => {
+      api.off('select', handleSelect)
+    }
+  }, [api])
 
   // Scroll to the initial index when the dialog opens and API is ready
   useEffect(() => {
     if (api) {
+      previousIndexRef.current = initialIndex
       api.scrollTo(initialIndex, false) // Scroll instantly
     }
   }, [api, initialIndex])
@@ -77,7 +80,11 @@ export function VideoCarouselDialog({
         </DialogHeader>
         <div className="py-4">
           <Carousel
-            setApi={setApi}
+            setApi={nextApi => {
+              previousIndexRef.current = initialIndex
+              setCurrent((nextApi?.selectedScrollSnap() ?? initialIndex) + 1)
+              setApi(nextApi)
+            }}
             className="w-full bg-muted max-h-[60vh]"
             opts={{
               startIndex: initialIndex // Set initial slide
@@ -115,7 +122,7 @@ export function VideoCarouselDialog({
           </Carousel>
           <div className="py-2">
             <div className="text-center text-sm text-muted-foreground">
-              {current} of {count}
+              {current} of {videos.length}
             </div>
           </div>
         </div>
