@@ -89,8 +89,11 @@ export function ChatMessages({
 
   if (!sections.length) return null
 
-  // Check if loading indicator should be shown
-  const showLoading = status === 'submitted' || status === 'streaming'
+  // Keep the assistant logo visible for the latest section after generation
+  const latestSection = sections.at(-1)
+  const showAssistantLogo = Boolean(
+    latestSection && (isLoading || latestSection.assistantMessages.length > 0)
+  )
 
   // Helper function to get tool count with caching
   const getToolCount = (message?: UIMessage): number => {
@@ -231,10 +234,10 @@ export function ChatMessages({
                 </div>
               )
             })}
-            {/* Show loading after assistant messages */}
-            {showLoading && sectionIndex === sections.length - 1 && (
+            {/* Show assistant logo after assistant messages */}
+            {showAssistantLogo && sectionIndex === sections.length - 1 && (
               <div className="flex justify-start py-4">
-                <AnimatedLogo className="h-10 w-10" />
+                <AnimatedLogo className="h-10 w-10" animate={isLoading} />
               </div>
             )}
             {sectionIndex === sections.length - 1 && (
