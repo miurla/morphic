@@ -15,7 +15,6 @@ export function AnimatedLogo({
 
   useEffect(() => {
     if (animate) {
-      setIsBlinking(false)
       return
     }
 
