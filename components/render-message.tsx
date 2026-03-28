@@ -146,6 +146,7 @@ export function RenderMessage({
             index < (message.parts?.length ?? 0) - 1
           )}
           onOpenChange={open => onOpenChange(messageId, open)}
+          isLatestMessage={isLatestMessage}
           chatId={chatId}
           isGuest={isGuest}
           showActions={shouldShowActions}

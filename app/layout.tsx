@@ -16,6 +16,7 @@ import Header from '@/components/header'
 import { ThemeProvider } from '@/components/theme-provider'
 
 import './globals.css'
+import 'streamdown/styles.css'
 
 const fontSans = FontSans({
   subsets: ['latin'],

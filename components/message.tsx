@@ -18,11 +18,13 @@ import 'katex/dist/katex.min.css'
 export function MarkdownMessage({
   message,
   className,
-  citationMaps
+  citationMaps,
+  isAnimating = false
 }: {
   message: string
   className?: string
   citationMaps?: Record<string, Record<number, SearchResultItem>>
+  isAnimating?: boolean
 }) {
   // Process citations to replace [number](#toolCallId) with [number](actual-url)
   const processedMessage = processCitations(message || '', citationMaps || {})
@@ -41,6 +43,8 @@ export function MarkdownMessage({
         )}
       >
         <Streamdown
+          animated={{ animation: 'fadeIn' }}
+          isAnimating={isAnimating}
           rehypePlugins={[
             [rehypeExternalLinks, { target: '_blank' }],
             [rehypeKatex]
