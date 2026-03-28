@@ -49,7 +49,8 @@ export function AnswerSection({
 }: AnswerSectionProps) {
   const enableShare =
     process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined && !isGuest
-  const shouldAnimate = isLatestMessage && status === 'streaming'
+  const shouldAnimate =
+    isLatestMessage && (status === 'submitted' || status === 'streaming')
 
   const handleReload = () => {
     if (reload) {

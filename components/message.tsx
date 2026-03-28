@@ -43,7 +43,8 @@ export function MarkdownMessage({
         )}
       >
         <Streamdown
-          animated={{ animation: 'fadeIn' }}
+          mode={isAnimating ? 'streaming' : 'static'}
+          animated={isAnimating ? { animation: 'fadeIn' } : false}
           isAnimating={isAnimating}
           rehypePlugins={[
             [rehypeExternalLinks, { target: '_blank' }],
