@@ -67,7 +67,7 @@ export default async function RootLayout({
     user = supabaseUser
   }
 
-  const userId = await getCurrentUserId()
+  const userId = user?.id ?? (await getCurrentUserId())
 
   return (
     <html lang="en" suppressHydrationWarning>
