@@ -3,6 +3,7 @@ import { Inter as FontSans } from 'next/font/google'
 
 import { Analytics } from '@vercel/analytics/next'
 
+import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { UserProvider } from '@/lib/contexts/user-context'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
@@ -66,6 +67,8 @@ export default async function RootLayout({
     user = supabaseUser
   }
 
+  const userId = await getCurrentUserId()
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -80,9 +83,9 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <UserProvider hasUser={!!user}>
+          <UserProvider hasUser={!!userId}>
             <SidebarProvider defaultOpen={false}>
-              {user && <AppSidebar />}
+              {userId && <AppSidebar />}
               <div className="flex flex-col flex-1 min-w-0">
                 <Header user={user} />
                 <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">

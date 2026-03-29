@@ -13,8 +13,9 @@ services:
         - morphic:latest
     env_file: .env.local # Load environment variables
     environment:
-      # Database connection for Docker Compose
+      # Database connection for Docker Compose (override any cloud DB from .env.local)
       DATABASE_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
+      DATABASE_RESTRICTED_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
       DATABASE_SSL_DISABLED: 'true' # Disable SSL for local Docker PostgreSQL
       # Authentication settings (default: disabled for personal Docker use)
       ENABLE_AUTH: ${ENABLE_AUTH:-false}
