@@ -72,11 +72,44 @@ Docker Compose starts PostgreSQL, Redis, SearXNG, and Morphic automatically. No 
 
 See the [Docker Guide](./docs/DOCKER.md) for more options including building from source and file upload configuration.
 
+### Local Development
+
+1. Clone and install:
+
+```bash
+git clone https://github.com/miurla/morphic.git
+cd morphic
+bun install
+```
+
+2. Configure environment:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Edit `.env.local` and set your API keys:
+
+```bash
+OPENAI_API_KEY=your_openai_key
+TAVILY_API_KEY=your_tavily_key
+```
+
+To enable chat history, authentication, file upload, and other features, see [CONFIGURATION.md](./docs/CONFIGURATION.md).
+
+3. Start the dev server:
+
+```bash
+bun dev
+```
+
+Visit http://localhost:3000.
+
 ## Deploy
 
 ### Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY,ENABLE_AUTH)
 
 ## Contributing
 
