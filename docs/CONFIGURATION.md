@@ -5,10 +5,10 @@ This guide covers the optional features and their configuration in Morphic.
 ## Table of Contents
 
 - [Database](#database)
+- [AI Providers](#ai-providers)
+- [Search Providers](#search-providers)
 - [Authentication](#authentication)
 - [Guest Mode](#guest-mode)
-- [Search Providers](#search-providers)
-- [Additional AI Providers](#additional-ai-providers)
 - [Other Features](#other-features)
 
 ## Database
@@ -25,6 +25,8 @@ DATABASE_URL=postgresql://user:password@localhost:5432/morphic
 
 Any PostgreSQL provider works: [Neon](https://neon.tech/), [Supabase](https://supabase.com/), or a local PostgreSQL instance.
 
+**Docker**: Database is automatically configured — no need to set this.
+
 ### Running Migrations
 
 After configuring your database, run migrations to create the necessary tables:
@@ -33,252 +35,24 @@ After configuring your database, run migrations to create the necessary tables:
 bun run migrate
 ```
 
-This command applies all migrations from the `drizzle/` directory.
+This command applies all migrations from the `drizzle/` directory. Docker runs migrations automatically on startup.
 
-## Authentication
+## AI Providers
 
-By default, Morphic runs in **anonymous mode** with authentication disabled (`ENABLE_AUTH=false` in `.env.local.example`). This is ideal for personal use where all users share a single anonymous user ID.
+### Model Selection
 
-### Anonymous Mode (Default)
+Morphic dynamically detects available AI providers based on your API keys and displays a model selector in the UI. Set at least one provider API key to get started.
 
-No configuration needed. The default settings in `.env.local.example` include:
+In **Local/Docker** mode, the selected model is persisted in a cookie and used for all chat interactions including related question generation.
 
-```bash
-ENABLE_AUTH=false
-ANONYMOUS_USER_ID=anonymous-user
-```
-
-**⚠️ Important**: Anonymous mode is only suitable for personal, single-user environments. All chat history is shared under one user ID.
-
-### Enabling Supabase Authentication
-
-To enable user authentication with Supabase:
-
-1. Create a Supabase project at [supabase.com](https://supabase.com)
-
-2. Set the following environment variables in `.env.local`:
-
-```bash
-ENABLE_AUTH=true
-NEXT_PUBLIC_SUPABASE_URL=[YOUR_SUPABASE_PROJECT_URL]
-NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR_SUPABASE_ANON_KEY]
-```
-
-3. Obtain your credentials from the Supabase dashboard:
-   - **Project URL**: Settings → API → Project URL
-   - **Anon Key**: Settings → API → Project API keys → anon/public
-
-With authentication enabled, users will need to sign up/login to use Morphic, and each user will have isolated chat history.
-
-## Guest Mode
-
-Guest mode allows users to try Morphic without creating an account. Guest sessions are ephemeral - no chat history is stored in the database.
-
-### Enabling Guest Mode
-
-Set the following environment variable:
-
-```bash
-ENABLE_GUEST_CHAT=true
-```
-
-### Guest Mode Behavior
-
-When guest mode is enabled:
-
-- **No authentication required**: Users can start chatting immediately
-- **No chat history**: Messages are not saved to the database
-- **Full context per request**: The client sends all messages with each request to maintain conversation context
-- **No URL navigation**: Guests stay on the root path (no `/search/[id]` URLs)
-- **Disabled features**:
-  - File upload
-  - Quality mode (forced to "Speed")
-  - Chat sharing
-  - Sidebar history
-
-### Rate Limiting for Guests
-
-For cloud deployments, you can limit guest usage per IP address:
-
-```bash
-GUEST_CHAT_DAILY_LIMIT=10  # Maximum requests per IP per day (default: 10)
-```
-
-Rate limiting requires Redis (Upstash) configuration:
-
-```bash
-UPSTASH_REDIS_REST_URL=[YOUR_UPSTASH_URL]
-UPSTASH_REDIS_REST_TOKEN=[YOUR_UPSTASH_TOKEN]
-```
-
-**Note**: Rate limiting only applies when `MORPHIC_CLOUD_DEPLOYMENT=true`. For self-hosted deployments, rate limiting is disabled by default.
-
-### Recommended Setup
-
-| Environment    | Configuration                                |
-| -------------- | -------------------------------------------- |
-| Personal/Local | `ENABLE_AUTH=false` (anonymous mode)         |
-| Public Demo    | `ENABLE_GUEST_CHAT=true` with rate limiting  |
-| Production     | `ENABLE_AUTH=true` (Supabase authentication) |
-
-## Search Providers
-
-### SearXNG Configuration
-
-SearXNG can be used as an alternative search backend with advanced search capabilities.
-
-#### Basic Setup
-
-1. Set up SearXNG as your search provider:
-
-```bash
-SEARCH_API=searxng
-SEARXNG_API_URL=http://localhost:8080
-SEARXNG_SECRET=""  # generate with: openssl rand -base64 32
-```
-
-#### Docker Setup
-
-1. Ensure you have Docker and Docker Compose installed
-2. Two configuration files are provided in the root directory:
-   - `searxng-settings.yml`: Contains main configuration for SearXNG
-   - `searxng-limiter.toml`: Configures rate limiting and bot detection
-
-#### Advanced Configuration
-
-1. Configure environment variables in your `.env.local`:
-
-```bash
-# SearXNG Base Configuration
-SEARXNG_PORT=8080
-SEARXNG_BIND_ADDRESS=0.0.0.0
-SEARXNG_IMAGE_PROXY=true
-
-# Search Behavior
-SEARXNG_DEFAULT_DEPTH=basic  # Set to 'basic' or 'advanced'
-SEARXNG_MAX_RESULTS=50  # Maximum number of results to return
-SEARXNG_ENGINES=google,bing,duckduckgo,wikipedia  # Comma-separated list of search engines
-SEARXNG_TIME_RANGE=None  # Time range: day, week, month, year, or None
-SEARXNG_SAFESEARCH=0  # 0: off, 1: moderate, 2: strict
-
-# Rate Limiting
-SEARXNG_LIMITER=false  # Enable to limit requests per IP
-```
-
-#### Advanced Search Features
-
-- `SEARXNG_DEFAULT_DEPTH`: Controls search depth
-  - `basic`: Standard search
-  - `advanced`: Includes content crawling and relevance scoring
-- `SEARXNG_MAX_RESULTS`: Maximum results to return
-- `SEARXNG_CRAWL_MULTIPLIER`: In advanced mode, determines how many results to crawl
-  - Example: If `MAX_RESULTS=10` and `CRAWL_MULTIPLIER=4`, up to 40 results will be crawled
-
-#### Customizing SearXNG
-
-You can modify `searxng-settings.yml` to:
-
-- Enable/disable specific search engines
-- Change UI settings
-- Adjust server options
-
-Example of disabling specific engines:
-
-```yaml
-engines:
-  - name: wikidata
-    disabled: true
-```
-
-For detailed configuration options, refer to the [SearXNG documentation](https://docs.searxng.org/admin/settings/settings.html#settings-yml)
-
-#### Troubleshooting
-
-- If specific search engines aren't working, try disabling them in `searxng-settings.yml`
-- For rate limiting issues, adjust settings in `searxng-limiter.toml`
-- Check Docker logs for potential configuration errors:
-
-```bash
-docker-compose logs searxng
-```
-
-### Brave Search (Optional)
-
-Brave Search provides enhanced support for video and image searches when used as a general search provider:
-
-```bash
-BRAVE_SEARCH_API_KEY=[YOUR_BRAVE_SEARCH_API_KEY]
-```
-
-Get your API key at: https://brave.com/search/api/
-
-**Features:**
-
-- Multiple content types in single search (web, video, image, news)
-- Optimized for multimedia content with thumbnails
-- Direct video duration and metadata support
-- Used automatically when `type="general"` is specified in search queries
-
-**Fallback Behavior:**
-If `BRAVE_SEARCH_API_KEY` is not configured, `type="general"` searches will automatically fall back to your configured optimized search provider. Video and image searches will still work but may have limited multimedia support depending on the provider.
-
-## Additional AI Providers
-
-Model selection behavior differs by deployment type:
-
-- **Cloud (`MORPHIC_CLOUD_DEPLOYMENT=true`)**: models are fixed by `config/models/cloud.json`
-- **Local/Docker (`MORPHIC_CLOUD_DEPLOYMENT=false`)**: models are fetched dynamically from provider APIs and selected in the UI; selection is persisted in `selectedModel` cookie
-
-If no user-selected model exists in Local/Docker, Morphic falls back to an internal default model.
-
-### Model Configuration
-
-Cloud model configuration uses the following structure:
-
-```json
-{
-  "version": 2,
-  "models": {
-    "quick": {
-      "id": "model-id",
-      "name": "Model Name",
-      "provider": "Provider Name",
-      "providerId": "provider-id",
-      "providerOptions": {}
-    },
-    "adaptive": {
-      "id": "model-id",
-      "name": "Model Name",
-      "provider": "Provider Name",
-      "providerId": "provider-id",
-      "providerOptions": {}
-    },
-    "relatedQuestions": {
-      "id": "model-id",
-      "name": "Model Name",
-      "provider": "Provider Name",
-      "providerId": "provider-id"
-    }
-  }
-}
-```
-
-In Cloud, `quick` and `adaptive` are selected by search mode, and `relatedQuestions` is used for follow-up question generation.
-
-In Local/Docker, `cloud.json` is not used for normal chat model selection.
+In **Cloud** mode (`MORPHIC_CLOUD_DEPLOYMENT=true`), models are fixed by `config/models/cloud.json` and the model selector is not shown.
 
 ### Supported Providers
 
-#### OpenAI (Default)
+#### OpenAI
 
 ```bash
 OPENAI_API_KEY=[YOUR_API_KEY]
-```
-
-#### Google Generative AI
-
-```bash
-GOOGLE_GENERATIVE_AI_API_KEY=[YOUR_API_KEY]
 ```
 
 #### Anthropic
@@ -287,9 +61,15 @@ GOOGLE_GENERATIVE_AI_API_KEY=[YOUR_API_KEY]
 ANTHROPIC_API_KEY=[YOUR_API_KEY]
 ```
 
+#### Google Gemini
+
+```bash
+GOOGLE_GENERATIVE_AI_API_KEY=[YOUR_API_KEY]
+```
+
 #### Vercel AI Gateway
 
-[Vercel AI Gateway](https://vercel.com/docs/ai-gateway) allows you to use multiple AI providers through a single endpoint with automatic failover and load balancing.
+[Vercel AI Gateway](https://vercel.com/docs/ai-gateway) provides access to 200+ models through a single API.
 
 ```bash
 AI_GATEWAY_API_KEY=[YOUR_AI_GATEWAY_API_KEY]
@@ -299,23 +79,132 @@ AI_GATEWAY_API_KEY=[YOUR_AI_GATEWAY_API_KEY]
 
 [Ollama](https://ollama.com/) enables you to run large language models locally on your own hardware.
 
-**Configuration:**
-
 ```bash
 OLLAMA_BASE_URL=http://localhost:11434
 ```
 
-When configured, Ollama models are discovered dynamically and appear in the Local/Docker model selector.
+When configured, Ollama models are discovered dynamically and appear in the model selector.
 
-**Important Notes:**
+## Search Providers
 
-- **Tools Capability**: Morphic requires models to support the `tools` capability for function calling. On server startup, Morphic validates configured models and logs the results. Note that even if a model reports tools support, actual tool calling performance depends on the model's capabilities and is not guaranteed.
+### SearXNG Configuration
 
-- **Validation Logs**: Check server logs on startup to verify your configured models:
-  ```
-  ✓ qwen3:latest (configured and tools supported)
-  ✗ deepseek-r1:latest (configured but lacks tools support)
-  ```
+SearXNG can be used as an alternative search backend with advanced search capabilities. Docker Compose includes SearXNG automatically.
+
+#### Basic Setup
+
+```bash
+SEARCH_API=searxng
+SEARXNG_API_URL=http://localhost:8080
+SEARXNG_SECRET=""  # generate with: openssl rand -base64 32
+```
+
+#### Advanced Configuration
+
+```bash
+# Search Behavior
+SEARXNG_DEFAULT_DEPTH=basic  # Set to 'basic' or 'advanced'
+SEARXNG_MAX_RESULTS=50
+SEARXNG_ENGINES=google,bing,duckduckgo,wikipedia
+SEARXNG_TIME_RANGE=None  # day, week, month, year, or None
+SEARXNG_SAFESEARCH=0  # 0: off, 1: moderate, 2: strict
+
+# Server
+SEARXNG_PORT=8080
+SEARXNG_BIND_ADDRESS=0.0.0.0
+SEARXNG_IMAGE_PROXY=true
+SEARXNG_LIMITER=false
+```
+
+#### Advanced Search Features
+
+- `SEARXNG_DEFAULT_DEPTH`: Controls search depth
+  - `basic`: Standard search
+  - `advanced`: Includes content crawling and relevance scoring
+- `SEARXNG_CRAWL_MULTIPLIER`: In advanced mode, determines how many results to crawl
+  - Example: If `MAX_RESULTS=10` and `CRAWL_MULTIPLIER=4`, up to 40 results will be crawled
+
+#### Customizing SearXNG
+
+Modify `searxng-settings.yml` to enable/disable specific search engines, change UI settings, or adjust server options. See the [SearXNG documentation](https://docs.searxng.org/admin/settings/settings.html#settings-yml) for details.
+
+### Brave Search (Optional)
+
+Brave Search provides enhanced support for video and image searches:
+
+```bash
+BRAVE_SEARCH_API_KEY=[YOUR_BRAVE_SEARCH_API_KEY]
+```
+
+If not configured, `type="general"` searches fall back to your configured search provider.
+
+## Authentication
+
+By default, Morphic runs in **anonymous mode** (`ENABLE_AUTH=false`). This is ideal for personal, single-user environments.
+
+### Anonymous Mode (Default)
+
+```bash
+ENABLE_AUTH=false
+ANONYMOUS_USER_ID=anonymous-user
+```
+
+All users share a single anonymous user ID. No additional configuration needed.
+
+### Enabling Supabase Authentication
+
+For multi-user deployments:
+
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+
+2. Set the following environment variables:
+
+```bash
+ENABLE_AUTH=true
+NEXT_PUBLIC_SUPABASE_URL=[YOUR_SUPABASE_PROJECT_URL]
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR_SUPABASE_ANON_KEY]
+```
+
+3. Obtain your credentials from the Supabase dashboard:
+   - **Project URL**: Settings > API > Project URL
+   - **Anon Key**: Settings > API > Project API keys > anon/public
+
+## Guest Mode
+
+Guest mode allows users to try Morphic without creating an account. Guest sessions are ephemeral — no chat history is stored.
+
+### Enabling Guest Mode
+
+```bash
+ENABLE_GUEST_CHAT=true
+```
+
+### Guest Mode Behavior
+
+- No authentication required
+- No chat history saved
+- Full context per request (client sends all messages)
+- Disabled features: file upload, chat sharing, sidebar history
+
+### Rate Limiting for Guests
+
+For cloud deployments:
+
+```bash
+GUEST_CHAT_DAILY_LIMIT=10  # Maximum requests per IP per day
+UPSTASH_REDIS_REST_URL=[YOUR_UPSTASH_URL]
+UPSTASH_REDIS_REST_TOKEN=[YOUR_UPSTASH_TOKEN]
+```
+
+Rate limiting only applies when `MORPHIC_CLOUD_DEPLOYMENT=true`.
+
+### Recommended Setup
+
+| Environment    | Configuration                                |
+| -------------- | -------------------------------------------- |
+| Personal/Local | `ENABLE_AUTH=false` (anonymous mode)         |
+| Public Demo    | `ENABLE_GUEST_CHAT=true` with rate limiting  |
+| Production     | `ENABLE_AUTH=true` (Supabase authentication) |
 
 ## Other Features
 
@@ -344,7 +233,7 @@ R2_PUBLIC_URL=[YOUR_PUBLIC_BASE_URL]
 
 If storage variables are not configured, `/api/upload` returns `400` and uploads are disabled.
 
-### Alternative Fetch Tool
+### Content Extraction
 
 Use Jina for enhanced content extraction:
 

@@ -19,170 +19,69 @@ An AI-powered search engine with a generative UI.
 
 </div>
 
-## 🗂️ Overview
-
-- 🛠 [Features](#-features)
-- 🧱 [Stack](#-stack)
-- 🚀 [Quickstart](#-quickstart)
-- 🌐 [Deploy](#-deploy)
-- 👥 [Contributing](#-contributing)
-- 📄 [License](#-license)
-
-📝 Explore AI-generated documentation on [DeepWiki](https://deepwiki.com/miurla/morphic)
-
-## 🛠 Features
-
-### Core Features
+## Features
 
 - AI-powered search with GenerativeUI
-- Natural language question understanding
-- Multiple search providers support (Tavily, Brave, SearXNG, Exa)
 - Search modes: Quick and Adaptive
-- Model type selection: Speed vs Quality
-- Inspector panel for tool execution and AI processing details
-
-### Authentication
-
-- User authentication powered by [Supabase Auth](https://supabase.com/docs/guides/auth)
-
-### Guest Mode
-
-- Allow users to try the app without creating an account
-- No chat history stored for guests (ephemeral sessions)
-- Optional daily rate limit per IP address
-- Enable with `ENABLE_GUEST_CHAT=true`
-
-### Chat & History
-
-- Chat history automatically stored in PostgreSQL database
+- Model selector with dynamic provider detection (OpenAI, Anthropic, Google, Ollama, Vercel AI Gateway)
+- Multiple search providers (Tavily, SearXNG, Brave, Exa)
+- Chat history stored in PostgreSQL
 - Share search results with unique URLs
-- Message feedback system
 - File upload support
-
-### AI Providers
-
-- OpenAI (Default)
-- Anthropic Claude
-- Google Gemini
-- Vercel AI Gateway
-- Ollama
-
-Models are configured in `config/models/*.json` with profile-based settings. When using non-OpenAI providers, update the model configuration files with compatible model IDs. See [Configuration Guide](docs/CONFIGURATION.md) for details.
-
-### Search Capabilities
-
-- URL-specific search
-- Content extraction with Tavily or Jina
-- Citation tracking and display
-- Self-hosted search with SearXNG support
-
-### Additional Features
-
+- User authentication with Supabase Auth
+- Guest mode for anonymous usage
 - Docker deployment ready
-- Browser search engine integration
-- LLM observability with Langfuse (optional)
-- Todo tracking for complex tasks
 
-## 🧱 Stack
+## Installation
 
-### Core Framework
+### Docker (Recommended)
 
-- [Next.js](https://nextjs.org/) - React framework with App Router
-- [TypeScript](https://www.typescriptlang.org/) - Type-safe development
-- [Vercel AI SDK](https://ai-sdk.dev) - TypeScript toolkit for building AI-powered applications
-
-### Authentication & Authorization
-
-- [Supabase](https://supabase.com/) - User authentication and backend services
-
-### AI & Search
-
-- [OpenAI](https://openai.com/) - Default AI provider (Optional: Google AI, Anthropic)
-- [Tavily AI](https://tavily.com/) - AI-optimized search with context
-- [Brave Search](https://brave.com/search/api/) - Traditional web search results
-- Tavily alternatives:
-  - [SearXNG](https://docs.searxng.org/) - Self-hosted search
-  - [Exa](https://exa.ai/) - Meaning-based search powered by embeddings
-  - [Firecrawl](https://firecrawl.dev/) - Web, news, and image search with crawling, scraping, LLM-ready extraction, and [open source](https://github.com/firecrawl/firecrawl).
-
-### Data Storage
-
-- [PostgreSQL](https://www.postgresql.org/) - Primary database (supports Neon, Supabase, or standard PostgreSQL)
-- [Drizzle ORM](https://orm.drizzle.team/) - Type-safe database ORM
-- [Cloudflare R2](https://developers.cloudflare.com/r2/) - File storage (optional)
-
-### UI & Styling
-
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
-- [shadcn/ui](https://ui.shadcn.com/) - Re-usable components
-- [Radix UI](https://www.radix-ui.com/) - Unstyled, accessible components
-- [Lucide Icons](https://lucide.dev/) - Beautiful & consistent icons
-
-## 🚀 Quickstart
-
-### 1. Fork and Clone repo
-
-Fork the repo to your Github account, then run the following command to clone the repo:
+The quickest way to run Morphic locally:
 
 ```bash
-git clone git@github.com:[YOUR_GITHUB_ACCOUNT]/morphic.git
+docker pull ghcr.io/miurla/morphic:latest
 ```
 
-### 2. Install dependencies
+Then set up with Docker Compose:
+
+1. Clone the repository and configure environment:
 
 ```bash
+git clone https://github.com/miurla/morphic.git
 cd morphic
-bun install
-```
-
-### 3. Configure environment variables
-
-```bash
 cp .env.local.example .env.local
 ```
 
-Fill in the required environment variables in `.env.local`:
+2. Edit `.env.local` and set at least one AI provider API key:
 
 ```bash
 OPENAI_API_KEY=your_openai_key
-TAVILY_API_KEY=your_tavily_key
 ```
 
-### 4. Run app locally
+Other supported providers: Anthropic (`ANTHROPIC_API_KEY`), Google (`GOOGLE_GENERATIVE_AI_API_KEY`), Ollama (`OLLAMA_BASE_URL`), [Vercel AI Gateway](https://sdk.vercel.ai/docs/ai-sdk-core/settings#model) (`AI_GATEWAY_API_KEY` — access 200+ models through a single API). See [CONFIGURATION.md](./docs/CONFIGURATION.md) for details.
+
+3. Start all services:
 
 ```bash
-bun dev
+docker compose up -d
 ```
 
-Visit http://localhost:3000 in your browser.
+4. Visit http://localhost:3000 and select your model from the model selector.
 
-**Note**: By default, Morphic runs without a database or authentication. To enable chat history, authentication, and other features, see [CONFIGURATION.md](./docs/CONFIGURATION.md). For Docker setup, see the [Docker Guide](./docs/DOCKER.md).
+Docker Compose starts PostgreSQL, Redis, SearXNG, and Morphic automatically. No additional search API key is needed — SearXNG is included.
 
-## 🌐 Deploy
+See the [Docker Guide](./docs/DOCKER.md) for more options including building from source and file upload configuration.
 
-Host your own live version of Morphic with Vercel or Docker.
+## Deploy
 
 ### Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=DATABASE_URL,OPENAI_API_KEY,TAVILY_API_KEY,BRAVE_SEARCH_API_KEY)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY)
 
-**Note**: For Vercel deployments, set `ENABLE_AUTH=true` and configure Supabase authentication to secure your deployment.
+## Contributing
 
-### Docker
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get started, including local development setup.
 
-See the [Docker Guide](./docs/DOCKER.md) for prebuilt images, Docker Compose setup, and deployment instructions.
-
-## 👥 Contributing
-
-We welcome contributions to Morphic! Whether it's bug reports, feature requests, or pull requests, all contributions are appreciated.
-
-Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
-
-- How to submit issues
-- How to submit pull requests
-- Commit message conventions
-- Development setup
-
-## 📄 License
+## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
