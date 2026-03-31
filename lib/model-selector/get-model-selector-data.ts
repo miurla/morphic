@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers'
 
-import { DEFAULT_MODEL } from '@/lib/config/default-model'
 import {
   MODEL_SELECTION_COOKIE,
   parseModelSelectionCookie
@@ -11,37 +10,35 @@ import { Model } from '@/lib/types/models'
 
 import 'server-only'
 
-function ensureModelInGroup(
-  modelsByProvider: Record<string, Model[]>,
-  model: Model
-): Record<string, Model[]> {
-  const next = { ...modelsByProvider }
-  const providerModels = next[model.provider] ?? []
-  const exists = providerModels.some(
-    item => item.id === model.id && item.providerId === model.providerId
-  )
-
-  if (!exists) {
-    next[model.provider] = [...providerModels, model].sort((a, b) =>
-      a.name.localeCompare(b.name)
-    )
-  }
-
-  return next
-}
-
 function modelKey(model: Model): string {
   return `${model.providerId}:${model.id}`
 }
 
+function pickFirstAvailableModel(
+  modelsByProvider: Record<string, Model[]>
+): Model | null {
+  const providers = Object.keys(modelsByProvider).sort((a, b) =>
+    a.localeCompare(b)
+  )
+
+  for (const provider of providers) {
+    const firstModel = modelsByProvider[provider]?.[0]
+    if (firstModel) {
+      return firstModel
+    }
+  }
+
+  return null
+}
+
 function resolveSelectedModelKey(
   modelsByProvider: Record<string, Model[]>,
-  defaultModel: Model,
+  fallbackModel: Model | null,
   cookieValue?: string
 ): string {
   const parsedCookie = parseModelSelectionCookie(cookieValue)
   if (!parsedCookie) {
-    return modelKey(defaultModel)
+    return fallbackModel ? modelKey(fallbackModel) : ''
   }
 
   const matched = Object.values(modelsByProvider)
@@ -54,7 +51,9 @@ function resolveSelectedModelKey(
 
   return matched
     ? `${parsedCookie.providerId}:${parsedCookie.modelId}`
-    : modelKey(defaultModel)
+    : fallbackModel
+      ? modelKey(fallbackModel)
+      : ''
 }
 
 export async function getModelSelectorData(): Promise<ModelSelectorData> {
@@ -62,24 +61,25 @@ export async function getModelSelectorData(): Promise<ModelSelectorData> {
     return {
       enabled: false,
       modelsByProvider: {},
-      defaultModel: DEFAULT_MODEL,
-      selectedModelKey: modelKey(DEFAULT_MODEL)
+      selectedModelKey: '',
+      hasAvailableModels: false
     }
   }
 
-  const fetchedModels = await fetchAvailableModels()
-  const modelsByProvider = ensureModelInGroup(fetchedModels, DEFAULT_MODEL)
+  const modelsByProvider = await fetchAvailableModels()
+  const fallbackModel = pickFirstAvailableModel(modelsByProvider)
+  const hasAvailableModels = fallbackModel !== null
   const cookieStore = await cookies()
   const selectedModelKey = resolveSelectedModelKey(
     modelsByProvider,
-    DEFAULT_MODEL,
+    fallbackModel,
     cookieStore.get(MODEL_SELECTION_COOKIE)?.value
   )
 
   return {
     enabled: true,
     modelsByProvider,
-    defaultModel: DEFAULT_MODEL,
-    selectedModelKey
+    selectedModelKey,
+    hasAvailableModels
   }
 }

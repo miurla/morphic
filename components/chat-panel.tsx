@@ -79,6 +79,8 @@ export function ChatPanel({
   const [isInputFocused, setIsInputFocused] = useState(false) // Track input focus
   const { close: closeArtifact } = useArtifact()
   const isLoading = status === 'submitted' || status === 'streaming'
+  const hasAvailableModels =
+    isCloudDeployment || modelSelectorData?.hasAvailableModels !== false
 
   const handleCompositionStart = () => setIsComposing(true)
 
@@ -168,6 +170,11 @@ export function ChatPanel({
       )}
       <form
         onSubmit={e => {
+          if (!hasAvailableModels) {
+            e.preventDefault()
+            toast.error('No enabled model is available')
+            return
+          }
           handleSubmit(e)
           // Reset focus state after submission
           setIsInputFocused(false)
@@ -308,8 +315,15 @@ export function ChatPanel({
                 type={isLoading ? 'button' : 'submit'}
                 size={'icon'}
                 className={cn(isLoading && 'animate-pulse', 'rounded-full')}
-                disabled={input.length === 0 && !isLoading}
+                disabled={
+                  (input.length === 0 && !isLoading) || !hasAvailableModels
+                }
                 onClick={isLoading ? stop : undefined}
+                title={
+                  hasAvailableModels
+                    ? undefined
+                    : 'No enabled model is available'
+                }
               >
                 {isLoading ? <Square size={20} /> : <ArrowUp size={20} />}
               </Button>

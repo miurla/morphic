@@ -7,6 +7,7 @@ import {
   parseModelSelectionCookie
 } from '@/lib/config/model-selection-cookie'
 import { getModelForMode } from '@/lib/config/model-types'
+import { fetchAvailableModels } from '@/lib/models/fetch-models'
 import { Model } from '@/lib/types/models'
 import { SearchMode } from '@/lib/types/search'
 import { isProviderEnabled } from '@/lib/utils/registry'
@@ -34,6 +35,23 @@ function buildProviderOptions(
   }
 
   return undefined
+}
+
+function pickFirstFetchedModel(
+  modelsByProvider: Record<string, Model[]>
+): Model | null {
+  const providers = Object.keys(modelsByProvider).sort((a, b) =>
+    a.localeCompare(b)
+  )
+
+  for (const provider of providers) {
+    const firstModel = modelsByProvider[provider]?.[0]
+    if (firstModel) {
+      return firstModel
+    }
+  }
+
+  return null
 }
 
 interface ModelSelectionParams {
@@ -83,12 +101,13 @@ function resolveModelForMode(mode: SearchMode): Model | undefined {
  * Priority order:
  * 1. Use cloud mode-specific model for the active mode when enabled
  * 2. If the active mode has no enabled model, try remaining modes
- * 3. If cloud config is unavailable or providers are disabled, use DEFAULT_MODEL
+ * 3. Use DEFAULT_MODEL when its provider is enabled
+ * 4. Return null when no enabled models are available
  */
 export async function selectModel({
   searchMode,
   cookieStore
-}: ModelSelectionParams): Promise<Model> {
+}: ModelSelectionParams): Promise<Model | null> {
   if (!isCloudDeployment()) {
     const parsedCookie = parseModelSelectionCookie(
       cookieStore?.get(MODEL_SELECTION_COOKIE)?.value
@@ -98,14 +117,14 @@ export async function selectModel({
       try {
         if (!isProviderEnabled(parsedCookie.providerId)) {
           console.warn(
-            `[ModelSelection] Saved model provider "${parsedCookie.providerId}" is not enabled. Falling back to DEFAULT_MODEL.`
+            `[ModelSelection] Saved model provider "${parsedCookie.providerId}" is not enabled.`
           )
-          return DEFAULT_MODEL
+        } else {
+          return buildLocalCookieModel(
+            parsedCookie.providerId,
+            parsedCookie.modelId
+          )
         }
-        return buildLocalCookieModel(
-          parsedCookie.providerId,
-          parsedCookie.modelId
-        )
       } catch (error) {
         console.error(
           '[ModelSelection] Failed to resolve model from cookie:',
@@ -114,7 +133,11 @@ export async function selectModel({
       }
     }
 
-    return DEFAULT_MODEL
+    if (isProviderEnabled(DEFAULT_MODEL.providerId)) {
+      return DEFAULT_MODEL
+    }
+
+    return pickFirstFetchedModel(await fetchAvailableModels())
   }
 
   const requestedMode =
@@ -133,13 +156,11 @@ export async function selectModel({
     }
   }
 
-  if (!isProviderEnabled(DEFAULT_MODEL.providerId)) {
-    console.warn(
-      `[ModelSelection] Default model provider "${DEFAULT_MODEL.providerId}" is not enabled. Returning default model configuration.`
-    )
+  if (isProviderEnabled(DEFAULT_MODEL.providerId)) {
+    return DEFAULT_MODEL
   }
 
-  return DEFAULT_MODEL
+  return pickFirstFetchedModel(await fetchAvailableModels())
 }
 
 export { DEFAULT_MODEL }

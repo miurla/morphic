@@ -4,7 +4,7 @@ name: morphic-stack
 services:
   morphic:
     image: ghcr.io/${GITHUB_REPOSITORY:-your-username/morphic}:latest
-    command: bun start -H 0.0.0.0
+    command: npx next start -H 0.0.0.0
     build:
       context: .
       dockerfile: Dockerfile

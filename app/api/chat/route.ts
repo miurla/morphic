@@ -94,6 +94,13 @@ export async function POST(req: Request) {
 
     const selectedModel = await selectModel({ searchMode, cookieStore })
 
+    if (!selectedModel) {
+      return new Response('No enabled model is available', {
+        status: 503,
+        statusText: 'Service Unavailable'
+      })
+    }
+
     if (!isProviderEnabled(selectedModel.providerId)) {
       return new Response(
         `Selected provider is not enabled ${selectedModel.providerId}`,

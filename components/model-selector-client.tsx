@@ -86,9 +86,28 @@ export function ModelSelectorClient({ data }: ModelSelectorClientProps) {
     [selectableModels]
   )
 
-  const selectedModel = selectableByKey[selectedModelKey] ?? data.defaultModel
+  const selectedModel = selectableByKey[selectedModelKey]
 
   if (!data.enabled) {
+    return null
+  }
+
+  if (!data.hasAvailableModels) {
+    return (
+      <Button
+        variant="outline"
+        className="text-sm rounded-full shadow-none gap-1 transition-all px-3 py-2 h-auto bg-muted border-none"
+        disabled
+        title="No enabled models are available"
+      >
+        <span className="truncate max-w-52 text-xs font-medium">
+          No enabled model available
+        </span>
+      </Button>
+    )
+  }
+
+  if (!selectedModel) {
     return null
   }
 
