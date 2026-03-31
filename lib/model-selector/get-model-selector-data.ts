@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 
+import { DEFAULT_MODEL } from '@/lib/config/default-model'
 import {
   MODEL_SELECTION_COOKIE,
   parseModelSelectionCookie
@@ -7,6 +8,7 @@ import {
 import { fetchAvailableModels } from '@/lib/models/fetch-models'
 import { ModelSelectorData } from '@/lib/types/model-selector'
 import { Model } from '@/lib/types/models'
+import { isProviderEnabled } from '@/lib/utils/registry'
 
 import 'server-only'
 
@@ -68,7 +70,8 @@ export async function getModelSelectorData(): Promise<ModelSelectorData> {
 
   const modelsByProvider = await fetchAvailableModels()
   const fallbackModel = pickFirstAvailableModel(modelsByProvider)
-  const hasAvailableModels = fallbackModel !== null
+  const hasAvailableModels =
+    fallbackModel !== null || isProviderEnabled(DEFAULT_MODEL.providerId)
   const cookieStore = await cookies()
   const selectedModelKey = resolveSelectedModelKey(
     modelsByProvider,
