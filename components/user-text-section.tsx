@@ -118,7 +118,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
           </div>
         ) : (
           <div className="relative">
-            <div className="pr-10">{content}</div>
+            <div className="pr-10 whitespace-pre-wrap">{content}</div>
             <div
               className={cn(
                 'absolute top-0 right-0 transition-opacity',
