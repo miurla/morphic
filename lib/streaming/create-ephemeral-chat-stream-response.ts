@@ -1,12 +1,9 @@
+import type { UIMessage } from 'ai'
 import {
   consumeStream,
   convertToModelMessages,
-  createUIMessageStream,
-  createUIMessageStreamResponse,
   pruneMessages,
-  smoothStream,
-  UIMessage,
-  UIMessageStreamWriter
+  smoothStream
 } from 'ai'
 import { randomUUID } from 'crypto'
 import { Langfuse } from 'langfuse'
@@ -64,70 +61,69 @@ export async function createEphemeralChatStreamResponse(
     })
   }
 
-  const stream = createUIMessageStream<UIMessage>({
-    execute: async ({ writer }: { writer: UIMessageStreamWriter }) => {
-      try {
-        const isOpenAI = `${model.providerId}:${model.id}`.startsWith('openai:')
-        const messagesWithoutSpec = stripSpecFromMessages(messages)
-        const messagesToConvert = isOpenAI
-          ? stripReasoningParts(messagesWithoutSpec)
-          : messagesWithoutSpec
+  try {
+    const isOpenAI = `${model.providerId}:${model.id}`.startsWith('openai:')
+    const messagesWithoutSpec = stripSpecFromMessages(messages)
+    const messagesToConvert = isOpenAI
+      ? stripReasoningParts(messagesWithoutSpec)
+      : messagesWithoutSpec
 
-        let modelMessages = await convertToModelMessages(messagesToConvert)
+    let modelMessages = await convertToModelMessages(messagesToConvert)
 
-        modelMessages = pruneMessages({
-          messages: modelMessages,
-          reasoning: 'before-last-message',
-          toolCalls: 'before-last-2-messages',
-          emptyMessages: 'remove'
-        })
+    modelMessages = pruneMessages({
+      messages: modelMessages,
+      reasoning: 'before-last-message',
+      toolCalls: 'before-last-2-messages',
+      emptyMessages: 'remove'
+    })
 
-        if (shouldTruncateMessages(modelMessages, model)) {
-          const maxTokens = getMaxAllowedTokens(model)
-          modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
+    if (shouldTruncateMessages(modelMessages, model)) {
+      const maxTokens = getMaxAllowedTokens(model)
+      modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
+    }
+
+    const researchAgent = researcher({
+      model: `${model.providerId}:${model.id}`,
+      modelConfig: model,
+      parentTraceId,
+      searchMode
+    })
+
+    const result = await researchAgent.stream({
+      messages: modelMessages,
+      abortSignal,
+      experimental_transform: smoothStream({ chunking: 'word' })
+    })
+    result.consumeStream()
+
+    return result.toUIMessageStreamResponse({
+      messageMetadata: ({ part }) => {
+        if (part.type === 'start') {
+          return {
+            traceId: parentTraceId,
+            searchMode,
+            modelId: `${model.providerId}:${model.id}`
+          }
         }
-
-        const researchAgent = researcher({
-          model: `${model.providerId}:${model.id}`,
-          modelConfig: model,
-          parentTraceId,
-          searchMode
-        })
-
-        const result = await researchAgent.stream({
-          messages: modelMessages,
-          abortSignal,
-          experimental_transform: smoothStream({ chunking: 'word' })
-        })
-        result.consumeStream()
-        writer.merge(
-          result.toUIMessageStream({
-            messageMetadata: ({ part }) => {
-              if (part.type === 'start') {
-                return {
-                  traceId: parentTraceId,
-                  searchMode,
-                  modelId: `${model.providerId}:${model.id}`
-                }
-              }
-            }
-          })
-        )
-
-        await result.response
-      } finally {
+      },
+      onFinish: async () => {
         if (langfuse) {
           await langfuse.flushAsync()
         }
-      }
-    },
-    onError: (error: any) => {
-      return error instanceof Error ? error.message : String(error)
+      },
+      onError: (error: unknown) => {
+        return error instanceof Error ? error.message : String(error)
+      },
+      consumeSseStream: consumeStream
+    })
+  } catch (error) {
+    if (langfuse) {
+      await langfuse.flushAsync()
     }
-  })
-
-  return createUIMessageStreamResponse({
-    stream,
-    consumeSseStream: consumeStream
-  })
+    const message = error instanceof Error ? error.message : String(error)
+    return new Response(message, {
+      status: 500,
+      statusText: 'Internal Server Error'
+    })
+  }
 }
