@@ -12,20 +12,9 @@ export type SpecFenceResult =
       source: string
       spec: Spec
     }
-  | {
-      status: 'error'
-      source: string
-      error: string
-    }
-
-export type EvaluateSpecFenceInput = {
-  source: string
-  complete: boolean
-  showErrors?: boolean
-}
 
 export type SpecFenceEvaluator = {
-  evaluate(input: EvaluateSpecFenceInput): SpecFenceResult
+  evaluate(source: string): SpecFenceResult
   reset(): void
 }
 
@@ -33,11 +22,11 @@ export function createSpecFenceEvaluator(): SpecFenceEvaluator {
   const partialParser = createPartialSpecParser()
 
   return {
-    evaluate({ source }: EvaluateSpecFenceInput): SpecFenceResult {
+    evaluate(source: string): SpecFenceResult {
       try {
         // Always use partial parser for incremental rendering.
         // streamdown's isIncomplete flag requires isAnimating which
-        // we don't use, so we cannot rely on the complete flag.
+        // we don't use, so we cannot rely on it.
         const spec = partialParser.parse(source)
 
         if (!spec) {
@@ -52,7 +41,7 @@ export function createSpecFenceEvaluator(): SpecFenceEvaluator {
           source,
           spec
         }
-      } catch (error) {
+      } catch {
         return {
           status: 'pending',
           source

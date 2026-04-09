@@ -19,7 +19,7 @@ export function SpecBlock({ result }: SpecBlockProps) {
     () => ({
       submitQuery: (params: Record<string, unknown>) => {
         const query = (params as { query?: string }).query
-        if (query) {
+        if (typeof query === 'string' && query.trim()) {
           chatContext.sendMessage({
             role: 'user',
             parts: [{ type: 'text', text: query }]
@@ -31,10 +31,6 @@ export function SpecBlock({ result }: SpecBlockProps) {
   )
 
   const content = useMemo(() => {
-    if (result.status === 'error') {
-      return null
-    }
-
     if (result.status !== 'ready') {
       return null
     }

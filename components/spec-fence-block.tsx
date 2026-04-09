@@ -6,27 +6,9 @@ import { createSpecFenceEvaluator } from '@/lib/render/spec-fence'
 
 import { SpecBlock } from '@/components/spec-block'
 
-type SpecFenceBlockProps = {
-  source: string
-  complete: boolean
-  showErrors?: boolean
-}
-
-export function SpecFenceBlock({
-  source,
-  complete,
-  showErrors = true
-}: SpecFenceBlockProps) {
+export function SpecFenceBlock({ source }: { source: string }) {
   const [evaluator] = useState(() => createSpecFenceEvaluator())
-  const result = useMemo(
-    () =>
-      evaluator.evaluate({
-        source,
-        complete,
-        showErrors
-      }),
-    [complete, evaluator, showErrors, source]
-  )
+  const result = useMemo(() => evaluator.evaluate(source), [evaluator, source])
 
   return <SpecBlock result={result} />
 }

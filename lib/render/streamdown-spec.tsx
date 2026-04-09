@@ -7,14 +7,8 @@ import { SpecFenceBlock } from '@/components/spec-fence-block'
 export function createStreamdownSpecRenderer(): CustomRenderer {
   return {
     language: 'spec',
-    component({ code, isIncomplete }) {
-      return (
-        <SpecFenceBlock
-          source={code}
-          complete={!isIncomplete}
-          showErrors={!isIncomplete}
-        />
-      )
+    component({ code }) {
+      return <SpecFenceBlock source={code} />
     }
   }
 }
