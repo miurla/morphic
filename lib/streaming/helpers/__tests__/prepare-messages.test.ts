@@ -31,7 +31,7 @@ describe('prepareMessages', () => {
   })
 
   describe('regenerate-message trigger', () => {
-    it('should reload chat after deleting assistant message', async () => {
+    it('should use in-memory messages after deleting assistant message', async () => {
       // Setup: Chat with 4 messages
       const initialChat: Chat & { messages: UIMessage[] } = {
         id: chatId,
@@ -63,23 +63,10 @@ describe('prepareMessages', () => {
         ]
       }
 
-      // After deletion, only messages 1-3 remain (but we only return 1)
-      const updatedChat: Chat & { messages: UIMessage[] } = {
-        ...initialChat,
-        messages: [
-          {
-            id: 'msg-1',
-            role: 'user',
-            parts: [{ type: 'text', text: 'Question 1' }]
-          }
-        ]
-      }
-
       vi.mocked(deleteMessagesFromIndex).mockResolvedValue({
         success: true,
         count: 3
       })
-      vi.mocked(loadChat).mockResolvedValue(updatedChat)
 
       const context: StreamContext = {
         chatId,
@@ -100,15 +87,15 @@ describe('prepareMessages', () => {
         userId
       )
 
-      // Critical: loadChat should be called AFTER deletion to get fresh data
-      expect(loadChat).toHaveBeenCalledWith(chatId, userId)
+      // Should NOT call loadChat (uses in-memory messages to avoid stale cache)
+      expect(loadChat).not.toHaveBeenCalled()
 
       // Verify only message 1 is returned (correct context for regeneration)
       expect(result).toHaveLength(1)
       expect(result[0].id).toBe('msg-1')
     })
 
-    it('should reload chat after deleting later assistant message', async () => {
+    it('should use in-memory messages after deleting later assistant message', async () => {
       // Setup: Chat with 6 messages
       const initialChat: Chat & { messages: UIMessage[] } = {
         id: chatId,
@@ -150,33 +137,10 @@ describe('prepareMessages', () => {
         ]
       }
 
-      // After deleting msg-4, messages 1-3 remain
-      const updatedChat: Chat & { messages: UIMessage[] } = {
-        ...initialChat,
-        messages: [
-          {
-            id: 'msg-1',
-            role: 'user',
-            parts: [{ type: 'text', text: 'Question 1' }]
-          },
-          {
-            id: 'msg-2',
-            role: 'assistant',
-            parts: [{ type: 'text', text: 'Answer 1' }]
-          },
-          {
-            id: 'msg-3',
-            role: 'user',
-            parts: [{ type: 'text', text: 'Question 2' }]
-          }
-        ]
-      }
-
       vi.mocked(deleteMessagesFromIndex).mockResolvedValue({
         success: true,
         count: 3
       })
-      vi.mocked(loadChat).mockResolvedValue(updatedChat)
 
       const context: StreamContext = {
         chatId,
@@ -197,8 +161,8 @@ describe('prepareMessages', () => {
         userId
       )
 
-      // Critical: loadChat should be called to get updated state
-      expect(loadChat).toHaveBeenCalledWith(chatId, userId)
+      // Should NOT call loadChat (uses in-memory messages to avoid stale cache)
+      expect(loadChat).not.toHaveBeenCalled()
 
       // Verify messages 1-3 are returned (correct context)
       expect(result).toHaveLength(3)
@@ -207,7 +171,7 @@ describe('prepareMessages', () => {
       expect(result[2].id).toBe('msg-3')
     })
 
-    it('should handle user message edit and reload chat', async () => {
+    it('should handle user message edit with in-memory messages', async () => {
       // Setup: Chat with 4 messages
       const initialChat: Chat & { messages: UIMessage[] } = {
         id: chatId,
@@ -245,28 +209,6 @@ describe('prepareMessages', () => {
         parts: [{ type: 'text', text: 'Edited Question 2' }]
       }
 
-      // After editing msg-3, messages 1-3 remain (msg-4 deleted)
-      const updatedChat: Chat & { messages: UIMessage[] } = {
-        ...initialChat,
-        messages: [
-          {
-            id: 'msg-1',
-            role: 'user',
-            parts: [{ type: 'text', text: 'Question 1' }]
-          },
-          {
-            id: 'msg-2',
-            role: 'assistant',
-            parts: [{ type: 'text', text: 'Answer 1' }]
-          },
-          {
-            id: 'msg-3',
-            role: 'user',
-            parts: [{ type: 'text', text: 'Edited Question 2' }]
-          }
-        ]
-      }
-
       vi.mocked(upsertMessage).mockResolvedValue({
         id: 'msg-3',
         chatId,
@@ -279,7 +221,6 @@ describe('prepareMessages', () => {
         success: true,
         count: 1
       })
-      vi.mocked(loadChat).mockResolvedValue(updatedChat)
 
       const context: StreamContext = {
         chatId,
@@ -303,10 +244,10 @@ describe('prepareMessages', () => {
         userId
       )
 
-      // Critical: loadChat should be called to get updated state
-      expect(loadChat).toHaveBeenCalledWith(chatId, userId)
+      // Should NOT call loadChat (uses in-memory messages to avoid stale cache)
+      expect(loadChat).not.toHaveBeenCalled()
 
-      // Verify updated messages are returned
+      // Verify updated messages are returned with edited message
       expect(result).toHaveLength(3)
       expect(result[2].parts[0]).toMatchObject({
         type: 'text',
@@ -360,22 +301,10 @@ describe('prepareMessages', () => {
         ]
       }
 
-      const updatedChat: Chat & { messages: UIMessage[] } = {
-        ...initialChat,
-        messages: [
-          {
-            id: 'msg-1',
-            role: 'user',
-            parts: [{ type: 'text', text: 'Question 1' }]
-          }
-        ]
-      }
-
       vi.mocked(deleteMessagesFromIndex).mockResolvedValue({
         success: true,
         count: 1
       })
-      vi.mocked(loadChat).mockResolvedValue(updatedChat)
 
       const context: StreamContext = {
         chatId,
@@ -391,7 +320,8 @@ describe('prepareMessages', () => {
 
       // Should fallback to last assistant message (msg-2)
       expect(deleteMessagesFromIndex).toHaveBeenCalled()
-      expect(loadChat).toHaveBeenCalledWith(chatId, userId)
+      // Should NOT call loadChat (uses in-memory messages)
+      expect(loadChat).not.toHaveBeenCalled()
       expect(result).toHaveLength(1)
     })
   })
