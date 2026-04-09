@@ -25,24 +25,9 @@ export type UIMessage<
   TTools = UITools
 > = AIMessage
 
-export interface RelatedQuestionsData {
-  status: 'loading' | 'streaming' | 'success' | 'error'
-  questions?: Array<{ question: string }>
-}
-
 export type UIDataTypes = {
   sources?: any[]
-  relatedQuestions?: RelatedQuestionsData
 }
-
-// Data part types for DataSection
-export type DataRelatedQuestionsPart = {
-  type: 'data-relatedQuestions'
-  id?: string
-  data: RelatedQuestionsData
-}
-
-export type DataPart = DataRelatedQuestionsPart
 
 // Create todo tools instance for type inference
 const todoTools = createTodoTools()

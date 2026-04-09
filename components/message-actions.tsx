@@ -6,6 +6,7 @@ import { UseChatHelpers } from '@ai-sdk/react'
 import { Copy, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
 import type { SearchResultItem } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
@@ -59,7 +60,7 @@ export function MessageActions({
   }
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(mappedMessage)
+    await navigator.clipboard.writeText(stripSpecBlocks(mappedMessage))
     toast.success('Message copied to clipboard')
   }
 

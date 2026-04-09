@@ -7,6 +7,7 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 
+import { ChatProvider } from '@/lib/contexts/chat-context'
 import { generateId } from '@/lib/db/schema'
 import { UploadedFile } from '@/lib/types'
 import type { UIMessage } from '@/lib/types/ai'
@@ -300,13 +301,6 @@ export function Chat({
     }
   }, [sections, messages, chatId])
 
-  const onQuerySelect = (query: string) => {
-    sendMessage({
-      role: 'user',
-      parts: [{ type: 'text', text: query }]
-    })
-  }
-
   const handleUpdateAndReloadMessage = async (
     editedMessageId: string,
     newContentText: string
@@ -418,111 +412,112 @@ export function Chat({
     : { isDragging, handleDragOver, handleDragLeave, handleDrop }
 
   return (
-    <div
-      className={cn(
-        'relative flex h-full min-w-0 flex-1 flex-col',
-        messages.length === 0 ? 'items-center justify-center' : ''
-      )}
-      data-testid="full-chat"
-      onDragOver={dragHandlers.handleDragOver}
-      onDragLeave={dragHandlers.handleDragLeave}
-      onDrop={dragHandlers.handleDrop}
-    >
-      <ChatMessages
-        sections={sections}
-        onQuerySelect={onQuerySelect}
-        status={status}
-        chatId={chatId}
-        isGuest={isGuest}
-        addToolResult={({
-          toolCallId,
-          result
-        }: {
-          toolCallId: string
-          result: any
-        }) => {
-          // Find the tool name from the message parts
-          let toolName = 'unknown'
+    <ChatProvider sendMessage={sendMessage}>
+      <div
+        className={cn(
+          'relative flex h-full min-w-0 flex-1 flex-col',
+          messages.length === 0 ? 'items-center justify-center' : ''
+        )}
+        data-testid="full-chat"
+        onDragOver={dragHandlers.handleDragOver}
+        onDragLeave={dragHandlers.handleDragLeave}
+        onDrop={dragHandlers.handleDrop}
+      >
+        <ChatMessages
+          sections={sections}
+          status={status}
+          chatId={chatId}
+          isGuest={isGuest}
+          addToolResult={({
+            toolCallId,
+            result
+          }: {
+            toolCallId: string
+            result: any
+          }) => {
+            // Find the tool name from the message parts
+            let toolName = 'unknown'
 
-          // Optimize by breaking early once found
-          outerLoop: for (const message of messages) {
-            if (!message.parts) continue
+            // Optimize by breaking early once found
+            outerLoop: for (const message of messages) {
+              if (!message.parts) continue
 
-            for (const part of message.parts) {
-              if (isToolCallPart(part) && part.toolCallId === toolCallId) {
-                toolName = part.toolName
-                break outerLoop
-              } else if (
-                isToolTypePart(part) &&
-                part.toolCallId === toolCallId
-              ) {
-                toolName = part.type.substring(5) // Remove 'tool-' prefix
-                break outerLoop
-              } else if (
-                isDynamicToolPart(part) &&
-                part.toolCallId === toolCallId
-              ) {
-                toolName = part.toolName
-                break outerLoop
-              }
-            }
-          }
-
-          addToolResult({ tool: toolName, toolCallId, output: result })
-        }}
-        scrollContainerRef={scrollContainerRef}
-        onUpdateMessage={handleUpdateAndReloadMessage}
-        reload={handleReloadFrom}
-        error={error}
-      />
-      <ChatPanel
-        chatId={chatId}
-        input={input}
-        handleInputChange={handleInputChange}
-        handleSubmit={onSubmit}
-        status={status}
-        messages={messages}
-        setMessages={setMessages}
-        stop={stop}
-        query={query}
-        append={(message: any) => {
-          sendMessage(message)
-        }}
-        showScrollToBottomButton={!isAtBottom}
-        uploadedFiles={uploadedFiles}
-        setUploadedFiles={setUploadedFiles}
-        scrollContainerRef={scrollContainerRef}
-        onNewChat={handleNewChat}
-        isGuest={isGuest}
-        isCloudDeployment={isCloudDeployment}
-        modelSelectorData={modelSelectorData}
-      />
-      <DragOverlay visible={dragHandlers.isDragging} />
-      <ErrorModal
-        open={errorModal.open}
-        onOpenChange={open => setErrorModal(prev => ({ ...prev, open }))}
-        error={errorModal}
-        onRetry={
-          errorModal.type !== 'rate-limit'
-            ? () => {
-                // Retry the last message if not rate limited
-                if (messages.length > 0) {
-                  const lastUserMessage = messages
-                    .filter(m => m.role === 'user')
-                    .pop()
-                  if (lastUserMessage) {
-                    sendMessage(lastUserMessage)
-                  }
+              for (const part of message.parts) {
+                if (isToolCallPart(part) && part.toolCallId === toolCallId) {
+                  toolName = part.toolName
+                  break outerLoop
+                } else if (
+                  isToolTypePart(part) &&
+                  part.toolCallId === toolCallId
+                ) {
+                  toolName = part.type.substring(5) // Remove 'tool-' prefix
+                  break outerLoop
+                } else if (
+                  isDynamicToolPart(part) &&
+                  part.toolCallId === toolCallId
+                ) {
+                  toolName = part.toolName
+                  break outerLoop
                 }
               }
-            : undefined
-        }
-        onAuthClose={() => {
-          // Clear messages and navigate to root
-          setMessages([])
-          router.push('/')
-        }}
-      />
-    </div>
+            }
+
+            addToolResult({ tool: toolName, toolCallId, output: result })
+          }}
+          scrollContainerRef={scrollContainerRef}
+          onUpdateMessage={handleUpdateAndReloadMessage}
+          reload={handleReloadFrom}
+          error={error}
+        />
+        <ChatPanel
+          chatId={chatId}
+          input={input}
+          handleInputChange={handleInputChange}
+          handleSubmit={onSubmit}
+          status={status}
+          messages={messages}
+          setMessages={setMessages}
+          stop={stop}
+          query={query}
+          append={(message: any) => {
+            sendMessage(message)
+          }}
+          showScrollToBottomButton={!isAtBottom}
+          uploadedFiles={uploadedFiles}
+          setUploadedFiles={setUploadedFiles}
+          scrollContainerRef={scrollContainerRef}
+          onNewChat={handleNewChat}
+          isGuest={isGuest}
+          isCloudDeployment={isCloudDeployment}
+          modelSelectorData={modelSelectorData}
+        />
+        <DragOverlay visible={dragHandlers.isDragging} />
+        <ErrorModal
+          open={errorModal.open}
+          onOpenChange={open => setErrorModal(prev => ({ ...prev, open }))}
+          error={errorModal}
+          onRetry={
+            errorModal.type !== 'rate-limit'
+              ? () => {
+                  // Retry the last message if not rate limited
+                  if (messages.length > 0) {
+                    const lastUserMessage = messages
+                      .filter(m => m.role === 'user')
+                      .pop()
+                    if (lastUserMessage) {
+                      sendMessage(lastUserMessage)
+                    }
+                  }
+                }
+              : undefined
+          }
+          onAuthClose={() => {
+            // Clear messages and navigate to root
+            setMessages([])
+            router.push('/')
+          }}
+        />
+      </div>
+    </ChatProvider>
   )
 }

@@ -1,3 +1,4 @@
+import { getRelatedQuestionsSpecPrompt } from '@/lib/render/prompt'
 import {
   getContentTypesGuidance,
   isGeneralSearchProviderAvailable
@@ -110,7 +111,6 @@ OUTPUT FORMAT (MANDATORY):
 - Only use fenced code blocks if the user explicitly asks for code or commands.
 - Prefer natural, conversational tone while maintaining informativeness.
 - Always end with a brief conclusion that synthesizes the main points into a cohesive summary.
-- **CRITICAL: Do NOT include follow-up suggestions or questions at the end** (e.g., "If you want, I can..." or "Would you like me to..."). The application provides related questions separately.
 - Response length guidance:
   - Simple definitions or facts: Keep concise and direct
   - Comparisons or multi-faceted topics: Provide comprehensive coverage
@@ -138,6 +138,8 @@ Example approach:
 - **Consideration:** Practical implications with real-world context
 
 End with a synthesizing conclusion that ties the main points together into a clear overall picture.
+
+${getRelatedQuestionsSpecPrompt()}
 `
 }
 
@@ -288,7 +290,6 @@ OUTPUT FORMAT (MANDATORY):
 - Adapt length and structure to query complexity: simple topics can be concise, complex topics should be thorough.
 - Place all citations at the end of the sentence they support.
 - Always include a brief conclusion that synthesizes the key points.
-- **CRITICAL: Do NOT include follow-up suggestions or questions at the end** (e.g., "If you want, I can..." or "Would you like me to..."). The application provides related questions separately.
 - Response length guidance:
   - Scale naturally with query complexity
   - Simple queries: Concise and direct answers
@@ -309,6 +310,8 @@ Flexible example:
 - **Context:** Relevant supporting details
 
 Conclude with a brief synthesis that ties together the main insights into a clear overall understanding.
+
+${getRelatedQuestionsSpecPrompt()}
 `
 }
 

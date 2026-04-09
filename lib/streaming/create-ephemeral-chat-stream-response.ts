@@ -20,7 +20,6 @@ import {
   truncateMessages
 } from '../utils/context-window'
 
-import { streamRelatedQuestions } from './helpers/stream-related-questions'
 import { stripReasoningParts } from './helpers/strip-reasoning-parts'
 import { BaseStreamConfig } from './types'
 
@@ -113,22 +112,7 @@ export async function createEphemeralChatStreamResponse(
           })
         )
 
-        const responseMessages = (await result.response).messages
-        if (responseMessages && responseMessages.length > 0) {
-          const lastUserMessage = [...modelMessages]
-            .reverse()
-            .find(msg => msg.role === 'user')
-          const messagesForQuestions = lastUserMessage
-            ? [lastUserMessage, ...responseMessages]
-            : responseMessages
-          await streamRelatedQuestions(
-            writer,
-            messagesForQuestions,
-            abortSignal,
-            parentTraceId,
-            model
-          )
-        }
+        await result.response
       } finally {
         if (langfuse) {
           await langfuse.flushAsync()

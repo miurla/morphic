@@ -22,7 +22,6 @@ interface ChatSection {
 
 interface ChatMessagesProps {
   sections: ChatSection[] // Changed from messages to sections
-  onQuerySelect: (query: string) => void
   status: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   chatId?: string
   isGuest?: boolean
@@ -36,7 +35,6 @@ interface ChatMessagesProps {
 
 export function ChatMessages({
   sections,
-  onQuerySelect,
   status,
   chatId,
   isGuest = false,
@@ -56,12 +54,7 @@ export function ChatMessages({
   const isMobile = useMediaQuery('(max-width: 767px)')
 
   // Tool types definition - moved outside function for performance
-  const toolTypes = [
-    'tool-search',
-    'tool-fetch',
-    'tool-askQuestion',
-    'tool-relatedQuestions'
-  ]
+  const toolTypes = ['tool-search', 'tool-fetch', 'tool-askQuestion']
 
   // Clear cache during streaming to ensure accurate tool counts
   useEffect(() => {
@@ -194,7 +187,6 @@ export function ChatMessages({
                   getIsOpen(id, partType, hasNextPart, section.userMessage)
                 }
                 onOpenChange={handleOpenChange}
-                onQuerySelect={onQuerySelect}
                 chatId={chatId}
                 isGuest={isGuest}
                 status={status}
@@ -221,7 +213,6 @@ export function ChatMessages({
                       getIsOpen(id, partType, hasNextPart, assistantMessage)
                     }
                     onOpenChange={handleOpenChange}
-                    onQuerySelect={onQuerySelect}
                     chatId={chatId}
                     isGuest={isGuest}
                     status={status}

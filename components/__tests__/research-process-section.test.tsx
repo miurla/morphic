@@ -34,7 +34,6 @@ vi.mock('../tool-section', () => ({
 describe('ResearchProcessSection', () => {
   const mockGetIsOpen = vi.fn()
   const mockOnOpenChange = vi.fn()
-  const mockOnQuerySelect = vi.fn()
   const mockAddToolResult = vi.fn()
 
   beforeEach(() => {
@@ -61,7 +60,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-1"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
         />
       )
 
@@ -88,7 +86,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-2"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
         />
       )
 
@@ -118,7 +115,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-3"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
         />
       )
 
@@ -154,7 +150,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-4"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
         />
       )
 
@@ -200,7 +195,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-5"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
         />
       )
 
@@ -228,7 +222,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-6"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
         />
       )
 
@@ -249,7 +242,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-6"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
         />
       )
     })
@@ -271,7 +263,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-7"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
         />
       )
 
@@ -306,7 +297,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-8"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
         />
       )
 
@@ -333,7 +323,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-9"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
         />
       )
 
@@ -360,7 +349,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-10"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
           parts={overrideParts}
         />
       )
@@ -371,7 +359,7 @@ describe('ResearchProcessSection', () => {
       expect(screen.getByText('Override')).toBeInTheDocument()
     })
 
-    test('handles data parts correctly', () => {
+    test('ignores unknown part types', () => {
       const parts: any[] = [{ type: 'data-test', data: 'test' }]
 
       const message: UIMessage = {
@@ -386,13 +374,12 @@ describe('ResearchProcessSection', () => {
           messageId="test-11"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
         />
       )
 
-      // Data parts should render the DataSection component
-      // Check that the component renders (not null)
-      expect(container.firstChild).toBeInTheDocument()
+      // Unknown part types render no meaningful content (wrapper may exist)
+      expect(screen.queryByTestId('reasoning-section')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('tool-section')).not.toBeInTheDocument()
     })
   })
 
@@ -417,7 +404,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-12"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
           status="streaming"
         />
       )
@@ -445,7 +431,6 @@ describe('ResearchProcessSection', () => {
           messageId="test-13"
           getIsOpen={mockGetIsOpen}
           onOpenChange={mockOnOpenChange}
-          onQuerySelect={mockOnQuerySelect}
           addToolResult={mockAddToolResult}
         />
       )

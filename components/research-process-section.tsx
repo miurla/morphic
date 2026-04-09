@@ -6,13 +6,7 @@ import type { ReasoningPart } from '@ai-sdk/provider-utils'
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ChevronDown } from 'lucide-react'
 
-import type {
-  DataPart as UIDataPart,
-  ToolPart,
-  UIDataTypes,
-  UIMessage,
-  UITools
-} from '@/lib/types/ai'
+import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import { cn } from '@/lib/utils'
 
@@ -21,7 +15,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from './ui/collapsible'
-import { DataSection } from './data-section'
 import { ReasoningSection } from './reasoning-section'
 import { ToolSection } from './tool-section'
 
@@ -31,14 +24,7 @@ type TextPart = {
   text: string
 }
 
-type DataPart = UIDataPart
-
-type MessagePart =
-  | ReasoningPart
-  | ToolPart
-  | TextPart
-  | DataPart
-  | DynamicToolPart
+type MessagePart = ReasoningPart | ToolPart | TextPart | DynamicToolPart
 
 // Type guards
 function isReasoningPart(part: MessagePart): part is ReasoningPart {
@@ -55,8 +41,15 @@ function isTextPart(part: MessagePart): part is TextPart {
   return part.type === 'text'
 }
 
-function isDataPart(part: MessagePart): part is DataPart {
-  return part.type?.startsWith?.('data-') ?? false
+function isNonEmptyTextPart(part: MessagePart): part is TextPart {
+  return isTextPart(part) && part.text.trim().length > 0
+}
+
+function isRenderablePart(part: MessagePart): boolean {
+  if (isReasoningPart(part) || isTextPart(part)) {
+    return part.text.trim().length > 0
+  }
+  return true
 }
 
 type Props = {
@@ -64,7 +57,6 @@ type Props = {
   messageId: string
   getIsOpen: (id: string, partType?: string, hasNextPart?: boolean) => boolean
   onOpenChange: (id: string, open: boolean) => void
-  onQuerySelect: (query: string) => void
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   parts?: MessagePart[]
@@ -82,7 +74,7 @@ function splitByText(parts: MessagePart[]): MessagePart[][] {
   let currentSegment: MessagePart[] = []
 
   for (const part of parts || []) {
-    if (isTextPart(part)) {
+    if (isNonEmptyTextPart(part)) {
       // When we hit a text part, save the current segment if it has content
       if (currentSegment.length > 0) {
         segments.push(currentSegment)
@@ -187,8 +179,7 @@ function RenderPart({
   openSectionId,
   handleAccordionChange,
   status,
-  addToolResult,
-  onQuerySelect
+  addToolResult
 }: {
   part: MessagePart
   partId: string
@@ -204,7 +195,6 @@ function RenderPart({
   handleAccordionChange: (id: string, open: boolean, isSingle: boolean) => void
   status?: any
   addToolResult?: (params: { toolCallId: string; result: any }) => void
-  onQuerySelect: (query: string) => void
 }) {
   const hasSubsequent = hasNext || hasSubsequentContent
 
@@ -239,16 +229,11 @@ function RenderPart({
         }
         status={status}
         addToolResult={addToolResult}
-        onQuerySelect={onQuerySelect}
         borderless={!isSingle}
         isFirst={isFirstGroup && partIndex === 0}
         isLast={isLastGroup && partIndex === groupLength - 1}
       />
     )
-  }
-
-  if (isDataPart(part)) {
-    return <DataSection part={part} onQuerySelect={onQuerySelect} />
   }
 
   return null
@@ -295,7 +280,6 @@ export function ResearchProcessSection({
   messageId,
   getIsOpen,
   onOpenChange,
-  onQuerySelect,
   status,
   addToolResult,
   parts: partsOverride,
@@ -303,8 +287,11 @@ export function ResearchProcessSection({
 }: Props) {
   const allParts = (partsOverride ?? (message.parts || [])) as MessagePart[]
 
-  // Filter out empty reasoning parts to avoid incorrect grouping
-  const filteredParts = allParts.filter(p => !(isReasoningPart(p) && !p.text))
+  // Filter out empty reasoning/text parts to avoid incorrect grouping
+  const filteredParts = allParts.filter(isRenderablePart)
+  const filteredMessageParts = ((message.parts || []) as MessagePart[]).filter(
+    isRenderablePart
+  )
 
   const segments = partsOverride ? [filteredParts] : splitByText(filteredParts)
 
@@ -315,7 +302,7 @@ export function ResearchProcessSection({
   // Use custom hook for subsequent content detection
   const hasSubsequentContent = useHasSubsequentContent(
     segments,
-    message.parts as MessagePart[] | undefined
+    filteredMessageParts
   )
 
   // State for parent collapsible (when segment has 5+ parts)
@@ -370,7 +357,6 @@ export function ResearchProcessSection({
                       handleAccordionChange={handleAccordionChange}
                       status={status}
                       addToolResult={addToolResult}
-                      onQuerySelect={onQuerySelect}
                     />
                   )
                 })}

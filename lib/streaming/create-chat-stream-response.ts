@@ -26,7 +26,6 @@ import { perfLog, perfTime } from '../utils/perf-logging'
 
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
-import { streamRelatedQuestions } from './helpers/stream-related-questions'
 import { stripReasoningParts } from './helpers/strip-reasoning-parts'
 import type { StreamContext } from './helpers/types'
 import { BaseStreamConfig } from './types'
@@ -204,26 +203,8 @@ export async function createChatStreamResponse(
           })
         )
 
-        const responseMessages = (await result.response).messages
+        await result.response
         perfTime('researchAgent.stream completed', llmStart)
-        // Generate related questions
-        if (responseMessages && responseMessages.length > 0) {
-          // Find the last user message
-          const lastUserMessage = [...modelMessages]
-            .reverse()
-            .find(msg => msg.role === 'user')
-          const messagesForQuestions = lastUserMessage
-            ? [lastUserMessage, ...responseMessages]
-            : responseMessages
-
-          await streamRelatedQuestions(
-            writer,
-            messagesForQuestions,
-            abortSignal,
-            parentTraceId,
-            model
-          )
-        }
       } catch (error) {
         console.error('Stream execution error:', error)
         throw error // This error will be handled by the onError callback

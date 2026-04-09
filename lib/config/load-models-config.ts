@@ -8,7 +8,6 @@ export interface ModelsConfig {
   models: {
     quick: Model
     adaptive: Model
-    relatedQuestions: Model
   }
 }
 
@@ -30,13 +29,6 @@ function validateModelsConfigStructure(
   if (!parsed.models || typeof parsed.models !== 'object') {
     throw new Error('Invalid models config: missing models')
   }
-  if (!parsed.models.relatedQuestions) {
-    throw new Error('Invalid models config: missing required sections')
-  }
-  if (typeof parsed.models.relatedQuestions !== 'object') {
-    throw new Error('Invalid models config: relatedQuestions must be an object')
-  }
-
   for (const searchMode of VALID_SEARCH_MODES) {
     const modeEntry = parsed.models[searchMode]
     if (!modeEntry || typeof modeEntry !== 'object') {

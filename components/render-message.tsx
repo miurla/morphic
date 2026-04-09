@@ -20,7 +20,6 @@ interface RenderMessageProps {
   messageId: string
   getIsOpen: (id: string, partType?: string, hasNextPart?: boolean) => boolean
   onOpenChange: (id: string, open: boolean) => void
-  onQuerySelect: (query: string) => void
   chatId?: string
   isGuest?: boolean
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
@@ -36,7 +35,6 @@ export function RenderMessage({
   messageId,
   getIsOpen,
   onOpenChange,
-  onQuerySelect,
   chatId,
   isGuest = false,
   status,
@@ -46,6 +44,11 @@ export function RenderMessage({
   isLatestMessage = false,
   citationMaps = {}
 }: RenderMessageProps) {
+  const isNonEmptyTextPart = (part: any) =>
+    part?.type === 'text' &&
+    typeof part.text === 'string' &&
+    part.text.trim().length > 0
+
   // Use provided citation maps (from all messages)
   if (message.role === 'user') {
     return (
@@ -93,7 +96,6 @@ export function RenderMessage({
         parts={buffer}
         getIsOpen={getIsOpen}
         onOpenChange={onOpenChange}
-        onQuerySelect={onQuerySelect}
         status={status}
         addToolResult={addToolResult}
       />
@@ -103,6 +105,11 @@ export function RenderMessage({
 
   message.parts?.forEach((part: any, index: number) => {
     if (part.type === 'text') {
+      // Ignore empty text chunks (some providers emit them before reasoning/tool parts).
+      if (!isNonEmptyTextPart(part)) {
+        return
+      }
+
       // Check if there's buffered content before this text part
       const hasBufferedContent = buffer.length > 0
 
@@ -118,7 +125,6 @@ export function RenderMessage({
               parts={buffer}
               getIsOpen={getIsOpen}
               onOpenChange={onOpenChange}
-              onQuerySelect={onQuerySelect}
               status={status}
               addToolResult={addToolResult}
               hasSubsequentText={true}
@@ -129,7 +135,7 @@ export function RenderMessage({
       }
 
       const remainingParts = message.parts?.slice(index + 1) || []
-      const hasMoreTextParts = remainingParts.some(p => p.type === 'text')
+      const hasMoreTextParts = remainingParts.some(isNonEmptyTextPart)
       const isLastTextPart = !hasMoreTextParts
       const isStreamingComplete =
         status !== 'streaming' && status !== 'submitted'
@@ -156,11 +162,7 @@ export function RenderMessage({
           citationMaps={citationMaps}
         />
       )
-    } else if (
-      part.type === 'reasoning' ||
-      part.type?.startsWith?.('tool-') ||
-      part.type?.startsWith?.('data-')
-    ) {
+    } else if (part.type === 'reasoning' || part.type?.startsWith?.('tool-')) {
       buffer.push(part)
     } else if (part.type === 'dynamic-tool') {
       flushBuffer(`seg-${index}`)
