@@ -55,8 +55,9 @@ export async function prepareMessages(
     }
 
     const targetMessage = currentChat.messages[messageIndex]
+    const targetMessageId = targetMessage.id
     if (targetMessage.role === 'assistant') {
-      await deleteMessagesFromIndex(chatId, messageId, userId)
+      await deleteMessagesFromIndex(chatId, targetMessageId, userId)
       // Use in-memory messages instead of re-fetching from cache
       // loadChat uses unstable_cache which may return stale data
       // even after revalidateTag within the same request
