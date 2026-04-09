@@ -16,8 +16,9 @@ Example output (always at the very end of your response):
 
 \`\`\`spec
 {"op":"add","path":"/root","value":"main"}
-{"op":"add","path":"/elements/main","value":{"type":"Stack","props":{"direction":"vertical","gap":"sm"},"children":["header","q1","q2","q3"]}}
+{"op":"add","path":"/elements/main","value":{"type":"Stack","props":{"direction":"vertical","gap":"sm"},"children":["header","questions"]}}
 {"op":"add","path":"/elements/header","value":{"type":"SectionHeader","props":{"title":"Related","icon":"related"},"children":[]}}
+{"op":"add","path":"/elements/questions","value":{"type":"Stack","props":{"direction":"vertical","gap":"xs"},"children":["q1","q2","q3"]}}
 {"op":"add","path":"/elements/q1","value":{"type":"QuestionButton","props":{"text":"First follow-up question here"},"on":{"press":{"action":"submitQuery","params":{"query":"First follow-up question here"}}},"children":[]}}
 {"op":"add","path":"/elements/q2","value":{"type":"QuestionButton","props":{"text":"Second follow-up question here"},"on":{"press":{"action":"submitQuery","params":{"query":"Second follow-up question here"}}},"children":[]}}
 {"op":"add","path":"/elements/q3","value":{"type":"QuestionButton","props":{"text":"Third follow-up question here"},"on":{"press":{"action":"submitQuery","params":{"query":"Third follow-up question here"}}},"children":[]}}
