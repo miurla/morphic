@@ -27,6 +27,7 @@ import { perfLog, perfTime } from '../utils/perf-logging'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
 import { stripReasoningParts } from './helpers/strip-reasoning-parts'
+import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import type { StreamContext } from './helpers/types'
 import { BaseStreamConfig } from './types'
 
@@ -136,9 +137,10 @@ export async function createChatStreamResponse(
         // OpenAI's Responses API requires reasoning items and their following items to be kept together
         // See: https://github.com/vercel/ai/issues/11036
         const isOpenAI = context.modelId.startsWith('openai:')
+        const messagesWithoutSpec = stripSpecFromMessages(messagesToModel)
         const messagesToConvert = isOpenAI
-          ? stripReasoningParts(messagesToModel)
-          : messagesToModel
+          ? stripReasoningParts(messagesWithoutSpec)
+          : messagesWithoutSpec
 
         // Convert to model messages and apply context window management
         let modelMessages = await convertToModelMessages(messagesToConvert)
