@@ -182,7 +182,6 @@ export async function createChatStreamResponse(
       experimental_transform: smoothStream({ chunking: 'word' })
     })
     result.consumeStream()
-    perfTime('researchAgent.stream completed', llmStart)
 
     return result.toUIMessageStreamResponse({
       messageMetadata: ({ part }) => {
@@ -196,6 +195,7 @@ export async function createChatStreamResponse(
       },
       onFinish: async ({ responseMessage, isAborted }) => {
         try {
+          perfTime('researchAgent.stream completed', llmStart)
           if (isAborted || !responseMessage) return
 
           // Persist stream results to database
