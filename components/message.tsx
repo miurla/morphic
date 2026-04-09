@@ -3,7 +3,11 @@
 import { useMemo } from 'react'
 
 import { math } from '@streamdown/math'
-import { defaultRehypePlugins, Streamdown, type StreamdownProps } from 'streamdown'
+import {
+  defaultRehypePlugins,
+  Streamdown,
+  type StreamdownProps
+} from 'streamdown'
 
 import { mergeStreamdownSpecRenderer } from '@/lib/render/streamdown-spec'
 import type { SearchResultItem } from '@/lib/types'

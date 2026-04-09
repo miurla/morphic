@@ -3,9 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { createPartialSpecParser, parseSpecBlock } from '../parse-spec-block'
 
 // Helper to build JSONL source for related questions spec
-function buildRelatedQuestionsSource(
-  questions: string[]
-): string {
+function buildRelatedQuestionsSource(questions: string[]): string {
   const lines = [
     '{"op":"add","path":"/root","value":"main"}',
     `{"op":"add","path":"/elements/main","value":{"type":"Stack","props":{"direction":"vertical","gap":"sm"},"children":[${questions.map((_, i) => `"q${i + 1}"`).join(',')}]}}`
