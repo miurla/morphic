@@ -131,7 +131,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-full h-7 w-7"
+                className="rounded-full size-7"
                 onClick={handleEditClick}
               >
                 <Pencil className="size-3.5" />

@@ -11,7 +11,7 @@ function IconLogo({ className, ...props }: React.ComponentProps<'svg'>) {
       viewBox="0 0 256 256"
       role="img"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn('h-4 w-4', className)}
+      className={cn('size-4', className)}
       {...props}
     >
       <circle cx="128" cy="128" r="128" fill="black"></circle>
@@ -28,7 +28,7 @@ function IconLogoOutline({ className, ...props }: React.ComponentProps<'svg'>) {
       viewBox="0 0 256 256"
       role="img"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn('h-4 w-4', className)}
+      className={cn('size-4', className)}
       {...props}
     >
       <circle
@@ -144,7 +144,7 @@ function IconBlinkingLogo({
       viewBox="0 0 256 256"
       role="img"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn('h-4 w-4', className)}
+      className={cn('size-4', className)}
       {...props}
     >
       <circle cx="128" cy="128" r="128" fill="#222"></circle>

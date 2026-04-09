@@ -154,13 +154,13 @@ export function ChatPanel({
     <div
       className={cn(
         'w-full bg-background group/form-container shrink-0',
-        messages.length > 0 ? 'sticky bottom-0 px-2 pb-4' : 'px-6'
+        messages.length > 0 ? 'sticky bottom-0 px-2 pb-2 md:pb-4' : 'px-6'
       )}
     >
       {messages.length === 0 && (
-        <div className="mb-10 flex flex-col items-center gap-4">
+        <div className="mb-6 md:mb-10 flex flex-col items-center gap-2 md:gap-4">
           <IconBlinkingLogo className="size-12" />
-          <h1 className="text-2xl font-medium text-foreground">
+          <h1 className="text-xl md:text-2xl font-medium text-foreground">
             What would you like to know?
           </h1>
         </div>
@@ -217,7 +217,7 @@ export function ChatPanel({
             spellCheck={false}
             value={input}
             disabled={isLoading || isToolInvocationInProgress()}
-            className="resize-none w-full min-h-12 bg-transparent border-0 p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+            className="resize-none w-full min-h-12 bg-transparent border-0 p-3 md:p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
             onChange={handleInputChange}
             onKeyDown={e => {
               if (
@@ -241,7 +241,7 @@ export function ChatPanel({
           />
 
           {/* Bottom menu area */}
-          <div className="flex items-center justify-between p-3">
+          <div className="flex items-center justify-between p-2 md:p-3">
             <div className="flex items-center gap-2">
               {!isGuest && (
                 <FileUploadButton
@@ -304,7 +304,7 @@ export function ChatPanel({
                   variant="outline"
                   size="icon"
                   onClick={handleNewChat}
-                  className="shrink-0 rounded-full group"
+                  className="shrink-0 size-8 md:size-10 rounded-full group"
                   type="button"
                   disabled={isLoading}
                 >
@@ -314,7 +314,10 @@ export function ChatPanel({
               <Button
                 type={isLoading ? 'button' : 'submit'}
                 size={'icon'}
-                className={cn(isLoading && 'animate-pulse', 'rounded-full')}
+                className={cn(
+                  isLoading && 'animate-pulse',
+                  'size-8 md:size-10 rounded-full'
+                )}
                 disabled={
                   (input.length === 0 && !isLoading) || !hasAvailableModels
                 }
@@ -325,7 +328,11 @@ export function ChatPanel({
                     : 'No enabled model is available'
                 }
               >
-                {isLoading ? <Square size={20} /> : <ArrowUp size={20} />}
+                {isLoading ? (
+                  <Square className="size-4 md:size-5" />
+                ) : (
+                  <ArrowUp className="size-4 md:size-5" />
+                )}
               </Button>
             </div>
           </div>

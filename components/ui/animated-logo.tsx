@@ -50,7 +50,7 @@ export function AnimatedLogo({
       viewBox="0 0 256 256"
       role="img"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn('h-8 w-8', className)}
+      className={cn('size-8', className)}
       {...props}
     >
       <circle cx="128" cy="128" r="128" fill="black"></circle>

@@ -15,7 +15,7 @@ export const Spinner = ({ className, ...props }: SpinnerProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     xmlns="http://www.w3.org/2000/svg"
-    className={cn('h-5 w-5 animate-spin stroke-zinc-400', className)}
+    className={cn('size-5 animate-spin stroke-zinc-400', className)}
     {...props}
   >
     <path d="M12 3v3m6.366-.366-2.12 2.12M21 12h-3m.366 6.366-2.12-2.12M12 21v-3m-6.366.366 2.12-2.12M3 12h3m-.366-6.366 2.12 2.12"></path>
@@ -24,6 +24,6 @@ export const Spinner = ({ className, ...props }: SpinnerProps) => (
 
 export const LogoSpinner = () => (
   <div className="p-4 border border-background">
-    <IconLogo className="w-4 h-4 animate-spin" />
+    <IconLogo className="size-4 animate-spin" />
   </div>
 )

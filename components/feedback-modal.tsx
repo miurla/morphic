@@ -79,11 +79,11 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
               size="icon"
               onClick={() => setSentiment('positive')}
               className={cn(
-                'h-12 w-12',
+                'size-12',
                 sentiment === 'positive' && 'bg-green-500 hover:bg-green-600'
               )}
             >
-              <Smile className="h-6 w-6" />
+              <Smile className="size-6" />
             </Button>
             <Button
               type="button"
@@ -91,11 +91,11 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
               size="icon"
               onClick={() => setSentiment('neutral')}
               className={cn(
-                'h-12 w-12',
+                'size-12',
                 sentiment === 'neutral' && 'bg-yellow-500 hover:bg-yellow-600'
               )}
             >
-              <Meh className="h-6 w-6" />
+              <Meh className="size-6" />
             </Button>
             <Button
               type="button"
@@ -103,11 +103,11 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
               size="icon"
               onClick={() => setSentiment('negative')}
               className={cn(
-                'h-12 w-12',
+                'size-12',
                 sentiment === 'negative' && 'bg-red-500 hover:bg-red-600'
               )}
             >
-              <Frown className="h-6 w-6" />
+              <Frown className="size-6" />
             </Button>
           </div>
 

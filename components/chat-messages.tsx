@@ -67,7 +67,7 @@ export function ChatMessages({
   // Calculate the offset height based on device type
   // Note: pt-14 (56px) on scroll-container must be included in desktop offset
   const offsetHeight = isMobile
-    ? 208 // Mobile: larger offset for mobile header/input
+    ? 192 // Mobile: larger offset for mobile header/input (pt-10 = 40px)
     : 196 // Desktop: smaller offset (140px) + pt-14 (56px)
 
   // Extract citation maps from all messages in all sections
@@ -162,7 +162,7 @@ export function ChatMessages({
       role="list"
       aria-roledescription="chat messages"
       className={cn(
-        'relative size-full pt-14',
+        'relative size-full pt-10 md:pt-14',
         sections.length > 0 ? 'flex-1 overflow-y-auto' : ''
       )}
     >
@@ -171,7 +171,7 @@ export function ChatMessages({
           <div
             key={section.id}
             id={`section-${section.id}`}
-            className="chat-section pb-14"
+            className="chat-section pb-8 md:pb-14"
             style={
               sectionIndex === sections.length - 1
                 ? { minHeight: `calc(100dvh - ${offsetHeight}px)` }
@@ -179,7 +179,7 @@ export function ChatMessages({
             }
           >
             {/* User message */}
-            <div className="flex flex-col gap-4 mb-4">
+            <div className="flex flex-col gap-2 md:gap-4 mb-2 md:mb-4">
               <RenderMessage
                 message={section.userMessage}
                 messageId={section.userMessage.id}
@@ -205,7 +205,10 @@ export function ChatMessages({
                 messageIndex === section.assistantMessages.length - 1
 
               return (
-                <div key={assistantMessage.id} className="flex flex-col gap-4">
+                <div
+                  key={assistantMessage.id}
+                  className="flex flex-col gap-2 md:gap-4"
+                >
                   <RenderMessage
                     message={assistantMessage}
                     messageId={assistantMessage.id}
@@ -228,7 +231,7 @@ export function ChatMessages({
             {/* Show assistant logo after assistant messages */}
             {showAssistantLogo && sectionIndex === sections.length - 1 && (
               <div className="flex justify-start py-4">
-                <AnimatedLogo className="h-10 w-10" animate={isLoading} />
+                <AnimatedLogo className="size-10" animate={isLoading} />
               </div>
             )}
             {sectionIndex === sections.length - 1 && (

@@ -73,12 +73,13 @@ export function SearchModeSelector() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="text-sm rounded-full shadow-none gap-1 transition-all"
+              size="sm"
+              className="text-xs rounded-full shadow-none gap-1 transition-all"
             >
               {SelectedIcon && (
                 <SelectedIcon
                   className={cn(
-                    'h-4 w-4 transition-colors',
+                    'size-3.5 transition-colors',
                     selectedMode?.color
                   )}
                 />
@@ -86,7 +87,7 @@ export function SearchModeSelector() {
               <span className="text-xs font-medium">{selectedMode?.label}</span>
               <ChevronDown
                 className={cn(
-                  'h-3 w-3 ml-1 opacity-50 transition-transform duration-200',
+                  'size-3 ml-0.5 opacity-50 transition-transform duration-200',
                   dropdownOpen && 'rotate-180'
                 )}
               />
@@ -103,11 +104,11 @@ export function SearchModeSelector() {
                   className="relative flex flex-col items-start gap-1 py-2 pl-8 pr-2 cursor-pointer focus:outline-none"
                 >
                   {isSelected && (
-                    <Check className="absolute left-2 top-2.5 h-4 w-4" />
+                    <Check className="absolute left-2 top-2.5 size-4" />
                   )}
                   <div className="flex items-center gap-2">
                     <ModeIcon
-                      className={cn('h-4 w-4 transition-colors', config.color)}
+                      className={cn('size-4 transition-colors', config.color)}
                     />
                     <span className="text-sm font-medium">{config.label}</span>
                   </div>
@@ -182,7 +183,7 @@ export function SearchModeSelector() {
                   >
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Icon className={cn('h-5 w-5', config.color)} />
+                        <Icon className={cn('size-5', config.color)} />
                         <h4 className="text-sm font-semibold">
                           {config.label}
                         </h4>

@@ -15,14 +15,14 @@ export const RetryButton: React.FC<RetryButtonProps> = ({
 }) => {
   return (
     <Button
-      className="rounded-full h-8 w-8"
+      className="rounded-full size-8"
       type="button"
       variant="ghost"
       size="icon"
       onClick={() => reload()}
       aria-label={`Retry from message ${messageId}`}
     >
-      <RotateCcw className="w-4 h-4" />
+      <RotateCcw className="size-4" />
       <span className="sr-only">Retry</span>
     </Button>
   )

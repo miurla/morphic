@@ -85,7 +85,7 @@ export function ReasoningSection({
       label={
         !isSingle ? (
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-4 h-4 shrink-0 flex items-center justify-center relative">
+            <div className="size-4 shrink-0 flex items-center justify-center relative">
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
             </div>
             <span className="truncate block min-w-0 max-w-full">
