@@ -73,7 +73,7 @@ export function InspectorPanel() {
               aria-label="Close panel"
               tooltipContent="Close"
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </TooltipButton>
           </div>
           <Separator className="my-1 bg-border/50" />
