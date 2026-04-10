@@ -1,12 +1,6 @@
 'use client'
 
-import {
-  LightbulbIcon,
-  ListTodo,
-  MessageSquare,
-  Search,
-  X
-} from 'lucide-react'
+import { LightbulbIcon, ListTodo, MessageSquare, Search, X } from 'lucide-react'
 
 import { Separator } from '@/components/ui/separator'
 import { TooltipProvider } from '@/components/ui/tooltip'
