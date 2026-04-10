@@ -4,8 +4,8 @@ import {
   LightbulbIcon,
   ListTodo,
   MessageSquare,
-  Minimize2,
-  Search
+  Search,
+  X
 } from 'lucide-react'
 
 import { Separator } from '@/components/ui/separator'
@@ -71,9 +71,9 @@ export function InspectorPanel() {
               size="icon"
               onClick={close}
               aria-label="Close panel"
-              tooltipContent="Minimize"
+              tooltipContent="Close"
             >
-              <Minimize2 className="h-4 w-4" />
+              <X className="h-4 w-4" />
             </TooltipButton>
           </div>
           <Separator className="my-1 bg-border/50" />
