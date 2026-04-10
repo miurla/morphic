@@ -120,7 +120,7 @@ export function ReasoningSection({
         header={reasoningHeader}
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        showBorder={false}
+        showBorder={isSingle}
         showIcon={showIcon}
         variant={variant}
         showSeparator={false}
