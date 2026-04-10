@@ -83,18 +83,14 @@ export function ReasoningSection({
   const reasoningHeader = (
     <ProcessHeader
       label={
-        !isSingle ? (
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="size-4 shrink-0 flex items-center justify-center relative">
-              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-            </div>
-            <span className="truncate block min-w-0 max-w-full">
-              {headerLabel}
-            </span>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="size-4 shrink-0 flex items-center justify-center relative">
+            <div className="size-1.5 rounded-full bg-muted-foreground" />
           </div>
-        ) : (
-          headerLabel
-        )
+          <span className="truncate block min-w-0 max-w-full">
+            {headerLabel}
+          </span>
+        </div>
       }
       onInspect={() =>
         open({ type: 'reasoning', text: content.reasoning } as ReasoningPart)
@@ -112,15 +108,11 @@ export function ReasoningSection({
   return (
     <div className="relative">
       {/* Rails for header - show based on position */}
-      {!isSingle && (
-        <>
-          {!isFirst && (
-            <div className="absolute left-[19.5px] w-px bg-border h-2 top-0" />
-          )}
-          {!isLast && (
-            <div className="absolute left-[19.5px] w-px bg-border h-2 bottom-0" />
-          )}
-        </>
+      {!isFirst && (
+        <div className="absolute left-[19.5px] w-px bg-border h-2 top-0" />
+      )}
+      {!isLast && (
+        <div className="absolute left-[19.5px] w-px bg-border h-2 bottom-0" />
       )}
       <CollapsibleMessage
         role="assistant"
@@ -128,31 +120,27 @@ export function ReasoningSection({
         header={reasoningHeader}
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        showBorder={isSingle}
+        showBorder={false}
         showIcon={showIcon}
         variant={variant}
         showSeparator={false}
         headerClickBehavior="split"
       >
         <div className="flex">
-          {/* Rail space - always reserved when grouped */}
-          {!isSingle && (
-            <>
-              <div className="w-[16px] shrink-0 flex justify-center">
-                <div
-                  className={cn(
-                    'w-px bg-border/50 transition-opacity duration-200',
-                    isOpen ? 'opacity-100' : 'opacity-0'
-                  )}
-                  style={{
-                    marginTop: isFirst ? '0' : '-1rem',
-                    marginBottom: isLast ? '0' : '-1rem'
-                  }}
-                />
-              </div>
-              <div className="w-2 shrink-0" />
-            </>
-          )}
+          {/* Rail space */}
+          <div className="w-[16px] shrink-0 flex justify-center">
+            <div
+              className={cn(
+                'w-px bg-border/50 transition-opacity duration-200',
+                isOpen ? 'opacity-100' : 'opacity-0'
+              )}
+              style={{
+                marginTop: isFirst ? '0' : '-1rem',
+                marginBottom: isLast ? '0' : '-1rem'
+              }}
+            />
+          </div>
+          <div className="w-2 shrink-0" />
           <div className="[&_p]:text-xs [&_p]:text-muted-foreground/80 flex-1">
             <MarkdownMessage message={content.reasoning} />
           </div>
