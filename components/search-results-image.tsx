@@ -11,7 +11,10 @@ import {
   useState
 } from 'react'
 
+import { Images } from 'lucide-react'
+
 import { SearchResultImage } from '@/lib/types'
+import { displayUrlName } from '@/lib/utils/domain'
 
 import {
   Carousel,
@@ -223,6 +226,15 @@ const useCarouselMetrics = ({
   return { current: currentValue }
 }
 
+const getFaviconUrl = (imageUrl: string): string => {
+  try {
+    const hostname = new URL(imageUrl).hostname
+    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`
+  } catch {
+    return ''
+  }
+}
+
 const cornerClassForIndex = (actualIndex: number, isFullMode: boolean) => {
   if (!isFullMode) {
     return 'rounded-lg'
@@ -303,6 +315,14 @@ export const SearchResultsImageSection: React.FC<
                     />
                   </div>
                 </div>
+                {!isFullMode &&
+                  index === imageSubset.length - 1 &&
+                  filteredCount > 1 && (
+                    <div className="absolute bottom-1.5 right-1.5 bg-black/40 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                      <Images size={14} />
+                      <span>{filteredCount}</span>
+                    </div>
+                  )}
               </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-auto">
@@ -324,23 +344,46 @@ export const SearchResultsImageSection: React.FC<
                   <CarouselContent>
                     {filteredImages.map((img, idx) => (
                       <CarouselItem key={img.id}>
-                        <div className="p-1 flex items-center justify-center h-full">
+                        <div className="relative w-full h-full flex items-center justify-center">
                           <img
                             src={img.url}
                             alt={`Image ${idx + 1}`}
-                            className="h-auto w-full object-contain max-h-[60vh]"
+                            className="max-w-full max-h-[60vh] object-contain"
                             onError={() => removeImage(img.id)}
                           />
+                          <a
+                            href={img.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="absolute bottom-3 left-3 max-w-[80%] bg-black/70 backdrop-blur-sm rounded-xl px-3 py-2.5 flex items-center gap-2.5 no-underline hover:bg-black/80 transition-colors"
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <img
+                              src={getFaviconUrl(img.url)}
+                              alt=""
+                              className="w-7 h-7 rounded-lg shrink-0"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-white/70 text-xs">
+                                {displayUrlName(img.url)}
+                              </div>
+                              {img.description && (
+                                <div className="text-white text-sm font-medium line-clamp-1">
+                                  {img.description}
+                                </div>
+                              )}
+                            </div>
+                          </a>
                         </div>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
                   {filteredCount > 1 && (
-                    <div className="absolute inset-8 flex items-center justify-between p-4">
-                      <CarouselPrevious className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden">
+                    <div className="absolute inset-8 flex items-center justify-between p-4 pointer-events-none">
+                      <CarouselPrevious className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
                         <span className="sr-only">Previous</span>
                       </CarouselPrevious>
-                      <CarouselNext className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden">
+                      <CarouselNext className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
                         <span className="sr-only">Next</span>
                       </CarouselNext>
                     </div>
