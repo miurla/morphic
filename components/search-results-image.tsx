@@ -361,7 +361,7 @@ export const SearchResultsImageSection: React.FC<
                             <img
                               src={getFaviconUrl(img.url)}
                               alt=""
-                              className="w-7 h-7 rounded-lg shrink-0"
+                              className="size-7 rounded-lg shrink-0"
                             />
                             <div className="min-w-0 flex-1">
                               <div className="text-white/70 text-xs">
@@ -380,10 +380,10 @@ export const SearchResultsImageSection: React.FC<
                   </CarouselContent>
                   {filteredCount > 1 && (
                     <div className="absolute inset-8 flex items-center justify-between p-4 pointer-events-none">
-                      <CarouselPrevious className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
+                      <CarouselPrevious className="size-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
                         <span className="sr-only">Previous</span>
                       </CarouselPrevious>
-                      <CarouselNext className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
+                      <CarouselNext className="size-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
                         <span className="sr-only">Next</span>
                       </CarouselNext>
                     </div>
