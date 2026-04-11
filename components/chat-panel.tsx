@@ -188,12 +188,14 @@ export function ChatPanel({
       >
         {/* Scroll to bottom button */}
         {messages.length > 0 && (
-          <div className={cn(
-            'transition-opacity duration-100',
-            showScrollToBottomButton
-              ? 'opacity-100'
-              : 'pointer-events-none opacity-0'
-          )}>
+          <div
+            className={cn(
+              'transition-opacity duration-100',
+              showScrollToBottomButton
+                ? 'opacity-100'
+                : 'pointer-events-none opacity-0'
+            )}
+          >
             <Button
               type="button"
               variant="outline"
@@ -208,12 +210,14 @@ export function ChatPanel({
         )}
         {/* Message navigation dots */}
         {sections.length > 0 && (
-          <div className={cn(
-            'transition-opacity duration-100',
-            !showScrollToBottomButton && status === 'ready'
-              ? 'opacity-100'
-              : 'pointer-events-none opacity-0'
-          )}>
+          <div
+            className={cn(
+              'transition-opacity duration-100',
+              !showScrollToBottomButton && status === 'ready'
+                ? 'opacity-100'
+                : 'pointer-events-none opacity-0'
+            )}
+          >
             <MessageNavigationDots sections={sections} />
           </div>
         )}

@@ -28,7 +28,9 @@ function getUserMessagePreview(message: UIMessage): string {
   return ''
 }
 
-export function MessageNavigationDots({ sections }: MessageNavigationDotsProps) {
+export function MessageNavigationDots({
+  sections
+}: MessageNavigationDotsProps) {
   const visibleSections = sections.slice(-4)
 
   const handleClick = (sectionId: string) => {
@@ -38,8 +40,7 @@ export function MessageNavigationDots({ sections }: MessageNavigationDotsProps) 
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="absolute bottom-full right-0 z-20 mb-2 flex w-8 flex-col items-center gap-0 pb-2"
-      >
+      <div className="absolute bottom-full right-0 z-20 mb-2 flex w-8 flex-col items-center gap-0 pb-2">
         {visibleSections.map(section => {
           const preview = getUserMessagePreview(section.userMessage)
           return (
