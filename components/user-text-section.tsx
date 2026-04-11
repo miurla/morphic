@@ -135,7 +135,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
               className={cn(
                 'absolute -top-1 -right-1 flex items-center gap-0.5 p-0.5 transition-opacity bg-background rounded-full shadow-sm border',
                 'opacity-0',
-                'group-focus-within:opacity-100',
+                'max-md:group-focus-within:opacity-100',
                 'md:group-hover:opacity-100'
               )}
             >
