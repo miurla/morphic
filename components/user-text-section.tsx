@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
-import { Pencil } from 'lucide-react'
+import { Check, Copy, Pencil } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -25,6 +25,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
   const [editedContent, setEditedContent] = useState(content)
   const [isComposing, setIsComposing] = useState(false)
   const [enterDisabled, setEnterDisabled] = useState(false)
+  const [copied, setCopied] = useState(false)
   const enterResetTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -34,6 +35,13 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
       }
     }
   }, [])
+
+  const handleCopyClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation()
+    await navigator.clipboard.writeText(content)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const handleEditClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
@@ -118,13 +126,12 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
           </div>
         ) : (
           <div className="relative">
-            <div className="pr-10 whitespace-pre-wrap">{content}</div>
+            <div className="whitespace-pre-wrap">{content}</div>
             <div
               className={cn(
-                'absolute top-0 right-0 transition-opacity',
+                'absolute -top-1 -right-1 flex items-center gap-0.5 p-0.5 transition-opacity bg-background rounded-full shadow-sm border',
                 'opacity-0',
-                'group-focus-within:opacity-100',
-                'md:opacity-0',
+                'max-md:group-focus-within:opacity-100',
                 'md:group-hover:opacity-100'
               )}
             >
@@ -132,6 +139,20 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
                 variant="ghost"
                 size="icon"
                 className="rounded-full size-7"
+                onMouseDown={e => e.preventDefault()}
+                onClick={handleCopyClick}
+              >
+                {copied ? (
+                  <Check className="size-3.5" />
+                ) : (
+                  <Copy className="size-3.5" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full size-7"
+                onMouseDown={e => e.preventDefault()}
                 onClick={handleEditClick}
               >
                 <Pencil className="size-3.5" />
