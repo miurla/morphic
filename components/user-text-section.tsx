@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
-import { Check, Copy, Pencil } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, Copy, Pencil } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -26,7 +26,15 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
   const [isComposing, setIsComposing] = useState(false)
   const [enterDisabled, setEnterDisabled] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [isClamped, setIsClamped] = useState(false)
   const enterResetTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const contentRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      setIsClamped(node.scrollHeight > node.clientHeight)
+    }
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -130,7 +138,32 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
           </div>
         ) : (
           <div className="relative">
-            <div className="whitespace-pre-wrap">{content}</div>
+            <div
+              ref={contentRef}
+              className={cn(
+                'whitespace-pre-wrap',
+                !isExpanded && 'line-clamp-3'
+              )}
+            >
+              {content}
+            </div>
+            {(isClamped || isExpanded) && (
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground mt-1"
+                onClick={() => setIsExpanded(prev => !prev)}
+              >
+                {isExpanded ? (
+                  <span className="inline-flex items-center gap-0.5">
+                    Show less <ChevronUp className="size-3" />
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-0.5">
+                    Show more <ChevronDown className="size-3" />
+                  </span>
+                )}
+              </button>
+            )}
             <div
               className={cn(
                 'absolute -top-1 -right-1 flex items-center gap-0.5 p-0.5 transition-opacity bg-background rounded-full shadow-sm border',
