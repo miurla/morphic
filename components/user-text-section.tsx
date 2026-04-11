@@ -38,9 +38,13 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
 
   const handleCopyClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
-    await navigator.clipboard.writeText(content)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Clipboard access denied — silently ignore
+    }
   }
 
   const handleEditClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -131,7 +135,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
               className={cn(
                 'absolute -top-1 -right-1 flex items-center gap-0.5 p-0.5 transition-opacity bg-background rounded-full shadow-sm border',
                 'opacity-0',
-                'max-md:group-focus-within:opacity-100',
+                'group-focus-within:opacity-100',
                 'md:group-hover:opacity-100'
               )}
             >
