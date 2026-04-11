@@ -79,8 +79,9 @@ export async function POST(req: Request) {
         forwardedFor.split(',')[0]?.trim() ||
         req.headers.get('x-real-ip') ||
         null
-      const guestLimitResponse = await checkAndEnforceGuestLimit(ip)
-      if (guestLimitResponse) return guestLimitResponse
+      // TODO: Re-enable guest limit
+      // const guestLimitResponse = await checkAndEnforceGuestLimit(ip)
+      // if (guestLimitResponse) return guestLimitResponse
     }
 
     const cookieStore = await cookies()
