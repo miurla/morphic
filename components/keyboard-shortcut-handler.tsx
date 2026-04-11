@@ -29,12 +29,6 @@ export function KeyboardShortcutHandler() {
 
   useKeyboardShortcut(SHORTCUTS.toggleSidebar, toggleSidebar)
 
-  useKeyboardShortcut(SHORTCUTS.focusInput, () => {
-    window.dispatchEvent(
-      new CustomEvent(SHORTCUT_EVENTS.focusInput, { cancelable: true })
-    )
-  })
-
   useKeyboardShortcut(SHORTCUTS.newChat, () => {
     window.dispatchEvent(
       new CustomEvent(SHORTCUT_EVENTS.newChat, { cancelable: true })

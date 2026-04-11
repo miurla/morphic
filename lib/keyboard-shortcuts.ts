@@ -14,13 +14,6 @@ export const SHORTCUTS = {
     shift: false,
     description: 'Toggle sidebar'
   },
-  focusInput: {
-    id: 'focusInput',
-    key: 'k',
-    meta: true,
-    shift: false,
-    description: 'Focus search input'
-  },
   newChat: {
     id: 'newChat',
     key: 'o',
@@ -52,7 +45,6 @@ export const SHORTCUTS = {
 } as const satisfies Record<string, ShortcutDefinition>
 
 export const SHORTCUT_EVENTS = {
-  focusInput: 'shortcut:focus-input',
   newChat: 'shortcut:new-chat',
   copyMessage: 'shortcut:copy-message'
 } as const

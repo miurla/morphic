@@ -117,21 +117,14 @@ export function ChatPanel({
   }, [handleNewChat])
 
   useEffect(() => {
-    const handleFocusInput = (e: Event) => {
-      if (e.defaultPrevented) return
-      e.preventDefault()
-      inputRef.current?.focus()
-    }
     const handleNewChatShortcut = (e: Event) => {
       if (e.defaultPrevented) return
       e.preventDefault()
       handleNewChatRef.current()
     }
 
-    window.addEventListener(SHORTCUT_EVENTS.focusInput, handleFocusInput)
     window.addEventListener(SHORTCUT_EVENTS.newChat, handleNewChatShortcut)
     return () => {
-      window.removeEventListener(SHORTCUT_EVENTS.focusInput, handleFocusInput)
       window.removeEventListener(SHORTCUT_EVENTS.newChat, handleNewChatShortcut)
     }
   }, [])
