@@ -490,6 +490,7 @@ export function Chat({
           isGuest={isGuest}
           isCloudDeployment={isCloudDeployment}
           modelSelectorData={modelSelectorData}
+          sections={sections}
         />
         <DragOverlay visible={dragHandlers.isDragging} />
         <ErrorModal

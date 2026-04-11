@@ -18,6 +18,7 @@ import { Button } from './ui/button'
 import { IconBlinkingLogo } from './ui/icons'
 import { ActionButtons } from './action-buttons'
 import { FileUploadButton } from './file-upload-button'
+import { MessageNavigationDots } from './message-navigation-dots'
 import { ModelSelectorClient } from './model-selector-client'
 import { SearchModeSelector } from './search-mode-selector'
 import { UploadedFileList } from './uploaded-file-list'
@@ -49,6 +50,8 @@ interface ChatPanelProps {
   /** Whether the deployment is cloud mode */
   isCloudDeployment?: boolean
   modelSelectorData?: ModelSelectorData
+  /** Chat sections for message navigation dots */
+  sections?: { id: string; userMessage: UIMessage }[]
 }
 
 export function ChatPanel({
@@ -69,7 +72,8 @@ export function ChatPanel({
   onNewChat,
   isGuest = false,
   isCloudDeployment = false,
-  modelSelectorData
+  modelSelectorData,
+  sections = []
 }: ChatPanelProps) {
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -182,18 +186,36 @@ export function ChatPanel({
         }}
         className={cn('max-w-full md:max-w-3xl w-full mx-auto relative')}
       >
-        {/* Scroll to bottom button - only shown when showScrollToBottomButton is true */}
-        {showScrollToBottomButton && messages.length > 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="absolute -top-10 right-4 z-20 size-8 rounded-full shadow-md"
-            onClick={handleScrollToBottom}
-            title="Scroll to bottom"
-          >
-            <ChevronDown size={16} />
-          </Button>
+        {/* Scroll to bottom button */}
+        {messages.length > 0 && (
+          <div className={cn(
+            'transition-opacity duration-100',
+            showScrollToBottomButton
+              ? 'opacity-100'
+              : 'pointer-events-none opacity-0'
+          )}>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="absolute -top-10 right-0 z-20 size-8 rounded-full shadow-md"
+              onClick={handleScrollToBottom}
+              title="Scroll to bottom"
+            >
+              <ChevronDown size={16} />
+            </Button>
+          </div>
+        )}
+        {/* Message navigation dots */}
+        {sections.length > 0 && (
+          <div className={cn(
+            'transition-opacity duration-100',
+            !showScrollToBottomButton && status === 'ready'
+              ? 'opacity-100'
+              : 'pointer-events-none opacity-0'
+          )}>
+            <MessageNavigationDots sections={sections} />
+          </div>
         )}
 
         <div
