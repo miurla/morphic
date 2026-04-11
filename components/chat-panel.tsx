@@ -8,6 +8,7 @@ import { UseChatHelpers } from '@ai-sdk/react'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
 import { UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { ModelSelectorData } from '@/lib/types/model-selector'
@@ -96,7 +97,7 @@ export function ChatPanel({
     }, 300)
   }
 
-  const handleNewChat = () => {
+  const handleNewChat = useCallback(() => {
     setMessages([])
     closeArtifact()
     // Reset focus state when clearing chat
@@ -105,7 +106,35 @@ export function ChatPanel({
     // Reset chatId in parent component
     onNewChat?.()
     router.push('/')
-  }
+  }, [setMessages, closeArtifact, onNewChat, router])
+
+  // Listen for keyboard shortcut events
+  // Uses defaultPrevented to prevent duplicate handling
+  // when multiple ChatPanel instances are mounted (Next.js component caching)
+  const handleNewChatRef = useRef(handleNewChat)
+  useEffect(() => {
+    handleNewChatRef.current = handleNewChat
+  }, [handleNewChat])
+
+  useEffect(() => {
+    const handleFocusInput = (e: Event) => {
+      if (e.defaultPrevented) return
+      e.preventDefault()
+      inputRef.current?.focus()
+    }
+    const handleNewChatShortcut = (e: Event) => {
+      if (e.defaultPrevented) return
+      e.preventDefault()
+      handleNewChatRef.current()
+    }
+
+    window.addEventListener(SHORTCUT_EVENTS.focusInput, handleFocusInput)
+    window.addEventListener(SHORTCUT_EVENTS.newChat, handleNewChatShortcut)
+    return () => {
+      window.removeEventListener(SHORTCUT_EVENTS.focusInput, handleFocusInput)
+      window.removeEventListener(SHORTCUT_EVENTS.newChat, handleNewChatShortcut)
+    }
+  }, [])
 
   const isToolInvocationInProgress = () => {
     if (!messages.length) return false

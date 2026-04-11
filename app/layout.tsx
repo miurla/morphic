@@ -14,6 +14,7 @@ import { Toaster } from '@/components/ui/sonner'
 import AppSidebar from '@/components/app-sidebar'
 import ArtifactRoot from '@/components/artifact/artifact-root'
 import Header from '@/components/header'
+import { KeyboardShortcutHandler } from '@/components/keyboard-shortcut-handler'
 import { ThemeProvider } from '@/components/theme-provider'
 
 import './globals.css'
@@ -86,6 +87,7 @@ export default async function RootLayout({
           <UserProvider hasUser={!!userId}>
             <SidebarProvider defaultOpen={false}>
               {userId && <AppSidebar />}
+              <KeyboardShortcutHandler />
               <div className="flex flex-col flex-1 min-w-0">
                 <Header user={user} />
                 <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">

@@ -9,6 +9,8 @@ import { toast } from 'sonner'
 
 import { ChatProvider } from '@/lib/contexts/chat-context'
 import { generateId } from '@/lib/db/schema'
+import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
+import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
 import { UploadedFile } from '@/lib/types'
 import type { UIMessage } from '@/lib/types/ai'
 import {
@@ -233,6 +235,51 @@ export function Chat({
 
     return result
   }, [messages])
+
+  // Listen for copy message shortcut
+  // Uses ref to avoid re-registering listener on every messages change.
+  // Uses defaultPrevented + visibility check to prevent duplicate handling
+  // when multiple Chat instances are mounted (Next.js component caching).
+  const messagesRef = useRef(messages)
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+
+  useEffect(() => {
+    const handleCopyMessage = (e: Event) => {
+      if (e.defaultPrevented) return
+      // Only handle in the visible (active) Chat instance
+      if (!scrollContainerRef.current?.offsetParent) return
+      e.preventDefault()
+
+      const assistantMessages = messagesRef.current.filter(
+        m => m.role === 'assistant'
+      )
+      const lastAssistant = assistantMessages[assistantMessages.length - 1]
+      if (!lastAssistant) {
+        toast.info('No assistant message to copy')
+        return
+      }
+      const text =
+        lastAssistant.parts
+          ?.filter(
+            (p): p is { type: 'text'; text: string } => p.type === 'text'
+          )
+          .map(p => p.text)
+          .join('\n') ?? ''
+
+      if (text) {
+        navigator.clipboard.writeText(stripSpecBlocks(text)).then(
+          () => toast.success('Message copied to clipboard'),
+          () => toast.error('Failed to copy message')
+        )
+      }
+    }
+
+    window.addEventListener(SHORTCUT_EVENTS.copyMessage, handleCopyMessage)
+    return () =>
+      window.removeEventListener(SHORTCUT_EVENTS.copyMessage, handleCopyMessage)
+  }, [])
 
   // Dispatch custom event when messages change
   useEffect(() => {
