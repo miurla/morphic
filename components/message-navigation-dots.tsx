@@ -19,7 +19,7 @@ interface MessageNavigationDotsProps {
 }
 
 function getUserMessagePreview(message: UIMessage): string {
-  for (const part of message.parts) {
+  for (const part of message.parts ?? []) {
     if (part.type === 'text' && part.text) {
       const text = part.text.trim()
       return text.length > 20 ? `${text.slice(0, 20)}…` : text
