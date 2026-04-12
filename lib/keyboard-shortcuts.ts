@@ -41,13 +41,32 @@ export const SHORTCUTS = {
     meta: true,
     shift: true,
     description: 'Toggle search mode'
+  },
+  showShortcuts: {
+    id: 'showShortcuts',
+    key: '/',
+    meta: true,
+    shift: false,
+    description: 'Show keyboard shortcuts'
   }
 } as const satisfies Record<string, ShortcutDefinition>
 
 export const SHORTCUT_EVENTS = {
   newChat: 'shortcut:new-chat',
-  copyMessage: 'shortcut:copy-message'
+  copyMessage: 'shortcut:copy-message',
+  showShortcuts: 'shortcut:show-shortcuts'
 } as const
+
+export function formatShortcutKeys(shortcut: ShortcutDefinition): string[] {
+  const isMac =
+    typeof navigator !== 'undefined' &&
+    navigator.userAgent.toLowerCase().includes('mac')
+  const keys: string[] = []
+  keys.push(isMac ? '⌘' : 'Ctrl')
+  if (shortcut.shift) keys.push('Shift')
+  keys.push(shortcut.key.toUpperCase())
+  return keys
+}
 
 export function matchesShortcut(
   event: KeyboardEvent,

@@ -11,6 +11,7 @@ import { getCookie, setCookie } from '@/lib/utils/cookies'
 import { useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
 
 import { useSidebar } from './ui/sidebar'
+import { KeyboardShortcutDialog } from './keyboard-shortcut-dialog'
 
 const THEME_CYCLE: Record<string, string> = {
   dark: 'light',
@@ -52,5 +53,9 @@ export function KeyboardShortcutHandler() {
     toast.info(`Search mode: ${SEARCH_MODE_LABELS[next]}`)
   })
 
-  return null
+  useKeyboardShortcut(SHORTCUTS.showShortcuts, () => {
+    window.dispatchEvent(new CustomEvent(SHORTCUT_EVENTS.showShortcuts))
+  })
+
+  return <KeyboardShortcutDialog />
 }
