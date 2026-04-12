@@ -6,7 +6,8 @@ import {
   formatShortcutKeys,
   SHORTCUT_EVENTS,
   type ShortcutDefinition,
-  SHORTCUTS} from '@/lib/keyboard-shortcuts'
+  SHORTCUTS
+} from '@/lib/keyboard-shortcuts'
 
 import {
   Dialog,
