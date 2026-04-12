@@ -3,6 +3,8 @@ export type ShortcutDefinition = {
   key: string
   meta: boolean
   shift: boolean
+  /** If true, ignore shiftKey state when matching (for keys like / that require Shift on some layouts) */
+  ignoreShift?: boolean
   description: string
 }
 
@@ -47,6 +49,7 @@ export const SHORTCUTS = {
     key: '/',
     meta: true,
     shift: false,
+    ignoreShift: true,
     description: 'Show keyboard shortcuts'
   }
 } as const satisfies Record<string, ShortcutDefinition>
@@ -74,9 +77,12 @@ export function matchesShortcut(
 ): boolean {
   if (event.repeat) return false
   if (event.altKey) return false
+  const shiftMatch = shortcut.ignoreShift
+    ? true
+    : event.shiftKey === shortcut.shift
   return (
     event.key.toLowerCase() === shortcut.key &&
     (event.metaKey || event.ctrlKey) === shortcut.meta &&
-    event.shiftKey === shortcut.shift
+    shiftMatch
   )
 }
