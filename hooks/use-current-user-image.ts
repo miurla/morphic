@@ -13,7 +13,9 @@ export const useCurrentUserImage = () => {
         if (error) {
           console.error(error)
         }
-        const avatarUrl = data.session?.user.user_metadata.avatar_url
+        const avatarUrl =
+          data.session?.user.user_metadata.avatar_url ||
+          data.session?.user.user_metadata.picture
         if (avatarUrl) {
           setImage(avatarUrl)
         } else if (data.session?.user.email) {
