@@ -18,9 +18,10 @@ import UserMenu from './user-menu'
 
 interface HeaderProps {
   user: User | null
+  avatarUrl?: string
 }
 
-export const Header: React.FC<HeaderProps> = ({ user }) => {
+export const Header: React.FC<HeaderProps> = ({ user, avatarUrl }) => {
   const { open } = useSidebar()
   const pathname = usePathname()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
@@ -48,7 +49,11 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
               Feedback
             </Button>
           )}
-          {user ? <UserMenu user={user} /> : <GuestMenu />}
+          {user ? (
+            <UserMenu user={user} avatarUrl={avatarUrl} />
+          ) : (
+            <GuestMenu />
+          )}
         </div>
       </header>
 

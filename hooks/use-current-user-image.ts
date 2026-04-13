@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
+import { getGravatarUrl } from '@/lib/utils/gravatar'
 
 export const useCurrentUserImage = () => {
   const [image, setImage] = useState<string | null>(null)
@@ -12,7 +13,13 @@ export const useCurrentUserImage = () => {
         if (error) {
           console.error(error)
         }
-        setImage(data.session?.user.user_metadata.avatar_url ?? null)
+        const avatarUrl = data.session?.user.user_metadata.avatar_url
+        if (avatarUrl) {
+          setImage(avatarUrl)
+        } else if (data.session?.user.email) {
+          const gravatarUrl = await getGravatarUrl(data.session.user.email)
+          setImage(gravatarUrl)
+        }
       } catch (error) {
         // Supabase not configured, skip silently
       }

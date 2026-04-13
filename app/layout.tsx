@@ -7,6 +7,7 @@ import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { UserProvider } from '@/lib/contexts/user-context'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
+import { getGravatarUrl } from '@/lib/utils/gravatar.server'
 
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
@@ -57,6 +58,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   let user = null
+  let avatarUrl: string | undefined
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -66,6 +68,10 @@ export default async function RootLayout({
       data: { user: supabaseUser }
     } = await supabase.auth.getUser()
     user = supabaseUser
+    avatarUrl =
+      user?.user_metadata?.avatar_url ||
+      user?.user_metadata?.picture ||
+      (user?.email ? getGravatarUrl(user.email) : undefined)
   }
 
   const userId = user?.id ?? (await getCurrentUserId())
@@ -89,7 +95,7 @@ export default async function RootLayout({
               {userId && <AppSidebar />}
               <KeyboardShortcutHandler />
               <div className="flex flex-col flex-1 min-w-0">
-                <Header user={user} />
+                <Header user={user} avatarUrl={avatarUrl} />
                 <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
                   <ArtifactRoot>{children}</ArtifactRoot>
                 </main>

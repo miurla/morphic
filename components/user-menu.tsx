@@ -26,14 +26,13 @@ import { ThemeMenuItems } from './theme-menu-items'
 
 interface UserMenuProps {
   user: User
+  avatarUrl?: string
 }
 
-export default function UserMenu({ user }: UserMenuProps) {
+export default function UserMenu({ user, avatarUrl }: UserMenuProps) {
   const router = useRouter()
   const userName =
     user.user_metadata?.full_name || user.user_metadata?.name || 'User'
-  const avatarUrl =
-    user.user_metadata?.avatar_url || user.user_metadata?.picture
 
   const getInitials = (name: string, email: string | undefined) => {
     if (name && name !== 'User') {
