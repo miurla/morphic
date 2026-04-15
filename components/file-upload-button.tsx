@@ -9,12 +9,8 @@ import { cn } from '@/lib/utils'
 
 import { Button } from './ui/button'
 
-const allowedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
-const allowedOtherTypes = [
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-]
+const allowedImageTypes = ['image/png', 'image/jpeg']
+const allowedOtherTypes = ['application/pdf']
 
 const isAllowedFileType = (file: File) =>
   allowedImageTypes.includes(file.type) || allowedOtherTypes.includes(file.type)
@@ -70,7 +66,7 @@ export function FileUploadButton({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*,.pdf,.doc,.docx"
+        accept="image/png,image/jpeg,application/pdf"
         hidden
         multiple
         onChange={e => {
