@@ -11,13 +11,16 @@ export type SearchResults = {
   citationMap?: Record<number, SearchResultItem> // Maps citation number to search result
 }
 
-// If enabled the include_images_description is true, the images will be an array of { url: string, description: string }
-// Otherwise, the images will be an array of strings
+// If include_images_description is true, images are objects with url/description.
+// When the provider can resolve the referring page, sourceUrl and title are also set.
+// Otherwise, the images are an array of strings.
 export type SearchResultImage =
   | string
   | {
       url: string
       description: string
+      title?: string
+      sourceUrl?: string
       number_of_results?: number
     }
 

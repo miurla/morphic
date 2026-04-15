@@ -1,4 +1,4 @@
-import { SearchResultImage, SearchResults } from '@/lib/types'
+import { SearchResults } from '@/lib/types'
 import { sanitizeUrl } from '@/lib/utils'
 
 import { BaseSearchProvider } from './base'
@@ -45,18 +45,39 @@ export class TavilySearchProvider extends BaseSearchProvider {
     }
 
     const data = await response.json()
+
+    // Tavily returns top-level images with { url, title?, description? }. We try
+    // to match each image to a result by title so the UI can link back to the
+    // original article rather than just the image host.
+    const resultTitleToUrl = new Map<string, string>()
+    for (const r of (data.results ?? []) as Array<{
+      title?: string
+      url?: string
+    }>) {
+      if (r.title && r.url) {
+        resultTitleToUrl.set(r.title, r.url)
+      }
+    }
+
     const processedImages = includeImageDescriptions
-      ? data.images
-          .map(
-            ({ url, description }: { url: string; description: string }) => ({
-              url: sanitizeUrl(url),
-              description
-            })
-          )
+      ? (data.images as Array<{
+          url: string
+          title?: string
+          description?: string
+        }>)
+          .map(image => {
+            const sourceUrl = image.title
+              ? resultTitleToUrl.get(image.title)
+              : undefined
+            return {
+              url: sanitizeUrl(image.url),
+              description: image.description ?? '',
+              ...(image.title ? { title: image.title } : {}),
+              ...(sourceUrl ? { sourceUrl } : {})
+            }
+          })
           .filter(
-            (
-              image: SearchResultImage
-            ): image is { url: string; description: string } =>
+            (image): image is { url: string; description: string } =>
               typeof image === 'object' &&
               image.description !== undefined &&
               image.description !== ''

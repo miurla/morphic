@@ -14,7 +14,6 @@ import {
 import { Images } from 'lucide-react'
 
 import { SearchResultImage } from '@/lib/types'
-import { displayUrlName } from '@/lib/utils/domain'
 
 import {
   Carousel,
@@ -32,6 +31,8 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
+
+import { ImageCreditOverlay } from '@/components/image-credit-overlay'
 
 interface SearchResultsImageSectionProps {
   images: SearchResultImage[]
@@ -226,15 +227,6 @@ const useCarouselMetrics = ({
   return { current: currentValue }
 }
 
-const getFaviconUrl = (imageUrl: string): string => {
-  try {
-    const hostname = new URL(imageUrl).hostname
-    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`
-  } catch {
-    return ''
-  }
-}
-
 const cornerClassForIndex = (actualIndex: number, isFullMode: boolean) => {
   if (!isFullMode) {
     return 'rounded-lg'
@@ -351,29 +343,10 @@ export const SearchResultsImageSection: React.FC<
                             className="max-w-full max-h-[60vh] object-contain"
                             onError={() => removeImage(img.id)}
                           />
-                          <a
-                            href={img.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="absolute bottom-3 left-3 max-w-[80%] bg-black/70 backdrop-blur-sm rounded-xl px-3 py-2.5 flex items-center gap-2.5 no-underline hover:bg-black/80 transition-colors"
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <img
-                              src={getFaviconUrl(img.url)}
-                              alt=""
-                              className="size-7 rounded-lg shrink-0"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="text-white/70 text-xs">
-                                {displayUrlName(img.url)}
-                              </div>
-                              {img.description && (
-                                <div className="text-white text-sm font-medium line-clamp-1">
-                                  {img.description}
-                                </div>
-                              )}
-                            </div>
-                          </a>
+                          <ImageCreditOverlay
+                            url={img.url}
+                            description={img.description}
+                          />
                         </div>
                       </CarouselItem>
                     ))}

@@ -114,4 +114,33 @@ describe('parseSpecBlock', () => {
 
     expect(() => parseSpecBlock(source)).toThrow()
   })
+
+  test('parses a Grid image group with Image children', () => {
+    const source = [
+      '{"op":"add","path":"/root","value":"grid"}',
+      '{"op":"add","path":"/elements/grid","value":{"type":"Grid","props":{"columns":2,"gap":"sm"},"children":["img1","img2"]}}',
+      '{"op":"add","path":"/elements/img1","value":{"type":"Image","props":{"src":"https://example.com/a.jpg","title":"A","description":"Alpha","aspectRatio":"4:3"},"children":[]}}',
+      '{"op":"add","path":"/elements/img2","value":{"type":"Image","props":{"src":"https://example.com/b.jpg","title":"B","aspectRatio":"4:3"},"children":[]}}'
+    ].join('\n')
+
+    const spec = parseSpecBlock(source)
+    expect(spec.root).toBe('grid')
+    expect(spec.elements['grid'].type).toBe('Grid')
+    expect(spec.elements['grid'].props).toMatchObject({
+      columns: 2,
+      gap: 'sm'
+    })
+    expect(spec.elements['img1'].type).toBe('Image')
+    expect(spec.elements['img1'].props).toMatchObject({
+      src: 'https://example.com/a.jpg',
+      title: 'A',
+      description: 'Alpha',
+      aspectRatio: '4:3'
+    })
+    expect(spec.elements['img2'].props).toMatchObject({
+      src: 'https://example.com/b.jpg',
+      title: 'B',
+      aspectRatio: '4:3'
+    })
+  })
 })

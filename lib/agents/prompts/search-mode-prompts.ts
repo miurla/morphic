@@ -1,4 +1,7 @@
-import { getRelatedQuestionsSpecPrompt } from '@/lib/render/prompt'
+import {
+  getImageSpecPrompt,
+  getRelatedQuestionsSpecPrompt
+} from '@/lib/render/prompt'
 import {
   getContentTypesGuidance,
   isGeneralSearchProviderAvailable
@@ -138,6 +141,8 @@ Example approach:
 - **Consideration:** Practical implications with real-world context
 
 End with a synthesizing conclusion that ties the main points together into a clear overall picture.
+
+${getImageSpecPrompt()}
 
 ${getRelatedQuestionsSpecPrompt()}
 `
@@ -310,6 +315,8 @@ Flexible example:
 - **Context:** Relevant supporting details
 
 Conclude with a brief synthesis that ties together the main insights into a clear overall understanding.
+
+${getImageSpecPrompt()}
 
 ${getRelatedQuestionsSpecPrompt()}
 `
