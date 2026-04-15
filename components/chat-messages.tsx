@@ -11,6 +11,7 @@ import { extractCitationMapsFromMessages } from '@/lib/utils/citation'
 
 import { AnimatedLogo } from './ui/animated-logo'
 import { ChatError } from './chat-error'
+import { ChatFooterMessage } from './chat-footer-message'
 import { RenderMessage } from './render-message'
 
 // Import section structure interface
@@ -228,10 +229,14 @@ export function ChatMessages({
                 </div>
               )
             })}
-            {/* Show assistant logo after assistant messages */}
+            {/* Show assistant logo and footer message after assistant messages */}
             {showAssistantLogo && sectionIndex === sections.length - 1 && (
-              <div className="flex justify-start py-1 md:py-4">
-                <AnimatedLogo className="size-10" animate={isLoading} />
+              <div className="flex items-center gap-3 py-1 md:py-4">
+                <AnimatedLogo
+                  className="size-10 shrink-0"
+                  animate={isLoading}
+                />
+                <ChatFooterMessage isLoading={isLoading} />
               </div>
             )}
             {sectionIndex === sections.length - 1 && (
