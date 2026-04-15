@@ -18,12 +18,12 @@ export const Button: ComponentFn<CatalogType, 'Button'> = ({ props, on }) => {
   const Icon = icon ? iconMap[icon] : null
   const handle = on('press')
 
-  // Override shadcn's link variant defaults so it matches the former
-  // QuestionButton look: muted color, no hover underline, left-aligned,
-  // wrappable text and zero padding.
+  // For the link variant, tweak layout/color so it reads as an inline
+  // follow-up suggestion: muted color, left-aligned, wrappable text and
+  // zero padding. The shadcn link variant's hover underline is preserved.
   const linkOverride =
     variant === 'link'
-      ? 'h-auto w-fit justify-start whitespace-normal text-left px-0 py-0.5 font-semibold text-accent-foreground/50 hover:text-accent-foreground/70 hover:no-underline'
+      ? 'h-auto w-fit justify-start whitespace-normal text-left px-0 py-0.5 font-semibold text-accent-foreground/50 hover:text-accent-foreground/70'
       : ''
 
   return (

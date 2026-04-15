@@ -7,6 +7,7 @@ import {
 } from '@json-render/core'
 
 import { catalog } from './catalog'
+import { migrateSpec } from './migrations'
 
 function compileSource(source: string): Spec {
   return compileSpecStream(source, {
@@ -62,21 +63,25 @@ export function createPartialSpecParser(): PartialSpecParser {
       }
 
       if (source === lastSource) {
-        const result = prunePartialSpec(compiler.getResult() as Spec)
+        const result = migrateSpec(
+          prunePartialSpec(compiler.getResult() as Spec)
+        )
         return result.root ? result : null
       }
 
       if (source.startsWith(lastSource)) {
         compiler.push(source.slice(lastSource.length))
         lastSource = source
-        const result = prunePartialSpec(compiler.getResult() as Spec)
+        const result = migrateSpec(
+          prunePartialSpec(compiler.getResult() as Spec)
+        )
         return result.root ? result : null
       }
 
       compiler = createCompiler()
       compiler.push(source)
       lastSource = source
-      const result = prunePartialSpec(compiler.getResult() as Spec)
+      const result = migrateSpec(prunePartialSpec(compiler.getResult() as Spec))
       return result.root ? result : null
     },
     reset() {
@@ -87,7 +92,11 @@ export function createPartialSpecParser(): PartialSpecParser {
 }
 
 export function parseSpecBlock(source: string): Spec {
-  const validation = catalog.validate(compileSource(source))
+  // Apply legacy type migrations before catalog validation so that old
+  // specs persisted in chat history can still validate against the current
+  // catalog.
+  const compiled = migrateSpec(compileSource(source))
+  const validation = catalog.validate(compiled)
 
   if (!validation.success || !validation.data) {
     const issues = validation.error?.issues
