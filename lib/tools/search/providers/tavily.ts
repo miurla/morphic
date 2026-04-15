@@ -3,6 +3,11 @@ import { sanitizeUrl } from '@/lib/utils'
 
 import { BaseSearchProvider } from './base'
 
+// Domains excluded system-wide in Morphic Cloud deployments. Tavily has
+// started surfacing low-value aggregator/social pages (notably Instagram)
+// that rarely help answer informational queries.
+const CLOUD_EXCLUDED_DOMAINS = ['instagram.com']
+
 export class TavilySearchProvider extends BaseSearchProvider {
   async search(
     query: string,
@@ -17,6 +22,11 @@ export class TavilySearchProvider extends BaseSearchProvider {
     // Tavily API requires a minimum of 5 characters in the query
     const filledQuery =
       query.length < 5 ? query + ' '.repeat(5 - query.length) : query
+
+    const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
+    const effectiveExcludeDomains = isCloudDeployment
+      ? Array.from(new Set([...excludeDomains, ...CLOUD_EXCLUDED_DOMAINS]))
+      : excludeDomains
 
     const includeImageDescriptions = true
     const response = await fetch('https://api.tavily.com/search', {
@@ -33,7 +43,7 @@ export class TavilySearchProvider extends BaseSearchProvider {
         include_image_descriptions: includeImageDescriptions,
         include_answers: true,
         include_domains: includeDomains,
-        exclude_domains: excludeDomains
+        exclude_domains: effectiveExcludeDomains
       })
     })
 
