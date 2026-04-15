@@ -60,11 +60,13 @@ export class TavilySearchProvider extends BaseSearchProvider {
     }
 
     const processedImages = includeImageDescriptions
-      ? (data.images as Array<{
-          url: string
-          title?: string
-          description?: string
-        }>)
+      ? (
+          data.images as Array<{
+            url: string
+            title?: string
+            description?: string
+          }>
+        )
           .map(image => {
             const sourceUrl = image.title
               ? resultTitleToUrl.get(image.title)
