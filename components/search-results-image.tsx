@@ -317,10 +317,10 @@ export const SearchResultsImageSection: React.FC<
                   )}
               </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-auto">
+            <DialogContent className="max-w-[90vw] sm:max-w-[90vw] max-h-[90vh] overflow-auto border border-white/10 bg-black/60 shadow-2xl backdrop-blur-md">
               <DialogHeader>
-                <DialogTitle>Search Images</DialogTitle>
-                <DialogDescription className="text-sm">
+                <DialogTitle className="text-white">Images</DialogTitle>
+                <DialogDescription className="text-sm text-white/70">
                   {query}
                 </DialogDescription>
               </DialogHeader>
@@ -331,7 +331,7 @@ export const SearchResultsImageSection: React.FC<
                     startIndex: selectedIndex,
                     loop: filteredCount > 1
                   }}
-                  className="w-full bg-muted max-h-[60vh]"
+                  className="w-full max-h-[70vh]"
                 >
                   <CarouselContent>
                     {filteredImages.map((img, idx) => (
@@ -340,7 +340,7 @@ export const SearchResultsImageSection: React.FC<
                           <img
                             src={img.url}
                             alt={`Image ${idx + 1}`}
-                            className="max-w-full max-h-[60vh] object-contain"
+                            className="max-w-full max-h-[70vh] object-contain"
                             onError={() => removeImage(img.id)}
                           />
                           <ImageCreditOverlay
@@ -362,7 +362,7 @@ export const SearchResultsImageSection: React.FC<
                     </div>
                   )}
                 </Carousel>
-                <div className="py-2 text-center text-sm text-muted-foreground">
+                <div className="py-2 text-center text-sm text-white/70">
                   {current} of {filteredCount}
                 </div>
               </div>
