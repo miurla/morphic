@@ -112,7 +112,7 @@ describe.skipIf(!RUN)('LLM inline image output (E2E)', () => {
           // src MUST be one of the fixture image URLs — no fabrication.
           expect(fixtureSrcs.has(src)).toBe(true)
         }
-        if (el.type === 'QuestionButton') {
+        if (el.type === 'Button') {
           hasRelatedQuestions = true
         }
       }

@@ -10,24 +10,24 @@ Each question should explore a different aspect of the topic not yet covered.
 Questions must be concise (max 10-12 words) and in the user's language.
 
 The spec block uses JSONL (one JSON object per line) with RFC 6902 JSON Patch operations.
-Always include a SectionHeader with title "Related" as the first child element.
+Always include a Heading with title "Related" as the first child element.
 
 Example output (always at the very end of your response):
 
 \`\`\`spec
 {"op":"add","path":"/root","value":"main"}
 {"op":"add","path":"/elements/main","value":{"type":"Stack","props":{"direction":"vertical","gap":"sm"},"children":["header","questions"]}}
-{"op":"add","path":"/elements/header","value":{"type":"SectionHeader","props":{"title":"Related","icon":"related"},"children":[]}}
+{"op":"add","path":"/elements/header","value":{"type":"Heading","props":{"title":"Related","icon":"related"},"children":[]}}
 {"op":"add","path":"/elements/questions","value":{"type":"Stack","props":{"direction":"vertical","gap":"xs"},"children":["q1","q2","q3"]}}
-{"op":"add","path":"/elements/q1","value":{"type":"QuestionButton","props":{"text":"First follow-up question here"},"on":{"press":{"action":"submitQuery","params":{"query":"First follow-up question here"}}},"children":[]}}
-{"op":"add","path":"/elements/q2","value":{"type":"QuestionButton","props":{"text":"Second follow-up question here"},"on":{"press":{"action":"submitQuery","params":{"query":"Second follow-up question here"}}},"children":[]}}
-{"op":"add","path":"/elements/q3","value":{"type":"QuestionButton","props":{"text":"Third follow-up question here"},"on":{"press":{"action":"submitQuery","params":{"query":"Third follow-up question here"}}},"children":[]}}
+{"op":"add","path":"/elements/q1","value":{"type":"Button","props":{"text":"First follow-up question here","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"First follow-up question here"}}},"children":[]}}
+{"op":"add","path":"/elements/q2","value":{"type":"Button","props":{"text":"Second follow-up question here","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"Second follow-up question here"}}},"children":[]}}
+{"op":"add","path":"/elements/q3","value":{"type":"Button","props":{"text":"Third follow-up question here","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"Third follow-up question here"}}},"children":[]}}
 \`\`\`
 
 AVAILABLE COMPONENTS:
-- SectionHeader: { title: string, icon?: "related" } - A section heading label with optional icon
+- Heading: { title: string, icon?: "related" | "arrow-right" } - A heading label with optional icon
 - Stack: { direction?: "vertical" | "horizontal", gap?: "xs" | "sm" | "md" | "lg" } - Layout container
-- QuestionButton: { text: string } - A clickable follow-up question button
+- Button: { text: string, icon?: "related" | "arrow-right", variant?: "default" | "outline" | "ghost" | "link" | "secondary" } - A clickable button that emits a press action. Use variant="link" with icon="arrow-right" for inline follow-up suggestions.
 
 AVAILABLE ACTIONS:
 - submitQuery: { query: string } - Submit a follow-up query

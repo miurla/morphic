@@ -2,14 +2,16 @@ import { z } from 'zod'
 
 import { schema } from './schema'
 
+const iconName = z.enum(['related', 'arrow-right']).optional()
+
 export const catalog = schema.createCatalog({
   components: {
-    SectionHeader: {
+    Heading: {
       props: z.object({
         title: z.string(),
-        icon: z.enum(['related']).optional()
+        icon: iconName
       }),
-      description: 'A section heading label with optional icon'
+      description: 'A heading label with an optional icon'
     },
     Stack: {
       props: z
@@ -21,11 +23,16 @@ export const catalog = schema.createCatalog({
       description:
         'A layout container that stacks children vertically or horizontally'
     },
-    QuestionButton: {
+    Button: {
       props: z.object({
-        text: z.string()
+        text: z.string(),
+        icon: iconName,
+        variant: z
+          .enum(['default', 'outline', 'ghost', 'link', 'secondary'])
+          .optional()
       }),
-      description: 'A related follow-up question the user can click to ask'
+      description:
+        'A clickable button that emits a press action. Use variant="link" with icon="arrow-right" for inline follow-up suggestions.'
     },
     Grid: {
       props: z.object({

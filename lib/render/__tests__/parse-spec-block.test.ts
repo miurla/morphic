@@ -10,7 +10,7 @@ function buildRelatedQuestionsSource(questions: string[]): string {
   ]
   questions.forEach((q, i) => {
     lines.push(
-      `{"op":"add","path":"/elements/q${i + 1}","value":{"type":"QuestionButton","props":{"text":"${q}"},"on":{"press":{"action":"submitQuery","params":{"query":"${q}"}}},"children":[]}}`
+      `{"op":"add","path":"/elements/q${i + 1}","value":{"type":"Button","props":{"text":"${q}","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"${q}"}}},"children":[]}}`
     )
   })
   return lines.join('\n')
@@ -93,8 +93,12 @@ describe('parseSpecBlock', () => {
     const spec = parseSpecBlock(source)
     expect(spec.root).toBe('main')
     expect(Object.keys(spec.elements)).toHaveLength(4) // main + q1 + q2 + q3
-    expect(spec.elements['q1'].type).toBe('QuestionButton')
-    expect(spec.elements['q1'].props).toEqual({ text: 'Question 1' })
+    expect(spec.elements['q1'].type).toBe('Button')
+    expect(spec.elements['q1'].props).toMatchObject({
+      text: 'Question 1',
+      variant: 'link',
+      icon: 'arrow-right'
+    })
   })
 
   test('throws for invalid component types', () => {

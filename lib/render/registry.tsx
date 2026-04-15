@@ -2,18 +2,18 @@
 
 import { defineRegistry } from '@json-render/react'
 
+import { Button } from './components/button'
 import { Grid } from './components/grid'
+import { Heading } from './components/heading'
 import { Image } from './components/image'
-import { QuestionButton } from './components/question-button'
-import { SectionHeader } from './components/section-header'
 import { Stack } from './components/stack'
 import { catalog } from './catalog'
 
 export const { registry } = defineRegistry(catalog, {
   components: {
-    SectionHeader,
+    Heading,
     Stack,
-    QuestionButton,
+    Button,
     Grid,
     Image
   },
