@@ -71,7 +71,10 @@ export function ErrorModal({
           'You have made too many requests. Please wait a moment before trying again.'
         )
       case 'auth':
-        return 'To use Morphic, sign in to your account or create a new one.'
+        return (
+          error.message ||
+          'To use Morphic, sign in to your account or create a new one.'
+        )
       case 'forbidden':
         return 'You do not have permission to access this resource.'
       default:
@@ -83,7 +86,7 @@ export function ErrorModal({
 
   const getErrorDetails = () => {
     if (error.type === 'rate-limit') {
-      return 'The limit will reset at midnight UTC. You can continue using speed mode without restrictions.'
+      return error.details || 'The limit resets at midnight UTC.'
     }
     return error.details
   }

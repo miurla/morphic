@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { loadChat } from '@/lib/actions/chat'
 import { calculateConversationTurn, trackChatEvent } from '@/lib/analytics'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { checkAndEnforceAdaptiveLimit } from '@/lib/rate-limit/adaptive-limit'
 import { checkAndEnforceOverallChatLimit } from '@/lib/rate-limit/chat-limits'
 import { checkAndEnforceGuestLimit } from '@/lib/rate-limit/guest-limit'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
@@ -111,9 +112,35 @@ export async function POST(req: Request) {
       )
     }
 
+    // Adaptive mode is gated to authenticated users on cloud deployments.
+    // Guests are nudged to sign in instead of being downgraded silently.
+    if (
+      isGuest &&
+      searchMode === 'adaptive' &&
+      process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
+    ) {
+      return new Response(
+        JSON.stringify({
+          error:
+            'Sign in to use Adaptive mode. Quick mode remains available without an account.',
+          mode: 'adaptive',
+          authRequired: true
+        }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
     if (!isGuest) {
       const overallLimitResponse = await checkAndEnforceOverallChatLimit(userId)
       if (overallLimitResponse) return overallLimitResponse
+
+      if (searchMode === 'adaptive') {
+        const adaptiveLimitResponse = await checkAndEnforceAdaptiveLimit(userId)
+        if (adaptiveLimitResponse) return adaptiveLimitResponse
+      }
     }
 
     const streamStart = performance.now()

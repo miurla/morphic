@@ -8,6 +8,10 @@
  * @module analytics
  */
 
+export {
+  type AdaptiveLimitEventData,
+  trackAdaptiveLimitEvent
+} from './track-adaptive-limit-event'
 export { trackChatEvent } from './track-chat-event'
 export type { AnalyticsProvider, ChatEventData } from './types'
 export { calculateConversationTurn } from './utils'

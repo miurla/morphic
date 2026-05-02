@@ -150,14 +150,15 @@ export function Chat({
         errorMessage.includes('sign in to continue')
 
       if (isRateLimit) {
-        // Try to parse JSON error response for quality mode rate limit
+        // Try to parse JSON error response. The body may include `mode`
+        // (e.g. "adaptive") so we can show context-specific guidance.
         let parsedError: {
           error?: string
           resetAt?: number
           remaining?: number
+          mode?: string
         } = {}
         try {
-          // Extract JSON from error message if it exists
           const jsonMatch = error.message?.match(/\{.*\}/)
           if (jsonMatch) {
             parsedError = JSON.parse(jsonMatch[0])
@@ -166,22 +167,36 @@ export function Chat({
           // Ignore parse errors
         }
 
-        // Use parsed error message or fallback
         const userMessage =
           parsedError.error ||
-          'You have reached your daily limit for quality mode chat requests.'
+          'You have reached your daily chat limit. Please try again tomorrow.'
+
+        const details =
+          parsedError.mode === 'adaptive'
+            ? 'The limit resets at midnight UTC. You can continue using Quick mode without restrictions.'
+            : 'The limit resets at midnight UTC.'
 
         setErrorModal({
           open: true,
           type: 'rate-limit',
           message: userMessage,
-          details: undefined
+          details
         })
       } else if (isAuthError) {
+        // Try to parse JSON for context-specific auth prompts
+        // (e.g. adaptive mode requires sign in).
+        let parsedAuthError: { error?: string; authRequired?: boolean } = {}
+        try {
+          const jsonMatch = error.message?.match(/\{.*\}/)
+          if (jsonMatch) parsedAuthError = JSON.parse(jsonMatch[0])
+        } catch {
+          // Ignore parse errors
+        }
+
         setErrorModal({
           open: true,
           type: 'auth',
-          message: error.message
+          message: parsedAuthError.error || error.message
         })
       } else if (
         error.message?.includes('403') ||
