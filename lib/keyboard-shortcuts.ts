@@ -81,7 +81,7 @@ export function matchesShortcut(
     ? true
     : event.shiftKey === shortcut.shift
   return (
-    event.key.toLowerCase() === shortcut.key &&
+    event.key?.toLowerCase() === shortcut.key &&
     (event.metaKey || event.ctrlKey) === shortcut.meta &&
     shiftMatch
   )
