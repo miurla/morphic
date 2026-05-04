@@ -1,6 +1,6 @@
 'use client'
 
-import { DefaultSkeleton } from '../../components/default-skeleton'
+import { DefaultSkeleton } from '@/components/default-skeleton'
 
 export default function Loading() {
   return (

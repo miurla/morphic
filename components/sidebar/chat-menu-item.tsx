@@ -1,8 +1,8 @@
 'use client'
 
-import { useCallback, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useCallback, useState, useTransition } from 'react'
 
 import { MoreHorizontal, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -97,7 +97,7 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
       if (result?.success) {
         toast.success('Chat deleted')
         if (isActive) {
-          router.push('/')
+          router.push('/chat')
         }
         window.dispatchEvent(new CustomEvent('chat-history-updated'))
       } else if (result?.error) {

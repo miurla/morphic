@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
@@ -575,9 +575,9 @@ export function Chat({
               : undefined
           }
           onAuthClose={() => {
-            // Clear messages and navigate to root
+            // Clear messages and navigate to chat
             setMessages([])
-            router.push('/')
+            router.push('/chat')
           }}
         />
       </div>

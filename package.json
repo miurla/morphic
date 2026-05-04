@@ -23,6 +23,8 @@
     "@ai-sdk/openai": "^3.0.52",
     "@ai-sdk/react": "^3.0.158",
     "@aws-sdk/client-s3": "^3.850.0",
+    "@iconify-json/solar": "^1.2.5",
+    "@iconify/react": "^6.0.2",
     "@json-render/core": "^0.16.0",
     "@json-render/react": "^0.16.0",
     "@opentelemetry/api-logs": "0.57.2",
