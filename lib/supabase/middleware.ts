@@ -3,9 +3,25 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request
-  })
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-pathname', request.nextUrl.pathname)
+
+  const createSupabaseResponse = () =>
+    NextResponse.next({
+      request: {
+        headers: requestHeaders
+      }
+    })
+
+  let supabaseResponse = createSupabaseResponse()
+
+  const redirectWithSessionCookies = (url: URL) => {
+    const response = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach(cookie => {
+      response.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return response
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,9 +35,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-          supabaseResponse = NextResponse.next({
-            request
-          })
+          supabaseResponse = createSupabaseResponse()
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -57,7 +71,28 @@ export async function updateSession(request: NextRequest) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
-    return NextResponse.redirect(url)
+    return redirectWithSessionCookies(url)
+  }
+
+  const isOnboardingPath = pathname.startsWith('/onboarding')
+  const isAuthPath = pathname.startsWith('/auth')
+  const isApiPath = pathname.startsWith('/api')
+
+  if (user && !isOnboardingPath && !isAuthPath && !isApiPath) {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('onboarding_completed')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (error) {
+      console.warn('[Middleware] Failed to check onboarding status:', error)
+    } else if (data?.onboarding_completed === false) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/onboarding'
+      url.search = ''
+      return redirectWithSessionCookies(url)
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

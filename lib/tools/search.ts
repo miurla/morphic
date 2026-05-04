@@ -1,5 +1,6 @@
 import { UIToolInvocation } from 'ai'
 
+import type { UserProfile } from '@/lib/supabase/types'
 import { SearchResults } from '@/lib/types'
 
 import { createAgriSearchTool } from './agri-search'
@@ -8,8 +9,11 @@ import { createAgriSearchTool } from './agri-search'
  * Creates the AgriEvidence search tool using Parallel Search while preserving
  * Morphic's existing tool name, schema, streaming states, and result shape.
  */
-export function createSearchTool(fullModel: string) {
-  return createAgriSearchTool(fullModel)
+export function createSearchTool(
+  fullModel: string,
+  userProfile?: UserProfile | null
+) {
+  return createAgriSearchTool(fullModel, userProfile)
 }
 
 // Default export for backward compatibility, using the AgriEvidence default model.

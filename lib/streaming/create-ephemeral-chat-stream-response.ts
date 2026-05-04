@@ -86,7 +86,8 @@ export async function createEphemeralChatStreamResponse(
       model: `${model.providerId}:${model.id}`,
       modelConfig: model,
       parentTraceId,
-      searchMode
+      searchMode,
+      userProfile: null
     })
 
     const result = await researchAgent.stream({

@@ -193,6 +193,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR_SUPABASE_ANON_KEY]
    - **Project URL**: Settings > API > Project URL
    - **Anon Key**: Settings > API > Project API keys > anon/public
 
+### Authenticated User Onboarding
+
+When Supabase authentication is enabled, new users are created with a `user_profiles` row by the `on_auth_user_created` trigger. Registration collects `full_name`, then authenticated users with `onboarding_completed=false` are redirected to `/onboarding` until they complete the agricultural profile wizard.
+
+The wizard stores farm types, primary crops/products, farm size in hectares, country/region, climate zone, and preferred language. Completed profiles are used on each authenticated chat request to personalise the Researcher system prompt and DeepSeek V4 Flash query enrichment.
+
 ## Guest Mode
 
 Guest mode allows users to try Morphic without creating an account. Guest sessions are ephemeral — no chat history is stored.

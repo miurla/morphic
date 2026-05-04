@@ -1,6 +1,10 @@
 import { generateText } from 'ai'
 
+import type { UserProfile } from '@/lib/supabase/types'
+
 import { getModel } from '../utils/registry'
+
+import { buildQueryEnricherUserContext } from './user-context'
 
 const QUERY_ENRICHER_MODEL = 'deepseek:deepseek-v4-flash'
 const QUERY_ENRICHER_TIMEOUT_MS = 3000
@@ -29,7 +33,10 @@ function parseQueryLines(text: string): string[] {
  * Uses the same generateText + getModel pattern as title-generator.ts.
  * Falls back to [userQuery] on any error so the search step is never blocked.
  */
-export async function enrichQuery(userQuery: string): Promise<string[]> {
+export async function enrichQuery(
+  userQuery: string,
+  userProfile?: UserProfile | null
+): Promise<string[]> {
   const controller = new AbortController()
   let timeoutId: ReturnType<typeof setTimeout> | undefined
 
@@ -41,17 +48,21 @@ export async function enrichQuery(userQuery: string): Promise<string[]> {
       }, QUERY_ENRICHER_TIMEOUT_MS)
     })
 
+    const userContext = buildQueryEnricherUserContext(userProfile)
+
     const { text } = await Promise.race([
       generateText({
         model: getModel(QUERY_ENRICHER_MODEL),
         system: `You are a scientific search query specialist for agricultural research.
 Your task: rewrite the user's question into two to three precise search queries optimized for finding peer-reviewed agricultural literature and authoritative extension/government sources.
 
+${userContext ? `User context for query specificity: ${userContext}` : ''}
+
 Rules:
 - Expand informal or colloquial language into correct scientific terminology where applicable.
 - Add the most relevant crop species scientific name if the crop is identifiable.
 - Add temporal context only if the user explicitly mentions a season.
-- Add geographic context (e.g. "Mediterranean climate", "sub-Saharan Africa") only if the user explicitly mentioned a region.
+- Add geographic and agronomic context from the user context when available and relevant.
 - Each query should target a different angle: cause/etiology, management/treatment, regulatory status, or regional/varietal specifics.
 - Return only the query strings with no explanation, preamble, bullets, numbering, or formatting.
 - Put one query per line.

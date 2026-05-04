@@ -1,5 +1,7 @@
 import { stepCountIs, ToolLoopAgent } from 'ai'
 
+import { buildUserAgriculturalContextBlock } from '@/lib/agri/user-context'
+import type { UserProfile } from '@/lib/supabase/types'
 import type { ResearcherTools } from '@/lib/types/agent'
 import { type Model } from '@/lib/types/models'
 
@@ -22,18 +24,20 @@ export function createResearcher({
   model,
   modelConfig,
   parentTraceId,
-  searchMode = 'adaptive'
+  searchMode = 'adaptive',
+  userProfile
 }: {
   model: string
   modelConfig?: Model
   parentTraceId?: string
   searchMode?: SearchMode
+  userProfile?: UserProfile | null
 }) {
   try {
     const currentDate = new Date().toLocaleString()
 
     // Create model-specific tools with proper typing
-    const originalSearchTool = createSearchTool(model)
+    const originalSearchTool = createSearchTool(model, userProfile)
     const askQuestionTool = createQuestionTool(model)
     const todoTools = createTodoTools()
 
@@ -72,10 +76,13 @@ export function createResearcher({
       ...todoTools
     } as ResearcherTools
 
+    const userContextBlock = buildUserAgriculturalContextBlock(userProfile)
+    const instructions = `${userContextBlock ? `${userContextBlock}\n\n` : ''}${systemPrompt}\nCurrent date and time: ${currentDate}`
+
     // Create ToolLoopAgent with all configuration
     const agent = new ToolLoopAgent({
       model: getModel(model),
-      instructions: `${systemPrompt}\nCurrent date and time: ${currentDate}`,
+      instructions,
       tools,
       activeTools: activeToolsList,
       stopWhen: stepCountIs(maxSteps),

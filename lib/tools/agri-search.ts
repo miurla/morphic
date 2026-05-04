@@ -5,6 +5,7 @@ import { enrichQuery } from '@/lib/agri/query-enricher'
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { getAllSources } from '@/lib/supabase/queries/sources'
 import { createClient } from '@/lib/supabase/server'
+import type { UserProfile } from '@/lib/supabase/types'
 import { SearchResultItem, SearchResults } from '@/lib/types'
 import { getSearchToolDescription } from '@/lib/utils/search-config'
 
@@ -224,7 +225,8 @@ export async function runAgriSearch({
   includeDomains = [],
   excludeDomains = [],
   modelId,
-  toolCallId
+  toolCallId,
+  userProfile
 }: {
   query: string
   maxResults?: number
@@ -233,6 +235,7 @@ export async function runAgriSearch({
   excludeDomains?: string[]
   modelId: string
   toolCallId?: string
+  userProfile?: UserProfile | null
 }): Promise<SearchResults> {
   const client = createParallelClient()
   const trustedDomains = await getTrustedAgriDomains()
@@ -246,7 +249,7 @@ export async function runAgriSearch({
     maxResults || TARGET_RESULT_COUNT,
     TARGET_RESULT_COUNT
   )
-  const enrichedQueries = await enrichQuery(query)
+  const enrichedQueries = await enrichQuery(query, userProfile)
 
   const primaryResponses = await Promise.all(
     enrichedQueries.map(enrichedQuery =>
@@ -341,7 +344,10 @@ export async function runAgriSearch({
   }
 }
 
-export function createAgriSearchTool(fullModel: string) {
+export function createAgriSearchTool(
+  fullModel: string,
+  userProfile?: UserProfile | null
+) {
   return tool({
     description: getSearchToolDescription(),
     inputSchema: getSearchSchemaForModel(fullModel),
@@ -367,7 +373,8 @@ export function createAgriSearchTool(fullModel: string) {
         includeDomains: include_domains,
         excludeDomains: exclude_domains,
         modelId: fullModel,
-        toolCallId: context?.toolCallId
+        toolCallId: context?.toolCallId,
+        userProfile
       })
 
       yield {

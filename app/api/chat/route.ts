@@ -9,6 +9,8 @@ import { checkAndEnforceOverallChatLimit } from '@/lib/rate-limit/chat-limits'
 import { checkAndEnforceGuestLimit } from '@/lib/rate-limit/guest-limit'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-ephemeral-chat-stream-response'
+import { getUserProfile } from '@/lib/supabase/queries/user-profile'
+import { createClient } from '@/lib/supabase/server'
 import { SearchMode } from '@/lib/types/search'
 import { selectModel } from '@/lib/utils/model-selection'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
@@ -67,6 +69,7 @@ export async function POST(req: Request) {
 
     const guestChatEnabled = process.env.ENABLE_GUEST_CHAT === 'true'
     const isGuest = !userId
+    const isAnonymousModeUser = process.env.ENABLE_AUTH === 'false'
     if (isGuest && !guestChatEnabled) {
       return new Response('Authentication required', {
         status: 401,
@@ -143,6 +146,14 @@ export async function POST(req: Request) {
       }
     }
 
+    const userProfile =
+      !isGuest && !isAnonymousModeUser
+        ? await getUserProfile(await createClient(), userId).catch(error => {
+            console.warn('[Chat] Failed to fetch user profile:', error)
+            return null
+          })
+        : null
+
     const streamStart = performance.now()
     perfLog(
       `createChatStreamResponse - Start: model=${selectedModel.providerId}:${selectedModel.id}, searchMode=${searchMode}`
@@ -165,7 +176,8 @@ export async function POST(req: Request) {
           messageId,
           abortSignal,
           isNewChat,
-          searchMode
+          searchMode,
+          userProfile
         })
 
     perfTime('createChatStreamResponse resolved', streamStart)
