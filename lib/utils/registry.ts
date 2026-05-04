@@ -6,14 +6,19 @@ import { createProviderRegistry, LanguageModel } from 'ai'
 import { createOllama } from 'ai-sdk-ollama'
 
 // Build providers object conditionally
+// openai-compatible is kept separate so getModel() can call it directly
+// as a function (chat/completions) instead of via .languageModel() which
+// in @ai-sdk/openai v3 defaults to the Responses API.
+const openaiCompatibleProvider = createOpenAI({
+  apiKey: process.env.OPENAI_COMPATIBLE_API_KEY,
+  baseURL: process.env.OPENAI_COMPATIBLE_API_BASE_URL
+})
+
 const providers: Record<string, any> = {
   openai,
   anthropic,
   google,
-  'openai-compatible': createOpenAI({
-    apiKey: process.env.OPENAI_COMPATIBLE_API_KEY,
-    baseURL: process.env.OPENAI_COMPATIBLE_API_BASE_URL
-  }),
+  'openai-compatible': openaiCompatibleProvider,
   gateway: createGateway({
     apiKey: process.env.AI_GATEWAY_API_KEY
   })
@@ -31,6 +36,14 @@ if (ollamaProvider) {
 export const registry = createProviderRegistry(providers)
 
 export function getModel(model: string): LanguageModel {
+  // For openai-compatible models, use .chat() which calls /chat/completions.
+  // In @ai-sdk/openai v3, both provider(id) and .languageModel(id) default to
+  // the Responses API (/v1/responses); .chat(id) is the correct escape hatch.
+  if (model.startsWith('openai-compatible:')) {
+    const modelId = model.slice('openai-compatible:'.length)
+    return openaiCompatibleProvider.chat(modelId) as LanguageModel
+  }
+
   // For Ollama models, bypass the registry to pass model-level settings
   // that ai-sdk-ollama requires (think, supportedUrls override).
   if (model.startsWith('ollama:') && ollamaProvider) {

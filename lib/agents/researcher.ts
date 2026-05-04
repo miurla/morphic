@@ -3,9 +3,10 @@ import { stepCountIs, tool, ToolLoopAgent } from 'ai'
 import type { ResearcherTools } from '@/lib/types/agent'
 import { type Model } from '@/lib/types/models'
 
+import { enrichQuery } from '../agri/query-enricher'
 import { fetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
-import { createSearchTool } from '../tools/search'
+import { createSearchTool, search } from '../tools/search'
 import { createTodoTools } from '../tools/todo'
 import { SearchMode } from '../types/search'
 import { getModel } from '../utils/registry'
@@ -62,6 +63,89 @@ function wrapSearchToolForQuickMode<
   }) as T
 }
 
+// AgriEvidence search wrapper — intercepts every search tool call, enriches the user
+// query into 2-3 scientific search terms, runs them in parallel, and yields a merged
+// SearchResults object under the original toolCallId so citations stay coherent.
+function createAgriSearchTool<T extends ReturnType<typeof createSearchTool>>(
+  originalTool: T,
+  model: string
+): T {
+  return tool({
+    description: originalTool.description,
+    inputSchema: originalTool.inputSchema,
+    async *execute(params, context) {
+      // params may have optional fields depending on the model schema; cast once
+      const p = params as typeof params & {
+        max_results?: number
+        search_depth?: string
+        include_domains?: string[]
+        exclude_domains?: string[]
+      }
+
+      // Signal the UI that a search is starting with the original user query
+      yield {
+        state: 'searching' as const,
+        query: params.query
+      }
+
+      // Rewrite query into 2-3 precise scientific search terms
+      const enrichedQueries = await enrichQuery(params.query, model)
+
+      // Run all enriched queries in parallel
+      const searchResults = await Promise.all(
+        enrichedQueries.map(q =>
+          search(
+            q,
+            p.max_results ?? 10,
+            (p.search_depth as 'basic' | 'advanced') ?? 'basic',
+            p.include_domains ?? [],
+            p.exclude_domains ?? []
+          )
+        )
+      )
+
+      // Merge: deduplicate results by URL, concatenate images
+      const seenUrls = new Set<string>()
+      const mergedResults: Array<{ title: string; url: string; content: string }> =
+        []
+      const mergedImages: unknown[] = []
+      let totalResults = 0
+
+      for (const result of searchResults) {
+        totalResults += result.number_of_results ?? 0
+        for (const item of result.results ?? []) {
+          if (!seenUrls.has(item.url)) {
+            seenUrls.add(item.url)
+            mergedResults.push(item)
+          }
+        }
+        for (const img of result.images ?? []) {
+          mergedImages.push(img)
+        }
+      }
+
+      // Build citation map (1-based index)
+      const citationMap: Record<
+        number,
+        { title: string; url: string; content: string }
+      > = {}
+      mergedResults.forEach((item, index) => {
+        citationMap[index + 1] = item
+      })
+
+      yield {
+        state: 'complete' as const,
+        results: mergedResults,
+        images: mergedImages,
+        query: params.query,
+        number_of_results: totalResults,
+        citationMap,
+        ...(context?.toolCallId ? { toolCallId: context.toolCallId } : {})
+      }
+    }
+  }) as T
+}
+
 // Enhanced researcher function with improved type safety using ToolLoopAgent
 // Note: abortSignal should be passed to agent.stream() or agent.generate() calls, not to the agent constructor
 export function createResearcher({
@@ -97,7 +181,7 @@ export function createResearcher({
         systemPrompt = QUICK_MODE_PROMPT
         activeToolsList = ['search', 'fetch']
         maxSteps = 20
-        searchTool = wrapSearchToolForQuickMode(originalSearchTool)
+        searchTool = createAgriSearchTool(originalSearchTool, model)
         break
 
       case 'adaptive':
@@ -108,7 +192,7 @@ export function createResearcher({
           `[Researcher] Adaptive mode: maxSteps=50, tools=[${activeToolsList.join(', ')}]`
         )
         maxSteps = 50
-        searchTool = originalSearchTool
+        searchTool = createAgriSearchTool(originalSearchTool, model)
         break
     }
 
