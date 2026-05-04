@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     const searchMode: SearchMode =
       searchModeCookie && ['quick', 'adaptive'].includes(searchModeCookie)
         ? (searchModeCookie as SearchMode)
-        : 'quick'
+        : 'adaptive'
 
     const selectedModel = await selectModel({ searchMode, cookieStore })
 
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
       )
     }
 
-    // Adaptive mode is gated to authenticated users on cloud deployments.
+    // Quality mode (internal value: adaptive) is gated on cloud deployments.
     // Guests are nudged to sign in instead of being downgraded silently.
     if (
       isGuest &&
@@ -122,7 +122,7 @@ export async function POST(req: Request) {
       return new Response(
         JSON.stringify({
           error:
-            'Sign in to use Adaptive mode. Quick mode remains available without an account.',
+            'Sign in to use Quality mode. Speed mode remains available without an account.',
           mode: 'adaptive',
           authRequired: true
         }),
@@ -208,7 +208,7 @@ export async function POST(req: Request) {
     // Invalidate the cache for this specific chat after creating the response
     // This ensures the next load will get fresh data
     if (chatId && !isGuest) {
-      revalidateTag(`chat-${chatId}`, 'max')
+      revalidateTag(`chat-${chatId}`)
     }
 
     const totalTime = performance.now() - startTime

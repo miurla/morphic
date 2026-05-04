@@ -1,7 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
@@ -13,9 +13,9 @@ import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
 import { UploadedFile } from '@/lib/types'
 import type { UIMessage } from '@/lib/types/ai'
 import {
-    isDynamicToolPart,
-    isToolCallPart,
-    isToolTypePart
+  isDynamicToolPart,
+  isToolCallPart,
+  isToolTypePart
 } from '@/lib/types/dynamic-tools'
 import type { ModelSelectorData } from '@/lib/types/model-selector'
 import { cn } from '@/lib/utils'
@@ -173,7 +173,7 @@ export function Chat({
 
         const details =
           parsedError.mode === 'adaptive'
-            ? 'The limit resets at midnight UTC. You can continue using Quick mode without restrictions.'
+            ? 'The limit resets at midnight UTC. You can continue using Speed mode without restrictions.'
             : 'The limit resets at midnight UTC.'
 
         setErrorModal({
@@ -184,7 +184,7 @@ export function Chat({
         })
       } else if (isAuthError) {
         // Try to parse JSON for context-specific auth prompts
-        // (e.g. adaptive mode requires sign in).
+        // (e.g. Quality mode requires sign in).
         let parsedAuthError: { error?: string; authRequired?: boolean } = {}
         try {
           const jsonMatch = error.message?.match(/\{.*\}/)

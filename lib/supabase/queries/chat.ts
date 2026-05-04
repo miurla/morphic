@@ -159,10 +159,7 @@ export async function updateChatTitle(
   userId?: string
 ): Promise<Chat | null> {
   const supabase = createAdminClient()
-  let query = supabase
-    .from('chats')
-    .update({ title })
-    .eq('id', chatId)
+  let query = supabase.from('chats').update({ title }).eq('id', chatId)
 
   if (userId) query = query.eq('user_id', userId)
 
@@ -176,7 +173,14 @@ export async function updateChatTitle(
 export async function upsertMessage(
   message: PersistableUIMessage & { chatId: string },
   _userId?: string
-): Promise<{ id: string; chatId: string; role: string; createdAt: Date; updatedAt: Date | null; metadata: Record<string, any> | null }> {
+): Promise<{
+  id: string
+  chatId: string
+  role: string
+  createdAt: Date
+  updatedAt: Date | null
+  metadata: Record<string, any> | null
+}> {
   const count = incrementDbOperationCount()
   perfLog(`DB - upsertMessage called - count: ${count}`)
 
@@ -380,7 +384,17 @@ export async function createChatWithFirstMessageTransaction({
   chatTitle: string
   userId: string
   message: PersistableUIMessage
-}): Promise<{ chat: Chat; message: { id: string; chatId: string; role: string; createdAt: Date; updatedAt: Date | null; metadata: Record<string, any> | null } }> {
+}): Promise<{
+  chat: Chat
+  message: {
+    id: string
+    chatId: string
+    role: string
+    createdAt: Date
+    updatedAt: Date | null
+    metadata: Record<string, any> | null
+  }
+}> {
   perfLog(`DB - createChatWithFirstMessageTransaction start`)
   const dbStart = performance.now()
 

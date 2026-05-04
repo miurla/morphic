@@ -1,11 +1,11 @@
 import { UIMessage } from 'ai'
 
 import {
-    createChat,
-    createChatWithFirstMessage,
-    deleteMessagesFromIndex,
-    loadChat,
-    upsertMessage
+  createChat,
+  createChatWithFirstMessage,
+  deleteMessagesFromIndex,
+  loadChat,
+  upsertMessage
 } from '@/lib/actions/chat'
 import { generateId } from '@/lib/utils/id'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'

@@ -7,9 +7,9 @@ import { toast } from 'sonner'
 import { Chat as DBChat } from '@/lib/supabase/types'
 
 import {
-    SidebarGroup,
-    SidebarGroupLabel,
-    SidebarMenu
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu
 } from '@/components/ui/sidebar'
 
 import { ChatHistorySkeleton } from './chat-history-skeleton'

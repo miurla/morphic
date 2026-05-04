@@ -15,7 +15,7 @@ export const searchSchema = z.object({
     .optional()
     .default(['web'])
     .describe(
-      'Types of content to include in search results. Only applicable when type is "general" and a dedicated general search provider is configured. Ignored otherwise.'
+      'Preserved for compatibility. AgriEvidence search currently returns web evidence snippets from Parallel and ignores multimedia content types.'
     ),
   max_results: z
     .number()
@@ -34,7 +34,7 @@ export const searchSchema = z.object({
     .nullish()
     .transform(val => val ?? [])
     .describe(
-      'A list of domains to specifically include in the search results. Default is None, which includes all domains.'
+      'Optional additional domains. AgriEvidence primarily uses trusted agricultural domains from the Supabase sources table.'
     ),
   exclude_domains: z
     .array(z.string())
@@ -52,7 +52,7 @@ export const strictSearchSchema = z.object({
   content_types: z
     .array(z.enum(['web', 'video', 'image', 'news']))
     .describe(
-      'Types of content to include in search results. Only applicable when type is "general" and a dedicated general search provider is configured. Ignored otherwise.'
+      'Preserved for compatibility. AgriEvidence search currently returns web evidence snippets from Parallel and ignores multimedia content types.'
     ),
   max_results: z.number().describe('The maximum number of results to return.'),
   search_depth: z
@@ -63,7 +63,7 @@ export const strictSearchSchema = z.object({
     .nullish()
     .transform(val => val ?? [])
     .describe(
-      'A list of domains to specifically include in the search results. Default is None, which includes all domains.'
+      'Optional additional domains. AgriEvidence primarily uses trusted agricultural domains from the Supabase sources table.'
     ),
   exclude_domains: z
     .array(z.string())

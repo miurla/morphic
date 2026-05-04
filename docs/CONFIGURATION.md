@@ -47,7 +47,21 @@ In **Local/Docker** mode, the selected model is persisted in a cookie and used f
 
 In **Cloud** mode (`MORPHIC_CLOUD_DEPLOYMENT=true`), models are fixed by `config/models/cloud.json` and the model selector is not shown.
 
+AgriEvidence defaults to DeepSeek V4 Pro in Quality mode and uses DeepSeek V4 Flash for Speed mode and query enrichment.
+
 ### Supported Providers
+
+#### DeepSeek V4
+
+DeepSeek is the default AgriEvidence provider. The integration uses the OpenAI-compatible DeepSeek API.
+
+```bash
+DEEPSEEK_API_KEY=[YOUR_DEEPSEEK_API_KEY]
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+```
+
+- `deepseek-v4-pro`: default Quality model with DeepSeek thinking enabled in cloud configuration
+- `deepseek-v4-flash`: Speed mode and query enrichment model
 
 #### OpenAI
 
@@ -87,9 +101,19 @@ When configured, Ollama models are discovered dynamically and appear in the mode
 
 ## Search Providers
 
-### SearXNG Configuration
+### Parallel Search
 
-SearXNG can be used as an alternative search backend with advanced search capabilities. Docker Compose includes SearXNG automatically.
+AgriEvidence uses [Parallel Search](https://parallel.ai/) for live agricultural evidence retrieval. Search requests are enriched by DeepSeek V4 Flash, then sent to Parallel with a domain policy that prioritizes trusted agricultural sources from the Supabase `sources` table. If trusted-source coverage is thin, the tool falls back to open-web results and records this in search metadata.
+
+```bash
+PARALLEL_API_KEY=[YOUR_PARALLEL_API_KEY]
+```
+
+The legacy `type="general"` and `type="optimized"` search inputs are preserved for compatibility, but both route through the Parallel-backed AgriEvidence search tool.
+
+### SearXNG Configuration (Legacy / Docker Service)
+
+Docker Compose still includes SearXNG and Redis for compatibility with the upstream Morphic stack, but AgriEvidence search no longer uses SearXNG as the active backend.
 
 #### Basic Setup
 
@@ -128,15 +152,15 @@ SEARXNG_LIMITER=false
 
 Modify `searxng-settings.yml` to enable/disable specific search engines, change UI settings, or adjust server options. See the [SearXNG documentation](https://docs.searxng.org/admin/settings/settings.html#settings-yml) for details.
 
-### Brave Search (Optional)
+### Brave Search (Legacy Optional)
 
-Brave Search provides enhanced support for video and image searches:
+Brave Search is no longer used by the AgriEvidence search tool. The variable may remain in older environments, but Parallel is the active search provider.
 
 ```bash
 BRAVE_SEARCH_API_KEY=[YOUR_BRAVE_SEARCH_API_KEY]
 ```
 
-If not configured, `type="general"` searches fall back to your configured search provider.
+If `PARALLEL_API_KEY` is not configured, search requests will fail because the AgriEvidence tool requires Parallel.
 
 ## Authentication
 

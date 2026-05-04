@@ -9,19 +9,19 @@ import type { Chat, Message } from '@/lib/supabase/types'
 import type { UIMessage } from '@/lib/types/ai'
 
 import {
-    clearChats,
-    createChat,
-    createChatAndSaveMessage,
-    createChatWithFirstMessage,
-    deleteChat,
-    deleteMessagesAfter,
-    deleteMessagesFromIndex,
-    getChats,
-    getChatsPage,
-    loadChat,
-    saveChatTitle,
-    shareChat,
-    upsertMessage
+  clearChats,
+  createChat,
+  createChatAndSaveMessage,
+  createChatWithFirstMessage,
+  deleteChat,
+  deleteMessagesAfter,
+  deleteMessagesFromIndex,
+  getChats,
+  getChatsPage,
+  loadChat,
+  saveChatTitle,
+  shareChat,
+  upsertMessage
 } from '../chat'
 
 // Mock the modules
@@ -180,7 +180,7 @@ describe('Chat Actions', () => {
         userId,
         visibility: 'private'
       })
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
     })
 
     it('should generate ID and use default title when not provided', async () => {
@@ -310,7 +310,7 @@ describe('Chat Actions', () => {
           parts: [{ type: 'text', text: 'Hello' }]
         }
       })
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
     })
   })
 
@@ -345,7 +345,7 @@ describe('Chat Actions', () => {
         },
         userId
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
     })
 
     it('should generate message ID if not provided', async () => {
@@ -392,7 +392,7 @@ describe('Chat Actions', () => {
 
       expect(result).toEqual({ success: true })
       expect(dbActions.deleteChat).toHaveBeenCalledWith(chatId, userId)
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
     })
 
     it('should return error for unauthenticated user', async () => {
@@ -438,7 +438,7 @@ describe('Chat Actions', () => {
       expect(dbActions.deleteChat).toHaveBeenCalledTimes(2)
       expect(dbActions.deleteChat).toHaveBeenCalledWith('chat-1', userId)
       expect(dbActions.deleteChat).toHaveBeenCalledWith('chat-2', userId)
-      expect(revalidateTag).toHaveBeenCalledWith('chat', 'max')
+      expect(revalidateTag).toHaveBeenCalledWith('chat')
     })
   })
 
@@ -466,7 +466,7 @@ describe('Chat Actions', () => {
         chatId,
         messageId
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
     })
 
     it('should return error for unauthorized access', async () => {
@@ -514,7 +514,7 @@ describe('Chat Actions', () => {
         userId,
         'public'
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
     })
 
     it('should return null for unauthenticated user', async () => {
@@ -554,7 +554,7 @@ describe('Chat Actions', () => {
         messageId,
         userId
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
     })
   })
 
@@ -589,7 +589,7 @@ describe('Chat Actions', () => {
         chatId,
         generatedTitle
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
+      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`)
     })
 
     it('should not generate title for existing chat', async () => {

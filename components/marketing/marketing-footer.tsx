@@ -60,7 +60,8 @@ export function MarketingFooter() {
         {/* Bottom bar */}
         <div className="mt-8 flex flex-col items-center justify-between gap-2 border-t border-border/40 pt-6 md:flex-row">
           <p className="text-xs text-muted-foreground/60">
-            © {new Date().getFullYear()} Morphic. Open-source under the MIT License.
+            © {new Date().getFullYear()} Morphic. Open-source under the MIT
+            License.
           </p>
           <p className="text-xs text-muted-foreground/50">
             Built with Next.js · Vercel AI SDK · Tailwind CSS

@@ -5,26 +5,26 @@ const features = [
     icon: 'solar:magnifer-bold',
     title: 'Real-time Web Search',
     description:
-      'Every answer is grounded in live search results. Morphic queries the web at the moment you ask, not from a stale training snapshot.',
+      'Every answer is grounded in live search results. Morphic queries the web at the moment you ask, not from a stale training snapshot.'
   },
   {
     icon: 'solar:magic-stick-bold',
     title: 'Generative UI',
     description:
-      "Answers aren't walls of text. Morphic renders structured responses — with sources, follow-up questions, and rich components — in real time.",
+      "Answers aren't walls of text. Morphic renders structured responses — with sources, follow-up questions, and rich components — in real time."
   },
   {
     icon: 'solar:layers-bold',
     title: 'Multiple AI Providers',
     description:
-      'Switch between OpenAI, Anthropic, Google, and more. Bring your own API keys and stay in control of which models power your searches.',
+      'Switch between OpenAI, Anthropic, Google, and more. Bring your own API keys and stay in control of which models power your searches.'
   },
   {
     icon: 'solar:code-bold',
     title: 'Fully Open Source',
     description:
-      'Every line is on GitHub under the MIT license. Self-host it in minutes with Docker, or deploy to Vercel with a single click.',
-  },
+      'Every line is on GitHub under the MIT license. Self-host it in minutes with Docker, or deploy to Vercel with a single click.'
+  }
 ]
 
 export function FeaturesSection() {
@@ -45,8 +45,8 @@ export function FeaturesSection() {
             Built for answers, not just chat.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground">
-            Morphic combines a powerful search engine with a generative UI framework
-            to give you answers you can actually trust and trace.
+            Morphic combines a powerful search engine with a generative UI
+            framework to give you answers you can actually trust and trace.
           </p>
         </div>
 

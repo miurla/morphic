@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 
-import { Check, ChevronDown } from 'lucide-react'
+import { Icon } from '@iconify/react'
 
 import { SEARCH_MODE_CONFIGS } from '@/lib/config/search-modes'
 import { SearchMode } from '@/lib/types/search'
@@ -27,9 +27,9 @@ export function SearchModeSelector() {
     subscribeToCookieChange,
     () => {
       const savedMode = getCookie('searchMode')
-      return savedMode === 'adaptive' ? 'adaptive' : 'quick'
+      return savedMode === 'quick' ? 'quick' : 'adaptive'
     },
-    () => 'quick'
+    () => 'adaptive'
   )
   const [openHoverCard, setOpenHoverCard] = useState<string | null>(null)
   const [justSelected, setJustSelected] = useState(false)
@@ -39,7 +39,7 @@ export function SearchModeSelector() {
     const savedMode = getCookie('searchMode')
     if (savedMode && !['quick', 'adaptive'].includes(savedMode)) {
       // Clean up invalid cookie value (e.g., old 'planning' mode)
-      setCookie('searchMode', 'quick')
+      setCookie('searchMode', 'adaptive')
     }
   }, [])
 
@@ -85,7 +85,8 @@ export function SearchModeSelector() {
                 />
               )}
               <span className="text-xs font-medium">{selectedMode?.label}</span>
-              <ChevronDown
+              <Icon
+                icon="solar:alt-arrow-down-bold"
                 className={cn(
                   'size-3 ml-0.5 opacity-50 transition-transform duration-200',
                   dropdownOpen && 'rotate-180'
@@ -104,7 +105,10 @@ export function SearchModeSelector() {
                   className="relative flex flex-col items-start gap-1 py-2 pl-8 pr-2 cursor-pointer focus:outline-none"
                 >
                   {isSelected && (
-                    <Check className="absolute left-2 top-2.5 size-4" />
+                    <Icon
+                      icon="solar:check-circle-bold"
+                      className="absolute left-2 top-2.5 size-4"
+                    />
                   )}
                   <div className="flex items-center gap-2">
                     <ModeIcon

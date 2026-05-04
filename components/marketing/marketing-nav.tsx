@@ -1,13 +1,12 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 
 import { Icon } from '@iconify/react'
 
-import { cn } from '@/lib/utils'
-
 import { useHasUser } from '@/lib/contexts/user-context'
+import { cn } from '@/lib/utils'
 
 import { IconLogo } from '@/components/ui/icons'
 
@@ -34,15 +33,23 @@ export function MarketingNav() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 select-none">
           <IconLogo className="size-6" />
-          <span className="font-semibold text-base tracking-tight">Morphic</span>
+          <span className="font-semibold text-base tracking-tight">
+            Morphic
+          </span>
         </Link>
 
         {/* Nav links */}
         <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-          <Link href="#features" className="hover:text-foreground transition-colors">
+          <Link
+            href="#features"
+            className="hover:text-foreground transition-colors"
+          >
             Features
           </Link>
-          <Link href="#how-it-works" className="hover:text-foreground transition-colors">
+          <Link
+            href="#how-it-works"
+            className="hover:text-foreground transition-colors"
+          >
             How it works
           </Link>
           <Link

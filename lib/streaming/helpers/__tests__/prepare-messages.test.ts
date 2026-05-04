@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
-    createChatWithFirstMessage,
-    deleteMessagesFromIndex,
-    loadChat,
-    upsertMessage
+  createChatWithFirstMessage,
+  deleteMessagesFromIndex,
+  loadChat,
+  upsertMessage
 } from '@/lib/actions/chat'
 import type { Chat } from '@/lib/supabase/types'
 import type { UIMessage } from '@/lib/types/ai'

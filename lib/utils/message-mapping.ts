@@ -1,12 +1,9 @@
-import type {
-    UIMessage,
-    UIMessageMetadata
-} from '@/lib/types/ai'
+import type { UIMessage, UIMessageMetadata } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import type {
-    DBMessagePart,
-    DBMessagePartSelect,
-    ToolState
+  DBMessagePart,
+  DBMessagePartSelect,
+  ToolState
 } from '@/lib/types/message-persistence'
 import { generateId } from '@/lib/utils/id'
 

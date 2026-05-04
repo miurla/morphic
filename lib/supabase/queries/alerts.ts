@@ -1,10 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+
 import {
-  mapAlertSubscriptionRow,
+  type AlertChannel,
+  type AlertFrequency,
   type AlertSubscription,
   type AlertType,
-  type AlertFrequency,
-  type AlertChannel
+  mapAlertSubscriptionRow
 } from '../types'
 
 type DB = SupabaseClient
@@ -86,13 +87,13 @@ export async function updateAlert(
   >
 ): Promise<AlertSubscription> {
   const row: Record<string, unknown> = {}
-  if (updates.name !== undefined)       row.name = updates.name
-  if (updates.keywords !== undefined)   row.keywords = updates.keywords
-  if (updates.regions !== undefined)    row.regions = updates.regions
-  if (updates.channels !== undefined)   row.channels = updates.channels
-  if (updates.frequency !== undefined)  row.frequency = updates.frequency
+  if (updates.name !== undefined) row.name = updates.name
+  if (updates.keywords !== undefined) row.keywords = updates.keywords
+  if (updates.regions !== undefined) row.regions = updates.regions
+  if (updates.channels !== undefined) row.channels = updates.channels
+  if (updates.frequency !== undefined) row.frequency = updates.frequency
   if (updates.webhookUrl !== undefined) row.webhook_url = updates.webhookUrl
-  if (updates.isActive !== undefined)   row.is_active = updates.isActive
+  if (updates.isActive !== undefined) row.is_active = updates.isActive
 
   const { data, error } = await db
     .from('alert_subscriptions')

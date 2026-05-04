@@ -14,11 +14,17 @@ const openaiCompatibleProvider = createOpenAI({
   baseURL: process.env.OPENAI_COMPATIBLE_API_BASE_URL
 })
 
+const deepseekProvider = createOpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
+})
+
 const providers: Record<string, any> = {
   openai,
   anthropic,
   google,
   'openai-compatible': openaiCompatibleProvider,
+  deepseek: deepseekProvider,
   gateway: createGateway({
     apiKey: process.env.AI_GATEWAY_API_KEY
   })
@@ -42,6 +48,11 @@ export function getModel(model: string): LanguageModel {
   if (model.startsWith('openai-compatible:')) {
     const modelId = model.slice('openai-compatible:'.length)
     return openaiCompatibleProvider.chat(modelId) as LanguageModel
+  }
+
+  if (model.startsWith('deepseek:')) {
+    const modelId = model.slice('deepseek:'.length)
+    return deepseekProvider.chat(modelId) as LanguageModel
   }
 
   // For Ollama models, bypass the registry to pass model-level settings
@@ -79,6 +90,8 @@ export function isProviderEnabled(providerId: string): boolean {
         !!process.env.OPENAI_COMPATIBLE_API_KEY &&
         !!process.env.OPENAI_COMPATIBLE_API_BASE_URL
       )
+    case 'deepseek':
+      return !!process.env.DEEPSEEK_API_KEY
     case 'gateway':
       return !!process.env.AI_GATEWAY_API_KEY
     case 'ollama':

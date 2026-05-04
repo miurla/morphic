@@ -22,9 +22,9 @@ An AI-powered search engine with a generative UI.
 ## Features
 
 - AI-powered search with GenerativeUI
-- Search modes: Quick and Adaptive
-- Model selector with dynamic provider detection (OpenAI, Anthropic, Google, Ollama, Vercel AI Gateway)
-- Multiple search providers (Tavily, SearXNG, Brave, Exa)
+- Search modes: Speed and Quality
+- DeepSeek V4 defaults with dynamic provider detection for additional models
+- Parallel-backed agricultural evidence search with trusted-source prioritization
 - Chat history stored in PostgreSQL
 - Share search results with unique URLs
 - File upload support
@@ -52,13 +52,15 @@ cd morphic
 cp .env.local.example .env.local
 ```
 
-2. Edit `.env.local` and set at least one AI provider API key:
+2. Edit `.env.local` and set DeepSeek and Parallel keys for the AgriEvidence defaults:
 
 ```bash
-OPENAI_API_KEY=your_openai_key
+DEEPSEEK_API_KEY=your_deepseek_key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+PARALLEL_API_KEY=your_parallel_key
 ```
 
-See [supported providers](./docs/CONFIGURATION.md#supported-providers) for other options (Anthropic, Google, Ollama, Vercel AI Gateway).
+See [supported providers](./docs/CONFIGURATION.md#supported-providers) for other model options (OpenAI, Anthropic, Google, Ollama, Vercel AI Gateway).
 
 3. Start all services:
 
@@ -68,7 +70,7 @@ docker compose up -d
 
 4. Visit http://localhost:3000 and select your model from the model selector.
 
-Docker Compose starts PostgreSQL, Redis, SearXNG, and Morphic automatically. No additional search API key is needed — SearXNG is included.
+Docker Compose starts PostgreSQL, Redis, SearXNG, and Morphic automatically. AgriEvidence search uses Parallel, so `PARALLEL_API_KEY` is required for live evidence retrieval.
 
 See the [Docker Guide](./docs/DOCKER.md) for more options including building from source and file upload configuration.
 
@@ -91,8 +93,9 @@ cp .env.local.example .env.local
 Edit `.env.local` and set your API keys:
 
 ```bash
-OPENAI_API_KEY=your_openai_key
-TAVILY_API_KEY=your_tavily_key
+DEEPSEEK_API_KEY=your_deepseek_key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+PARALLEL_API_KEY=your_parallel_key
 ```
 
 To enable chat history, authentication, file upload, and other features, see [CONFIGURATION.md](./docs/CONFIGURATION.md).

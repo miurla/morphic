@@ -35,6 +35,7 @@ const ANTHROPIC_ALLOWED_PREFIXES = [
 ]
 const GOOGLE_ALLOWED_PREFIXES = ['gemini-2.5', 'gemini-3']
 const GOOGLE_EXCLUDED_KEYWORDS = ['image', 'live', 'native-audio', 'embedding']
+const DEEPSEEK_CONTEXT_WINDOW = 1000000
 
 let modelsCache:
   | {
@@ -379,6 +380,34 @@ export async function fetchGatewayModels(): Promise<Model[]> {
   }
 }
 
+export async function fetchDeepSeekModels(): Promise<Model[]> {
+  if (!isProviderEnabled('deepseek')) {
+    return []
+  }
+
+  return [
+    {
+      id: 'deepseek-v4-flash',
+      name: 'DeepSeek V4 Flash',
+      provider: 'DeepSeek',
+      providerId: 'deepseek',
+      contextWindow: DEEPSEEK_CONTEXT_WINDOW,
+      recommendedFor: 'Speed mode, query enrichment, simple lookups',
+      default: false
+    },
+    {
+      id: 'deepseek-v4-pro',
+      name: 'DeepSeek V4 Pro',
+      provider: 'DeepSeek',
+      providerId: 'deepseek',
+      contextWindow: DEEPSEEK_CONTEXT_WINDOW,
+      recommendedFor:
+        'Quality mode, complex agricultural queries, synthesis tasks',
+      default: true
+    }
+  ]
+}
+
 const OPENAI_COMPATIBLE_EXCLUDED_KEYWORDS = [
   'embed',
   'image',
@@ -423,7 +452,10 @@ export async function fetchOpenAICompatibleModels(): Promise<Model[]> {
       )
     )
   } catch (error) {
-    console.warn('[ModelFetch] Failed to fetch OpenAI Compatible models:', error)
+    console.warn(
+      '[ModelFetch] Failed to fetch OpenAI Compatible models:',
+      error
+    )
     return []
   }
 }
@@ -438,15 +470,23 @@ export async function fetchAvailableModels(options?: {
     return modelsCache.value
   }
 
-  const [openai, anthropic, google, ollama, gateway, openaiCompatible] =
-    await Promise.all([
-      fetchOpenAIModels(),
-      fetchAnthropicModels(),
-      fetchGoogleModels(),
-      fetchOllamaModels(),
-      fetchGatewayModels(),
-      fetchOpenAICompatibleModels()
-    ])
+  const [
+    openai,
+    anthropic,
+    google,
+    ollama,
+    gateway,
+    deepseek,
+    openaiCompatible
+  ] = await Promise.all([
+    fetchOpenAIModels(),
+    fetchAnthropicModels(),
+    fetchGoogleModels(),
+    fetchOllamaModels(),
+    fetchGatewayModels(),
+    fetchDeepSeekModels(),
+    fetchOpenAICompatibleModels()
+  ])
 
   const grouped = groupByProvider(
     dedupeModels([
@@ -455,6 +495,7 @@ export async function fetchAvailableModels(options?: {
       ...google,
       ...ollama,
       ...gateway,
+      ...deepseek,
       ...openaiCompatible
     ])
   )

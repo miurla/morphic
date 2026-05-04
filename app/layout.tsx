@@ -74,9 +74,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <UserProvider hasUser={!!userId}>
-            {children}
-          </UserProvider>
+          <UserProvider hasUser={!!userId}>{children}</UserProvider>
           <Toaster />
           <Analytics />
         </ThemeProvider>

@@ -1,9 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+
 import {
-  mapCollectionRow,
-  mapBookmarkRow,
   type Bookmark,
-  type Collection
+  type Collection,
+  mapBookmarkRow,
+  mapCollectionRow
 } from '../types'
 
 type DB = SupabaseClient
@@ -29,7 +30,10 @@ export async function getUserCollections(
 export async function createCollection(
   db: DB,
   userId: string,
-  input: Pick<Collection, 'name' | 'description' | 'icon' | 'color' | 'isPublic'>
+  input: Pick<
+    Collection,
+    'name' | 'description' | 'icon' | 'color' | 'isPublic'
+  >
 ): Promise<Collection> {
   const { data, error } = await db
     .from('collections')
@@ -52,10 +56,7 @@ export async function deleteCollection(
   db: DB,
   collectionId: string
 ): Promise<void> {
-  const { error } = await db
-    .from('collections')
-    .delete()
-    .eq('id', collectionId)
+  const { error } = await db.from('collections').delete().eq('id', collectionId)
 
   if (error) throw error
 }
@@ -123,10 +124,7 @@ export async function removeBookmark(
   db: DB,
   bookmarkId: string
 ): Promise<void> {
-  const { error } = await db
-    .from('bookmarks')
-    .delete()
-    .eq('id', bookmarkId)
+  const { error } = await db.from('bookmarks').delete().eq('id', bookmarkId)
 
   if (error) throw error
 }

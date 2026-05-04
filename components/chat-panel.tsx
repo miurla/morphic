@@ -1,8 +1,8 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Textarea from 'react-textarea-autosize'
+import { useRouter } from 'next/navigation'
 
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
@@ -14,14 +14,14 @@ import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { ModelSelectorData } from '@/lib/types/model-selector'
 import { cn } from '@/lib/utils'
 
-import { ActionButtons } from './action-buttons'
 import { useArtifact } from './artifact/artifact-context'
+import { Button } from './ui/button'
+import { IconBlinkingLogo } from './ui/icons'
+import { ActionButtons } from './action-buttons'
 import { FileUploadButton } from './file-upload-button'
 import { MessageNavigationDots } from './message-navigation-dots'
 import { ModelSelectorClient } from './model-selector-client'
 import { SearchModeSelector } from './search-mode-selector'
-import { Button } from './ui/button'
-import { IconBlinkingLogo } from './ui/icons'
 import { UploadedFileList } from './uploaded-file-list'
 
 // Constants for timing delays

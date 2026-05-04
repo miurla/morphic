@@ -12,14 +12,45 @@ import { Model } from '@/lib/types/models'
 import { SearchMode } from '@/lib/types/search'
 import { isProviderEnabled } from '@/lib/utils/registry'
 
-const MODE_FALLBACK_ORDER: SearchMode[] = ['quick', 'adaptive']
+const MODE_FALLBACK_ORDER: SearchMode[] = ['adaptive', 'quick']
 const PROVIDER_LABELS: Record<string, string> = {
   openai: 'OpenAI',
   anthropic: 'Anthropic',
   google: 'Google',
   ollama: 'Ollama',
   gateway: 'Gateway',
+  deepseek: 'DeepSeek',
   'openai-compatible': 'OpenAI Compatible'
+}
+
+const DEEPSEEK_CONTEXT_WINDOW = 1000000
+
+const DEEPSEEK_FLASH_MODEL: Model = {
+  id: 'deepseek-v4-flash',
+  name: 'DeepSeek V4 Flash',
+  provider: 'DeepSeek',
+  providerId: 'deepseek',
+  contextWindow: DEEPSEEK_CONTEXT_WINDOW,
+  recommendedFor: 'Speed mode, query enrichment, simple lookups',
+  default: false
+}
+
+const DEEPSEEK_PRO_THINKING_MODEL: Model = {
+  id: 'deepseek-v4-pro',
+  name: 'DeepSeek V4 Pro',
+  provider: 'DeepSeek',
+  providerId: 'deepseek',
+  contextWindow: DEEPSEEK_CONTEXT_WINDOW,
+  recommendedFor: 'Quality mode, complex agricultural queries, synthesis tasks',
+  default: true,
+  providerOptions: {
+    deepseek: {
+      thinking: {
+        type: 'enabled'
+      },
+      reasoning_effort: 'high'
+    }
+  }
 }
 
 function buildProviderOptions(
@@ -95,6 +126,14 @@ function resolveModelForMode(mode: SearchMode): Model | undefined {
   }
 }
 
+function resolveLocalModelForMode(mode?: SearchMode): Model | undefined {
+  if (!isProviderEnabled('deepseek')) {
+    return undefined
+  }
+
+  return mode === 'quick' ? DEEPSEEK_FLASH_MODEL : DEEPSEEK_PRO_THINKING_MODEL
+}
+
 /**
  * Determines which model to use based on search mode preference.
  *
@@ -133,6 +172,11 @@ export async function selectModel({
       }
     }
 
+    const modeModel = resolveLocalModelForMode(searchMode)
+    if (modeModel) {
+      return modeModel
+    }
+
     if (isProviderEnabled(DEFAULT_MODEL.providerId)) {
       return DEFAULT_MODEL
     }
@@ -143,7 +187,7 @@ export async function selectModel({
   const requestedMode =
     searchMode && MODE_FALLBACK_ORDER.includes(searchMode)
       ? searchMode
-      : 'quick'
+      : 'adaptive'
 
   const modePreferenceOrder: SearchMode[] = Array.from(
     new Set<SearchMode>([requestedMode, ...MODE_FALLBACK_ORDER])

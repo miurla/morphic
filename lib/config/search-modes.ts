@@ -1,8 +1,16 @@
-import { Search } from 'lucide-react'
+import { createElement } from 'react'
+
+import { Icon } from '@iconify/react'
 
 import { SearchMode } from '@/lib/types/search'
 
-import { IconLogoOutline } from '@/components/ui/icons'
+function SpeedIcon({ className }: { className?: string }) {
+  return createElement(Icon, { icon: 'solar:bolt-bold', className })
+}
+
+function QualityIcon({ className }: { className?: string }) {
+  return createElement(Icon, { icon: 'solar:brain-bold', className })
+}
 
 export interface SearchModeConfig {
   value: SearchMode
@@ -16,16 +24,16 @@ export interface SearchModeConfig {
 export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
   {
     value: 'quick',
-    label: 'Quick',
-    description: 'Streamlined search for fast, concise responses',
-    icon: Search,
+    label: 'Speed',
+    description: 'Fast DeepSeek Flash search for concise answers',
+    icon: SpeedIcon,
     color: 'text-amber-500'
   },
   {
     value: 'adaptive',
-    label: 'Adaptive',
-    description: 'Adaptive agentic search with intelligent query understanding',
-    icon: IconLogoOutline,
+    label: 'Quality',
+    description: 'DeepSeek Pro reasoning for deeper evidence synthesis',
+    icon: QualityIcon,
     color: 'text-violet-500'
   }
 ]

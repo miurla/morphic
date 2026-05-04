@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+
 import { mapTopicRow, type Topic } from '../types'
 
 type DB = SupabaseClient

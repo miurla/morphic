@@ -33,6 +33,18 @@ const adaptiveModel: Model = {
   providerId: 'provider-b'
 }
 
+const deepseekQualityModel = {
+  ...DEFAULT_MODEL,
+  providerOptions: {
+    deepseek: {
+      thinking: {
+        type: 'enabled'
+      },
+      reasoning_effort: 'high'
+    }
+  }
+}
+
 let matrix: Matrix
 
 function setMatrixImplementation() {
@@ -84,9 +96,9 @@ describe('selectModel', () => {
     expect(result).toEqual(adaptiveModel)
   })
 
-  it('falls back to quick mode when search mode is omitted', async () => {
+  it('falls back to quality mode when search mode is omitted', async () => {
     const result = await selectModel({ cookieStore: createCookieStore() })
-    expect(result).toEqual(quickModel)
+    expect(result).toEqual(adaptiveModel)
   })
 
   it('falls back to DEFAULT_MODEL when cloud models are unavailable', async () => {
@@ -133,7 +145,7 @@ describe('selectModel', () => {
     mockIsCloudDeployment.mockReturnValue(false)
 
     const result = await selectModel({ cookieStore: createCookieStore() })
-    expect(result).toEqual(DEFAULT_MODEL)
+    expect(result).toEqual(deepseekQualityModel)
   })
 
   it('falls back to DEFAULT_MODEL when local cookie provider is disabled', async () => {
@@ -145,7 +157,7 @@ describe('selectModel', () => {
     const result = await selectModel({
       cookieStore: createCookieStore('provider-l:local-model')
     })
-    expect(result).toEqual(DEFAULT_MODEL)
+    expect(result).toEqual(deepseekQualityModel)
   })
 
   it('sets ollama think provider options for thinking models from cookie', async () => {

@@ -4,4 +4,7 @@ export interface Model {
   provider: string
   providerId: string
   providerOptions?: Record<string, any>
+  contextWindow?: number
+  recommendedFor?: string
+  default?: boolean
 }

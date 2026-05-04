@@ -18,7 +18,10 @@ describe('Feedback Actions', () => {
     vi.clearAllMocks()
   })
 
-  const makeSupabaseMock = (selectResult: any, updateResult: any = undefined) => {
+  const makeSupabaseMock = (
+    selectResult: any,
+    updateResult: any = undefined
+  ) => {
     const singleSelect = vi.fn().mockResolvedValue(selectResult)
     const eqSelect = vi.fn().mockReturnValue({ single: singleSelect })
     const selectChain = vi.fn().mockReturnValue({ eq: eqSelect })
@@ -54,7 +57,10 @@ describe('Feedback Actions', () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
-                data: { metadata: { traceId: 'test-trace-id' }, chat_id: 'test-chat-id' },
+                data: {
+                  metadata: { traceId: 'test-trace-id' },
+                  chat_id: 'test-chat-id'
+                },
                 error: null
               })
             })
@@ -81,7 +87,10 @@ describe('Feedback Actions', () => {
         from: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: null, error: { message: 'not found' } })
+              single: vi.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'not found' }
+              })
             })
           })
         })
@@ -133,7 +142,10 @@ describe('Feedback Actions', () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
-                data: { metadata: { traceId: 'test-trace-id' }, chat_id: 'test-chat-id' },
+                data: {
+                  metadata: { traceId: 'test-trace-id' },
+                  chat_id: 'test-chat-id'
+                },
                 error: null
               })
             })
@@ -192,7 +204,10 @@ describe('Feedback Actions', () => {
         from: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: null, error: { message: 'not found' } })
+              single: vi.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'not found' }
+              })
             })
           })
         })
@@ -212,7 +227,9 @@ describe('Feedback Actions', () => {
         from: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: { metadata: {} }, error: null })
+              single: vi
+                .fn()
+                .mockResolvedValue({ data: { metadata: {} }, error: null })
             })
           })
         })

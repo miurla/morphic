@@ -86,9 +86,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-supabase-anon-key]
    - Database actions in `/lib/actions/chat-db.ts`
 
 4. **Search System**
-   - Multiple providers: Tavily (default), SearXNG (self-hosted), Exa (neural), Brave (optional)
-   - Brave Search is optional; if API key is not provided, type="general" searches fall back to primary provider
-   - Video/image search support depends on configured providers (Brave provides best multimedia support)
+   - Primary provider: Parallel Search for AgriEvidence agricultural retrieval
+   - Query enrichment uses DeepSeek V4 Flash before sending searches to Parallel
+   - Trusted agricultural domains are loaded from Supabase `sources` and open-web fallback is used when coverage is thin
    - URL-specific search capabilities
    - Configurable search depth and result limits
 
@@ -109,8 +109,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-supabase-anon-key]
 ### Required Variables
 
 ```bash
-OPENAI_API_KEY=      # Default AI provider
-TAVILY_API_KEY=      # Default search provider
+DEEPSEEK_API_KEY=    # Default AI provider for AgriEvidence
+PARALLEL_API_KEY=    # Default search provider for AgriEvidence
 DATABASE_URL=        # PostgreSQL connection string
 ```
 

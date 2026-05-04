@@ -69,8 +69,13 @@ export function HeroSection() {
             <div className="rounded-xl bg-muted/30 p-6 text-left">
               {/* Fake search bar */}
               <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/80 px-4 py-3 text-sm text-muted-foreground">
-                <Icon icon="solar:magnifer-bold" className="size-4 shrink-0 text-muted-foreground/60" />
-                <span className="truncate">How does quantum entanglement work?</span>
+                <Icon
+                  icon="solar:magnifer-bold"
+                  className="size-4 shrink-0 text-muted-foreground/60"
+                />
+                <span className="truncate">
+                  How does quantum entanglement work?
+                </span>
                 <div className="ml-auto flex items-center gap-1 shrink-0">
                   <div className="size-2 rounded-full bg-primary/60 animate-pulse" />
                 </div>

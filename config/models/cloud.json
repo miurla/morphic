@@ -2,28 +2,28 @@
   "version": 2,
   "models": {
     "quick": {
-      "id": "gemini-3.1-flash-lite-preview",
-      "name": "Gemini 3.1 Flash Lite Preview",
-      "provider": "Google",
-      "providerId": "google",
-      "providerOptions": {
-        "google": {
-          "thinkingConfig": {
-            "includeThoughts": true
-          }
-        }
-      }
+      "id": "deepseek-v4-flash",
+      "name": "DeepSeek V4 Flash",
+      "provider": "DeepSeek",
+      "providerId": "deepseek",
+      "contextWindow": 1000000,
+      "recommendedFor": "Speed mode, query enrichment, simple lookups",
+      "default": false
     },
     "adaptive": {
-      "id": "gemini-3-flash-preview",
-      "name": "Gemini 3 Flash Preview",
-      "provider": "Google",
-      "providerId": "google",
+      "id": "deepseek-v4-pro",
+      "name": "DeepSeek V4 Pro",
+      "provider": "DeepSeek",
+      "providerId": "deepseek",
+      "contextWindow": 1000000,
+      "recommendedFor": "Quality mode, complex agricultural queries, synthesis tasks",
+      "default": true,
       "providerOptions": {
-        "google": {
-          "thinkingConfig": {
-            "includeThoughts": true
-          }
+        "deepseek": {
+          "thinking": {
+            "type": "enabled"
+          },
+          "reasoning_effort": "high"
         }
       }
     }

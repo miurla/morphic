@@ -9,6 +9,17 @@ export type SearchResults = {
   query: string
   toolCallId?: string // ID of the search tool call
   citationMap?: Record<number, SearchResultItem> // Maps citation number to search result
+  metadata?: SearchResultsMetadata
+}
+
+export type SearchResultsMetadata = {
+  provider?: string
+  enrichedQueries?: string[]
+  trustedDomainsCount?: number
+  trustedResults?: number
+  openWebResults?: number
+  searchIds?: string[]
+  sessionIds?: string[]
 }
 
 // If include_images_description is true, images are objects with url/description.

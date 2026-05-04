@@ -16,13 +16,15 @@ docker pull ghcr.io/miurla/morphic:latest
 cp .env.local.example .env.local
 ```
 
-Edit `.env.local` and set at least one AI provider API key:
+Edit `.env.local` and set DeepSeek and Parallel keys for the AgriEvidence defaults:
 
 ```bash
-OPENAI_API_KEY=your_openai_key
+DEEPSEEK_API_KEY=your_deepseek_key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+PARALLEL_API_KEY=your_parallel_key
 ```
 
-Other supported providers: Anthropic (`ANTHROPIC_API_KEY`), Google (`GOOGLE_GENERATIVE_AI_API_KEY`), Ollama (`OLLAMA_BASE_URL`), Vercel AI Gateway (`AI_GATEWAY_API_KEY`).
+Other supported AI providers remain available for local model selection: OpenAI (`OPENAI_API_KEY`), Anthropic (`ANTHROPIC_API_KEY`), Google (`GOOGLE_GENERATIVE_AI_API_KEY`), Ollama (`OLLAMA_BASE_URL`), Vercel AI Gateway (`AI_GATEWAY_API_KEY`).
 
 3. Start all services:
 
@@ -43,28 +45,38 @@ docker compose up -d --build
 ## What Docker Compose Starts
 
 - **PostgreSQL 17** - Database with automatic migrations
-- **Redis** - SearXNG search caching
-- **SearXNG** - Self-hosted search engine (no external search API key needed)
+- **Redis** - Included for compatibility with the upstream Morphic stack
+- **SearXNG** - Included for compatibility, but AgriEvidence search uses Parallel
 - **Morphic** - The application
 
 ## Model Selection
 
-In Docker mode, Morphic dynamically detects available AI providers based on your API keys and displays a model selector in the UI. No configuration files to edit — just set your API key and pick your model.
+In Docker mode, Morphic dynamically detects available AI providers based on your API keys and displays a model selector in the UI. AgriEvidence defaults to DeepSeek V4 Pro for Quality mode and DeepSeek V4 Flash for Speed mode when `DEEPSEEK_API_KEY` is configured.
+
+## Search
+
+AgriEvidence uses Parallel Search for live agricultural evidence retrieval:
+
+```bash
+PARALLEL_API_KEY=your_parallel_key
+```
+
+Parallel search enriches the user query, prioritizes trusted agricultural sources from Supabase, and falls back to open-web results when trusted coverage is thin.
 
 ## Built-in Defaults
 
 Docker Compose automatically sets these for you:
 
 - `ENABLE_AUTH=false` (anonymous mode)
-- `SEARCH_API=searxng`
-- `SEARXNG_API_URL=http://searxng:8080`
+- `SEARCH_API=searxng` (legacy; active AgriEvidence search uses Parallel)
+- `SEARXNG_API_URL=http://searxng:8080` (legacy compatibility)
 - `LOCAL_REDIS_URL=redis://redis:6379`
 - `MORPHIC_CLOUD_DEPLOYMENT=false`
 
 Values in `docker-compose.yaml` take precedence over `.env.local`. To override a default:
 
 ```bash
-SEARCH_API=tavily docker compose up -d
+DEEPSEEK_API_KEY=your_deepseek_key PARALLEL_API_KEY=your_parallel_key docker compose up -d
 ```
 
 ## File Upload
