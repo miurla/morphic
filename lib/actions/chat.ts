@@ -4,10 +4,10 @@ import { revalidateTag, unstable_cache } from 'next/cache'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import * as dbActions from '@/lib/db/actions'
-import type { Chat, Message } from '@/lib/db/schema'
-import { generateId } from '@/lib/db/schema'
+import * as dbActions from '@/lib/supabase/queries/chat'
+import type { Chat, Message } from '@/lib/supabase/types'
 import type { UIMessage } from '@/lib/types/ai'
+import { generateId } from '@/lib/utils/id'
 import { getTextFromParts } from '@/lib/utils/message-utils'
 
 // Constants

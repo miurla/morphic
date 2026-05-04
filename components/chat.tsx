@@ -8,18 +8,18 @@ import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 
 import { ChatProvider } from '@/lib/contexts/chat-context'
-import { generateId } from '@/lib/db/schema'
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
 import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
 import { UploadedFile } from '@/lib/types'
 import type { UIMessage } from '@/lib/types/ai'
 import {
-  isDynamicToolPart,
-  isToolCallPart,
-  isToolTypePart
+    isDynamicToolPart,
+    isToolCallPart,
+    isToolTypePart
 } from '@/lib/types/dynamic-tools'
 import type { ModelSelectorData } from '@/lib/types/model-selector'
 import { cn } from '@/lib/utils'
+import { generateId } from '@/lib/utils/id'
 
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
 

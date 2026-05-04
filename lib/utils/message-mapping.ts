@@ -1,16 +1,14 @@
-import { generateId } from '@/lib/db/schema'
 import type {
-  UIDataTypes,
-  UIMessage,
-  UIMessageMetadata,
-  UITools
+    UIMessage,
+    UIMessageMetadata
 } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import type {
-  DBMessagePart,
-  DBMessagePartSelect,
-  ToolState
+    DBMessagePart,
+    DBMessagePartSelect,
+    ToolState
 } from '@/lib/types/message-persistence'
+import { generateId } from '@/lib/utils/id'
 
 // Define local types for message parts that are compatible with the AI SDK
 type TextUIPart = { type: 'text'; text: string; providerMetadata?: any }

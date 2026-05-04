@@ -1,7 +1,7 @@
 import { UIMessage } from 'ai'
 
 import { createChatWithFirstMessage, upsertMessage } from '@/lib/actions/chat'
-import { updateChatTitle } from '@/lib/db/actions'
+import { updateChatTitle } from '@/lib/supabase/queries/chat'
 import { SearchMode } from '@/lib/types/search'
 import { perfTime } from '@/lib/utils/perf-logging'
 import { retryDatabaseOperation } from '@/lib/utils/retry'

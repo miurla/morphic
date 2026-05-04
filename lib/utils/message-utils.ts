@@ -1,6 +1,6 @@
 import { ModelMessage, UIMessage } from 'ai'
 
-import { type Message as DBMessage } from '@/lib/db/schema'
+import { type Message as DBMessage } from '@/lib/supabase/types'
 
 // Interface matching the expected DB message input format
 interface DatabaseMessageInput {

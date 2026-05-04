@@ -1,4 +1,4 @@
-import type { Chat, Message } from '@/lib/db/schema'
+import type { Chat, Message } from '@/lib/supabase/types'
 import type { UIMessage } from '@/lib/types/ai'
 
 export interface StreamContext {

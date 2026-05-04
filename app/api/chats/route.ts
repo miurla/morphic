@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { getChatsPage } from '@/lib/actions/chat'
-import { Chat as DBChat } from '@/lib/db/schema'
+import { Chat as DBChat } from '@/lib/supabase/types'
 
 interface ChatPageResponse {
   chats: DBChat[]

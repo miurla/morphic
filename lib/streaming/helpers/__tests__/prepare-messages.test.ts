@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
-  createChatWithFirstMessage,
-  deleteMessagesFromIndex,
-  loadChat,
-  upsertMessage
+    createChatWithFirstMessage,
+    deleteMessagesFromIndex,
+    loadChat,
+    upsertMessage
 } from '@/lib/actions/chat'
-import type { Chat } from '@/lib/db/schema'
+import type { Chat } from '@/lib/supabase/types'
 import type { UIMessage } from '@/lib/types/ai'
 
 import { prepareMessages } from '../prepare-messages'
@@ -14,10 +14,8 @@ import type { StreamContext } from '../types'
 
 // Mock dependencies
 vi.mock('@/lib/actions/chat')
-vi.mock('@/lib/db/schema', async () => {
-  const actual = await vi.importActual('@/lib/db/schema')
+vi.mock('@/lib/utils/id', async () => {
   return {
-    ...actual,
     generateId: vi.fn(() => 'generated-id-123')
   }
 })

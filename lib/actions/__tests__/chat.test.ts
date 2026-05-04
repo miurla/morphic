@@ -4,29 +4,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import * as dbActions from '@/lib/db/actions'
-import type { Chat, Message } from '@/lib/db/schema'
+import * as dbActions from '@/lib/supabase/queries/chat'
+import type { Chat, Message } from '@/lib/supabase/types'
 import type { UIMessage } from '@/lib/types/ai'
 
 import {
-  clearChats,
-  createChat,
-  createChatAndSaveMessage,
-  createChatWithFirstMessage,
-  deleteChat,
-  deleteMessagesAfter,
-  deleteMessagesFromIndex,
-  getChats,
-  getChatsPage,
-  loadChat,
-  saveChatTitle,
-  shareChat,
-  upsertMessage
+    clearChats,
+    createChat,
+    createChatAndSaveMessage,
+    createChatWithFirstMessage,
+    deleteChat,
+    deleteMessagesAfter,
+    deleteMessagesFromIndex,
+    getChats,
+    getChatsPage,
+    loadChat,
+    saveChatTitle,
+    shareChat,
+    upsertMessage
 } from '../chat'
 
 // Mock the modules
 vi.mock('@/lib/auth/get-current-user')
-vi.mock('@/lib/db/actions')
+vi.mock('@/lib/supabase/queries/chat')
 vi.mock('@/lib/agents/title-generator')
 
 describe('Chat Actions', () => {
