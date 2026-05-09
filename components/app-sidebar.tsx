@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 
-import { Plus } from 'lucide-react'
+import { Activity, Kanban, Plus } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -37,6 +37,22 @@ export default function AppSidebar() {
               <Link href="/" className="flex items-center gap-2">
                 <Plus className="size-4" />
                 <span>New</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/plan" className="flex items-center gap-2">
+                <Kanban className="size-4" />
+                <span>Plan</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/heartbeat" className="flex items-center gap-2">
+                <Activity className="size-4" />
+                <span>Heartbeat</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

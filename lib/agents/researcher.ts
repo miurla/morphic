@@ -4,6 +4,10 @@ import type { ResearcherTools } from '@/lib/types/agent'
 import { type Model } from '@/lib/types/models'
 
 import { fetchTool } from '../tools/fetch'
+import {
+  createMelronMcpClient,
+  type MelronMcpClient
+} from '../tools/melron-mcp'
 import { createQuestionTool } from '../tools/question'
 import { createSearchTool } from '../tools/search'
 import { createTodoTools } from '../tools/todo'
@@ -64,7 +68,7 @@ function wrapSearchToolForQuickMode<
 
 // Enhanced researcher function with improved type safety using ToolLoopAgent
 // Note: abortSignal should be passed to agent.stream() or agent.generate() calls, not to the agent constructor
-export function createResearcher({
+export async function createResearcher({
   model,
   modelConfig,
   parentTraceId,
@@ -74,7 +78,11 @@ export function createResearcher({
   modelConfig?: Model
   parentTraceId?: string
   searchMode?: SearchMode
-}) {
+}): Promise<{
+  agent: ToolLoopAgent<never, ResearcherTools, never>
+  mcpClient: MelronMcpClient | null
+}> {
+  let mcpClient: MelronMcpClient | null = null
   try {
     const currentDate = new Date().toLocaleString()
 
@@ -112,20 +120,36 @@ export function createResearcher({
         break
     }
 
-    // Build tools object with proper typing
-    const tools: ResearcherTools = {
+    // Connect to melron MCP server if configured (env-driven, opt-in)
+    mcpClient = await createMelronMcpClient()
+    const mcpTools = mcpClient ? await mcpClient.tools() : {}
+    const mcpToolNames = Object.keys(mcpTools)
+    if (mcpToolNames.length > 0) {
+      console.log(
+        `[Researcher] Loaded ${mcpToolNames.length} MCP tools from melron: [${mcpToolNames.join(', ')}]`
+      )
+    }
+
+    // Build tools object — MCP tools are spread in last and exposed in activeTools
+    const tools = {
       search: searchTool,
       fetch: fetchTool,
       askQuestion: askQuestionTool,
-      ...todoTools
+      ...todoTools,
+      ...mcpTools
     } as ResearcherTools
+
+    const activeTools = [
+      ...activeToolsList,
+      ...(mcpToolNames as (keyof ResearcherTools)[])
+    ]
 
     // Create ToolLoopAgent with all configuration
     const agent = new ToolLoopAgent({
       model: getModel(model),
       instructions: `${systemPrompt}\nCurrent date and time: ${currentDate}`,
       tools,
-      activeTools: activeToolsList,
+      activeTools,
       stopWhen: stepCountIs(maxSteps),
       ...(modelConfig?.providerOptions && {
         providerOptions: modelConfig.providerOptions
@@ -145,8 +169,11 @@ export function createResearcher({
       }
     })
 
-    return agent
+    return { agent, mcpClient }
   } catch (error) {
+    if (mcpClient) {
+      await mcpClient.close().catch(() => {})
+    }
     console.error('Error in createResearcher:', error)
     throw error
   }
@@ -161,3 +188,4 @@ export function getResearcherTools(
 
 // Export the legacy function name for backward compatibility
 export const researcher = createResearcher
+

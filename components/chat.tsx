@@ -7,7 +7,7 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 
-import { ChatProvider } from '@/lib/contexts/chat-context'
+import { ChatProvider, type SelectedItem } from '@/lib/contexts/chat-context'
 import { generateId } from '@/lib/db/schema'
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
 import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
@@ -64,6 +64,7 @@ export function Chat({
     // Clear other chat-related state that persists due to Next.js 16 component caching
     setInput('')
     setUploadedFiles([])
+    setSelectedItem(null)
     setErrorModal({
       open: false,
       type: 'general',
@@ -75,6 +76,7 @@ export function Chat({
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [input, setInput] = useState('')
+  const [selectedItem, setSelectedItem] = useState<SelectedItem | null>(null)
   const [errorModal, setErrorModal] = useState<{
     open: boolean
     type: 'rate-limit' | 'auth' | 'forbidden' | 'general'
@@ -426,7 +428,10 @@ export function Chat({
     if (input.trim() || uploaded.length > 0) {
       const parts: any[] = []
 
-      if (input.trim()) {
+      if (selectedItem) {
+        const ctx = `[Selected ${selectedItem.type}: ${selectedItem.title}${selectedItem.subtitle ? ` — ${selectedItem.subtitle}` : ''}${selectedItem.url ? ` (${selectedItem.url})` : ''}${selectedItem.data?.job_id ? ` job_id=${selectedItem.data.job_id}` : ''}]`
+        parts.push({ type: 'text', text: `${ctx}\n${input}` })
+      } else if (input.trim()) {
         parts.push({ type: 'text', text: input })
       }
 
@@ -442,6 +447,7 @@ export function Chat({
       sendMessage({ role: 'user', parts })
       setInput('')
       setUploadedFiles([])
+      setSelectedItem(null)
 
       // Push URL state immediately after sending message (for new chats)
       // Check if we're on the root path (new chat)
@@ -474,7 +480,11 @@ export function Chat({
     : { isDragging, handleDragOver, handleDragLeave, handleDrop }
 
   return (
-    <ChatProvider sendMessage={sendMessage}>
+    <ChatProvider
+      sendMessage={sendMessage}
+      selectedItem={selectedItem}
+      setSelectedItem={setSelectedItem}
+    >
       <div
         className={cn(
           'relative flex h-full min-w-0 flex-1 flex-col',

@@ -135,6 +135,11 @@ export function ChatMessages({
       return true
     }
 
+    // Dynamic (MCP) tools — open by default (results shown as cards)
+    if (partType === 'dynamic-tool') {
+      return true
+    }
+
     // For tool-invocations, default to open
     if (partType === 'tool-invocation') {
       return true

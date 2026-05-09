@@ -32,9 +32,17 @@ function isReasoningPart(part: MessagePart): part is ReasoningPart {
 }
 
 function isToolPart(part: MessagePart): part is ToolPart {
-  return (
-    (part.type?.startsWith?.('tool-') && part.type !== 'dynamic-tool') ?? false
-  )
+  return part.type?.startsWith?.('tool-') ?? false
+}
+
+function isDynamicToolPart(part: MessagePart): part is DynamicToolPart {
+  return part.type === 'dynamic-tool'
+}
+
+function isToolLikePart(
+  part: MessagePart
+): part is ToolPart | DynamicToolPart {
+  return isToolPart(part) || isDynamicToolPart(part)
 }
 
 function isTextPart(part: MessagePart): part is TextPart {
@@ -108,9 +116,9 @@ function groupConsecutiveParts(segment: MessagePart[]): MessagePart[][] {
   while (currentIndex < segment.length) {
     const currentPart = segment[currentIndex]
 
-    if (isToolPart(currentPart)) {
+    if (isToolLikePart(currentPart)) {
       // Group consecutive tool parts of the same type
-      const toolGroup = [currentPart]
+      const toolGroup: MessagePart[] = [currentPart]
       const toolType = currentPart.type
 
       let nextIndex = currentIndex + 1
@@ -118,7 +126,7 @@ function groupConsecutiveParts(segment: MessagePart[]): MessagePart[][] {
         nextIndex < segment.length &&
         segment[nextIndex].type === toolType
       ) {
-        toolGroup.push(segment[nextIndex] as ToolPart)
+        toolGroup.push(segment[nextIndex])
         nextIndex++
       }
 
@@ -215,7 +223,7 @@ function RenderPart({
     )
   }
 
-  if (isToolPart(part)) {
+  if (isToolLikePart(part)) {
     const isOpen = isSingle
       ? getIsOpen(part.toolCallId, part.type, hasSubsequent)
       : openSectionId === part.toolCallId
@@ -336,7 +344,7 @@ export function ResearchProcessSection({
             {groups.map((grp, gidx) => (
               <div key={`${messageId}-grp-${sidx}-${gidx}`}>
                 {grp.map((part, pidx) => {
-                  const partId = isToolPart(part)
+                  const partId = isToolLikePart(part)
                     ? part.toolCallId
                     : `${messageId}-${part.type}-${sidx}-${gidx}-${pidx}`
 

@@ -3,14 +3,16 @@
 import { UseChatHelpers } from '@ai-sdk/react'
 
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
+import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 
+import { DynamicToolSection } from './dynamic-tool-section'
 import FetchSection from './fetch-section'
 import { QuestionConfirmation } from './question-confirmation'
 import { SearchSection } from './search-section'
 import { ToolTodoDisplay } from './tool-todo-display'
 
 interface ToolSectionProps {
-  tool: ToolPart
+  tool: ToolPart | DynamicToolPart
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
@@ -30,6 +32,20 @@ export function ToolSection({
   isFirst = false,
   isLast = false
 }: ToolSectionProps) {
+  // Dynamic (MCP) tools — runtime-loaded, not statically typed
+  if (tool.type === 'dynamic-tool') {
+    return (
+      <DynamicToolSection
+        tool={tool}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        status={status}
+        borderless={borderless}
+        isFirst={isFirst}
+        isLast={isLast}
+      />
+    )
+  }
   // Special handling for ask_question tool
   if (tool.type === 'tool-askQuestion') {
     // When waiting for user input

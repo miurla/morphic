@@ -82,7 +82,7 @@ export async function createEphemeralChatStreamResponse(
       modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
     }
 
-    const researchAgent = researcher({
+    const { agent: researchAgent, mcpClient } = await researcher({
       model: `${model.providerId}:${model.id}`,
       modelConfig: model,
       parentTraceId,
@@ -107,6 +107,9 @@ export async function createEphemeralChatStreamResponse(
         }
       },
       onFinish: async () => {
+        if (mcpClient) {
+          await mcpClient.close().catch(() => {})
+        }
         if (langfuse) {
           await langfuse.flushAsync()
         }

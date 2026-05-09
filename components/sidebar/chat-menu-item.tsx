@@ -1,14 +1,18 @@
 'use client'
 
-import { useCallback, useState, useTransition } from 'react'
+import { useCallback, useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 
-import { MoreHorizontal, Trash2 } from 'lucide-react'
+import { Activity, Heart, MoreHorizontal, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { deleteChat } from '@/lib/actions/chat'
 import { Chat as DBChat } from '@/lib/db/schema'
+import {
+  createHeartbeat,
+  hasHeartbeat as checkHasHeartbeat
+} from '@/lib/heartbeat/store'
 
 import {
   AlertDialog,
@@ -24,6 +28,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import {
@@ -84,10 +89,16 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
   const [isPending, startTransition] = useTransition()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isAlertOpen, setIsAlertOpen] = useState(false)
+  const [hasHb, setHasHb] = useState(false)
+
+  useEffect(() => {
+    setHasHb(checkHasHeartbeat(chat.id))
+    const handler = () => setHasHb(checkHasHeartbeat(chat.id))
+    window.addEventListener('heartbeat-updated', handler)
+    return () => window.removeEventListener('heartbeat-updated', handler)
+  }, [chat.id])
 
   const handleDeleteChat = useCallback(() => {
-    // Close overlays first so focus and pointer locks are released
-    // before the list updates and this item potentially unmounts.
     setIsAlertOpen(false)
     setIsMenuOpen(false)
 
@@ -107,6 +118,21 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
       }
     })
   }, [chat.id, isActive, router, startTransition])
+
+  const handleCreateHeartbeat = useCallback(() => {
+    setIsMenuOpen(false)
+    createHeartbeat({
+      chatId: chat.id,
+      chatTitle: chat.title ?? 'Sans titre',
+      query: chat.title ?? '',
+      frequency: 'daily',
+      channel: 'email'
+    })
+    toast.success('Heartbeat créé', {
+      description: 'Cette conversation sera relancée quotidiennement.'
+    })
+  }, [chat.id, chat.title])
+
   const handleMenuOpenChange = useCallback((open: boolean) => {
     setIsMenuOpen(open)
   }, [])
@@ -119,8 +145,11 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
         className="h-auto flex-col gap-0.5 items-start p-2 pr-8"
       >
         <Link href={path}>
-          <div className="text-xs font-medium truncate select-none w-full">
-            {chat.title}
+          <div className="flex items-center gap-1.5 text-xs font-medium truncate select-none w-full">
+            {hasHb && (
+              <Activity className="size-3 text-green-500 shrink-0 animate-pulse" />
+            )}
+            <span className="truncate">{chat.title}</span>
           </div>
           <div className="text-xs text-muted-foreground w-full">
             {formatDateWithTime(chat.createdAt)}
@@ -136,6 +165,32 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
           </SidebarMenuAction>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start">
+          {!hasHb && (
+            <DropdownMenuItem
+              className="gap-2"
+              onSelect={event => {
+                event.preventDefault()
+                handleCreateHeartbeat()
+              }}
+            >
+              <Heart size={14} />
+              Créer un Heartbeat
+            </DropdownMenuItem>
+          )}
+          {hasHb && (
+            <DropdownMenuItem
+              className="gap-2 text-green-600"
+              onSelect={event => {
+                event.preventDefault()
+                setIsMenuOpen(false)
+                router.push('/heartbeat')
+              }}
+            >
+              <Activity size={14} />
+              Voir le Heartbeat
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             className="gap-2 text-destructive focus:text-destructive"
             onSelect={event => {

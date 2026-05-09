@@ -5,7 +5,14 @@ import Textarea from 'react-textarea-autosize'
 import { useRouter } from 'next/navigation'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
+import {
+  ArrowUp,
+  Briefcase,
+  ChevronDown,
+  MessageCirclePlus,
+  Square,
+  X
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
@@ -13,6 +20,8 @@ import { UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { ModelSelectorData } from '@/lib/types/model-selector'
 import { cn } from '@/lib/utils'
+
+import { useChatContext } from '@/lib/contexts/chat-context'
 
 import { useArtifact } from './artifact/artifact-context'
 import { Button } from './ui/button'
@@ -51,8 +60,12 @@ interface ChatPanelProps {
   /** Whether the deployment is cloud mode */
   isCloudDeployment?: boolean
   modelSelectorData?: ModelSelectorData
-  /** Chat sections for message navigation dots */
-  sections?: { id: string; userMessage: UIMessage }[]
+  /** Chat sections for message navigation and agent result anchors */
+  sections?: {
+    id: string
+    userMessage: UIMessage
+    assistantMessages: UIMessage[]
+  }[]
 }
 
 export function ChatPanel({
@@ -83,6 +96,7 @@ export function ChatPanel({
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
   const [isInputFocused, setIsInputFocused] = useState(false) // Track input focus
   const { close: closeArtifact } = useArtifact()
+  const { selectedItem, setSelectedItem } = useChatContext()
   const isLoading = status === 'submitted' || status === 'streaming'
   const hasAvailableModels =
     isCloudDeployment || modelSelectorData?.hasAvailableModels !== false
@@ -230,18 +244,9 @@ export function ChatPanel({
             </Button>
           </div>
         )}
-        {/* Message navigation dots */}
-        {sections.length > 0 && (
-          <div
-            className={cn(
-              'transition-opacity duration-100',
-              !showScrollToBottomButton && status === 'ready'
-                ? 'opacity-100'
-                : 'pointer-events-none opacity-0'
-            )}
-          >
-            <MessageNavigationDots sections={sections} />
-          </div>
+        {/* Message navigation - always visible */}
+        {sections.length > 1 && (
+          <MessageNavigationDots sections={sections} />
         )}
 
         <div
@@ -251,6 +256,28 @@ export function ChatPanel({
               'ring-1 ring-ring/20 ring-offset-1 ring-offset-background/50'
           )}
         >
+          {selectedItem && (
+            <div className="flex items-center gap-2 px-3 pt-2">
+              <div className="flex items-center gap-1.5 text-xs bg-primary/10 text-primary rounded-full pl-2 pr-1 py-1 max-w-[280px]">
+                <Briefcase className="h-3 w-3 shrink-0" />
+                <span className="truncate font-medium">
+                  {selectedItem.title}
+                </span>
+                {selectedItem.subtitle && (
+                  <span className="truncate text-primary/70">
+                    · {selectedItem.subtitle}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedItem(null)}
+                  className="ml-0.5 p-0.5 rounded-full hover:bg-primary/20 transition-colors shrink-0"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
+          )}
           <Textarea
             ref={inputRef}
             name="input"

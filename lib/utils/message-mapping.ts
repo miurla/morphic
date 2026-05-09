@@ -313,6 +313,23 @@ export function mapUIMessagePartsToDBParts(
 
       // Data parts
       default:
+        // Handle MCP/dynamic tool parts (tool-mcp__*)
+        if (
+          part.type.startsWith('tool-mcp__') ||
+          part.type.startsWith('tool-dynamic__')
+        ) {
+          if (isExtendedToolPart(part)) {
+            const mapped = createToolPartMapping(basePart, part, 'dynamic')
+            mapped.type = 'tool-dynamic'
+            mapped.tool_dynamic_name = part.type.replace('tool-', '')
+            mapped.tool_dynamic_type = part.type.startsWith('tool-mcp__')
+              ? 'mcp'
+              : 'dynamic'
+            return mapped
+          }
+          return null
+        }
+
         if (part.type.startsWith('data-')) {
           const dataType = part.type.substring(5) // Remove 'data-' prefix
           return {

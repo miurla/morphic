@@ -9,6 +9,77 @@ import {
 
 // Search mode system prompts
 
+// Shared guidance for MCP tools (dynamically loaded — e.g. melron LinkedIn tools).
+// These tools' outputs are rendered as rich UI cards in the chat, so the model
+// must NOT restate their raw contents in its text response.
+const MCP_TOOL_RESPONSE_GUIDANCE = `
+MCP TOOL OUTPUT — DO NOT RESTATE:
+- Tools other than \`search\`, \`fetch\`, \`askQuestion\`, and the todo tools (e.g. \`smart_job_search\`, \`smart_apply\`, \`smart_message\`, etc.) are MCP tools.
+- Their results are AUTOMATICALLY rendered as rich UI cards in the chat. The user already sees: titles, company names, locations, links, scores, applicant counts, salaries, badges, red flags.
+- Therefore, you MUST NOT re-list, restate, or recap the raw items from these tools in your text response. Do not produce a "Top results", "Voici les offres", or similar bulleted/numbered list of items the cards already show.
+- Your text response should add ONLY value the cards do not convey:
+  * 1–2 sentences of market analysis or pattern observations (e.g., "Most results are remote, salaries cluster around 50–65k").
+  * Warnings about red flags surfaced in the data (e.g., possible ghost jobs).
+  * A concrete next-action suggestion or 2–3 alternative search refinements ("Want me to filter to <50 applicants?").
+- Keep this added-value text short — typically 3–6 sentences total. Never repeat data already on screen.
+- If the user explicitly asks for details on ONE specific item, then it is OK to summarize that single item in text.
+
+MCP TOOL FOLLOW-UP CHAINS — RELATED QUESTIONS:
+When an MCP tool was used in this turn, your \`\`\`spec related questions MUST propose the logical next steps from the chains below. Pick 3 questions that guide the user forward in the workflow.
+
+Chains (→ means "naturally leads to"):
+  smart_job_search → smart_apply → smart_send → smart_fire
+  smart_people_search → smart_interest_map → smart_message → smart_send → smart_fire
+  smart_network_update → smart_post_planner
+  smart_job_search → create_card → list_cards → get_board_summary
+  list_cards → smart_message (follow_up) → smart_send → smart_fire
+
+Per-tool suggested Related questions (adapt to context and user language):
+  After smart_job_search:
+    - "Postuler à [top job title] chez [company]" (→ smart_apply)
+    - "Élargir la recherche à [radius] km" or "Chercher en remote" (→ smart_job_search with different params)
+    - "Voir mon board de suivi" (→ list_cards)
+  After smart_apply:
+    - "Envoyer la candidature à [recruiter name]" (→ smart_send)
+    - "Analyser le profil du recruteur" (→ smart_interest_map)
+    - "Chercher d'autres offres similaires" (→ smart_job_search)
+  After smart_people_search:
+    - "Analyser le profil de [person name]" (→ smart_interest_map)
+    - "Envoyer un message à [person name]" (→ smart_message)
+    - "Chercher dans un autre secteur / ville" (→ smart_people_search)
+  After smart_interest_map:
+    - "Rédiger un message personnalisé" (→ smart_message)
+    - "Planifier un post sur [detected interest]" (→ smart_post_planner)
+    - "Chercher d'autres profils similaires" (→ smart_people_search)
+  After smart_message:
+    - "Envoyer ce message" (→ smart_send)
+    - "Modifier le ton / raccourcir" (→ smart_message)
+    - "Voir mon board de suivi" (→ list_cards)
+  After smart_send:
+    - "Confirmer l'envoi" (user types the security code)
+    - "Modifier le message avant envoi" (→ smart_message)
+    - "Voir mes candidatures" (→ list_cards)
+  After smart_network_update:
+    - "Planifier un post sur [trending topic]" (→ smart_post_planner)
+    - "Contacter [active person]" (→ smart_message)
+    - "Chercher des offres liées à [trend]" (→ smart_job_search)
+  After smart_post_planner:
+    - "Adapter le ton du post #1" (→ smart_post_planner)
+    - "Voir les tendances de mon réseau" (→ smart_network_update)
+    - "Chercher des personnes dans [topic domain]" (→ smart_people_search)
+  After list_cards:
+    - "Relancer ma candidature chez [company]" (→ smart_message with purpose=follow_up)
+    - "Résumé de ma progression" (→ get_board_summary)
+    - "Chercher de nouvelles offres" (→ smart_job_search)
+  After get_board_summary:
+    - "Relancer les candidatures en attente" (→ smart_message)
+    - "Chercher de nouvelles offres" (→ smart_job_search)
+    - "Voir mon board complet" (→ list_cards)
+
+IMPORTANT: Replace placeholders like [top job title], [company], [person name], [trending topic] with ACTUAL data from the tool results. Use the user's language for the questions.
+`
+
+
 export function getQuickModePrompt(): string {
   const hasGeneralProvider = isGeneralSearchProviderAvailable()
 
@@ -103,6 +174,8 @@ If tool call ID is "ABC123xyz", cite as: [2](#ABC123xyz)
 
 Rule precedence:
 - Search requirement and citation integrity supersede brevity. If there is any conflict, prefer searching and proper citations over being brief.
+
+${MCP_TOOL_RESPONSE_GUIDANCE}
 
 OUTPUT FORMAT (MANDATORY):
 - You MUST always format responses as Markdown.
@@ -285,6 +358,8 @@ TASK MANAGEMENT (todoWrite tool):
 - Before composing the final answer: verify completedCount equals totalCount
 - If not all tasks are completed: continue executing remaining tasks
 - Only proceed to write the final answer after all tasks are completed
+
+${MCP_TOOL_RESPONSE_GUIDANCE}
 
 OUTPUT FORMAT (MANDATORY):
 - You MUST always format responses as Markdown.
