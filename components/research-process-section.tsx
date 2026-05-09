@@ -183,6 +183,7 @@ function RenderPart({
   isLastGroup,
   groupLength,
   partIndex,
+  isLastDynamicTool,
   getIsOpen,
   openSectionId,
   handleAccordionChange,
@@ -198,6 +199,7 @@ function RenderPart({
   isLastGroup: boolean
   groupLength: number
   partIndex: number
+  isLastDynamicTool: boolean
   getIsOpen: (id: string, partType?: string, hasNextPart?: boolean) => boolean
   openSectionId: string | null
   handleAccordionChange: (id: string, open: boolean, isSingle: boolean) => void
@@ -224,9 +226,12 @@ function RenderPart({
   }
 
   if (isToolLikePart(part)) {
-    const isOpen = isSingle
-      ? getIsOpen(part.toolCallId, part.type, hasSubsequent)
-      : openSectionId === part.toolCallId
+    const isDynamic = isDynamicToolPart(part)
+    const isOpen = isDynamic
+      ? isLastDynamicTool
+      : isSingle
+        ? getIsOpen(part.toolCallId, part.type, hasSubsequent)
+        : openSectionId === part.toolCallId
 
     return (
       <ToolSection
@@ -327,17 +332,31 @@ export function ResearchProcessSection({
       {segments.map((seg, sidx) => {
         const groups = groupConsecutiveParts(seg)
         const isSingle = groups.length === 1 && groups[0].length === 1
-        const containerClass = cn(!isSingle && 'rounded-lg border bg-card')
+        const hasDynamicTools = seg.some(p => isDynamicToolPart(p))
+        const containerClass = cn(
+          !isSingle && !hasDynamicTools && 'rounded-lg border bg-card'
+        )
 
         // Count total parts in this segment
         const totalParts = seg.length
-        const needsParentCollapsible = totalParts >= 5
+        const needsParentCollapsible = totalParts >= 5 && !hasDynamicTools
 
         // Parent collapsible ID
         const parentId = `${messageId}-parent-${sidx}`
         // If user has explicitly set state, use that; otherwise auto-collapse when text follows
         const isParentOpen =
           parentOpenStates[parentId] ?? (hasSubsequentText ? false : true)
+
+        // Find the last dynamic-tool in this segment
+        const allSegParts = groups.flat()
+        let lastDynamicId: string | null = null
+        for (let k = allSegParts.length - 1; k >= 0; k--) {
+          const p = allSegParts[k]
+          if (isDynamicToolPart(p)) {
+            lastDynamicId = p.toolCallId
+            break
+          }
+        }
 
         const segmentContent = (
           <div className={containerClass}>
@@ -347,6 +366,8 @@ export function ResearchProcessSection({
                   const partId = isToolLikePart(part)
                     ? part.toolCallId
                     : `${messageId}-${part.type}-${sidx}-${gidx}-${pidx}`
+
+                  const isLastDynamic = isDynamicToolPart(part) && part.toolCallId === lastDynamicId
 
                   return (
                     <RenderPart
@@ -360,6 +381,7 @@ export function ResearchProcessSection({
                       isLastGroup={gidx === groups.length - 1}
                       groupLength={grp.length}
                       partIndex={pidx}
+                      isLastDynamicTool={isLastDynamic}
                       getIsOpen={getIsOpen}
                       openSectionId={openSectionId}
                       handleAccordionChange={handleAccordionChange}

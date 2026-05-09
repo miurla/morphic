@@ -3,6 +3,7 @@
 import { UseChatHelpers } from '@ai-sdk/react'
 import {
   AlertCircle,
+  Brain,
   Briefcase,
   Check,
   Loader2,
@@ -16,7 +17,10 @@ import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 
 import { MelronApplyResult } from './melron/melron-apply-result'
+import { MelronInterestMapResult } from './melron/melron-interest-map-result'
 import { MelronJobSearchResult } from './melron/melron-job-search-result'
+import { MelronMessageResult } from './melron/melron-message-result'
+import { MelronPeopleSearchResult } from './melron/melron-people-search-result'
 import { CollapsibleMessage } from './collapsible-message'
 import ProcessHeader from './process-header'
 
@@ -41,7 +45,7 @@ const TOOL_META: Record<string, { label: string; Icon: typeof Briefcase }> = {
   smart_fire: { label: 'Fire application', Icon: Send },
   smart_network_update: { label: 'Network update', Icon: Users },
   smart_post_planner: { label: 'Plan post', Icon: MessageSquare },
-  smart_interest_map: { label: 'Interest map', Icon: Users }
+  smart_interest_map: { label: 'Interest map', Icon: Brain }
 }
 
 // MCP tool outputs come back as `{ content: [{ type: 'text', text: '<json>' }] }`.
@@ -124,6 +128,15 @@ export function DynamicToolSection({
     }
     if (tool.toolName === 'smart_apply' && parsed) {
       return <MelronApplyResult data={parsed} />
+    }
+    if (tool.toolName === 'smart_people_search' && parsed) {
+      return <MelronPeopleSearchResult data={parsed} />
+    }
+    if (tool.toolName === 'smart_interest_map' && parsed) {
+      return <MelronInterestMapResult data={parsed} />
+    }
+    if (tool.toolName === 'smart_message' && parsed) {
+      return <MelronMessageResult data={parsed} />
     }
     return (
       <pre className="text-xs bg-muted p-3 rounded overflow-auto max-h-96">

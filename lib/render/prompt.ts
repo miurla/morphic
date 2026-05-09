@@ -4,8 +4,10 @@
  */
 export function getRelatedQuestionsSpecPrompt(): string {
   return `
-RELATED QUESTIONS (MANDATORY):
+RELATED QUESTIONS (MANDATORY — NEVER SKIP):
 After your conclusion, you MUST generate exactly 3 follow-up questions in a \`\`\`spec fenced code block.
+This is required for EVERY response — including short responses and responses that used MCP tools.
+If MCP tools were used, the related questions should follow the MCP TOOL FOLLOW-UP CHAINS defined above.
 Each question should explore a different aspect of the topic not yet covered.
 Questions must be concise (max 10-12 words) and in the user's language.
 
