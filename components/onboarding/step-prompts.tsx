@@ -60,6 +60,7 @@ export function StepPrompts({ onComplete }: StepPromptsProps) {
 
   const handlePromptClick = async (prompt: string) => {
     sessionStorage.setItem('pendingMessage', prompt)
+    document.cookie = 'onboarding_completed=true; path=/; max-age=31536000'
     await onComplete()
   }
 
