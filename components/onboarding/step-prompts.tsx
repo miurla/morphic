@@ -70,8 +70,9 @@ export function StepPrompts({ onComplete }: StepPromptsProps) {
 
   const handleLaunch = () => {
     const prompt = selectedPrompt
-    if (!prompt) return
+    if (!prompt || isLaunching) return
 
+    setIsLaunching(true)
     sessionStorage.setItem('pendingMessage', prompt)
     document.cookie = 'onboarding_completed=true; path=/; max-age=31536000'
 
@@ -82,7 +83,10 @@ export function StepPrompts({ onComplete }: StepPromptsProps) {
       body: JSON.stringify({ onboardingCompleted: true, onboardingStep: 4 })
     })
 
-    window.location.href = '/'
+    // Small delay to show loading state before redirect
+    setTimeout(() => {
+      window.location.href = '/'
+    }, 200)
   }
 
   return (
