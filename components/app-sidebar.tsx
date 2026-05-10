@@ -1,13 +1,15 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 
-import { Activity, Kanban, Plus } from 'lucide-react'
+import { User } from '@supabase/supabase-js'
+import { Activity, Kanban, LogIn, Plus } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -18,9 +20,14 @@ import {
 
 import { ChatHistorySection } from './sidebar/chat-history-section'
 import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
+import { SidebarUserProfile } from './sidebar/sidebar-user-profile'
 import { IconLogo } from './ui/icons'
 
-export default function AppSidebar() {
+interface AppSidebarProps {
+  user?: User | null
+}
+
+export default function AppSidebar({ user }: AppSidebarProps) {
   return (
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
       <SidebarHeader className="flex flex-row justify-between items-center">
@@ -63,6 +70,25 @@ export default function AppSidebar() {
           </Suspense>
         </div>
       </SidebarContent>
+      <SidebarFooter>
+        {user ? (
+          <SidebarUserProfile user={user} />
+        ) : (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link
+                  href="/auth/login"
+                  className="flex items-center gap-2"
+                >
+                  <LogIn className="size-4" />
+                  <span>Se connecter</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
