@@ -24,16 +24,15 @@ async function findExistingAccount(username: string): Promise<string | null> {
   }
   const data = await res.json()
   const accounts: any[] = data.items ?? []
-
   const normalizedInput = username.toLowerCase().trim()
 
+  // Unipile doesn't store the login email — match by name, publicIdentifier, or IM username
   const match = accounts.find((acc: any) => {
+    if (acc.type !== 'LINKEDIN') return false
     const candidates = [
-      acc.connection_params?.username,
       acc.connection_params?.im?.username,
-      acc.connection_params?.email,
-      acc.name,
-      acc.identifier
+      acc.connection_params?.im?.publicIdentifier,
+      acc.name
     ].filter(Boolean)
 
     return candidates.some(
@@ -42,14 +41,26 @@ async function findExistingAccount(username: string): Promise<string | null> {
   })
 
   if (match) {
-    console.log(`[linkedin] Found existing account: ${match.id}`)
-  } else {
-    console.log(
-      `[linkedin] No match for "${username}" among ${accounts.length} accounts`
-    )
+    console.log(`[linkedin] Found existing account: ${match.id} (${match.name})`)
+    return match.id
   }
 
-  return match?.id ?? null
+  // If no exact match but there's a single LINKEDIN account, use it
+  // (common case: user has only one LinkedIn connected)
+  const linkedinAccounts = accounts.filter(
+    (acc: any) => acc.type === 'LINKEDIN'
+  )
+  if (linkedinAccounts.length === 1) {
+    console.log(
+      `[linkedin] No name match but found single LinkedIn account: ${linkedinAccounts[0].id}`
+    )
+    return linkedinAccounts[0].id
+  }
+
+  console.log(
+    `[linkedin] No match for "${username}" among ${accounts.length} accounts (${linkedinAccounts.length} LinkedIn)`
+  )
+  return null
 }
 
 export async function POST(req: Request) {
