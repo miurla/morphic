@@ -85,7 +85,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <UserProvider hasUser={!!userId}>
-            <SidebarProvider defaultOpen={false}>
+            <SidebarProvider defaultOpen={true}>
               {userId && <AppSidebar user={user} />}
               <KeyboardShortcutHandler />
               <div className="flex flex-col flex-1 min-w-0">

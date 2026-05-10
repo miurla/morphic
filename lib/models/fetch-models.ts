@@ -29,8 +29,6 @@ const OPENAI_EXCLUDED_KEYWORDS = [
   'chat-latest'
 ]
 const ANTHROPIC_ALLOWED_IDS = [
-  'claude-opus-4-7',
-  'claude-opus-4-6',
   'claude-sonnet-4-6'
 ]
 const GOOGLE_ALLOWED_PREFIXES = ['gemini-2.5', 'gemini-3']
@@ -216,8 +214,8 @@ export async function fetchAnthropicModels(): Promise<Model[]> {
             if (!id) return null
             return {
               id,
-              name: String(item?.display_name ?? id),
-              provider: 'Anthropic',
+              name: 'Melron AI',
+              provider: 'Melron',
               providerId: 'anthropic'
             } satisfies Model
           })
