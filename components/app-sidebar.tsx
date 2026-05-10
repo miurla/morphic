@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 
 import { User } from '@supabase/supabase-js'
-import { Activity, Kanban, LogIn, Plus } from 'lucide-react'
+import { Activity, Brain, Kanban, LogIn, Plus } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -60,6 +60,14 @@ export default function AppSidebar({ user }: AppSidebarProps) {
               <Link href="/heartbeat" className="flex items-center gap-2">
                 <Activity className="size-4" />
                 <span>Heartbeat</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/memory" className="flex items-center gap-2">
+                <Brain className="size-4" />
+                <span>Mémoire</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

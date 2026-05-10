@@ -9,6 +9,7 @@ import { randomUUID } from 'crypto'
 import { Langfuse } from 'langfuse'
 
 import { researcher } from '@/lib/agents/researcher'
+import { loadUserMemory } from '@/lib/memory/load'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import {
@@ -82,11 +83,14 @@ export async function createEphemeralChatStreamResponse(
       modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
     }
 
+    const memoryPrompt: string | null = null // Guest mode — no memory
+
     const { agent: researchAgent, mcpClient } = await researcher({
       model: `${model.providerId}:${model.id}`,
       modelConfig: model,
       parentTraceId,
-      searchMode
+      searchMode,
+      memoryPrompt
     })
 
     const result = await researchAgent.stream({

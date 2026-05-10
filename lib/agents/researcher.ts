@@ -72,12 +72,14 @@ export async function createResearcher({
   model,
   modelConfig,
   parentTraceId,
-  searchMode = 'adaptive'
+  searchMode = 'adaptive',
+  memoryPrompt
 }: {
   model: string
   modelConfig?: Model
   parentTraceId?: string
   searchMode?: SearchMode
+  memoryPrompt?: string | null
 }): Promise<{
   agent: ToolLoopAgent<never, ResearcherTools, never>
   mcpClient: MelronMcpClient | null
@@ -147,7 +149,7 @@ export async function createResearcher({
     // Create ToolLoopAgent with all configuration
     const agent = new ToolLoopAgent({
       model: getModel(model),
-      instructions: `${systemPrompt}\nCurrent date and time: ${currentDate}`,
+      instructions: `${systemPrompt}\nCurrent date and time: ${currentDate}${memoryPrompt ? `\n\n${memoryPrompt}` : ''}`,
       tools,
       activeTools,
       stopWhen: stepCountIs(maxSteps),

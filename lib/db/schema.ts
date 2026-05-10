@@ -336,6 +336,98 @@ export const unipileAccounts = pgTable(
 
 export type UnipileAccount = InferSelectModel<typeof unipileAccounts>
 
+// User memories table (structured facts derived from conversations)
+export const userMemories = pgTable(
+  'user_memories',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    category: varchar('category', {
+      length: 50,
+      enum: [
+        'identity',
+        'business',
+        'icp',
+        'positioning',
+        'goals',
+        'relationships',
+        'preferences',
+        'constraints'
+      ]
+    }).notNull(),
+    content: text('content').notNull(),
+    confidence: integer('confidence').notNull().default(80),
+    sourceConversationId: varchar('source_conversation_id', {
+      length: ID_LENGTH
+    }),
+    expiresAt: timestamp('expires_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('user_memories_user_id_idx').on(table.userId),
+    index('user_memories_user_category_idx').on(table.userId, table.category),
+    pgPolicy('memories_select', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`true`
+    }),
+    pgPolicy('memories_insert', {
+      for: 'insert',
+      to: 'public',
+      withCheck: sql`true`
+    }),
+    pgPolicy('memories_update', {
+      for: 'update',
+      to: 'public',
+      using: sql`true`
+    }),
+    pgPolicy('memories_delete', {
+      for: 'delete',
+      to: 'public',
+      using: sql`true`
+    })
+  ]
+).enableRLS()
+
+export type UserMemory = InferSelectModel<typeof userMemories>
+
+// User memory edits (explicit user instructions)
+export const userMemoryEdits = pgTable(
+  'user_memory_edits',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    instruction: text('instruction').notNull(),
+    type: varchar('type', {
+      length: 20,
+      enum: ['add', 'exclude', 'correct']
+    }).notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('user_memory_edits_user_id_idx').on(table.userId),
+    pgPolicy('edits_select', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`true`
+    }),
+    pgPolicy('edits_insert', {
+      for: 'insert',
+      to: 'public',
+      withCheck: sql`true`
+    })
+  ]
+).enableRLS()
+
+export type UserMemoryEdit = InferSelectModel<typeof userMemoryEdits>
+
 // Feedback table
 export const feedback = pgTable(
   'feedback',

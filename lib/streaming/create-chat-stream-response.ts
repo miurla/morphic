@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto'
 import { Langfuse } from 'langfuse'
 
 import { researcher } from '@/lib/agents/researcher'
+import { loadUserMemory } from '@/lib/memory/load'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import { loadChat } from '../actions/chat'
@@ -118,12 +119,16 @@ export async function createChatStreamResponse(
     const messagesToModel = await prepareMessages(context, message)
     perfTime('prepareMessages completed (stream)', prepareStart)
 
+    // Load user memory for personalization
+    const memoryPrompt = await loadUserMemory(userId).catch(() => null)
+
     // Get the researcher agent with parent trace ID and search mode.
     const { agent: researchAgent, mcpClient } = await researcher({
       model: context.modelId,
       modelConfig: model,
       parentTraceId,
-      searchMode
+      searchMode,
+      memoryPrompt
     })
 
     // For OpenAI models, strip reasoning parts from UIMessages before conversion

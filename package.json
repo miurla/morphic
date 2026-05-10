@@ -23,6 +23,7 @@
     "@ai-sdk/mcp": "^1.0.39",
     "@ai-sdk/openai": "^3.0.52",
     "@ai-sdk/react": "^3.0.158",
+    "@anthropic-ai/sdk": "^0.95.1",
     "@aws-sdk/client-s3": "^3.850.0",
     "@json-render/core": "^0.16.0",
     "@json-render/react": "^0.16.0",
