@@ -82,6 +82,7 @@ export async function POST(req: Request) {
       const existingId = storedAccountId ?? (await findExistingAccount(username))
 
       if (existingId) {
+        console.log(`[linkedin] Reconnecting existing account: ${existingId}`)
         const res = await fetch(`${UNIPILE_URL}/accounts/${existingId}`, {
           method: 'POST',
           headers,
@@ -91,7 +92,15 @@ export async function POST(req: Request) {
             password
           })
         })
-        const data = await res.json()
+        const rawText = await res.text()
+        let data: any
+        try {
+          data = JSON.parse(rawText)
+        } catch {
+          data = { raw: rawText }
+        }
+
+        console.log(`[linkedin] Reconnect response (${res.status}):`, JSON.stringify(data).slice(0, 500))
 
         if (data.object === 'Checkpoint' || data.checkpoint) {
           return NextResponse.json({
@@ -101,17 +110,22 @@ export async function POST(req: Request) {
           })
         }
 
-        if (res.ok) {
+        if (res.ok || data.object === 'AccountReconnected') {
           return NextResponse.json({
             status: 'connected',
-            accountId: existingId
+            accountId: data.account_id || existingId
           })
         }
 
-        return NextResponse.json(
-          { error: data.message || 'Reconnexion échouée' },
-          { status: 400 }
-        )
+        // If reconnect fails (404 = account deleted), fall through to create
+        if (res.status === 404) {
+          console.log(`[linkedin] Account ${existingId} not found, creating new`)
+        } else {
+          return NextResponse.json(
+            { error: data.detail || data.title || data.message || 'Reconnexion échouée' },
+            { status: 400 }
+          )
+        }
       }
 
       const controller = new AbortController()

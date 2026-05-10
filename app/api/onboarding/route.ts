@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
@@ -23,6 +24,16 @@ export async function GET() {
       return NextResponse.json({
         onboardingCompleted: false,
         onboardingStep: 0
+      })
+    }
+
+    // Sync cookie with DB state
+    if (profiles[0].onboardingCompleted) {
+      const cookieStore = await cookies()
+      cookieStore.set('onboarding_completed', 'true', {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        httpOnly: false
       })
     }
 
@@ -63,6 +74,16 @@ export async function POST(req: Request) {
         .update(userProfiles)
         .set({ ...body, updatedAt: new Date() })
         .where(eq(userProfiles.userId, userId))
+    }
+
+    // Set cookie when onboarding is completed
+    if (body.onboardingCompleted) {
+      const cookieStore = await cookies()
+      cookieStore.set('onboarding_completed', 'true', {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        httpOnly: false
+      })
     }
 
     return NextResponse.json({ ok: true })
