@@ -298,6 +298,44 @@ export const userProfiles = pgTable(
 
 export type UserProfile = InferSelectModel<typeof userProfiles>
 
+// Unipile accounts table (synced from Unipile API)
+export const unipileAccounts = pgTable(
+  'unipile_accounts',
+  {
+    accountId: varchar('account_id', { length: VARCHAR_LENGTH })
+      .primaryKey(),
+    email: varchar('email', { length: VARCHAR_LENGTH }),
+    provider: varchar('provider', { length: 50 }).notNull().default('LINKEDIN'),
+    name: varchar('name', { length: VARCHAR_LENGTH }),
+    publicIdentifier: varchar('public_identifier', { length: VARCHAR_LENGTH }),
+    linkedinUrnId: varchar('linkedin_urn_id', { length: VARCHAR_LENGTH }),
+    status: varchar('status', { length: 50 }).notNull().default('RUNNING'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    syncedAt: timestamp('synced_at').notNull().defaultNow()
+  },
+  table => [
+    index('unipile_accounts_email_idx').on(table.email),
+    pgPolicy('unipile_select', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`true`
+    }),
+    pgPolicy('unipile_insert', {
+      for: 'insert',
+      to: 'public',
+      withCheck: sql`true`
+    }),
+    pgPolicy('unipile_update', {
+      for: 'update',
+      to: 'public',
+      using: sql`true`
+    })
+  ]
+).enableRLS()
+
+export type UnipileAccount = InferSelectModel<typeof unipileAccounts>
+
 // Feedback table
 export const feedback = pgTable(
   'feedback',

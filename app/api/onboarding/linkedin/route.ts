@@ -1,9 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 
-import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { db } from '@/lib/db'
-import { userProfiles } from '@/lib/db/schema'
+import { unipileAccounts } from '@/lib/db/schema'
 
 const UNIPILE_URL = process.env.UNIPILE_URL!
 const UNIPILE_TOKEN = process.env.UNIPILE_TOKEN!
@@ -14,37 +13,17 @@ const uniHeaders = {
   accept: 'application/json'
 }
 
-type UnipileAccount = {
-  id: string
-  type: string
-  name: string
-  created_at: string
-  sources?: { status: string }[]
-  connection_params?: {
-    im?: {
-      id?: string
-      username?: string
-      publicIdentifier?: string
-    }
+async function checkAccountRunning(accountId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${UNIPILE_URL}/accounts/${accountId}`, {
+      headers: { 'X-API-KEY': UNIPILE_TOKEN, accept: 'application/json' }
+    })
+    if (!res.ok) return false
+    const data = await res.json()
+    return data.sources?.some((s: any) => s.status === 'OK') ?? false
+  } catch {
+    return false
   }
-}
-
-async function listLinkedInAccounts(): Promise<UnipileAccount[]> {
-  const res = await fetch(`${UNIPILE_URL}/accounts`, {
-    headers: { 'X-API-KEY': UNIPILE_TOKEN, accept: 'application/json' }
-  })
-  if (!res.ok) return []
-  const data = await res.json()
-  return (data.items ?? []).filter((a: any) => a.type === 'LINKEDIN')
-}
-
-function isAccountRunning(acc: UnipileAccount): boolean {
-  return acc.sources?.some(s => s.status === 'OK') ?? false
-}
-
-function checkAccountStatus(acc: UnipileAccount): string {
-  const src = acc.sources?.[0]
-  return src?.status ?? 'UNKNOWN'
 }
 
 export async function POST(req: Request) {
@@ -61,73 +40,35 @@ export async function POST(req: Request) {
         )
       }
 
-      // Step 1: Check our DB for a stored Unipile account ID
-      const userId = await getCurrentUserId()
-      let storedAccountId: string | null = null
-      if (userId) {
-        const profiles = await db
-          .select()
-          .from(userProfiles)
-          .where(eq(userProfiles.userId, userId))
-          .limit(1)
-        storedAccountId = profiles[0]?.unipileAccountId ?? null
-      }
+      // Step 1: Check our DB by email
+      const normalizedEmail = username.toLowerCase().trim()
+      const existing = await db
+        .select()
+        .from(unipileAccounts)
+        .where(eq(unipileAccounts.email, normalizedEmail))
+        .limit(1)
 
-      // Step 2: List all LinkedIn accounts on Unipile
-      const linkedinAccounts = await listLinkedInAccounts()
-      console.log(
-        `[linkedin] ${linkedinAccounts.length} LinkedIn accounts on Unipile, storedId=${storedAccountId}`
-      )
-
-      // Step 3: Find the right account
-      let targetAccount: UnipileAccount | undefined
-
-      // 3a. If we have a stored ID, find it
-      if (storedAccountId) {
-        targetAccount = linkedinAccounts.find(a => a.id === storedAccountId)
-      }
-
-      // 3b. If not found in DB, try to match by LinkedIn IM id or name
-      if (!targetAccount) {
-        const normalizedInput = username.toLowerCase().trim()
-        targetAccount = linkedinAccounts.find(a => {
-          const candidates = [
-            a.connection_params?.im?.username,
-            a.connection_params?.im?.publicIdentifier,
-            a.name
-          ].filter(Boolean)
-          return candidates.some(
-            c => c!.toLowerCase().trim() === normalizedInput
-          )
-        })
-      }
-
-      // 3c. If still not found and there's only one LinkedIn account, use it
-      if (!targetAccount && linkedinAccounts.length === 1) {
-        targetAccount = linkedinAccounts[0]
+      if (existing.length > 0) {
+        const acc = existing[0]
         console.log(
-          `[linkedin] Using single LinkedIn account: ${targetAccount.id}`
+          `[linkedin] Found in DB: ${acc.accountId} (${acc.email}) status=${acc.status}`
         )
-      }
 
-      // Step 4: If account found and running → just link it, no reconnection needed
-      if (targetAccount && isAccountRunning(targetAccount)) {
-        console.log(
-          `[linkedin] Account ${targetAccount.id} is Running — linking directly`
-        )
-        return NextResponse.json({
-          status: 'connected',
-          accountId: targetAccount.id
-        })
-      }
+        // Step 2: Verify it's still running on Unipile
+        const isRunning = await checkAccountRunning(acc.accountId)
 
-      // Step 5: If account found but not running → reconnect
-      if (targetAccount) {
-        console.log(
-          `[linkedin] Account ${targetAccount.id} status=${checkAccountStatus(targetAccount)}, reconnecting...`
-        )
+        if (isRunning) {
+          console.log(`[linkedin] Account ${acc.accountId} is Running — skip`)
+          return NextResponse.json({
+            status: 'connected',
+            accountId: acc.accountId
+          })
+        }
+
+        // Step 3: Not running — reconnect
+        console.log(`[linkedin] Account ${acc.accountId} not running, reconnecting...`)
         const res = await fetch(
-          `${UNIPILE_URL}/accounts/${targetAccount.id}`,
+          `${UNIPILE_URL}/accounts/${acc.accountId}`,
           {
             method: 'POST',
             headers: uniHeaders,
@@ -135,38 +76,36 @@ export async function POST(req: Request) {
           }
         )
         const data = await res.json().catch(() => ({}))
-        console.log(
-          `[linkedin] Reconnect ${res.status}:`,
-          JSON.stringify(data).slice(0, 300)
-        )
 
         if (data.object === 'Checkpoint' || data.checkpoint) {
           return NextResponse.json({
             status: 'checkpoint',
-            accountId: data.account_id || targetAccount.id,
+            accountId: data.account_id || acc.accountId,
             checkpointType: data.checkpoint?.type || 'OTP'
           })
         }
         if (res.ok || data.object === 'AccountReconnected') {
+          await db
+            .update(unipileAccounts)
+            .set({ status: 'RUNNING', syncedAt: new Date() })
+            .where(eq(unipileAccounts.accountId, acc.accountId))
           return NextResponse.json({
             status: 'connected',
-            accountId: data.account_id || targetAccount.id
+            accountId: data.account_id || acc.accountId
           })
         }
-        // If reconnect fails with 404, account is gone — fall through to create
+
+        // Reconnect failed but account exists — don't create a new one
         if (res.status !== 404) {
           return NextResponse.json(
-            {
-              error:
-                data.detail || data.title || data.message || 'Reconnexion échouée'
-            },
+            { error: data.detail || data.title || 'Reconnexion échouée' },
             { status: 400 }
           )
         }
       }
 
-      // Step 6: No existing account → create new
-      console.log(`[linkedin] No existing account found, creating new...`)
+      // Step 4: Not in DB — create new account on Unipile
+      console.log(`[linkedin] No account for "${normalizedEmail}" in DB, creating new...`)
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 60000)
 
@@ -189,17 +128,23 @@ export async function POST(req: Request) {
         }
 
         if (res.ok) {
+          const newAccountId = data.account_id || data.id
+          // Save to DB immediately
+          await db.insert(unipileAccounts).values({
+            accountId: newAccountId,
+            email: normalizedEmail,
+            provider: 'LINKEDIN',
+            status: 'RUNNING',
+            syncedAt: new Date()
+          })
           return NextResponse.json({
             status: 'connected',
-            accountId: data.account_id || data.id
+            accountId: newAccountId
           })
         }
 
         return NextResponse.json(
-          {
-            error:
-              data.detail || data.title || data.message || 'Connexion échouée'
-          },
+          { error: data.detail || data.title || 'Connexion échouée' },
           { status: 400 }
         )
       } finally {
@@ -237,6 +182,11 @@ export async function POST(req: Request) {
       }
 
       if (res.ok) {
+        // Update status in DB
+        await db
+          .update(unipileAccounts)
+          .set({ status: 'RUNNING', syncedAt: new Date() })
+          .where(eq(unipileAccounts.accountId, accountId))
         return NextResponse.json({ status: 'connected', accountId })
       }
 
@@ -248,18 +198,10 @@ export async function POST(req: Request) {
 
     if (action === 'poll') {
       const { accountId } = body
-      const res = await fetch(`${UNIPILE_URL}/accounts/${accountId}`, {
-        headers: { 'X-API-KEY': UNIPILE_TOKEN, accept: 'application/json' }
+      const isRunning = await checkAccountRunning(accountId)
+      return NextResponse.json({
+        status: isRunning ? 'connected' : 'pending'
       })
-
-      if (res.status === 404) {
-        return NextResponse.json({ status: 'pending' })
-      }
-      if (res.ok) {
-        const data = await res.json()
-        if (data.id) return NextResponse.json({ status: 'connected' })
-      }
-      return NextResponse.json({ status: 'pending' })
     }
 
     return NextResponse.json({ error: 'Action inconnue' }, { status: 400 })
