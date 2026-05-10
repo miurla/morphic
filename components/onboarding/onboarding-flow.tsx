@@ -66,7 +66,9 @@ export function OnboardingFlow() {
   const router = useRouter()
 
   const handleNext = async (data?: Record<string, unknown>) => {
-    const nextStep = currentStep + 1
+    // Allow steps to specify which step to jump to
+    const jumpTo = data?.onboardingStep as number | undefined
+    const nextStep = jumpTo ?? currentStep + 1
     await saveStep(nextStep, data)
 
     if (nextStep >= STEPS.length) {
