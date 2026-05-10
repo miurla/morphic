@@ -22,11 +22,7 @@ const runMigrations = async () => {
   const isProduction = process.env.NODE_ENV === 'production'
 
   const sql = postgres(connectionString, {
-    ssl: sslDisabled
-      ? false
-      : isProduction
-        ? { rejectUnauthorized: false }
-        : false,
+    ssl: sslDisabled ? false : { rejectUnauthorized: false },
     prepare: false
   })
 

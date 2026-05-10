@@ -1,6 +1,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import { InferSelectModel, sql } from 'drizzle-orm'
 import {
+  boolean,
   check,
   index,
   integer,
@@ -257,6 +258,44 @@ export const parts = pgTable(
 
 export type Part = InferSelectModel<typeof parts>
 export type NewPart = typeof parts.$inferInsert
+
+// User profiles table (onboarding + preferences)
+export const userProfiles = pgTable(
+  'user_profiles',
+  {
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).primaryKey(),
+    onboardingCompleted: boolean('onboarding_completed')
+      .notNull()
+      .default(false),
+    onboardingStep: integer('onboarding_step').notNull().default(0),
+    linkedinConnected: boolean('linkedin_connected').notNull().default(false),
+    linkedinEmail: varchar('linkedin_email', { length: VARCHAR_LENGTH }),
+    whatsappNumber: varchar('whatsapp_number', { length: 50 }),
+    whatsappEnabled: boolean('whatsapp_enabled').notNull().default(false),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    pgPolicy('profile_select_own', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`true`
+    }),
+    pgPolicy('profile_insert_own', {
+      for: 'insert',
+      to: 'public',
+      withCheck: sql`true`
+    }),
+    pgPolicy('profile_update_own', {
+      for: 'update',
+      to: 'public',
+      using: sql`true`
+    })
+  ]
+).enableRLS()
+
+export type UserProfile = InferSelectModel<typeof userProfiles>
 
 // Feedback table
 export const feedback = pgTable(
