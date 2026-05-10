@@ -68,15 +68,15 @@ export function StepPrompts({ onComplete }: StepPromptsProps) {
       ? SUGGESTED_PROMPTS[selectedIndex]?.prompt
       : pendingMessage
 
-  const handleLaunch = async () => {
+  const handleLaunch = () => {
     const prompt = selectedPrompt
     if (!prompt) return
 
-    setIsLaunching(true)
     sessionStorage.setItem('pendingMessage', prompt)
     document.cookie = 'onboarding_completed=true; path=/; max-age=31536000'
 
-    await fetch('/api/onboarding', {
+    // Fire and forget — don't wait for DB write
+    fetch('/api/onboarding', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ onboardingCompleted: true, onboardingStep: 4 })
