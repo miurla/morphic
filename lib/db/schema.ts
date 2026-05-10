@@ -428,6 +428,105 @@ export const userMemoryEdits = pgTable(
 
 export type UserMemoryEdit = InferSelectModel<typeof userMemoryEdits>
 
+// Heartbeats table
+export const heartbeats = pgTable(
+  'heartbeats',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    chatId: varchar('chat_id', { length: ID_LENGTH }),
+    chatTitle: varchar('chat_title', { length: VARCHAR_LENGTH }).notNull(),
+    query: text('query').notNull(),
+    frequency: varchar('frequency', {
+      length: 20,
+      enum: ['daily', 'weekly', 'custom']
+    })
+      .notNull()
+      .default('daily'),
+    channel: varchar('channel', {
+      length: 20,
+      enum: ['email', 'whatsapp']
+    })
+      .notNull()
+      .default('whatsapp'),
+    whatsappNumber: varchar('whatsapp_number', { length: 50 }),
+    status: varchar('status', {
+      length: 20,
+      enum: ['active', 'paused']
+    })
+      .notNull()
+      .default('active'),
+    lastRunAt: timestamp('last_run_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('heartbeats_user_id_idx').on(table.userId),
+    index('heartbeats_status_idx').on(table.status),
+    pgPolicy('heartbeats_select', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`true`
+    }),
+    pgPolicy('heartbeats_insert', {
+      for: 'insert',
+      to: 'public',
+      withCheck: sql`true`
+    }),
+    pgPolicy('heartbeats_update', {
+      for: 'update',
+      to: 'public',
+      using: sql`true`
+    }),
+    pgPolicy('heartbeats_delete', {
+      for: 'delete',
+      to: 'public',
+      using: sql`true`
+    })
+  ]
+).enableRLS()
+
+export type Heartbeat = InferSelectModel<typeof heartbeats>
+
+// Heartbeat runs table
+export const heartbeatRuns = pgTable(
+  'heartbeat_runs',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    heartbeatId: varchar('heartbeat_id', { length: ID_LENGTH })
+      .notNull()
+      .references(() => heartbeats.id, { onDelete: 'cascade' }),
+    results: jsonb('results').$type<any[]>().notNull().default([]),
+    resultsCount: integer('results_count').notNull().default(0),
+    viewToken: varchar('view_token', { length: 50 })
+      .notNull()
+      .$defaultFn(() => generateId().slice(0, 12)),
+    notifiedVia: varchar('notified_via', { length: 20 }).notNull().default('whatsapp'),
+    runAt: timestamp('run_at').notNull().defaultNow()
+  },
+  table => [
+    index('heartbeat_runs_heartbeat_id_idx').on(table.heartbeatId),
+    index('heartbeat_runs_view_token_idx').on(table.viewToken),
+    pgPolicy('runs_select', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`true`
+    }),
+    pgPolicy('runs_insert', {
+      for: 'insert',
+      to: 'public',
+      withCheck: sql`true`
+    })
+  ]
+).enableRLS()
+
+export type HeartbeatRun = InferSelectModel<typeof heartbeatRuns>
+
 // Feedback table
 export const feedback = pgTable(
   'feedback',

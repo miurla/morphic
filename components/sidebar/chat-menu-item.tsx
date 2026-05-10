@@ -92,8 +92,10 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
   const [hasHb, setHasHb] = useState(false)
 
   useEffect(() => {
-    setHasHb(checkHasHeartbeat(chat.id))
-    const handler = () => setHasHb(checkHasHeartbeat(chat.id))
+    checkHasHeartbeat(chat.id).then(setHasHb)
+    const handler = () => {
+      checkHasHeartbeat(chat.id).then(setHasHb)
+    }
     window.addEventListener('heartbeat-updated', handler)
     return () => window.removeEventListener('heartbeat-updated', handler)
   }, [chat.id])
@@ -119,14 +121,14 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
     })
   }, [chat.id, isActive, router, startTransition])
 
-  const handleCreateHeartbeat = useCallback(() => {
+  const handleCreateHeartbeat = useCallback(async () => {
     setIsMenuOpen(false)
-    createHeartbeat({
+    await createHeartbeat({
       chatId: chat.id,
       chatTitle: chat.title ?? 'Sans titre',
       query: chat.title ?? '',
       frequency: 'daily',
-      channel: 'email'
+      channel: 'whatsapp'
     })
     toast.success('Heartbeat créé', {
       description: 'Cette conversation sera relancée quotidiennement.'

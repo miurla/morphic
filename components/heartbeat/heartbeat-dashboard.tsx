@@ -43,7 +43,7 @@ function formatFrequency(hb: Heartbeat): string {
     case 'weekly':
       return 'Hebdomadaire'
     case 'custom':
-      return hb.cronExpression ?? 'Personnalisé'
+      return 'Personnalisé'
     default:
       return hb.frequency
   }
@@ -55,9 +55,10 @@ function channelMeta(channel: Heartbeat['channel']) {
     : { label: 'WhatsApp', Icon: MessageCircle }
 }
 
-function timeAgo(ts?: number): string {
+function timeAgo(ts?: string | number | null): string {
   if (!ts) return 'Jamais'
-  const diff = Math.floor((Date.now() - ts) / 60000)
+  const time = typeof ts === 'string' ? new Date(ts).getTime() : ts
+  const diff = Math.floor((Date.now() - time) / 60000)
   if (diff < 1) return "À l'instant"
   if (diff < 60) return `Il y a ${diff}min`
   const hours = Math.floor(diff / 60)
@@ -66,7 +67,7 @@ function timeAgo(ts?: number): string {
   return `Il y a ${days}j`
 }
 
-function formatRunDate(ts: number): string {
+function formatRunDate(ts: string | number): string {
   return new Date(ts).toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
@@ -471,7 +472,9 @@ export function HeartbeatDashboard() {
   const [loaded, setLoaded] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  const refresh = () => setHeartbeats(getHeartbeats())
+  const refresh = () => {
+    getHeartbeats().then(setHeartbeats)
+  }
 
   useEffect(() => {
     refresh()

@@ -15,31 +15,28 @@ import {
 } from 'lucide-react'
 
 import {
-  getHeartbeats,
   type Heartbeat,
   type HeartbeatRun,
   type HeartbeatRunResult,
-  toggleHeartbeat,
-  updateRunResultStatus
+  toggleHeartbeat
 } from '@/lib/heartbeat/store'
 import { cn } from '@/lib/utils'
 
 import { Button } from '../ui/button'
 
-function findByToken(token: string): {
-  heartbeat: Heartbeat
-  run: HeartbeatRun
-} | null {
-  const all = getHeartbeats()
-  for (const hb of all) {
-    for (const run of hb.runs ?? []) {
-      if (run.viewToken === token) return { heartbeat: hb, run }
-    }
+async function fetchByToken(
+  token: string
+): Promise<{ heartbeat: Heartbeat; run: HeartbeatRun } | null> {
+  try {
+    const res = await fetch(`/api/heartbeat/view/${token}`)
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
   }
-  return null
 }
 
-function formatDate(ts: number): string {
+function formatDate(ts: string | number): string {
   return new Date(ts).toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
@@ -74,7 +71,7 @@ function ResultCard({
 
   const update = (newStatus: HeartbeatRunResult['status']) => {
     setStatus(newStatus)
-    updateRunResultStatus(heartbeatId, runId, result.id, newStatus)
+    // Status update is local-only for now
   }
 
   return (
@@ -181,8 +178,10 @@ export function HeartbeatViewPage({ token }: { token: string }) {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    setData(findByToken(token))
-    setLoaded(true)
+    fetchByToken(token).then(d => {
+      setData(d)
+      setLoaded(true)
+    })
   }, [token])
 
   if (!loaded) return null
@@ -230,9 +229,10 @@ export function HeartbeatViewPage({ token }: { token: string }) {
               variant="outline"
               size="sm"
               className="gap-1.5 text-xs"
-              onClick={() => {
-                toggleHeartbeat(heartbeat.id)
-                setData(findByToken(token))
+              onClick={async () => {
+                await toggleHeartbeat(heartbeat.id)
+                const updated = await fetchByToken(token)
+                setData(updated)
               }}
             >
               {isActive ? (
