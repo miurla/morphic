@@ -1,0 +1,3318 @@
+"id","category","objective","persona","title","prompt","tags","level","heartbeat","expected_output"
+"M001","Prospection commerciale","Découvrir","Founder","Prospects qualifiés pour mon SaaS dans mon réseau","Identifie dans mon réseau LinkedIn (1er degré) les prospects qualifiés pour mon produit.
+
+CONTEXTE PRODUIT
+- Décris ton produit en 2 lignes : [À COMPLÉTER : nom, ce qu'il fait, à qui]
+- Persona cible (ICP) : [À COMPLÉTER : poste, taille de boîte, secteur]
+- Douleur résolue : [À COMPLÉTER : problème spécifique]
+- Pricing : [À COMPLÉTER : fourchette]
+
+CRITÈRES DE QUALIFICATION
+1. Match ICP strict (poste + secteur + taille de boîte cohérents)
+2. Signal d'urgence ou de douleur dans les 30 derniers jours (post, commentaire, changement de poste, levée annoncée)
+3. Profil acheteur probable (décideur ou influenceur direct)
+
+POUR CHAQUE PROSPECT
+- Nom + poste + entreprise
+- Signal exact détecté (citation si possible)
+- Niveau de douleur perçu (faible/moyen/fort)
+- Angle d'approche en 2 phrases max
+- Hook de premier message personnalisé
+
+EXCLUSIONS
+- Profils en recherche d'emploi
+- Pages entreprises sans signal humain
+- Annonces froides sans douleur exprimée
+
+Trie par niveau de douleur décroissant. Limite à 10 prospects max.","B2B,SaaS,ICP,signal-douleur,outbound","avancé","oui","Liste hiérarchisée 10 prospects max avec angle + hook"
+"M002","Prospection commerciale","Cibler","Founder","Mes 5 meilleurs leads à contacter cette semaine","Parmi mes contacts LinkedIn, identifie les 5 personnes qui combinent au plus haut degré ces 3 critères :
+1. Match ICP de mon produit (à rappeler ci-dessous)
+2. Signal récent d'achat ou de douleur (7 derniers jours en priorité)
+3. Forte probabilité de réponse (interaction antérieure, second degré commun, ancien collègue, etc.)
+
+MON ICP
+[À COMPLÉTER : poste cible, secteur, taille, géographie]
+
+MON PRODUIT
+[À COMPLÉTER : nom + value prop en 1 phrase]
+
+Pour chaque prospect, donne :
+- Score de priorité 1-5
+- Le signal précis qui justifie le contact maintenant
+- Ce que je dois mentionner dans le premier message pour montrer que je l'ai vraiment vu
+- Le canal recommandé (LinkedIn DM / email / commentaire de post)
+
+Format : tableau condensé, prêt à imprimer.","priorisation,outbound,top-5,quick-wins","intermédiaire","non","Top 5 actionnable avec score + canal"
+"M003","Prospection commerciale","Surveiller","Founder","Veille continue sur mes signaux d'achat","Surveille en continu mon réseau LinkedIn et ping-moi quand l'un des signaux suivants apparaît chez un prospect potentiel pour mon produit :
+
+SIGNAUX FORTS (ping immédiat)
+- Changement de poste vers un rôle décideur (CTO, VP, Head of, Director)
+- Post exprimant une douleur que mon produit résout (mots-clés : [À COMPLÉTER])
+- Levée de fonds annoncée (chez l'entreprise du prospect)
+- Embauche d'une équipe (signal de croissance budget)
+
+SIGNAUX FAIBLES (regroupement hebdomadaire)
+- Like/commentaire sur des posts d'éditeurs concurrents
+- Participation à un événement sectoriel
+- Promotion interne
+
+MON ICP
+[À COMPLÉTER]
+
+MON PRODUIT
+[À COMPLÉTER]
+
+Format de notification : nom du prospect, signal détecté, action recommandée en 1 phrase.","veille,signaux-achat,heartbeat,whatsapp","avancé","oui","Notifications WhatsApp ciblées au fil de l'eau"
+"M004","Prospection commerciale","Activer","Founder","Message d'approche personnalisé pour [PROSPECT]","Rédige-moi un message d'approche LinkedIn pour [NOM DU PROSPECT].
+
+CONTEXTE
+- Mon produit : [À COMPLÉTER]
+- Sa douleur probable : [À COMPLÉTER ou laisser Morphic inférer depuis son profil]
+- Ce que je veux à la fin du message : un call de 15 min cette semaine
+
+CONTRAINTES DE STYLE
+- Maximum 4 phrases
+- Pas de ""j'espère que vous allez bien""
+- Premier mot doit accrocher (pas ""Bonjour"")
+- Référence concrète à son profil ou un de ses posts récents
+- Question ouverte à la fin, pas une demande directe
+
+Donne-moi 3 variantes : une factuelle, une provoquante, une empathique.","message,personnalisation,3-variantes,activation","débutant","non","3 messages prêts à copier dans LinkedIn"
+"M005","Prospection commerciale","Découvrir","Sales","Comptes cibles dans mon territoire qui ne sont pas encore travaillés","Identifie dans mon réseau LinkedIn et les pages entreprises associées les comptes qui :
+1. Correspondent à mon ICP (à rappeler ci-dessous)
+2. Ne sont PAS dans mon CRM actuel (je liste mes comptes existants ci-dessous)
+3. Présentent un signal de fenêtre de tir : levée récente, embauche tech, changement de C-level, ouverture de bureau
+
+MON ICP
+[À COMPLÉTER : secteur, ARR estimé, taille équipe, géographie]
+
+COMPTES DÉJÀ TRAVAILLÉS (NE PAS REMONTER)
+[À COMPLÉTER : liste des entreprises dans mon CRM]
+
+Pour chaque compte trouvé :
+- Nom de l'entreprise + URL LinkedIn
+- Signal détecté (avec date)
+- Décideur LinkedIn présumé (poste + nom si visible)
+- Pourquoi maintenant (en 1 phrase)
+
+Trie par ""fenêtre de tir"" qui se referme le plus vite.","territoire,CRM,nouveaux-comptes,fenetre-tir","avancé","oui","Liste de comptes vierges avec décideur identifié"
+"M006","Prospection commerciale","Cibler","Sales","Les 10 prospects les plus chauds de ma pipeline LinkedIn","Score les prospects de mon réseau LinkedIn 1er degré sur ma proposition de valeur, et donne-moi les 10 plus chauds à travailler cette semaine.
+
+MA PROPOSITION DE VALEUR
+[À COMPLÉTER]
+
+CRITÈRES DE SCORING
+- Adéquation rôle (40%)
+- Signal d'achat récent (30%)
+- Probabilité de réponse / interaction passée (20%)
+- Timing : taille pipeline trimestre (10%)
+
+POUR CHAQUE PROSPECT
+- Score sur 100
+- 1 phrase qui justifie le score
+- Action recommandée pour cette semaine (DM, commentaire, intro warm, autre)
+
+Donne le tableau final, sans commentaire intermédiaire.","scoring,top-10,pipeline,activation","intermédiaire","non","Top 10 scorés et plan d'action hebdo"
+"M007","Prospection commerciale","Surveiller","Sales","Détection automatique de nouveaux signaux d'achat","Mets en veille continue mon territoire et alerte-moi quand un de ces événements se produit chez un prospect ou compte cible :
+
+ÉVÉNEMENTS DÉCLENCHEURS
+- Changement de poste vers un rôle décideur dans mon ICP
+- Post du prospect mentionnant un mot-clé de ma liste : [À COMPLÉTER]
+- Annonce de levée de fonds Série A/B chez un compte cible
+- Lancement de produit chez un compte cible
+- Embauche d'un VP Sales / RevOps / CRO (signal d'investissement go-to-market)
+
+MES COMPTES CIBLES
+[À COMPLÉTER]
+
+MON ICP DE DÉCIDEUR
+[À COMPLÉTER]
+
+Notification format court : ""@Prospect / @Compte | Événement | Action recommandée en 5 mots"".","veille,trigger-events,heartbeat,whatsapp","avancé","oui","Alertes WhatsApp courtes au déclenchement"
+"M008","Prospection commerciale","Activer","Sales","Séquence de relance personnalisée pour [PROSPECT]","Construis-moi une séquence de relance 4 touches pour [NOM DU PROSPECT] qui ne m'a pas répondu après mon premier message.
+
+CONTEXTE
+- Ce que j'ai déjà envoyé : [À COMPLÉTER ou résumer]
+- Date du premier message : [À COMPLÉTER]
+- Sa stack / sa boîte / son rôle : (à inférer depuis son profil)
+
+LA SÉQUENCE
+- Touche 2 (J+3) : LinkedIn DM, soft, angle différent
+- Touche 3 (J+7) : commentaire intelligent sur un de ses posts récents
+- Touche 4 (J+14) : email pro, value-first, un insight chiffré pour son secteur
+- Touche 5 (J+21) : break-up message LinkedIn
+
+Chaque touche : objectif, formulation exacte, justification du timing.","sequence,relance,4-touches,multicanal","intermédiaire","non","Séquence 4 messages prête à programmer"
+"M009","Prospection commerciale","Découvrir","Recruteur","Clients potentiels pour mes services de recrutement","Trouve dans mon réseau LinkedIn les entreprises et personnes qui pourraient devenir clients de mes services de recrutement.
+
+CRITÈRES
+1. Entreprise tech/digitale en croissance (5-200 personnes idéalement)
+2. Signal d'embauche actif : 3+ postes ouverts, post ""we're hiring"", embauche d'un VP tech
+3. Décideur visible : Founder, CEO, CTO, Head of People, ou TA Manager
+4. Pas de DRH dédiée encore (signal qu'ils externalisent ou cherchent du soutien)
+
+MA SPÉCIALITÉ
+[À COMPLÉTER : tech / data / sales / autre]
+
+GÉOGRAPHIE
+[À COMPLÉTER]
+
+POUR CHAQUE PROSPECT
+- Entreprise + décideur identifié
+- Volume de postes ouverts
+- Postes les plus durs à pourvoir (signal de besoin d'un cabinet)
+- Angle d'approche en 1 phrase
+
+Trie par fenêtre d'urgence (postes ouverts depuis longtemps en priorité).","cabinet-recrutement,client,entreprise-croissance","intermédiaire","oui","Liste de boîtes en croissance avec décideur RH"
+"M010","Prospection commerciale","Découvrir","Job seeker","Boîtes qui pourraient avoir besoin de mon profil sans avoir publié d'offre","Identifie les entreprises de mon réseau LinkedIn (1er + 2e degré) qui pourraient avoir besoin de mon profil même si elles n'ont pas publié d'offre publique.
+
+MON PROFIL
+- Mon poste actuel : [À COMPLÉTER]
+- Mes compétences clés : [À COMPLÉTER]
+- Mes années d'expérience : [À COMPLÉTER]
+- Géographie souhaitée : [À COMPLÉTER]
+
+SIGNAUX À DÉTECTER
+- Levée de fonds récente → augmentation des effectifs probable
+- Lancement d'un nouveau produit → besoin de profils sur cette stack
+- Départ d'une personne dont le poste correspond au mien
+- Croissance LinkedIn (>10% en 6 mois)
+- Post d'un dirigeant mentionnant une douleur que je peux résoudre
+
+POUR CHAQUE BOÎTE
+- Pourquoi elle pourrait avoir besoin de mon profil maintenant
+- Personne à contacter en priorité (avec poste exact)
+- Hook d'approche personnalisé en 2 phrases
+
+Limite à 10 boîtes max.","spontane,marche-cache,boites-croissance","avancé","oui","10 boîtes en marché caché avec contact"
+"M011","Prospection commerciale","Découvrir","Investisseur","Founders pré-seed dans mon réseau qui n'ont pas encore levé","Identifie dans mon réseau LinkedIn les founders qui ont lancé un projet récent et qui n'ont probablement pas encore levé.
+
+SIGNAUX À DÉTECTER
+- Changement récent de poste vers ""Founder"", ""Co-founder"", ""CEO at [nouvelle boîte]""
+- Création d'une nouvelle entité (page LinkedIn entreprise <12 mois)
+- Posts évoquant le lancement, le MVP, les premiers clients
+- Pas d'annonce visible de levée de fonds dans les 18 derniers mois
+
+THÈSE D'INVESTISSEMENT
+- Secteurs ciblés : [À COMPLÉTER]
+- Ticket : [À COMPLÉTER]
+- Géographie : [À COMPLÉTER]
+
+POUR CHAQUE FOUNDER
+- Nom + projet + ce que la boîte fait en 1 phrase
+- Maturité estimée (idée / MVP / premiers revenus / traction)
+- Pourquoi c'est aligné avec ma thèse
+- Hook d'approche : ""j'aimerais qu'on se parle parce que [...]""
+
+Trie par alignement avec ma thèse.","pré-seed,deal-flow,founders-emergents","avancé","oui","Deal flow de founders pré-seed alignés thèse"
+"M012","Prospection commerciale","Découvrir","Consultant","Missions de conseil potentielles dans mon réseau","Trouve dans mon réseau LinkedIn les opportunités de mission de conseil pour mon expertise.
+
+MON EXPERTISE
+[À COMPLÉTER : domaine, années d'XP, types de missions typiques]
+
+SIGNAUX D'OPPORTUNITÉ
+- Post d'un dirigeant exprimant une douleur que je peux résoudre
+- Embauche récente d'un C-level (souvent il faut un consultant pour épauler 6-12 mois)
+- Levée de fonds (besoin de structuration)
+- Nouveau projet / lancement / pivot stratégique
+- Demande de freelance/consultant dans des posts ou commentaires
+
+POUR CHAQUE OPPORTUNITÉ
+- Boîte + décideur
+- Signal exact détecté (avec citation si possible)
+- Pourquoi mon expertise matche
+- Angle d'approche en 2 phrases
+
+Trie par chaleur du signal et probabilité de budget disponible.","mission-conseil,freelance,signaux-besoins","intermédiaire","oui","Opportunités de missions ciblées"
+"M013","Recherche d'emploi","Découvrir","Job seeker","Toutes les offres pertinentes près de chez moi cette semaine","Trouve les offres d'emploi correspondant à mon profil dans ma zone géographique.
+
+MON PROFIL
+- Poste cherché : [À COMPLÉTER]
+- Stack / compétences : [À COMPLÉTER]
+- Années d'expérience : [À COMPLÉTER]
+- Type de contrat : [CDI / freelance / mission]
+- Géographie : [À COMPLÉTER : ville + rayon km accepté ou télétravail]
+- Salaire min souhaité : [À COMPLÉTER]
+- Secteurs à éviter : [À COMPLÉTER éventuellement]
+
+SOURCES À CROISER
+- Posts LinkedIn de recruteurs et dirigeants
+- Pages entreprises de mon réseau qui ont publié une offre
+- Mentions ""we're hiring"" / ""rejoins-nous"" dans les 14 derniers jours
+
+POUR CHAQUE OFFRE
+- Titre + entreprise + lieu + type contrat
+- Recruteur LinkedIn identifiable (avec lien profil)
+- Niveau d'adéquation 1-5 vs mon profil
+- Action recommandée (postuler / contacter direct le recruteur / passer)
+
+Trie par adéquation décroissante. Liste exhaustive (pas de limite haute).","offres-emploi,veille-active,geographie","débutant","oui","Liste hebdo d'offres scorées"
+"M014","Recherche d'emploi","Cibler","Job seeker","Mes 3 candidatures les plus stratégiques cette semaine","Parmi toutes les offres détectées dans mon réseau, identifie les 3 candidatures les plus stratégiques pour moi cette semaine.
+
+MON PROFIL
+[À COMPLÉTER : poste cible, années XP, géographie, salaire visé]
+
+CRITÈRES DE PRIORISATION
+1. Adéquation parfaite avec mon profil (couvre 80%+ du brief)
+2. Probabilité de passer le filtre RH (réseau pour intro warm, ou recruteur connu)
+3. Qualité de l'opportunité (boîte en croissance, salaire conforme, stack alignée)
+4. Fenêtre de tir (offre récente, peu de candidats apparents)
+
+POUR CHAQUE TOP 3
+- Pourquoi celle-ci est top 3
+- Le warm intro disponible dans mon réseau (qui peut me recommander)
+- Le hook que je dois mettre dans ma lettre / mon DM
+- L'action concrète à faire dans les 48h","top-3,candidature-strategique,warm-intro","intermédiaire","non","Top 3 candidatures avec plan d'action 48h"
+"M015","Recherche d'emploi","Surveiller","Job seeker","Veille continue sur mes boîtes cibles","Surveille en continu ces entreprises et préviens-moi dès qu'elles publient une offre, embauchent, ou émettent un signal de croissance.
+
+MES BOÎTES CIBLES
+[À COMPLÉTER : liste]
+
+POSTES À DÉTECTER
+[À COMPLÉTER : intitulés exacts ou famille de rôles]
+
+SIGNAUX SECONDAIRES (à remonter en agrégé hebdo)
+- Recrutement massif d'autres profils (signal de croissance)
+- Levée de fonds
+- Lancement produit
+- Changement de C-level
+
+Notification : ""[Entreprise] | [Événement] | [Action recommandée]"" en 1 ligne.","boites-cibles,veille,heartbeat,whatsapp","intermédiaire","oui","Alertes ciblées par boîte"
+"M016","Recherche d'emploi","Activer","Job seeker","Message LinkedIn percutant pour [RECRUTEUR] sur l'offre [POSTE]","Rédige un message LinkedIn pour contacter [NOM DU RECRUTEUR] qui a publié une offre pour [POSTE] chez [ENTREPRISE].
+
+MON PROFIL
+- Mon poste actuel : [À COMPLÉTER]
+- 3 réussites mesurables que je peux mettre en avant : [À COMPLÉTER]
+- Pourquoi cette boîte / ce poste m'intéresse spécifiquement : [À COMPLÉTER]
+
+CONTRAINTES DE STYLE
+- Maximum 5 phrases
+- Pas de ""Bonjour, j'espère que vous allez bien""
+- Premier mot doit accrocher
+- Référence concrète à l'offre ou à un post du recruteur
+- Closing avec une question ouverte ou une proposition de call
+
+Donne 2 variantes : une ""directe et confiante"", une ""humble et curieuse"". Précise quand utiliser laquelle.","message-recruteur,2-variantes,offre-ciblee","débutant","non","2 variantes de DM prêtes à envoyer"
+"M017","Recherche d'emploi","Découvrir","Manager","Postes de Head of / VP dans mon secteur","Trouve les postes de niveau Head of / VP / Director / C-level dans mon secteur qui ne sont pas forcément publiés mais visibles via des signaux.
+
+MON PROFIL
+[À COMPLÉTER : niveau actuel, secteur, taille d'équipe gérée, géographie]
+
+SIGNAUX À DÉTECTER
+- Offres explicites pour ces niveaux dans mon réseau
+- Posts d'investisseurs cherchant un C-level pour une boîte de leur portfolio
+- Annonces de levée série B+ (souvent suivies de recrutement leadership)
+- Départ public d'un Head of / VP dans une boîte cible (ouverture probable)
+
+POUR CHAQUE OPPORTUNITÉ
+- Boîte + poste + niveau de visibilité (offre publique vs signal indirect)
+- Décideur identifié (CEO, board member, investor, recruteur exec)
+- Mon angle d'approche
+
+Trie par opportunités ""cachées"" (signal indirect) en priorité — c'est là qu'il y a le moins de concurrence.","leadership,marche-cache,executive","avancé","oui","Postes leadership avec angle d'approche"
+"M018","Sourcing & Recrutement","Découvrir","Recruteur","Candidats passifs qualifiés pour mon poste [INTITULÉ]","Trouve des candidats passifs (= pas en recherche active) qui correspondent à mon brief.
+
+LE BRIEF
+- Poste : [À COMPLÉTER]
+- Stack technique / compétences clés : [À COMPLÉTER]
+- Niveau d'expérience : [À COMPLÉTER]
+- Localisation acceptée : [À COMPLÉTER]
+- Type contrat : [À COMPLÉTER]
+- Salaire range : [À COMPLÉTER]
+- Bonus différenciants : [À COMPLÉTER : ex. Open source, conférences, etc.]
+
+CRITÈRES DE QUALIFICATION
+1. Profil tech matche le brief à 80%+
+2. PAS en recherche active (bannière ""Open to Work"" absente, pas d'application apparente)
+3. Signaux de ""bougeabilité"" : ancienneté actuelle 18-36 mois, dernier post critique sur sa boîte, like de posts d'autres recruteurs
+
+POUR CHAQUE CANDIDAT
+- Nom + poste + boîte actuelle + URL LinkedIn
+- Score d'adéquation /100
+- Score de ""bougeabilité"" /100
+- Signal qui fait penser qu'il est ouvert à l'écoute
+- Hook d'approche personnalisé
+
+Trie par produit (adéquation × bougeabilité). Limite 15 candidats max.","sourcing,candidats-passifs,brief-tech","avancé","oui","15 candidats passifs scorés et hookés"
+"M019","Sourcing & Recrutement","Cibler","Recruteur","Mes 5 meilleurs candidats à approcher cette semaine","Parmi tous les candidats que j'ai déjà sourcés sur ce poste, identifie les 5 à approcher en priorité cette semaine.
+
+LE POSTE
+[À COMPLÉTER]
+
+CRITÈRES DE PRIORITÉ
+- Score adéquation × bougeabilité (déjà calculé)
+- Activité LinkedIn récente (signe qu'ils sont visibles et joignables)
+- Probabilité qu'ils soient déjà sollicités par d'autres (s'ils sont visibles, je dois passer en premier)
+- Disponibilité géographique vs poste
+
+POUR CHAQUE TOP 5
+- Pourquoi top 5
+- Heure idéale d'envoi du DM (basée sur leurs habitudes LinkedIn si détectables)
+- Variation du hook personnalisé
+- Plan B si pas de réponse à J+5","top-5,priorisation,outreach","intermédiaire","non","Top 5 candidats avec plan d'attaque"
+"M020","Sourcing & Recrutement","Surveiller","Recruteur","Détection de talents en mouvement chez des concurrents","Surveille en continu ces entreprises et alerte-moi dès qu'un de leurs employés émet un signal de mouvement.
+
+ENTREPRISES SURVEILLÉES
+[À COMPLÉTER : liste de concurrents ou boîtes ""fournisseurs de talent""]
+
+PROFILS CIBLES
+[À COMPLÉTER : intitulés / stacks / séniorités à détecter]
+
+SIGNAUX DE MOUVEMENT
+- Like sur posts de recruteurs ou d'autres boîtes du secteur
+- Commentaires critiques sur leur boîte actuelle
+- Post sur l'évolution de carrière, le burn-out, la quête de sens
+- Mise à jour soudaine du profil (compétences, photo, headline)
+- Bannière ""Open to Work"" activée
+
+Format ping : ""[Nom] / [Boîte actuelle] / [Signal détecté] / [Action recommandée]"".","veille-talent,concurrents,heartbeat,whatsapp","avancé","oui","Alertes en temps réel sur talents mobiles"
+"M021","Sourcing & Recrutement","Activer","Recruteur","Premier message de sourcing pour [CANDIDAT] sur le poste [INTITULÉ]","Rédige le premier message de sourcing à envoyer à [NOM DU CANDIDAT] pour le poste [INTITULÉ].
+
+LE POSTE
+[À COMPLÉTER : titre, entreprise, stack, salaire range, USP du poste]
+
+CONTEXTE CANDIDAT
+- À inférer depuis son profil
+- Mentionner concrètement quelque chose de SON profil (un projet, une compétence, un poste passé)
+
+CONTRAINTES DE STYLE
+- Max 6 phrases
+- Pas de ""Bonjour, comment allez-vous""
+- Pas de ""j'ai un poste génial pour vous""
+- Personnaliser au-delà du nom : montrer qu'on a lu son profil
+- Donner l'info clé (poste + boîte + 1 chiffre attractif) sans tout déballer
+- CTA léger : ""ouvert à 15 min cette semaine ?"" pas ""envoyez-moi votre CV""
+
+Donne 3 variantes : tech-respect (parle stack), business-impact (parle de réussites), human-curieux (parle de parcours).","message-sourcing,3-variantes,personnalisation","débutant","non","3 messages personnalisés pour candidat passif"
+"M022","Sourcing & Recrutement","Découvrir","Founder","Premier dev senior à recruter pour ma startup","Trouve dans mon réseau LinkedIn et son 2e degré les développeurs seniors qui pourraient devenir mon premier hire tech.
+
+MA STARTUP
+- Mission : [À COMPLÉTER]
+- Stade : [pré-seed / seed / Series A]
+- Stack actuelle : [À COMPLÉTER]
+- Localisation / remote : [À COMPLÉTER]
+- Equity range possible : [À COMPLÉTER]
+
+PROFIL CIBLE
+- 5+ ans d'expérience tech
+- A déjà bossé en startup ou scale-up (pas que en grands groupes)
+- Polyvalent (full-stack ou avec affinité produit)
+- Signaux ""envie de bouger"" : ancienneté actuelle 2-4 ans, posts sur l'entrepreneuriat, side projects visibles
+
+POUR CHAQUE CANDIDAT
+- Pourquoi il pourrait être tenté par mon offre
+- Sa motivation probable (argent, mission, équipe, technique, autonomie)
+- Risques : sa stack vs la mienne, sa famille, son confort actuel
+- Hook d'approche custom
+
+Trie par ""fit founder-dev"" subjectif (énergie, mission, profil).","first-hire,startup,equity,fit-founder","avancé","non","Liste qualifiée de premiers devs hireables"
+"M023","Veille & Intelligence économique","Découvrir","Founder","Mes concurrents directs et indirects que je n'ai pas encore identifiés","Identifie sur LinkedIn les entreprises qui pourraient être mes concurrents directs ou indirects.
+
+MA SOLUTION
+- Ce que je fais : [À COMPLÉTER en 2 phrases]
+- Mon ICP : [À COMPLÉTER]
+- Géographie : [À COMPLÉTER]
+
+CRITÈRES
+- Concurrents directs : même solution, même ICP, même géographie
+- Concurrents indirects : solution différente mais résout la même douleur, OU même solution mais ICP/géo différent
+- Concurrents émergents : startup <2 ans avec mots-clés similaires aux miens
+
+POUR CHAQUE CONCURRENT TROUVÉ
+- Type (direct / indirect / émergent)
+- Différenciation principale vs moi
+- Taille estimée (employés LinkedIn)
+- Signaux récents (levée, lancement, embauche)
+- Niveau de menace 1-5 pour ma roadmap
+
+Trie par menace décroissante. Limite 15.","concurrents,benchmarking,landscape","avancé","oui","Mapping concurrentiel hiérarchisé"
+"M024","Veille & Intelligence économique","Surveiller","Founder","Mouvements stratégiques de mes concurrents","Surveille ces concurrents et alerte-moi de tout mouvement stratégique.
+
+MES CONCURRENTS
+[À COMPLÉTER : liste]
+
+SIGNAUX À DÉTECTER
+- Levée de fonds (montant, lead investor)
+- Lancement de produit / nouvelle feature majeure
+- Embauche d'un C-level (Head of Sales, VP Marketing, CTO...)
+- Pivot ou repositionnement
+- Acquisition ou acquisition par
+- Faillite, restructuration, layoffs
+- Partenariat ou intégration majeure
+
+Format de notification : ""[Concurrent] | [Type d'événement] | [Implication pour moi en 1 phrase] | [Action recommandée]"".","concurrents,heartbeat,strategie,whatsapp","avancé","oui","Alertes en temps réel sur les mouvements"
+"M025","Veille & Intelligence économique","Découvrir","Investisseur","Tendances émergentes dans mon secteur de thèse","Identifie les tendances émergentes dans le secteur sur lequel j'investis.
+
+MA THÈSE
+- Secteur : [À COMPLÉTER]
+- Sous-thèmes : [À COMPLÉTER]
+- Géographie : [À COMPLÉTER]
+
+SIGNAUX
+- Founders qui changent de poste vers ce secteur
+- Posts récurrents sur des concepts / mots-clés émergents
+- Levées de fonds récentes (signal d'intérêt VC)
+- Nouvelles boîtes créées dans le secteur (<12 mois)
+- Hires de talents seniors quittant un secteur pour rejoindre celui-ci
+
+POUR CHAQUE TENDANCE
+- Description en 2 phrases
+- Boîtes en pointe (3-5 max)
+- Investisseurs déjà positionnés
+- Signaux qui valident la tendance
+- Niveau de maturité (émergent / consolidant / mainstream)","tendances,thesis,emergence,scouting","avancé","oui","Cartographie des tendances avec acteurs clés"
+"M026","Veille & Intelligence économique","Cibler","Sales","Comptes cibles avec un signal d'investissement go-to-market","Identifie les boîtes de mon ICP qui viennent d'investir dans leur GTM (sales/marketing) et qui sont donc en mode achat de solutions.
+
+SIGNAUX D'INVESTISSEMENT GTM
+- Embauche d'un VP Sales / CRO / VP Marketing dans les 90 derniers jours
+- Levée de fonds Série A/B avec mention ""go-to-market"" dans la communication
+- Hires multiples dans les équipes commerciales/marketing
+- Lancement d'un nouveau marché / nouvelle géographie
+
+MON ICP
+[À COMPLÉTER]
+
+POUR CHAQUE COMPTE
+- Le signal détecté (date, source)
+- Le décideur GTM identifié
+- Pourquoi mon offre est pertinente maintenant
+- Hook d'approche","GTM,signaux,fenetre-budget,sales-trigger","avancé","oui","Comptes en mode achat avec décideur"
+"M027","Veille & Intelligence économique","Découvrir","Manager","Best practices émergentes dans la gestion d'équipes tech","Trouve les meilleurs contenus, frameworks et personnes qui parlent de management tech moderne.
+
+CE QUE JE CHERCHE
+- Méthodologies récentes (post-2024)
+- Posts à fort engagement de Heads of Engineering / VP Eng
+- Études et reports sectoriels cités
+- Personnes à suivre pour ne plus rater les évolutions
+
+DOMAINES PRIORITAIRES
+[À COMPLÉTER : ex. async work, IA dans dev, performance review, etc.]
+
+POUR CHAQUE INSIGHT
+- Le concept / framework / personne
+- Pourquoi c'est différent de l'existant
+- Comment l'appliquer concrètement dans mon contexte
+- Source LinkedIn pour creuser","management,best-practices,veille-pro","intermédiaire","oui","Veille managériale curatée"
+"M028","Networking & Relations","Découvrir","Founder","Cartographie de mon réseau : mes clusters cachés","Analyse mon réseau LinkedIn 1er degré et identifie les clusters thématiques cachés que je peux activer.
+
+DIMENSIONS À EXPLORER
+- Par entreprise (mes anciens collègues par boîte)
+- Par école (mes alumni par formation)
+- Par secteur d'activité actuel
+- Par géographie
+- Par séniorité
+
+POUR CHAQUE CLUSTER PERTINENT
+- Nom du cluster
+- Nombre de personnes
+- Décideurs / ""ponts"" influents dans ce cluster
+- Quelle activation possible (intro, événement, contenu ciblé, etc.)
+
+Limite à 10 clusters les plus actionnables pour moi.","cartographie,clusters,reseau-cache","intermédiaire","non","Top 10 clusters avec leviers d'activation"
+"M029","Networking & Relations","Cibler","Founder","Les 10 personnes que je dois reconnecter ce mois","Identifie les 10 personnes de mon réseau que je devrais reconnecter ce mois pour des raisons stratégiques.
+
+CRITÈRES
+- Connexion ancienne mais qualitative (a déjà eu un échange substantiel avec moi)
+- Pas d'interaction depuis 6+ mois
+- A bougé professionnellement dans une direction qui peut être utile à mes objectifs actuels
+- Ou : a une influence qui peut m'ouvrir des portes
+- Ou : a été clé pour moi dans le passé et je dois lui rendre la pareille
+
+MES OBJECTIFS ACTUELS
+[À COMPLÉTER : ex. lever des fonds / recruter / vendre / signer un partenariat]
+
+POUR CHAQUE PERSONNE
+- Pourquoi reconnecter MAINTENANT
+- Sujet d'accroche basé sur sa situation actuelle (pas sur la mienne)
+- Type de contact (DM léger / café / call zoom / commentaire d'un post)
+- Bénéfice mutuel possible","reconnexion,top-10,strategique","intermédiaire","non","10 reconnexions stratégiques avec hook"
+"M030","Networking & Relations","Surveiller","Founder","Anniversaires pro et événements de vie de mon réseau","Surveille mon réseau LinkedIn et préviens-moi quand des personnes clés vivent un événement professionnel important.
+
+ÉVÉNEMENTS À DÉTECTER
+- Anniversaire LinkedIn (work anniversary)
+- Promotion ou changement de poste
+- Lancement d'une nouvelle boîte
+- Levée de fonds annoncée
+- Publication d'un livre / article / interview majeure
+- Récompense ou reconnaissance publique
+- Retour de congé maternité/paternité
+- Diplôme ou certification
+
+PERSONNES À SURVEILLER EN PRIORITÉ
+[À COMPLÉTER : noms ou critères, ex. anciens collègues, clients, prospects]
+
+Format ping : ""[Nom] | [Événement] | [Proposition de message en 1 phrase]"".","anniversaires,evenements-vie,heartbeat,whatsapp","débutant","oui","Notifications WhatsApp sur événements clés"
+"M031","Networking & Relations","Activer","Founder","Demande d'intro warm pour rencontrer [PERSONNE CIBLE]","Trouve qui dans mon réseau peut me présenter à [NOM DE LA PERSONNE CIBLE] et rédige le message de demande d'intro.
+
+LA PERSONNE QUE JE VEUX RENCONTRER
+- Nom : [À COMPLÉTER]
+- Poste / boîte : [À COMPLÉTER]
+- Pourquoi je veux la rencontrer : [À COMPLÉTER]
+
+ANALYSE
+- Identifie tous les ""ponts"" possibles entre elle et mon réseau
+- Score chaque pont sur sa probabilité d'accepter de m'introduire (proximité, dette de gratitude, intérêt commun)
+
+LE MESSAGE
+Pour le pont le mieux scoré, rédige le message de demande d'intro :
+- Maximum 5 phrases
+- Précise ce que je veux exactement
+- Donne au pont une raison ÉGOÏSTE de m'aider (pas juste ""rends-moi service"")
+- Inclus un ""blurb"" prêt à transférer (3 phrases max décrivant qui je suis et ce que je veux)
+- Closing facile à dire NON pour le pont (réduire la pression)","warm-intro,pont,blurb,activation","avancé","non","Pont identifié + message d'intro complet"
+"M032","Networking & Relations","Cibler","Sales","Comptes existants où je peux faire de l'expansion via le réseau","Dans mes comptes clients existants, identifie les opportunités d'expansion via mon réseau LinkedIn.
+
+MES COMPTES CLIENTS ACTUELS
+[À COMPLÉTER : liste]
+
+OPPORTUNITÉS À DÉTECTER
+- Nouveaux décideurs dans le compte (changement récent de C-level)
+- Filiales ou divisions du groupe pas encore équipées
+- Anciens employés du compte qui sont partis ailleurs (= prospects warm pour moi)
+- Personnes de mon réseau qui sont entrées dans le compte récemment
+
+POUR CHAQUE OPPORTUNITÉ
+- Compte + personne identifiée
+- Type d'opportunité (upsell / cross-sell / new logo via alumni)
+- Mon levier d'entrée
+- Action recommandée","expansion,upsell,alumni,reseau","avancé","oui","Plan d'expansion réseau par compte"
+"M033","Networking & Relations","Découvrir","Job seeker","Mes ""ponts"" possibles vers les boîtes que je vise","Pour chaque entreprise que je vise, identifie les personnes de mon réseau qui peuvent me faire une intro.
+
+MES BOÎTES CIBLES
+[À COMPLÉTER : liste]
+
+POUR CHAQUE BOÎTE
+- Personnes de mon 1er degré qui y travaillent actuellement
+- Personnes de mon 1er degré qui y ont travaillé dans le passé
+- Personnes de mon réseau étendu (2e degré) qui pourraient me connecter
+- Score de ""willingness"" probable de chaque pont (sympathie, dette, intérêt)
+
+ACTION
+Pour chaque boîte, identifie le pont optimal et rédige le 1er message à lui envoyer (maximum 5 phrases, focus sur lui pas sur moi).","warm-intro,job-search,ponts","intermédiaire","non","Cartographie des ponts vers boîtes cibles"
+"M034","Networking & Relations","Cibler","Consultant","Mes anciens clients à relancer ce trimestre","Liste mes anciens clients (mission terminée >6 mois) et identifie ceux que je devrais relancer ce trimestre.
+
+CRITÈRES DE RELANCE PRIORITAIRE
+- Mission terminée avec un résultat positif (signal de relation préservée)
+- Le client a évolué dans son rôle / sa boîte (nouveau besoin probable)
+- Sa boîte a grandi / levé / changé de phase (nouveaux besoins)
+- Cas d'usage pertinent émergent dans son secteur
+
+POUR CHAQUE CLIENT
+- Pourquoi le relancer maintenant
+- Le bon angle d'approche (suite mission précédente, nouveau besoin détecté, simple ""comment vas-tu"")
+- Le hook personnalisé","anciens-clients,relance,nurturing","intermédiaire","non","Plan de relance trimestre"
+"M035","Création de contenu","Découvrir","Founder","Sujets de posts qui marchent dans mon secteur cette semaine","Analyse les posts LinkedIn qui ont le plus performé dans mon secteur cette semaine.
+
+MON SECTEUR
+[À COMPLÉTER]
+
+CRITÈRES D'ANALYSE
+- Posts >100 réactions ET ratio engagement/followers >3%
+- Issus de personnes de mon réseau ou de mon secteur (1er + 2e degré)
+- Sur les 7 derniers jours
+
+POUR CHAQUE POST PERFORMANT
+- Auteur + type de profil (dirigeant / créateur / etc.)
+- Sujet en 1 phrase
+- Pourquoi ça a marché (hook, structure, émotion, info, controverse, format)
+- Comment je peux faire un post DIFFÉRENT mais inspiré (pas copier)
+
+Donne 5 idées de posts personnalisés pour moi, avec hook + structure + closing.","sujets,viralite,benchmark,5-idees","intermédiaire","oui","5 idées de posts avec structure"
+"M036","Création de contenu","Activer","Founder","Post LinkedIn engageant pour cette semaine","Rédige-moi un post LinkedIn complet à publier cette semaine.
+
+CONTEXTE
+- Mon secteur / mon expertise : [À COMPLÉTER]
+- Ce sur quoi je veux capitaliser (sujet, message, opinion forte) : [À COMPLÉTER]
+- Mon objectif : [building authority / attirer prospects / recrutement / réseau]
+
+CONTRAINTES DE FORMAT
+- Hook en 1 phrase qui DOIT donner envie de cliquer ""Voir plus""
+- 8-15 lignes max après le hook (LinkedIn coupe à ~3 lignes)
+- Structure : promesse → développement → punchline → CTA
+- Pas d'émojis en surnombre (max 2-3)
+- Une question ouverte à la fin
+- Si pertinent, propose un visuel à associer (idée + description en 1 phrase)
+
+Donne 3 versions :
+- A : Storytelling personnel
+- B : Insight contrarien
+- C : Frame de tableau / liste actionnable","post,3-versions,engagement,hook","débutant","non","3 versions de post prêtes à publier"
+"M037","Création de contenu","Surveiller","Founder","Tendances de contenu dans mon secteur","Surveille en continu les sujets émergents qui font du bruit dans mon secteur.
+
+MON SECTEUR
+[À COMPLÉTER]
+
+SIGNAUX
+- Pic de posts sur un même sujet (>5 posts/semaine de mon réseau étendu)
+- Posts d'influenceurs majeurs (>10k followers) sur un nouveau sujet
+- Hashtag qui décolle (volume de posts × engagement)
+- Débats / controverses qui mobilisent
+
+Notification : ""[Sujet émergent] | [Volume] | [3 posts représentatifs] | [Mon angle possible]"".","tendances,heartbeat,whatsapp,contenu","avancé","oui","Alertes hebdo sur sujets brûlants"
+"M038","Création de contenu","Cibler","Personal brander","Calendrier éditorial du mois prochain","Construis-moi un calendrier éditorial de 12 posts pour les 4 prochaines semaines.
+
+MON POSITIONNEMENT
+- Mon thème éditorial principal : [À COMPLÉTER]
+- Mes 3 piliers de contenu : [À COMPLÉTER]
+- Mon ICP audience : [À COMPLÉTER]
+- Ma fréquence : [3 posts / semaine]
+
+PRINCIPES
+- Alterner les formats : storytelling, listicle, contrarien, témoignage, framework
+- Couvrir mes 3 piliers de manière équilibrée
+- Inclure 1-2 posts ""viralité maximale"" (sujet émotionnel ou clivant)
+- Inclure 1 post ""promotion soft"" si pertinent
+
+POUR CHAQUE POST
+- Date + jour
+- Pilier ciblé
+- Format
+- Hook complet
+- Idée de développement en 1 paragraphe
+- CTA
+- Visuel suggéré","calendrier,12-posts,piliers,formats","avancé","non","Calendrier complet 4 semaines, 12 posts"
+"M039","Création de contenu","Activer","Personal brander","Hook viral pour mon prochain post sur [SUJET]","Donne-moi 10 hooks différents pour un post LinkedIn sur [SUJET].
+
+MON SUJET
+[À COMPLÉTER]
+
+LES 10 STYLES À COUVRIR
+1. Confession personnelle (""J'ai fait l'erreur de..."")
+2. Liste numérotée (""5 trucs que personne ne te dit sur..."")
+3. Contrarien (""Tout le monde dit X. C'est faux."")
+4. Cas concret (""Voici comment j'ai..."")
+5. Question rhétorique (""Pourquoi est-ce que..."")
+6. Stat choc (""87% des [...]"")
+7. Comparaison (""X est à Y ce que Z est à W"")
+8. Témoignage indirect (""Mon mentor m'a dit..."")
+9. Métaphore (""Construire un produit, c'est comme..."")
+10. Promesse claire (""Si tu lis ce post, tu repars avec..."")
+
+Pour chaque hook, score-le sur :
+- Probabilité de clic ""Voir plus"" /10
+- Risque de polarisation /10
+- Authenticité par rapport à mon ton","hooks,10-variantes,viralite,formats","débutant","non","10 hooks scorés pour 1 sujet"
+"M040","Création de contenu","Découvrir","Sales","Posts de mon ICP qui montrent leurs douleurs","Identifie les posts récents (30 derniers jours) de profils correspondant à mon ICP qui révèlent une douleur que je peux résoudre.
+
+MON ICP
+[À COMPLÉTER]
+
+DOULEURS QUE JE RÉSOUS
+[À COMPLÉTER]
+
+CRITÈRES
+- Post émis par un profil ICP
+- Mention d'un problème spécifique (frustration, blocage, échec)
+- Post avec engagement (au moins 5 commentaires, ou >100 likes)
+
+POUR CHAQUE POST
+- Auteur + URL profil
+- Citation du passage qui exprime la douleur
+- Mon angle : commentaire intelligent sous le post pour me positionner sans pitcher
+- Hook potentiel pour DM en suivi","douleurs,sales,commentaires,ICP","intermédiaire","oui","Posts ICP avec angle commercial"
+"M041","Apprentissage & Carrière","Découvrir","Job seeker","Mes role models : qui a le parcours que je veux ?","Trouve dans mon réseau LinkedIn (1er + 2e degré) les personnes qui ont aujourd'hui le poste que je veux atteindre, et analyse leurs parcours.
+
+MON OBJECTIF DE CARRIÈRE À 5 ANS
+[À COMPLÉTER]
+
+MON PROFIL ACTUEL
+[À COMPLÉTER : poste, années XP, secteur]
+
+POUR CHAQUE ROLE MODEL TROUVÉ
+- Nom + poste + boîte actuelle
+- Parcours en 4-6 étapes clés
+- Compétences / expériences pivots qui ont fait la différence
+- Différence clé avec mon parcours actuel
+- Ce que je peux apprendre de son chemin
+
+Limite à 8 personnes max. Trie par alignement avec mon profil de départ.","role-model,parcours-cible,benchmark","avancé","non","8 parcours analysés avec apprentissages"
+"M042","Apprentissage & Carrière","Cibler","Job seeker","Mes mentors potentiels accessibles","Identifie 5 personnes de mon réseau (1er ou 2e degré) qui pourraient devenir mes mentors.
+
+CRITÈRES
+- 8-15 ans d'avance sur moi en termes de carrière (pas trop loin = inaccessible, pas trop proche = inutile)
+- Parcours partiellement aligné avec ce que je veux faire
+- Profil d'accessibilité : crée du contenu, répond en commentaire, semble ouvert
+- Si possible, pas trop sollicité (pas un influenceur 50k followers déjà saturé)
+
+POUR CHAQUE MENTOR POTENTIEL
+- Pourquoi lui spécifiquement
+- Quelle question je pourrais lui poser qui le valoriserait sans le saouler
+- Format de premier contact (commentaire intelligent / DM / question publique)
+- Plan de relation long terme : quel rythme, quel échange équilibré","mentors,5-mentors,accessibilite","intermédiaire","non","5 mentors potentiels avec plan d'approche"
+"M043","Apprentissage & Carrière","Découvrir","Manager","Communautés et événements pro pour mon développement","Identifie les communautés en ligne, événements, conférences et formats récurrents pertinents pour mon développement.
+
+MON RÔLE
+[À COMPLÉTER]
+
+CE QUE JE CHERCHE À DÉVELOPPER
+[À COMPLÉTER : compétences techniques, leadership, secteur, autre]
+
+SOURCES À EXPLORER
+- Communautés Slack / Discord / Circle mentionnées par mes pairs
+- Conférences / meetups où des gens de mon ICP sont speakers
+- Newsletters citées en commentaire de posts
+- Podcasts mentionnés dans l'écosystème
+- Formations / cohortes mentionnées
+
+POUR CHAQUE OPPORTUNITÉ
+- Type (communauté / événement / format / contenu)
+- Pourquoi pertinent pour moi
+- Coût (€ + temps)
+- Niveau de qualité estimé (basé sur qui le recommande)
+- Action concrète (s'inscrire / s'abonner / postuler)","communautes,evenements,formation,dev-pro","intermédiaire","oui","Liste curatée d'opportunités de dev pro"
+"M044","Apprentissage & Carrière","Découvrir","Founder","Founders qui ont déjà résolu mon problème actuel","Trouve des founders qui ont déjà traversé / résolu le défi que j'affronte aujourd'hui.
+
+MON DÉFI ACTUEL
+[À COMPLÉTER : ex. faire passer un MVP au product-market fit, embaucher mes 5 premiers, lever en seed, structurer ma boîte à 10 personnes...]
+
+CRITÈRES
+- Founders dans mon réseau (1er ou 2e degré idéalement)
+- Boîte 1-3 ans en avance sur la mienne
+- Secteur similaire ou adjacent
+- Visibilité sur leur parcours (posts, interviews, podcasts)
+
+POUR CHAQUE FOUNDER
+- Sa boîte, son stade
+- Ce qu'il a fait spécifiquement face à mon défi (basé sur ses posts/interviews)
+- 1 leçon clé que je peux appliquer cette semaine
+- Approche pour le contacter (sans saouler — il est probablement très sollicité)","founders-mentors,defi-specifique,apprentissage","avancé","non","Founders avec leçons applicables"
+"M045","Business Development & Partenariats","Découvrir","Founder","Partenaires de distribution complémentaires à ma solution","Identifie les entreprises et personnes qui pourraient devenir des partenaires de distribution pour mon produit.
+
+MA SOLUTION
+- Produit : [À COMPLÉTER]
+- ICP : [À COMPLÉTER]
+
+CRITÈRES DE PARTENAIRE IDÉAL
+- Adresse le même ICP que moi
+- Vend une solution complémentaire (pas concurrente)
+- A déjà une distribution établie (sales team, communauté, audience)
+- Aurait intérêt à recommander mon produit (revenue share, exclu de marché, complétion d'offre)
+
+POUR CHAQUE PARTENAIRE POTENTIEL
+- Entreprise + décideur BD/partenariats
+- Pourquoi le match
+- Type de partenariat possible (revente / co-marketing / intégration tech / référencement)
+- Hook d'approche","partenaires,distribution,channel","avancé","oui","Liste de partenaires avec hook"
+"M046","Business Development & Partenariats","Cibler","Founder","Mes 3 partenariats prioritaires à activer ce trimestre","Parmi tous mes partenaires potentiels identifiés, sélectionne les 3 prioritaires pour ce trimestre.
+
+CRITÈRES DE PRIORITÉ
+- Effort de mise en place (faible = priorité haute)
+- Volume de business potentiel (haut = priorité haute)
+- Probabilité d'aboutir (chaleur de la relation)
+- Stratégique pour ma roadmap
+
+MES PARTENAIRES POTENTIELS
+[À COMPLÉTER : liste depuis prompt précédent ou à fournir]
+
+POUR CHAQUE TOP 3
+- Justification de la priorité
+- Plan d'attaque sur 90 jours (étapes clés)
+- Premier message à envoyer cette semaine
+- Risques / objections à anticiper","top-3,partenariats,90-jours,plan","avancé","non","3 partenariats avec plan 90 jours"
+"M047","Business Development & Partenariats","Découvrir","Sales","Prescripteurs naturels de ma solution dans mon réseau","Identifie les personnes de mon réseau qui pourraient naturellement parler de ma solution à leurs contacts (sans rétribution forcément).
+
+QUI EST UN BON PRESCRIPTEUR
+- A déjà acheté ou recommandé ma solution OU une solution comparable
+- Crée du contenu / partage des outils dans son secteur
+- A une audience LinkedIn engagée (>1000 followers)
+- A un intérêt aligné avec moi (consultant, expert, créateur)
+
+MA SOLUTION
+[À COMPLÉTER]
+
+POUR CHAQUE PRESCRIPTEUR POTENTIEL
+- Pourquoi il pourrait recommander
+- Quel deal lui proposer (gratuit à vie / commission / co-marketing / autre)
+- Comment l'aborder sans paraître transactionnel
+- Volume potentiel d'audience touchée","prescripteurs,influence,recommandation","avancé","oui","Liste de prescripteurs avec deal proposé"
+"M048","Business Development & Partenariats","Activer","Founder","Premier message de partenariat pour [PARTENAIRE]","Rédige-moi le premier message à envoyer à [NOM] de [BOÎTE] pour proposer un partenariat.
+
+CONTEXTE
+- Mon produit : [À COMPLÉTER]
+- Leur produit : [À COMPLÉTER]
+- Pourquoi ça matche : [À COMPLÉTER]
+- Ce que je veux : [À COMPLÉTER : exploratoire 30 min / pilote / etc.]
+
+CONTRAINTES DE STYLE
+- Maximum 6 phrases
+- Premier mot doit accrocher
+- Mentionner concrètement ce qu'ils font (preuve qu'on a fait ses devoirs)
+- Articuler le bénéfice POUR EUX (pas pour moi)
+- CTA léger et asymétrique : ils peuvent dire NON facilement
+
+3 variantes : exploratoire (open question), spécifique (pilote précis), warm (via un connaissance commune si applicable).","message-partenariat,3-variantes,activation","intermédiaire","non","3 messages de partenariat prêts"
+"M049","Levée de fonds","Découvrir","Founder","Investisseurs qui ont investi dans ma thèse récemment","Identifie les investisseurs qui ont fait des deals dans mon secteur / mon stade dans les 12 derniers mois.
+
+MA THÈSE
+- Secteur : [À COMPLÉTER]
+- Sous-thèmes : [À COMPLÉTER]
+- Géographie : [À COMPLÉTER]
+- Mon stade : [pré-seed / seed / Série A]
+- Mon ticket cible : [À COMPLÉTER]
+
+SIGNAUX À DÉTECTER
+- Annonce de deal sur LinkedIn dans mon secteur (12 derniers mois)
+- Investisseur du fond qui poste sur mon thème
+- Partner du fond avec un parcours aligné avec mon secteur
+
+POUR CHAQUE INVESTISSEUR
+- Nom du fond + nom du partner identifié
+- Deals récents dans mon secteur (avec détail)
+- Ticket habituel
+- Géographie d'investissement
+- Probabilité de match avec ma boîte (1-5)
+- Hook d'approche personnalisé","levee-fonds,VC,thesis-match,deals-recents","avancé","oui","Liste de VCs alignés thèse avec hook"
+"M050","Levée de fonds","Cibler","Founder","Mes 10 VCs prioritaires à approcher pour ma seed","Parmi tous les investisseurs potentiels, sélectionne les 10 prioritaires pour ma levée seed.
+
+CRITÈRES DE PRIORITÉ
+- Match thèse (secteur + stade + géo)
+- Réputation et qualité du fond
+- Présence d'un warm intro possible dans mon réseau
+- Vélocité du fond (ils investissent vite)
+- Value-add post-investissement (réseau, expertise, suivantes)
+
+MA LEVÉE
+- Montant : [À COMPLÉTER]
+- Valorisation cible : [À COMPLÉTER]
+- Timing : [À COMPLÉTER]
+
+POUR CHAQUE TOP 10
+- Justification du score
+- Warm intro disponible (qui peut me présenter)
+- Hook personnalisé
+- Ordre d'approche optimal (commencer par les ""tier 2"" pour s'entraîner, finir par les top)","top-10,seed,prioritisation,warm-intro","avancé","non","Top 10 VCs avec ordre d'attaque"
+"M051","Levée de fonds","Surveiller","Founder","Mouvements et signaux de mes VCs cibles","Surveille les VCs que j'ai ciblés pour ma levée et alerte-moi de tout signal pertinent.
+
+MES VCs CIBLES
+[À COMPLÉTER : liste]
+
+SIGNAUX À DÉTECTER
+- Deal annoncé dans mon secteur (signal qu'ils sont actifs ET potentiellement compétitifs)
+- Partner du fond qui poste sur ma thèse (= sujet ""top of mind"" pour eux)
+- Embauche d'un nouvel investment partner (peut-être plus joignable, ""fresh book"")
+- Levée d'un nouveau fond (= deploy pressure, plus actifs)
+- Sortie publique sur leur stratégie / nouveaux secteurs
+
+Format : ""[VC] | [Signal] | [Implication] | [Action recommandée]"".","VC,heartbeat,whatsapp,fundraising","avancé","oui","Alertes VCs en temps réel"
+"M052","Levée de fonds","Activer","Founder","Email de cold outreach à [INVESTISSEUR]","Rédige-moi l'email de premier contact à envoyer à [NOM PARTNER] de [FOND].
+
+CONTEXTE
+- Mon produit / ma boîte en 1 phrase : [À COMPLÉTER]
+- Ma traction (chiffres concrets) : [À COMPLÉTER]
+- Pourquoi mon produit matche leur thèse : [À COMPLÉTER ou laisser Morphic inférer]
+- Ce que je veux : 30 min pour présenter
+
+CONTRAINTES
+- 6 phrases max
+- Hook qui montre que j'ai lu leurs posts / deals récents
+- 3 chiffres concrets de traction (revenu, clients, croissance)
+- Référence concrète à un de leurs investissements similaires
+- CTA explicite mais asymétrique (facile de dire non)
+- Pas de pièce jointe dans le 1er email (lien vers un one-pager max)
+
+Donne 2 variantes : ""factuelle directe"" et ""narrative storytelling"".","cold-email,VC,2-variantes,traction","avancé","non","2 emails VC prêts à envoyer"
+"M053","Levée de fonds","Découvrir","Investisseur","Co-investisseurs naturels pour mes deals","Identifie les fonds avec qui je devrais co-investir sur mes deals actuels.
+
+MA THÈSE / MON FOND
+[À COMPLÉTER]
+
+DEALS EN COURS / PIPELINE
+[À COMPLÉTER]
+
+CRITÈRES DE CO-INVESTISSEUR IDÉAL
+- Thèse complémentaire (pas exactement la même, mais alignée)
+- Stade compatible (souvent un fond + grand pour me faire follow ou un + petit pour faire le filling)
+- Géographie cohérente
+- Bon réputation : pas un VC qui détruit la cap table
+- Historique de co-investissement avec moi positif
+
+POUR CHAQUE FOND
+- Pourquoi pertinent
+- Partner spécifique à approcher
+- Deal sur lequel les approcher en priorité
+- Hook d'approche","co-investissement,VC-network,deals","avancé","oui","Liste de co-investisseurs ciblés"
+"M054","Communauté & Événements","Découvrir","Founder","Événements professionnels où je devrais être présent ce trimestre","Identifie les événements (conférences, meetups, salons, hackathons) où je devrais être présent ce trimestre.
+
+MON CONTEXTE
+- Mon secteur / mon ICP : [À COMPLÉTER]
+- Mes objectifs trimestre : [À COMPLÉTER : ex. trouver 5 clients / lever / recruter / networker]
+- Géographie acceptable : [À COMPLÉTER]
+- Budget temps : [À COMPLÉTER : nb max d'événements]
+
+CRITÈRES DE SÉLECTION
+- ICP fortement présent (basé sur les speakers et l'audience visible)
+- Format adapté à mon objectif (un salon ≠ une retraite founder)
+- Reputation et qualité (basé sur les éditions précédentes ou les sponsors)
+- ROI temps : déplacement vs valeur
+
+POUR CHAQUE ÉVÉNEMENT
+- Nom + dates + lieu + format
+- Pourquoi pertinent pour moi
+- Profils que je vais y croiser
+- Stratégie d'événement (objectif + 3 personnes à rencontrer absolument + pitch en 30 secondes)","evenements,trimestre,strategie,ROI","intermédiaire","oui","Calendrier événements avec stratégie"
+"M055","Communauté & Événements","Cibler","Founder","Personnes à rencontrer absolument à [ÉVÉNEMENT]","Pour [NOM DE L'ÉVÉNEMENT] qui a lieu [DATE], identifie les 10 personnes que je dois absolument rencontrer.
+
+CONTEXTE ÉVÉNEMENT
+- Si la liste des participants est publique : utilise-la
+- Sinon : déduis depuis les speakers, sponsors, et les posts annonciateurs
+
+MES OBJECTIFS POUR L'ÉVÉNEMENT
+[À COMPLÉTER : ex. trouver 5 prospects, identifier 2 partenaires, signer 1 deal, etc.]
+
+POUR CHAQUE PERSONNE
+- Pourquoi elle est dans le top 10
+- Où la trouver (talk, sponsor stand, after-party)
+- Ce que je dois savoir sur elle avant le moment T
+- Hook d'introduction en 1 phrase
+- Follow-up à faire J+1 si la connexion s'est bien passée","evenement,top-10,strategie-physique","avancé","non","Top 10 personnes avec plan rencontre"
+"M056","Communauté & Événements","Surveiller","Founder","Veille des événements de mon ICP","Surveille en continu les événements organisés ou attendus dans mon secteur.
+
+MON ICP
+[À COMPLÉTER]
+
+GÉOGRAPHIE
+[À COMPLÉTER]
+
+ÉVÉNEMENTS À SURVEILLER
+- Annonces d'événements >50 participants ICP
+- Sortie de speaker line-up dans mon secteur
+- Événements organisés par des concurrents (signal d'investissement)
+- Hackathons / programmes pertinents pour ma boîte
+
+Notification : ""[Événement] | [Date] | [Pourquoi pertinent] | [Action recommandée : speak / sponsor / attend / skip]"".","evenements,heartbeat,whatsapp,sectoriel","intermédiaire","oui","Veille événements sectoriels"
+"M057","Communauté & Événements","Activer","Personal brander","Plan de visibilité pour [ÉVÉNEMENT]","Construis-moi un plan de visibilité complet pour [ÉVÉNEMENT].
+
+L'ÉVÉNEMENT
+[À COMPLÉTER : nom, dates, lieu, ICP]
+
+MES OBJECTIFS DE VISIBILITÉ
+- Avant : créer du buzz, attirer des rendez-vous, signaler ma présence
+- Pendant : maximiser les rencontres, capturer du contenu, multiplier les interactions
+- Après : transformer les rencontres en pipeline, capitaliser sur les contenus
+
+POUR CHAQUE PHASE
+- 3 actions concrètes
+- Posts LinkedIn associés (avec hook complet pour chaque)
+- Personnes à tagger / contacter
+- Visuels / formats à créer","visibilite,evenement,3-phases,personal-branding","avancé","non","Plan de visibilité 3-phases complet"
+"M058","Communauté & Événements","Découvrir","Job seeker","Événements où mes recruteurs cibles seront présents","Identifie les événements pro à venir où les recruteurs et hiring managers de mes boîtes cibles seront présents.
+
+MES BOÎTES CIBLES
+[À COMPLÉTER]
+
+POSTES VISÉS
+[À COMPLÉTER]
+
+CRITÈRES DE SÉLECTION
+- Événement où l'une de mes boîtes cibles est sponsor ou présente
+- Speakers du secteur cible
+- Job fairs, hackathons, hiring events
+- Meetups où des recruteurs cibles sont visibles
+
+POUR CHAQUE ÉVÉNEMENT
+- Quelles boîtes cibles seront là
+- Quels personnes spécifiques de mon scope (recruteurs, hiring managers)
+- Stratégie d'approche pour ce format spécifique
+- Investment / ROI pour moi","evenements,job-search,hiring-events","intermédiaire","oui","Événements ciblés avec stratégie job"
+"M059","Communauté & Événements","Activer","Sales","Plan d'attaque pour [SALON / ÉVÉNEMENT]","Construis-moi un plan d'attaque commercial pour [ÉVÉNEMENT].
+
+CONTEXTE
+- Mon produit : [À COMPLÉTER]
+- Mon ICP : [À COMPLÉTER]
+- Date événement : [À COMPLÉTER]
+- Mon objectif chiffré : X RDVs, Y conversations qualifiées, Z propositions
+
+PHASES
+1. AVANT (J-14 à J-1) : qui contacter pour booker des RDVs sur place, quel hook
+2. PENDANT : timing, lieux clés (food court, talks, after-parties), pitch 30 secondes
+3. APRÈS (J+1 à J+7) : séquence de follow-up différenciée par qualité de la rencontre
+
+DELIVRABLES
+- Liste pré-événement (10-15 RDVs visés avec hooks)
+- Carte de l'événement avec stratégie de positionnement
+- Templates de follow-up J+1, J+3, J+7","evenement,sales,plan-attaque,3-phases","avancé","non","Plan d'attaque salon complet"
+"M060","Prospection commerciale","Activer","Founder","Plan de prospection 2 semaines pour mon SaaS","Construis-moi un plan de prospection LinkedIn de 2 semaines pour vendre mon produit.
+
+MON PRODUIT
+[À COMPLÉTER]
+
+MON OBJECTIF (sur 2 semaines)
+[À COMPLÉTER : ex. 5 démos bookées, 2 trials lancés]
+
+LE PLAN
+Pour chaque jour ouvré (10 jours) :
+- Action principale du jour
+- Nombre de prospects à contacter
+- Type de message (cold DM / commentaire / warm intro / follow-up)
+- Temps à consacrer
+
+PRINCIPES
+- Lundi-Mardi : volume cold (audience nouvelle)
+- Mercredi-Jeudi : commentaires intelligents et nurturing
+- Vendredi : follow-up des prospects chauds
+- Toujours équilibrer cold / warm pour ne pas brûler le réseau
+
+Donne aussi les 3 templates de messages que j'utiliserai.","plan-prospection,2-semaines,founder","intermédiaire","non","Plan jour par jour avec templates"
+"M061","Sourcing & Recrutement","Cibler","Recruteur","Top 10 sourcing pour mon brief urgent","Pour mon brief urgent, sors-moi les 10 meilleurs candidats à approcher AUJOURD'HUI.
+
+LE BRIEF URGENT
+- Poste : [À COMPLÉTER]
+- Stack obligatoire : [À COMPLÉTER]
+- Stack souhaitée : [À COMPLÉTER]
+- Niveau : [À COMPLÉTER]
+- Localisation : [À COMPLÉTER]
+- Salaire range : [À COMPLÉTER]
+- Date limite : [À COMPLÉTER]
+
+CRITÈRES DE PRIORISATION
+- Match technique strict (stack obligatoire 100%)
+- Bougeabilité élevée (signaux récents)
+- Probabilité de réponse rapide (activité LinkedIn récente)
+- Pas déjà approché par mes collègues (à filtrer si possible)
+
+POUR CHAQUE TOP 10
+- Score technique /100
+- Score bougeabilité /100
+- Hook personnalisé express (3 phrases max)
+- Heure idéale d'envoi du DM aujourd'hui","top-10,brief-urgent,sourcing-rapide","intermédiaire","non","Top 10 candidats actionnables aujourd'hui"
+"M062","Recherche d'emploi","Découvrir","Job seeker","Mes scale-ups en hyper-croissance qui ne le crient pas","Identifie les scale-ups qui sont en hyper-croissance dans mon scope mais qui ne communiquent pas massivement (signaux faibles à détecter).
+
+MON SCOPE
+- Secteur : [À COMPLÉTER]
+- Stade : Série A / B / pré-IPO
+- Géographie : [À COMPLÉTER]
+- Taille équipe préférée : [À COMPLÉTER]
+
+SIGNAUX FAIBLES DE CROISSANCE
+- Croissance LinkedIn employees >30% sur 12 mois
+- Multiple postes ouverts simultanément (>10 actifs)
+- Hires de seniors (Head of, VP, Director)
+- Pas de levée publique récente mais signaux d'expansion (nouveau bureau, nouveau marché)
+- CTO/CEO actif sur LinkedIn parlant de croissance
+
+POUR CHAQUE BOÎTE
+- Pourquoi en croissance silencieuse
+- Personnes à contacter pour rentrer
+- Mon angle d'approche","scale-up,signaux-faibles,croissance-cachee","avancé","oui","Scale-ups secrètes avec angle d'approche"
+"M063","Veille & Intelligence économique","Surveiller","Investisseur","Founders dans mon portfolio à surveiller","Surveille en continu mes founders portfolio et alerte-moi de tout signal pertinent.
+
+MON PORTFOLIO
+[À COMPLÉTER : noms des founders + boîtes]
+
+SIGNAUX À DÉTECTER
+POSITIFS
+- Nouveau client signé (post LinkedIn)
+- Recrutement clé (Head of, VP)
+- Mention dans la presse
+- Award / reconnaissance
+- Partenariat stratégique annoncé
+
+NÉGATIFS
+- Départ d'un co-fondateur ou C-level
+- Layoffs annoncés
+- Posts émotionnels sur la difficulté
+- Diminution d'activité LinkedIn
+- Rumeurs de pivot
+
+Format : ""[Founder] | [Signal +/-] | [Action recommandée]"".","portfolio,founders,heartbeat,whatsapp","avancé","oui","Veille portfolio temps réel"
+"M064","Création de contenu","Surveiller","Personal brander","Performances de mes posts vs mes pairs","Surveille les performances de mes posts LinkedIn et compare-les à mes pairs.
+
+MES PAIRS / BENCHMARK
+[À COMPLÉTER : 5-10 personnes que je considère comme références]
+
+MÉTRIQUES À SUIVRE
+- Engagement rate (likes + comments + shares / followers)
+- Volume comments
+- Reach estimé
+- Croissance followers
+
+ALERTES À ENVOYER
+- Mon post sous-performe vs ma médiane (-30%)
+- Un pair publie un post >2x ma performance moyenne (à analyser)
+- Un de mes posts décolle au-dessus de la médiane (à pousser, à dupliquer)
+
+Hebdomadaire, format synthétique avec recommandations.","metrics,benchmark,heartbeat,contenu","avancé","oui","Rapport hebdo performance vs pairs"
+"M065","Sourcing & Recrutement","Activer","Manager","Plan de sourcing pour les 3 postes de mon équipe","Construis-moi un plan de sourcing actionnable pour les 3 postes ouverts dans mon équipe.
+
+LES 3 POSTES
+- Poste 1 : [À COMPLÉTER]
+- Poste 2 : [À COMPLÉTER]
+- Poste 3 : [À COMPLÉTER]
+
+POUR CHAQUE POSTE
+- 5 candidats prioritaires identifiés (dans mon réseau ou via signaux)
+- Hook d'approche par candidat
+- Plan d'attaque sur 14 jours
+- Plan B si mes 5 prioritaires ne mordent pas
+
+MON CALENDRIER
+- Combien de temps je peux dédier au sourcing par semaine : [À COMPLÉTER]
+- Date limite de remplissage : [À COMPLÉTER]","sourcing,manager,3-postes,plan-14j","avancé","non","Plan complet pour 3 postes simultanés"
+"M066","Networking & Relations","Activer","Consultant","Message de pitch pour [PROSPECT] basé sur son post du [DATE]","Rédige un message LinkedIn pour [NOM] qui a posté ceci le [DATE] :
+
+LE POST DU PROSPECT
+[À COMPLÉTER : copier-coller le post ou ses points clés]
+
+MON OFFRE
+- Mon expertise : [À COMPLÉTER]
+- Format de mission typique : [À COMPLÉTER : durée, prix, livrables]
+- Cas similaire que j'ai déjà résolu : [À COMPLÉTER]
+
+CONTRAINTES
+- Maximum 5 phrases
+- Hook qui reprend SON post (citation ou paraphrase)
+- Apport de valeur immédiat (un insight, une question pointue)
+- Pas un pitch direct — créer de l'envie de répondre
+- CTA léger : ""ouvert à 15 min cette semaine ?""
+
+3 variantes : ""challenger"" (questionne son angle), ""co-pilot"" (propose un add-on à sa réflexion), ""case-driven"" (raconte un cas similaire).","pitch,post-driven,consultant,3-variantes","intermédiaire","non","3 messages basés sur son post"
+"M067","Levée de fonds","Activer","Investisseur","Email d'intro à [FOUNDER] que je veux soutenir","Rédige l'email à envoyer à [NOM FOUNDER] que j'aimerais financer.
+
+CONTEXTE
+- Sa boîte : [À COMPLÉTER]
+- Pourquoi je veux l'investir (en 2 phrases) : [À COMPLÉTER]
+- Mon fond / ma thèse / mon ticket : [À COMPLÉTER]
+- Mon value-add unique pour lui : [À COMPLÉTER]
+
+CONTRAINTES
+- 5 phrases max
+- Personnalisation profonde (référence à sa traction, à un de ses posts, à un milestone récent)
+- Pas de ""j'investis dans ton secteur, parlons"" — trop générique
+- Articuler MON value-add avant de demander un call
+- CTA explicite : ""ouvert à 30 min en visio cette semaine ?""
+
+2 variantes : ""proactif"" (je viens à lui), ""warm"" (intro via un connaissance commune).","investisseur,founder,intro,2-variantes","avancé","non","2 emails d'intro investisseur"
+"M068","Veille & Intelligence économique","Surveiller","Job seeker","Suivi de mes candidatures et signaux des recruteurs","Surveille les recruteurs de mes candidatures en cours et alerte-moi de tout signal.
+
+MES CANDIDATURES EN COURS
+[À COMPLÉTER : entreprise + recruteur + date candidature]
+
+SIGNAUX À DÉTECTER
+- Le recruteur revient en activité après ma candidature (signe qu'il regarde des profils)
+- Le poste est repris par un autre recruteur (changement)
+- Le poste est retiré de l'annonce (= pourvu, ou freezé)
+- L'entreprise communique sur ses recrutements (signal de momentum)
+- Un autre poste similaire est publié
+
+Format : ""[Boîte] | [Statut candidature] | [Signal détecté] | [Action recommandée]"".","candidatures,suivi,heartbeat,whatsapp","intermédiaire","oui","Pings sur l'avancement des candidatures"
+"M069","Levée de fonds","Cibler","Founder","Mes 5 angels prioritaires à closer avant la grande levée","Identifie les 5 business angels prioritaires à closer en pre-seed avant ma série A.
+
+PROFIL DES ANGELS RECHERCHÉS
+- Operators (founders ou ex-founders dans mon secteur)
+- Tickets 25k-100k €
+- Capable d'amener du value-add concret (réseau, expertise, hire)
+- Pas trop sollicités (j'ai une chance d'avoir leur attention)
+
+MA BOÎTE
+[À COMPLÉTER : produit, traction, levée précédente s'il y en a]
+
+POUR CHAQUE TOP 5 ANGEL
+- Pourquoi celui-là (match thèse, value-add, accessibilité)
+- Warm intro disponible
+- Hook d'approche
+- Ticket à demander","angels,5-prioritaires,pre-seed,operators","avancé","non","5 angels avec stratégie de closing"
+"M070","Networking & Relations","Découvrir","Sales","Mes anciens clients qui ont changé de boîte = opportunités fraîches","Identifie mes anciens clients (avec qui j'ai déjà signé un deal) qui ont changé de boîte récemment — ce sont des prospects warm pour leur nouvelle boîte.
+
+CONTEXTE
+- Mes anciens clients (CRM ou liste à fournir) : [À COMPLÉTER]
+
+CRITÈRES
+- A changé de poste dans les 6 derniers mois
+- Le nouveau poste lui permet d'acheter ma solution
+- La nouvelle boîte est dans mon ICP
+
+POUR CHAQUE OPPORTUNITÉ
+- Ancien deal qu'on avait fait ensemble (pour rappel)
+- Nouvelle boîte + nouveau rôle
+- Pourquoi ma solution est pertinente dans la nouvelle structure
+- Hook d'approche personnalisé : ""Hey [Prénom], vu ton arrivée chez [Nouvelle Boîte] !...""","alumni-clients,nouveaux-roles,warm-prospects","avancé","oui","Liste d'anciens clients en nouveau poste"
+"M071","Sourcing & Recrutement","Découvrir","Recruteur","Alumni d'une boîte cible qui pourraient revenir","Identifie les anciens employés d'une boîte cible qui pourraient être candidats à revenir ou à rejoindre une boîte similaire.
+
+LA BOÎTE DE RÉFÉRENCE
+[À COMPLÉTER : ex. Capgemini, Google France, etc.]
+
+LE POSTE QUE JE CHERCHE À POURVOIR
+[À COMPLÉTER]
+
+CRITÈRES
+- A travaillé à [BOÎTE] entre [PÉRIODE]
+- Aujourd'hui dans un poste équivalent ou inférieur (= upgrade possible)
+- Pas en boîte concurrente directe (clauses de non-concurrence)
+- Signaux de bougeabilité
+
+POUR CHAQUE ALUMNI
+- Parcours résumé
+- Pourquoi candidat probable
+- Hook d'approche : ""Hey, j'ai vu que tu étais passé par [BOÎTE]...""","alumni-sourcing,boite-reference,return-talent","avancé","oui","Alumni candidats pour mon poste"
+"M072","Création de contenu","Activer","Manager","Post de recrutement pour mon équipe","Rédige un post LinkedIn pour annoncer un recrutement dans mon équipe et attirer des candidats qualifiés.
+
+LE POSTE
+- Titre : [À COMPLÉTER]
+- Stack/compétences : [À COMPLÉTER]
+- Salaire range : [À COMPLÉTER si OK]
+- Localisation : [À COMPLÉTER]
+- Pourquoi le poste est cool : [À COMPLÉTER : impact, mission, équipe, autonomie]
+
+CONTRAINTES
+- Pas un post type ""Nous recrutons #hiring"" — trop générique
+- Storytelling : pourquoi je cherche cette personne, ce qu'on va faire ensemble
+- Détails concrets sur la mission (pas que des buzzwords)
+- 1 contrainte ou exigence forte (pour signaler la sélection)
+- CTA clair : DM moi avec X élément
+
+3 variantes : storytelling personnel, focus impact, focus stack/technique.","recrutement,post,3-variantes,manager","intermédiaire","non","3 versions de post recrutement"
+"M073","Création de contenu","Découvrir","Personal brander","Mes opportunités de prise de parole publique","Identifie les opportunités de prise de parole (talks, podcasts, articles invités) où je pourrais me positionner.
+
+MON THÈME / MON EXPERTISE
+[À COMPLÉTER]
+
+OPPORTUNITÉS À DÉTECTER
+- Conférences cherchant des speakers (call for speakers)
+- Podcasts qui invitent des experts dans mon thème
+- Médias / blogs qui acceptent des contributions externes
+- Événements où mes pairs sont speakers (si eux, pourquoi pas moi)
+
+POUR CHAQUE OPPORTUNITÉ
+- Format (talk / podcast / article)
+- Audience estimée
+- Niveau de prestige
+- Comment candidater (le processus exact)
+- Mon angle de proposition","speaker,podcast,prise-parole,visibilite","avancé","oui","Opportunités de prise de parole curatées"
+"M074","Networking & Relations","Cibler","Investisseur","Mes founders à reconnecter ce trimestre","Identifie les founders de mon réseau (1er degré) que je devrais reconnecter ce trimestre.
+
+CRITÈRES
+- N'ai pas eu d'interaction depuis 4+ mois
+- Boîte qui a évolué (levée, traction, pivot, nouveau marché)
+- Potentiellement en train de préparer une nouvelle ronde
+- Ou : excellent founder qui mérite que je reste top of mind
+
+MON FOND / MA THÈSE
+[À COMPLÉTER]
+
+POUR CHAQUE FOUNDER
+- Évolution depuis notre dernier échange
+- Pourquoi reconnecter MAINTENANT
+- Type d'échange à proposer (café, call, intro à quelqu'un de mon réseau)","founders,reconnexion,investisseur,deal-flow","avancé","non","Plan de reconnexion founders"
+"M075","Veille & Intelligence économique","Découvrir","Consultant","Sujets émergents dans ma spécialité où peu de monde se positionne","Identifie les sujets émergents dans ma spécialité où la concurrence sur LinkedIn est encore faible — opportunités de me positionner comme expert.
+
+MA SPÉCIALITÉ
+[À COMPLÉTER]
+
+CRITÈRES DE ""SUJET ÉMERGENT À FAIBLE CONCURRENCE""
+- Mots-clés en hausse de mention dans mon secteur (>20% sur 6 mois)
+- Mais peu de ""voix de référence"" établies (peu de profils avec >100 posts sur le sujet)
+- Pertinent pour les douleurs de mon ICP
+- Cohérent avec mon expertise actuelle (pas un pivot complet)
+
+POUR CHAQUE SUJET
+- Description en 2 phrases
+- Pourquoi peu de concurrence aujourd'hui
+- Calendrier pour me positionner (3-6 mois)
+- Premiers contenus à produire","positionnement,blue-ocean,consultant,emergent","avancé","oui","Sujets blue-ocean avec plan de positionnement"
+"M076","Apprentissage & Carrière","Cibler","Founder","Le top 5 contenu / livre / cours pour mon défi du trimestre","Identifie les 5 ressources (contenus, livres, cours, communautés) les plus pertinentes pour mon défi du trimestre.
+
+MON DÉFI DU TRIMESTRE
+[À COMPLÉTER : ex. passer de 0 à 100 clients, structurer mon équipe, lever 1M€...]
+
+CRITÈRES
+- Recommandé par des founders qui ont résolu mon défi
+- Récent (post-2024 idéalement)
+- Format adapté à mon temps disponible (pas un livre de 600 pages si j'ai 20 min/jour)
+- Concret et actionnable, pas théorique
+
+POUR CHAQUE TOP 5
+- Format + auteur + durée
+- Pourquoi exactement pertinent pour mon défi
+- 1-2 frameworks que je peux appliquer dès cette semaine
+- Source de la recommandation (qui a recommandé)","apprentissage,top-5,defi-trimestre,actionnable","intermédiaire","non","Top 5 ressources curées et actionnables"
+"M077","Apprentissage & Carrière","Découvrir","Sales","Top performers commerciaux à étudier dans mon secteur","Identifie les top performers commerciaux dans mon secteur dont je devrais étudier le parcours et les méthodes.
+
+MON SECTEUR
+[À COMPLÉTER]
+
+MON RÔLE ACTUEL
+[À COMPLÉTER : SDR / AE / Sales Manager / autre]
+
+CRITÈRES
+- Réputation établie (mentions positives par leurs pairs et clients)
+- Visible sur LinkedIn (créent du contenu, partagent leurs méthodes)
+- Numbers bons (basés sur les indices visibles : promotions, posts de leur boîte les valorisant, deals sortis publiquement)
+- Style transposable à mon contexte
+
+POUR CHAQUE TOP PERFORMER
+- Parcours en 4-6 étapes
+- 2-3 frameworks ou pratiques qui les distinguent
+- Comment apprendre d'eux (suivre, contacter, lire leurs posts)","top-performers,sales,role-models,methods","intermédiaire","non","5 top performers analysés"
+"M078","Communauté & Événements","Cibler","Manager","Communautés de Heads of à intégrer pour grandir comme manager","Identifie les 3-5 meilleures communautés professionnelles pour managers / Heads of dans mon secteur.
+
+MON CONTEXTE
+- Mon rôle : [À COMPLÉTER]
+- Taille équipe : [À COMPLÉTER]
+- Ce que je veux développer : [À COMPLÉTER]
+
+CRITÈRES
+- Communautés actives (>1 contenu/semaine)
+- Membres seniors et engagés
+- Format compatible avec mon temps (Slack async, événements mensuels, etc.)
+- Reputation positive dans mon secteur
+
+POUR CHAQUE COMMUNAUTÉ
+- Format + taille + ICP membres
+- Type de valeur produite (network, learning, accountability, autre)
+- Coût (€ + temps)
+- Comment rentrer (cooptation, application, ouvert)","communautes,manager,reseau-pair,niveau-pair","intermédiaire","non","Communautés curées avec porte d'entrée"
+"M079","Communauté & Événements","Cibler","Job seeker","Communautés alumni qui peuvent m'ouvrir des portes","Identifie les communautés alumni accessibles qui peuvent m'aider dans ma recherche d'emploi.
+
+MON BACKGROUND
+- Mes écoles / formations : [À COMPLÉTER]
+- Mes anciennes boîtes : [À COMPLÉTER]
+- Mon secteur cible : [À COMPLÉTER]
+
+CRITÈRES
+- Communauté alumni (de mon école ou d'une de mes anciennes boîtes)
+- Active sur LinkedIn (groupe, événements)
+- Membres dans des positions de décision
+- Mécanismes de mise en relation explicites (job board, mentoring, événements de networking)
+
+POUR CHAQUE COMMUNAUTÉ
+- Comment y accéder (déjà membre / candidature)
+- Quelle activation possible (poster un appel, contacter un membre clé, participer à un événement)
+- 2-3 personnes spécifiques à contacter en priorité","alumni,job-search,reseau-ferme,communautes","intermédiaire","non","Communautés alumni avec activation"
+"M080","Communauté & Événements","Découvrir","Recruteur","Communautés de talents passifs où je peux pêcher","Identifie les communautés tech (Slack, Discord, événements) où des candidats passifs qualifiés sont actifs.
+
+MON SCOPE DE RECRUTEMENT
+[À COMPLÉTER : stack / niveau / géographie]
+
+CRITÈRES
+- Communauté reconnue dans le scope tech
+- Permet la prise de contact discrète (pas du spam de masse)
+- Membres qualifiés (vérification à l'entrée, niveau senior)
+- Reputation positive (ne brûler la com avec un mauvais sourcing)
+
+POUR CHAQUE COMMUNAUTÉ
+- Type + taille + ICP membres
+- Règles de sourcing (DM autorisé / channel jobs uniquement / autre)
+- Coût d'entrée (gratuit / payant / cooptation)
+- Stratégie de présence pour gagner ma légitimité avant de sourcer","communautes-tech,sourcing,passif,etiquette","avancé","non","Communautés tech avec règles de sourcing"
+"M081","Apprentissage & Carrière","Découvrir","Personal brander","Top créateurs LinkedIn dont je devrais étudier les patterns","Identifie les top créateurs LinkedIn dans mon thème dont je devrais analyser les patterns de contenu.
+
+MON THÈME
+[À COMPLÉTER]
+
+CRITÈRES
+- Audience pertinente (ICP similaire au mien)
+- Croissance soutenue (pas juste viral one-shot)
+- Variété de formats maîtrisés
+- Authenticité perçue (pas du growth hacking pur)
+
+POUR CHAQUE CRÉATEUR
+- Profil + audience size + thèmes principaux
+- 3 patterns récurrents qui marchent pour eux (analyse de leurs 20 derniers posts)
+- Ce que je peux emprunter VS ce qui est trop personnel à eux
+- Comment les ""étudier"" (suivre, lire, commenter, contacter)","creators,patterns,etude,benchmark","avancé","oui","5 créateurs analysés avec patterns"
+"M082","Communauté & Événements","Découvrir","Founder","Programmes founders (accélérateurs, communautés) à intégrer","Identifie les programmes founders les plus pertinents pour ma boîte (accélérateurs, communautés payantes, fellowships).
+
+MA BOÎTE
+- Stade : [À COMPLÉTER]
+- Secteur : [À COMPLÉTER]
+- Géographie / langue : [À COMPLÉTER]
+- Mes besoins : [À COMPLÉTER : capital / mentoring / network / clients / hiring]
+
+PROGRAMMES À ÉVALUER
+- Accélérateurs (YC, Techstars, Antler, mais aussi locaux pertinents)
+- Communautés payantes founders (On Deck, Earnest Capital, etc.)
+- Fellowships sectoriels
+- Programmes corporate (Microsoft for Startups, AWS, etc.)
+
+POUR CHAQUE PROGRAMME
+- Coût (équity / cash / temps)
+- Bénéfices concrets (capital, network, brand, deals)
+- Probabilité d'admission selon mon profil
+- ROI estimé pour ma situation","accelerateurs,programmes,founders,ROI","avancé","non","Programmes founders évalués"
+"M083","Communauté & Événements","Découvrir","Sales","Communautés sales où mes prospects et pairs traînent","Identifie les communautés sales (ou où des sales sont actifs) qui peuvent m'aider dans mon métier ET où je peux croiser des prospects.
+
+MON SECTEUR
+[À COMPLÉTER]
+
+DOUBLE OBJECTIF
+- Apprentissage : monter en compétence
+- Sourcing : croiser des prospects naturellement (sans spam)
+
+POUR CHAQUE COMMUNAUTÉ
+- Format (Slack / événements / payante)
+- Membres représentatifs (pairs vs prospects ratio)
+- Stratégie de présence pour les deux objectifs
+- ROI estimé","communautes-sales,double-objectif,sourcing-naturel","avancé","non","Communautés sales évaluées sur 2 critères"
+"M084","Veille & Intelligence économique","Surveiller","Sales","Signaux de churn chez mes clients existants","Surveille mes clients existants et alerte-moi des signaux de churn potentiels.
+
+MES CLIENTS
+[À COMPLÉTER : liste]
+
+SIGNAUX FORTS DE CHURN
+- Départ du sponsor / décideur principal
+- Diminution d'activité LinkedIn de la boîte
+- Embauche d'une équipe interne pour résoudre le problème en in-house
+- Signaux de difficulté financière (layoffs, levée échouée)
+- Mention d'un concurrent dans leurs posts
+- Changement de direction stratégique
+
+ACTIONS RECOMMANDÉES PAR SIGNAL
+- Pour chaque ping : ""[Client] | [Signal] | [Action préventive en 1 phrase]""","churn,clients,heartbeat,whatsapp,retention","avancé","oui","Alertes pré-churn en temps réel"
+"M085","Veille & Intelligence économique","Surveiller","Founder","Évolution de mes early adopters et premiers clients","Surveille mes 20 premiers clients et alerte-moi de tout signal pertinent.
+
+MES EARLY ADOPTERS
+[À COMPLÉTER : liste 20 boîtes]
+
+SIGNAUX À DÉTECTER
+- Changement de poste du décideur (départ ou promotion)
+- Levée de fonds (capacité à upgrader leur abonnement)
+- Layoffs (risque de churn)
+- Mention publique de mon produit (case study, post, podcast)
+- Recrutement d'un poste lié à l'usage de mon produit (signal d'extension)
+
+Format : ""[Client] | [Signal] | [Implication] | [Action recommandée]"".","early-adopters,founder,heartbeat,whatsapp","avancé","oui","Veille des 20 premiers clients"
+"M086","Apprentissage & Carrière","Cibler","Sales","Mes 3 axes de progrès commerciaux pour le trimestre","Analyse mes performances commerciales récentes et identifie mes 3 axes de progrès prioritaires pour ce trimestre.
+
+MES DONNÉES
+[À COMPLÉTER : taux de réponse cold, taux conversion DM → call, win rate, taille deal moyenne, cycle vente]
+
+MES OBJECTIFS TRIMESTRE
+[À COMPLÉTER]
+
+ANALYSE
+- Identifie mes 3 plus grandes ""fuites"" dans le funnel
+- Pour chaque fuite : la cause probable + 1 levier d'amélioration
+- 1 ressource (livre, cours, mentor, contenu) par axe
+- 1 KPI à suivre par axe
+- Plan d'action 90 jours","progres,sales,3-axes,90-jours,KPI","avancé","non","Plan de progrès commercial trimestriel"
+"M087","Apprentissage & Carrière","Activer","Manager","Mon plan de développement personnel sur 6 mois","Construis-moi un plan de développement personnel sur 6 mois aligné avec mes objectifs de carrière.
+
+MON PROFIL ACTUEL
+- Rôle : [À COMPLÉTER]
+- Forces reconnues : [À COMPLÉTER]
+- Faiblesses identifiées : [À COMPLÉTER]
+
+MON OBJECTIF À 18 MOIS
+[À COMPLÉTER : ex. devenir VP, lever, changer de boîte, autre]
+
+LE PLAN
+Pour chacun des 6 mois :
+- Compétence/sujet à développer
+- 1 ressource principale
+- 1 expérience à provoquer dans mon job actuel
+- 1 personne à fréquenter (mentor, pair, communauté)
+- KPI pour valider le progrès","developpement,6-mois,plan,manager","avancé","non","Plan de dev personnel 6 mois"
+"M088","Networking & Relations","Activer","Founder","Demande de feedback à mes 5 advisors / mentors","Rédige des messages personnalisés pour solliciter du feedback à mes 5 advisors / mentors.
+
+MES ADVISORS
+[À COMPLÉTER : liste 5 personnes + ce qu'on a déjà fait ensemble]
+
+CE SUR QUOI JE VEUX DU FEEDBACK
+[À COMPLÉTER : ex. mon nouveau pricing, ma roadmap, mon pitch, mon embauche...]
+
+POUR CHAQUE ADVISOR
+- Message personnalisé en 4-5 phrases max
+- Reconnaissance de notre relation (sans flatterie excessive)
+- Question PRÉCISE (pas ""que penses-tu en général ?"")
+- Format de feedback proposé (call 20 min, async, document)
+- Date butoir indiquée
+- Réciprocité offerte (un update produit, une intro, etc.)","advisors,feedback,5-personnes,reciprocite","intermédiaire","non","5 messages de feedback personnalisés"
+"M089","Levée de fonds","Découvrir","Founder","Subventions et financements non-dilutifs pour ma boîte","Identifie les subventions, financements non-dilutifs et programmes publics pertinents pour ma boîte.
+
+MA BOÎTE
+- Secteur : [À COMPLÉTER]
+- Stade : [À COMPLÉTER]
+- Géographie : France / EU / Cameroun / autre
+- Innovation : Deep tech / Tech / Service / autre
+
+SOURCES À EXPLORER
+- BPI France (programmes innovation, French Tech)
+- Région et collectivités locales
+- Horizon Europe / EIC
+- Programmes sectoriels (santé, énergie, IA, etc.)
+- Concours d'innovation et awards
+- Crédit impôt recherche / innovation
+
+POUR CHAQUE OPPORTUNITÉ
+- Montant + nature (subvention, avance remboursable, prêt à 0%, etc.)
+- Critères d'éligibilité
+- Charge administrative estimée
+- Calendrier (deadline de candidature)
+- Probabilité d'obtention selon mon profil","subventions,non-dilutif,BPI,financements-public","avancé","oui","Pipeline de financements non-dilutifs"
+"M090","Création de contenu","Activer","Sales","Posts LinkedIn pour positionner mon expertise commerciale","Rédige 3 posts LinkedIn que je peux publier cette semaine pour me positionner comme expert dans mon secteur (pas comme commercial agressif).
+
+MON SECTEUR / MON OFFRE
+[À COMPLÉTER]
+
+PRINCIPES
+- Apport de valeur AVANT proposition commerciale
+- Ne pas pitcher en premier degré
+- Mettre en scène un cas client anonymisé OU une analyse sectorielle
+- Le lecteur doit avoir appris quelque chose à la fin
+
+POUR CHAQUE POST (3 versions)
+- Hook
+- Structure (1 paragraphe → développement → punchline)
+- CTA léger qui invite à la conversation (pas à la démo)","sales,positionnement,3-posts,valeur-avant","intermédiaire","non","3 posts d'autorité commerciale"
+"M091","Création de contenu","Activer","Recruteur","Posts LinkedIn pour attirer des candidats qualifiés","Rédige 3 posts LinkedIn pour attirer des candidats qualifiés sur mes postes ouverts (sans paraître comme un recruteur classique).
+
+MES POSTES OUVERTS
+[À COMPLÉTER : liste]
+
+PRINCIPES
+- Pas un ""Nous recrutons #hiring"" générique
+- Storytelling : pourquoi cette équipe, pourquoi maintenant, pourquoi ce poste
+- Détails concrets sur le projet, la stack, l'autonomie
+- Une question forte pour engager les commentaires
+- 1 contrainte ou exigence forte qui filtre
+
+POUR CHAQUE POST (3 versions différentes)
+- Variante ""vision projet"" (raconter ce qu'on construit)
+- Variante ""équipe"" (mettre en avant qui ils vont rejoindre)
+- Variante ""défi technique"" (le problème à résoudre)","recrutement,posts-attirance,3-versions,storytelling","intermédiaire","non","3 posts pour attirer des candidats"
+"M092","Création de contenu","Activer","Investisseur","Posts LinkedIn pour attirer du deal flow qualifié","Rédige 3 posts LinkedIn pour attirer du deal flow founder qualifié sur ma thèse d'investissement.
+
+MA THÈSE
+- Secteur : [À COMPLÉTER]
+- Stade : [À COMPLÉTER]
+- Ce que je cherche : [À COMPLÉTER]
+- Mon différenciateur en tant qu'investisseur : [À COMPLÉTER]
+
+PRINCIPES
+- Pas un ""Je cherche des founders"" plat
+- Démontrer ma compréhension du marché (montrer mon expertise)
+- Articuler ma thèse de manière distinctive
+- Donner de la valeur (analyse, framework, cas d'usage) avant de ""demander"" un deal flow
+- Inviter à la conversation (DM, café, événement) pas à un pitch direct
+
+POUR CHAQUE POST (3 variantes)
+- Variante ""thesis essay"" (analyse de marché)
+- Variante ""cas concret"" (parler d'un investissement passé ou d'un founder admiré)
+- Variante ""framework"" (donner un outil aux founders)","deal-flow,thesis,3-posts,investisseur","avancé","non","3 posts pour attirer du deal flow"
+"M093","Communauté & Événements","Cibler","Personal brander","Mes opportunités de collaboration de contenu (cross-posts, lives)","Identifie 5 opportunités de collaboration de contenu avec d'autres créateurs LinkedIn dans mon thème.
+
+MON THÈME / MON AUDIENCE
+[À COMPLÉTER]
+
+TYPES DE COLLAB
+- Live LinkedIn / podcast à deux
+- Article co-écrit / framework partagé
+- Cross-promotion (je le mentionne, il me mentionne)
+- Carrousel à deux signatures
+- Newsletter croisée
+
+CRITÈRES POUR LE PARTENAIRE
+- Audience comparable (±50%)
+- Thème complémentaire (pas concurrent direct)
+- Activité régulière sur LinkedIn
+- Reputation positive
+
+POUR CHAQUE TOP 5
+- Justification du match
+- Format de collab proposé
+- Hook d'approche
+- Bénéfice mutuel articulé","collab-contenu,5-creators,formats,croissance","avancé","non","5 collabs avec format proposé"
+"M094","Networking & Relations","Surveiller","Manager","Évolution de mes anciens membres d'équipe (mes ""alumni team"")","Surveille les évolutions des personnes qui ont fait partie de mon équipe (et qui sont maintenant ailleurs) et alerte-moi des signaux pertinents.
+
+MON ALUMNI TEAM
+[À COMPLÉTER : liste des anciens membres et leurs boîtes actuelles]
+
+SIGNAUX À DÉTECTER
+- Promotion (= félicitations à envoyer + signal d'intro vers leur nouvelle boîte)
+- Changement de boîte (= maintenir la relation + opportunité business potentielle)
+- Réussite publique (mention presse, prix, post viral)
+- Difficulté (post émotionnel, layoff, recherche)
+- Anniversaire LinkedIn dans leur boîte actuelle
+
+Format : ""[Nom] | [Signal] | [Action recommandée]"".","alumni-team,manager,heartbeat,whatsapp","intermédiaire","oui","Veille sur les anciens membres d'équipe"
+"M095","Création de contenu","Cibler","Founder","Post LinkedIn pour annoncer un milestone de ma boîte","Rédige un post LinkedIn pour annoncer un milestone important de ma boîte.
+
+LE MILESTONE
+[À COMPLÉTER : ex. 100 clients, levée, hire d'un C-level, lancement, anniversaire 1 an, MRR atteint, etc.]
+
+PRINCIPES
+- Pas un communiqué de presse plat
+- Storytelling : raconter le chemin pour y arriver, pas juste l'arrivée
+- Donner du crédit aux personnes qui ont contribué (mais sans liste exhaustive ennuyeuse)
+- Apprentissages partagés (ce qui a été dur, ce qu'on a appris)
+- Inviter à la conversation (où on va ensuite, comment vous pouvez nous aider)
+
+3 variantes :
+- ""Vulnerable"" (parle des difficultés et de la chance)
+- ""Frame achievement"" (annonce le milestone comme un cadre, donne les leçons)
+- ""Communauté first"" (remercie, valorise les autres avant moi)","milestone,3-variantes,storytelling,founder","intermédiaire","non","3 posts pour annoncer milestone"
+"M096","Création de contenu","Activer","Job seeker","Posts LinkedIn pour augmenter ma visibilité côté recruteurs","Rédige 3 posts LinkedIn que je peux publier sur les 2 prochaines semaines pour augmenter ma visibilité auprès des recruteurs sans paraître désespéré.
+
+MON PROFIL
+[À COMPLÉTER : poste cible, expertise, années XP]
+
+PRINCIPES
+- NE PAS dire ""je cherche un emploi"" en titre
+- Montrer mon expertise via des analyses, des opinions, des frameworks
+- 1 sur 3 peut mentionner subtilement ma disponibilité (ex. ""ouvert à de nouvelles opportunités tech à Bordeaux"")
+- Faire dialoguer plutôt que monologuer (questions, debate)
+
+POUR CHAQUE POST
+- Hook
+- Structure
+- CTA / Question d'engagement
+- Mention subtile de disponibilité (variante 3 uniquement)","job-search,visibility,3-posts,non-desperate","intermédiaire","non","3 posts pour visibilité côté recruteurs"
+"M097","Networking & Relations","Activer","Recruteur","Message à un alumni de [BOÎTE A] passé chez [BOÎTE B]","Rédige un message LinkedIn pour [NOM] qui a travaillé à [BOÎTE A] et qui est maintenant chez [BOÎTE B].
+
+CONTEXTE
+- Mon brief actuel : [À COMPLÉTER]
+- Pourquoi son profil m'intéresse : [À COMPLÉTER]
+- Ce que je veux : il candidate, ou il me recommande quelqu'un, ou il me donne du contexte sur son ancienne boîte
+
+CONTRAINTES
+- 5 phrases max
+- Pas de ""Je vois que tu as travaillé chez [BOÎTE A]"" (trop évident)
+- Référence concrète à un projet ou une équipe spécifique de son passage
+- Question ouverte qui demande son expertise / son avis (pas son CV)
+
+3 variantes :
+- ""Pour lui"" (l'inviter à candidater)
+- ""Pour son réseau"" (lui demander de recommander)
+- ""Pour son insight"" (lui demander juste son avis sur un point précis)","message-alumni,recruteur,3-variantes,multifonction","avancé","non","3 messages pour 3 angles différents"
+"M098","Networking & Relations","Découvrir","Investisseur","Mes co-LP / co-investisseurs naturels","Identifie les autres investisseurs (LPs, VC, angels) avec qui je devrais bâtir une relation pour de futurs co-investissements.
+
+MON FOND / MON ANGEL PROFILE
+[À COMPLÉTER]
+
+CRITÈRES
+- Co-investisseurs réguliers de mes deals existants (= déjà alignés)
+- Investisseurs complémentaires (stade au-dessus ou en dessous, géo différente)
+- Reputation excellente (pas un VC qui détruit la cap table)
+- Pas trop loin de mon thèse pour qu'on parle de la même chose
+
+POUR CHAQUE INVESTISSEUR
+- Pourquoi pertinent pour mon portfolio
+- Type de relation à construire (co-deal, partage de pipeline, advisor)
+- Comment l'approcher (warm intro, événement commun, deal partagé)","co-LP,VC-network,investisseur,5-personnes","avancé","non","Investisseurs partenaires curatés"
+"M099","Recherche d'emploi","Surveiller","Manager","Veille sur les postes de leadership dans mes boîtes cibles","Surveille les boîtes cibles et alerte-moi des signaux d'opportunité de leadership.
+
+MES BOÎTES CIBLES
+[À COMPLÉTER]
+
+SIGNAUX À DÉTECTER
+- Départ d'un Head of / VP / C-level (= ouverture probable)
+- Levée Série B+ (= recrutement leadership probable)
+- Lancement d'une nouvelle BU / nouveau marché (= besoin d'un Head of dédié)
+- Restructuration annoncée (= opportunités de redessin de l'org)
+- Founder qui poste sur le besoin de ""leveling up"" l'équipe
+
+Format : ""[Boîte] | [Signal] | [Type de poste susceptible d'ouvrir] | [Personne à contacter]"".","leadership,heartbeat,whatsapp,boites-cibles","avancé","oui","Veille leadership sur boîtes cibles"
+"M100","Création de contenu","Activer","Sales","Carrousel de cas d'usage pour mon produit","Rédige le contenu d'un carrousel LinkedIn (8-10 slides) qui présente des cas d'usage de mon produit.
+
+MON PRODUIT
+[À COMPLÉTER]
+
+PRINCIPE DE STRUCTURE
+- Slide 1 : Hook + accroche
+- Slide 2 : Le problème commun
+- Slides 3-7 : 5 cas d'usage concrets, 1 par slide (avec data si possible)
+- Slide 8 : Le commun denominator (= ma proposition de valeur articulée)
+- Slide 9 : Stat ou témoignage chiffré
+- Slide 10 : CTA léger (DM, démo, autre)
+
+POUR CHAQUE SLIDE
+- Titre court (max 6 mots)
+- Body (max 30 mots)
+- Suggestion de visuel","carrousel,8-slides,sales,cas-usage","avancé","non","Contenu de carrousel prêt à designer"
+"M101","Apprentissage & Carrière","Activer","Founder","Cadre de décision pour mon dilemme stratégique du moment","Aide-moi à structurer une décision stratégique que j'hésite à prendre.
+
+MON DILEMME
+[À COMPLÉTER : description en 3-5 phrases]
+
+OPTIONS QUE JE CONSIDÈRE
+[À COMPLÉTER : 2-4 options avec leur description]
+
+LE CADRE
+Pour chaque option, structure :
+- Reversibilité (one-way door / two-way door)
+- Coût (€ + temps + opportunité)
+- Upside maximum
+- Downside maximum
+- Probabilité de succès subjective
+- Information manquante critique
+- Décision de référence : qu'aurait fait un founder dont j'admire le jugement ?
+
+Conclusion : ta recommandation (avec ses limites) en 4-5 phrases.","decision,framework,founder,strategique","avancé","non","Cadre de décision structuré"
+"M102","Apprentissage & Carrière","Cibler","Recruteur","Mes 3 leviers pour réduire mon time-to-hire","Analyse mon process de recrutement et identifie 3 leviers concrets pour réduire mon time-to-hire.
+
+MON PROCESS ACTUEL (à compléter étape par étape)
+1. Brief : [À COMPLÉTER : durée moyenne]
+2. Sourcing : [À COMPLÉTER : durée]
+3. Pré-qualification : [À COMPLÉTER : durée]
+4. Entretiens : [À COMPLÉTER : durée]
+5. Offre / closing : [À COMPLÉTER : durée]
+
+ANALYSE
+- Identifie les 3 plus grosses fuites de temps
+- Pour chacune : la cause + 1-2 leviers actionnables
+- Outil ou méthode pour suivre l'amélioration
+- Plan 30-60-90 jours","time-to-hire,process,3-leviers,90-jours","avancé","non","Plan d'optimisation TTH"
+"M103","Prospection commerciale","Activer","Personal brander","Convertir mon audience LinkedIn en pipeline commercial","Construis-moi un plan pour convertir mon audience LinkedIn passive en pipeline commercial actif.
+
+MON CONTEXTE
+- Audience : [À COMPLÉTER : taille + composition]
+- Mon offre : [À COMPLÉTER : produit / service / coaching]
+- Pricing : [À COMPLÉTER]
+
+LEVIERS
+- Posts inviting (qui amènent les bons profils à se manifester en commentaire)
+- DMs sur engageurs (les gens qui likent / commentent à plusieurs reprises)
+- Lead magnets (newsletter, ressource gratuite, événement)
+- CTA stratégiques sur posts existants
+- Webinar / live mensuel
+
+PLAN 30 JOURS
+- Semaine 1 : audit des 50 derniers commentateurs récurrents
+- Semaine 2 : 1 lead magnet créé et lancé
+- Semaine 3 : 30 DMs personnalisés sur top engageurs
+- Semaine 4 : 1 webinar / événement live
+- Mesure : leads générés, conversations entamées, meetings bookés","audience-to-pipeline,30-jours,personal-brander","avancé","non","Plan 30j conversion audience"
+"M104","Apprentissage & Carrière","Activer","Job seeker","Mes 5 lacunes à combler avant de viser le poste cible","Analyse l'écart entre mon profil actuel et le poste que je vise, et identifie les 5 lacunes principales à combler.
+
+MON PROFIL ACTUEL
+[À COMPLÉTER]
+
+MON POSTE CIBLE
+[À COMPLÉTER : titre + description type]
+
+ANALYSE
+- Compare les compétences clés du poste cible vs mon profil
+- Identifie 5 lacunes par ordre de priorité
+- Pour chaque lacune :
+  - Pourquoi importante pour le poste
+  - Comment la combler (formation / projet perso / mentorat / job intermédiaire)
+  - Délai réaliste (3 / 6 / 12 mois)
+  - 1 ressource immédiate pour démarrer","gap-analysis,lacunes,plan-formation,job-search","avancé","non","5 lacunes avec plan de comblement"
+"M105","Apprentissage & Carrière","Découvrir","Investisseur","Investisseurs émérites dont je devrais étudier les frameworks","Identifie 5 investisseurs reconnus dont je devrais étudier les frameworks et la philosophie d'investissement.
+
+MA THÈSE / MON CONTEXTE
+[À COMPLÉTER : stade, secteur, géographie]
+
+CRITÈRES
+- Track record exceptionnel (>10 ans, deals signature visibles)
+- Communique publiquement (essais, podcasts, posts)
+- Frameworks distinctifs (pas que des banalités)
+- Pertinent pour mon contexte (un VC seed US peut être moins applicable qu'un BA français pour un BA français)
+
+POUR CHAQUE INVESTISSEUR
+- Bio courte + track record signature
+- 2-3 frameworks distinctifs qu'ils ont articulés
+- Comment les étudier (essais, podcasts, livres, posts)
+- Premier contenu à consommer cette semaine","investisseurs-mentor,frameworks,etude,5-personnes","intermédiaire","non","5 investisseurs avec frameworks à étudier"
+"M106","Veille & Intelligence économique","Cibler","Manager","Tendances salariales pour mon équipe vs marché","Identifie les tendances salariales actuelles pour les profils de mon équipe afin de calibrer mes politiques RH.
+
+MON ÉQUIPE
+- Postes : [À COMPLÉTER]
+- Géographie : [À COMPLÉTER]
+- Stade boîte : [startup / scale-up / grand groupe]
+
+SIGNAUX À ANALYSER
+- Annonces récentes avec salaire affiché
+- Posts de talents quittant pour ""meilleure offre""
+- Annonces de levées avec mention de ""war for talent""
+- Études salariales publiées par des cabinets (Robert Walters, Hays, etc.)
+
+POUR CHAQUE POSTE DANS MON ÉQUIPE
+- Range salarial actuel marché
+- Tendance (en hausse / stable / en baisse)
+- Risque de churn de mon équipe vs marché
+- Recommandation d'ajustement","salaire,benchmark-marche,RH,manager","avancé","non","Benchmark salaire avec recommandations"
+"M107","Communauté & Événements","Cibler","Founder","Événements investisseurs où je dois absolument être avant ma levée","Identifie les événements investisseurs (conférences, meetups, demo days) où je dois être présent dans les 6 prochains mois pour préparer ma levée.
+
+CONTEXTE
+- Stade actuel : [À COMPLÉTER]
+- Stade visé : [À COMPLÉTER]
+- Géographie d'investisseurs ciblée : [À COMPLÉTER]
+- Date prévisionnelle de levée : [À COMPLÉTER]
+
+CRITÈRES
+- VCs cibles présents (speakers, sponsors, attendees)
+- Format propice au networking (pas que des grandes conférences sans interaction)
+- Reputation et qualité
+
+POUR CHAQUE ÉVÉNEMENT
+- Nom + dates + lieu + format
+- VCs cibles probablement présents
+- Stratégie de présence (talk / sponsor / juste networking)
+- Investment € + temps
+- Préparation requise (pitch, demo, one-pager...)","evenements-VC,levee,6-mois,founder","avancé","non","Calendrier événements investisseurs"
+"M108","Communauté & Événements","Activer","Sales","Ma stratégie de meetup / dîner pour réseauter avec mes prospects","Construis-moi une stratégie de meetup / dîner que j'organise moi-même pour réseauter avec mes prospects qualifiés.
+
+CONTEXTE
+- Mon ICP : [À COMPLÉTER]
+- Format préféré : dîner 8-10 personnes / meetup 30 personnes / petit déjeuner / autre
+- Géographie : [À COMPLÉTER]
+- Mon offre : [À COMPLÉTER]
+
+LE PLAN
+- Thème de l'événement (qui doit attirer mon ICP sans être commercial direct)
+- Liste des 10 premiers invités cibles (warm + 2-3 prospects froids importants)
+- Format de l'événement (avec un speaker invité ? un débat ? juste networking ?)
+- Stratégie d'invitation (4 semaines avant)
+- Stratégie de follow-up post-événement
+
+DELIVRABLES
+- Brief événement complet
+- Template d'invitation
+- Plan de follow-up","event-host,dinner,meetup,sales","avancé","non","Plan complet d'événement self-hosted"
+"M109","Apprentissage & Carrière","Activer","Personal brander","Mon plan pour passer de 5k à 50k followers en 12 mois","Construis-moi un plan réaliste pour passer de 5k à 50k followers LinkedIn en 12 mois.
+
+MON CONTEXTE
+- Audience actuelle : [À COMPLÉTER]
+- Thème éditorial : [À COMPLÉTER]
+- Fréquence actuelle de posts : [À COMPLÉTER]
+- Time available / semaine : [À COMPLÉTER]
+
+LES LEVIERS
+- Augmentation fréquence/qualité posts (sans burnout)
+- Engagement systématique sur posts d'autres créateurs
+- Carrousels et formats à fort partage
+- Collaborations avec créateurs comparables
+- Newsletter / podcast / lead magnet en complément
+- Lives / événements physiques
+
+PLAN
+- Mois 1-3 : focus contenu + engagement de base
+- Mois 4-6 : ajout d'1 levier majeur (newsletter ou collab)
+- Mois 7-9 : ajout d'un format multiplicateur (podcast, événement)
+- Mois 10-12 : optimisation, scaling
+
+KPIs
+- Followers (objectif intermédiaire chaque mois)
+- Engagement rate (à maintenir >3% malgré la croissance)
+- Profile views, search appearances","audience-growth,12-mois,personal-brander,plan","avancé","non","Plan 12 mois croissance audience"
+"M110","Veille & Intelligence économique","Cibler","Investisseur","Quelles sont mes hypothèses de marché à valider ce trimestre","Identifie 5 hypothèses majeures dans ma thèse d'investissement à valider/invalider sur LinkedIn ce trimestre.
+
+MA THÈSE
+[À COMPLÉTER : secteur + sous-thèse + horizon]
+
+POUR CHAQUE HYPOTHÈSE
+- Formulation précise (X est en train de se passer parce que Y)
+- Signaux de validation à chercher sur LinkedIn (posts, hires, levées, lancements)
+- Signaux d'invalidation (= ce qui me ferait douter)
+- Échantillon de profils / boîtes à analyser
+- Conclusion à atteindre fin trimestre","thesis-validation,hypothese,investisseur,trimestre","avancé","non","5 hypothèses avec protocole de validation"
+"M111","Veille & Intelligence économique","Cibler","Founder","Mes 3 canaux d'acquisition à tester dans les 90 jours","À partir de ce que font les concurrents et les boîtes similaires dans mon secteur, identifie les 3 canaux d'acquisition que je devrais tester dans les 90 prochains jours.
+
+MA BOÎTE
+- Stade : [À COMPLÉTER]
+- ICP : [À COMPLÉTER]
+- Canaux actuels et leurs performances : [À COMPLÉTER]
+
+ANALYSE LINKEDIN
+- Comment mes concurrents directs acquièrent leurs clients (posts, partenariats, événements visibles)
+- Quels canaux les boîtes similaires (même stade/ICP) utilisent
+- Quels canaux mentionnent les founders dans leurs posts comme ""underused""
+
+POUR CHAQUE TOP 3 CANAL
+- Justification (pourquoi celui-là)
+- Hypothèse de performance (CAC, volume)
+- Test budget recommandé
+- KPIs de validation
+- Plan d'exécution sur 90 jours","acquisition,3-canaux,90-jours,test","avancé","non","3 canaux à tester avec plan"
+"M112","Veille & Intelligence économique","Découvrir","Recruteur","Quelles compétences tech émergentes sont les plus demandées","Identifie les compétences tech émergentes qui sont les plus demandées sur le marché en ce moment, et les profils qui les possèdent.
+
+MON SECTEUR D'INTERVENTION
+[À COMPLÉTER]
+
+ANALYSE
+- Mots-clés en hausse dans les offres LinkedIn (>30% sur 6 mois)
+- Compétences mentionnées par les CTOs dans leurs posts
+- Skills tags qui apparaissent dans les profils de top performers récents
+
+POUR CHAQUE COMPÉTENCE
+- Description en 1 phrase
+- Volume estimé de profils qui la possèdent
+- Ratio offre / demande
+- Salaire range observé
+- Profils types qui la possèdent (pour mon sourcing futur)","competences-emergentes,sourcing,marche-tendance","avancé","oui","Veille des skills émergentes"
+"M113","Networking & Relations","Surveiller","Sales","Tracker mes top 20 comptes ABM","Surveille en continu mes 20 comptes ABM (Account-Based Marketing) prioritaires.
+
+MES 20 COMPTES
+[À COMPLÉTER : liste]
+
+SIGNAUX À DÉTECTER PAR COMPTE
+- Changement de C-level (= remplacement, opportunité d'entrée)
+- Levée de fonds (= budget débloqué)
+- Hire d'un poste lié à mon ICP buyer (= persona disponible)
+- Lancement de produit (= besoin de support nouveau)
+- Mention publique d'un concurrent (= comparison shopping)
+- Embauche massive (= croissance, besoin grandissant)
+
+Format : ""[Compte] | [Signal] | [Action recommandée] | [Personne à contacter]"".","ABM,top-20,heartbeat,whatsapp,sales","avancé","oui","Surveillance continue 20 comptes ABM"
+"M114","Communauté & Événements","Surveiller","Founder","Veille hackathons / défis innovation où ma boîte peut briller","Surveille les hackathons, défis innovation, et appels à projets où ma boîte peut se positionner.
+
+MA BOÎTE
+- Secteur : [À COMPLÉTER]
+- Stage : [À COMPLÉTER]
+- Tech / produit clé : [À COMPLÉTER]
+
+OPPORTUNITÉS
+- Hackathons sectoriels (avec sponsors qui sont mes clients potentiels)
+- Concours startup (BPI, French Tech, etc.)
+- Awards et nominations
+- Calls for innovation des grandes entreprises
+- Programmes corporate (ex. Microsoft for Startups)
+
+Format : ""[Opportunité] | [Date limite] | [Pertinence] | [Action]"".","hackathons,concours,heartbeat,whatsapp,founder","avancé","oui","Veille événements et défis"
+"M115","Veille & Intelligence économique","Cibler","Job seeker","Préparation entretien chez [BOÎTE] : analyse complète","Prépare-moi un brief complet pour mon entretien chez [BOÎTE] le [DATE].
+
+CE QUE JE DOIS COMPRENDRE
+- Mission, stade, équipe, levée, traction visibles sur LinkedIn
+- Posts récents des dirigeants : leurs préoccupations, leurs convictions
+- Récents départs / arrivées : signaux culturels
+- Concurrents directs et leur positionnement vs cette boîte
+- Glassdoor / témoignages public sur la culture (si visibles)
+
+POUR L'ENTRETIEN
+- 5 questions intelligentes à poser (qui montrent que j'ai fait mes devoirs)
+- 3 angles de lien entre mon parcours et ce que je vois de leur situation
+- Risques / red flags à surveiller pendant l'entretien
+- Stratégie de négociation salariale (si je vais jusque-là)","entretien,preparation,boite,job-seeker","avancé","non","Brief d'entretien complet"
+"M116","Networking & Relations","Activer","Manager","Mon plan de mentoring (donner et recevoir) sur l'année","Construis-moi un plan de mentoring sur 12 mois : qui je vais mentorer, et qui va me mentorer.
+
+MON PROFIL
+[À COMPLÉTER]
+
+OBJECTIFS
+- Mentorer : 1-2 juniors / mid-career par trimestre
+- Être mentoré : 1-2 seniors par semestre
+
+MES MENTORÉS POTENTIELS
+- Critères : profils 5-10 ans en arrière, prometteurs, alignés avec ma trajectoire
+- Identification dans mon réseau
+
+MES MENTORS POTENTIELS
+- Critères : 5-10 ans en avance, accessibles, alignés avec mes ambitions
+- Identification dans mon réseau
+
+POUR CHAQUE RELATION (mentor + mentoré)
+- Format (call mensuel / async / café)
+- Sujets prioritaires
+- Réciprocité offerte
+- Mesure de succès","mentoring,12-mois,plan-bidirectionnel,manager","avancé","non","Plan mentoring complet"
+"M117","Networking & Relations","Cibler","Personal brander","Mes 10 super-ambassadeurs naturels à activer","Identifie 10 personnes dans mon réseau qui sont déjà des ""super-fans"" potentiels et qui pourraient devenir mes ambassadeurs naturels.
+
+MES SIGNAUX DE SUPER-FAN
+- Like / commente régulièrement mes posts (>5 fois sur 30 derniers jours)
+- A déjà partagé un de mes contenus
+- Audience LinkedIn engagée (>500 followers actifs)
+- Profil cohérent avec mon thème éditorial
+
+POUR CHAQUE TOP 10
+- Score d'engagement passé sur mes contenus
+- Audience size + composition
+- Type d'activation possible :
+  - Mentionner ses posts dans les miens (réciprocité)
+  - L'inviter à un live / podcast
+  - Lui demander un témoignage
+  - Co-création d'un contenu
+- Premier message / action à initier cette semaine","super-fans,ambassadeurs,activation,personal-brander","avancé","non","10 super-fans à activer"
+"M118","Apprentissage & Carrière","Cibler","Founder","Frameworks pour faire grandir ma première équipe","Construis-moi une bibliothèque de frameworks pour faire grandir ma première équipe (de 3 à 10 personnes).
+
+MON CONTEXTE
+- Équipe actuelle : [À COMPLÉTER : taille, postes]
+- Croissance prévue 12 mois : [À COMPLÉTER]
+- Mes douleurs actuelles management : [À COMPLÉTER]
+
+LES FRAMEWORKS À FOURNIR
+1. Hiring : 1 framework de recrutement systématique
+2. Onboarding : 1 framework d'intégration (30-60-90)
+3. Performance : 1 framework de feedback / 1:1 / objectifs
+4. Growth : 1 framework de plan de carrière interne
+5. Team rituals : 1 cadre de rituels d'équipe (standups, retros, all-hands)
+6. Difficult conversations : 1 cadre pour les sujets durs
+7. Compensation : 1 cadre simple de rémunération à ce stade
+
+POUR CHAQUE FRAMEWORK
+- Description en 5-8 lignes
+- Source (founder ou manager qui l'a popularisé)
+- Comment l'adapter à ma boîte
+- Premier pas pour le mettre en place cette semaine","team-building,frameworks,founder,first-team","avancé","non","Bibliothèque de 7 frameworks"
+"M119","Apprentissage & Carrière","Découvrir","Recruteur","Outils sourcing modernes que j'ignore probablement","Identifie les outils de sourcing modernes (au-delà de LinkedIn Recruiter) que je devrais évaluer.
+
+MON CONTEXTE
+- Type de profils sourcés : [À COMPLÉTER : tech / sales / autre]
+- Géographie : [À COMPLÉTER]
+- Volume mensuel : [À COMPLÉTER : nb de candidats sourcés]
+
+CATÉGORIES À COUVRIR
+- Sourcing tools (au-delà de LinkedIn Recruiter)
+- Outreach automation
+- ATS modernes
+- Talent communities et job boards spécialisés
+- Outils de scoring / matching IA
+- Outils de référence checking
+
+POUR CHAQUE OUTIL
+- Description en 1 phrase
+- Pricing typique
+- Cas d'usage idéal
+- Réputation (basé sur les recommandations dans la communauté)
+- Free trial / démo disponible","outils-sourcing,decouverte,recruteur,modernite","intermédiaire","oui","Stack sourcing modernisée"
+"M120","Recherche d'emploi","Activer","Job seeker","Plan de candidature complet pour [POSTE] chez [BOÎTE]","Construis-moi un plan de candidature complet pour [POSTE] chez [BOÎTE].
+
+CONTEXTE
+- Date butoir candidature : [À COMPLÉTER]
+- Date entretien probable : [À COMPLÉTER]
+- Mon profil : [À COMPLÉTER]
+
+PHASES
+1. Pré-candidature (J-7)
+   - Recherche complète sur la boîte (mission, stade, équipe, dirigeants visibles)
+   - Identification du recruteur et du hiring manager
+   - Engagement subtil sur LinkedIn (likes, commentaires intelligents sur leurs posts)
+
+2. Candidature (J0)
+   - CV personnalisé pour le poste (priorisation des expériences pertinentes)
+   - Lettre / message de candidature (5-7 phrases max, pas générique)
+   - Application sur la plateforme + DM au recruteur
+
+3. Pré-entretien (J+3 à J+10)
+   - Préparation des 5 questions intelligentes
+   - Préparation de 3 stories STAR alignées avec leurs valeurs / besoins
+   - Anticipation des questions techniques
+
+4. Post-entretien (J+15)
+   - Message de thank you personnalisé
+   - Plan B si pas de retour à J+15
+
+DELIVRABLES
+- Le CV adapté
+- Le message d'application
+- La fiche de préparation entretien","candidature,plan-complet,4-phases,job-seeker","avancé","non","Plan candidature multi-phases"
+"M121","Sourcing & Recrutement","Découvrir","Founder","Co-founders potentiels dans mon réseau","Identifie 3-5 personnes dans mon réseau LinkedIn qui pourraient être de bons co-founders pour ma prochaine aventure (ou pour combler une compétence manquante dans la boîte actuelle).
+
+MON CONTEXTE
+- Mes forces : [À COMPLÉTER]
+- Mes faiblesses : [À COMPLÉTER]
+- Type de co-founder cherché : [tech / business / produit / opérationnel]
+- Stade : [démarrage / pivot / extension d'équipe fondatrice]
+
+CRITÈRES
+- Profil complémentaire au mien
+- Expérience entrepreneuriale (idéalement)
+- Bonne réputation dans mon réseau (signaux de fiabilité)
+- Disponibilité potentielle (ancienneté actuelle, signaux de bougeabilité)
+- Affinité personnelle (interactions passées positives)
+
+POUR CHAQUE CO-FOUNDER POTENTIEL
+- Pourquoi le match
+- Risques / red flags potentiels
+- Comment l'aborder (le sujet co-founder est délicat)
+- Format de premier échange","co-founder,founder,3-5-personnes,complementarite","avancé","non","Liste de co-founders potentiels"
+"M122","Veille & Intelligence économique","Activer","Sales","Mon battlecard à jour sur mes 3 concurrents principaux","Construis-moi une battlecard à jour pour chacun de mes 3 concurrents principaux.
+
+MES 3 CONCURRENTS
+[À COMPLÉTER]
+
+POUR CHAQUE CONCURRENT, ANALYSE
+- Positionnement actuel (basé sur leurs derniers posts/communications)
+- Pricing visible / estimé
+- Forces majeures (ce qu'ils mettent en avant)
+- Faiblesses (ce qu'ils ne disent pas, ou ce que leurs clients critiquent en commentaire)
+- Récente actualité (dernier deal, lancement, embauche)
+- Mes 3 angles différenciants vs eux
+- Réponses aux objections types (""pourquoi pas eux ?"")","battlecard,3-concurrents,sales,objections","avancé","oui","Battlecards mises à jour"
+"M123","Networking & Relations","Surveiller","Manager","Mood tracker de mon équipe via signaux LinkedIn","Surveille les signaux LinkedIn de mon équipe et alerte-moi de potentiels mood signals (positifs ou négatifs).
+
+MON ÉQUIPE
+[À COMPLÉTER : noms des membres]
+
+SIGNAUX POSITIFS
+- Posts enthousiastes sur le travail / la boîte
+- Mentions positives de collègues
+- Reconnaissance reçue / award
+- Apprentissage actif (cours, conférence)
+
+SIGNAUX NÉGATIFS / D'ALERTE
+- Posts émotionnels critiques (sur le management, le travail, le burn-out)
+- Mise à jour brutale du profil (CV, headline)
+- Activation ""Open to Work""
+- Like / commentaire répété sur posts de recruteurs ou sur ""comment quitter sa boîte""
+- Diminution drastique d'activité (peut être ""tête dans le guidon"" mais aussi désengagement)
+
+Format : ""[Membre] | [Signal type] | [Recommandation : check-in / célébrer / s'inquiéter]"".","team-mood,heartbeat,whatsapp,manager,retention","avancé","oui","Veille mood team continue"
+"M124","Création de contenu","Surveiller","Founder","Mes contenus best performers pour les répliquer","Analyse l'historique de mes posts LinkedIn et identifie mes patterns gagnants.
+
+MES DONNÉES
+- 30 derniers posts
+- Métriques disponibles : reach, engagement rate, commentaires, shares
+
+ANALYSE
+- Top 5 posts par engagement
+- Patterns communs (sujet, format, longueur, hook, CTA, jour/heure de publication)
+- Top 5 posts par audience reach
+- Patterns communs
+
+DELIVRABLES
+- 3 patterns à répliquer (avec template)
+- 3 anti-patterns à éviter
+- Calendrier optimisé (jours / heures de publication)
+- 5 sujets futurs à creuser (basés sur ce qui a déjà marché)","analytics,patterns-gagnants,founder,contenu","avancé","oui","Analyse complète de mes patterns gagnants"
+"M125","Apprentissage & Carrière","Surveiller","Job seeker","Évolution de mon ICP de marché de l'emploi","Surveille mon ICP (les boîtes / postes / salaires que je vise) et alerte-moi des évolutions du marché.
+
+MON ICP MARCHÉ
+- Postes cibles : [À COMPLÉTER]
+- Boîtes cibles : [À COMPLÉTER]
+- Géographie : [À COMPLÉTER]
+- Salaire range visé : [À COMPLÉTER]
+
+SIGNAUX À SUIVRE
+- Évolution des offres dans mon scope (volume + descriptions)
+- Évolution des salaires affichés
+- Apparition de nouveaux types de postes hybrides
+- Évolution des compétences demandées
+- Boîtes en croissance / en difficulté
+
+Hebdomadaire format synthétique : ""Cette semaine sur ton marché de l'emploi : [3 points clés]"".","marche-emploi,heartbeat,whatsapp,job-seeker","intermédiaire","oui","Veille marché emploi hebdo"
+"M126","Networking & Relations","Activer","Investisseur","Mon plan de visibilité founder-friendly pour les 90 prochains jours","Construis-moi un plan de visibilité LinkedIn 90 jours pour me positionner comme l'investisseur que les bons founders veulent dans leur cap table.
+
+MON PROFIL
+- Mon fond / ma thèse : [À COMPLÉTER]
+- Mon différenciateur : [À COMPLÉTER]
+
+PILIERS DE CONTENU (4 à articuler)
+1. Thesis-driven : pourquoi je crois en X
+2. Founder-celebrating : valoriser des founders dont j'admire le travail
+3. Educational : aider les founders à comprendre la levée
+4. Behind-the-scenes : ce que c'est vraiment être investisseur
+
+CALENDRIER
+- 3 posts / semaine sur ces 4 piliers
+- 1 newsletter mensuelle avec mes prises de position
+- 1 événement / mois (live LinkedIn ou IRL) où des founders peuvent venir
+
+POUR CHAQUE SEMAINE
+- 3 sujets de posts précis
+- 2 founders à mentionner / valoriser (pour créer du capital relationnel)
+- 1 action de visibilité hors-LinkedIn (podcast, article, événement)","visibilite,90-jours,investisseur,founder-friendly","avancé","non","Plan 90 jours visibilité founder-friendly"
+"M127","Business Development & Partenariats","Découvrir","Sales","Partenariats de revente pour multiplier mon pipeline","Identifie les agences, intégrateurs, consultants et resellers qui pourraient revendre ma solution à leurs propres clients.
+
+MA SOLUTION
+[À COMPLÉTER]
+
+ICP DU PARTENAIRE
+- Type : agence digitale / cabinet conseil / intégrateur / freelance senior
+- Adresse mon ICP final
+- Cherche à élargir son offre (signaux : posts sur ""best tools"", ""stack 2026"", etc.)
+
+POUR CHAQUE PARTENAIRE
+- Type d'entité + décideur identifié
+- Volume de clients qu'ils peuvent toucher (estimation)
+- Levier de motivation (commission, exclu géo, brand association)
+- Hook d'approche","reseller,agence,channel-sales,sales","avancé","oui","Liste de partenaires revendeurs avec hook"
+"M128","Business Development & Partenariats","Cibler","Founder","Mes 5 grands comptes à pénétrer via partenariat stratégique","Identifie 5 grands comptes (>1000 employés) que je vise et pour chacun, le partenaire ou intégrateur qui peut me faire entrer.
+
+MA SOLUTION
+[À COMPLÉTER]
+
+GRANDS COMPTES VISÉS
+[À COMPLÉTER : liste]
+
+POUR CHAQUE GRAND COMPTE
+- Le SI ou les outils déjà utilisés (basé sur signaux LinkedIn)
+- Les agences / intégrateurs qui les servent (signaux : posts d'agences mentionnant le client)
+- Le partenaire le plus probable pour me faire entrer
+- Hook d'approche du partenaire (pas du grand compte)
+- Plan d'attaque 90 jours","grand-compte,partenaire-strategique,5-comptes","avancé","non","5 stratégies d'entrée via partenaires"
+"M129","Business Development & Partenariats","Surveiller","Founder","Veille sur les partenariats et intégrations de mes concurrents","Surveille les annonces de partenariats et intégrations de mes concurrents.
+
+MES CONCURRENTS
+[À COMPLÉTER]
+
+SIGNAUX À DÉTECTER
+- Annonce de partenariat avec une marketplace / plateforme
+- Intégration native annoncée avec un outil populaire
+- Co-marketing visible (webinar conjoint, étude croisée)
+- Distribution via reseller program
+
+Format : ""[Concurrent] | [Partenariat annoncé] | [Implication] | [Réplique possible]"".","partenariats-concurrents,heartbeat,whatsapp","avancé","oui","Veille partenariats du marché"
+"M130","Business Development & Partenariats","Cibler","Sales","Mes 5 prescripteurs à activer ce trimestre","Parmi tous les prescripteurs identifiés dans mon réseau, sélectionne les 5 à activer en priorité ce trimestre.
+
+CRITÈRES DE PRIORITÉ
+- Volume d'audience qualifiée
+- Probabilité de recommandation (relation existante)
+- Effort de mise en relation (faible si déjà tiède)
+- Valeur asymétrique (eux n'ont pas grand-chose à perdre, moi beaucoup à gagner)
+
+POUR CHAQUE TOP 5
+- Justification du score
+- Type d'activation (mention publique / DM perso / co-création de contenu / commission)
+- Premier message à envoyer cette semaine
+- KPI de suivi (volume de leads attendus)","prescripteurs,top-5,activation,sales","avancé","non","Top 5 prescripteurs avec plan d'activation"
+"M131","Business Development & Partenariats","Activer","Founder","Pitch deck partenariat pour [PARTENAIRE]","Rédige le contenu d'un mini pitch deck (5 slides max) pour proposer un partenariat à [PARTENAIRE].
+
+CONTEXTE
+- Mon produit : [À COMPLÉTER]
+- Leur produit : [À COMPLÉTER]
+- Ce que je propose comme partenariat : [À COMPLÉTER]
+- Bénéfices pour eux (ÉGOÏSTE — pas pour moi) : [À COMPLÉTER]
+
+LES 5 SLIDES
+- Slide 1 : Pourquoi maintenant (timing + opportunity)
+- Slide 2 : Le problème commun de nos clients respectifs
+- Slide 3 : La solution combinée (1+1 = 3)
+- Slide 4 : Le modèle de partenariat proposé (revenue share, lead share, intégration tech)
+- Slide 5 : Les premiers pas concrets (pilote 30 jours)
+
+POUR CHAQUE SLIDE
+- Titre court
+- Body / 3 bullets max
+- Visuel suggéré","pitch-partenariat,5-slides,founder","avancé","non","Mini pitch deck partenariat"
+"M132","Business Development & Partenariats","Découvrir","Consultant","Apporteurs d'affaires potentiels pour mes missions","Identifie des apporteurs d'affaires potentiels qui peuvent m'amener des missions.
+
+MON OFFRE
+[À COMPLÉTER : domaine + ticket moyen mission]
+
+PROFILS D'APPORTEURS POTENTIELS
+- Consultants seniors complémentaires (qu'ils refusent les missions hors leur scope)
+- Freelances qui peuvent sous-traiter une partie de leurs gros projets
+- Cabinets en surcharge ponctuelle
+- Coaches business qui accompagnent mon ICP
+- Anciens clients dans une nouvelle position
+
+POUR CHAQUE APPORTEUR
+- Pourquoi il pourrait m'amener du business
+- Type de deal proposé (commission 10-20% / échange réciproque / co-mission)
+- Hook d'approche
+- Volume de business potentiel","apporteurs-affaires,consultant,partenariats","intermédiaire","oui","Liste apporteurs d'affaires curatée"
+"M133","Business Development & Partenariats","Surveiller","Sales","Signaux de partenaires actuels en train de craquer","Surveille mes partenaires actuels (revendeurs, prescripteurs, intégrateurs) et alerte-moi si l'un d'eux montre des signes de faiblesse.
+
+MES PARTENAIRES ACTUELS
+[À COMPLÉTER]
+
+SIGNAUX D'ALERTE
+- Volume de leads / signatures qui chute
+- Diminution d'activité LinkedIn de leur côté
+- Mention publique d'un de mes concurrents
+- Embauche d'un partner manager côté concurrent (signal qu'ils vont nous courtiser)
+- Changement de C-level chez le partenaire
+- Difficulté financière visible
+
+Format : ""[Partenaire] | [Signal] | [Action préventive]"".","partenaires-existants,heartbeat,sales","avancé","oui","Veille santé des partenariats"
+"M134","Business Development & Partenariats","Activer","Sales","Programme partner enablement de mes 3 top partenaires","Construis-moi un plan d'enablement (formation + outils) pour mes 3 partenaires les plus importants.
+
+MES 3 TOP PARTENAIRES
+[À COMPLÉTER]
+
+POUR CHACUN, BÂTIR
+- Diagnostic : où en sont-ils dans la maîtrise de mon offre ?
+- Formation requise (call de cadrage, masterclass produit, certification)
+- Matériel à fournir (one-pager, demo videos, battlecards, case studies)
+- Rituels de suivi (call mensuel, QBR trimestriel)
+- KPIs de suivi (leads générés, signatures, NPS partner)
+- Plan 30-60-90","enablement,3-partenaires,plan,sales","avancé","non","Plan d'enablement complet 3 partenaires"
+"M135","Prospection commerciale","Cibler","Consultant","Mes 5 missions prioritaires à closer ce mois","Parmi toutes mes opportunités de mission identifiées, sélectionne les 5 à closer en priorité ce mois.
+
+CRITÈRES
+- Probabilité de signature (chaleur du contact)
+- Ticket de la mission (€ + durée)
+- Adéquation avec mes compétences (effort vs delivery)
+- Valeur stratégique (référence, secteur, repeat business)
+
+POUR CHAQUE TOP 5
+- Score de priorité (€ × probabilité)
+- Frein principal à la signature (budget / timing / décideur / objection technique)
+- Action concrète cette semaine pour faire avancer
+- Plan B si la mission ne signe pas","pipeline,consultant,5-missions,closing","intermédiaire","non","Top 5 missions avec plan de closing"
+"M136","Prospection commerciale","Surveiller","Consultant","Veille des appels d'offres et missions publiques","Surveille les appels d'offres, missions publiques et opportunités de freelance dans mon scope.
+
+MON SCOPE
+- Domaine : [À COMPLÉTER]
+- Type de mission : [court / long / forfait / TJM]
+- Géographie / remote : [À COMPLÉTER]
+
+SOURCES À CROISER
+- Posts LinkedIn de directeurs / managers cherchant un consultant
+- Annonces ""looking for [profil]"" sur les groupes pro
+- Plateformes freelance (signaux indirects)
+- AOs publics (BOAMP, etc. si applicable à mon métier)
+
+Format : ""[Source] | [Opportunité] | [Décideur si visible] | [Action]"".","AO,missions,heartbeat,consultant","intermédiaire","oui","Veille opportunités missions"
+"M137","Création de contenu","Activer","Consultant","Posts LinkedIn de positionnement expert pour ma niche","Rédige 3 posts LinkedIn pour me positionner comme expert dans ma niche, en attirant des clients potentiels sans paraître commercial.
+
+MA NICHE / MON EXPERTISE
+[À COMPLÉTER]
+
+PRINCIPES
+- Apport de valeur en premier degré (un cas, un framework, une analyse)
+- Démontrer mon expertise par une opinion forte ou un détail technique
+- 1 sur 3 peut mentionner subtilement la disponibilité (ex. ""j'accompagne 2-3 boîtes par trimestre sur ce sujet"")
+- Inviter à la conversation, pas à la prestation
+
+POUR CHAQUE POST (3 versions)
+- ""Cas client anonymisé"" : raconter un cas concret
+- ""Framework / méthode"" : donner un outil de réflexion
+- ""Opinion contrarienne"" : casser un mythe de la pratique","consultant,positionnement,3-posts,expert","intermédiaire","non","3 posts d'autorité pour consultant"
+"M138","Networking & Relations","Découvrir","Consultant","Mes pairs consultants à connecter pour échanger / s'envoyer des missions","Identifie 10 consultants pairs (mêmes profils que moi ou complémentaires) avec qui je devrais bâtir une relation.
+
+MON PROFIL
+[À COMPLÉTER]
+
+PROFILS RECHERCHÉS
+- Consultants au même TJM / niveau (= peer learning)
+- Consultants complémentaires (différente spécialité, même ICP)
+- Consultants 5-10 ans en avance (= mentors potentiels)
+
+POUR CHAQUE PAIR
+- Pourquoi pertinent
+- Type de relation possible (échange de missions, masterminding, simple veille)
+- Premier contact / format proposé","pairs-consultants,reseau,10-pairs","intermédiaire","non","10 pairs consultants à activer"
+"M139","Apprentissage & Carrière","Cibler","Consultant","Mon plan pour augmenter mon TJM de X% en 6 mois","Construis-moi un plan en 6 mois pour augmenter mon TJM de X%.
+
+MON CONTEXTE
+- TJM actuel : [À COMPLÉTER]
+- TJM cible : [À COMPLÉTER]
+- Domaine : [À COMPLÉTER]
+
+LEVIERS
+- Repositionnement : monter en gamme dans ma niche (vs me généraliser)
+- Spécialisation : devenir LE référent sur un sous-thème
+- Visibilité : créer du contenu / passer des conférences / être cité
+- Asset : produire un livre / framework / cours qui légitime
+- Sélection : oser refuser des missions sous le nouveau TJM
+
+PLAN 6 MOIS
+- Mois 1 : repositionnement + nouveau pricing affiché
+- Mois 2-3 : production de contenu d'autorité
+- Mois 4 : événement / asset majeur
+- Mois 5 : 3 nouvelles missions au nouveau TJM
+- Mois 6 : consolidation + ajustement
+
+KPIs et risques associés.","TJM,consultant,plan-6-mois,pricing","avancé","non","Plan 6 mois augmentation TJM"
+"M140","Communauté & Événements","Activer","Consultant","Plan pour speaker dans 3 conférences ce semestre","Construis-moi un plan d'action pour candidater et speaker dans 3 conférences pertinentes ce semestre.
+
+MA SPÉCIALITÉ
+[À COMPLÉTER]
+
+CONFÉRENCES À VISER
+- Type : [À COMPLÉTER : sectorielles / professionnelles / fonctionnelles]
+- Géographie : [À COMPLÉTER]
+- Niveau de prestige souhaité
+
+LE PLAN
+1. Identification : 10 conférences candidates avec call for speakers ouvert ou prévu
+2. Pitch : 3 abstracts différents que je peux soumettre selon les thèmes attendus
+3. Calendrier de soumission : dates limites de candidature
+4. Préparation post-acceptation : présentation + amplification LinkedIn
+
+DELIVRABLES
+- Liste 10 conférences avec deadlines
+- 3 abstracts prêts à soumettre
+- Plan de promotion en cas d'acceptation","speaker,conferences,3-talks,consultant","avancé","non","Plan complet de candidature speaker"
+"M141","Recherche d'emploi","Découvrir","Consultant","Opportunités de salariat ou de CDI freelance dans mon scope","Sans renoncer au freelance, identifie les opportunités hybrides ou de CDI qui pourraient m'intéresser : Head of, Director, ou rôles de freelance ""intégré"".
+
+MON CONTEXTE
+- Domaine : [À COMPLÉTER]
+- TJM actuel : [À COMPLÉTER]
+- Ce qui me motiverait à reprendre un poste salarié : [À COMPLÉTER]
+
+OPPORTUNITÉS À DÉTECTER
+- Postes Head of / Director correspondant à ma spécialité
+- Rôles de ""fractional"" (CFO, CMO, CTO à temps partagé)
+- Rôles de Partner dans des cabinets
+- Rôles d'intrapreneur dans des grands groupes
+
+POUR CHAQUE OPPORTUNITÉ
+- Boîte + rôle + niveau de visibilité (offre vs marché caché)
+- Fit avec mon profil
+- Mon angle d'approche","consultant,salariat,fractional,leadership","avancé","non","Opportunités hybrides curatées"
+"M142","Sourcing & Recrutement","Découvrir","Consultant","Sous-traitants potentiels pour mes gros projets","Identifie 10 freelances que je pourrais sous-traiter pour mes projets en surcharge.
+
+MON SCOPE
+[À COMPLÉTER : type de projets que je traite]
+
+PROFILS RECHERCHÉS
+- Junior à mi-senior (TJM 1.5-2x inférieur au mien)
+- Compétences cohérentes avec mes livrables
+- Disponibilité partielle (5-15j / mois idéalement)
+- Reputation pro (références, posts, recommandations)
+
+POUR CHAQUE FREELANCE
+- Profil + TJM estimé
+- Pourquoi pertinent pour mon scope
+- Premier contact (test mission de 2-3 jours pour valider la collab)","sous-traitance,freelances,consultant,scaling","intermédiaire","non","10 freelances sous-traitants potentiels"
+"M143","Recherche d'emploi","Cibler","Manager","Mes 5 boîtes en hyper-croissance compatibles avec mon profil leadership","Identifie 5 boîtes en hyper-croissance (Série B+ ou pré-IPO) qui pourraient avoir besoin de mon profil leadership.
+
+MON PROFIL
+- Niveau actuel : [À COMPLÉTER]
+- Domaine : [À COMPLÉTER]
+- Type d'équipe gérée : [taille + profils]
+
+CRITÈRES
+- Levée Série B+ dans les 12 derniers mois
+- Croissance employees >40% sur 12 mois
+- Ouverture de nouveaux marchés / nouvelle BU
+- Pas de mon niveau leadership encore en place
+
+POUR CHAQUE BOÎTE
+- Pourquoi elle a probablement besoin de mon profil
+- Personne à contacter (CEO, CTO, COO)
+- Hook d'approche : value-add specific au stade de la boîte","leadership,scale-up,hyper-croissance,manager","avancé","non","5 boîtes scale-up avec angle leadership"
+"M144","Recherche d'emploi","Activer","Manager","Pitch de candidature spontanée pour [BOÎTE] visant [POSTE]","Rédige un pitch de candidature spontanée pour [BOÎTE] où je vise [POSTE LEADERSHIP].
+
+CONTEXTE
+- Mon parcours : [À COMPLÉTER]
+- Mes 3 réalisations majeures : [À COMPLÉTER]
+- Pourquoi cette boîte spécifiquement : [À COMPLÉTER]
+- Pourquoi maintenant : [À COMPLÉTER : signal qu'ils ont]
+
+LE PITCH (format DM ou email)
+- Maximum 8 phrases
+- Hook qui montre que j'ai compris leur business
+- Articulation ROI : ce que je peux leur apporter en chiffres
+- Référence à un challenge spécifique qu'ils traversent
+- CTA : 30 min pour échanger sur leur prochaine étape
+
+3 variantes :
+- ""Operator"" : je viens des tranchées, je reconstruis
+- ""Strategist"" : je vois où aller, je guide
+- ""Builder"" : je crée de zéro, je structure","candidature-spontanee,3-variantes,leadership","avancé","non","3 pitches de candidature leadership"
+"M145","Recherche d'emploi","Cibler","Founder","Postes opérationnels pour me reconvertir si ma boîte ne marche pas","Plan B : identifie les postes vers lesquels je pourrais pivoter si ma boîte actuelle ne décolle pas, en valorisant mon expérience entrepreneuriale.
+
+MON PARCOURS DE FOUNDER
+- Boîte : [À COMPLÉTER]
+- Compétences développées : [À COMPLÉTER]
+- Domaine de la boîte : [À COMPLÉTER]
+
+POSTES POTENTIELS À VISER
+- Operator dans une scale-up (Head of Ops, Chief of Staff, Head of Growth)
+- Investisseur (analyst, principal junior dans un VC)
+- Product / GM dans un grand groupe
+- Founder en série (rejoindre comme co-founder une autre boîte)
+- Operating Partner dans un fond
+
+POUR CHAQUE OPTION
+- Pourquoi mon parcours match
+- Boîtes / fonds typiques qui valorisent ce profil
+- Mon angle de pitch
+- Personnes à contacter dans mon réseau","plan-B,founder,reconversion,operator","avancé","non","Plan de reconversion founder"
+"M146","Recherche d'emploi","Activer","Sales","Lettre de motivation et message de candidature pour [POSTE SALES]","Rédige les supports de candidature pour [POSTE] chez [BOÎTE] : lettre + DM au recruteur + DM au futur manager.
+
+MON PROFIL SALES
+- Mes chiffres clés : [À COMPLÉTER : quotas, atteintes, deals signés]
+- Mes méthodes : [À COMPLÉTER : MEDDIC, Challenger, autre]
+- Pourquoi je vise cette boîte spécifiquement : [À COMPLÉTER]
+
+LE PACK
+1. LETTRE / EMAIL DE MOTIVATION (10 phrases max)
+   - Hook qui montre que je comprends leur GTM
+   - 3 réussites chiffrées (ne pas tout déballer)
+   - Articulation ROI clair
+   - Compréhension de leurs challenges actuels
+   - CTA explicite
+
+2. DM RECRUTEUR (5 phrases max)
+   - Référence concrète à leurs posts ou actualités
+   - Pourquoi je suis particulier (1 ligne)
+   - Demande explicite de call
+
+3. DM FUTUR MANAGER (5 phrases max)
+   - Référence à un de ses posts ou réussites
+   - Pourquoi je peux contribuer à son équipe
+   - CTA léger","candidature-sales,3-supports,job-seeker","avancé","non","3 supports de candidature sales"
+"M147","Recherche d'emploi","Cibler","Investisseur","Mes opportunités de switch vers un autre fond ou un poste corporate","Sans bouger de l'industrie, identifie les fonds ou postes corporate qui pourraient m'offrir une étape de carrière intéressante.
+
+MON PROFIL
+- Fond actuel : [À COMPLÉTER]
+- Niveau : [À COMPLÉTER : Analyst / Associate / Principal / Partner]
+- Spécialité : [À COMPLÉTER : secteur ou stade]
+
+OPPORTUNITÉS POSSIBLES
+- Switch vers un fond plus prestigieux (mêmes fonctions mais brand premium)
+- Switch vers un fond spécialisé (deeper expertise)
+- Corporate development d'une scale-up (CVC ou M&A)
+- Operator role chez un de mes investissements
+- Création de mon propre fond (avec LP commitments)
+
+POUR CHAQUE OPTION
+- Pourquoi pertinent à mon stade de carrière
+- Boîtes / fonds typiques
+- Risques / trade-offs","investisseur,carriere,switch,opportunites","avancé","non","Cartographie des moves carrière VC"
+"M148","Networking & Relations","Activer","Job seeker","Plan de réactivation de mon réseau dormant","Construis-moi un plan pour réactiver intelligemment mon réseau dormant pendant ma recherche d'emploi.
+
+MON RÉSEAU DORMANT
+- Définir : personnes que je n'ai pas contactées depuis 12+ mois mais qui me connaissent
+- Volume estimé : [À COMPLÉTER]
+
+LE PLAN
+1. Tri par utilité : qui peut m'aider concrètement vs qui c'est juste sympa de revoir
+2. Personnalisation : pour chaque ""haute utilité"", un message custom
+3. Cadence : pas tout en même temps (max 3-5 / semaine pour rester authentique)
+4. Format : pas ""j'ai besoin d'aide"", plutôt ""comment vas-tu, voici où j'en suis""
+
+DELIVRABLES
+- Top 20 personnes à reconnecter en priorité (avec hook personnalisé)
+- Template de message neutre + variantes selon contexte
+- Plan de relance progressive sur 4 semaines","reseau-dormant,reactivation,job-seeker,plan-4-semaines","intermédiaire","non","Plan de réactivation 4 semaines"
+"M149","Levée de fonds","Découvrir","Founder","Family offices et investisseurs alternatifs dans mon réseau","Identifie les family offices, holdings privées et investisseurs alternatifs qui pourraient compléter une ronde ""classique"".
+
+MA BOÎTE
+- Stade : [À COMPLÉTER]
+- Ticket cherché : [À COMPLÉTER]
+
+PROFILS À DÉTECTER
+- Family offices visibles sur LinkedIn (rare mais existant)
+- Holdings privées d'industriels qui investissent en startup
+- Investisseurs étrangers (Asie, Moyen-Orient) actifs dans mon secteur
+- Plateformes de financement participatif tier 1
+- Crowdequity (Anaxago, Sowefund, etc. en France)
+
+POUR CHAQUE PROFIL
+- Type d'investisseur
+- Ticket habituel
+- Process et timing de décision
+- Comment l'approcher","family-office,holding,sources-alternatives,founder","avancé","non","Sources de financement alternatives"
+"M150","Levée de fonds","Cibler","Founder","Ordre d'attaque optimal pour ma roadmap de levée","Construis-moi un ordre d'attaque optimal pour rencontrer les VCs de ma roadmap de levée.
+
+CONTEXTE
+- Mes 15 VCs cibles classés par tier (top 5 / 5 mid / 5 backup) : [À COMPLÉTER]
+- Date prévisionnelle de closing : [À COMPLÉTER]
+
+PRINCIPES
+- Commencer par les ""tier 3"" pour s'entraîner et affiner le pitch
+- Activer les ""tier 2"" en milieu de cycle (signaux d'intérêt = leverage pour tier 1)
+- Finir par les ""tier 1"" quand le pitch est rodé et qu'on a déjà des signaux
+- Garder 2-3 ""tier 2"" en réserve pour activer si tier 1 n'aboutit pas
+
+LE CALENDRIER
+- Semaines 1-2 : tier 3 (rodage)
+- Semaines 3-5 : tier 2 (génération de leverage)
+- Semaines 6-9 : tier 1 (closing)
+- Semaines 10-12 : term sheet, due diligence, closing
+
+Pour chaque VC : date d'approche optimale + warm intro à mobiliser.","roadmap-levee,ordre-attaque,founder,12-semaines","avancé","non","Plan d'attaque levée 12 semaines"
+"M151","Levée de fonds","Activer","Founder","One-pager investisseurs prêt à envoyer","Rédige le contenu d'un one-pager (1 page A4) à envoyer à des investisseurs en preview.
+
+MA BOÎTE
+- Nom + tagline en 1 phrase
+- Mission : [À COMPLÉTER]
+- Stade : [À COMPLÉTER]
+- Ticket cherché : [À COMPLÉTER]
+- Valorisation cible : [À COMPLÉTER]
+
+LES SECTIONS DU ONE-PAGER
+1. Hero : Tagline + 1 chiffre choc
+2. Problem : Le marché en 3 lignes
+3. Solution : Mon produit en 3 lignes
+4. Traction : 3-5 chiffres clés (revenue, growth, retention, NPS, customers)
+5. Market : Tam / Sam estimé + positioning
+6. Team : 3 fondateurs / key hires en 1 ligne chacun
+7. Round : What we're raising + use of funds
+8. Contact : Un email pro + un calendly
+
+CONTRAINTES
+- Tout doit tenir sur 1 page A4
+- Lisible en 60 secondes
+- Stat / chiffre dans chaque section","one-pager,fundraising,founder,investisseurs","avancé","non","One-pager structuré complet"
+"M152","Levée de fonds","Surveiller","Investisseur","Founders de mon portfolio en train de préparer leur next round","Surveille les founders de mon portfolio et alerte-moi quand l'un d'eux est en train de préparer une nouvelle levée.
+
+MON PORTFOLIO
+[À COMPLÉTER : noms]
+
+SIGNAUX D'UNE LEVÉE EN PRÉPARATION
+- Augmentation drastique de la communication (3+ posts / semaine)
+- Annonces de milestones (clients, traction, hires)
+- Posts du founder sur ""ce qui se passe"" dans la boîte
+- Hires d'un Head of Finance / CFO
+- Recrutement d'un advisor externe (consultant en levée)
+- Activité accrue avec d'autres VCs (visible via likes / commentaires)
+
+Format : ""[Founder] | [Signal détecté] | [Action recommandée : appel proactif / follow-on / intro]"".","portfolio,next-round,heartbeat,investisseur","avancé","oui","Veille des next rounds portfolio"
+"M153","Levée de fonds","Cibler","Founder","Mes 10 LP / business angels prioritaires qui n'ont pas levé récemment","Identifie 10 business angels et LP de mon réseau qui n'ont pas annoncé d'investissement récent — ils sont peut-être prêts pour de nouveaux deals.
+
+PROFIL CIBLÉ
+- Business angels actifs ces dernières années
+- Mais pas d'annonce d'investissement dans les 6 derniers mois (= ""fresh book"")
+- Profile cohérent avec mon ICP investisseur
+
+POUR CHAQUE TOP 10
+- Profil rapide
+- Type de deals qu'ils font habituellement (ticket + secteur)
+- Pourquoi mon deal pourrait les intéresser
+- Hook d'approche
+- Warm intro disponible","angels-fresh,founder,top-10,prospection-VC","avancé","non","10 angels frais à approcher"
+"M154","Levée de fonds","Activer","Founder","Réponses préparées aux 10 questions que je vais me prendre en pitch","Prépare-moi les réponses aux 10 questions les plus probables que je vais me prendre en pitch VC.
+
+MON CONTEXTE
+- Mon produit : [À COMPLÉTER]
+- Stade : [À COMPLÉTER]
+- Ma traction : [À COMPLÉTER]
+
+LES 10 QUESTIONS PROBABLES
+1. ""Pourquoi vous, pourquoi maintenant ?""
+2. ""Quelle est votre defensibilité long-terme ?""
+3. ""Quels sont vos pires concurrents ?""
+4. ""Comment se compose votre équipe et qui manque ?""
+5. ""Quel est votre go-to-market ?""
+6. ""Que se passe-t-il si [un grand acteur] entre sur votre marché ?""
+7. ""Pourquoi ce pricing ?""
+8. ""Quel est votre taux de churn et pourquoi ?""
+9. ""Qu'utilisez-vous comme fonds dans cette levée ?""
+10. ""Quel est le worst-case scenario et comment le gérez-vous ?""
+
+POUR CHAQUE QUESTION
+- Réponse courte (60 secondes max)
+- 2-3 chiffres / preuves à dégainer
+- Anti-piège : ce qu'il NE faut PAS dire","pitch-prep,VC,10-questions,founder","avancé","non","Réponses préparées 10 questions VC"
+"M155","Sourcing & Recrutement","Activer","Founder","Plan d'attaque pour recruter un Head of Sales en 60 jours","Construis-moi un plan d'action pour recruter un Head of Sales en 60 jours.
+
+MON CONTEXTE
+- Stade boîte : [À COMPLÉTER]
+- Équipe sales actuelle : [À COMPLÉTER]
+- ICP du Head of Sales recherché : [À COMPLÉTER : background, années, taille équipe gérée]
+- Salary range + equity : [À COMPLÉTER]
+
+PHASE 1 — Définition (J1 à J7)
+- Brief précis (mission, ownership, KPIs)
+- Profil idéal vs profil acceptable
+- Process d'entretien (4 étapes max)
+
+PHASE 2 — Sourcing (J8 à J30)
+- Top 30 candidats potentiels (avec mon réseau + signaux LinkedIn)
+- 3 vagues de sourcing (warm intros / cold premium / cold standard)
+- 50 messages personnalisés à envoyer
+
+PHASE 3 — Évaluation (J20 à J50)
+- 8-10 entretiens approfondis
+- Cas business pratique
+- References checks parallèles
+
+PHASE 4 — Closing (J50 à J60)
+- Offre + closing
+- Plan d'onboarding 30-60-90
+
+POUR CHAQUE PHASE
+- Actions concrètes par semaine
+- KPIs de suivi
+- Plan B si retard","head-of-sales,plan-60-jours,founder,recrutement-cle","avancé","non","Plan complet recrutement Head of Sales"
+"M156","Sourcing & Recrutement","Surveiller","Founder","Talents techniques rares qui rentrent sur le marché","Surveille en continu les talents techniques rares (que je n'arrive pas à embaucher facilement) et alerte-moi dès qu'un d'eux émet un signal de mouvement.
+
+MES PROFILS RARES
+[À COMPLÉTER : ex. ML engineer senior français, lead architect Rust, data scientist healthcare, etc.]
+
+SIGNAUX
+- Activation ""Open to Work""
+- Ancienneté >3 ans dans le poste actuel
+- Posts critiques de leur boîte
+- Like de posts de recruteurs ou de communautés tech
+- Mise à jour profil
+- Participation à des événements tech (= signal de réseautage actif)
+
+Format : ""[Profil] | [Personne] | [Signal] | [Action immédiate]"".","talents-rares,heartbeat,founder,sourcing-strategique","avancé","oui","Veille talents rares en mouvement"
+"M157","Sourcing & Recrutement","Cibler","Manager","Mes 10 candidats top sur le brief [POSTE] à pousser cette semaine","Sors-moi les 10 meilleurs candidats sur mon brief actuel à pousser activement cette semaine.
+
+LE BRIEF
+[À COMPLÉTER]
+
+CRITÈRES DE PRIORITISATION
+- Adéquation technique stricte
+- Probabilité de réponse (signaux d'activité, ancienneté du poste actuel)
+- Bougeabilité (comparé au marché)
+- Pas déjà sollicité par d'autres recruteurs (à inférer)
+
+POUR CHAQUE TOP 10
+- Score d'adéquation /100
+- Score de bougeabilité /100
+- Hook personnalisé
+- Plan B si pas de réponse à J+5","manager,top-10,sourcing-actif,brief","intermédiaire","non","Top 10 candidats actionables"
+"M158","Sourcing & Recrutement","Activer","Recruteur","Approche personnalisée pour [CANDIDAT PASSIF DIFFICILE]","Rédige une approche pour [NOM] qui est un candidat passif difficile : senior, sollicité, sans signal ""Open to Work"".
+
+CONTEXTE
+- Son profil : [À COMPLÉTER : poste, boîte, parcours]
+- Mon poste : [À COMPLÉTER]
+- Ce qui le distingue (et m'intéresse) : [À COMPLÉTER]
+
+CONTRAINTES SPÉCIALES
+- Il reçoit probablement 3-5 messages de recruteurs / semaine
+- Premier message doit se distinguer en 5 secondes
+- Pas de pitch direct du poste
+- Apport de valeur immédiat (insight sectoriel, question pointue, recommandation)
+
+3 VARIANTES
+- ""Tech-respect"" : référence à un projet open source / talk / paper
+- ""Humble curieux"" : question pointue qui valorise son expertise
+- ""Insight-driven"" : un fait sectoriel qu'il ne sait peut-être pas","sourcing,passif-difficile,3-variantes,recruteur","avancé","non","3 messages pour candidat passif difficile"
+"M159","Sourcing & Recrutement","Découvrir","Manager","Talents internes (transfert) avant d'embaucher en externe","Avant de lancer un recrutement externe, identifie les talents internes (dans ma boîte) qui pourraient pivoter vers le poste cherché.
+
+LE POSTE OUVERT
+[À COMPLÉTER]
+
+CRITÈRES POUR UN TRANSFERT INTERNE
+- Compétences proches (60%+ déjà acquises)
+- Signaux d'envie de bouger (post LinkedIn, like de posts de carrière)
+- Bonne réputation interne
+- Disponibilité (pas en mission critique sans backup)
+
+POUR CHAQUE INTERNE POTENTIEL
+- Pourquoi le match
+- Lacunes à combler (formation, mentoring)
+- Comment l'aborder pour vérifier l'envie sans déclencher des attentes
+- Bénéfice pour la boîte (rétention, motivation, économie sourcing)","transfert-interne,manager,talent-pool","intermédiaire","non","Liste de candidats internes potentiels"
+"M160","Sourcing & Recrutement","Cibler","Recruteur","Mon plan de remontée de qualité de mon vivier candidats","Construis-moi un plan pour améliorer la qualité de mon vivier candidats sur 90 jours.
+
+MON CONTEXTE
+- Vivier actuel : [À COMPLÉTER : volume + qualité estimée]
+- Domaines : [À COMPLÉTER]
+
+LEVIERS
+- Sourcing actif (passer plus de temps sur les profils premium plutôt que la masse)
+- Inbound : créer du contenu LinkedIn pour attirer
+- Communautés : intégrer 2-3 communautés où mes profils traînent
+- Référent : système de cooptation interne et externe
+- Database : nettoyer / scorer mon vivier actuel
+
+PLAN 30/60/90
+- 30 : nettoyage + nouveau sourcing process
+- 60 : 1 nouveau canal d'inbound activé (contenu, communauté)
+- 90 : système de cooptation déployé
+
+KPIs : volume vivier, qualité (score moyen), conversion vivier → entretien.","vivier,90-jours,recruteur,quality","avancé","non","Plan amélioration vivier 90 jours"
+"M161","Prospection commerciale","Cibler","Personal brander","Mes 20 prospects les plus engagés avec mon contenu","Identifie les 20 personnes qui ont le plus interagi avec mes contenus LinkedIn dans les 60 derniers jours et qui pourraient devenir clients.
+
+MON OFFRE
+[À COMPLÉTER : produit / service / coaching / formation]
+[À COMPLÉTER : pricing range]
+
+CRITÈRES
+- A interagi avec mes contenus 3+ fois sur 60 jours
+- Profil match avec mon ICP cible
+- Signal de pouvoir d'achat (poste, boîte, séniorité)
+
+POUR CHAQUE TOP 20
+- Score d'engagement avec mes contenus
+- Match avec mon ICP
+- Type de message à lui envoyer (pas un pitch — une conversation)
+- Hook basé sur leur dernière interaction avec mon contenu","engageurs,prospects,20-personnes,personal-brander","avancé","non","Top 20 engageurs convertibles"
+"M162","Recherche d'emploi","Découvrir","Personal brander","Sponsoring / partenariats marque pour monétiser mon audience","Identifie les marques et entreprises qui pourraient sponsoriser mon contenu ou m'employer comme ambassadeur.
+
+MON AUDIENCE / MON THÈME
+[À COMPLÉTER]
+
+PROFILS DE SPONSORS POTENTIELS
+- Outils / produits utilisés par mon audience (SaaS B2B compatibles avec mon thème)
+- Plateformes de formation / coaching
+- Marques de consommation alignées (rare en LinkedIn B2B)
+- Événements et conférences
+
+POUR CHAQUE PROSPECT SPONSOR
+- Match audience
+- Format de partenariat possible (post sponsorisé, collab newsletter, ambassadeur)
+- Tarif estimé pour ma taille d'audience
+- Décideur à contacter (Head of Marketing, CMO)","monetisation,sponsoring,personal-brander,partenariats-marque","avancé","non","Sponsors potentiels avec décideurs"
+"M163","Apprentissage & Carrière","Surveiller","Personal brander","Évolution de mes algos LinkedIn et signaux de changement","Surveille les signaux d'évolution de l'algorithme LinkedIn et alerte-moi des changements à intégrer.
+
+SIGNAUX À DÉTECTER
+- Posts d'experts LinkedIn analysant des changements
+- Annonces officielles de LinkedIn
+- Évolution des best practices (formats qui marchent / ne marchent plus)
+- Témoignages de créateurs qui voient leur reach changer
+- Posts de Richard van der Blom, Justin Welsh, et autres analystes algo
+
+Format : ""[Source] | [Changement détecté] | [Implication pour mon contenu] | [Adaptation recommandée]"".","algo-linkedin,heartbeat,personal-brander","avancé","oui","Veille algo LinkedIn"
+"M164","Networking & Relations","Activer","Personal brander","Plan d'invitation à mon prochain live / événement","Construis-moi un plan d'invitation pour mon prochain live LinkedIn / podcast / événement.
+
+L'ÉVÉNEMENT
+- Format : [À COMPLÉTER]
+- Date : [À COMPLÉTER]
+- Sujet : [À COMPLÉTER]
+- Invité(s) : [À COMPLÉTER si applicable]
+
+LE PLAN
+- J-21 : annonce publique sur LinkedIn (post + commentaire teaser)
+- J-14 : DMs personnalisés à 30 personnes prioritaires (super-fans + ICP)
+- J-7 : 2e post LinkedIn (recap des inscrits, social proof)
+- J-3 : DMs aux engageurs des derniers posts
+- J-1 : reminder LinkedIn + DM individuel aux 10 plus stratégiques
+- J0 : live + posts en direct
+- J+1 : post recap + replay
+- J+3 : DMs aux participants pour conversion (call, prochain événement, etc.)
+
+DELIVRABLES
+- Templates de DM par segment
+- Templates de posts LinkedIn pour chaque phase","live,evenement,plan-invitation,personal-brander","avancé","non","Plan complet d'invitation événement"
+"M165","Création de contenu","Activer","Personal brander","Newsletter LinkedIn de [SUJET] pour ce mois","Rédige le contenu d'une newsletter LinkedIn (1 édition) sur [SUJET] avec le ton et la structure adaptés à mon audience.
+
+CONTEXTE
+- Mon audience : [À COMPLÉTER]
+- Mon thème éditorial : [À COMPLÉTER]
+- Sujet précis de cette édition : [À COMPLÉTER]
+
+LA STRUCTURE
+- Titre : court, accrocheur, pas tease pour rien
+- Intro (3 phrases) : pourquoi cette édition, à qui elle s'adresse
+- Section 1 : Le problème / contexte (4-6 phrases)
+- Section 2 : 3 insights ou frameworks (avec des sous-titres)
+- Section 3 : Application concrète / 1 exercice / 1 question pour le lecteur
+- Closing : CTA léger (commenter, partager, DM)
+
+TONALITÉ
+- Pas de jargon inutile
+- 1 anecdote personnelle
+- 1 stat ou exemple chiffré
+- 1 prise de position forte (être un peu clivant)","newsletter,personal-brander,contenu-long,structure","avancé","non","Newsletter LinkedIn complète"
+"M166","Veille & Intelligence économique","Cibler","Personal brander","Mes 5 sujets niches non saturés que je peux dominer","Identifie 5 sujets de niche, non saturés, où je pourrais devenir LE référent rapidement.
+
+MON THÈME ÉDITORIAL ACTUEL
+[À COMPLÉTER]
+
+MES COMPÉTENCES / EXPÉRIENCES UNIQUES
+[À COMPLÉTER]
+
+CRITÈRES POUR UN ""SUJET NICHE NON SATURÉ""
+- Volume de recherche / d'intérêt en hausse (>20% sur 6 mois)
+- Peu de ""voix de référence"" établies sur LinkedIn (<5 créateurs majeurs)
+- Cohérent avec mon expertise (pas un pivot complet)
+- Pertinence pour mon ICP audience
+
+POUR CHAQUE SUJET
+- Définition en 1 phrase
+- Volume estimé d'intérêt (basé sur les posts récents qui décollent)
+- Mes 5 premiers angles / posts à produire
+- Qui sont les rares experts existants
+- Plan de positionnement sur 6 mois","niche-non-saturee,5-sujets,personal-brander,positionnement","avancé","oui","5 niches blue-ocean avec plan"
+"M167","Prospection commerciale","Activer","Investisseur","Email à un founder que j'aimerais avoir dans mon portfolio","Rédige l'email à envoyer à [NOM FOUNDER] que j'aimerais financer mais qui n'a pas encore initié de levée.
+
+CONTEXTE
+- Sa boîte : [À COMPLÉTER]
+- Pourquoi je le veux : [À COMPLÉTER : produit, traction, vision]
+- Mon différenciateur en tant qu'investisseur : [À COMPLÉTER]
+- Ce que je propose concrètement : [À COMPLÉTER : meeting / pre-empt / etc.]
+
+CONTRAINTES
+- 6 phrases max
+- Pas un ""j'aimerais investir, parlons"" — trop générique
+- Compliment précis sur quelque chose qu'il a fait (sans flagornerie)
+- Articulation immédiate de mon value-add unique
+- CTA explicite et asymétrique
+
+3 variantes :
+- ""Pre-empt"" : je veux investir avant que tu ouvres une vraie ronde
+- ""Conversation"" : juste apprendre à se connaître, pas d'engagement
+- ""Specific value"" : un apport concret (intro, conseil, recrutement)","investisseur,founder,3-variantes,outreach","avancé","non","3 emails investisseur-founder"
+"M168","Veille & Intelligence économique","Activer","Investisseur","Mémo d'investissement pour [BOÎTE] que j'évalue","Construis-moi le squelette d'un mémo d'investissement pour [BOÎTE] que j'évalue.
+
+CONTEXTE
+- Ma thèse : [À COMPLÉTER]
+- Mon ticket cible : [À COMPLÉTER]
+
+LES SECTIONS DU MÉMO
+1. Executive summary (5 phrases max)
+2. Pourquoi cette boîte (3 raisons fortes)
+3. Pourquoi cette équipe
+4. Marché et timing
+5. Modèle business + unit economics
+6. Concurrence et défensibilité
+7. Risques majeurs (top 3)
+8. Termes du deal proposés
+9. Use of funds
+10. Décision et next steps
+
+POUR CHAQUE SECTION
+- Données à collecter (LinkedIn pour la team, financials pour les unit economics, etc.)
+- Questions à poser au founder
+- Red flags à surveiller","memo-investissement,due-dilligence,investisseur","avancé","non","Squelette de mémo d'investissement"
+"M169","Communauté & Événements","Activer","Investisseur","Plan d'organisation d'un dîner founders pour mon deal flow","Construis-moi un plan complet pour organiser un dîner founders qui alimente mon deal flow.
+
+CONTEXTE
+- Ma thèse : [À COMPLÉTER]
+- Format souhaité : dîner 8-12 founders, sujet thématique
+- Géographie : [À COMPLÉTER]
+- Fréquence : [À COMPLÉTER : trimestriel ?]
+
+LE PLAN
+1. Choix du sujet (qui doit attirer mon ICP founder)
+2. Choix d'un guest speaker (founder reconnu, qui valide la qualité)
+3. Liste des 30 founders à inviter (filtrer pour avoir 10-12 confirmations)
+4. Stratégie d'invitation (4 semaines avant)
+5. Format du dîner (ice breaker, animation, time pour les conversations)
+6. Stratégie post-dîner (qui je rappelle dans la semaine, pour quoi)
+
+DELIVRABLES
+- Brief événement complet
+- Templates d'invitation par profil
+- Checklist logistique","dinner-founders,deal-flow,investisseur,plan-event","avancé","non","Plan complet dîner founders"
+"M170","Apprentissage & Carrière","Découvrir","Investisseur","Frameworks de due diligence des meilleurs VC","Identifie les meilleurs frameworks de due diligence partagés publiquement par des VCs reconnus, applicables à ma thèse.
+
+MA THÈSE
+- Stade : [À COMPLÉTER]
+- Secteur : [À COMPLÉTER]
+
+CATÉGORIES DE FRAMEWORKS
+- Évaluation de l'équipe / founders
+- Évaluation du marché et du timing
+- Évaluation du produit et de la traction
+- Évaluation du business model et unit economics
+- Évaluation des risques et de la défensibilité
+
+POUR CHAQUE FRAMEWORK
+- VC ou investisseur source
+- Description en 5-8 lignes
+- Applicabilité à ma thèse
+- Source pour creuser (essai, podcast, livre)","due-diligence,frameworks,investisseur,best-practices","avancé","non","Bibliothèque de frameworks DD"
+"M171","Networking & Relations","Surveiller","Investisseur","Mes founders portfolio qui ont besoin d'aide (sans le demander)","Surveille mes founders portfolio et alerte-moi quand un signal indique qu'ils sont en difficulté ou qu'ils ont besoin d'aide.
+
+MON PORTFOLIO
+[À COMPLÉTER]
+
+SIGNAUX D'ALERTE
+- Diminution drastique de l'activité LinkedIn
+- Posts émotionnels ou philosophiques (sortie de zone confort)
+- Annonces de départs d'équipe (signal de problème interne)
+- Pivot non communiqué officiellement (basé sur changements profil entreprise)
+- Posts du founder sur l'épuisement, le doute, la difficulté
+- Disparition d'un co-fondateur
+
+Action recommandée pour chaque signal : ""[Founder] | [Signal] | [Niveau d'urgence] | [Action : check-in léger / proposer aide / activer mon réseau pour eux]"".","portfolio,detresse,heartbeat,investisseur,care","avancé","oui","Veille bien-être founders portfolio"
+"M172","Création de contenu","Découvrir","Investisseur","Sujets d'essais / thèses publiques que je devrais publier","Identifie 5 sujets d'essais ou de thèses publiques que je devrais publier sur LinkedIn pour me positionner comme investisseur de référence.
+
+MON FOND / MA POSITION
+[À COMPLÉTER]
+
+CRITÈRES POUR UN BON SUJET D'ESSAI
+- Sujet où j'ai un point de vue fort et défendable
+- Pas saturé par d'autres VCs
+- Pertinent pour mon deal flow (founders y reconnaîtront ma thèse)
+- Génère du débat sain (pas juste du consensus mou)
+
+POUR CHAQUE TOP 5
+- Hypothèse centrale en 1 phrase
+- 3 arguments principaux
+- Format optimal (post LinkedIn long / newsletter / article externe)
+- Founders ou pairs à mentionner / interviewer
+- Calendrier optimal de publication","thought-leadership,essais,investisseur,5-sujets","avancé","non","5 sujets d'essais avec angle"
+"M173","Prospection commerciale","Découvrir","Manager","Talents commerciaux à débaucher pour mon équipe","Identifie 10 commerciaux dans mon réseau ou son extension qui pourraient rejoindre mon équipe.
+
+MON CONTEXTE
+- Mon équipe sales : [À COMPLÉTER]
+- Le poste cible : [À COMPLÉTER]
+- Salaire range + variable + equity : [À COMPLÉTER]
+- USP du poste vs la concurrence : [À COMPLÉTER]
+
+CRITÈRES DU PROFIL CIBLE
+- 3-7 ans d'expérience selon le niveau
+- Performance visible (promotions, posts de leur boîte les valorisant)
+- Background SaaS ou similaire à mon offre
+- Signal de bougeabilité (ancienneté 18-30 mois)
+
+POUR CHAQUE CANDIDAT
+- Profil + boîte actuelle
+- Pourquoi mon poste l'intéresserait probablement
+- Risques (stock options non vested, contrat à honorer)
+- Hook d'approche","debauchage,sales-team,manager,sourcing-direct","avancé","oui","10 commerciaux à débaucher"
+"M174","Sourcing & Recrutement","Activer","Manager","Mon plan d'embauche complet pour les 6 prochains mois","Construis-moi un plan d'embauche complet pour mon équipe sur 6 mois.
+
+MON CONTEXTE
+- Équipe actuelle : [À COMPLÉTER]
+- Croissance prévue : [À COMPLÉTER : nb de hires]
+- Postes à pourvoir : [À COMPLÉTER]
+- Budget RH : [À COMPLÉTER]
+
+LE PLAN
+Pour chaque mois :
+- Postes à pourvoir
+- Candidats actuels en pipeline
+- Sourcing actif vs inbound prévu
+- KPIs : nb candidats sourcés, nb entretiens, nb signatures
+- Risques (départs prévus, contraintes saisonnières)
+
+DELIVRABLES
+- Calendrier de hiring détaillé
+- Distribution charge entre moi, les équipes RH, les recruteurs externes
+- Stratégie d'attractivité (employer branding, posts LinkedIn, événements)","plan-embauche,6-mois,manager","avancé","non","Plan d'embauche complet 6 mois"
+"M175","Communauté & Événements","Découvrir","Manager","Cohortes de leadership / executive education pour moi","Identifie 5 programmes de leadership / executive education compatibles avec mon profil et mes ambitions.
+
+MON PROFIL
+- Niveau actuel : [À COMPLÉTER]
+- Domaine : [À COMPLÉTER]
+- Géographie / langue : [À COMPLÉTER]
+- Disponibilité (temps + budget) : [À COMPLÉTER]
+
+CATÉGORIES À COUVRIR
+- Programmes courts (1-3 mois part-time, ex. cohortes On Deck, Reforge, etc.)
+- Executive MBA (HEC, INSEAD, etc.)
+- Cohortes leadership spécifiques (engineering management, product, sales)
+- Communautés payantes pour C-level
+- Coaching exécutif individuel
+
+POUR CHAQUE OPTION
+- Format + durée + coût
+- Pertinence pour ma trajectoire
+- Reputation et réseau
+- Prochain rentrée / cohort
+- Application requirements","executive-education,5-programmes,manager,carriere","avancé","non","5 programmes leadership évalués"
+"M176","Création de contenu","Cibler","Manager","Posts LinkedIn pour positionner mon leadership","Rédige 5 posts LinkedIn que je peux publier sur les 5 prochaines semaines pour positionner mon leadership.
+
+MON CONTEXTE
+- Mon rôle : [À COMPLÉTER]
+- Ma boîte : [À COMPLÉTER]
+- Mon objectif de visibilité : [À COMPLÉTER : recrutement, deal flow, future opportunité, etc.]
+
+LES 5 POSTS À ÉCRIRE
+1. ""Lessons learned"" : 3 leçons de management que j'ai apprises à mes dépens
+2. ""Behind the scenes"" : un projet difficile et comment je l'ai mené
+3. ""Hot take"" : opinion contrarienne sur une pratique commune
+4. ""Thank you team"" : valoriser mon équipe pour un succès récent
+5. ""Vision forward"" : où je vois aller mon secteur dans 12-24 mois
+
+POUR CHAQUE POST
+- Hook (1 phrase)
+- Structure et points clés
+- CTA / Question d'engagement
+- Visuel suggéré","leadership-content,5-posts,manager,visibility","intermédiaire","non","5 posts pour leadership visibility"
+"M177","Apprentissage & Carrière","Surveiller","Manager","Mes pairs / managers similaires pour comparer ma trajectoire","Surveille les évolutions de carrière de mes pairs (managers similaires à mon niveau) et alerte-moi des moves intéressants.
+
+MES PAIRS (à identifier ou compléter)
+[À COMPLÉTER : managers comparables dans mon réseau ou son extension]
+
+SIGNAUX À DÉTECTER
+- Promotion (= je dois me poser la question)
+- Changement de boîte (avec ou sans promotion)
+- Création d'une boîte
+- Sortie médiatique majeure
+- Diminution drastique d'activité (= peut-être en transition)
+
+INTÉRÊT POUR MOI
+- Comprendre où va mon marché
+- Identifier des opportunités similaires
+- Repérer des mentors ou advisors potentiels
+- Évaluer ma trajectoire vs le marché","pairs,trajectoire,heartbeat,manager,benchmark","intermédiaire","oui","Veille mouvements pairs managers"
+"M178","Networking & Relations","Découvrir","Manager","Mes board members / advisors potentiels","Identifie 5 personnes qui pourraient devenir advisors ou board members pour ma fonction / mon équipe.
+
+MON CONTEXTE
+- Rôle / fonction : [À COMPLÉTER]
+- Boîte : [À COMPLÉTER]
+- Sujets sur lesquels j'ai besoin de coaching : [À COMPLÉTER]
+
+PROFILS RECHERCHÉS
+- 10-20 ans d'avance sur ma fonction
+- Reputation établie dans mon secteur
+- Probable disponible pour 1h/mois (pas trop sollicité)
+- Aligné avec mon stage (si je suis en scale-up, un ex-grand-groupe peut moins matcher)
+
+POUR CHAQUE ADVISOR POTENTIEL
+- Profil + parcours
+- Pourquoi pertinent pour moi spécifiquement
+- Format de relation à proposer (advisor formel avec equity / mentor informel / sparring partner)
+- Premier message d'approche","advisors,5-personnes,manager,coaching","avancé","non","5 advisors potentiels avec format"
+"M179","Networking & Relations","Découvrir","Recruteur","Hiring managers et talent leaders à connecter pour mon réseau","Identifie 10 hiring managers et talent leaders avec qui bâtir une relation pour faire grandir mon business de recrutement.
+
+MON CONTEXTE
+- Spécialité : [À COMPLÉTER]
+- Géographie : [À COMPLÉTER]
+
+PROFILS RECHERCHÉS
+- Hiring managers de boîtes en croissance dans ma spécialité
+- Talent acquisition leaders (Head of TA, VP People)
+- Founders avec besoins de recrutement récurrents
+
+POUR CHAQUE PROFIL
+- Boîte + signaux d'embauche
+- Pourquoi pertinent pour moi
+- Format de prise de contact (commentaire d'un de leurs posts / DM / café)
+- Type de valeur asymétrique à offrir (insight marché, candidat exclusif, contenu utile)","hiring-managers,reseau-recruteur,10-personnes","avancé","non","10 hiring managers à connecter"
+"M180","Création de contenu","Découvrir","Recruteur","Sujets de posts qui marchent pour les recruteurs","Identifie les sujets de posts qui marchent le mieux dans la communauté des recruteurs LinkedIn pour m'inspirer.
+
+MON CONTEXTE
+- Type de recrutement : [À COMPLÉTER]
+- Mon ICP audience : [À COMPLÉTER : candidats / hiring managers / les deux]
+
+CRITÈRES
+- Posts >100 réactions de recruteurs reconnus
+- Sur les 90 derniers jours
+- Couvrant différents formats (storytelling, listicle, opinion)
+
+POUR CHAQUE TYPE DE POST QUI PERFORME
+- Auteur exemple
+- Pattern (hook + structure + closing)
+- Pourquoi ça marche
+- Comment l'adapter à ma voix
+- 3 idées de posts pour moi inspirés de ce pattern","patterns-recruteur,inspiration,benchmark,contenu","intermédiaire","oui","Patterns de posts recruteurs gagnants"
+"M181","Apprentissage & Carrière","Activer","Recruteur","Mon plan pour devenir cabinet de recrutement de référence","Construis-moi un plan sur 12 mois pour me positionner comme LE cabinet de recrutement de référence dans ma niche.
+
+MA NICHE
+- Verticale / spécialité : [À COMPLÉTER]
+- Géographie : [À COMPLÉTER]
+- Stade boîte cible : [À COMPLÉTER]
+
+LEVIERS
+1. Visibilité : créer du contenu LinkedIn 2-3x / semaine sur ma niche
+2. Communauté : organiser un dîner / événement trimestriel pour mon ICP
+3. Asset : produire un rapport sectoriel annuel (""Salary survey 2026"")
+4. Référence : 3 case studies clients à publier
+5. Partenariats : 2-3 partenariats stratégiques (média, communauté, ATS)
+6. Speaker : 2-3 conférences par an
+
+PLAN 12 MOIS
+- Trimestre 1 : visibilité (contenu) + 1 événement
+- Trimestre 2 : asset (rapport)
+- Trimestre 3 : 3 case studies + speaker
+- Trimestre 4 : partenariats stratégiques
+
+KPIs : audience LinkedIn, missions signées, ARR cabinet.","cabinet-reference,12-mois,recruteur,positioning","avancé","non","Plan 12 mois cabinet de référence"
+"M182","Veille & Intelligence économique","Cibler","Recruteur","Salaires actuels et négociations en cours dans mon scope","Analyse les salaires actuels dans mon scope (basé sur signaux LinkedIn) pour calibrer mes propositions et briefer mes clients.
+
+MON SCOPE
+- Postes : [À COMPLÉTER]
+- Géographie : [À COMPLÉTER]
+- Stade boîte : [À COMPLÉTER]
+
+SIGNAUX À EXPLOITER
+- Annonces avec salaire affiché
+- Posts de candidats partageant leurs offres reçues
+- Études salariales publiées
+- Mentions dans les commentaires de posts liés à la rémunération
+
+POUR CHAQUE POSTE
+- Range salarial actuel
+- Tendance (+/-/stable)
+- Variations par niveau d'expérience
+- Variations par type de boîte (startup vs scale-up vs grand groupe)
+- Recommandation pour mes briefs clients","salaires-marche,calibration,recruteur,benchmark","avancé","oui","Brief salarial complet par poste"
+"M183","Networking & Relations","Surveiller","Recruteur","Évolution de mes anciens placements (NPS continu)","Surveille les anciens candidats que j'ai placés et alerte-moi de tout signal pour maintenir une relation NPS positive.
+
+MES PLACEMENTS RÉCENTS
+[À COMPLÉTER : liste]
+
+SIGNAUX À DÉTECTER
+- Anniversaire d'embauche (= prendre des nouvelles)
+- Promotion interne (= félicitations + signal de bonne intégration)
+- Posts sur la satisfaction de leur poste (positifs ou négatifs)
+- Départ de la boîte avant 2 ans (= problème à comprendre)
+- Référence à mon cabinet dans leurs posts
+
+Action pour chaque signal : ""[Candidat] | [Signal] | [Action : check-in / célébrer / s'inquiéter / capitaliser]"".","placements,NPS,heartbeat,recruteur,fidelisation","avancé","oui","Veille NPS continue placements"
+"M184","Communauté & Événements","Activer","Recruteur","Plan pour animer la communauté de mes candidats placés","Construis-moi un plan pour animer une communauté autour de mes candidats placés (alumni cabinet).
+
+MON CABINET
+- Volume de placements / an : [À COMPLÉTER]
+- Spécialité : [À COMPLÉTER]
+
+INTÉRÊT D'UNE COMMUNAUTÉ ALUMNI
+- Récurrence (mes candidats deviennent mes futurs hiring managers)
+- Référencement (ils m'envoient leurs anciens collègues)
+- Insights marché (ils me donnent du feedback sectoriel)
+- Brand (ma marque cabinet vit à travers eux)
+
+LE PLAN
+- Format : Slack privé / dîner trimestriel / newsletter mensuelle / mix
+- Contenu : insights marché, intros, opportunités
+- Engagement : rituel mensuel ou trimestriel
+- Croissance : intégrer chaque nouveau placement automatiquement
+- Mesure : taux de réponse, missions générées, intros faites","alumni-cabinet,communaute,recruteur,fidelisation","avancé","non","Plan communauté alumni complet"
+"M185","Veille & Intelligence économique","Découvrir","Job seeker","Boîtes qui paient le mieux mon profil","Identifie les boîtes qui paient le mieux mon profil dans ma géographie.
+
+MON PROFIL
+- Poste cible : [À COMPLÉTER]
+- Années XP : [À COMPLÉTER]
+- Géographie acceptée : [À COMPLÉTER]
+
+SIGNAUX SALARIAUX
+- Annonces avec salaire affiché (boîtes les plus transparentes)
+- Posts de candidats partageant leurs offres
+- Glassdoor / témoignages (si visible)
+- Stade et financement (Série C+ paie mieux que pré-seed)
+
+POUR CHAQUE BOÎTE
+- Range salarial estimé
+- Avantages associés (BSPCE, RTT, télétravail, etc.)
+- Difficulté d'entrée (sélection, concurrence)
+- Signaux de croissance (= places probables à terme)","salaire-cible,job-seeker,boites-payantes","intermédiaire","non","Top boîtes payantes pour mon profil"
+"M186","Apprentissage & Carrière","Activer","Sales","Mon plan pour devenir top 10% de mon équipe en 6 mois","Construis-moi un plan pour devenir top 10% de mon équipe sales en 6 mois.
+
+MON CONTEXTE
+- Mon ranking actuel : [À COMPLÉTER]
+- Mes points forts : [À COMPLÉTER]
+- Mes points faibles : [À COMPLÉTER]
+- Mes objectifs trimestre : [À COMPLÉTER]
+
+LEVIERS À ACTIVER
+1. Méthode : adopter ou améliorer 1 framework (MEDDIC, Challenger, etc.)
+2. Pipeline : doubler mon volume d'opportunités qualifiées
+3. Conversion : améliorer mon taux conversion à chaque étape
+4. Closing : 3 techniques de closing avancées
+5. Réseau : entrer dans les communautés des top sales français
+
+PLAN 6 MOIS
+- Mois 1-2 : nouveau framework + pipeline doublé
+- Mois 3-4 : conversion améliorée + 1 mentor sales senior
+- Mois 5-6 : closing avancé + visibilité interne (devenir le go-to)
+
+KPIs : quota atteint, pipeline value, win rate, deal size moyen.","top-10pct,plan-6-mois,sales,performance","avancé","non","Plan 6 mois top performer"
+"M187","Création de contenu","Surveiller","Sales","Performance de mes contenus sales et leurs déclencheurs","Surveille mes posts LinkedIn et alerte-moi des contenus qui génèrent des prospects (pas juste des likes).
+
+CRITÈRES DE PERFORMANCE COMMERCIALE
+- Volume de DMs reçus dans les 7 jours suivant le post
+- Profils ICP qui commentent / engagent
+- Mentions dans des conversations commerciales
+- Demandes de démo / call qui mentionnent un post
+
+Format hebdo : ""Cette semaine, ces posts ont généré du business : [...]. Pourquoi ils ont marché : [...]"".","performance-sales,heartbeat,contenu,attribution","avancé","oui","Reporting hebdo posts → business"
+"M188","Levée de fonds","Activer","Founder","Préparation complète à un premier call investisseur","Prépare-moi pour mon premier call avec un VC.
+
+CONTEXTE
+- VC : [À COMPLÉTER]
+- Stade ma boîte : [À COMPLÉTER]
+- Format prévu : [À COMPLÉTER : 30 min visio / 1h café / autre]
+
+PRÉPARATION
+1. Recherche VC
+   - 3 deals récents
+   - Thèse explicite (si visible)
+   - Background du partner
+   - Style de questions habituelles
+
+2. Mon pitch
+   - Pitch en 60 secondes (rodé)
+   - Pitch en 5 minutes (avec data)
+   - Top 5 chiffres à dégainer
+   - Top 5 risques que JE soulève (préempt)
+
+3. Mes questions au VC
+   - 5 questions intelligentes (montrer la qualité de ma due diligence)
+   - 1 question test (signaling sur leur culture / style)
+
+4. Le post-call
+   - Email de remerciement type J+1
+   - Quels next steps proposer
+   - Comment maintenir la relation","call-VC,preparation,founder,1er-contact","avancé","non","Prépa complète call VC"
+"M189","Sourcing & Recrutement","Cibler","Founder","Optimisation de mon process de recrutement (faire mieux avec ce que j'ai)","Analyse mon process de recrutement actuel et identifie 3 optimisations à fort impact.
+
+MON PROCESS ACTUEL
+- Source des candidats : [À COMPLÉTER : pourcentages]
+- Étapes d'entretien : [À COMPLÉTER]
+- Time-to-hire moyen : [À COMPLÉTER]
+- Conversion par étape : [À COMPLÉTER]
+- Coût par hire : [À COMPLÉTER]
+
+ANALYSE
+- Top 3 fuites identifiées
+- Pour chaque fuite : la cause + 2 leviers actionnables
+- Effort vs impact estimé
+- Plan d'action 30/60/90 jours
+- KPIs de validation
+
+Bonus : 1 outil ou méthode underused dans la communauté startup que je devrais essayer.","process-recrutement,founder,3-optimisations,fuites","avancé","non","Audit process + plan optimisation"
+"M190","Communauté & Événements","Découvrir","Sales","Salons et conférences où mes prospects vont en masse","Identifie les 5 salons / conférences les plus efficaces pour rencontrer mes prospects en masse.
+
+MON ICP
+[À COMPLÉTER]
+
+CRITÈRES
+- Volume d'ICP attendu (>500 idéalement)
+- Format propice aux rencontres (pas que des grandes conférences plénières)
+- ROI vs participants payants ou sponsors
+- Géographie acceptable
+
+POUR CHAQUE TOP 5
+- Nom + dates + lieu + format
+- Volume ICP attendu (basé sur les sponsors et les éditions précédentes)
+- Niveau de prestige et qualité audience
+- Coût (pass + déplacement + temps + sponsoring si applicable)
+- Stratégie (juste assister vs prendre un stand vs sponsoriser un event annexe)","salons-conferences,top-5,sales,ICP-rassemble","avancé","non","Top 5 événements ICP avec stratégie"
