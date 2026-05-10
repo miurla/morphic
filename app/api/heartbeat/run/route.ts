@@ -85,8 +85,11 @@ export async function POST(req: Request) {
 
     if (
       query.includes('recrute') ||
+      query.includes('recruteur') ||
       query.includes('réseau') ||
-      query.includes('network')
+      query.includes('network') ||
+      query.includes('tendance') ||
+      query.includes('quoi de neuf')
     ) {
       toolName = 'smart_network_update'
       toolArgs = { topic: hb.query }
@@ -94,7 +97,9 @@ export async function POST(req: Request) {
       query.includes('profil') ||
       query.includes('vp') ||
       query.includes('décideur') ||
-      query.includes('people')
+      query.includes('directeur') ||
+      query.includes('people') ||
+      query.includes('trouver des')
     ) {
       toolName = 'smart_people_search'
       toolArgs = { query: hb.query, max_results: 5 }
@@ -183,9 +188,10 @@ export async function POST(req: Request) {
       viewToken
     })
   } catch (error) {
-    console.error('[heartbeat/run] Error:', error)
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('[heartbeat/run] Error:', msg, error)
     return NextResponse.json(
-      { error: 'Run failed' },
+      { error: 'Run failed', detail: msg },
       { status: 500 }
     )
   }
