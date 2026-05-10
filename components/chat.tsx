@@ -75,7 +75,16 @@ export function Chat({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const pending = sessionStorage.getItem('pendingMessage')
+      if (pending) {
+        sessionStorage.removeItem('pendingMessage')
+        return pending
+      }
+    }
+    return ''
+  })
   const [selectedItem, setSelectedItem] = useState<SelectedItem | null>(null)
   const [errorModal, setErrorModal] = useState<{
     open: boolean

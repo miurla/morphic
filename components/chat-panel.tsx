@@ -22,6 +22,7 @@ import type { ModelSelectorData } from '@/lib/types/model-selector'
 import { cn } from '@/lib/utils'
 
 import { useChatContext } from '@/lib/contexts/chat-context'
+import { useHasUser } from '@/lib/contexts/user-context'
 
 import { useArtifact } from './artifact/artifact-context'
 import { Button } from './ui/button'
@@ -97,6 +98,7 @@ export function ChatPanel({
   const [isInputFocused, setIsInputFocused] = useState(false) // Track input focus
   const { close: closeArtifact } = useArtifact()
   const { selectedItem, setSelectedItem } = useChatContext()
+  const hasUser = useHasUser()
   const isLoading = status === 'submitted' || status === 'streaming'
   const hasAvailableModels =
     isCloudDeployment || modelSelectorData?.hasAvailableModels !== false
@@ -210,6 +212,14 @@ export function ChatPanel({
       )}
       <form
         onSubmit={e => {
+          if (!hasUser) {
+            e.preventDefault()
+            if (input.trim()) {
+              sessionStorage.setItem('pendingMessage', input.trim())
+            }
+            router.push('/auth/login?next=' + encodeURIComponent(window.location.pathname))
+            return
+          }
           if (!hasAvailableModels) {
             e.preventDefault()
             toast.error('No enabled model is available')
