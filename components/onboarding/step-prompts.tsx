@@ -1,9 +1,11 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 import {
   Briefcase,
+  Check,
+  Loader2,
   MessageSquare,
   Rocket,
   Search,
@@ -13,11 +15,13 @@ import {
 
 import { cn } from '@/lib/utils'
 
+import { Button } from '../ui/button'
+
 const SUGGESTED_PROMPTS = [
   {
     icon: Briefcase,
     label: 'Chercher des offres',
-    prompt: 'Chercher des offres d\'emploi près de chez moi',
+    prompt: "Chercher des offres d'emploi près de chez moi",
     color: 'text-blue-500 bg-blue-500/10'
   },
   {
@@ -29,7 +33,7 @@ const SUGGESTED_PROMPTS = [
   {
     icon: TrendingUp,
     label: 'Tendances de mon réseau',
-    prompt: 'Quoi de neuf et d\'intéressant dans mon réseau cette semaine ?',
+    prompt: "Quoi de neuf et d'intéressant dans mon réseau cette semaine ?",
     color: 'text-green-500 bg-green-500/10'
   },
   {
@@ -51,17 +55,34 @@ interface StepPromptsProps {
 }
 
 export function StepPrompts({ onComplete }: StepPromptsProps) {
-  const router = useRouter()
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [isLaunching, setIsLaunching] = useState(false)
 
   const pendingMessage =
     typeof window !== 'undefined'
       ? sessionStorage.getItem('pendingMessage')
       : null
 
-  const handlePromptClick = async (prompt: string) => {
+  const selectedPrompt =
+    selectedIndex !== null
+      ? SUGGESTED_PROMPTS[selectedIndex]?.prompt
+      : pendingMessage
+
+  const handleLaunch = async () => {
+    const prompt = selectedPrompt
+    if (!prompt) return
+
+    setIsLaunching(true)
     sessionStorage.setItem('pendingMessage', prompt)
     document.cookie = 'onboarding_completed=true; path=/; max-age=31536000'
-    await onComplete()
+
+    await fetch('/api/onboarding', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ onboardingCompleted: true, onboardingStep: 4 })
+    })
+
+    window.location.href = '/'
   }
 
   return (
@@ -69,7 +90,8 @@ export function StepPrompts({ onComplete }: StepPromptsProps) {
       <div>
         <h1 className="text-2xl font-bold">C&apos;est parti !</h1>
         <p className="text-muted-foreground mt-2">
-          Ton compte est configuré. Lance ta première recherche avec Melron.
+          Ton compte est configuré. Choisis ta première action et lance
+          Melron.
         </p>
       </div>
 
@@ -86,13 +108,20 @@ export function StepPrompts({ onComplete }: StepPromptsProps) {
             Ton message en attente
           </p>
           <button
-            onClick={() => handlePromptClick(pendingMessage)}
-            className="w-full text-left rounded-xl border-2 border-primary bg-primary/5 p-4 hover:bg-primary/10 transition-colors"
+            onClick={() => setSelectedIndex(null)}
+            className={cn(
+              'w-full text-left rounded-xl border-2 p-4 transition-colors',
+              selectedIndex === null
+                ? 'border-primary bg-primary/5'
+                : 'border-transparent hover:bg-muted/50'
+            )}
           >
-            <p className="text-sm font-medium">{pendingMessage}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Cliquer pour lancer
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">{pendingMessage}</p>
+              {selectedIndex === null && (
+                <Check className="size-4 text-primary shrink-0" />
+              )}
+            </div>
           </button>
         </div>
       )}
@@ -100,16 +129,22 @@ export function StepPrompts({ onComplete }: StepPromptsProps) {
       {/* Suggested prompts */}
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Ou essaie une de ces actions
+          {pendingMessage ? 'Ou essaie une de ces actions' : 'Choisis une action'}
         </p>
         <div className="grid gap-2">
           {SUGGESTED_PROMPTS.map((item, i) => {
             const Icon = item.icon
+            const isSelected = selectedIndex === i
             return (
               <button
                 key={i}
-                onClick={() => handlePromptClick(item.prompt)}
-                className="flex items-center gap-3 rounded-xl border p-4 text-left hover:bg-muted/50 transition-colors group"
+                onClick={() => setSelectedIndex(i)}
+                className={cn(
+                  'flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-colors',
+                  isSelected
+                    ? 'border-primary bg-primary/5'
+                    : 'border-transparent hover:bg-muted/50'
+                )}
               >
                 <div
                   className={cn(
@@ -120,18 +155,39 @@ export function StepPrompts({ onComplete }: StepPromptsProps) {
                   <Icon className="size-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium group-hover:text-primary transition-colors">
-                    {item.label}
-                  </p>
+                  <p className="text-sm font-medium">{item.label}</p>
                   <p className="text-xs text-muted-foreground truncate">
                     {item.prompt}
                   </p>
                 </div>
+                {isSelected && (
+                  <Check className="size-4 text-primary shrink-0" />
+                )}
               </button>
             )
           })}
         </div>
       </div>
+
+      {/* Launch button */}
+      <Button
+        className="w-full gap-2"
+        size="lg"
+        onClick={handleLaunch}
+        disabled={!selectedPrompt || isLaunching}
+      >
+        {isLaunching ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Lancement...
+          </>
+        ) : (
+          <>
+            <Rocket className="size-4" />
+            Découvrir
+          </>
+        )}
+      </Button>
     </div>
   )
 }
