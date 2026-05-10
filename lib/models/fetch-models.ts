@@ -92,7 +92,7 @@ function passesOpenAIFilters(id: string): boolean {
 }
 
 function passesAnthropicFilters(id: string): boolean {
-  return ANTHROPIC_ALLOWED_IDS.some(prefix => id.startsWith(prefix))
+  return ANTHROPIC_ALLOWED_IDS.includes(id)
 }
 
 function passesGoogleFilters(id: string): boolean {
