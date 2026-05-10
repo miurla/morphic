@@ -26,6 +26,7 @@ import { MelronApplyResult } from './melron/melron-apply-result'
 import { MelronInterestMapResult } from './melron/melron-interest-map-result'
 import { MelronJobSearchResult } from './melron/melron-job-search-result'
 import { MelronMessageResult } from './melron/melron-message-result'
+import { MelronNetworkUpdateResult } from './melron/melron-network-update-result'
 import { MelronPeopleSearchResult } from './melron/melron-people-search-result'
 import { CollapsibleMessage } from './collapsible-message'
 import ProcessHeader from './process-header'
@@ -106,6 +107,9 @@ function renderToolBody(
   }
   if (tool.toolName === 'smart_message' && parsed) {
     return <MelronMessageResult data={parsed} />
+  }
+  if (tool.toolName === 'smart_network_update' && parsed) {
+    return <MelronNetworkUpdateResult data={parsed} />
   }
   return (
     <pre className="text-xs bg-muted p-3 rounded overflow-auto max-h-96">
