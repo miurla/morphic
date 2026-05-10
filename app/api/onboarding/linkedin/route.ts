@@ -1,4 +1,9 @@
+import { eq } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
+
+import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { db } from '@/lib/db'
+import { userProfiles } from '@/lib/db/schema'
 
 const UNIPILE_URL = process.env.UNIPILE_URL!
 const UNIPILE_TOKEN = process.env.UNIPILE_TOKEN!
@@ -13,21 +18,36 @@ async function findExistingAccount(username: string): Promise<string | null> {
   const res = await fetch(`${UNIPILE_URL}/accounts`, {
     headers: { 'X-API-KEY': UNIPILE_TOKEN, accept: 'application/json' }
   })
-  if (!res.ok) return null
+  if (!res.ok) {
+    console.error('[linkedin] Failed to list accounts:', res.status)
+    return null
+  }
   const data = await res.json()
   const accounts: any[] = data.items ?? []
 
+  const normalizedInput = username.toLowerCase().trim()
+
   const match = accounts.find((acc: any) => {
-    const accUsername =
-      acc.connection_params?.username ||
-      acc.connection_params?.im?.username ||
-      acc.name ||
-      ''
-    return (
-      accUsername.toLowerCase() === username.toLowerCase() &&
-      acc.provider === 'LINKEDIN'
+    const candidates = [
+      acc.connection_params?.username,
+      acc.connection_params?.im?.username,
+      acc.connection_params?.email,
+      acc.name,
+      acc.identifier
+    ].filter(Boolean)
+
+    return candidates.some(
+      (c: string) => c.toLowerCase().trim() === normalizedInput
     )
   })
+
+  if (match) {
+    console.log(`[linkedin] Found existing account: ${match.id}`)
+  } else {
+    console.log(
+      `[linkedin] No match for "${username}" among ${accounts.length} accounts`
+    )
+  }
 
   return match?.id ?? null
 }
@@ -46,7 +66,20 @@ export async function POST(req: Request) {
         )
       }
 
-      const existingId = await findExistingAccount(username)
+      // 1. Check our DB first for stored account ID
+      const userId = await getCurrentUserId()
+      let storedAccountId: string | null = null
+      if (userId) {
+        const profiles = await db
+          .select()
+          .from(userProfiles)
+          .where(eq(userProfiles.userId, userId))
+          .limit(1)
+        storedAccountId = profiles[0]?.unipileAccountId ?? null
+      }
+
+      // 2. Then check Unipile for existing accounts
+      const existingId = storedAccountId ?? (await findExistingAccount(username))
 
       if (existingId) {
         const res = await fetch(`${UNIPILE_URL}/accounts/${existingId}`, {

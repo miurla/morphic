@@ -75,7 +75,8 @@ export function StepConnectLinkedIn({ onNext }: StepConnectLinkedInProps) {
           })
         )
         await onNext({
-          linkedinEmail: email
+          linkedinEmail: email,
+          unipileAccountId: data.accountId
         })
       } else if (data.status === 'connected') {
         sessionStorage.setItem(
@@ -85,6 +86,7 @@ export function StepConnectLinkedIn({ onNext }: StepConnectLinkedInProps) {
         await onNext({
           linkedinConnected: true,
           linkedinEmail: email,
+          unipileAccountId: data.accountId,
           onboardingStep: 2
         })
       }

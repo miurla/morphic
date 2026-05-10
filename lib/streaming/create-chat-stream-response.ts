@@ -220,7 +220,12 @@ export async function createChatStreamResponse(
         }
       },
       onError: (error: unknown) => {
-        return error instanceof Error ? error.message : String(error)
+        const msg = error instanceof Error ? error.message : String(error)
+        console.error('[stream] onError:', msg)
+        if (msg.startsWith('model:') || msg.includes('model:')) {
+          return 'Une erreur est survenue. Réessaie dans un instant.'
+        }
+        return msg
       },
       consumeSseStream: consumeStream
     })

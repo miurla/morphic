@@ -75,6 +75,7 @@ export function Chat({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [autoSendPending, setAutoSendPending] = useState(false)
   const [input, setInput] = useState(() => {
     if (typeof window !== 'undefined') {
       const pending = sessionStorage.getItem('pendingMessage')
@@ -306,6 +307,23 @@ export function Chat({
     return () =>
       window.removeEventListener(SHORTCUT_EVENTS.copyMessage, handleCopyMessage)
   }, [])
+
+  // Auto-send pending message from onboarding/login
+  useEffect(() => {
+    if (input.trim() && messages.length === 0 && status === 'ready' && !autoSendPending) {
+      setAutoSendPending(true)
+      requestAnimationFrame(() => {
+        sendMessage({
+          role: 'user',
+          parts: [{ type: 'text', text: input }]
+        })
+        setInput('')
+        if (!isGuest && window.location.pathname === '/') {
+          window.history.pushState({}, '', `/search/${chatId}`)
+        }
+      })
+    }
+  }, [input, messages.length, status, autoSendPending])
 
   // Dispatch custom event when messages change
   useEffect(() => {

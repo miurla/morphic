@@ -85,6 +85,13 @@
       "when": 1778415606876,
       "tag": "0011_fast_angel",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1778418118180,
+      "tag": "0012_classy_bucky",
+      "breakpoints": true
     }
   ]
 }

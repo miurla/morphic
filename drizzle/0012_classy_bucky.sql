@@ -1,0 +1,1 @@
+ALTER TABLE "user_profiles" ADD COLUMN "unipile_account_id" varchar(256);

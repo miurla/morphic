@@ -270,6 +270,7 @@ export const userProfiles = pgTable(
     onboardingStep: integer('onboarding_step').notNull().default(0),
     linkedinConnected: boolean('linkedin_connected').notNull().default(false),
     linkedinEmail: varchar('linkedin_email', { length: VARCHAR_LENGTH }),
+    unipileAccountId: varchar('unipile_account_id', { length: VARCHAR_LENGTH }),
     whatsappNumber: varchar('whatsapp_number', { length: 50 }),
     whatsappEnabled: boolean('whatsapp_enabled').notNull().default(false),
     createdAt: timestamp('created_at').notNull().defaultNow(),
