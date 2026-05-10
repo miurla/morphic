@@ -291,8 +291,8 @@ export function mapUIMessagePartsToDBParts(
         return createToolPartMapping(basePart, part, 'fetch')
 
       case 'tool-question':
+      case 'tool-askQuestion':
         if (!isExtendedToolPart(part)) {
-          console.error('Invalid extended tool part:', part)
           return null
         }
         return createToolPartMapping(basePart, part, 'question')

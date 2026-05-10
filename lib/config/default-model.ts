@@ -1,8 +1,8 @@
 import { Model } from '@/lib/types/models'
 
 export const DEFAULT_MODEL: Model = {
-  id: 'gpt-5.4-mini',
-  name: 'GPT-5.4 mini',
-  provider: 'OpenAI',
-  providerId: 'openai'
+  id: 'claude-sonnet-4-6-20250514',
+  name: 'Claude Sonnet 4.6',
+  provider: 'Anthropic',
+  providerId: 'anthropic'
 }

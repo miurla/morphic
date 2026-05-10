@@ -28,10 +28,10 @@ const OPENAI_EXCLUDED_KEYWORDS = [
   'instruct',
   'chat-latest'
 ]
-const ANTHROPIC_ALLOWED_PREFIXES = [
-  'claude-opus-4',
-  'claude-sonnet-4',
-  'claude-haiku-4'
+const ANTHROPIC_ALLOWED_IDS = [
+  'claude-opus-4-7',
+  'claude-opus-4-6',
+  'claude-sonnet-4-6'
 ]
 const GOOGLE_ALLOWED_PREFIXES = ['gemini-2.5', 'gemini-3']
 const GOOGLE_EXCLUDED_KEYWORDS = ['image', 'live', 'native-audio', 'embedding']
@@ -94,11 +94,7 @@ function passesOpenAIFilters(id: string): boolean {
 }
 
 function passesAnthropicFilters(id: string): boolean {
-  if (hasDateSnapshotSuffix(id)) {
-    return false
-  }
-
-  return ANTHROPIC_ALLOWED_PREFIXES.some(prefix => id.startsWith(prefix))
+  return ANTHROPIC_ALLOWED_IDS.some(prefix => id.startsWith(prefix))
 }
 
 function passesGoogleFilters(id: string): boolean {

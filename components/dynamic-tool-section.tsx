@@ -16,6 +16,12 @@ import {
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 
+import {
+  ChainOfThought,
+  ChainOfThoughtContent,
+  ChainOfThoughtStep,
+  ChainOfThoughtTrigger
+} from './chain-of-thought'
 import { MelronApplyResult } from './melron/melron-apply-result'
 import { MelronInterestMapResult } from './melron/melron-interest-map-result'
 import { MelronJobSearchResult } from './melron/melron-job-search-result'
@@ -34,8 +40,6 @@ interface DynamicToolSectionProps {
   isLast?: boolean
 }
 
-// Pretty display names + icons for known melron tools.
-// Anything not listed falls back to a generic icon and the raw tool name.
 const TOOL_META: Record<string, { label: string; Icon: typeof Briefcase }> = {
   smart_job_search: { label: 'LinkedIn job search', Icon: Briefcase },
   smart_people_search: { label: 'LinkedIn people search', Icon: Users },
@@ -48,8 +52,6 @@ const TOOL_META: Record<string, { label: string; Icon: typeof Briefcase }> = {
   smart_interest_map: { label: 'Interest map', Icon: Brain }
 }
 
-// MCP tool outputs come back as `{ content: [{ type: 'text', text: '<json>' }] }`.
-// We try to parse the JSON to render structured cards. Fail-soft: return null.
 function extractMcpJson(output: unknown): unknown | null {
   if (!output || typeof output !== 'object') return null
   const content = (output as { content?: unknown }).content
@@ -63,6 +65,57 @@ function extractMcpJson(output: unknown): unknown | null {
   }
 }
 
+function getToolLabel(toolName: string): string {
+  return TOOL_META[toolName]?.label ?? toolName
+}
+
+function getToolIcon(toolName: string): typeof Briefcase {
+  return TOOL_META[toolName]?.Icon ?? Plug
+}
+
+function renderToolBody(
+  tool: DynamicToolPart,
+  parsed: unknown | null,
+  label: string
+): React.ReactNode {
+  if (tool.state === 'output-error') {
+    return (
+      <div className="text-sm text-destructive bg-destructive/10 p-3 rounded">
+        {tool.errorText || 'Tool execution failed'}
+      </div>
+    )
+  }
+  if (tool.state !== 'output-available') {
+    return (
+      <div className="text-sm text-muted-foreground p-3">
+        Running {label}…
+      </div>
+    )
+  }
+  if (tool.toolName === 'smart_job_search' && parsed) {
+    return <MelronJobSearchResult data={parsed} />
+  }
+  if (tool.toolName === 'smart_apply' && parsed) {
+    return <MelronApplyResult data={parsed} />
+  }
+  if (tool.toolName === 'smart_people_search' && parsed) {
+    return <MelronPeopleSearchResult data={parsed} />
+  }
+  if (tool.toolName === 'smart_interest_map' && parsed) {
+    return <MelronInterestMapResult data={parsed} />
+  }
+  if (tool.toolName === 'smart_message' && parsed) {
+    return <MelronMessageResult data={parsed} />
+  }
+  return (
+    <pre className="text-xs bg-muted p-3 rounded overflow-auto max-h-96">
+      <code>{JSON.stringify(parsed ?? tool.output, null, 2)}</code>
+    </pre>
+  )
+}
+
+// ── Single tool (standalone) ─────────────────────────
+
 export function DynamicToolSection({
   tool,
   isOpen,
@@ -70,9 +123,8 @@ export function DynamicToolSection({
   status,
   borderless = false
 }: DynamicToolSectionProps) {
-  const meta = TOOL_META[tool.toolName]
-  const Icon = meta?.Icon ?? Plug
-  const label = meta?.label ?? tool.toolName
+  const label = getToolLabel(tool.toolName)
+  const Icon = getToolIcon(tool.toolName)
 
   const isLoading = status === 'submitted' || status === 'streaming'
   const isToolLoading =
@@ -107,43 +159,7 @@ export function DynamicToolSection({
     />
   )
 
-  // Specialized renderer per tool name. Falls back to raw JSON.
-  const body = (() => {
-    if (isError) {
-      return (
-        <div className="text-sm text-destructive bg-destructive/10 p-3 rounded">
-          {tool.errorText || 'Tool execution failed'}
-        </div>
-      )
-    }
-    if (!isComplete) {
-      return (
-        <div className="text-sm text-muted-foreground p-3">
-          Running {label}…
-        </div>
-      )
-    }
-    if (tool.toolName === 'smart_job_search' && parsed) {
-      return <MelronJobSearchResult data={parsed} />
-    }
-    if (tool.toolName === 'smart_apply' && parsed) {
-      return <MelronApplyResult data={parsed} />
-    }
-    if (tool.toolName === 'smart_people_search' && parsed) {
-      return <MelronPeopleSearchResult data={parsed} />
-    }
-    if (tool.toolName === 'smart_interest_map' && parsed) {
-      return <MelronInterestMapResult data={parsed} />
-    }
-    if (tool.toolName === 'smart_message' && parsed) {
-      return <MelronMessageResult data={parsed} />
-    }
-    return (
-      <pre className="text-xs bg-muted p-3 rounded overflow-auto max-h-96">
-        <code>{JSON.stringify(parsed ?? tool.output, null, 2)}</code>
-      </pre>
-    )
-  })()
+  const body = renderToolBody(tool, parsed, label)
 
   return (
     <CollapsibleMessage
@@ -158,5 +174,54 @@ export function DynamicToolSection({
     >
       {body}
     </CollapsibleMessage>
+  )
+}
+
+// ── Chain of thought (multiple tools) ────────────────
+
+export function DynamicToolChain({
+  tools,
+  status
+}: {
+  tools: DynamicToolPart[]
+  status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
+}) {
+  return (
+    <ChainOfThought>
+      {tools.map((tool, i) => {
+        const isLast = i === tools.length - 1
+        const label = getToolLabel(tool.toolName)
+        const Icon = getToolIcon(tool.toolName)
+        const isComplete = tool.state === 'output-available'
+        const isError = tool.state === 'output-error'
+        const isLoading =
+          tool.state === 'input-streaming' || tool.state === 'input-available'
+        const parsed = isComplete ? extractMcpJson(tool.output) : null
+
+        const stepStatus = isError
+          ? 'error' as const
+          : isLoading
+            ? 'loading' as const
+            : 'complete' as const
+
+        return (
+          <ChainOfThoughtStep
+            key={tool.toolCallId}
+            isLast={isLast}
+            defaultOpen={isLast}
+          >
+            <ChainOfThoughtTrigger
+              status={stepStatus}
+              icon={<Icon className="size-3" />}
+            >
+              {label}
+            </ChainOfThoughtTrigger>
+            <ChainOfThoughtContent>
+              {renderToolBody(tool, parsed, label)}
+            </ChainOfThoughtContent>
+          </ChainOfThoughtStep>
+        )
+      })}
+    </ChainOfThought>
   )
 }

@@ -161,6 +161,22 @@ export function RenderMessage({
           citationMaps={citationMaps}
         />
       )
+    } else if (part.type === 'tool-askQuestion') {
+      // askQuestion must stay visible — render inline, never collapse
+      flushBuffer(`pre-ask-${index}`)
+      elements.push(
+        <ResearchProcessSection
+          key={`${messageId}-ask-${index}`}
+          message={message}
+          messageId={messageId}
+          parts={[part]}
+          getIsOpen={getIsOpen}
+          onOpenChange={onOpenChange}
+          status={status}
+          addToolResult={addToolResult}
+          hasSubsequentText={false}
+        />
+      )
     } else if (
       part.type === 'reasoning' ||
       part.type?.startsWith?.('tool-') ||

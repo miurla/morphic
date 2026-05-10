@@ -8,7 +8,10 @@ import { getQuestionSchemaForModel } from '@/lib/schema/question'
 export function createQuestionTool(fullModel: string) {
   return tool({
     description:
-      'Ask a clarifying question with multiple options when more information is needed',
+      'Ask the user a clarifying question with clickable options. ' +
+      'Parameters: question (string), options (array of {value: string, label: string}), ' +
+      'allowsInput (boolean — set true to allow free text). ' +
+      'Example: { "question": "Quel ton ?", "options": [{"value": "professional", "label": "Professionnel"}, {"value": "casual", "label": "Casual"}], "allowsInput": false }',
     inputSchema: getQuestionSchemaForModel(fullModel)
     // execute function removed to enable frontend confirmation
   })

@@ -41,7 +41,25 @@ export function QuestionConfirmation({
   onConfirm,
   isCompleted = false
 }: QuestionConfirmationProps) {
-  const input = (toolInvocation.input || {}) as QuestionInput
+  const rawInput = (toolInvocation.input || {}) as Record<string, unknown>
+  const rawOptions = rawInput.options
+  const normalizedOptions: QuestionOption[] = Array.isArray(rawOptions)
+    ? rawOptions.map((opt: unknown) => {
+        if (typeof opt === 'string') return { value: opt, label: opt }
+        if (opt && typeof opt === 'object' && 'label' in opt) {
+          const o = opt as Record<string, unknown>
+          return {
+            value: String(o.value ?? o.label ?? ''),
+            label: String(o.label ?? o.value ?? '')
+          }
+        }
+        return { value: String(opt), label: String(opt) }
+      })
+    : []
+  const input = {
+    ...rawInput,
+    options: normalizedOptions
+  } as QuestionInput
   const {
     question = '',
     options = [],

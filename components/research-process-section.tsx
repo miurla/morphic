@@ -15,6 +15,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from './ui/collapsible'
+import { DynamicToolChain } from './dynamic-tool-section'
 import { ReasoningSection } from './reasoning-section'
 import { ToolSection } from './tool-section'
 
@@ -347,51 +348,57 @@ export function ResearchProcessSection({
         const isParentOpen =
           parentOpenStates[parentId] ?? (hasSubsequentText ? false : true)
 
-        // Find the last dynamic-tool in this segment
-        const allSegParts = groups.flat()
-        let lastDynamicId: string | null = null
-        for (let k = allSegParts.length - 1; k >= 0; k--) {
-          const p = allSegParts[k]
-          if (isDynamicToolPart(p)) {
-            lastDynamicId = p.toolCallId
-            break
-          }
-        }
-
         const segmentContent = (
           <div className={containerClass}>
-            {groups.map((grp, gidx) => (
-              <div key={`${messageId}-grp-${sidx}-${gidx}`}>
-                {grp.map((part, pidx) => {
-                  const partId = isToolLikePart(part)
-                    ? part.toolCallId
-                    : `${messageId}-${part.type}-${sidx}-${gidx}-${pidx}`
-
-                  const isLastDynamic = isDynamicToolPart(part) && part.toolCallId === lastDynamicId
-
+            {groups.map((grp, gidx) => {
+              // If the entire group is dynamic-tools, render as chain
+              if (grp.length > 0 && grp.every(p => isDynamicToolPart(p))) {
+                const dynamicTools = grp as DynamicToolPart[]
+                if (dynamicTools.length > 1) {
                   return (
-                    <RenderPart
-                      key={partId}
-                      part={part}
-                      partId={partId}
-                      hasNext={pidx < grp.length - 1}
-                      hasSubsequentContent={hasSubsequentContent(sidx)}
-                      isSingle={isSingle}
-                      isFirstGroup={gidx === 0}
-                      isLastGroup={gidx === groups.length - 1}
-                      groupLength={grp.length}
-                      partIndex={pidx}
-                      isLastDynamicTool={isLastDynamic}
-                      getIsOpen={getIsOpen}
-                      openSectionId={openSectionId}
-                      handleAccordionChange={handleAccordionChange}
+                    <DynamicToolChain
+                      key={`${messageId}-chain-${sidx}-${gidx}`}
+                      tools={dynamicTools}
                       status={status}
-                      addToolResult={addToolResult}
                     />
                   )
-                })}
-              </div>
-            ))}
+                }
+              }
+
+              return (
+                <div key={`${messageId}-grp-${sidx}-${gidx}`}>
+                  {grp.map((part, pidx) => {
+                    const partId = isToolLikePart(part)
+                      ? part.toolCallId
+                      : `${messageId}-${part.type}-${sidx}-${gidx}-${pidx}`
+
+                    const isLastDynamic =
+                      isDynamicToolPart(part) && pidx === grp.length - 1
+
+                    return (
+                      <RenderPart
+                        key={partId}
+                        part={part}
+                        partId={partId}
+                        hasNext={pidx < grp.length - 1}
+                        hasSubsequentContent={hasSubsequentContent(sidx)}
+                        isSingle={isSingle}
+                        isFirstGroup={gidx === 0}
+                        isLastGroup={gidx === groups.length - 1}
+                        groupLength={grp.length}
+                        partIndex={pidx}
+                        isLastDynamicTool={isLastDynamic}
+                        getIsOpen={getIsOpen}
+                        openSectionId={openSectionId}
+                        handleAccordionChange={handleAccordionChange}
+                        status={status}
+                        addToolResult={addToolResult}
+                      />
+                    )
+                  })}
+                </div>
+              )
+            })}
           </div>
         )
 
