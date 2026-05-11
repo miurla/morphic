@@ -98,7 +98,7 @@ export function OnboardingFlow() {
       <div className="hidden lg:flex lg:w-[400px] bg-muted/30 border-r flex-col p-8">
         <div className="flex items-center gap-2 mb-10">
           <IconLogo className="size-6" />
-          <span className="font-semibold">Morphic</span>
+          <span className="font-semibold">Melron</span>
         </div>
 
         <div className="flex-1">

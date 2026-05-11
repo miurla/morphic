@@ -27,7 +27,7 @@ export async function POST(req: Request) {
           },
           body: JSON.stringify({
             to: cleanNumber,
-            text: '👋 Nice to meet you ! Ton compte Morphic est connecté. Tu recevras ici tes alertes et résultats de recherche.\n\n— Melron'
+            text: '👋 Nice to meet you ! Ton compte Melron est connecté. Tu recevras ici tes alertes et résultats de recherche.\n\n— Melron'
           })
         }
       )

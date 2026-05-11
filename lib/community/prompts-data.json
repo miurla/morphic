@@ -57,7 +57,7 @@
     "objective": "Activer",
     "persona": "Founder",
     "title": "Message d'approche personnalisé pour [PROSPECT]",
-    "prompt": "Rédige-moi un message d'approche LinkedIn pour [NOM DU PROSPECT].\n\nCONTEXTE\n- Mon produit : [À COMPLÉTER]\n- Sa douleur probable : [À COMPLÉTER ou laisser Morphic inférer depuis son profil]\n- Ce que je veux à la fin du message : un call de 15 min cette semaine\n\nCONTRAINTES DE STYLE\n- Maximum 4 phrases\n- Pas de \"j'espère que vous allez bien\"\n- Premier mot doit accrocher (pas \"Bonjour\")\n- Référence concrète à son profil ou un de ses posts récents\n- Question ouverte à la fin, pas une demande directe\n\nDonne-moi 3 variantes : une factuelle, une provoquante, une empathique.",
+    "prompt": "Rédige-moi un message d'approche LinkedIn pour [NOM DU PROSPECT].\n\nCONTEXTE\n- Mon produit : [À COMPLÉTER]\n- Sa douleur probable : [À COMPLÉTER ou laisser Melron inférer depuis son profil]\n- Ce que je veux à la fin du message : un call de 15 min cette semaine\n\nCONTRAINTES DE STYLE\n- Maximum 4 phrases\n- Pas de \"j'espère que vous allez bien\"\n- Premier mot doit accrocher (pas \"Bonjour\")\n- Référence concrète à son profil ou un de ses posts récents\n- Question ouverte à la fin, pas une demande directe\n\nDonne-moi 3 variantes : une factuelle, une provoquante, une empathique.",
     "tags": [
       "message",
       "personnalisation",
@@ -850,7 +850,7 @@
     "objective": "Activer",
     "persona": "Founder",
     "title": "Email de cold outreach à [INVESTISSEUR]",
-    "prompt": "Rédige-moi l'email de premier contact à envoyer à [NOM PARTNER] de [FOND].\n\nCONTEXTE\n- Mon produit / ma boîte en 1 phrase : [À COMPLÉTER]\n- Ma traction (chiffres concrets) : [À COMPLÉTER]\n- Pourquoi mon produit matche leur thèse : [À COMPLÉTER ou laisser Morphic inférer]\n- Ce que je veux : 30 min pour présenter\n\nCONTRAINTES\n- 6 phrases max\n- Hook qui montre que j'ai lu leurs posts / deals récents\n- 3 chiffres concrets de traction (revenu, clients, croissance)\n- Référence concrète à un de leurs investissements similaires\n- CTA explicite mais asymétrique (facile de dire non)\n- Pas de pièce jointe dans le 1er email (lien vers un one-pager max)\n\nDonne 2 variantes : \"factuelle directe\" et \"narrative storytelling\".",
+    "prompt": "Rédige-moi l'email de premier contact à envoyer à [NOM PARTNER] de [FOND].\n\nCONTEXTE\n- Mon produit / ma boîte en 1 phrase : [À COMPLÉTER]\n- Ma traction (chiffres concrets) : [À COMPLÉTER]\n- Pourquoi mon produit matche leur thèse : [À COMPLÉTER ou laisser Melron inférer]\n- Ce que je veux : 30 min pour présenter\n\nCONTRAINTES\n- 6 phrases max\n- Hook qui montre que j'ai lu leurs posts / deals récents\n- 3 chiffres concrets de traction (revenu, clients, croissance)\n- Référence concrète à un de leurs investissements similaires\n- CTA explicite mais asymétrique (facile de dire non)\n- Pas de pièce jointe dans le 1er email (lien vers un one-pager max)\n\nDonne 2 variantes : \"factuelle directe\" et \"narrative storytelling\".",
     "tags": [
       "cold-email",
       "VC",

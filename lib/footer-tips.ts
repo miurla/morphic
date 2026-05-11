@@ -1,7 +1,7 @@
 import { formatShortcutKeys, SHORTCUTS } from '@/lib/keyboard-shortcuts'
 
 export const DISCLAIMER_TEXT =
-  'Morphic can make mistakes. Please double-check responses.'
+  'Melron peut faire des erreurs. Vérifie toujours les réponses.'
 
 const SHORTCUT_ENTRIES = [
   SHORTCUTS.newChat,

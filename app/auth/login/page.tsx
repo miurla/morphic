@@ -8,7 +8,7 @@ export default function Page() {
       {/* Left panel — branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-foreground text-background flex-col justify-between p-12">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Morphic</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Melron</h2>
         </div>
         <div className="space-y-4">
           <h1 className="text-4xl font-bold leading-tight">
@@ -22,7 +22,7 @@ export default function Page() {
           </p>
         </div>
         <p className="text-background/40 text-sm">
-          Propulsé par Melron &middot; Morphic
+          Propulsé par Melron
         </p>
       </div>
 

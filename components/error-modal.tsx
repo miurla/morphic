@@ -55,7 +55,7 @@ export function ErrorModal({
       case 'rate-limit':
         return 'Rate Limit Exceeded'
       case 'auth':
-        return 'Continue with Morphic'
+        return 'Continuer avec Melron'
       case 'forbidden':
         return 'Access Denied'
       default:
@@ -73,7 +73,7 @@ export function ErrorModal({
       case 'auth':
         return (
           error.message ||
-          'To use Morphic, sign in to your account or create a new one.'
+          'Pour utiliser Melron, connecte-toi ou crée un compte.'
         )
       case 'forbidden':
         return 'You do not have permission to access this resource.'

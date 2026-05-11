@@ -26,10 +26,10 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
             <IconLogo className="size-14" />
           </div>
           <DialogTitle className="text-xl font-semibold">
-            Continue with Morphic
+            Continuer avec Melron
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            To use Morphic, sign in to your account or create a new one.
+            Pour utiliser Melron, connecte-toi ou crée un compte.
           </DialogDescription>
         </DialogHeader>
         <div className="mt-6 space-y-3">
