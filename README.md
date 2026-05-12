@@ -9,6 +9,7 @@ An AI-powered search engine with a generative UI.
 <a href="https://vercel.com/oss">
   <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
 </a>
+[![Deploy to PandaStack](https://dashboard.pandastack.io/deploy-button.svg)](https://dashboard.pandastack.io/deploy?repo=miurla/morphic&type=static&buildCmd=npm+run+build&outputDir=dist)
 
 <br />
 <br />
@@ -110,6 +111,7 @@ Visit http://localhost:3000.
 ### Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY,ENABLE_AUTH)
+[![Deploy to PandaStack](https://dashboard.pandastack.io/deploy-button.svg)](https://dashboard.pandastack.io/deploy?repo=miurla/morphic&type=static&buildCmd=npm+run+build&outputDir=dist)
 
 ## Contributing
 
