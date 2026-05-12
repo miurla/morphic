@@ -2,8 +2,8 @@
   "version": 2,
   "models": {
     "quick": {
-      "id": "gemini-3.1-flash-lite-preview",
-      "name": "Gemini 3.1 Flash Lite Preview",
+      "id": "gemini-3.1-flash-lite",
+      "name": "Gemini 3.1 Flash Lite",
       "provider": "Google",
       "providerId": "google",
       "providerOptions": {
