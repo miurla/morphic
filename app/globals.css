@@ -259,6 +259,19 @@
   }
 }
 
+@keyframes marquee-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@utility animate-marquee-up {
+  animation: marquee-up var(--marquee-duration, 30s) linear infinite;
+}
+
 @utility animate-blink {
   animation: blink 0.2s ease-in-out;
 }

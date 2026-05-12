@@ -1,7 +1,5 @@
 'use client'
 
-import { useTheme } from 'next-themes'
-
 import { toast } from 'sonner'
 
 import { SHORTCUT_EVENTS, SHORTCUTS } from '@/lib/keyboard-shortcuts'
@@ -12,8 +10,9 @@ import { useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
 
 import { useSidebar } from './ui/sidebar'
 import { KeyboardShortcutDialog } from './keyboard-shortcut-dialog'
+import { type Theme, useTheme } from './theme-provider'
 
-const THEME_CYCLE: Record<string, string> = {
+const THEME_CYCLE: Record<Theme, Theme> = {
   dark: 'light',
   light: 'system',
   system: 'dark'
@@ -37,7 +36,7 @@ export function KeyboardShortcutHandler() {
   })
 
   useKeyboardShortcut(SHORTCUTS.toggleTheme, () => {
-    setTheme(THEME_CYCLE[theme ?? 'system'] ?? 'dark')
+    setTheme(THEME_CYCLE[theme])
   })
 
   useKeyboardShortcut(SHORTCUTS.copyMessage, () => {

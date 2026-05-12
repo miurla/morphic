@@ -15,14 +15,13 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { useChatContext } from '@/lib/contexts/chat-context'
+import { useHasUser } from '@/lib/contexts/user-context'
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
 import { UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { ModelSelectorData } from '@/lib/types/model-selector'
 import { cn } from '@/lib/utils'
-
-import { useChatContext } from '@/lib/contexts/chat-context'
-import { useHasUser } from '@/lib/contexts/user-context'
 
 import { useArtifact } from './artifact/artifact-context'
 import { Button } from './ui/button'
@@ -195,16 +194,35 @@ export function ChatPanel({
   return (
     <div
       className={cn(
-        'w-full bg-background group/form-container shrink-0',
+        'w-full group/form-container shrink-0',
+        messages.length === 0 ? 'bg-transparent' : 'bg-background',
         messages.length > 0 ? 'sticky bottom-0 px-2 pb-2 md:pb-4' : 'px-6'
       )}
     >
       {messages.length === 0 && (
-        <div className="mb-6 md:mb-10 flex flex-col items-center gap-2 md:gap-4">
-          <IconBlinkingLogo className="size-12" />
-          <h1 className="text-xl md:text-2xl font-medium text-foreground">
-            What would you like to know?
-          </h1>
+        <div className="mb-8 flex flex-col items-center gap-4 md:mb-12 md:gap-5">
+          <IconBlinkingLogo className="size-[58px]" />
+          {isGuest ? (
+            <>
+              <h1 className="max-w-3xl text-center font-serif text-4xl font-semibold leading-none tracking-normal text-foreground md:text-6xl lg:text-7xl">
+                Talk with your{' '}
+                <span className="italic text-muted-foreground">network</span>.
+              </h1>
+              <p className="max-w-xl text-center text-base leading-relaxed text-muted-foreground md:text-lg">
+                Découvrez les opportunités cachées dans votre réseau avec{' '}
+                <span className="font-semibold text-foreground">Melron</span>.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-xl md:text-2xl font-medium text-foreground">
+                Talk with your network
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Découvrez les opportunités de votre réseau
+              </p>
+            </>
+          )}
         </div>
       )}
       {uploadedFiles.length > 0 && (
@@ -217,7 +235,9 @@ export function ChatPanel({
             if (input.trim()) {
               sessionStorage.setItem('pendingMessage', input.trim())
             }
-            router.push('/auth/login?next=' + encodeURIComponent(window.location.pathname))
+            router.push(
+              '/auth/login?next=' + encodeURIComponent(window.location.pathname)
+            )
             return
           }
           if (!hasAvailableModels) {
@@ -255,9 +275,7 @@ export function ChatPanel({
           </div>
         )}
         {/* Message navigation - always visible */}
-        {sections.length > 1 && (
-          <MessageNavigationDots sections={sections} />
-        )}
+        {sections.length > 1 && <MessageNavigationDots sections={sections} />}
 
         <div
           className={cn(
