@@ -1,8 +1,12 @@
+'use client'
+
 import Link from 'next/link'
 
 import { ArrowRight, Heart, Users } from 'lucide-react'
 
 import promptsData from '@/lib/community/prompts-data.json'
+
+import { useAuthModal } from '@/components/auth-modal'
 
 type Prompt = (typeof promptsData)[number]
 
@@ -42,6 +46,8 @@ const AVATAR_IMAGE_IDS = [
 ]
 
 export function TemplatesSection() {
+  const { openAuthModal } = useAuthModal()
+
   return (
     <section className="w-full px-6 pt-16 pb-12 md:px-12 max-w-7xl mx-auto">
       <div className="flex items-end justify-between mb-8">
@@ -68,10 +74,11 @@ export function TemplatesSection() {
           const avatarIds = AVATAR_IMAGE_IDS[index]
 
           return (
-            <Link
+            <button
               key={template.id}
-              href="/auth/login"
-              className="group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md"
+              type="button"
+              onClick={() => openAuthModal('signup')}
+              className="group flex flex-col overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition-shadow hover:shadow-md"
             >
               <div
                 className="h-48 overflow-hidden"
@@ -116,7 +123,7 @@ export function TemplatesSection() {
                   </div>
                 </div>
               </div>
-            </Link>
+            </button>
           )
         })}
       </div>

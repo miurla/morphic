@@ -27,6 +27,7 @@ import { useArtifact } from './artifact/artifact-context'
 import { Button } from './ui/button'
 import { IconBlinkingLogo } from './ui/icons'
 import { ActionButtons } from './action-buttons'
+import { useAuthModal } from './auth-modal'
 import { FileUploadButton } from './file-upload-button'
 import { MessageNavigationDots } from './message-navigation-dots'
 import { ModelSelectorClient } from './model-selector-client'
@@ -96,6 +97,7 @@ export function ChatPanel({
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
   const [isInputFocused, setIsInputFocused] = useState(false) // Track input focus
   const { close: closeArtifact } = useArtifact()
+  const { openAuthModal } = useAuthModal()
   const { selectedItem, setSelectedItem } = useChatContext()
   const hasUser = useHasUser()
   const isLoading = status === 'submitted' || status === 'streaming'
@@ -235,9 +237,7 @@ export function ChatPanel({
             if (input.trim()) {
               sessionStorage.setItem('pendingMessage', input.trim())
             }
-            router.push(
-              '/auth/login?next=' + encodeURIComponent(window.location.pathname)
-            )
+            openAuthModal('signup')
             return
           }
           if (!hasAvailableModels) {

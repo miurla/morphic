@@ -1,7 +1,5 @@
 'use client'
 
-import Link from 'next/link'
-
 import { AlertCircle, Clock, RefreshCw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -13,6 +11,8 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+
+import { useAuthModal } from '@/components/auth-modal'
 
 interface ErrorModalProps {
   open: boolean
@@ -33,6 +33,8 @@ export function ErrorModal({
   onRetry,
   onAuthClose
 }: ErrorModalProps) {
+  const { openAuthModal } = useAuthModal()
+
   const handleAuthClose = () => {
     onOpenChange(false)
     onAuthClose?.()
@@ -122,11 +124,24 @@ export function ErrorModal({
         <DialogFooter className="flex-col gap-2">
           {error.type === 'auth' ? (
             <>
-              <Button asChild className="w-full">
-                <Link href="/auth/sign-up">Sign Up</Link>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  handleAuthClose()
+                  openAuthModal('signup')
+                }}
+              >
+                Sign Up
               </Button>
-              <Button asChild variant="outline" className="w-full">
-                <Link href="/auth/login">Sign In</Link>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  handleAuthClose()
+                  openAuthModal('signin')
+                }}
+              >
+                Sign In
               </Button>
             </>
           ) : (

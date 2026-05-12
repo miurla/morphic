@@ -63,6 +63,7 @@ export function Chat({
     setChatId(newId)
     // Clear other chat-related state that persists due to Next.js 16 component caching
     setInput('')
+    autoSendPending.current = false
     setUploadedFiles([])
     setSelectedItem(null)
     setErrorModal({
@@ -75,9 +76,9 @@ export function Chat({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-  const [autoSendPending, setAutoSendPending] = useState(false)
+  const autoSendPending = useRef(false)
   const [input, setInput] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (!isGuest && typeof window !== 'undefined') {
       const pending = sessionStorage.getItem('pendingMessage')
       if (pending) {
         sessionStorage.removeItem('pendingMessage')
@@ -310,8 +311,14 @@ export function Chat({
 
   // Auto-send pending message from onboarding/login
   useEffect(() => {
-    if (input.trim() && messages.length === 0 && status === 'ready' && !autoSendPending) {
-      setAutoSendPending(true)
+    if (
+      !isGuest &&
+      input.trim() &&
+      messages.length === 0 &&
+      status === 'ready' &&
+      !autoSendPending.current
+    ) {
+      autoSendPending.current = true
       requestAnimationFrame(() => {
         sendMessage({
           role: 'user',
@@ -323,7 +330,7 @@ export function Chat({
         }
       })
     }
-  }, [input, messages.length, status, autoSendPending])
+  }, [chatId, input, isGuest, messages.length, sendMessage, status])
 
   // Dispatch custom event when messages change
   useEffect(() => {

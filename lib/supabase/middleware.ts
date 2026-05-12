@@ -7,6 +7,14 @@ export async function updateSession(request: NextRequest) {
     request
   })
 
+  const redirectWithSessionCookies = (url: URL) => {
+    const redirectResponse = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach(cookie => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectResponse
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -55,10 +63,11 @@ export async function updateSession(request: NextRequest) {
   if (!user && !publicPaths.some(path => pathname.startsWith(path))) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
-    return NextResponse.redirect(url)
+    return redirectWithSessionCookies(url)
   }
 
-  // Redirect to onboarding if authenticated but not onboarded
+  // Redirect to onboarding if authenticated but not onboarded.
+  // Prefer the cookie as a fast path, but verify against the DB when missing.
   if (
     user &&
     !pathname.startsWith('/onboarding') &&
@@ -67,9 +76,25 @@ export async function updateSession(request: NextRequest) {
   ) {
     const onboardingDone = request.cookies.get('onboarding_completed')?.value
     if (onboardingDone !== 'true') {
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('onboarding_completed')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!error && profile?.onboarding_completed === true) {
+        supabaseResponse.cookies.set('onboarding_completed', 'true', {
+          path: '/',
+          maxAge: 60 * 60 * 24 * 365,
+          httpOnly: false
+        })
+
+        return supabaseResponse
+      }
+
       const url = request.nextUrl.clone()
       url.pathname = '/onboarding'
-      return NextResponse.redirect(url)
+      return redirectWithSessionCookies(url)
     }
   }
 

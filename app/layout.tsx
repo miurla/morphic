@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata, Viewport } from 'next'
 import { Inter as FontSans } from 'next/font/google'
 
@@ -13,6 +14,7 @@ import { Toaster } from '@/components/ui/sonner'
 
 import AppSidebar from '@/components/app-sidebar'
 import ArtifactRoot from '@/components/artifact/artifact-root'
+import { AuthModalProvider } from '@/components/auth-modal'
 import Header from '@/components/header'
 import { KeyboardShortcutHandler } from '@/components/keyboard-shortcut-handler'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -72,7 +74,10 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          'fixed inset-0 flex flex-col font-sans antialiased overflow-hidden',
+          'font-sans antialiased',
+          userId
+            ? 'fixed inset-0 flex flex-col overflow-hidden'
+            : 'min-h-screen flex flex-col',
           fontSans.variable
         )}
       >
@@ -83,16 +88,28 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <UserProvider hasUser={!!userId}>
-            <SidebarProvider defaultOpen={true}>
-              {userId && <AppSidebar user={user} />}
-              <KeyboardShortcutHandler />
-              <div className="flex flex-col flex-1 min-w-0">
-                <Header user={user} />
-                <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
-                  <ArtifactRoot>{children}</ArtifactRoot>
-                </main>
-              </div>
-            </SidebarProvider>
+            <Suspense>
+              <AuthModalProvider>
+                {userId ? (
+                  <SidebarProvider defaultOpen={true}>
+                    <AppSidebar user={user} />
+                    <KeyboardShortcutHandler />
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <Header user={user} />
+                      <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
+                        <ArtifactRoot>{children}</ArtifactRoot>
+                      </main>
+                    </div>
+                  </SidebarProvider>
+                ) : (
+                  <SidebarProvider defaultOpen={false}>
+                    <main className="flex flex-1 flex-col min-w-0">
+                      {children}
+                    </main>
+                  </SidebarProvider>
+                )}
+              </AuthModalProvider>
+            </Suspense>
           </UserProvider>
           <Toaster />
           <Analytics />

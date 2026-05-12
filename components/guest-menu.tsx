@@ -1,7 +1,5 @@
 'use client'
 
-import Link from 'next/link'
-
 import {
   Link2,
   LogIn,
@@ -21,10 +19,14 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 
+import { useAuthModal } from '@/components/auth-modal'
+
 import { ExternalLinkItems } from './external-link-items'
 import { ThemeMenuItems } from './theme-menu-items'
 
 export default function GuestMenu() {
+  const { openAuthModal } = useAuthModal()
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -34,11 +36,11 @@ export default function GuestMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuItem asChild>
-          <Link href="/auth/login">
+        <DropdownMenuItem onClick={() => openAuthModal('signin')}>
+          <div className="flex items-center">
             <LogIn className="mr-2 h-4 w-4" />
             <span>Sign In</span>
-          </Link>
+          </div>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>

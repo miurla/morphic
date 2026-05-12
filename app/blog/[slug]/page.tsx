@@ -54,12 +54,13 @@ export function generateStaticParams() {
   return BLOG_POSTS.map(post => ({ slug: post.slug }))
 }
 
-export default function BlogDetailPage({
+export default async function BlogDetailPage({
   params
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }) {
-  const post = BLOG_POSTS.find(item => item.slug === params.slug)
+  const { slug } = await params
+  const post = BLOG_POSTS.find(item => item.slug === slug)
 
   if (!post) {
     notFound()
