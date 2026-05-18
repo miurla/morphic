@@ -180,7 +180,9 @@ export function ChatPanel({
     <div
       className={cn(
         'w-full bg-background group/form-container shrink-0',
-        messages.length > 0 ? 'sticky bottom-0 px-2 pb-2 md:pb-4' : 'px-6'
+        messages.length > 0
+          ? 'sticky bottom-0 px-2 pb-2 md:pb-4'
+          : 'px-4 md:px-6'
       )}
     >
       {messages.length === 0 && (
@@ -411,7 +413,7 @@ export function ChatPanel({
               inputRef.current?.focus()
             }}
             inputRef={inputRef}
-            className="mt-2"
+            className="mt-2 hidden md:block"
           />
         )}
       </form>
