@@ -293,6 +293,15 @@ export const feedback = pgTable(
       for: 'insert',
       to: 'public',
       withCheck: sql`true`
+    }),
+
+    // Allow users to remove the account link from their own feedback.
+    pgPolicy('users_anonymize_own_feedback', {
+      as: 'permissive',
+      for: 'update',
+      to: 'public',
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id IS NULL`
     })
   ]
 ).enableRLS()

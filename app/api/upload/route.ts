@@ -5,6 +5,7 @@ import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import {
   getR2Client,
+  isObjectStorageConfigured,
   R2_BUCKET_NAME,
   R2_PUBLIC_URL
 } from '@/lib/storage/r2-client'
@@ -102,14 +103,4 @@ async function uploadFileToR2(file: File, userId: string, chatId: string) {
   } catch (error: any) {
     throw new Error('Upload failed: ' + error.message)
   }
-}
-
-function isObjectStorageConfigured() {
-  const hasCredentials =
-    !!process.env.R2_ACCESS_KEY_ID && !!process.env.R2_SECRET_ACCESS_KEY
-  const hasEndpointOrAccount =
-    !!process.env.S3_ENDPOINT || !!process.env.R2_ACCOUNT_ID
-  const hasPublicUrl = !!R2_PUBLIC_URL
-
-  return hasCredentials && hasEndpointOrAccount && hasPublicUrl
 }

@@ -1,9 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { User } from '@supabase/supabase-js'
-import { Link2, LogOut, Palette } from 'lucide-react'
+import type { User } from '@supabase/supabase-js'
+import { Link2, LogOut, UserRound } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -20,9 +21,10 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 
+import { AccountSettingsDialog } from '@/components/account-settings-dialog'
+
 import { Button } from './ui/button'
 import { ExternalLinkItems } from './external-link-items'
-import { ThemeMenuItems } from './theme-menu-items'
 
 interface UserMenuProps {
   user: User
@@ -30,6 +32,7 @@ interface UserMenuProps {
 
 export default function UserMenu({ user }: UserMenuProps) {
   const router = useRouter()
+  const [accountOpen, setAccountOpen] = useState(false)
   const userName =
     user.user_metadata?.full_name || user.user_metadata?.name || 'User'
   const avatarUrl =
@@ -57,51 +60,55 @@ export default function UserMenu({ user }: UserMenuProps) {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative size-6 rounded-full">
-          <Avatar className="size-6">
-            <AvatarImage src={avatarUrl} alt={userName} />
-            <AvatarFallback>{getInitials(userName, user.email)}</AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-60" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none truncate">
-              {userName}
-            </p>
-            <p className="text-xs leading-none text-muted-foreground truncate">
-              {user.email}
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Palette className="mr-2 h-4 w-4" />
-            <span>Theme</span>
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <ThemeMenuItems />
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Link2 className="mr-2 h-4 w-4" />
-            <span>Links</span>
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <ExternalLinkItems />
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Logout</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative size-6 rounded-full">
+            <Avatar className="size-6">
+              <AvatarImage src={avatarUrl} alt={userName} />
+              <AvatarFallback>
+                {getInitials(userName, user.email)}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-60" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none truncate">
+                {userName}
+              </p>
+              <p className="text-xs leading-none text-muted-foreground truncate">
+                {user.email}
+              </p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => setAccountOpen(true)}>
+            <UserRound className="mr-2 h-4 w-4" />
+            <span>Account</span>
+          </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Link2 className="mr-2 h-4 w-4" />
+              <span>Links</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <ExternalLinkItems />
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Logout</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <AccountSettingsDialog
+        open={accountOpen}
+        onOpenChange={setAccountOpen}
+        user={user}
+      />
+    </>
   )
 }

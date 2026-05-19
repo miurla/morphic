@@ -163,11 +163,14 @@ For multi-user deployments:
 ENABLE_AUTH=true
 NEXT_PUBLIC_SUPABASE_URL=[YOUR_SUPABASE_PROJECT_URL]
 NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR_SUPABASE_ANON_KEY]
+# Required for account deletion. Keep server-side only.
+SUPABASE_SERVICE_ROLE_KEY=[YOUR_SUPABASE_SERVICE_ROLE_KEY]
 ```
 
 3. Obtain your credentials from the Supabase dashboard:
    - **Project URL**: Settings > API > Project URL
    - **Anon Key**: Settings > API > Project API keys > anon/public
+   - **Service Role Key**: Settings > API > Project API keys > service_role
 
 ## Guest Mode
 

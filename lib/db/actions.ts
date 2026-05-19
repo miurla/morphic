@@ -13,7 +13,7 @@ import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
 
 import type { Chat, Message } from './schema'
-import { chats, generateId, messages, parts } from './schema'
+import { chats, feedback, generateId, messages, parts } from './schema'
 import { withOptionalRLS, withRLS } from './with-rls'
 import { db } from '.'
 
@@ -341,6 +341,45 @@ export async function deleteChat(
   } catch (error) {
     console.error('Error deleting chat:', error)
     return { success: false, error: 'Failed to delete chat' }
+  }
+}
+
+/**
+ * Delete all chats for a user.
+ * Messages and parts are removed by database cascades.
+ */
+export async function deleteUserChats(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    return withRLS(userId, async tx => {
+      await tx.delete(chats).where(eq(chats.userId, userId))
+      return { success: true }
+    })
+  } catch (error) {
+    console.error('Error deleting user chats:', error)
+    return { success: false, error: 'Failed to delete user chats' }
+  }
+}
+
+/**
+ * Remove account linkage from feedback while retaining the feedback content.
+ */
+export async function anonymizeUserFeedback(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    return withRLS(userId, async tx => {
+      await tx
+        .update(feedback)
+        .set({ userId: null })
+        .where(eq(feedback.userId, userId))
+
+      return { success: true }
+    })
+  } catch (error) {
+    console.error('Error anonymizing user feedback:', error)
+    return { success: false, error: 'Failed to anonymize user feedback' }
   }
 }
 
