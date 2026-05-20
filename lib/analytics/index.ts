@@ -8,6 +8,7 @@
  * @module analytics
  */
 
+export { trackAccountDeleted } from './track-account-event'
 export {
   type AdaptiveLimitEventData,
   trackAdaptiveLimitEvent

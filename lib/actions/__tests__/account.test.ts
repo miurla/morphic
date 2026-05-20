@@ -2,6 +2,7 @@ import { revalidateTag } from 'next/cache'
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { trackAccountDeleted } from '@/lib/analytics'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
 import { deleteUserObjects } from '@/lib/storage/r2-client'
@@ -9,6 +10,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 import { deleteAccount } from '../account'
 
+vi.mock('@/lib/analytics')
 vi.mock('@/lib/auth/get-current-user')
 vi.mock('@/lib/db/actions')
 vi.mock('@/lib/storage/r2-client')
@@ -33,6 +35,7 @@ describe('Account Actions', () => {
       deletedCount: 0,
       skipped: true
     })
+    vi.mocked(trackAccountDeleted).mockResolvedValue()
     deleteUser.mockResolvedValue({ data: { user: null }, error: null })
     vi.mocked(createAdminClient).mockReturnValue({
       auth: { admin: { deleteUser } }
@@ -92,6 +95,7 @@ describe('Account Actions', () => {
     expect(deleteUserObjects).toHaveBeenCalledWith(user.id)
     expect(deleteUser).toHaveBeenCalledWith(user.id)
     expect(revalidateTag).toHaveBeenCalledWith('chat', 'max')
+    expect(trackAccountDeleted).toHaveBeenCalledTimes(1)
   })
 
   it('stops before storage and auth deletion when app data deletion fails', async () => {
@@ -108,6 +112,7 @@ describe('Account Actions', () => {
     })
     expect(deleteUserObjects).not.toHaveBeenCalled()
     expect(deleteUser).not.toHaveBeenCalled()
+    expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
 
   it('stops before storage and auth deletion when feedback anonymization fails', async () => {
@@ -124,6 +129,7 @@ describe('Account Actions', () => {
     })
     expect(deleteUserObjects).not.toHaveBeenCalled()
     expect(deleteUser).not.toHaveBeenCalled()
+    expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
 
   it('stops before auth deletion when uploaded file deletion fails', async () => {
@@ -137,5 +143,21 @@ describe('Account Actions', () => {
     })
     expect(dbActions.deleteUserChats).toHaveBeenCalledWith(user.id)
     expect(deleteUser).not.toHaveBeenCalled()
+    expect(trackAccountDeleted).not.toHaveBeenCalled()
+  })
+
+  it('does not track account deletion when auth deletion fails', async () => {
+    deleteUser.mockResolvedValue({
+      data: { user: null },
+      error: new Error('Auth deletion failed')
+    })
+
+    const result = await deleteAccount()
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Auth deletion failed'
+    })
+    expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
 })
