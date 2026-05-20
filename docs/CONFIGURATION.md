@@ -162,12 +162,15 @@ For multi-user deployments:
 ```bash
 ENABLE_AUTH=true
 NEXT_PUBLIC_SUPABASE_URL=[YOUR_SUPABASE_PROJECT_URL]
-NEXT_PUBLIC_SUPABASE_ANON_KEY=[YOUR_SUPABASE_ANON_KEY]
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[YOUR_SUPABASE_PUBLISHABLE_KEY]
+# Required for account deletion. Keep server-side only.
+SUPABASE_SECRET_KEY=[YOUR_SUPABASE_SECRET_KEY]
 ```
 
 3. Obtain your credentials from the Supabase dashboard:
    - **Project URL**: Settings > API > Project URL
-   - **Anon Key**: Settings > API > Project API keys > anon/public
+   - **Publishable Key**: Settings > API Keys > publishable key (`sb_publishable_...`)
+   - **Secret Key**: Settings > API Keys > secret key (`sb_secret_...`)
 
 ## Guest Mode
 

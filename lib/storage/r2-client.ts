@@ -1,4 +1,8 @@
-import { S3Client } from '@aws-sdk/client-s3'
+import {
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
+  S3Client
+} from '@aws-sdk/client-s3'
 
 export const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'user-uploads'
 export const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || ''
@@ -38,4 +42,63 @@ export function getR2Client(): S3Client {
   })
 
   return _r2Client
+}
+
+export function isObjectStorageConfigured() {
+  const hasCredentials =
+    !!process.env.R2_ACCESS_KEY_ID && !!process.env.R2_SECRET_ACCESS_KEY
+  const hasEndpointOrAccount =
+    !!process.env.S3_ENDPOINT || !!process.env.R2_ACCOUNT_ID
+  const hasPublicUrl = !!R2_PUBLIC_URL
+
+  return hasCredentials && hasEndpointOrAccount && hasPublicUrl
+}
+
+export async function deleteObjectsByPrefix(prefix: string) {
+  if (!isObjectStorageConfigured()) {
+    return { deletedCount: 0, skipped: true }
+  }
+
+  const r2Client = getR2Client()
+  let continuationToken: string | undefined
+  let deletedCount = 0
+
+  do {
+    const listedObjects = await r2Client.send(
+      new ListObjectsV2Command({
+        Bucket: R2_BUCKET_NAME,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+        MaxKeys: 1000
+      })
+    )
+
+    const keys =
+      listedObjects.Contents?.map(object => object.Key).filter(
+        (key): key is string => Boolean(key)
+      ) ?? []
+
+    if (keys.length > 0) {
+      await r2Client.send(
+        new DeleteObjectsCommand({
+          Bucket: R2_BUCKET_NAME,
+          Delete: {
+            Objects: keys.map(Key => ({ Key })),
+            Quiet: true
+          }
+        })
+      )
+      deletedCount += keys.length
+    }
+
+    continuationToken = listedObjects.IsTruncated
+      ? listedObjects.NextContinuationToken
+      : undefined
+  } while (continuationToken)
+
+  return { deletedCount, skipped: false }
+}
+
+export async function deleteUserObjects(userId: string) {
+  return deleteObjectsByPrefix(`${userId}/`)
 }

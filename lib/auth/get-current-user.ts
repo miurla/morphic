@@ -1,12 +1,10 @@
+import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
 import { createClient } from '@/lib/supabase/server'
 import { perfLog } from '@/lib/utils/perf-logging'
 import { incrementAuthCallCount } from '@/lib/utils/perf-tracking'
 
 export async function getCurrentUser() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!hasSupabasePublicConfig()) {
     return null // Supabase is not configured
   }
 

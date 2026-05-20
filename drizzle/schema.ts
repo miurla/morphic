@@ -236,6 +236,13 @@ export const feedback = pgTable(
       as: 'permissive',
       for: 'insert',
       to: ['public']
+    }),
+    pgPolicy('users_anonymize_own_feedback', {
+      as: 'permissive',
+      for: 'update',
+      to: ['public'],
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id IS NULL`
     })
   ]
 )
