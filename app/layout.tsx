@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { UserProvider } from '@/lib/contexts/user-context'
+import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 
@@ -57,10 +58,8 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   let user = null
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (supabaseUrl && supabaseAnonKey) {
+  if (hasSupabasePublicConfig()) {
     const supabase = await createClient()
     const {
       data: { user: supabaseUser }

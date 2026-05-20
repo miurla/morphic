@@ -71,15 +71,14 @@ describe('Account Actions', () => {
 
   it('returns an error when Supabase admin is not configured', async () => {
     vi.mocked(createAdminClient).mockImplementation(() => {
-      throw new Error('Missing service role key')
+      throw new Error('Missing secret key')
     })
 
     const result = await deleteAccount()
 
     expect(result).toEqual({
       success: false,
-      error:
-        'Account deletion is not configured. Set SUPABASE_SERVICE_ROLE_KEY.'
+      error: 'Account deletion is not configured. Set SUPABASE_SECRET_KEY.'
     })
     expect(dbActions.deleteUserChats).not.toHaveBeenCalled()
   })

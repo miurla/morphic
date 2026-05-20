@@ -38,8 +38,7 @@ export async function deleteAccount(): Promise<{
     console.error('Supabase admin client is not configured:', error)
     return {
       success: false,
-      error:
-        'Account deletion is not configured. Set SUPABASE_SERVICE_ROLE_KEY.'
+      error: 'Account deletion is not configured. Set SUPABASE_SECRET_KEY.'
     }
   }
 

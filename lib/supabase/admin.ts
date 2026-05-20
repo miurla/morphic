@@ -2,15 +2,15 @@ import { createClient } from '@supabase/supabase-js'
 
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const secretKey = process.env.SUPABASE_SECRET_KEY
 
-  if (!url || !serviceRoleKey) {
+  if (!url || !secretKey) {
     throw new Error(
-      'Supabase admin client is not configured. Set SUPABASE_SERVICE_ROLE_KEY.'
+      'Supabase admin client is not configured. Set SUPABASE_SECRET_KEY.'
     )
   }
 
-  return createClient(url, serviceRoleKey, {
+  return createClient(url, secretKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false

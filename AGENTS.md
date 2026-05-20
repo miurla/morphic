@@ -43,7 +43,8 @@ To require Supabase authentication, set:
 ```bash
 ENABLE_AUTH=true  # or remove ENABLE_AUTH from docker-compose.yaml
 NEXT_PUBLIC_SUPABASE_URL=[your-supabase-url]
-NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-supabase-anon-key]
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[your-supabase-publishable-key]
+SUPABASE_SECRET_KEY=[your-supabase-secret-key]
 ```
 
 **Implementation:**
