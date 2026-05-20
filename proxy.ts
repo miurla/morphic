@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
+import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
 import { updateSession } from '@/lib/supabase/middleware'
 
 export async function proxy(request: NextRequest) {
@@ -17,11 +18,7 @@ export async function proxy(request: NextRequest) {
   // Create a response
   let response: NextResponse
 
-  // Handle Supabase session if configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (supabaseUrl && supabaseAnonKey) {
+  if (hasSupabasePublicConfig()) {
     response = await updateSession(request)
   } else {
     // If Supabase is not configured, just pass the request through
