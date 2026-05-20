@@ -2,6 +2,7 @@
 
 import { revalidateTag } from 'next/cache'
 
+import { trackAccountDeleted } from '@/lib/analytics'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
 import { deleteUserObjects } from '@/lib/storage/r2-client'
@@ -70,6 +71,7 @@ export async function deleteAccount(): Promise<{
     }
 
     revalidateTag('chat', 'max')
+    await trackAccountDeleted()
 
     return { success: true }
   } catch (error) {
