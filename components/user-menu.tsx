@@ -32,6 +32,7 @@ interface UserMenuProps {
 
 export default function UserMenu({ user }: UserMenuProps) {
   const router = useRouter()
+  const [menuOpen, setMenuOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const userName =
     user.user_metadata?.full_name || user.user_metadata?.name || 'User'
@@ -59,9 +60,14 @@ export default function UserMenu({ user }: UserMenuProps) {
     router.refresh()
   }
 
+  const handleOpenAccount = () => {
+    setMenuOpen(false)
+    window.setTimeout(() => setAccountOpen(true), 0)
+  }
+
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative size-6 rounded-full">
             <Avatar className="size-6">
@@ -84,13 +90,18 @@ export default function UserMenu({ user }: UserMenuProps) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => setAccountOpen(true)}>
-            <UserRound className="mr-2 h-4 w-4" />
+          <DropdownMenuItem
+            onSelect={event => {
+              event.preventDefault()
+              handleOpenAccount()
+            }}
+          >
+            <UserRound className="size-4" />
             <span>Account</span>
           </DropdownMenuItem>
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <Link2 className="mr-2 h-4 w-4" />
+            <DropdownMenuSubTrigger className="gap-2">
+              <Link2 className="size-4" />
               <span>Links</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
@@ -99,7 +110,7 @@ export default function UserMenu({ user }: UserMenuProps) {
           </DropdownMenuSub>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut className="size-4" />
             <span>Logout</span>
           </DropdownMenuItem>
         </DropdownMenuContent>

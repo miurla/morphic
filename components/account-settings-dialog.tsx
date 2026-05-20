@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 
@@ -53,6 +53,7 @@ export function AccountSettingsDialog({
   const router = useRouter()
   const { setTheme, theme } = useTheme()
   const [isDeleting, startDeleteTransition] = useTransition()
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const activeTheme = theme ?? 'system'
 
   const userName =
@@ -70,6 +71,7 @@ export function AccountSettingsDialog({
         }
 
         toast.success('Account deleted')
+        setConfirmOpen(false)
         onOpenChange(false)
         router.push('/')
         router.refresh()
@@ -85,6 +87,9 @@ export function AccountSettingsDialog({
       open={open}
       onOpenChange={nextOpen => {
         if (!isDeleting) {
+          if (!nextOpen) {
+            setConfirmOpen(false)
+          }
           onOpenChange(nextOpen)
         }
       }}
@@ -148,12 +153,18 @@ export function AccountSettingsDialog({
               </h3>
               <p className="text-sm text-muted-foreground">
                 Permanently delete your account, chat history, and uploaded
-                files. Any feedback you submitted will be anonymized rather than
-                deleted.
+                files. This action cannot be undone.
               </p>
             </div>
 
-            <AlertDialog>
+            <AlertDialog
+              open={confirmOpen}
+              onOpenChange={nextOpen => {
+                if (!isDeleting) {
+                  setConfirmOpen(nextOpen)
+                }
+              }}
+            >
               <AlertDialogTrigger asChild>
                 <Button
                   type="button"
