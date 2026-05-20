@@ -79,7 +79,7 @@ export async function deleteObjectsByPrefix(prefix: string) {
       ) ?? []
 
     if (keys.length > 0) {
-      await r2Client.send(
+      const deleteResponse = await r2Client.send(
         new DeleteObjectsCommand({
           Bucket: R2_BUCKET_NAME,
           Delete: {
@@ -88,6 +88,19 @@ export async function deleteObjectsByPrefix(prefix: string) {
           }
         })
       )
+
+      const deleteErrors = deleteResponse.Errors ?? []
+      if (deleteErrors.length > 0) {
+        const sampleErrors = deleteErrors
+          .slice(0, 3)
+          .map(error => error.Key ?? error.Code ?? 'unknown')
+          .join(', ')
+
+        throw new Error(
+          `Failed to delete ${deleteErrors.length} object(s) from storage: ${sampleErrors}`
+        )
+      }
+
       deletedCount += keys.length
     }
 
