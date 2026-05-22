@@ -233,4 +233,123 @@ describe('fetch-models', () => {
       }
     ])
   })
+
+  describe('fetchOpenAICompatibleModels', () => {
+    afterEach(() => {
+      delete process.env.OPENAI_COMPATIBLE_API_BASE_URL
+      delete process.env.OPENAI_COMPATIBLE_API_KEY
+      delete process.env.OPENAI_COMPATIBLE_PROVIDER_NAME
+      delete process.env.OPENAI_COMPATIBLE_MODELS
+    })
+
+    it('fetches /v1/models and filters embeddings + audio', async () => {
+      mockIsProviderEnabled.mockImplementation(
+        providerId => providerId === 'openai-compatible'
+      )
+      process.env.OPENAI_COMPATIBLE_API_BASE_URL = 'https://api.deepseek.com'
+      process.env.OPENAI_COMPATIBLE_API_KEY = 'test-key'
+      process.env.OPENAI_COMPATIBLE_PROVIDER_NAME = 'DeepSeek'
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({
+          data: [
+            { id: 'deepseek-chat' },
+            { id: 'deepseek-reasoner' },
+            { id: 'text-embedding-3-small' },
+            { id: 'whisper-1' }
+          ]
+        })
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOpenAICompatibleModels()
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.deepseek.com/v1/models',
+        expect.objectContaining({ method: 'GET' })
+      )
+      expect(models.map(m => m.id)).toEqual([
+        'deepseek-chat',
+        'deepseek-reasoner'
+      ])
+      expect(models[0]).toMatchObject({
+        provider: 'DeepSeek',
+        providerId: 'openai-compatible'
+      })
+    })
+
+    it('strips trailing /v1 from base URL before appending /v1/models', async () => {
+      mockIsProviderEnabled.mockImplementation(
+        providerId => providerId === 'openai-compatible'
+      )
+      process.env.OPENAI_COMPATIBLE_API_BASE_URL =
+        'https://api.example.com/v1/'
+      process.env.OPENAI_COMPATIBLE_API_KEY = 'test-key'
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({ data: [{ id: 'foo-1' }] })
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      await fetchModels.fetchOpenAICompatibleModels()
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.example.com/v1/models',
+        expect.objectContaining({ method: 'GET' })
+      )
+    })
+
+    it('falls back to "OpenAI Compatible" provider name when env not set', async () => {
+      mockIsProviderEnabled.mockImplementation(
+        providerId => providerId === 'openai-compatible'
+      )
+      process.env.OPENAI_COMPATIBLE_API_BASE_URL = 'https://api.deepseek.com'
+      process.env.OPENAI_COMPATIBLE_API_KEY = 'test-key'
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({ data: [{ id: 'deepseek-chat' }] })
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOpenAICompatibleModels()
+      expect(models[0]?.provider).toBe('OpenAI Compatible')
+    })
+
+    it('returns empty list when provider not enabled', async () => {
+      mockIsProviderEnabled.mockImplementation(() => false)
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOpenAICompatibleModels()
+      expect(models).toEqual([])
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('uses OPENAI_COMPATIBLE_MODELS static list when set, skipping fetch', async () => {
+      mockIsProviderEnabled.mockImplementation(
+        providerId => providerId === 'openai-compatible'
+      )
+      process.env.OPENAI_COMPATIBLE_MODELS =
+        'deepseek-chat, deepseek-reasoner , '
+      process.env.OPENAI_COMPATIBLE_PROVIDER_NAME = 'DeepSeek'
+
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOpenAICompatibleModels()
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(models.map(m => m.id)).toEqual([
+        'deepseek-chat',
+        'deepseek-reasoner'
+      ])
+      expect(models[0]?.provider).toBe('DeepSeek')
+    })
+  })
 })
