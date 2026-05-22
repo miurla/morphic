@@ -84,7 +84,14 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
       return
     }
 
-    if (event.shiftKey || isComposing || enterDisabled) {
+    // event.nativeEvent.isComposing catches the IME candidate-confirm
+    // Enter even after the React-level isComposing state has flipped.
+    if (
+      event.shiftKey ||
+      isComposing ||
+      (event.nativeEvent as KeyboardEvent).isComposing ||
+      enterDisabled
+    ) {
       return
     }
 
@@ -105,7 +112,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
     enterResetTimeoutRef.current = setTimeout(() => {
       setEnterDisabled(false)
       enterResetTimeoutRef.current = null
-    }, 300)
+    }, 50)
   }
 
   return (
