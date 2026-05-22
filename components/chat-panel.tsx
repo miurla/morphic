@@ -270,11 +270,16 @@ export function ChatPanel({
             className="resize-none w-full min-h-12 bg-transparent border-0 p-3 md:p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
             onChange={handleInputChange}
             onKeyDown={e => {
+              if (e.key !== 'Enter' || isComposing || enterDisabled) {
+                return
+              }
+
+              // Plain Enter (no modifiers) → submit
               if (
-                e.key === 'Enter' &&
                 !e.shiftKey &&
-                !isComposing &&
-                !enterDisabled
+                !e.altKey &&
+                !e.metaKey &&
+                !e.ctrlKey
               ) {
                 if (input.trim().length === 0) {
                   e.preventDefault()
@@ -283,9 +288,26 @@ export function ChatPanel({
                 e.preventDefault()
                 const textarea = e.target as HTMLTextAreaElement
                 textarea.form?.requestSubmit()
-                // Reset focus state after Enter key submission
                 setIsInputFocused(false)
                 textarea.blur()
+                return
+              }
+
+              // Shift+Enter falls through to textarea default (inserts \n).
+              // Alt/Option+Enter on macOS does NOT insert \n by default,
+              // so insert it manually to match user expectation.
+              if (e.altKey && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+                e.preventDefault()
+                const textarea = e.target as HTMLTextAreaElement
+                const start = textarea.selectionStart ?? input.length
+                const end = textarea.selectionEnd ?? input.length
+                const next = input.slice(0, start) + '\n' + input.slice(end)
+                handleInputChange({
+                  target: { value: next }
+                } as React.ChangeEvent<HTMLTextAreaElement>)
+                requestAnimationFrame(() => {
+                  textarea.selectionStart = textarea.selectionEnd = start + 1
+                })
               }
             }}
           />
