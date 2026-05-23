@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 import type { SearchResultItem } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { isCitationLabel } from '@/lib/utils/citation'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -37,8 +38,7 @@ export const CitationLink = memo(function CitationLink({
 }: CitationLinkProps) {
   const [open, setOpen] = useState(false)
   const childrenText = children?.toString() || ''
-  // Match domain names (alphanumeric and hyphens) or numbers for backward compatibility
-  const isCitation = /^[\w-]+$/.test(childrenText)
+  const isCitation = isCitationLabel(childrenText)
 
   const linkClasses = cn(
     isCitation
