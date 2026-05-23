@@ -274,18 +274,20 @@ export function ChatPanel({
             className="resize-none w-full min-h-12 bg-transparent border-0 p-3 md:p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
             onChange={handleInputChange}
             onKeyDown={e => {
-              // e.nativeEvent.isComposing is the most reliable signal —
-              // it stays true on the keydown that confirms an IME
-              // candidate, even after the React-level isComposing state
-              // has been flipped. Belt-and-braces with isComposing and
-              // the short enterDisabled debounce.
+              // e.nativeEvent.isComposing stays true on the keydown that
+              // confirms an IME candidate, even after React-level
+              // isComposing has flipped.
               if (
-                e.key === 'Enter' &&
-                !e.shiftKey &&
-                !isComposing &&
-                !(e.nativeEvent as KeyboardEvent).isComposing &&
-                !enterDisabled
+                e.key !== 'Enter' ||
+                isComposing ||
+                (e.nativeEvent as KeyboardEvent).isComposing ||
+                enterDisabled
               ) {
+                return
+              }
+
+              // Plain Enter (no modifiers) → submit
+              if (!e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
                 if (input.trim().length === 0) {
                   e.preventDefault()
                   return
@@ -293,9 +295,26 @@ export function ChatPanel({
                 e.preventDefault()
                 const textarea = e.target as HTMLTextAreaElement
                 textarea.form?.requestSubmit()
-                // Reset focus state after Enter key submission
                 setIsInputFocused(false)
                 textarea.blur()
+                return
+              }
+
+              // Shift+Enter falls through to textarea default (inserts \n).
+              // Alt/Option+Enter on macOS does NOT insert \n by default,
+              // so insert it manually to match user expectation.
+              if (e.altKey && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+                e.preventDefault()
+                const textarea = e.target as HTMLTextAreaElement
+                const start = textarea.selectionStart ?? input.length
+                const end = textarea.selectionEnd ?? input.length
+                const next = input.slice(0, start) + '\n' + input.slice(end)
+                handleInputChange({
+                  target: { value: next }
+                } as React.ChangeEvent<HTMLTextAreaElement>)
+                requestAnimationFrame(() => {
+                  textarea.selectionStart = textarea.selectionEnd = start + 1
+                })
               }
             }}
           />

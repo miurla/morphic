@@ -1,18 +1,32 @@
 import { anthropic } from '@ai-sdk/anthropic'
 import { createGateway } from '@ai-sdk/gateway'
 import { google } from '@ai-sdk/google'
-import { createOpenAI, openai } from '@ai-sdk/openai'
+import { openai } from '@ai-sdk/openai'
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createProviderRegistry, LanguageModel } from 'ai'
 import { createOllama } from 'ai-sdk-ollama'
+
+// Strip a trailing /v1 from the configured base URL, then re-append it,
+// so both shapes work for OpenAI-compatible hosts:
+//   OPENAI_COMPATIBLE_API_BASE_URL=https://api.deepseek.com
+//   OPENAI_COMPATIBLE_API_BASE_URL=https://api.deepseek.com/v1
+function normalizeOpenAICompatibleBaseURL(raw: string): string {
+  return raw.replace(/\/+$/, '').replace(/\/v1$/, '') + '/v1'
+}
 
 // Build providers object conditionally
 const providers: Record<string, any> = {
   openai,
   anthropic,
   google,
-  'openai-compatible': createOpenAI({
+  'openai-compatible': createOpenAICompatible({
+    // Keep the SDK provider key stable. OPENAI_COMPATIBLE_PROVIDER_NAME is
+    // only a UI label used by the model selector.
+    name: 'openai-compatible',
     apiKey: process.env.OPENAI_COMPATIBLE_API_KEY,
-    baseURL: process.env.OPENAI_COMPATIBLE_API_BASE_URL
+    baseURL: normalizeOpenAICompatibleBaseURL(
+      process.env.OPENAI_COMPATIBLE_API_BASE_URL || ''
+    )
   }),
   gateway: createGateway({
     apiKey: process.env.AI_GATEWAY_API_KEY
