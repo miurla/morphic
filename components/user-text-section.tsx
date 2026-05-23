@@ -84,7 +84,29 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
       return
     }
 
-    if (event.shiftKey || isComposing || enterDisabled) {
+    // Any modifier (Shift / Alt / Meta / Ctrl) + Enter → let it insert a
+    // newline instead of submitting the edit.
+    if (
+      event.shiftKey ||
+      event.altKey ||
+      event.metaKey ||
+      event.ctrlKey ||
+      isComposing ||
+      enterDisabled
+    ) {
+      // Alt+Enter on macOS does not insert \n by default; do it manually.
+      if (event.altKey && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
+        event.preventDefault()
+        const textarea = event.target as HTMLTextAreaElement
+        const start = textarea.selectionStart ?? editedContent.length
+        const end = textarea.selectionEnd ?? editedContent.length
+        const next =
+          editedContent.slice(0, start) + '\n' + editedContent.slice(end)
+        setEditedContent(next)
+        requestAnimationFrame(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + 1
+        })
+      }
       return
     }
 
