@@ -387,5 +387,5 @@ export const SearchResultsImageSection: React.FC<
   }
 
   const previewImages = displayImages.slice(0, 4)
-  return renderImageGrid(previewImages, 'grid grid-cols-2 md:grid-cols-4 gap-2')
+  return renderImageGrid(previewImages, 'grid grid-cols-4 gap-2')
 }

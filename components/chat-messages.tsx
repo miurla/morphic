@@ -34,6 +34,10 @@ interface ChatMessagesProps {
   error?: Error | string | null | undefined
 }
 
+const DESKTOP_LATEST_SECTION_OFFSET = 196
+const MOBILE_LATEST_SECTION_OFFSET_FALLBACK = 180
+const MOBILE_FOLLOW_UP_TOP_CLEARANCE_FALLBACK = 56
+
 export function ChatMessages({
   sections,
   status,
@@ -53,9 +57,34 @@ export function ChatMessages({
   const toolCountCacheRef = useRef<Map<string, number>>(new Map())
   const isLoading = status === 'submitted' || status === 'streaming'
   const isMobile = useMediaQuery('(max-width: 767px)')
+  const [scrollViewportHeight, setScrollViewportHeight] = useState(0)
+  const [mobileFollowUpTopClearance, setMobileFollowUpTopClearance] = useState(
+    MOBILE_FOLLOW_UP_TOP_CLEARANCE_FALLBACK
+  )
 
   // Tool types definition - moved outside function for performance
   const toolTypes = ['tool-search', 'tool-fetch', 'tool-askQuestion']
+
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const updateMetrics = () => {
+      const { paddingTop } = getComputedStyle(container)
+      setScrollViewportHeight(container.clientHeight)
+      setMobileFollowUpTopClearance(
+        parseFloat(paddingTop) || MOBILE_FOLLOW_UP_TOP_CLEARANCE_FALLBACK
+      )
+    }
+    updateMetrics()
+
+    if (typeof ResizeObserver === 'undefined') return
+
+    const observer = new ResizeObserver(updateMetrics)
+    observer.observe(container)
+
+    return () => observer.disconnect()
+  }, [scrollContainerRef])
 
   // Clear cache during streaming to ensure accurate tool counts
   useEffect(() => {
@@ -65,11 +94,14 @@ export function ChatMessages({
     }
   }, [isLoading])
 
-  // Calculate the offset height based on device type
-  // Note: pt-14 (56px) on scroll-container must be included in desktop offset
-  const offsetHeight = isMobile
-    ? 208 // Mobile: larger offset for mobile header/input (pt-14 = 56px)
-    : 196 // Desktop: smaller offset (140px) + pt-14 (56px)
+  const latestSectionMinHeight =
+    isMobile && scrollViewportHeight > 0
+      ? `${Math.max(0, scrollViewportHeight - mobileFollowUpTopClearance)}px`
+      : `calc(100dvh - ${
+          isMobile
+            ? MOBILE_LATEST_SECTION_OFFSET_FALLBACK
+            : DESKTOP_LATEST_SECTION_OFFSET
+        }px)`
 
   // Extract citation maps from all messages in all sections
   const allCitationMaps = useMemo(() => {
@@ -175,7 +207,7 @@ export function ChatMessages({
             className="chat-section scroll-mt-14 pb-4 md:pb-14"
             style={
               sectionIndex === sections.length - 1
-                ? { minHeight: `calc(100dvh - ${offsetHeight}px)` }
+                ? { minHeight: latestSectionMinHeight }
                 : {}
             }
           >
