@@ -1,7 +1,12 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { AlertCircle, Check, ExternalLink, Globe } from 'lucide-react'
+import {
+  IconAlertCircle as AlertCircle,
+  IconCheck as Check,
+  IconExternalLink as ExternalLink,
+  IconWorld as Globe
+} from '@tabler/icons-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import { SearchResults as SearchResultsType } from '@/lib/types'

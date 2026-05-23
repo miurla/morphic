@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { Link, Search } from 'lucide-react'
+import { IconLink as Link, IconSearch as Search } from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
 

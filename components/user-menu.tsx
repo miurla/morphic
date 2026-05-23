@@ -4,7 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import type { User } from '@supabase/supabase-js'
-import { Link2, LogOut, UserRound } from 'lucide-react'
+import {
+  IconLink as Link2,
+  IconLogout as LogOut,
+  IconUserCircle as UserRound
+} from '@tabler/icons-react'
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -100,7 +104,7 @@ export default function UserMenu({ user }: UserMenuProps) {
             <span>Account</span>
           </DropdownMenuItem>
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="gap-2">
+            <DropdownMenuSubTrigger>
               <Link2 className="size-4" />
               <span>Links</span>
             </DropdownMenuSubTrigger>

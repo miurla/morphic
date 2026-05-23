@@ -3,7 +3,10 @@
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
 
-import { Check, ChevronDown } from 'lucide-react'
+import {
+  IconCheck as Check,
+  IconChevronDown as ChevronDown
+} from '@tabler/icons-react'
 
 import {
   MODEL_SELECTION_COOKIE,

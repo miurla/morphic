@@ -1,4 +1,7 @@
-import { Check, ListTodo } from 'lucide-react'
+import {
+  IconCheck as Check,
+  IconListCheck as ListTodo
+} from '@tabler/icons-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import { Part, TodoItem } from '@/lib/types/ai'

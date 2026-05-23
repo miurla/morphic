@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 
-import { Check, ChevronDown } from 'lucide-react'
+import {
+  IconCheck as Check,
+  IconChevronDown as ChevronDown
+} from '@tabler/icons-react'
 
 import { SEARCH_MODE_CONFIGS } from '@/lib/config/search-modes'
 import { SearchMode } from '@/lib/types/search'

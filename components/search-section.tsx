@@ -1,7 +1,10 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { Check, Search as SearchIcon } from 'lucide-react'
+import {
+  IconCheck as Check,
+  IconSearch as SearchIcon
+} from '@tabler/icons-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'

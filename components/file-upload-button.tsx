@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 
-import { Paperclip } from 'lucide-react'
+import { IconPaperclip as Paperclip } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'

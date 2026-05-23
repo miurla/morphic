@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useState } from 'react'
 
-import { Eye, EyeOff } from 'lucide-react'
+import { IconEye as Eye, IconEyeOff as EyeOff } from '@tabler/icons-react'
 
 import { Input, InputProps } from '@/components/ui/input'
 

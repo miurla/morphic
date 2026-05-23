@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 
-import { Share } from 'lucide-react'
+import { IconShare as Share } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { shareChat } from '@/lib/actions/chat'

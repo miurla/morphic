@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 
 import {
-  FileText,
-  HelpCircle,
-  LucideIcon,
-  Newspaper,
-  Scale,
-  Search
-} from 'lucide-react'
+  IconFileText as FileText,
+  IconHelpCircle as HelpCircle,
+  IconNews as Newspaper,
+  IconScale as Scale,
+  IconSearch as Search,
+  type TablerIcon
+} from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
 
@@ -19,7 +19,7 @@ import { Button } from './ui/button'
 const FOCUS_OUT_DELAY_MS = 100 // Delay to ensure focus has actually moved
 
 interface ActionCategory {
-  icon: LucideIcon
+  icon: TablerIcon
   label: string
   key: string
 }

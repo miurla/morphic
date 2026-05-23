@@ -3,11 +3,11 @@
 import Link from 'next/link'
 
 import {
-  Link2,
-  LogIn,
-  Palette,
-  Settings2 // Or EllipsisVertical, etc.
-} from 'lucide-react'
+  IconLink as Link2,
+  IconLogin as LogIn,
+  IconPalette as Palette,
+  IconSettings as Settings2
+} from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -29,21 +29,21 @@ export default function GuestMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="size-6">
-          <Settings2 className="size-4" /> {/* Choose an icon */}
+          <Settings2 className="size-4" />
           <span className="sr-only">Open menu</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuItem asChild>
           <Link href="/auth/login">
-            <LogIn className="mr-2 h-4 w-4" />
+            <LogIn className="size-4" />
             <span>Sign In</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <Palette className="mr-2 h-4 w-4" />
+            <Palette className="size-4" />
             <span>Theme</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
@@ -52,7 +52,7 @@ export default function GuestMenu() {
         </DropdownMenuSub>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <Link2 className="mr-2 h-4 w-4" />
+            <Link2 className="size-4" />
             <span>Links</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>

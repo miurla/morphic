@@ -1,6 +1,9 @@
 'use client'
 
-import { AlertCircle, Check } from 'lucide-react'
+import {
+  IconAlertCircle as AlertCircle,
+  IconCheck as Check
+} from '@tabler/icons-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import type { TodoItem } from '@/lib/types/ai'

@@ -3,7 +3,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
-import { Check, ChevronDown, ChevronUp, Copy, Pencil } from 'lucide-react'
+import {
+  IconCheck as Check,
+  IconChevronDown as ChevronDown,
+  IconChevronUp as ChevronUp,
+  IconCopy as Copy,
+  IconPencil as Pencil
+} from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
 
