@@ -9,6 +9,10 @@ import { toast } from 'sonner'
 
 import { ChatProvider } from '@/lib/contexts/chat-context'
 import { generateId } from '@/lib/db/schema'
+import {
+  getPublicRateLimitDetails,
+  toPublicErrorPayload
+} from '@/lib/errors/public-error'
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
 import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
 import { UploadedFile } from '@/lib/types'
@@ -143,83 +147,29 @@ export function Chat({
     },
     onError: error => {
       isStreamingRef.current = false
-      // Handle rate limiting errors from Vercel WAF
-      // Check for status codes in error message or specific rate limit indicators
-      const errorMessage = error.message?.toLowerCase() || ''
-      const isRateLimit =
-        error.message?.includes('429') ||
-        errorMessage.includes('rate limit') ||
-        errorMessage.includes('too many requests') ||
-        errorMessage.includes('daily limit')
+      const publicError = toPublicErrorPayload(error)
 
-      // Check for authentication errors
-      const isAuthError =
-        error.message?.includes('401') ||
-        errorMessage.includes('unauthorized') ||
-        errorMessage.includes('authentication required') ||
-        errorMessage.includes('sign in to continue')
-
-      if (isRateLimit) {
-        // Try to parse JSON error response. The body may include `mode`
-        // (e.g. "adaptive") so we can show context-specific guidance.
-        let parsedError: {
-          error?: string
-          resetAt?: number
-          remaining?: number
-          mode?: string
-        } = {}
-        try {
-          const jsonMatch = error.message?.match(/\{.*\}/)
-          if (jsonMatch) {
-            parsedError = JSON.parse(jsonMatch[0])
-          }
-        } catch {
-          // Ignore parse errors
-        }
-
-        const userMessage =
-          parsedError.error ||
-          'You have reached your daily chat limit. Please try again tomorrow.'
-
-        const details =
-          parsedError.mode === 'adaptive'
-            ? 'The limit resets at midnight UTC. You can continue using Quick mode without restrictions.'
-            : 'The limit resets at midnight UTC.'
-
+      if (publicError.type === 'rate-limit') {
         setErrorModal({
           open: true,
           type: 'rate-limit',
-          message: userMessage,
-          details
+          message: publicError.error,
+          details: getPublicRateLimitDetails(publicError)
         })
-      } else if (isAuthError) {
-        // Try to parse JSON for context-specific auth prompts
-        // (e.g. adaptive mode requires sign in).
-        let parsedAuthError: { error?: string; authRequired?: boolean } = {}
-        try {
-          const jsonMatch = error.message?.match(/\{.*\}/)
-          if (jsonMatch) parsedAuthError = JSON.parse(jsonMatch[0])
-        } catch {
-          // Ignore parse errors
-        }
-
+      } else if (publicError.type === 'auth') {
         setErrorModal({
           open: true,
           type: 'auth',
-          message: parsedAuthError.error || error.message
+          message: publicError.error
         })
-      } else if (
-        error.message?.includes('403') ||
-        errorMessage.includes('forbidden')
-      ) {
+      } else if (publicError.type === 'forbidden') {
         setErrorModal({
           open: true,
           type: 'forbidden',
-          message: error.message
+          message: publicError.error
         })
       } else {
-        // For general errors, still use toast for less intrusive notification
-        toast.error(`Error in chat: ${error.message}`)
+        toast.error(publicError.error)
       }
     },
     experimental_throttle: 100,
@@ -436,9 +386,7 @@ export function Chat({
       await safeRegenerate({ messageId: editedMessageId })
     } catch (error) {
       console.error('Error during message edit and reload process:', error)
-      toast.error(
-        `Error processing edited message: ${(error as Error).message}`
-      )
+      toast.error(toPublicErrorPayload(error).error)
     }
   }
 
@@ -456,7 +404,7 @@ export function Chat({
         `Error during reload from message ${reloadFromFollowerMessageId}:`,
         error
       )
-      toast.error(`Failed to reload conversation: ${(error as Error).message}`)
+      toast.error(toPublicErrorPayload(error).error)
     }
   }
 
