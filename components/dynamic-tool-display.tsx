@@ -2,6 +2,8 @@
 
 import React from 'react'
 
+import { toPublicErrorPayload } from '@/lib/errors/public-error'
+
 // This matches the structure from AI SDK v5
 type DynamicToolPart =
   | {
@@ -62,6 +64,12 @@ export function DynamicToolDisplay({ part }: DynamicToolDisplayProps) {
 
   const toolType = getToolType(part.toolName)
   const displayName = getDisplayName(part.toolName)
+  const errorMessage =
+    part.state === 'output-error'
+      ? toPublicErrorPayload(part.errorText, {
+          fallbackMessage: 'Tool execution failed'
+        }).error
+      : undefined
 
   return (
     <div className="dynamic-tool-container rounded-lg border p-4 my-2">
@@ -100,7 +108,7 @@ export function DynamicToolDisplay({ part }: DynamicToolDisplayProps) {
         <div className="mb-2">
           <div className="text-xs text-destructive mb-1">Error:</div>
           <div className="text-xs bg-destructive/10 text-destructive p-2 rounded">
-            {part.errorText}
+            {errorMessage}
           </div>
         </div>
       )}

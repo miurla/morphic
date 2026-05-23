@@ -9,6 +9,10 @@ import { randomUUID } from 'crypto'
 import { Langfuse } from 'langfuse'
 
 import { researcher } from '@/lib/agents/researcher'
+import {
+  createPublicErrorResponse,
+  serializePublicError
+} from '@/lib/errors/public-error'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import {
@@ -112,7 +116,8 @@ export async function createEphemeralChatStreamResponse(
         }
       },
       onError: (error: unknown) => {
-        return error instanceof Error ? error.message : String(error)
+        console.error('Ephemeral stream response error:', error)
+        return serializePublicError(error)
       },
       consumeSseStream: consumeStream
     })
@@ -120,8 +125,8 @@ export async function createEphemeralChatStreamResponse(
     if (langfuse) {
       await langfuse.flushAsync()
     }
-    const message = error instanceof Error ? error.message : String(error)
-    return new Response(message, {
+    console.error('Ephemeral stream execution error:', error)
+    return createPublicErrorResponse(error, {
       status: 500,
       statusText: 'Internal Server Error'
     })

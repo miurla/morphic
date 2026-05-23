@@ -1,5 +1,6 @@
 import { Check, ListTodo } from 'lucide-react'
 
+import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import { Part, TodoItem } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
@@ -37,6 +38,7 @@ export function ToolTodoDisplay({
   tool,
   state,
   output,
+  errorText,
   toolCallId,
   isOpen = false,
   onOpenChange,
@@ -53,6 +55,12 @@ export function ToolTodoDisplay({
       : 0)
   const totalCount =
     output?.totalCount ?? (output?.todos ? output.todos.length : 0)
+  const errorMessage =
+    state === 'output-error'
+      ? toPublicErrorPayload(errorText ?? output?.message, {
+          fallbackMessage: 'Todo tool failed'
+        }).error
+      : undefined
 
   const isLoading = state === 'input-streaming' || state === 'input-available'
 
@@ -154,11 +162,9 @@ export function ToolTodoDisplay({
                 className="pb-1"
               />
             ) : state === 'output-error' ? (
-              <div className="px-3 pb-3 text-xs text-destructive">{`Todo tool failed${
-                output && 'message' in output && output.message
-                  ? `: ${output.message}`
-                  : ''
-              }`}</div>
+              <div className="px-3 pb-3 text-xs text-destructive">
+                {errorMessage}
+              </div>
             ) : null}
           </div>
         </div>
