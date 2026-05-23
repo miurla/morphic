@@ -23,7 +23,7 @@ An AI-powered search engine with a generative UI.
 
 - AI-powered search with GenerativeUI
 - Search modes: Quick and Adaptive
-- Model selector with dynamic provider detection (OpenAI, Anthropic, Google, Ollama, Vercel AI Gateway)
+- Model selector with dynamic provider detection (OpenAI, Anthropic, Google, Ollama, Vercel AI Gateway, OpenAI-compatible providers)
 - Multiple search providers (Tavily, SearXNG, Brave, Exa)
 - Chat history stored in PostgreSQL
 - Share search results with unique URLs
@@ -58,7 +58,7 @@ cp .env.local.example .env.local
 OPENAI_API_KEY=your_openai_key
 ```
 
-See [supported providers](./docs/CONFIGURATION.md#supported-providers) for other options (Anthropic, Google, Ollama, Vercel AI Gateway).
+See [supported providers](./docs/CONFIGURATION.md#supported-providers) for other options (Anthropic, Google, Ollama, Vercel AI Gateway, OpenAI-compatible providers).
 
 3. Start all services:
 

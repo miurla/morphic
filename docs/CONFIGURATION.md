@@ -85,6 +85,36 @@ OLLAMA_BASE_URL=http://localhost:11434
 
 When configured, Ollama models are discovered dynamically and appear in the model selector.
 
+#### OpenAI-Compatible Providers
+
+Use OpenAI-compatible endpoints for providers such as DeepSeek, Moonshot, Zhipu, Together, or a self-hosted gateway that exposes the OpenAI chat completions API.
+
+```bash
+OPENAI_COMPATIBLE_API_KEY=[YOUR_API_KEY]
+OPENAI_COMPATIBLE_API_BASE_URL=https://api.deepseek.com
+```
+
+Morphic sends chat requests to `/v1/chat/completions`. You can provide either a base URL with or without `/v1`; both of these resolve to the same endpoint:
+
+```bash
+OPENAI_COMPATIBLE_API_BASE_URL=https://api.deepseek.com
+OPENAI_COMPATIBLE_API_BASE_URL=https://api.deepseek.com/v1
+```
+
+The model selector tries to load models from `/v1/models`. If your provider does not expose that endpoint, or you want to restrict the choices shown in the UI, set a comma-separated model list:
+
+```bash
+OPENAI_COMPATIBLE_MODELS=deepseek-chat,deepseek-reasoner
+```
+
+You can also customize the provider label shown in the model selector:
+
+```bash
+OPENAI_COMPATIBLE_PROVIDER_NAME=DeepSeek
+```
+
+This value is only a UI display name. The internal provider id remains `openai-compatible`.
+
 ## Search Providers
 
 ### SearXNG Configuration
