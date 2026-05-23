@@ -319,7 +319,7 @@ export const SearchResultsImageSection: React.FC<
             </DialogTrigger>
             <DialogContent className="max-w-[90vw] sm:max-w-[90vw] max-h-[90vh] overflow-auto border border-white/10 bg-black/60 shadow-2xl backdrop-blur-md">
               <DialogHeader>
-                <DialogTitle className="text-white">Images</DialogTitle>
+                <DialogTitle className="sr-only">Images</DialogTitle>
                 <DialogDescription className="text-sm text-white/70">
                   {query}
                 </DialogDescription>
@@ -387,5 +387,5 @@ export const SearchResultsImageSection: React.FC<
   }
 
   const previewImages = displayImages.slice(0, 4)
-  return renderImageGrid(previewImages, 'grid grid-cols-2 md:grid-cols-4 gap-2')
+  return renderImageGrid(previewImages, 'grid grid-cols-4 gap-2')
 }
