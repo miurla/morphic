@@ -24,7 +24,11 @@ import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { ModelSelectorData } from '@/lib/types/model-selector'
 import type { SearchMode } from '@/lib/types/search'
 import { cn } from '@/lib/utils'
-import { getCookie, subscribeToCookieChange } from '@/lib/utils/cookies'
+import {
+  getCookie,
+  setCookie,
+  subscribeToCookieChange
+} from '@/lib/utils/cookies'
 
 import { useArtifact } from './artifact/artifact-context'
 import { Button } from './ui/button'
@@ -187,8 +191,7 @@ export function ChatPanel({
   useEffect(() => {
     if (isFirstRender.current && query && query.trim().length > 0) {
       if (adaptiveModeSubmitBlocked) {
-        onAdaptiveModeAuthRequired?.()
-        isFirstRender.current = false
+        setCookie('searchMode', 'quick')
         return
       }
 
@@ -198,8 +201,7 @@ export function ChatPanel({
       })
       isFirstRender.current = false
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query])
+  }, [adaptiveModeSubmitBlocked, append, query])
 
   const handleFileRemove = useCallback(
     (index: number) => {
