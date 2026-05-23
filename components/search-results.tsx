@@ -109,15 +109,30 @@ export function SearchResults({
         </div>
       ))}
       {!showAllResults && additionalResultsCount > 0 && (
-        <div className="flex justify-center py-1 md:w-1/4 md:p-1">
-          <Button
-            variant="link"
-            className="h-auto px-2 py-1 text-muted-foreground"
-            onClick={handleViewMore}
-          >
-            View {additionalResultsCount} more
-          </Button>
-        </div>
+        <>
+          <div className="flex justify-center py-1 md:hidden">
+            <Button
+              variant="link"
+              className="h-auto px-2 py-1 text-muted-foreground"
+              onClick={handleViewMore}
+            >
+              View {additionalResultsCount} more
+            </Button>
+          </div>
+          <div className="hidden md:block md:w-1/4 md:p-1">
+            <Card className="flex h-full flex-1 items-center justify-center">
+              <CardContent className="p-2">
+                <Button
+                  variant="link"
+                  className="text-muted-foreground"
+                  onClick={handleViewMore}
+                >
+                  View {additionalResultsCount} more
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </>
       )}
     </div>
   )
