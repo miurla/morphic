@@ -91,10 +91,14 @@ export function ChatPanel({
 
   const handleCompositionEnd = () => {
     setIsComposing(false)
+    // Brief debounce — the candidate-confirm Enter that fires
+    // immediately after compositionend may otherwise be treated as a
+    // submit. 50ms is enough to swallow that synchronous event but
+    // short enough not to drop a real "finish typing, press Enter".
     setEnterDisabled(true)
     setTimeout(() => {
       setEnterDisabled(false)
-    }, 300)
+    }, 50)
   }
 
   const handleNewChat = useCallback(() => {
@@ -270,17 +274,20 @@ export function ChatPanel({
             className="resize-none w-full min-h-12 bg-transparent border-0 p-3 md:p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
             onChange={handleInputChange}
             onKeyDown={e => {
-              if (e.key !== 'Enter' || isComposing || enterDisabled) {
+              // e.nativeEvent.isComposing stays true on the keydown that
+              // confirms an IME candidate, even after React-level
+              // isComposing has flipped.
+              if (
+                e.key !== 'Enter' ||
+                isComposing ||
+                (e.nativeEvent as KeyboardEvent).isComposing ||
+                enterDisabled
+              ) {
                 return
               }
 
               // Plain Enter (no modifiers) → submit
-              if (
-                !e.shiftKey &&
-                !e.altKey &&
-                !e.metaKey &&
-                !e.ctrlKey
-              ) {
+              if (!e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
                 if (input.trim().length === 0) {
                   e.preventDefault()
                   return
