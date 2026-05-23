@@ -226,15 +226,32 @@ export function Chat({
     generateId
   })
 
-  // Wrap sendMessage so every dispatch flips isStreamingRef on; onFinish
-  // and onError flip it off. Use this in place of the raw sendMessage at
-  // every call site so the throttle is uniform.
+  // Keep all request entry points reflected in isStreamingRef so downstream
+  // action handlers can reliably reject overlapping sends.
   const safeSendMessage = useCallback<typeof sendMessage>(
     (...args) => {
       isStreamingRef.current = true
-      return sendMessage(...args)
+      try {
+        return sendMessage(...args)
+      } catch (error) {
+        isStreamingRef.current = false
+        throw error
+      }
     },
     [sendMessage]
+  )
+
+  const safeRegenerate = useCallback(
+    async (...args: Parameters<typeof regenerate>) => {
+      isStreamingRef.current = true
+      try {
+        return await regenerate(...args)
+      } catch (error) {
+        isStreamingRef.current = false
+        throw error
+      }
+    },
+    [regenerate]
   )
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -412,7 +429,7 @@ export function Chat({
       })
 
       // Regenerate from this message
-      await regenerate({ messageId: editedMessageId })
+      await safeRegenerate({ messageId: editedMessageId })
     } catch (error) {
       console.error('Error during message edit and reload process:', error)
       toast.error(
@@ -429,7 +446,7 @@ export function Chat({
 
     try {
       // Use the SDK's regenerate function with the specific messageId
-      await regenerate({ messageId: reloadFromFollowerMessageId })
+      await safeRegenerate({ messageId: reloadFromFollowerMessageId })
     } catch (error) {
       console.error(
         `Error during reload from message ${reloadFromFollowerMessageId}:`,
@@ -495,10 +512,7 @@ export function Chat({
     : { isDragging, handleDragOver, handleDragLeave, handleDrop }
 
   return (
-    <ChatProvider
-      sendMessage={safeSendMessage}
-      isStreamingRef={isStreamingRef}
-    >
+    <ChatProvider sendMessage={safeSendMessage} isStreamingRef={isStreamingRef}>
       <div
         className={cn(
           'relative flex h-full min-w-0 flex-1 flex-col',
