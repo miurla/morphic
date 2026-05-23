@@ -105,7 +105,7 @@ export function SearchModeSelector({
             <Button
               variant="outline"
               size="sm"
-              className="text-xs rounded-full shadow-none gap-1 transition-all"
+              className="gap-1 rounded-full text-xs shadow-none transition-[background-color,color,box-shadow,transform]"
             >
               {SelectedIcon && (
                 <SelectedIcon
@@ -118,7 +118,7 @@ export function SearchModeSelector({
               <span className="text-xs font-medium">{selectedMode?.label}</span>
               <ChevronDown
                 className={cn(
-                  'size-3 ml-0.5 opacity-50 transition-transform duration-200',
+                  'ml-0.5 size-3 opacity-50 transition-transform duration-[160ms] ease-[var(--motion-ease-out)]',
                   dropdownOpen && 'rotate-180'
                 )}
               />
@@ -160,7 +160,7 @@ export function SearchModeSelector({
         <div className="relative inline-flex items-center rounded-full bg-background border p-1">
           {/* Animated background indicator */}
           <div
-            className="absolute inset-1 rounded-full bg-muted transition-all duration-200 ease-out"
+            className="absolute inset-1 rounded-full bg-muted transition-[transform,width] duration-[180ms] ease-[var(--motion-ease-in-out)]"
             style={{
               width: `calc(${100 / modeCount}% - 4px)`,
               transform: `translateX(${selectedIndex * 100}%)`
@@ -190,7 +190,7 @@ export function SearchModeSelector({
                       type="button"
                       onClick={() => handleModeSelect(config.value)}
                       className={cn(
-                        'relative z-10 flex-1 items-center justify-center rounded-full px-3 py-2 transition-colors duration-200',
+                        'relative z-10 flex-1 items-center justify-center rounded-full px-3 py-2 transition-colors duration-[140ms] ease-[var(--motion-ease-out)]',
                         isSelected
                           ? 'text-foreground'
                           : 'text-muted-foreground hover:text-foreground/80'

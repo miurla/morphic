@@ -174,7 +174,7 @@ export function ActionButtons({
         {/* Action buttons */}
         <div
           className={cn(
-            'absolute inset-0 flex items-start justify-center pt-2 transition-opacity duration-300',
+            'absolute inset-0 flex items-start justify-center pt-2 transition-opacity duration-[180ms] ease-[var(--motion-ease-out)]',
             activeCategory ? 'opacity-0 pointer-events-none' : 'opacity-100'
           )}
         >
@@ -204,7 +204,7 @@ export function ActionButtons({
         {/* Prompt samples */}
         <div
           className={cn(
-            'absolute inset-0 py-1 space-y-1 overflow-y-auto transition-opacity duration-300',
+            'absolute inset-0 space-y-1 overflow-y-auto py-1 transition-opacity duration-[180ms] ease-[var(--motion-ease-out)]',
             !activeCategory ? 'opacity-0 pointer-events-none' : 'opacity-100'
           )}
         >
@@ -214,8 +214,8 @@ export function ActionButtons({
                 key={index}
                 type="button"
                 className={cn(
-                  'w-full text-left px-3 py-2 rounded-md text-sm',
-                  'hover:bg-muted transition-colors',
+                  'w-full rounded-md px-3 py-2 text-left text-sm',
+                  'transition-colors duration-[140ms] ease-[var(--motion-ease-out)] hover:bg-muted',
                   'flex items-center gap-2 group'
                 )}
                 onClick={() => handlePromptClick(prompt)}
