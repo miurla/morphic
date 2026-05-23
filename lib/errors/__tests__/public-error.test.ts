@@ -87,6 +87,25 @@ describe('public error mapping', () => {
     )
   })
 
+  it('maps guest limit payloads to the auth modal path', () => {
+    const payload = toPublicErrorPayload(
+      JSON.stringify({
+        error: 'Please sign in to continue.',
+        authRequired: true,
+        remaining: 0,
+        resetAt: 1767139200000,
+        limit: 10
+      })
+    )
+
+    expect(payload.type).toBe('auth')
+    expect(payload.code).toBe('auth_required')
+    expect(payload.authRequired).toBe(true)
+    expect(payload.error).toBe('Please sign in to continue.')
+    expect(payload.remaining).toBe(0)
+    expect(payload.limit).toBe(10)
+  })
+
   it('does not preserve raw text just because a parsed payload has a known code', () => {
     const payload = toPublicErrorPayload(
       JSON.stringify({

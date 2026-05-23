@@ -7,6 +7,10 @@ import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { checkAndEnforceAdaptiveLimit } from '@/lib/rate-limit/adaptive-limit'
 import { checkAndEnforceOverallChatLimit } from '@/lib/rate-limit/chat-limits'
 import { checkAndEnforceGuestLimit } from '@/lib/rate-limit/guest-limit'
+import {
+  ADAPTIVE_MODE_AUTH_REQUIRED_MESSAGE,
+  isAdaptiveModeAuthBlocked
+} from '@/lib/search-mode-availability'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-ephemeral-chat-stream-response'
 import { SearchMode } from '@/lib/types/search'
@@ -93,6 +97,29 @@ export async function POST(req: Request) {
         ? (searchModeCookie as SearchMode)
         : 'quick'
 
+    // Adaptive mode is gated to authenticated users on cloud deployments.
+    // Check before model/provider selection so guests always get the
+    // intentional auth payload instead of lower-level configuration errors.
+    if (
+      isAdaptiveModeAuthBlocked({
+        mode: searchMode,
+        isGuest,
+        isCloudDeployment: process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
+      })
+    ) {
+      return new Response(
+        JSON.stringify({
+          error: ADAPTIVE_MODE_AUTH_REQUIRED_MESSAGE,
+          mode: 'adaptive',
+          authRequired: true
+        }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
     const selectedModel = await selectModel({ searchMode, cookieStore })
 
     if (!selectedModel) {
@@ -108,27 +135,6 @@ export async function POST(req: Request) {
         {
           status: 404,
           statusText: 'Not Found'
-        }
-      )
-    }
-
-    // Adaptive mode is gated to authenticated users on cloud deployments.
-    // Guests are nudged to sign in instead of being downgraded silently.
-    if (
-      isGuest &&
-      searchMode === 'adaptive' &&
-      process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
-    ) {
-      return new Response(
-        JSON.stringify({
-          error:
-            'Sign in to use Adaptive mode. Quick mode remains available without an account.',
-          mode: 'adaptive',
-          authRequired: true
-        }),
-        {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' }
         }
       )
     }

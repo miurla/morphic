@@ -88,6 +88,7 @@ export async function checkAndEnforceGuestLimit(
     return new Response(
       JSON.stringify({
         error: 'Please sign in to continue.',
+        authRequired: true,
         remaining: 0,
         resetAt: result.resetAt,
         limit: result.limit
