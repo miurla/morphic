@@ -258,14 +258,21 @@ export function Chat({
     setInput(e.target.value)
   }
 
-  // Convert messages array to sections array
+  // Convert messages array to sections array.
+  // Deduplicate by message.id — @ai-sdk/react useChat can occasionally
+  // surface the same assistant message twice during stream finalization,
+  // which would otherwise produce React 'duplicate key' warnings in
+  // chat-messages.tsx (one warning per re-render).
   const sections = useMemo<ChatSection[]>(() => {
     const result: ChatSection[] = []
+    const seenIds = new Set<string>()
     let currentSection: ChatSection | null = null
 
     for (const message of messages) {
+      if (seenIds.has(message.id)) continue
+      seenIds.add(message.id)
+
       if (message.role === 'user') {
-        // Start a new section when a user message is found
         if (currentSection) {
           result.push(currentSection)
         }
@@ -275,13 +282,10 @@ export function Chat({
           assistantMessages: []
         }
       } else if (currentSection && message.role === 'assistant') {
-        // Add assistant message to the current section
         currentSection.assistantMessages.push(message)
       }
-      // Ignore other role types like 'system' for now
     }
 
-    // Add the last section if exists
     if (currentSection) {
       result.push(currentSection)
     }
