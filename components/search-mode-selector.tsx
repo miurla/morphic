@@ -22,13 +22,25 @@ import {
 } from './ui/dropdown-menu'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card'
 
-export function SearchModeSelector() {
+const VALID_SEARCH_MODES = new Set(['quick', 'adaptive'])
+
+function getSearchModeSnapshot(): SearchMode {
+  const savedMode = getCookie('searchMode')
+  return savedMode === 'adaptive' ? 'adaptive' : 'quick'
+}
+
+interface SearchModeSelectorProps {
+  isAdaptiveAuthRequired?: boolean
+  onAdaptiveAuthRequired?: () => void
+}
+
+export function SearchModeSelector({
+  isAdaptiveAuthRequired = false,
+  onAdaptiveAuthRequired
+}: SearchModeSelectorProps) {
   const value = useSyncExternalStore(
     subscribeToCookieChange,
-    () => {
-      const savedMode = getCookie('searchMode')
-      return savedMode === 'adaptive' ? 'adaptive' : 'quick'
-    },
+    getSearchModeSnapshot,
     () => 'quick'
   )
   const [openHoverCard, setOpenHoverCard] = useState<string | null>(null)
@@ -37,14 +49,18 @@ export function SearchModeSelector() {
 
   useEffect(() => {
     const savedMode = getCookie('searchMode')
-    if (savedMode && !['quick', 'adaptive'].includes(savedMode)) {
+    if (savedMode && !VALID_SEARCH_MODES.has(savedMode)) {
       // Clean up invalid cookie value (e.g., old 'planning' mode)
       setCookie('searchMode', 'quick')
+      return
     }
-  }, [])
 
-  const handleModeSelect = (mode: SearchMode) => {
-    setCookie('searchMode', mode)
+    if (isAdaptiveAuthRequired && savedMode === 'adaptive') {
+      setCookie('searchMode', 'quick')
+    }
+  }, [isAdaptiveAuthRequired])
+
+  const closeModeSelectControls = () => {
     setOpenHoverCard(null) // Close hover card on selection
     setDropdownOpen(false) // Close dropdown on selection
     setJustSelected(true)
@@ -53,6 +69,18 @@ export function SearchModeSelector() {
     setTimeout(() => {
       setJustSelected(false)
     }, 500)
+  }
+
+  const handleModeSelect = (mode: SearchMode) => {
+    if (mode === 'adaptive' && isAdaptiveAuthRequired) {
+      setCookie('searchMode', 'quick')
+      closeModeSelectControls()
+      onAdaptiveAuthRequired?.()
+      return
+    }
+
+    setCookie('searchMode', mode)
+    closeModeSelectControls()
   }
 
   const selectedMode = SEARCH_MODE_CONFIGS.find(

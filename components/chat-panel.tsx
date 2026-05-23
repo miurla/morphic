@@ -1,6 +1,12 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react'
 import Textarea from 'react-textarea-autosize'
 import { useRouter } from 'next/navigation'
 
@@ -9,10 +15,16 @@ import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
+import {
+  isAdaptiveModeAuthBlocked,
+  requiresAdaptiveModeAuth
+} from '@/lib/search-mode-availability'
 import { UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { ModelSelectorData } from '@/lib/types/model-selector'
+import type { SearchMode } from '@/lib/types/search'
 import { cn } from '@/lib/utils'
+import { getCookie, subscribeToCookieChange } from '@/lib/utils/cookies'
 
 import { useArtifact } from './artifact/artifact-context'
 import { Button } from './ui/button'
@@ -26,6 +38,10 @@ import { UploadedFileList } from './uploaded-file-list'
 
 // Constants for timing delays
 const INPUT_UPDATE_DELAY_MS = 10 // Delay to ensure input value is updated before form submission
+
+function getSearchModeSnapshot(): SearchMode {
+  return getCookie('searchMode') === 'adaptive' ? 'adaptive' : 'quick'
+}
 
 interface ChatPanelProps {
   chatId: string
@@ -50,6 +66,7 @@ interface ChatPanelProps {
   isGuest?: boolean
   /** Whether the deployment is cloud mode */
   isCloudDeployment?: boolean
+  onAdaptiveModeAuthRequired?: () => void
   modelSelectorData?: ModelSelectorData
   /** Chat sections for message navigation dots */
   sections?: { id: string; userMessage: UIMessage }[]
@@ -73,6 +90,7 @@ export function ChatPanel({
   onNewChat,
   isGuest = false,
   isCloudDeployment = false,
+  onAdaptiveModeAuthRequired,
   modelSelectorData,
   sections = []
 }: ChatPanelProps) {
@@ -86,6 +104,20 @@ export function ChatPanel({
   const isLoading = status === 'submitted' || status === 'streaming'
   const hasAvailableModels =
     isCloudDeployment || modelSelectorData?.hasAvailableModels !== false
+  const searchMode = useSyncExternalStore(
+    subscribeToCookieChange,
+    getSearchModeSnapshot,
+    () => 'quick' as SearchMode
+  )
+  const isAdaptiveAuthRequired = requiresAdaptiveModeAuth({
+    isGuest,
+    isCloudDeployment
+  })
+  const adaptiveModeSubmitBlocked = isAdaptiveModeAuthBlocked({
+    mode: searchMode,
+    isGuest,
+    isCloudDeployment
+  })
 
   const handleCompositionStart = () => setIsComposing(true)
 
@@ -154,6 +186,12 @@ export function ChatPanel({
   // if query is not empty, submit the query
   useEffect(() => {
     if (isFirstRender.current && query && query.trim().length > 0) {
+      if (adaptiveModeSubmitBlocked) {
+        onAdaptiveModeAuthRequired?.()
+        isFirstRender.current = false
+        return
+      }
+
       append({
         role: 'user',
         content: query
@@ -202,6 +240,12 @@ export function ChatPanel({
       )}
       <form
         onSubmit={e => {
+          if (adaptiveModeSubmitBlocked) {
+            e.preventDefault()
+            onAdaptiveModeAuthRequired?.()
+            return
+          }
+
           if (!hasAvailableModels) {
             e.preventDefault()
             toast.error('No enabled model is available')
@@ -372,7 +416,10 @@ export function ChatPanel({
                   }}
                 />
               )}
-              <SearchModeSelector />
+              <SearchModeSelector
+                isAdaptiveAuthRequired={isAdaptiveAuthRequired}
+                onAdaptiveAuthRequired={onAdaptiveModeAuthRequired}
+              />
             </div>
             <div className="flex items-center gap-2">
               {!isCloudDeployment && modelSelectorData && (
