@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { SearchResultItem } from '@/lib/types'
 
-import { processCitations } from '../citation'
+import { isCitationLabel, processCitations } from '../citation'
 
 describe('processCitations', () => {
   const mockCitationMaps = {
@@ -62,6 +62,30 @@ describe('processCitations', () => {
 
     expect(result).toBe(
       'Try [google](https://www.google.com/search) or [google](https://www.google.com/maps)'
+    )
+  })
+
+  it('converts citations with dotted display labels', () => {
+    const citationMaps = {
+      toolCall1: {
+        1: {
+          title: 'Global News',
+          url: 'https://topics.global.example.com/portal/news/page.html',
+          content: 'News article'
+        },
+        2: {
+          title: 'World Report',
+          url: 'https://articles.world.example.net/articles/-/123',
+          content: 'News article'
+        }
+      } as Record<number, SearchResultItem>
+    }
+
+    const content = 'Sources [1](#toolCall1) [2](#toolCall1)'
+    const result = processCitations(content, citationMaps)
+
+    expect(result).toBe(
+      'Sources [global.example](https://topics.global.example.com/portal/news/page.html) [world.example](https://articles.world.example.net/articles/-/123)'
     )
   })
 
@@ -156,5 +180,21 @@ describe('processCitations', () => {
     // 0 and 101 are out of bounds (1-100), so they're replaced with empty string
     // -1 doesn't match the regex pattern \d+, so it remains unchanged
     expect(result).toBe('Edge cases:   [-1](#toolCall1)')
+  })
+
+  describe('isCitationLabel', () => {
+    it('accepts numeric, simple domain, and dotted domain labels', () => {
+      expect(isCitationLabel('1')).toBe(true)
+      expect(isCitationLabel('youtube')).toBe(true)
+      expect(isCitationLabel('global.example')).toBe(true)
+      expect(isCitationLabel('world.example')).toBe(true)
+    })
+
+    it('rejects punctuation and whitespace outside the label', () => {
+      expect(isCitationLabel('')).toBe(false)
+      expect(isCitationLabel('global.example.')).toBe(false)
+      expect(isCitationLabel('.global.example')).toBe(false)
+      expect(isCitationLabel('global example')).toBe(false)
+    })
   })
 })
