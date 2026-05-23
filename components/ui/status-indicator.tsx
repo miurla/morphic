@@ -1,9 +1,9 @@
 import { ReactNode } from 'react'
 
-import { LucideIcon } from 'lucide-react'
+import { type TablerIcon } from '@tabler/icons-react'
 
 interface StatusIndicatorProps {
-  icon: LucideIcon
+  icon: TablerIcon
   iconClassName?: string
   children?: ReactNode
 }

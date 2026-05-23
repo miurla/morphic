@@ -1,6 +1,6 @@
 'use client'
 
-import { RotateCcw } from 'lucide-react'
+import { IconRefresh as RotateCcw } from '@tabler/icons-react'
 
 import { Button } from './ui/button'
 

@@ -11,7 +11,7 @@ import {
   useState
 } from 'react'
 
-import { Images } from 'lucide-react'
+import { IconPhoto as Images } from '@tabler/icons-react'
 
 import { SearchResultImage } from '@/lib/types'
 

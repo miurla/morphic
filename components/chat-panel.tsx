@@ -11,7 +11,12 @@ import Textarea from 'react-textarea-autosize'
 import { useRouter } from 'next/navigation'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
+import {
+  IconArrowUp as ArrowUp,
+  IconChevronDown as ChevronDown,
+  IconMessageCirclePlus as MessageCirclePlus,
+  IconSquare as Square
+} from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'

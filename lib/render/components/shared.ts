@@ -1,4 +1,7 @@
-import { ArrowRight, Repeat2 } from 'lucide-react'
+import {
+  IconArrowRight as ArrowRight,
+  IconRepeat as Repeat2
+} from '@tabler/icons-react'
 
 import { catalog } from '../catalog'
 

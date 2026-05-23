@@ -3,7 +3,11 @@
 import { useMemo, useState } from 'react'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { Copy, ThumbsDown, ThumbsUp } from 'lucide-react'
+import {
+  IconCopy as Copy,
+  IconThumbDown as ThumbsDown,
+  IconThumbUp as ThumbsUp
+} from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'

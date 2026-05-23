@@ -3,7 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 
-import { Loader2, X } from 'lucide-react'
+import { IconLoader2 as Loader2, IconX as X } from '@tabler/icons-react'
 
 import { UploadedFile } from '@/lib/types'
 

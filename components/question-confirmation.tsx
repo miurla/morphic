@@ -2,7 +2,11 @@
 
 import { useState } from 'react'
 
-import { ArrowRight, Check, SkipForward } from 'lucide-react'
+import {
+  IconArrowRight as ArrowRight,
+  IconCheck as Check,
+  IconPlayerTrackNext as SkipForward
+} from '@tabler/icons-react'
 
 import type { ToolPart } from '@/lib/types/ai'
 

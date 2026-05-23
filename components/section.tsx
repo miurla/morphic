@@ -3,16 +3,16 @@
 import React from 'react'
 
 import {
-  BookCheck,
-  Check,
-  File,
-  FileText,
-  Film,
-  Image,
-  MessageCircleMore,
-  Repeat2,
-  Search
-} from 'lucide-react'
+  IconCheck as Check,
+  IconChecklist as BookCheck,
+  IconFile as File,
+  IconFileText as FileText,
+  IconMessageCircle as MessageCircleMore,
+  IconMovie as Film,
+  IconPhoto as Image,
+  IconRepeat as Repeat2,
+  IconSearch as Search
+} from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
 

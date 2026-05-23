@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 
-import { Plus } from 'lucide-react'
+import { IconPlus as Plus } from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
 

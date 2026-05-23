@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 
-import { PlusCircle } from 'lucide-react'
+import { IconCirclePlus as PlusCircle } from '@tabler/icons-react'
 
 import { SerperSearchResultItem } from '@/lib/types'
 
