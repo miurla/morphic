@@ -269,7 +269,7 @@ export function ChatPanel({
         {messages.length > 0 && (
           <div
             className={cn(
-              'transition-opacity duration-100',
+              'transition-opacity duration-[120ms] ease-[var(--motion-ease-out)]',
               showScrollToBottomButton
                 ? 'opacity-100'
                 : 'pointer-events-none opacity-0'
@@ -291,7 +291,7 @@ export function ChatPanel({
         {sections.length > 0 && (
           <div
             className={cn(
-              'transition-opacity duration-100',
+              'transition-opacity duration-[120ms] ease-[var(--motion-ease-out)]',
               !showScrollToBottomButton && status === 'ready'
                 ? 'opacity-100'
                 : 'pointer-events-none opacity-0'
@@ -303,7 +303,7 @@ export function ChatPanel({
 
         <div
           className={cn(
-            'relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input transition-shadow',
+            'relative flex w-full flex-col gap-2 rounded-3xl border border-input bg-muted transition-[box-shadow] duration-[140ms] ease-[var(--motion-ease-out)]',
             isInputFocused &&
               'ring-1 ring-ring/20 ring-offset-1 ring-offset-background/50'
           )}
@@ -441,7 +441,7 @@ export function ChatPanel({
                   type="button"
                   disabled={isLoading}
                 >
-                  <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
+                  <MessageCirclePlus className="size-4 transition-transform duration-[140ms] ease-[var(--motion-ease-out)] group-hover:rotate-12" />
                 </Button>
               )}
               <Button

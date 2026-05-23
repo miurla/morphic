@@ -132,7 +132,7 @@ export function ChatArtifactContainer({
 
   return (
     <div className="flex-1 min-h-0 min-w-0 h-full flex">
-      <div className="absolute p-4 z-50 transition-opacity duration-1000">
+      <div className="absolute z-50 p-4 transition-opacity duration-[180ms] ease-[var(--motion-ease-out)]">
         {hasUser && (!open || isMobileSidebar) && (
           <SidebarTrigger className="animate-fade-in" />
         )}
@@ -164,7 +164,8 @@ export function ChatArtifactContainer({
           className={cn(
             'bg-background overflow-hidden',
             state.isOpen && state.part ? 'opacity-100' : 'w-0 opacity-0',
-            !isResizing && 'transition-all duration-300 ease-out'
+            !isResizing &&
+              'transition-[opacity,width] duration-[260ms] ease-[var(--motion-ease-in-out)]'
           )}
           style={{
             width: state.isOpen && state.part ? `${width}px` : '0px'
