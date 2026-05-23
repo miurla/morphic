@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { useChat } from '@ai-sdk/react'
@@ -86,6 +86,14 @@ export function Chat({
     message: ''
   })
 
+  // Locally-maintained streaming flag exposed through ChatContext so
+  // programmatic dispatch sites (e.g. Related-question buttons in
+  // spec-block) can throttle clicks. Held in a ref so closures
+  // captured by @json-render/react's ActionProvider (which freezes
+  // its `handlers` prop via useState(initialHandlers)) can still see
+  // the freshest value through `.current`. See lib/contexts/chat-context.tsx.
+  const isStreamingRef = useRef(false)
+
   const {
     messages,
     status,
@@ -130,9 +138,11 @@ export function Chat({
     }),
     messages: savedMessages,
     onFinish: () => {
+      isStreamingRef.current = false
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
     },
     onError: error => {
+      isStreamingRef.current = false
       // Handle rate limiting errors from Vercel WAF
       // Check for status codes in error message or specific rate limit indicators
       const errorMessage = error.message?.toLowerCase() || ''
@@ -215,6 +225,17 @@ export function Chat({
     experimental_throttle: 100,
     generateId
   })
+
+  // Wrap sendMessage so every dispatch flips isStreamingRef on; onFinish
+  // and onError flip it off. Use this in place of the raw sendMessage at
+  // every call site so the throttle is uniform.
+  const safeSendMessage = useCallback<typeof sendMessage>(
+    (...args) => {
+      isStreamingRef.current = true
+      return sendMessage(...args)
+    },
+    [sendMessage]
+  )
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
@@ -439,7 +460,7 @@ export function Chat({
         })
       })
 
-      sendMessage({ role: 'user', parts })
+      safeSendMessage({ role: 'user', parts })
       setInput('')
       setUploadedFiles([])
 
@@ -474,7 +495,10 @@ export function Chat({
     : { isDragging, handleDragOver, handleDragLeave, handleDrop }
 
   return (
-    <ChatProvider sendMessage={sendMessage}>
+    <ChatProvider
+      sendMessage={safeSendMessage}
+      isStreamingRef={isStreamingRef}
+    >
       <div
         className={cn(
           'relative flex h-full min-w-0 flex-1 flex-col',
@@ -542,7 +566,7 @@ export function Chat({
           stop={stop}
           query={query}
           append={(message: any) => {
-            sendMessage(message)
+            safeSendMessage(message)
           }}
           showScrollToBottomButton={!isAtBottom}
           uploadedFiles={uploadedFiles}
@@ -568,7 +592,7 @@ export function Chat({
                       .filter(m => m.role === 'user')
                       .pop()
                     if (lastUserMessage) {
-                      sendMessage(lastUserMessage)
+                      safeSendMessage(lastUserMessage)
                     }
                   }
                 }
