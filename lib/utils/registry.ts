@@ -20,7 +20,9 @@ const providers: Record<string, any> = {
   anthropic,
   google,
   'openai-compatible': createOpenAICompatible({
-    name: process.env.OPENAI_COMPATIBLE_PROVIDER_NAME || 'openai-compatible',
+    // Keep the SDK provider key stable. OPENAI_COMPATIBLE_PROVIDER_NAME is
+    // only a UI label used by the model selector.
+    name: 'openai-compatible',
     apiKey: process.env.OPENAI_COMPATIBLE_API_KEY,
     baseURL: normalizeOpenAICompatibleBaseURL(
       process.env.OPENAI_COMPATIBLE_API_BASE_URL || ''

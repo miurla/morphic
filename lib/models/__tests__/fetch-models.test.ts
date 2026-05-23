@@ -284,8 +284,7 @@ describe('fetch-models', () => {
       mockIsProviderEnabled.mockImplementation(
         providerId => providerId === 'openai-compatible'
       )
-      process.env.OPENAI_COMPATIBLE_API_BASE_URL =
-        'https://api.example.com/v1/'
+      process.env.OPENAI_COMPATIBLE_API_BASE_URL = 'https://api.example.com/v1/'
       process.env.OPENAI_COMPATIBLE_API_KEY = 'test-key'
 
       const fetchMock = vi.fn().mockResolvedValue({
