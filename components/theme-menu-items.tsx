@@ -1,7 +1,5 @@
 'use client'
 
-import { useTheme } from 'next-themes'
-
 import {
   IconDeviceLaptop as Laptop,
   IconMoon as Moon,
@@ -9,6 +7,8 @@ import {
 } from '@tabler/icons-react'
 
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+
+import { useTheme } from '@/components/theme-provider'
 
 export function ThemeMenuItems() {
   const { setTheme } = useTheme()
