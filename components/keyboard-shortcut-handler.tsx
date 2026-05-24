@@ -1,7 +1,5 @@
 'use client'
 
-import { useTheme } from 'next-themes'
-
 import { toast } from 'sonner'
 
 import { SHORTCUT_EVENTS, SHORTCUTS } from '@/lib/keyboard-shortcuts'
@@ -12,6 +10,7 @@ import { useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
 
 import { useSidebar } from './ui/sidebar'
 import { KeyboardShortcutDialog } from './keyboard-shortcut-dialog'
+import { useTheme } from './theme-provider'
 
 const THEME_CYCLE: Record<string, string> = {
   dark: 'light',

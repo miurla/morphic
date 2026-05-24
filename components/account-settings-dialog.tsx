@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTheme } from 'next-themes'
 
 import type { User } from '@supabase/supabase-js'
 import {
@@ -37,6 +36,8 @@ import {
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
+
+import { useTheme } from '@/components/theme-provider'
 
 interface AccountSettingsDialogProps {
   open: boolean
