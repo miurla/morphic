@@ -115,6 +115,21 @@ OPENAI_COMPATIBLE_PROVIDER_NAME=DeepSeek
 
 This value is only a UI display name. The internal provider id remains `openai-compatible`.
 
+**Example: OrcaRouter**
+
+[OrcaRouter](https://www.orcarouter.ai) is an OpenAI-compatible endpoint that fronts 160+ models from OpenAI, Anthropic, Google, DeepSeek, xAI and others behind one API key. To use it with Morphic:
+
+```bash
+OPENAI_COMPATIBLE_API_KEY=sk-orca-...
+OPENAI_COMPATIBLE_API_BASE_URL=https://api.orcarouter.ai/v1
+OPENAI_COMPATIBLE_PROVIDER_NAME=OrcaRouter
+# Pin a few tool-capable models so Morphic's research agents work out of the box.
+# Browse the full catalog at https://www.orcarouter.ai/models
+OPENAI_COMPATIBLE_MODELS=orcarouter/openai/gpt-5.5,orcarouter/anthropic/claude-opus-4.7,orcarouter/google/gemini-3-flash-preview
+```
+
+Morphic's research agents rely on tool calling, so make sure any model you select supports it. Restricting `OPENAI_COMPATIBLE_MODELS` to known tool-capable models (as above) is the simplest way to keep the selector clean and avoid hitting non-tool-capable upstreams.
+
 ## Search Providers
 
 ### SearXNG Configuration
