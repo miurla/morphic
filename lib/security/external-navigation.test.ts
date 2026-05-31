@@ -37,6 +37,23 @@ describe('external navigation assessment', () => {
     expect(result.isValidUrl).toBe(false)
   })
 
+  it('does not show web-origin warnings for non-http protocol handlers', () => {
+    const protocols = ['mailto:hello@example.org', 'tel:+15555555555', 'sms:+15555555555']
+
+    for (const href of protocols) {
+      const result = assessExternalNavigation(href, baseOrigin)
+      expect(result.risk).toBe('none')
+      expect(result.displayHost).toBeNull()
+    }
+  })
+
+  it('does not show a broken warning for javascript URLs', () => {
+    const result = assessExternalNavigation('javascript:alert(1)', baseOrigin)
+
+    expect(result.risk).toBe('none')
+    expect(result.displayHost).toBeNull()
+  })
+
   it('shows warnings for external destinations', () => {
     expect(shouldShowLeavingAppWarning('https://example.org', baseOrigin)).toBe(true)
   })
