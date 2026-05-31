@@ -4,6 +4,7 @@ import type { ResearcherTools } from '@/lib/types/agent'
 import { type Model } from '@/lib/types/models'
 
 import { fetchTool } from '../tools/fetch'
+import { createMapTool } from '../tools/map'
 import { createQuestionTool } from '../tools/question'
 import { createSearchTool } from '../tools/search'
 import { createResearchSubtaskTool } from '../tools/subtask-agent'
@@ -84,6 +85,7 @@ export function createResearcher({
     const askQuestionTool = createQuestionTool(model)
     const todoTools = createTodoTools()
     const researchSubtaskTool = createResearchSubtaskTool(model)
+    const mapSearchTool = createMapTool()
 
     let systemPrompt: string
     let activeToolsList: (keyof ResearcherTools)[] = []
@@ -105,7 +107,13 @@ export function createResearcher({
       case 'adaptive':
       default:
         systemPrompt = getAdaptiveModePrompt()
-        activeToolsList = ['search', 'fetch', 'todoWrite', 'researchSubtask']
+        activeToolsList = [
+          'search',
+          'fetch',
+          'todoWrite',
+          'researchSubtask',
+          'mapSearch'
+        ]
         console.log(
           `[Researcher] Adaptive mode: maxSteps=50, tools=[${activeToolsList.join(', ')}]`
         )
@@ -117,6 +125,7 @@ export function createResearcher({
     // Build tools object with proper typing
     const tools: ResearcherTools = {
       search: searchTool,
+      mapSearch: mapSearchTool,
       fetch: fetchTool,
       askQuestion: askQuestionTool,
       researchSubtask: researchSubtaskTool,

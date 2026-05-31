@@ -5,6 +5,7 @@ import { UseChatHelpers } from '@ai-sdk/react'
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import FetchSection from './fetch-section'
+import { MapSection } from './map-section'
 import { QuestionConfirmation } from './question-confirmation'
 import { ResearchSubtaskSection } from './research-subtask-section'
 import { SearchSection } from './search-section'
@@ -121,6 +122,24 @@ export function ToolSection({
           isLast={isLast}
         />
       )
+    case 'tool-mapSearch': {
+      const mInput = tool.input as any
+      const mOutput = tool.output as any
+      const isDone = tool.state === 'output-available'
+
+      return (
+        <MapSection
+          state={isDone ? 'complete' : 'searching'}
+          action={isDone ? mOutput?.action : mInput?.action}
+          provider={isDone ? mOutput?.provider : mInput?.provider}
+          query={isDone ? mOutput?.query : mInput?.query}
+          places={isDone ? mOutput?.places : undefined}
+          origin={isDone ? mOutput?.origin : mInput?.origin}
+          destination={isDone ? mOutput?.destination : mInput?.destination}
+          directions={isDone ? mOutput?.directions : undefined}
+        />
+      )
+    }
     default:
       return null
   }

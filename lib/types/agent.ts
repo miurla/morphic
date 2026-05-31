@@ -7,6 +7,7 @@ import type {
 } from 'ai'
 
 import type { fetchTool } from '../tools/fetch'
+import type { createMapTool } from '../tools/map'
 import type { createQuestionTool } from '../tools/question'
 import type { createSearchTool } from '../tools/search'
 import type { createResearchSubtaskTool } from '../tools/subtask-agent'
@@ -15,6 +16,7 @@ import type { createTodoTools } from '../tools/todo'
 // Define the tools type for researcher agent
 export type ResearcherTools = {
   search: ReturnType<typeof createSearchTool>
+  mapSearch: ReturnType<typeof createMapTool>
   fetch: typeof fetchTool
   askQuestion: ReturnType<typeof createQuestionTool>
   researchSubtask: ReturnType<typeof createResearchSubtaskTool>
@@ -39,6 +41,9 @@ export type QuestionToolInvocation = UIToolInvocation<
 export type TodoWriteToolInvocation = UIToolInvocation<
   ResearcherTools['todoWrite']
 >
+export type MapSearchToolInvocation = UIToolInvocation<
+  ResearcherTools['mapSearch']
+>
 export type ResearchSubtaskToolInvocation = UIToolInvocation<
   ResearcherTools['researchSubtask']
 >
@@ -46,6 +51,7 @@ export type ResearchSubtaskToolInvocation = UIToolInvocation<
 // Union type for all tool invocations
 export type ResearcherToolInvocation =
   | SearchToolInvocation
+  | MapSearchToolInvocation
   | FetchToolInvocation
   | QuestionToolInvocation
   | TodoWriteToolInvocation
