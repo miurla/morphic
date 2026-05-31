@@ -3,7 +3,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
-import { Check, ChevronDown, ChevronUp, Copy, Pencil } from 'lucide-react'
+import {
+  IconCheck as Check,
+  IconChevronDown as ChevronDown,
+  IconChevronUp as ChevronUp,
+  IconCopy as Copy,
+  IconPencil as Pencil
+} from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
 
@@ -84,7 +90,32 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
       return
     }
 
-    if (event.shiftKey || isComposing || enterDisabled) {
+    // Any modifier (Shift / Alt / Meta / Ctrl) + Enter → let it insert a
+    // newline instead of submitting the edit.
+    // nativeEvent.isComposing catches the IME candidate-confirm Enter even
+    // after React-level isComposing has flipped.
+    if (
+      event.shiftKey ||
+      event.altKey ||
+      event.metaKey ||
+      event.ctrlKey ||
+      isComposing ||
+      (event.nativeEvent as KeyboardEvent).isComposing ||
+      enterDisabled
+    ) {
+      // Alt+Enter on macOS does not insert \n by default; do it manually.
+      if (event.altKey && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
+        event.preventDefault()
+        const textarea = event.target as HTMLTextAreaElement
+        const start = textarea.selectionStart ?? editedContent.length
+        const end = textarea.selectionEnd ?? editedContent.length
+        const next =
+          editedContent.slice(0, start) + '\n' + editedContent.slice(end)
+        setEditedContent(next)
+        requestAnimationFrame(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + 1
+        })
+      }
       return
     }
 
@@ -105,7 +136,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
     enterResetTimeoutRef.current = setTimeout(() => {
       setEnterDisabled(false)
       enterResetTimeoutRef.current = null
-    }, 300)
+    }, 50)
   }
 
   return (

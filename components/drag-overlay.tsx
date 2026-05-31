@@ -1,5 +1,5 @@
 'use client'
-import { UploadCloud } from 'lucide-react'
+import { IconCloudUpload as UploadCloud } from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
 

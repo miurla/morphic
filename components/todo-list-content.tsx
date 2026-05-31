@@ -1,7 +1,11 @@
 'use client'
 
-import { AlertCircle, Check } from 'lucide-react'
+import {
+  IconAlertCircle as AlertCircle,
+  IconCheck as Check
+} from '@tabler/icons-react'
 
+import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import type { TodoItem } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
@@ -53,10 +57,14 @@ export function TodoListContent({
   }
 
   if (errorText) {
+    const publicError = toPublicErrorPayload(errorText, {
+      fallbackMessage: 'Failed to process todos'
+    })
+
     return (
       <div className="flex items-center gap-2 p-4 text-red-600">
         <AlertCircle className="size-4" />
-        <span>Error: {errorText}</span>
+        <span>Error: {publicError.error}</span>
       </div>
     )
   }

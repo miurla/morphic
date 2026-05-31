@@ -13,8 +13,8 @@ import type { Part } from '@/lib/types/ai'
 
 import { useSidebar } from '../ui/sidebar'
 
-// Animation duration should match CSS transition duration
-const ANIMATION_DURATION = 300
+// Animation duration should match the inspector panel exit transition.
+const ANIMATION_DURATION = 260
 
 interface ArtifactState {
   part: Part | null

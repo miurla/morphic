@@ -55,6 +55,9 @@
   --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+  --motion-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --motion-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --motion-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .dark {
@@ -161,13 +164,13 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
-  --animate-collapse-down: collapse-down 0.1s ease-in-out;
-  --animate-collapse-up: collapse-up 0.1s ease-in-out;
-  --animate-slide-in-right: slide-in-right 0.3s ease-out;
-  --animate-slide-out-right: slide-out-right 0.3s ease-out;
-  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-accordion-down: accordion-down 180ms var(--motion-ease-out);
+  --animate-accordion-up: accordion-up 140ms var(--motion-ease-out);
+  --animate-collapse-down: collapse-down 160ms var(--motion-ease-out);
+  --animate-collapse-up: collapse-up 120ms var(--motion-ease-out);
+  --animate-slide-in-right: slide-in-right 220ms var(--motion-ease-drawer);
+  --animate-slide-out-right: slide-out-right 160ms var(--motion-ease-out);
+  --animate-fade-in: fade-in 180ms var(--motion-ease-out);
 
   @keyframes accordion-down {
     from {
@@ -247,32 +250,36 @@
     100% {
       transform: translateX(0);
     }
-    25% {
-      transform: translateX(10px);
+    18%,
+    30% {
+      transform: translateX(6px);
     }
-    50% {
+    48%,
+    60% {
+      transform: translateX(-6px);
+    }
+    78% {
       transform: translateX(0);
-    }
-    75% {
-      transform: translateX(-10px);
     }
   }
 }
 
 @utility animate-blink {
-  animation: blink 0.2s ease-in-out;
+  animation: blink 180ms var(--motion-ease-in-out);
 }
 
 /* Animation utilities for dropdown menu */
 @utility animate-in {
   animation-name: enter;
-  animation-duration: 150ms;
+  animation-duration: var(--tw-duration, 160ms);
+  animation-timing-function: var(--tw-ease, var(--motion-ease-out));
   animation-fill-mode: both;
 }
 
 @utility animate-out {
   animation-name: exit;
-  animation-duration: 150ms;
+  animation-duration: var(--tw-duration, 120ms);
+  animation-timing-function: var(--tw-ease, var(--motion-ease-out));
   animation-fill-mode: both;
 }
 
@@ -308,6 +315,38 @@
   --enter-translate-x: 0.5rem;
 }
 
+@utility slide-in-from-top {
+  --enter-translate-y: -100%;
+}
+
+@utility slide-in-from-bottom {
+  --enter-translate-y: 100%;
+}
+
+@utility slide-in-from-left {
+  --enter-translate-x: -100%;
+}
+
+@utility slide-in-from-right {
+  --enter-translate-x: 100%;
+}
+
+@utility slide-out-to-top {
+  --exit-translate-y: -100%;
+}
+
+@utility slide-out-to-bottom {
+  --exit-translate-y: 100%;
+}
+
+@utility slide-out-to-left {
+  --exit-translate-x: -100%;
+}
+
+@utility slide-out-to-right {
+  --exit-translate-x: 100%;
+}
+
 @keyframes enter {
   from {
     opacity: var(--enter-opacity, 1);
@@ -332,6 +371,30 @@
     opacity: var(--exit-opacity, 1);
     transform: translate(var(--exit-translate-x, 0), var(--exit-translate-y, 0))
       scale(var(--exit-scale, 1));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes enter {
+    from {
+      opacity: var(--enter-opacity, 1);
+      transform: translate(0, 0) scale(1);
+    }
+    to {
+      opacity: 1;
+      transform: translate(0, 0) scale(1);
+    }
+  }
+
+  @keyframes exit {
+    from {
+      opacity: 1;
+      transform: translate(0, 0) scale(1);
+    }
+    to {
+      opacity: var(--exit-opacity, 1);
+      transform: translate(0, 0) scale(1);
+    }
   }
 }
 

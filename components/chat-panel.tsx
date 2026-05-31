@@ -1,18 +1,39 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react'
 import Textarea from 'react-textarea-autosize'
 import { useRouter } from 'next/navigation'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { ArrowUp, ChevronDown, MessageCirclePlus, Square } from 'lucide-react'
+import {
+  IconArrowUp as ArrowUp,
+  IconChevronDown as ChevronDown,
+  IconMessageCirclePlus as MessageCirclePlus,
+  IconSquare as Square
+} from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
+import {
+  isAdaptiveModeAuthBlocked,
+  requiresAdaptiveModeAuth
+} from '@/lib/search-mode-availability'
 import { UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { ModelSelectorData } from '@/lib/types/model-selector'
+import type { SearchMode } from '@/lib/types/search'
 import { cn } from '@/lib/utils'
+import {
+  getCookie,
+  setCookie,
+  subscribeToCookieChange
+} from '@/lib/utils/cookies'
 
 import { useArtifact } from './artifact/artifact-context'
 import { Button } from './ui/button'
@@ -26,6 +47,10 @@ import { UploadedFileList } from './uploaded-file-list'
 
 // Constants for timing delays
 const INPUT_UPDATE_DELAY_MS = 10 // Delay to ensure input value is updated before form submission
+
+function getSearchModeSnapshot(): SearchMode {
+  return getCookie('searchMode') === 'adaptive' ? 'adaptive' : 'quick'
+}
 
 interface ChatPanelProps {
   chatId: string
@@ -50,6 +75,7 @@ interface ChatPanelProps {
   isGuest?: boolean
   /** Whether the deployment is cloud mode */
   isCloudDeployment?: boolean
+  onAdaptiveModeAuthRequired?: () => void
   modelSelectorData?: ModelSelectorData
   /** Chat sections for message navigation dots */
   sections?: { id: string; userMessage: UIMessage }[]
@@ -73,6 +99,7 @@ export function ChatPanel({
   onNewChat,
   isGuest = false,
   isCloudDeployment = false,
+  onAdaptiveModeAuthRequired,
   modelSelectorData,
   sections = []
 }: ChatPanelProps) {
@@ -86,15 +113,33 @@ export function ChatPanel({
   const isLoading = status === 'submitted' || status === 'streaming'
   const hasAvailableModels =
     isCloudDeployment || modelSelectorData?.hasAvailableModels !== false
+  const searchMode = useSyncExternalStore(
+    subscribeToCookieChange,
+    getSearchModeSnapshot,
+    () => 'quick' as SearchMode
+  )
+  const isAdaptiveAuthRequired = requiresAdaptiveModeAuth({
+    isGuest,
+    isCloudDeployment
+  })
+  const adaptiveModeSubmitBlocked = isAdaptiveModeAuthBlocked({
+    mode: searchMode,
+    isGuest,
+    isCloudDeployment
+  })
 
   const handleCompositionStart = () => setIsComposing(true)
 
   const handleCompositionEnd = () => {
     setIsComposing(false)
+    // Brief debounce — the candidate-confirm Enter that fires
+    // immediately after compositionend may otherwise be treated as a
+    // submit. 50ms is enough to swallow that synchronous event but
+    // short enough not to drop a real "finish typing, press Enter".
     setEnterDisabled(true)
     setTimeout(() => {
       setEnterDisabled(false)
-    }, 300)
+    }, 50)
   }
 
   const handleNewChat = useCallback(() => {
@@ -150,14 +195,18 @@ export function ChatPanel({
   // if query is not empty, submit the query
   useEffect(() => {
     if (isFirstRender.current && query && query.trim().length > 0) {
+      if (adaptiveModeSubmitBlocked) {
+        setCookie('searchMode', 'quick')
+        return
+      }
+
       append({
         role: 'user',
         content: query
       })
       isFirstRender.current = false
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query])
+  }, [adaptiveModeSubmitBlocked, append, query])
 
   const handleFileRemove = useCallback(
     (index: number) => {
@@ -198,6 +247,12 @@ export function ChatPanel({
       )}
       <form
         onSubmit={e => {
+          if (adaptiveModeSubmitBlocked) {
+            e.preventDefault()
+            onAdaptiveModeAuthRequired?.()
+            return
+          }
+
           if (!hasAvailableModels) {
             e.preventDefault()
             toast.error('No enabled model is available')
@@ -214,7 +269,7 @@ export function ChatPanel({
         {messages.length > 0 && (
           <div
             className={cn(
-              'transition-opacity duration-100',
+              'transition-opacity duration-[120ms] ease-[var(--motion-ease-out)]',
               showScrollToBottomButton
                 ? 'opacity-100'
                 : 'pointer-events-none opacity-0'
@@ -236,7 +291,7 @@ export function ChatPanel({
         {sections.length > 0 && (
           <div
             className={cn(
-              'transition-opacity duration-100',
+              'transition-opacity duration-[120ms] ease-[var(--motion-ease-out)]',
               !showScrollToBottomButton && status === 'ready'
                 ? 'opacity-100'
                 : 'pointer-events-none opacity-0'
@@ -248,7 +303,7 @@ export function ChatPanel({
 
         <div
           className={cn(
-            'relative flex flex-col w-full gap-2 bg-muted rounded-3xl border border-input transition-shadow',
+            'relative flex w-full flex-col gap-2 rounded-3xl border border-input bg-muted transition-[box-shadow] duration-[140ms] ease-[var(--motion-ease-out)]',
             isInputFocused &&
               'ring-1 ring-ring/20 ring-offset-1 ring-offset-background/50'
           )}
@@ -270,12 +325,20 @@ export function ChatPanel({
             className="resize-none w-full min-h-12 bg-transparent border-0 p-3 md:p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
             onChange={handleInputChange}
             onKeyDown={e => {
+              // e.nativeEvent.isComposing stays true on the keydown that
+              // confirms an IME candidate, even after React-level
+              // isComposing has flipped.
               if (
-                e.key === 'Enter' &&
-                !e.shiftKey &&
-                !isComposing &&
-                !enterDisabled
+                e.key !== 'Enter' ||
+                isComposing ||
+                (e.nativeEvent as KeyboardEvent).isComposing ||
+                enterDisabled
               ) {
+                return
+              }
+
+              // Plain Enter (no modifiers) → submit
+              if (!e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
                 if (input.trim().length === 0) {
                   e.preventDefault()
                   return
@@ -283,9 +346,26 @@ export function ChatPanel({
                 e.preventDefault()
                 const textarea = e.target as HTMLTextAreaElement
                 textarea.form?.requestSubmit()
-                // Reset focus state after Enter key submission
                 setIsInputFocused(false)
                 textarea.blur()
+                return
+              }
+
+              // Shift+Enter falls through to textarea default (inserts \n).
+              // Alt/Option+Enter on macOS does NOT insert \n by default,
+              // so insert it manually to match user expectation.
+              if (e.altKey && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+                e.preventDefault()
+                const textarea = e.target as HTMLTextAreaElement
+                const start = textarea.selectionStart ?? input.length
+                const end = textarea.selectionEnd ?? input.length
+                const next = input.slice(0, start) + '\n' + input.slice(end)
+                handleInputChange({
+                  target: { value: next }
+                } as React.ChangeEvent<HTMLTextAreaElement>)
+                requestAnimationFrame(() => {
+                  textarea.selectionStart = textarea.selectionEnd = start + 1
+                })
               }
             }}
           />
@@ -343,7 +423,10 @@ export function ChatPanel({
                   }}
                 />
               )}
-              <SearchModeSelector />
+              <SearchModeSelector
+                isAdaptiveAuthRequired={isAdaptiveAuthRequired}
+                onAdaptiveAuthRequired={onAdaptiveModeAuthRequired}
+              />
             </div>
             <div className="flex items-center gap-2">
               {!isCloudDeployment && modelSelectorData && (
@@ -358,7 +441,7 @@ export function ChatPanel({
                   type="button"
                   disabled={isLoading}
                 >
-                  <MessageCirclePlus className="size-4 group-hover:rotate-12 transition-all" />
+                  <MessageCirclePlus className="size-4 transition-transform duration-[140ms] ease-[var(--motion-ease-out)] group-hover:rotate-12" />
                 </Button>
               )}
               <Button

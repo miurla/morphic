@@ -4,7 +4,10 @@ import { useCallback, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 
-import { MoreHorizontal, Trash2 } from 'lucide-react'
+import {
+  IconDots as MoreHorizontal,
+  IconTrash as Trash2
+} from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { deleteChat } from '@/lib/actions/chat'

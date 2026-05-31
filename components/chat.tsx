@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { useChat } from '@ai-sdk/react'
@@ -9,8 +9,16 @@ import { toast } from 'sonner'
 
 import { ChatProvider } from '@/lib/contexts/chat-context'
 import { generateId } from '@/lib/db/schema'
+import {
+  getPublicRateLimitDetails,
+  toPublicErrorPayload
+} from '@/lib/errors/public-error'
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
 import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
+import {
+  ADAPTIVE_MODE_AUTH_REQUIRED_MESSAGE,
+  isAdaptiveModeAuthBlocked
+} from '@/lib/search-mode-availability'
 import { UploadedFile } from '@/lib/types'
 import type { UIMessage } from '@/lib/types/ai'
 import {
@@ -20,6 +28,7 @@ import {
 } from '@/lib/types/dynamic-tools'
 import type { ModelSelectorData } from '@/lib/types/model-selector'
 import { cn } from '@/lib/utils'
+import { getCookie } from '@/lib/utils/cookies'
 
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
 
@@ -86,6 +95,31 @@ export function Chat({
     message: ''
   })
 
+  // Locally-maintained streaming flag exposed through ChatContext so
+  // programmatic dispatch sites (e.g. Related-question buttons in
+  // spec-block) can throttle clicks. Held in a ref so closures
+  // captured by @json-render/react's ActionProvider (which freezes
+  // its `handlers` prop via useState(initialHandlers)) can still see
+  // the freshest value through `.current`. See lib/contexts/chat-context.tsx.
+  const isStreamingRef = useRef(false)
+  const showAdaptiveModeAuthModal = useCallback(() => {
+    setErrorModal({
+      open: true,
+      type: 'auth',
+      message: ADAPTIVE_MODE_AUTH_REQUIRED_MESSAGE
+    })
+  }, [setErrorModal])
+
+  const isCurrentAdaptiveModeAuthBlocked = useCallback(
+    () =>
+      isAdaptiveModeAuthBlocked({
+        mode: getCookie('searchMode') === 'adaptive' ? 'adaptive' : 'quick',
+        isGuest,
+        isCloudDeployment
+      }),
+    [isGuest, isCloudDeployment]
+  )
+
   const {
     messages,
     status,
@@ -130,104 +164,97 @@ export function Chat({
     }),
     messages: savedMessages,
     onFinish: () => {
+      isStreamingRef.current = false
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
     },
     onError: error => {
-      // Handle rate limiting errors from Vercel WAF
-      // Check for status codes in error message or specific rate limit indicators
-      const errorMessage = error.message?.toLowerCase() || ''
-      const isRateLimit =
-        error.message?.includes('429') ||
-        errorMessage.includes('rate limit') ||
-        errorMessage.includes('too many requests') ||
-        errorMessage.includes('daily limit')
+      isStreamingRef.current = false
+      const publicError = toPublicErrorPayload(error)
 
-      // Check for authentication errors
-      const isAuthError =
-        error.message?.includes('401') ||
-        errorMessage.includes('unauthorized') ||
-        errorMessage.includes('authentication required') ||
-        errorMessage.includes('sign in to continue')
-
-      if (isRateLimit) {
-        // Try to parse JSON error response. The body may include `mode`
-        // (e.g. "adaptive") so we can show context-specific guidance.
-        let parsedError: {
-          error?: string
-          resetAt?: number
-          remaining?: number
-          mode?: string
-        } = {}
-        try {
-          const jsonMatch = error.message?.match(/\{.*\}/)
-          if (jsonMatch) {
-            parsedError = JSON.parse(jsonMatch[0])
-          }
-        } catch {
-          // Ignore parse errors
-        }
-
-        const userMessage =
-          parsedError.error ||
-          'You have reached your daily chat limit. Please try again tomorrow.'
-
-        const details =
-          parsedError.mode === 'adaptive'
-            ? 'The limit resets at midnight UTC. You can continue using Quick mode without restrictions.'
-            : 'The limit resets at midnight UTC.'
-
+      if (publicError.type === 'rate-limit') {
         setErrorModal({
           open: true,
           type: 'rate-limit',
-          message: userMessage,
-          details
+          message: publicError.error,
+          details: getPublicRateLimitDetails(publicError)
         })
-      } else if (isAuthError) {
-        // Try to parse JSON for context-specific auth prompts
-        // (e.g. adaptive mode requires sign in).
-        let parsedAuthError: { error?: string; authRequired?: boolean } = {}
-        try {
-          const jsonMatch = error.message?.match(/\{.*\}/)
-          if (jsonMatch) parsedAuthError = JSON.parse(jsonMatch[0])
-        } catch {
-          // Ignore parse errors
-        }
-
+      } else if (publicError.type === 'auth') {
         setErrorModal({
           open: true,
           type: 'auth',
-          message: parsedAuthError.error || error.message
+          message: publicError.error
         })
-      } else if (
-        error.message?.includes('403') ||
-        errorMessage.includes('forbidden')
-      ) {
+      } else if (publicError.type === 'forbidden') {
         setErrorModal({
           open: true,
           type: 'forbidden',
-          message: error.message
+          message: publicError.error
         })
       } else {
-        // For general errors, still use toast for less intrusive notification
-        toast.error(`Error in chat: ${error.message}`)
+        toast.error(publicError.error)
       }
     },
     experimental_throttle: 100,
     generateId
   })
 
+  // Keep all request entry points reflected in isStreamingRef so downstream
+  // action handlers can reliably reject overlapping sends.
+  const safeSendMessage = useCallback<typeof sendMessage>(
+    (...args) => {
+      if (isCurrentAdaptiveModeAuthBlocked()) {
+        showAdaptiveModeAuthModal()
+        return Promise.resolve()
+      }
+
+      isStreamingRef.current = true
+      try {
+        return sendMessage(...args)
+      } catch (error) {
+        isStreamingRef.current = false
+        throw error
+      }
+    },
+    [sendMessage, isCurrentAdaptiveModeAuthBlocked, showAdaptiveModeAuthModal]
+  )
+
+  const safeRegenerate = useCallback(
+    async (...args: Parameters<typeof regenerate>) => {
+      if (isCurrentAdaptiveModeAuthBlocked()) {
+        showAdaptiveModeAuthModal()
+        return
+      }
+
+      isStreamingRef.current = true
+      try {
+        return await regenerate(...args)
+      } catch (error) {
+        isStreamingRef.current = false
+        throw error
+      }
+    },
+    [regenerate, isCurrentAdaptiveModeAuthBlocked, showAdaptiveModeAuthModal]
+  )
+
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
   }
 
-  // Convert messages array to sections array
+  // Convert messages array to sections array.
+  // Deduplicate by message.id — @ai-sdk/react useChat can occasionally
+  // surface the same assistant message twice during stream finalization,
+  // which would otherwise produce React 'duplicate key' warnings in
+  // chat-messages.tsx (one warning per re-render).
   const sections = useMemo<ChatSection[]>(() => {
     const result: ChatSection[] = []
+    const seenIds = new Set<string>()
     let currentSection: ChatSection | null = null
 
     for (const message of messages) {
+      if (seenIds.has(message.id)) continue
+      seenIds.add(message.id)
+
       if (message.role === 'user') {
-        // Start a new section when a user message is found
         if (currentSection) {
           result.push(currentSection)
         }
@@ -237,13 +264,10 @@ export function Chat({
           assistantMessages: []
         }
       } else if (currentSection && message.role === 'assistant') {
-        // Add assistant message to the current section
         currentSection.assistantMessages.push(message)
       }
-      // Ignore other role types like 'system' for now
     }
 
-    // Add the last section if exists
     if (currentSection) {
       result.push(currentSection)
     }
@@ -391,12 +415,10 @@ export function Chat({
       })
 
       // Regenerate from this message
-      await regenerate({ messageId: editedMessageId })
+      await safeRegenerate({ messageId: editedMessageId })
     } catch (error) {
       console.error('Error during message edit and reload process:', error)
-      toast.error(
-        `Error processing edited message: ${(error as Error).message}`
-      )
+      toast.error(toPublicErrorPayload(error).error)
     }
   }
 
@@ -408,13 +430,13 @@ export function Chat({
 
     try {
       // Use the SDK's regenerate function with the specific messageId
-      await regenerate({ messageId: reloadFromFollowerMessageId })
+      await safeRegenerate({ messageId: reloadFromFollowerMessageId })
     } catch (error) {
       console.error(
         `Error during reload from message ${reloadFromFollowerMessageId}:`,
         error
       )
-      toast.error(`Failed to reload conversation: ${(error as Error).message}`)
+      toast.error(toPublicErrorPayload(error).error)
     }
   }
 
@@ -439,7 +461,7 @@ export function Chat({
         })
       })
 
-      sendMessage({ role: 'user', parts })
+      safeSendMessage({ role: 'user', parts })
       setInput('')
       setUploadedFiles([])
 
@@ -474,7 +496,7 @@ export function Chat({
     : { isDragging, handleDragOver, handleDragLeave, handleDrop }
 
   return (
-    <ChatProvider sendMessage={sendMessage}>
+    <ChatProvider sendMessage={safeSendMessage} isStreamingRef={isStreamingRef}>
       <div
         className={cn(
           'relative flex h-full min-w-0 flex-1 flex-col',
@@ -542,7 +564,7 @@ export function Chat({
           stop={stop}
           query={query}
           append={(message: any) => {
-            sendMessage(message)
+            safeSendMessage(message)
           }}
           showScrollToBottomButton={!isAtBottom}
           uploadedFiles={uploadedFiles}
@@ -551,6 +573,7 @@ export function Chat({
           onNewChat={handleNewChat}
           isGuest={isGuest}
           isCloudDeployment={isCloudDeployment}
+          onAdaptiveModeAuthRequired={showAdaptiveModeAuthModal}
           modelSelectorData={modelSelectorData}
           sections={sections}
         />
@@ -568,7 +591,7 @@ export function Chat({
                       .filter(m => m.role === 'user')
                       .pop()
                     if (lastUserMessage) {
-                      sendMessage(lastUserMessage)
+                      safeSendMessage(lastUserMessage)
                     }
                   }
                 }

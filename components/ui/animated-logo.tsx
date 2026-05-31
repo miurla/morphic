@@ -57,7 +57,8 @@ export function AnimatedLogo({
       <g
         className={cn(
           'origin-center',
-          animate && 'animate-[lookAround_2s_ease-in-out_infinite]'
+          animate &&
+            'animate-[lookAround_2.8s_var(--motion-ease-in-out)_infinite] will-change-transform motion-reduce:animate-none motion-reduce:will-change-auto'
         )}
       >
         <ellipse

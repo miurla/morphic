@@ -14,6 +14,10 @@ function isValidUrl(url: string): boolean {
   }
 }
 
+export function isCitationLabel(label: string): boolean {
+  return /^[\w-]+(?:\.[\w-]+)*$/.test(label)
+}
+
 /**
  * Extract citation maps from a message's tool parts
  * Returns a map of toolCallId to citation map

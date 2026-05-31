@@ -1,7 +1,7 @@
 import { AnchorHTMLAttributes, DetailedHTMLProps } from 'react'
 
 import type { SearchResultItem } from '@/lib/types'
-import { cn } from '@/lib/utils'
+import { isCitationLabel } from '@/lib/utils/citation'
 
 import { useCitation } from './citation-context'
 import { CitationLink } from './citation-link'
@@ -19,8 +19,7 @@ export function Citing({
 }: CustomLinkProps) {
   const { citationMaps } = useCitation()
   const childrenText = children?.toString() || ''
-  // Match domain names (alphanumeric and hyphens) or numbers for backward compatibility
-  const isCitation = /^[\w-]+$/.test(childrenText)
+  const isCitation = isCitationLabel(childrenText)
 
   // Get citation data if this is a citation
   let citationData: SearchResultItem | undefined = undefined

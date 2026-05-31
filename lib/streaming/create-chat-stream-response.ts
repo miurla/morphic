@@ -8,6 +8,10 @@ import { randomUUID } from 'crypto'
 import { Langfuse } from 'langfuse'
 
 import { researcher } from '@/lib/agents/researcher'
+import {
+  createPublicErrorResponse,
+  serializePublicError
+} from '@/lib/errors/public-error'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import { loadChat } from '../actions/chat'
@@ -217,7 +221,8 @@ export async function createChatStreamResponse(
         }
       },
       onError: (error: unknown) => {
-        return error instanceof Error ? error.message : String(error)
+        console.error('Stream response error:', error)
+        return serializePublicError(error)
       },
       consumeSseStream: consumeStream
     })
@@ -226,8 +231,7 @@ export async function createChatStreamResponse(
       await langfuse.flushAsync()
     }
     console.error('Stream execution error:', error)
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    return new Response(errorMessage, {
+    return createPublicErrorResponse(error, {
       status: 500,
       statusText: 'Internal Server Error'
     })

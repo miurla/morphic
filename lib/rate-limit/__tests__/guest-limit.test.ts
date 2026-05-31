@@ -36,6 +36,7 @@ describe('checkAndEnforceGuestLimit', () => {
     expect(response?.status).toBe(401)
     const body = await response!.json()
     expect(body.error).toBe('Please sign in to continue.')
+    expect(body.authRequired).toBe(true)
     expect(body.limit).toBe(10)
   })
 

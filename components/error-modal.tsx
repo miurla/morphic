@@ -2,7 +2,11 @@
 
 import Link from 'next/link'
 
-import { AlertCircle, Clock, RefreshCw } from 'lucide-react'
+import {
+  IconAlertCircle as AlertCircle,
+  IconClock as Clock,
+  IconRefresh as RefreshCw
+} from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
 import {

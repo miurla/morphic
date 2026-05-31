@@ -2,10 +2,14 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTheme } from 'next-themes'
 
 import type { User } from '@supabase/supabase-js'
-import { Laptop, Moon, Sun, Trash2 } from 'lucide-react'
+import {
+  IconDeviceLaptop as Laptop,
+  IconMoon as Moon,
+  IconSun as Sun,
+  IconTrash as Trash2
+} from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { deleteAccount } from '@/lib/actions/account'
@@ -32,6 +36,8 @@ import {
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
+
+import { useTheme } from '@/components/theme-provider'
 
 interface AccountSettingsDialogProps {
   open: boolean

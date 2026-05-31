@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 
 import { ActionProvider, JSONUIProvider, Renderer } from '@json-render/react'
+import { toast } from 'sonner'
 
 import { useChatContext } from '@/lib/contexts/chat-context'
 import { registry } from '@/lib/render/registry'
@@ -19,12 +20,22 @@ export function SpecBlock({ result }: SpecBlockProps) {
     () => ({
       submitQuery: (params: Record<string, unknown>) => {
         const query = (params as { query?: string }).query
-        if (typeof query === 'string' && query.trim()) {
-          chatContext.sendMessage({
-            role: 'user',
-            parts: [{ type: 'text', text: query }]
-          })
+        if (typeof query !== 'string' || !query.trim()) return
+
+        // Reject clicks while a response is in flight. Firing a second
+        // sendMessage mid-stream corrupts useChat's internal state and
+        // leaves the input box stuck disabled. Read via the ref so the
+        // frozen closure (ActionProvider stores handlers as
+        // useState(initialHandlers)) still sees the latest value.
+        if (chatContext.isStreamingRef.current) {
+          toast.info('Please wait for the current response to finish.')
+          return
         }
+
+        chatContext.sendMessage({
+          role: 'user',
+          parts: [{ type: 'text', text: query }]
+        })
       }
     }),
     [chatContext]

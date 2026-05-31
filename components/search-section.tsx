@@ -1,8 +1,12 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { Check, Search as SearchIcon } from 'lucide-react'
+import {
+  IconCheck as Check,
+  IconSearch as SearchIcon
+} from '@tabler/icons-react'
 
+import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
@@ -53,7 +57,9 @@ export function SearchSection({
     output?.state === 'complete' ? output : undefined
 
   const isError = tool.state === 'output-error'
-  const errorMessage = tool.errorText || 'Search failed'
+  const errorMessage = toPublicErrorPayload(tool.errorText, {
+    fallbackMessage: 'Search failed'
+  }).error
   const query = tool.input?.query || output?.query || ''
   const includeDomains = tool.input?.include_domains
   const includeDomainsString =

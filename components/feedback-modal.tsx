@@ -2,7 +2,11 @@
 
 import { useState, useTransition } from 'react'
 
-import { Frown, Meh, Smile } from 'lucide-react'
+import {
+  IconMoodNeutral as Meh,
+  IconMoodSad as Frown,
+  IconMoodSmile as Smile
+} from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { submitFeedback } from '@/lib/actions/site-feedback'

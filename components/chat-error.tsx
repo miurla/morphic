@@ -1,4 +1,6 @@
-import { AlertCircle } from 'lucide-react'
+import { IconAlertCircle as AlertCircle } from '@tabler/icons-react'
+
+import { toPublicErrorPayload } from '@/lib/errors/public-error'
 
 import { Card } from '@/components/ui/card'
 
@@ -9,20 +11,7 @@ interface ChatErrorProps {
 export function ChatError({ error }: ChatErrorProps) {
   if (!error) return null
 
-  let errorMessage = error instanceof Error ? error.message : error
-
-  // Try to parse JSON error response and extract user-friendly message
-  try {
-    const jsonMatch = errorMessage?.match(/\{.*\}/)
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0])
-      if (parsed.error) {
-        errorMessage = parsed.error
-      }
-    }
-  } catch {
-    // If parsing fails, use the original error message
-  }
+  const errorMessage = toPublicErrorPayload(error).error
 
   return (
     <Card className="border-destructive bg-destructive/10 p-4">

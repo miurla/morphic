@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 
-import { Check, ChevronDown } from 'lucide-react'
+import {
+  IconCheck as Check,
+  IconChevronDown as ChevronDown
+} from '@tabler/icons-react'
 
 import { SEARCH_MODE_CONFIGS } from '@/lib/config/search-modes'
 import { SearchMode } from '@/lib/types/search'
@@ -22,13 +25,25 @@ import {
 } from './ui/dropdown-menu'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card'
 
-export function SearchModeSelector() {
+const VALID_SEARCH_MODES = new Set(['quick', 'adaptive'])
+
+function getSearchModeSnapshot(): SearchMode {
+  const savedMode = getCookie('searchMode')
+  return savedMode === 'adaptive' ? 'adaptive' : 'quick'
+}
+
+interface SearchModeSelectorProps {
+  isAdaptiveAuthRequired?: boolean
+  onAdaptiveAuthRequired?: () => void
+}
+
+export function SearchModeSelector({
+  isAdaptiveAuthRequired = false,
+  onAdaptiveAuthRequired
+}: SearchModeSelectorProps) {
   const value = useSyncExternalStore(
     subscribeToCookieChange,
-    () => {
-      const savedMode = getCookie('searchMode')
-      return savedMode === 'adaptive' ? 'adaptive' : 'quick'
-    },
+    getSearchModeSnapshot,
     () => 'quick'
   )
   const [openHoverCard, setOpenHoverCard] = useState<string | null>(null)
@@ -37,14 +52,18 @@ export function SearchModeSelector() {
 
   useEffect(() => {
     const savedMode = getCookie('searchMode')
-    if (savedMode && !['quick', 'adaptive'].includes(savedMode)) {
+    if (savedMode && !VALID_SEARCH_MODES.has(savedMode)) {
       // Clean up invalid cookie value (e.g., old 'planning' mode)
       setCookie('searchMode', 'quick')
+      return
     }
-  }, [])
 
-  const handleModeSelect = (mode: SearchMode) => {
-    setCookie('searchMode', mode)
+    if (isAdaptiveAuthRequired && savedMode === 'adaptive') {
+      setCookie('searchMode', 'quick')
+    }
+  }, [isAdaptiveAuthRequired])
+
+  const closeModeSelectControls = () => {
     setOpenHoverCard(null) // Close hover card on selection
     setDropdownOpen(false) // Close dropdown on selection
     setJustSelected(true)
@@ -53,6 +72,18 @@ export function SearchModeSelector() {
     setTimeout(() => {
       setJustSelected(false)
     }, 500)
+  }
+
+  const handleModeSelect = (mode: SearchMode) => {
+    if (mode === 'adaptive' && isAdaptiveAuthRequired) {
+      setCookie('searchMode', 'quick')
+      closeModeSelectControls()
+      onAdaptiveAuthRequired?.()
+      return
+    }
+
+    setCookie('searchMode', mode)
+    closeModeSelectControls()
   }
 
   const selectedMode = SEARCH_MODE_CONFIGS.find(
@@ -74,7 +105,7 @@ export function SearchModeSelector() {
             <Button
               variant="outline"
               size="sm"
-              className="text-xs rounded-full shadow-none gap-1 transition-all"
+              className="gap-1 rounded-full text-xs shadow-none transition-[background-color,color,box-shadow,transform]"
             >
               {SelectedIcon && (
                 <SelectedIcon
@@ -87,7 +118,7 @@ export function SearchModeSelector() {
               <span className="text-xs font-medium">{selectedMode?.label}</span>
               <ChevronDown
                 className={cn(
-                  'size-3 ml-0.5 opacity-50 transition-transform duration-200',
+                  'ml-0.5 size-3 opacity-50 transition-transform duration-[160ms] ease-[var(--motion-ease-out)]',
                   dropdownOpen && 'rotate-180'
                 )}
               />
@@ -129,7 +160,7 @@ export function SearchModeSelector() {
         <div className="relative inline-flex items-center rounded-full bg-background border p-1">
           {/* Animated background indicator */}
           <div
-            className="absolute inset-1 rounded-full bg-muted transition-all duration-200 ease-out"
+            className="absolute inset-1 rounded-full bg-muted transition-[transform,width] duration-[180ms] ease-[var(--motion-ease-in-out)]"
             style={{
               width: `calc(${100 / modeCount}% - 4px)`,
               transform: `translateX(${selectedIndex * 100}%)`
@@ -159,7 +190,7 @@ export function SearchModeSelector() {
                       type="button"
                       onClick={() => handleModeSelect(config.value)}
                       className={cn(
-                        'relative z-10 flex-1 items-center justify-center rounded-full px-3 py-2 transition-colors duration-200',
+                        'relative z-10 flex-1 items-center justify-center rounded-full px-3 py-2 transition-colors duration-[140ms] ease-[var(--motion-ease-out)]',
                         isSelected
                           ? 'text-foreground'
                           : 'text-muted-foreground hover:text-foreground/80'

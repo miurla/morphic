@@ -1,6 +1,6 @@
 'use client'
 
-import { User2 } from 'lucide-react'
+import { IconUser as User2 } from '@tabler/icons-react'
 
 import { useCurrentUserImage } from '@/hooks/use-current-user-image'
 import { useCurrentUserName } from '@/hooks/use-current-user-name'

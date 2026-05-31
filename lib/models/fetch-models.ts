@@ -35,6 +35,15 @@ const ANTHROPIC_ALLOWED_PREFIXES = [
 ]
 const GOOGLE_ALLOWED_PREFIXES = ['gemini-2.5', 'gemini-3']
 const GOOGLE_EXCLUDED_KEYWORDS = ['image', 'live', 'native-audio', 'embedding']
+const OPENAI_COMPATIBLE_EXCLUDED_KEYWORDS = [
+  'embed',
+  'tts',
+  'whisper',
+  'audio',
+  'transcribe',
+  'image',
+  'realtime'
+]
 
 let modelsCache:
   | {
@@ -115,6 +124,12 @@ function passesGoogleFilters(id: string): boolean {
   }
 
   return !GOOGLE_EXCLUDED_KEYWORDS.some(keyword =>
+    id.toLowerCase().includes(keyword)
+  )
+}
+
+function passesOpenAICompatibleFilters(id: string): boolean {
+  return !OPENAI_COMPATIBLE_EXCLUDED_KEYWORDS.some(keyword =>
     id.toLowerCase().includes(keyword)
   )
 }
@@ -303,6 +318,71 @@ export async function fetchGoogleModels(): Promise<Model[]> {
   }
 }
 
+export async function fetchOpenAICompatibleModels(): Promise<Model[]> {
+  if (!isProviderEnabled('openai-compatible')) {
+    return []
+  }
+
+  const providerName =
+    process.env.OPENAI_COMPATIBLE_PROVIDER_NAME || 'OpenAI Compatible'
+
+  // Static-list path: when OPENAI_COMPATIBLE_MODELS is set, skip the
+  // network call and trust the comma-separated list. Useful when the
+  // provider has no /v1/models endpoint, or when that endpoint is
+  // slow / unreachable.
+  const staticList = process.env.OPENAI_COMPATIBLE_MODELS
+  if (staticList) {
+    return sortModels(
+      dedupeModels(
+        staticList
+          .split(',')
+          .map(id => id.trim())
+          .filter(Boolean)
+          .map(id => ({
+            id,
+            name: id,
+            provider: providerName,
+            providerId: 'openai-compatible'
+          }))
+      )
+    )
+  }
+
+  try {
+    const rawBaseURL = process.env.OPENAI_COMPATIBLE_API_BASE_URL || ''
+    if (!rawBaseURL) {
+      return []
+    }
+    const baseURL = rawBaseURL.replace(/\/+$/, '').replace(/\/v1$/, '')
+
+    const json = await fetchJson(`${baseURL}/v1/models`, {
+      Authorization: `Bearer ${process.env.OPENAI_COMPATIBLE_API_KEY}`
+    })
+
+    const data = Array.isArray(json?.data) ? json.data : []
+    return sortModels(
+      dedupeModels(
+        data
+          .map(item => String(item?.id ?? ''))
+          .filter(Boolean)
+          .filter(passesOpenAICompatibleFilters)
+          .map(id => ({
+            id,
+            name: id,
+            provider: providerName,
+            providerId: 'openai-compatible'
+          }))
+      )
+    )
+  } catch (error) {
+    console.warn(
+      '[ModelFetch] Failed to fetch OpenAI-compatible models:',
+      error
+    )
+    return []
+  }
+}
+
 export async function fetchOllamaModels(): Promise<Model[]> {
   if (!isProviderEnabled('ollama')) {
     return []
@@ -419,7 +499,11 @@ export async function fetchCloudflareModels(): Promise<Model[]> {
       }
     )
 
-    const data = Array.isArray(json?.result) ? json.result : (Array.isArray(json?.data) ? json.data : [])
+    const data = Array.isArray(json?.result)
+      ? json.result
+      : Array.isArray(json?.data)
+        ? json.data
+        : []
     if (data.length === 0) {
       return fallbacks
     }
@@ -427,7 +511,16 @@ export async function fetchCloudflareModels(): Promise<Model[]> {
     const fetchedModels = data
       .map(item => String(item?.id ?? ''))
       .filter(Boolean)
-      .filter(id => id.startsWith('@cf/') && (id.includes('llama') || id.includes('mistral') || id.includes('qwen') || id.includes('gemma') || id.includes('phi') || id.includes('deepseek')))
+      .filter(
+        id =>
+          id.startsWith('@cf/') &&
+          (id.includes('llama') ||
+            id.includes('mistral') ||
+            id.includes('qwen') ||
+            id.includes('gemma') ||
+            id.includes('phi') ||
+            id.includes('deepseek'))
+      )
       .map(id => ({
         id,
         name: id.split('/').pop() || id,
@@ -435,7 +528,9 @@ export async function fetchCloudflareModels(): Promise<Model[]> {
         providerId: 'cloudflare'
       }))
 
-    return fetchedModels.length > 0 ? sortModels(dedupeModels(fetchedModels)) : fallbacks
+    return fetchedModels.length > 0
+      ? sortModels(dedupeModels(fetchedModels))
+      : fallbacks
   } catch (error) {
     console.warn('[ModelFetch] Failed to fetch Cloudflare models:', error)
     return fallbacks
@@ -452,17 +547,34 @@ export async function fetchAvailableModels(options?: {
     return modelsCache.value
   }
 
-  const [openai, anthropic, google, ollama, gateway, cloudflare] = await Promise.all([
+  const [
+    openai,
+    anthropic,
+    google,
+    openaiCompatible,
+    ollama,
+    gateway,
+    cloudflare
+  ] = await Promise.all([
     fetchOpenAIModels(),
     fetchAnthropicModels(),
     fetchGoogleModels(),
+    fetchOpenAICompatibleModels(),
     fetchOllamaModels(),
     fetchGatewayModels(),
     fetchCloudflareModels()
   ])
 
   const grouped = groupByProvider(
-    dedupeModels([...openai, ...anthropic, ...google, ...ollama, ...gateway, ...cloudflare])
+    dedupeModels([
+      ...openai,
+      ...anthropic,
+      ...google,
+      ...openaiCompatible,
+      ...ollama,
+      ...gateway,
+      ...cloudflare
+    ])
   )
 
   // Keep stable ordering for each provider list.

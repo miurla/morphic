@@ -1,8 +1,14 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { AlertCircle, Check, ExternalLink, Globe } from 'lucide-react'
+import {
+  IconAlertCircle as AlertCircle,
+  IconCheck as Check,
+  IconExternalLink as ExternalLink,
+  IconWorld as Globe
+} from '@tabler/icons-react'
 
+import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
@@ -47,7 +53,9 @@ export function FetchSection({
   // Check tool state
   if (tool.state === 'output-error') {
     displayStatus = 'error'
-    error = tool.errorText || 'Failed to retrieve content'
+    error = toPublicErrorPayload(tool.errorText, {
+      fallbackMessage: 'Failed to retrieve content'
+    }).error
   } else if (!output || isFetching) {
     displayStatus = 'fetching'
   } else if (fetchResults) {
