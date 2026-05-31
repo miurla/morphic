@@ -1,0 +1,102 @@
+:root {
+  --native-safe-top: env(safe-area-inset-top, 0px);
+  --native-safe-right: env(safe-area-inset-right, 0px);
+  --native-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --native-safe-left: env(safe-area-inset-left, 0px);
+  --native-radius-card: 20px;
+  --native-radius-control: 14px;
+  --native-radius-sheet: 28px;
+  --native-min-touch-target: 44px;
+  --native-toolbar-height: 52px;
+  --native-bottom-bar-height: 72px;
+  --native-backdrop: color-mix(in oklch, var(--background) 86%, transparent);
+  --native-hairline: color-mix(in oklch, var(--border) 72%, transparent);
+  --native-shadow-card: 0 16px 48px hsl(0 0% 0% / 0.12);
+  --native-font-stack: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+}
+
+.platform-apple-like {
+  --native-radius-card: 22px;
+  --native-radius-control: 14px;
+  --native-radius-sheet: 30px;
+  --native-toolbar-height: 52px;
+  --native-backdrop: color-mix(in oklch, var(--background) 82%, transparent);
+  --native-shadow-card: 0 20px 60px hsl(0 0% 0% / 0.14);
+  font-family: var(--native-font-stack);
+}
+
+.platform-family-android {
+  --native-radius-card: 24px;
+  --native-radius-control: 999px;
+  --native-radius-sheet: 28px;
+  --native-toolbar-height: 56px;
+  --native-min-touch-target: 48px;
+}
+
+.platform-family-windows {
+  --native-radius-card: 12px;
+  --native-radius-control: 8px;
+  --native-radius-sheet: 16px;
+  --native-toolbar-height: 48px;
+}
+
+.app-shell {
+  min-height: 100dvh;
+  padding-top: var(--native-safe-top);
+  padding-right: var(--native-safe-right);
+  padding-bottom: var(--native-safe-bottom);
+  padding-left: var(--native-safe-left);
+  background: var(--background);
+  overscroll-behavior: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.native-app-frame {
+  min-height: 0;
+  background:
+    radial-gradient(circle at top, color-mix(in oklch, var(--muted) 45%, transparent), transparent 36rem),
+    var(--background);
+}
+
+.native-app-main {
+  min-height: 0;
+  isolation: isolate;
+}
+
+.pwa-standalone .app-shell {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pwa-standalone input,
+.pwa-standalone textarea,
+.pwa-standalone [contenteditable='true'],
+.pwa-standalone [role='textbox'] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+@supports ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
+  .platform-apple-like .native-translucent-surface {
+    background: var(--native-backdrop);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-color: var(--native-hairline);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-ease-out: linear;
+    --motion-ease-in-out: linear;
+    --motion-ease-drawer: linear;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}
