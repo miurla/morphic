@@ -52,6 +52,10 @@ function normalizeOrigin(origin: string): string | null {
   }
 }
 
+function isHttpNavigation(url: URL): boolean {
+  return url.protocol === 'http:' || url.protocol === 'https:'
+}
+
 export function isSensitiveNavigation(url: URL): boolean {
   const host = url.hostname.toLowerCase()
   const path = url.pathname.toLowerCase()
@@ -59,7 +63,9 @@ export function isSensitiveNavigation(url: URL): boolean {
   return (
     SENSITIVE_HOST_KEYWORDS.some(keyword => host.includes(keyword)) ||
     SENSITIVE_PATH_KEYWORDS.some(keyword =>
-      path.split('/').some(segment => segment === keyword || segment.includes(keyword))
+      path
+        .split('/')
+        .some(segment => segment === keyword || segment.includes(keyword))
     )
   )
 }
@@ -98,6 +104,19 @@ export function assessExternalNavigation(
     }
   }
 
+  if (!isHttpNavigation(url)) {
+    return {
+      href,
+      normalizedHref: url.href,
+      isValidUrl: true,
+      isExternal: false,
+      isSensitive: false,
+      risk: 'none',
+      displayHost: null,
+      reason: null
+    }
+  }
+
   const isExternal = url.origin !== normalizedBaseOrigin
   const isSensitive = isExternal && isSensitiveNavigation(url)
   const risk: NavigationRisk = isSensitive
@@ -113,7 +132,7 @@ export function assessExternalNavigation(
     isExternal,
     isSensitive,
     risk,
-    displayHost: url.host,
+    displayHost: isExternal ? url.host : null,
     reason: risk === 'none' ? null : buildExternalNavigationReason(url, risk)
   }
 }
