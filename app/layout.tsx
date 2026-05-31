@@ -20,6 +20,7 @@ import { KeyboardShortcutHandler } from '@/components/keyboard-shortcut-handler'
 import { ThemeProvider } from '@/components/theme-provider'
 
 import './globals.css'
+import './native-shell.css'
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -86,7 +87,11 @@ export default async function RootLayout({
   const userId = user?.id ?? (await getCurrentUserId())
 
   return (
-    <html lang="en" className="platform-unknown platform-apple-like display-unknown pwa-browser" suppressHydrationWarning>
+    <html
+      lang="en"
+      className="platform-unknown platform-apple-like display-unknown pwa-browser"
+      suppressHydrationWarning
+    >
       <body
         className={cn(
           'fixed inset-0 flex flex-col font-sans antialiased overflow-hidden app-shell',
