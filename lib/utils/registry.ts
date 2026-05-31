@@ -1,7 +1,7 @@
 import { anthropic } from '@ai-sdk/anthropic'
 import { createGateway } from '@ai-sdk/gateway'
 import { google } from '@ai-sdk/google'
-import { openai } from '@ai-sdk/openai'
+import { createOpenAI, openai } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createProviderRegistry, LanguageModel } from 'ai'
 import { createOllama } from 'ai-sdk-ollama'

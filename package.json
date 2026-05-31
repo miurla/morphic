@@ -21,7 +21,7 @@
     "@ai-sdk/gateway": "^3.0.114",
     "@ai-sdk/google": "^3.0.73",
     "@ai-sdk/openai": "^3.0.63",
-    "@ai-sdk/openai-compatible": "^2.0.47",
+    "@ai-sdk/openai-compatible": "^2.0.48",
     "@ai-sdk/react": "^3.0.182",
     "@aws-sdk/client-s3": "^3.850.0",
     "@json-render/core": "^0.16.0",
