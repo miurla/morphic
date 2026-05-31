@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { UserProvider } from '@/lib/contexts/user-context'
+import { buildPlatformInfo } from '@/lib/platform/platform'
 import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
@@ -30,6 +31,7 @@ const fontSans = FontSans({
 const title = 'Morphic'
 const description =
   'A fully open-source AI-powered answer engine with a generative UI.'
+const ssrPlatformClasses = buildPlatformInfo().classes.join(' ')
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://morphic.sh'),
@@ -37,6 +39,10 @@ export const metadata: Metadata = {
   description,
   applicationName: title,
   manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }]
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -87,11 +93,7 @@ export default async function RootLayout({
   const userId = user?.id ?? (await getCurrentUserId())
 
   return (
-    <html
-      lang="en"
-      className="platform-unknown platform-apple-like display-unknown pwa-browser"
-      suppressHydrationWarning
-    >
+    <html lang="en" className={ssrPlatformClasses} suppressHydrationWarning>
       <body
         className={cn(
           'fixed inset-0 flex flex-col font-sans antialiased overflow-hidden app-shell',
