@@ -1,0 +1,121 @@
+'use client'
+
+import { BotMessageSquare, CheckCircle2 } from 'lucide-react'
+
+import type { ToolPart } from '@/lib/types/ai'
+import { cn } from '@/lib/utils'
+
+import { CollapsibleMessage } from './collapsible-message'
+import ProcessHeader from './process-header'
+
+interface ResearchSubtaskSectionProps {
+  tool: ToolPart<'researchSubtask'>
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  borderless?: boolean
+  isFirst?: boolean
+  isLast?: boolean
+}
+
+export function ResearchSubtaskSection({
+  tool,
+  isOpen,
+  onOpenChange,
+  borderless = false,
+  isFirst = false,
+  isLast = false
+}: ResearchSubtaskSectionProps) {
+  const isLoading =
+    tool.state === 'input-streaming' || tool.state === 'input-available'
+  const isDone = tool.state === 'output-available'
+  const isError = tool.state === 'output-error'
+
+  const taskLabel = tool.input?.task
+    ? `Researching: ${tool.input.task}`
+    : 'Delegating research sub-task...'
+
+  const header = (
+    <ProcessHeader
+      isLoading={isLoading}
+      label={
+        <span className="inline-flex items-center gap-2 min-w-0 overflow-hidden">
+          <BotMessageSquare className="size-4 text-muted-foreground shrink-0" />
+          <span className="truncate">
+            {isDone
+              ? tool.output?.task
+                ? `Researched: ${tool.output.task}`
+                : 'Sub-task complete'
+              : isError
+                ? 'Sub-task failed'
+                : taskLabel}
+          </span>
+        </span>
+      }
+      meta={
+        isDone ? (
+          <CheckCircle2 className="size-4 text-green-500" />
+        ) : undefined
+      }
+      ariaExpanded={isOpen}
+    />
+  )
+
+  return (
+    <div className="relative">
+      {borderless && (
+        <>
+          {!isFirst && (
+            <div className="absolute left-[19.5px] w-px bg-border h-2 top-0" />
+          )}
+          {!isLast && (
+            <div className="absolute left-[19.5px] w-px bg-border h-2 bottom-0" />
+          )}
+        </>
+      )}
+      <CollapsibleMessage
+        role="assistant"
+        isCollapsible={isDone || isError}
+        header={header}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        showBorder={!borderless}
+        showIcon={false}
+        variant="default"
+        showSeparator={false}
+        headerClickBehavior="split"
+      >
+        <div className="flex">
+          {borderless && (
+            <>
+              <div className="w-[16px] shrink-0 flex justify-center">
+                <div
+                  className={cn(
+                    'w-px bg-border/50 transition-opacity duration-200',
+                    isOpen ? 'opacity-100' : 'opacity-0'
+                  )}
+                  style={{
+                    marginTop: isFirst ? '0' : '-1rem',
+                    marginBottom: isLast ? '0' : '-1rem'
+                  }}
+                />
+              </div>
+              <div className="w-2 shrink-0" />
+            </>
+          )}
+          <div className="flex-1 px-3 pb-3 text-sm text-muted-foreground">
+            {isDone && tool.output?.notes ? (
+              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-xs leading-relaxed">
+                {tool.output.notes}
+              </div>
+            ) : isError ? (
+              <p className="text-xs text-destructive">
+                Sub-task research failed.
+                {tool.errorText ? ` ${tool.errorText}` : ''}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </CollapsibleMessage>
+    </div>
+  )
+}

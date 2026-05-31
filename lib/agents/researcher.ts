@@ -6,6 +6,7 @@ import { type Model } from '@/lib/types/models'
 import { fetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
 import { createSearchTool } from '../tools/search'
+import { createResearchSubtaskTool } from '../tools/subtask-agent'
 import { createTodoTools } from '../tools/todo'
 import { SearchMode } from '../types/search'
 import { getModel } from '../utils/registry'
@@ -82,6 +83,7 @@ export function createResearcher({
     const originalSearchTool = createSearchTool(model)
     const askQuestionTool = createQuestionTool(model)
     const todoTools = createTodoTools()
+    const researchSubtaskTool = createResearchSubtaskTool(model)
 
     let systemPrompt: string
     let activeToolsList: (keyof ResearcherTools)[] = []
@@ -103,7 +105,7 @@ export function createResearcher({
       case 'adaptive':
       default:
         systemPrompt = getAdaptiveModePrompt()
-        activeToolsList = ['search', 'fetch', 'todoWrite']
+        activeToolsList = ['search', 'fetch', 'todoWrite', 'researchSubtask']
         console.log(
           `[Researcher] Adaptive mode: maxSteps=50, tools=[${activeToolsList.join(', ')}]`
         )
@@ -117,6 +119,7 @@ export function createResearcher({
       search: searchTool,
       fetch: fetchTool,
       askQuestion: askQuestionTool,
+      researchSubtask: researchSubtaskTool,
       ...todoTools
     } as ResearcherTools
 

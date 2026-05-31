@@ -6,6 +6,7 @@ import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
 import FetchSection from './fetch-section'
 import { QuestionConfirmation } from './question-confirmation'
+import { ResearchSubtaskSection } from './research-subtask-section'
 import { SearchSection } from './search-section'
 import { ToolTodoDisplay } from './tool-todo-display'
 
@@ -102,6 +103,17 @@ export function ToolSection({
           output={tool.output}
           errorText={tool.errorText}
           toolCallId={tool.toolCallId}
+          isOpen={isOpen}
+          onOpenChange={onOpenChange}
+          borderless={borderless}
+          isFirst={isFirst}
+          isLast={isLast}
+        />
+      )
+    case 'tool-researchSubtask':
+      return (
+        <ResearchSubtaskSection
+          tool={tool as ToolPart<'researchSubtask'>}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           borderless={borderless}

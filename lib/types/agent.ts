@@ -9,6 +9,7 @@ import type {
 import type { fetchTool } from '../tools/fetch'
 import type { createQuestionTool } from '../tools/question'
 import type { createSearchTool } from '../tools/search'
+import type { createResearchSubtaskTool } from '../tools/subtask-agent'
 import type { createTodoTools } from '../tools/todo'
 
 // Define the tools type for researcher agent
@@ -16,6 +17,7 @@ export type ResearcherTools = {
   search: ReturnType<typeof createSearchTool>
   fetch: typeof fetchTool
   askQuestion: ReturnType<typeof createQuestionTool>
+  researchSubtask: ReturnType<typeof createResearchSubtaskTool>
 } & ReturnType<typeof createTodoTools>
 
 // Type alias for the researcher agent using ToolLoopAgent
@@ -37,6 +39,9 @@ export type QuestionToolInvocation = UIToolInvocation<
 export type TodoWriteToolInvocation = UIToolInvocation<
   ResearcherTools['todoWrite']
 >
+export type ResearchSubtaskToolInvocation = UIToolInvocation<
+  ResearcherTools['researchSubtask']
+>
 
 // Union type for all tool invocations
 export type ResearcherToolInvocation =
@@ -44,6 +49,7 @@ export type ResearcherToolInvocation =
   | FetchToolInvocation
   | QuestionToolInvocation
   | TodoWriteToolInvocation
+  | ResearchSubtaskToolInvocation
 
 // Helper type to extract tool names
 export type ResearcherToolName = keyof ResearcherTools

@@ -379,6 +379,69 @@ export async function fetchGatewayModels(): Promise<Model[]> {
   }
 }
 
+export async function fetchCloudflareModels(): Promise<Model[]> {
+  if (!isProviderEnabled('cloudflare')) {
+    return []
+  }
+
+  const fallbacks = [
+    {
+      id: '@cf/meta/llama-3.3-70b-instruct',
+      name: 'Llama 3.3 70B Instruct',
+      provider: 'Cloudflare',
+      providerId: 'cloudflare'
+    },
+    {
+      id: '@cf/meta/llama-3.1-8b-instruct',
+      name: 'Llama 3.1 8B Instruct',
+      provider: 'Cloudflare',
+      providerId: 'cloudflare'
+    },
+    {
+      id: '@cf/meta/llama-3.2-3b-instruct',
+      name: 'Llama 3.2 3B Instruct',
+      provider: 'Cloudflare',
+      providerId: 'cloudflare'
+    },
+    {
+      id: '@cf/qwen/qwen1.5-14b-chat-awq',
+      name: 'Qwen 1.5 14B Chat AWQ',
+      provider: 'Cloudflare',
+      providerId: 'cloudflare'
+    }
+  ]
+
+  try {
+    const json = await fetchJson(
+      `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/v1/models`,
+      {
+        Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`
+      }
+    )
+
+    const data = Array.isArray(json?.result) ? json.result : (Array.isArray(json?.data) ? json.data : [])
+    if (data.length === 0) {
+      return fallbacks
+    }
+
+    const fetchedModels = data
+      .map(item => String(item?.id ?? ''))
+      .filter(Boolean)
+      .filter(id => id.startsWith('@cf/') && (id.includes('llama') || id.includes('mistral') || id.includes('qwen') || id.includes('gemma') || id.includes('phi') || id.includes('deepseek')))
+      .map(id => ({
+        id,
+        name: id.split('/').pop() || id,
+        provider: 'Cloudflare',
+        providerId: 'cloudflare'
+      }))
+
+    return fetchedModels.length > 0 ? sortModels(dedupeModels(fetchedModels)) : fallbacks
+  } catch (error) {
+    console.warn('[ModelFetch] Failed to fetch Cloudflare models:', error)
+    return fallbacks
+  }
+}
+
 export async function fetchAvailableModels(options?: {
   forceRefresh?: boolean
 }): Promise<ModelsByProvider> {
@@ -389,16 +452,17 @@ export async function fetchAvailableModels(options?: {
     return modelsCache.value
   }
 
-  const [openai, anthropic, google, ollama, gateway] = await Promise.all([
+  const [openai, anthropic, google, ollama, gateway, cloudflare] = await Promise.all([
     fetchOpenAIModels(),
     fetchAnthropicModels(),
     fetchGoogleModels(),
     fetchOllamaModels(),
-    fetchGatewayModels()
+    fetchGatewayModels(),
+    fetchCloudflareModels()
   ])
 
   const grouped = groupByProvider(
-    dedupeModels([...openai, ...anthropic, ...google, ...ollama, ...gateway])
+    dedupeModels([...openai, ...anthropic, ...google, ...ollama, ...gateway, ...cloudflare])
   )
 
   // Keep stable ordering for each provider list.

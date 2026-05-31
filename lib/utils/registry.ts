@@ -16,6 +16,10 @@ const providers: Record<string, any> = {
   }),
   gateway: createGateway({
     apiKey: process.env.AI_GATEWAY_API_KEY
+  }),
+  cloudflare: createOpenAI({
+    apiKey: process.env.CLOUDFLARE_API_TOKEN,
+    baseURL: `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/v1`
   })
 }
 
@@ -70,6 +74,8 @@ export function isProviderEnabled(providerId: string): boolean {
       return !!process.env.AI_GATEWAY_API_KEY
     case 'ollama':
       return !!process.env.OLLAMA_BASE_URL
+    case 'cloudflare':
+      return !!process.env.CLOUDFLARE_API_TOKEN && !!process.env.CLOUDFLARE_ACCOUNT_ID
     default:
       return false
   }

@@ -19,7 +19,8 @@ const PROVIDER_LABELS: Record<string, string> = {
   google: 'Google',
   ollama: 'Ollama',
   gateway: 'Gateway',
-  'openai-compatible': 'OpenAI Compatible'
+  'openai-compatible': 'OpenAI Compatible',
+  cloudflare: 'Cloudflare Workers AI'
 }
 
 function buildProviderOptions(
