@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Morphic</title>
+  <desc id="desc">Morphic app icon</desc>
+  <defs>
+    <linearGradient id="bg" x1="96" y1="48" x2="416" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#e5e7eb"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="152" y1="144" x2="360" y2="368" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="1" stop-color="#374151"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path fill="url(#mark)" d="M136 348V164h45l75 88 75-88h45v184h-48V236l-57 66h-30l-57-66v112h-48Z"/>
+  <circle cx="256" cy="384" r="18" fill="#111827" opacity="0.85"/>
+</svg>
