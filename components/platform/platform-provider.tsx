@@ -16,6 +16,11 @@ import {
 
 const PlatformContext = createContext<PlatformInfo>(buildPlatformInfo())
 
+type LegacyMediaQueryList = MediaQueryList & {
+  addListener?: (listener: (event: MediaQueryListEvent) => void) => void
+  removeListener?: (listener: (event: MediaQueryListEvent) => void) => void
+}
+
 function applyPlatformClasses(info: PlatformInfo) {
   const root = document.documentElement
   const previous = Array.from(root.classList).filter(
@@ -34,6 +39,34 @@ function applyPlatformClasses(info: PlatformInfo) {
   root.dataset.platformFamily = info.family
   root.dataset.displayMode = info.displayMode
   root.dataset.pwaStandalone = String(info.isStandalone)
+}
+
+function addMediaQueryListener(
+  query: LegacyMediaQueryList,
+  listener: (event: MediaQueryListEvent) => void
+) {
+  if (typeof query.addEventListener === 'function') {
+    query.addEventListener('change', listener)
+    return
+  }
+
+  if (typeof query.addListener === 'function') {
+    query.addListener(listener)
+  }
+}
+
+function removeMediaQueryListener(
+  query: LegacyMediaQueryList,
+  listener: (event: MediaQueryListEvent) => void
+) {
+  if (typeof query.removeEventListener === 'function') {
+    query.removeEventListener('change', listener)
+    return
+  }
+
+  if (typeof query.removeListener === 'function') {
+    query.removeListener(listener)
+  }
 }
 
 export function PlatformProvider({ children }: { children: React.ReactNode }) {
@@ -59,20 +92,20 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     ]
       .map(query => {
         try {
-          return window.matchMedia(query)
+          return window.matchMedia(query) as LegacyMediaQueryList
         } catch {
           return null
         }
       })
-      .filter((query): query is MediaQueryList => query !== null)
+      .filter((query): query is LegacyMediaQueryList => query !== null)
 
     for (const query of displayModeQueries) {
-      query.addEventListener?.('change', updatePlatformInfo)
+      addMediaQueryListener(query, updatePlatformInfo)
     }
 
     return () => {
       for (const query of displayModeQueries) {
-        query.removeEventListener?.('change', updatePlatformInfo)
+        removeMediaQueryListener(query, updatePlatformInfo)
       }
     }
   }, [])
