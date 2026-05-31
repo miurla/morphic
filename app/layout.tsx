@@ -9,6 +9,7 @@ import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 
+import { PlatformProvider } from '@/components/platform/platform-provider'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -33,6 +34,16 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://morphic.sh'),
   title,
   description,
+  applicationName: title,
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title
+  },
+  formatDetection: {
+    telephone: false
+  },
   openGraph: {
     title,
     description
@@ -49,7 +60,12 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   minimumScale: 1,
-  maximumScale: 1
+  maximumScale: 1,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fafafa' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' }
+  ]
 }
 
 export default async function RootLayout({
@@ -70,34 +86,36 @@ export default async function RootLayout({
   const userId = user?.id ?? (await getCurrentUserId())
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="platform-unknown platform-apple-like display-unknown pwa-browser" suppressHydrationWarning>
       <body
         className={cn(
-          'fixed inset-0 flex flex-col font-sans antialiased overflow-hidden',
+          'fixed inset-0 flex flex-col font-sans antialiased overflow-hidden app-shell',
           fontSans.variable
         )}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <UserProvider hasUser={!!userId}>
-            <SidebarProvider defaultOpen={false}>
-              {userId && <AppSidebar />}
-              <KeyboardShortcutHandler />
-              <div className="flex flex-col flex-1 min-w-0">
-                <Header user={user} />
-                <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
-                  <ArtifactRoot>{children}</ArtifactRoot>
-                </main>
-              </div>
-            </SidebarProvider>
-          </UserProvider>
-          <Toaster />
-          <Analytics />
-        </ThemeProvider>
+        <PlatformProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <UserProvider hasUser={!!userId}>
+              <SidebarProvider defaultOpen={false}>
+                {userId && <AppSidebar />}
+                <KeyboardShortcutHandler />
+                <div className="flex flex-col flex-1 min-w-0 native-app-frame">
+                  <Header user={user} />
+                  <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden native-app-main">
+                    <ArtifactRoot>{children}</ArtifactRoot>
+                  </main>
+                </div>
+              </SidebarProvider>
+            </UserProvider>
+            <Toaster />
+            <Analytics />
+          </ThemeProvider>
+        </PlatformProvider>
       </body>
     </html>
   )
