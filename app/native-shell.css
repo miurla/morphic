@@ -70,6 +70,10 @@
   -webkit-user-select: none;
 }
 
+.pwa-standalone .native-app-main,
+.pwa-standalone .native-app-main *,
+.pwa-standalone code,
+.pwa-standalone pre,
 .pwa-standalone input,
 .pwa-standalone textarea,
 .pwa-standalone [contenteditable='true'],
