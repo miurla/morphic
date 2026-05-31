@@ -178,7 +178,11 @@ export function getClientPlatformInfo(): PlatformInfo {
     platform: nav.platform,
     maxTouchPoints: nav.maxTouchPoints,
     userAgentDataPlatform: nav.userAgentData?.platform,
-    displayMode: resolveDisplayMode(window.matchMedia.bind(window)),
+    displayMode: resolveDisplayMode(
+      typeof window.matchMedia === 'function'
+        ? window.matchMedia.bind(window)
+        : undefined
+    ),
     navigatorStandalone: nav.standalone
   })
 }
