@@ -132,6 +132,8 @@ export const parts = pgTable(
     toolErrorText: text('tool_error_text'),
     toolSearchInput: json('tool_search_input'),
     toolSearchOutput: json('tool_search_output'),
+    toolFeedSearchInput: json('tool_feedSearch_input'),
+    toolFeedSearchOutput: json('tool_feedSearch_output'),
     toolFetchInput: json('tool_fetch_input'),
     toolFetchOutput: json('tool_fetch_output'),
     toolQuestionInput: json('tool_question_input'),

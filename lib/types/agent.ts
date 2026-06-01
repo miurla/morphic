@@ -6,6 +6,7 @@ import type {
   UIToolInvocation
 } from 'ai'
 
+import type { createFeedTool } from '../tools/feed'
 import type { fetchTool } from '../tools/fetch'
 import type { createMapTool } from '../tools/map'
 import type { createQuestionTool } from '../tools/question'
@@ -16,6 +17,7 @@ import type { createTodoTools } from '../tools/todo'
 // Define the tools type for researcher agent
 export type ResearcherTools = {
   search: ReturnType<typeof createSearchTool>
+  feedSearch: ReturnType<typeof createFeedTool>
   mapSearch: ReturnType<typeof createMapTool>
   fetch: typeof fetchTool
   askQuestion: ReturnType<typeof createQuestionTool>
@@ -34,6 +36,9 @@ export type ResearcherUITools = InferUITools<ResearcherTools>
 
 // Tool invocation types for each tool
 export type SearchToolInvocation = UIToolInvocation<ResearcherTools['search']>
+export type FeedSearchToolInvocation = UIToolInvocation<
+  ResearcherTools['feedSearch']
+>
 export type FetchToolInvocation = UIToolInvocation<ResearcherTools['fetch']>
 export type QuestionToolInvocation = UIToolInvocation<
   ResearcherTools['askQuestion']
@@ -51,6 +56,7 @@ export type ResearchSubtaskToolInvocation = UIToolInvocation<
 // Union type for all tool invocations
 export type ResearcherToolInvocation =
   | SearchToolInvocation
+  | FeedSearchToolInvocation
   | MapSearchToolInvocation
   | FetchToolInvocation
   | QuestionToolInvocation

@@ -283,6 +283,13 @@ export function mapUIMessagePartsToDBParts(
         }
         return createToolPartMapping(basePart, part, 'search')
 
+      case 'tool-feedSearch':
+        if (!isExtendedToolPart(part)) {
+          console.error('Invalid extended tool part:', part)
+          return null
+        }
+        return createToolPartMapping(basePart, part, 'feedSearch')
+
       case 'tool-fetch':
         if (!isExtendedToolPart(part)) {
           console.error('Invalid extended tool part:', part)
@@ -449,40 +456,51 @@ export function mapDBPartToUIMessagePart(
           }
         }
 
-        if (toolName === 'fetch') {
+        if (toolName === 'feedSearch' || toolName === 'fetch') {
           if (!part.tool_state) {
             throw new Error(`tool_state is undefined for ${toolName}`)
           }
 
+          const partType =
+            toolName === 'feedSearch' ? 'tool-feedSearch' : 'tool-fetch'
+          const input =
+            toolName === 'feedSearch'
+              ? part.tool_feedSearch_input
+              : part.tool_fetch_input
+          const output =
+            toolName === 'feedSearch'
+              ? part.tool_feedSearch_output
+              : part.tool_fetch_output
+
           switch (part.tool_state) {
             case 'input-streaming':
               return {
-                type: 'tool-fetch',
+                type: partType,
                 state: 'input-streaming',
                 toolCallId: part.tool_toolCallId || '',
-                input: part.tool_fetch_input!
+                input: input!
               }
             case 'input-available':
               return {
-                type: 'tool-fetch',
+                type: partType,
                 state: 'input-available',
                 toolCallId: part.tool_toolCallId || '',
-                input: part.tool_fetch_input!
+                input: input!
               }
             case 'output-available':
               return {
-                type: 'tool-fetch',
+                type: partType,
                 state: 'output-available',
                 toolCallId: part.tool_toolCallId || '',
-                input: part.tool_fetch_input!,
-                output: part.tool_fetch_output!
+                input: input!,
+                output: output!
               }
             case 'output-error':
               return {
-                type: 'tool-fetch',
+                type: partType,
                 state: 'output-error',
                 toolCallId: part.tool_toolCallId || '',
-                input: part.tool_fetch_input!,
+                input: input!,
                 errorText: part.tool_errorText!
               }
             default:
@@ -672,6 +690,7 @@ function getToolNameFromType(toolName: string): string {
   // Map original tool names to DB column names
   const toolNameMap: Record<string, string> = {
     search: 'search',
+    feedSearch: 'feedSearch',
     fetch: 'fetch',
     askQuestion: 'question',
     question: 'question',
@@ -713,6 +732,7 @@ function getToolNameFromCallId(
 function getOriginalToolName(dbToolName: string): string {
   const reverseMap: Record<string, string> = {
     search: 'search',
+    feedSearch: 'feedSearch',
     fetch: 'fetch',
     question: 'askQuestion',
     todoWrite: 'todoWrite',

@@ -3,6 +3,7 @@ import { stepCountIs, tool, ToolLoopAgent } from 'ai'
 import type { ResearcherTools } from '@/lib/types/agent'
 import { type Model } from '@/lib/types/models'
 
+import { createFeedTool } from '../tools/feed'
 import { fetchTool } from '../tools/fetch'
 import { createMapTool } from '../tools/map'
 import { createQuestionTool } from '../tools/question'
@@ -85,6 +86,7 @@ export function createResearcher({
     const askQuestionTool = createQuestionTool(model)
     const todoTools = createTodoTools()
     const researchSubtaskTool = createResearchSubtaskTool(model)
+    const feedSearchTool = createFeedTool()
     const mapSearchTool = createMapTool()
 
     let systemPrompt: string
@@ -109,6 +111,7 @@ export function createResearcher({
         systemPrompt = getAdaptiveModePrompt()
         activeToolsList = [
           'search',
+          'feedSearch',
           'fetch',
           'todoWrite',
           'researchSubtask',
@@ -125,6 +128,7 @@ export function createResearcher({
     // Build tools object with proper typing
     const tools: ResearcherTools = {
       search: searchTool,
+      feedSearch: feedSearchTool,
       mapSearch: mapSearchTool,
       fetch: fetchTool,
       askQuestion: askQuestionTool,

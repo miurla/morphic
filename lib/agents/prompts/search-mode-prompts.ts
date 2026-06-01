@@ -256,6 +256,12 @@ Search tool usage - UNDERSTAND THE DIFFERENCE:
   - You get relevant content immediately without needing fetch
   - Use this when the query has semantic meaning to match against
 
+Feed tool usage (feedSearch):
+- Use this tool when the user asks for RSS, Atom, RDF/RSS, JSON Feed, feed discovery, subscriptions, podcasts, episodes, podcast feed metadata, or Podcasting 2.0 details
+- Use action="discover" for a website/homepage/domain when you need to find available feeds
+- Use action="read" for a known feed URL when you need recent posts, podcast episodes, enclosures, transcripts, chapters, funding, value recipients, or other Podcasting 2.0 metadata
+- Prefer feedSearch over generic search/fetch when the task is feed-specific; feeds provide structured titles, dates, enclosures, and podcast metadata directly
+
 ${getContentTypesGuidance()}
 
 Fetch tool usage:
