@@ -20,7 +20,8 @@ const PROVIDER_LABELS: Record<string, string> = {
   ollama: 'Ollama',
   gateway: 'Gateway',
   'openai-compatible': 'OpenAI Compatible',
-  cloudflare: 'Cloudflare Workers AI'
+  cloudflare: 'Cloudflare Workers AI',
+  mistral: 'Mistral'
 }
 
 function buildProviderOptions(

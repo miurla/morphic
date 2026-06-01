@@ -1,6 +1,7 @@
 import { anthropic } from '@ai-sdk/anthropic'
 import { createGateway } from '@ai-sdk/gateway'
 import { google } from '@ai-sdk/google'
+import { mistral } from '@ai-sdk/mistral'
 import { createOpenAI, openai } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createProviderRegistry, LanguageModel } from 'ai'
@@ -19,6 +20,7 @@ const providers: Record<string, any> = {
   openai,
   anthropic,
   google,
+  mistral,
   'openai-compatible': createOpenAICompatible({
     // Keep the SDK provider key stable. OPENAI_COMPATIBLE_PROVIDER_NAME is
     // only a UI label used by the model selector.
@@ -89,7 +91,12 @@ export function isProviderEnabled(providerId: string): boolean {
     case 'ollama':
       return !!process.env.OLLAMA_BASE_URL
     case 'cloudflare':
-      return !!process.env.CLOUDFLARE_API_TOKEN && !!process.env.CLOUDFLARE_ACCOUNT_ID
+      return (
+        !!process.env.CLOUDFLARE_API_TOKEN &&
+        !!process.env.CLOUDFLARE_ACCOUNT_ID
+      )
+    case 'mistral':
+      return !!process.env.MISTRAL_API_KEY
     default:
       return false
   }
