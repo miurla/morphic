@@ -23,7 +23,7 @@ services:
       MORPHIC_CLOUD_DEPLOYMENT: 'false'
       # Docker-internal service URLs
       LOCAL_REDIS_URL: ${LOCAL_REDIS_URL:-redis://redis:6379}
-      SEARCH_API: ${SEARCH_API:-searxng}
+      SEARCH_API: ${SEARCH_API:-qwant}
       SEARXNG_API_URL: ${SEARXNG_API_URL:-http://searxng:8080}
     ports:
       - '3000:3000' # Maps port 3000 on the host to port 3000 in the container.

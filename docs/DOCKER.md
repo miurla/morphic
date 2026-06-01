@@ -56,7 +56,7 @@ In Docker mode, Morphic dynamically detects available AI providers based on your
 Docker Compose automatically sets these for you:
 
 - `ENABLE_AUTH=false` (anonymous mode)
-- `SEARCH_API=searxng`
+- `SEARCH_API=qwant`
 - `SEARXNG_API_URL=http://searxng:8080`
 - `LOCAL_REDIS_URL=redis://redis:6379`
 - `MORPHIC_CLOUD_DEPLOYMENT=false`
@@ -64,7 +64,7 @@ Docker Compose automatically sets these for you:
 Values in `docker-compose.yaml` take precedence over `.env.local`. To override a default:
 
 ```bash
-SEARCH_API=tavily docker compose up -d
+SEARCH_API=duckduckgo docker compose up -d
 ```
 
 ## File Upload

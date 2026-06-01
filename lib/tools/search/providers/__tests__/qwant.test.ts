@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { DuckDuckGoSearchProvider } from '../duckduckgo'
 import { QwantSearchProvider } from '../qwant'
 
 describe('QwantSearchProvider', () => {
@@ -51,5 +52,39 @@ describe('QwantSearchProvider', () => {
     expect(results.images).toEqual([
       'http://localhost:18080/image-proxy?url=example'
     ])
+  })
+})
+
+describe('DuckDuckGoSearchProvider', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    delete process.env.SEARXNG_API_URL
+  })
+
+  it('routes searches through the DuckDuckGo engine in SearXNG', async () => {
+    process.env.SEARXNG_API_URL = 'http://localhost:18080'
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        query: 'morphic github',
+        number_of_results: 1,
+        results: [
+          {
+            title: 'Morphic GitHub',
+            url: 'https://github.com/miurla/morphic',
+            content: 'An AI-powered search engine.',
+            img_src: ''
+          }
+        ]
+      })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const provider = new DuckDuckGoSearchProvider()
+    const results = await provider.search('morphic github', 10, 'basic', [], [])
+
+    const url = new URL(fetchMock.mock.calls[0][0])
+    expect(url.searchParams.get('engines')).toBe('duckduckgo')
+    expect(results.results[0]?.url).toBe('https://github.com/miurla/morphic')
   })
 })
