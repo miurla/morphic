@@ -62,7 +62,7 @@ services:
   searxng:
     image: searxng/searxng
     ports:
-      - '${SEARXNG_PORT:-8080}:8080'
+      - '${SEARXNG_HOST_PORT:-8080}:${SEARXNG_PORT:-8080}'
     env_file: .env.local # can remove if you want to use env variables or in settings.yml
     volumes:
       - ./searxng-limiter.toml:/etc/searxng/limiter.toml

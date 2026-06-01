@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 
 import {
   IconLink as Link2,
   IconLogin as LogIn,
+  IconMessageCircle as MessageCircle,
   IconPalette as Palette,
   IconSettings as Settings2
 } from '@tabler/icons-react'
@@ -24,9 +26,20 @@ import {
 import { ExternalLinkItems } from './external-link-items'
 import { ThemeMenuItems } from './theme-menu-items'
 
-export default function GuestMenu() {
+interface GuestMenuProps {
+  onFeedback: () => void
+}
+
+export default function GuestMenu({ onFeedback }: GuestMenuProps) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const handleFeedback = () => {
+    setMenuOpen(false)
+    window.setTimeout(onFeedback, 0)
+  }
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
@@ -43,6 +56,15 @@ export default function GuestMenu() {
             <LogIn className="size-4" />
             <span>Sign In</span>
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={event => {
+            event.preventDefault()
+            handleFeedback()
+          }}
+        >
+          <MessageCircle className="size-4" />
+          <span>Feedback</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>
