@@ -42,7 +42,8 @@ const OPENAI_COMPATIBLE_EXCLUDED_KEYWORDS = [
   'audio',
   'transcribe',
   'image',
-  'realtime'
+  'realtime',
+  'rerank'
 ]
 
 let modelsCache:
@@ -131,6 +132,36 @@ function passesGoogleFilters(id: string): boolean {
 function passesOpenAICompatibleFilters(id: string): boolean {
   return !OPENAI_COMPATIBLE_EXCLUDED_KEYWORDS.some(keyword =>
     id.toLowerCase().includes(keyword)
+  )
+}
+
+function formatProviderModelName(id: string): string {
+  const modelId = id.includes('/') ? id.split('/').pop() || id : id
+  return modelId
+    .replace(/-latest$/, '')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function modelsFromStaticList(
+  staticList: string,
+  provider: string,
+  providerId: string
+): Model[] {
+  return sortModels(
+    dedupeModels(
+      staticList
+        .split(',')
+        .map(id => id.trim())
+        .filter(Boolean)
+        .filter(passesOpenAICompatibleFilters)
+        .map(id => ({
+          id,
+          name: formatProviderModelName(id),
+          provider,
+          providerId
+        }))
+    )
   )
 }
 
@@ -332,20 +363,7 @@ export async function fetchOpenAICompatibleModels(): Promise<Model[]> {
   // slow / unreachable.
   const staticList = process.env.OPENAI_COMPATIBLE_MODELS
   if (staticList) {
-    return sortModels(
-      dedupeModels(
-        staticList
-          .split(',')
-          .map(id => id.trim())
-          .filter(Boolean)
-          .map(id => ({
-            id,
-            name: id,
-            provider: providerName,
-            providerId: 'openai-compatible'
-          }))
-      )
-    )
+    return modelsFromStaticList(staticList, providerName, 'openai-compatible')
   }
 
   try {
@@ -380,6 +398,58 @@ export async function fetchOpenAICompatibleModels(): Promise<Model[]> {
       error
     )
     return []
+  }
+}
+
+export async function fetchNvidiaModels(): Promise<Model[]> {
+  if (!isProviderEnabled('nvidia')) {
+    return []
+  }
+
+  const fallbackModels = modelsFromStaticList(
+    [
+      'meta/llama-3.1-8b-instruct',
+      'meta/llama-3.3-70b-instruct',
+      'nvidia/llama-3.1-nemotron-70b-instruct'
+    ].join(','),
+    'NVIDIA NIM',
+    'nvidia'
+  )
+
+  const staticList = process.env.NVIDIA_MODELS
+  if (staticList) {
+    return modelsFromStaticList(staticList, 'NVIDIA NIM', 'nvidia')
+  }
+
+  try {
+    const rawBaseURL =
+      process.env.NVIDIA_API_BASE_URL || 'https://integrate.api.nvidia.com'
+    const baseURL = rawBaseURL.replace(/\/+$/, '').replace(/\/v1$/, '')
+
+    const json = await fetchJson(`${baseURL}/v1/models`, {
+      Authorization: `Bearer ${process.env.NVIDIA_API_KEY}`
+    })
+
+    const data = Array.isArray(json?.data) ? json.data : []
+    const models = sortModels(
+      dedupeModels(
+        data
+          .map(item => String(item?.id ?? ''))
+          .filter(Boolean)
+          .filter(passesOpenAICompatibleFilters)
+          .map(id => ({
+            id,
+            name: formatProviderModelName(id),
+            provider: 'NVIDIA NIM',
+            providerId: 'nvidia'
+          }))
+      )
+    )
+
+    return models.length > 0 ? models : fallbackModels
+  } catch (error) {
+    console.warn('[ModelFetch] Failed to fetch NVIDIA NIM models:', error)
+    return fallbackModels
   }
 }
 
@@ -459,6 +529,70 @@ export async function fetchGatewayModels(): Promise<Model[]> {
   }
 }
 
+export async function fetchMistralModels(): Promise<Model[]> {
+  if (!isProviderEnabled('mistral')) {
+    return []
+  }
+
+  const fallbacks = [
+    {
+      id: 'mistral-large-latest',
+      name: 'Mistral Large',
+      provider: 'Mistral',
+      providerId: 'mistral'
+    },
+    {
+      id: 'mistral-medium-latest',
+      name: 'Mistral Medium',
+      provider: 'Mistral',
+      providerId: 'mistral'
+    },
+    {
+      id: 'mistral-small-latest',
+      name: 'Mistral Small',
+      provider: 'Mistral',
+      providerId: 'mistral'
+    },
+    {
+      id: 'codestral-latest',
+      name: 'Codestral',
+      provider: 'Mistral',
+      providerId: 'mistral'
+    }
+  ]
+
+  try {
+    const json = await fetchJson('https://api.mistral.ai/v1/models', {
+      Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`
+    })
+
+    const data = Array.isArray(json?.data) ? json.data : []
+    if (data.length === 0) {
+      return fallbacks
+    }
+
+    const excluded = ['embed', 'moderation', 'ocr']
+
+    return data
+      .map((m: Record<string, unknown>) => String(m?.id ?? ''))
+      .filter(Boolean)
+      .filter(
+        (id: string) => !excluded.some(kw => id.toLowerCase().includes(kw))
+      )
+      .map((id: string) => ({
+        id,
+        name: id
+          .replace(/-latest$/, '')
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, c => c.toUpperCase()),
+        provider: 'Mistral',
+        providerId: 'mistral'
+      }))
+  } catch (error) {
+    console.error('Error fetching Mistral models:', error)
+    return fallbacks
+  }
+}
 export async function fetchCloudflareModels(): Promise<Model[]> {
   if (!isProviderEnabled('cloudflare')) {
     return []
@@ -552,17 +686,21 @@ export async function fetchAvailableModels(options?: {
     anthropic,
     google,
     openaiCompatible,
+    nvidia,
     ollama,
     gateway,
-    cloudflare
+    cloudflare,
+    mistralModels
   ] = await Promise.all([
     fetchOpenAIModels(),
     fetchAnthropicModels(),
     fetchGoogleModels(),
     fetchOpenAICompatibleModels(),
+    fetchNvidiaModels(),
     fetchOllamaModels(),
     fetchGatewayModels(),
-    fetchCloudflareModels()
+    fetchCloudflareModels(),
+    fetchMistralModels()
   ])
 
   const grouped = groupByProvider(
@@ -571,9 +709,11 @@ export async function fetchAvailableModels(options?: {
       ...anthropic,
       ...google,
       ...openaiCompatible,
+      ...nvidia,
       ...ollama,
       ...gateway,
-      ...cloudflare
+      ...cloudflare,
+      ...mistralModels
     ])
   )
 
