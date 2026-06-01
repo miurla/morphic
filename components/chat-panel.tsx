@@ -306,7 +306,7 @@ export function ChatPanel({
 
         <div
           className={cn(
-            'relative flex w-full flex-col gap-2 rounded-3xl border border-input bg-muted transition-[box-shadow] duration-[140ms] ease-[var(--motion-ease-out)]',
+            'native-composer-surface relative flex w-full flex-col gap-2 rounded-3xl border border-input bg-muted transition-[box-shadow] duration-[140ms] ease-[var(--motion-ease-out)]',
             isInputFocused &&
               'ring-1 ring-ring/20 ring-offset-1 ring-offset-background/50'
           )}

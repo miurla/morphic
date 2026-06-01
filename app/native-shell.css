@@ -1,3 +1,5 @@
+@import './ui-phase-2.css';
+
 :root {
   --native-safe-top: env(safe-area-inset-top, 0px);
   --native-safe-right: env(safe-area-inset-right, 0px);
@@ -12,7 +14,9 @@
   --native-backdrop: color-mix(in oklch, var(--background) 86%, transparent);
   --native-hairline: color-mix(in oklch, var(--border) 72%, transparent);
   --native-shadow-card: 0 16px 48px hsl(0 0% 0% / 0.12);
-  --native-font-stack: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  --native-font-stack:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui,
+    sans-serif;
 }
 
 .platform-apple-like {
@@ -56,7 +60,11 @@
 .native-app-frame {
   min-height: 0;
   background:
-    radial-gradient(circle at top, color-mix(in oklch, var(--muted) 45%, transparent), transparent 36rem),
+    radial-gradient(
+      circle at top,
+      color-mix(in oklch, var(--muted) 45%, transparent),
+      transparent 36rem
+    ),
     var(--background);
 }
 
@@ -82,7 +90,9 @@
   -webkit-user-select: text;
 }
 
-@supports ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
+@supports (
+  (backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))
+) {
   .platform-apple-like .native-translucent-surface {
     background: var(--native-backdrop);
     backdrop-filter: blur(20px) saturate(180%);

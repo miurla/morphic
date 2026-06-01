@@ -28,12 +28,16 @@ export default function GuestMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-6">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="native-menu-trigger size-9 rounded-full text-muted-foreground hover:text-foreground"
+        >
           <Settings2 className="size-4" />
           <span className="sr-only">Open menu</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-56 p-1.5" align="end" forceMount>
         <DropdownMenuItem asChild>
           <Link href="/auth/login">
             <LogIn className="size-4" />
@@ -46,7 +50,7 @@ export default function GuestMenu() {
             <Palette className="size-4" />
             <span>Theme</span>
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
+          <DropdownMenuSubContent className="p-1.5">
             <ThemeMenuItems />
           </DropdownMenuSubContent>
         </DropdownMenuSub>
@@ -55,7 +59,7 @@ export default function GuestMenu() {
             <Link2 className="size-4" />
             <span>Links</span>
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
+          <DropdownMenuSubContent className="p-1.5">
             <ExternalLinkItems />
           </DropdownMenuSubContent>
         </DropdownMenuSub>
