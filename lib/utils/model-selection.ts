@@ -21,6 +21,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   gateway: 'Gateway',
   'openai-compatible': 'OpenAI Compatible',
   cloudflare: 'Cloudflare Workers AI',
+  nvidia: 'NVIDIA NIM',
   mistral: 'Mistral'
 }
 

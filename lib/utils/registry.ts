@@ -30,6 +30,13 @@ const providers: Record<string, any> = {
       process.env.OPENAI_COMPATIBLE_API_BASE_URL || ''
     )
   }),
+  nvidia: createOpenAICompatible({
+    name: 'nvidia',
+    apiKey: process.env.NVIDIA_API_KEY,
+    baseURL: normalizeOpenAICompatibleBaseURL(
+      process.env.NVIDIA_API_BASE_URL || 'https://integrate.api.nvidia.com'
+    )
+  }),
   gateway: createGateway({
     apiKey: process.env.AI_GATEWAY_API_KEY
   }),
@@ -95,6 +102,8 @@ export function isProviderEnabled(providerId: string): boolean {
         !!process.env.CLOUDFLARE_API_TOKEN &&
         !!process.env.CLOUDFLARE_ACCOUNT_ID
       )
+    case 'nvidia':
+      return !!process.env.NVIDIA_API_KEY
     case 'mistral':
       return !!process.env.MISTRAL_API_KEY
     default:
