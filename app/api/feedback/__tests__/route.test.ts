@@ -31,10 +31,12 @@ vi.mock('@/lib/utils/telemetry', () => ({
 }))
 
 vi.mock('langfuse', () => ({
-  Langfuse: vi.fn(() => ({
-    score: vi.fn(),
-    flushAsync: vi.fn(() => Promise.resolve())
-  }))
+  Langfuse: vi.fn(function () {
+    return {
+      score: vi.fn(),
+      flushAsync: vi.fn(() => Promise.resolve())
+    }
+  })
 }))
 
 // Import after mocking
@@ -59,13 +61,12 @@ describe('Feedback API Route', () => {
 
       const mockScore = vi.fn()
       const mockFlush = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(Langfuse).mockImplementation(
-        () =>
-          ({
-            score: mockScore,
-            flushAsync: mockFlush
-          }) as any
-      )
+      vi.mocked(Langfuse).mockImplementation(function () {
+        return {
+          score: mockScore,
+          flushAsync: mockFlush
+        } as any
+      } as any)
 
       const request = new Request('http://localhost:3000/api/feedback', {
         method: 'POST',
@@ -107,13 +108,12 @@ describe('Feedback API Route', () => {
 
       const mockScore = vi.fn()
       const mockFlush = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(Langfuse).mockImplementation(
-        () =>
-          ({
-            score: mockScore,
-            flushAsync: mockFlush
-          }) as any
-      )
+      vi.mocked(Langfuse).mockImplementation(function () {
+        return {
+          score: mockScore,
+          flushAsync: mockFlush
+        } as any
+      } as any)
 
       const request = new Request('http://localhost:3000/api/feedback', {
         method: 'POST',
@@ -209,13 +209,12 @@ describe('Feedback API Route', () => {
 
       const mockScore = vi.fn()
       const mockFlush = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(Langfuse).mockImplementation(
-        () =>
-          ({
-            score: mockScore,
-            flushAsync: mockFlush
-          }) as any
-      )
+      vi.mocked(Langfuse).mockImplementation(function () {
+        return {
+          score: mockScore,
+          flushAsync: mockFlush
+        } as any
+      } as any)
 
       const consoleErrorSpy = vi
         .spyOn(console, 'error')
@@ -249,13 +248,12 @@ describe('Feedback API Route', () => {
 
       const mockScore = vi.fn()
       const mockFlush = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(Langfuse).mockImplementation(
-        () =>
-          ({
-            score: mockScore,
-            flushAsync: mockFlush
-          }) as any
-      )
+      vi.mocked(Langfuse).mockImplementation(function () {
+        return {
+          score: mockScore,
+          flushAsync: mockFlush
+        } as any
+      } as any)
 
       const request = new Request('http://localhost:3000/api/feedback', {
         method: 'POST',

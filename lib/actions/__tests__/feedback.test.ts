@@ -95,13 +95,12 @@ describe('Feedback Actions', () => {
       // Mock Langfuse
       const mockScore = vi.fn()
       const mockFlush = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(Langfuse).mockImplementation(
-        () =>
-          ({
-            score: mockScore,
-            flushAsync: mockFlush
-          }) as any
-      )
+      vi.mocked(Langfuse).mockImplementation(function () {
+        return {
+          score: mockScore,
+          flushAsync: mockFlush
+        } as any
+      } as any)
 
       // Mock db.select
       const mockLimit = vi.fn().mockResolvedValue([

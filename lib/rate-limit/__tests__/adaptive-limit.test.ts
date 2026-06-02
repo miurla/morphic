@@ -7,10 +7,12 @@ const mockRedisExpire = vi.fn()
 const mockTrack = vi.fn()
 
 vi.mock('@upstash/redis', () => ({
-  Redis: vi.fn().mockImplementation(() => ({
-    incr: mockRedisIncr,
-    expire: mockRedisExpire
-  }))
+  Redis: vi.fn().mockImplementation(function () {
+    return {
+      incr: mockRedisIncr,
+      expire: mockRedisExpire
+    }
+  })
 }))
 
 vi.mock('@vercel/analytics/server', () => ({

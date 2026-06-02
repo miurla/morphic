@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const s3Mocks = vi.hoisted(() => {
   const send = vi.fn()
-  const S3Client = vi.fn(() => ({ send }))
+  const S3Client = vi.fn(function () {
+    return { send }
+  })
 
   class ListObjectsV2Command {
     input: unknown
