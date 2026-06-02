@@ -10,6 +10,11 @@ export interface SearchProvider {
     options?: {
       type?: 'general' | 'optimized'
       content_types?: Array<'web' | 'video' | 'image' | 'news'>
+      preferences?: {
+        language?: string
+        region?: string
+        safeSearch?: 'off' | 'moderate' | 'strict'
+      }
     }
   ): Promise<SearchResults>
 }
@@ -24,6 +29,11 @@ export abstract class BaseSearchProvider implements SearchProvider {
     options?: {
       type?: 'general' | 'optimized'
       content_types?: Array<'web' | 'video' | 'image' | 'news'>
+      preferences?: {
+        language?: string
+        region?: string
+        safeSearch?: 'off' | 'moderate' | 'strict'
+      }
     }
   ): Promise<SearchResults>
 
@@ -31,7 +41,7 @@ export abstract class BaseSearchProvider implements SearchProvider {
     key: string | undefined,
     providerName: string
   ): asserts key is string {
-    if (!key) {
+    if (!key || /^\[YOUR_[A-Z0-9_]+]$/.test(key)) {
       throw new Error(
         `${providerName}_API_KEY is not set in the environment variables`
       )

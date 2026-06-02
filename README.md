@@ -92,7 +92,8 @@ Edit `.env.local` and set your API keys:
 
 ```bash
 OPENAI_API_KEY=your_openai_key
-TAVILY_API_KEY=your_tavily_key
+# Qwant is the default search provider through SearXNG.
+# Set TAVILY_API_KEY only if you choose SEARCH_API=tavily.
 ```
 
 To enable chat history, authentication, file upload, and other features, see [CONFIGURATION.md](./docs/CONFIGURATION.md).

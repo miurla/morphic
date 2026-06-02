@@ -1,8 +1,10 @@
 import { SearchProvider } from './base'
 import { BraveSearchProvider } from './brave'
+import { DuckDuckGoSearchProvider } from './duckduckgo'
 import { ExaSearchProvider } from './exa'
 import { FirecrawlSearchProvider } from './firecrawl'
 import { KagiSearchProvider } from './kagi'
+import { QwantSearchProvider } from './qwant'
 import { SearXNGSearchProvider } from './searxng'
 import { TavilySearchProvider } from './tavily'
 
@@ -12,8 +14,10 @@ export type SearchProviderType =
   | 'searxng'
   | 'firecrawl'
   | 'brave'
+  | 'qwant'
+  | 'duckduckgo'
   | 'kagi'
-export const DEFAULT_PROVIDER: SearchProviderType = 'tavily'
+export const DEFAULT_PROVIDER: SearchProviderType = 'qwant'
 
 export function createSearchProvider(
   type?: SearchProviderType
@@ -30,20 +34,25 @@ export function createSearchProvider(
       return new SearXNGSearchProvider()
     case 'brave':
       return new BraveSearchProvider()
+    case 'qwant':
+      return new QwantSearchProvider()
+    case 'duckduckgo':
+      return new DuckDuckGoSearchProvider()
     case 'firecrawl':
       return new FirecrawlSearchProvider()
     case 'kagi':
       return new KagiSearchProvider()
     default:
-      // Default to TavilySearchProvider if an unknown provider is specified
-      return new TavilySearchProvider()
+      return new QwantSearchProvider()
   }
 }
 
 export { BraveSearchProvider } from './brave'
+export { DuckDuckGoSearchProvider } from './duckduckgo'
 export type { ExaSearchProvider } from './exa'
 export type { FirecrawlSearchProvider } from './firecrawl'
 export { KagiSearchProvider } from './kagi'
+export { QwantSearchProvider } from './qwant'
 export { SearXNGSearchProvider } from './searxng'
 export { TavilySearchProvider } from './tavily'
 export type { SearchProvider }

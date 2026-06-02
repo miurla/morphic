@@ -33,9 +33,31 @@ describe('public error mapping', () => {
     )
 
     expect(payload.code).toBe('provider_quota')
-    expect(payload.error).toBe('The AI service is currently unavailable.')
-    expect(payload.error.toLowerCase()).not.toContain('quota')
+    expect(payload.error).toBe(
+      'The selected AI model has exhausted its quota. Choose another model or try again later.'
+    )
     expect(payload.error.toLowerCase()).not.toContain('billing')
+  })
+
+  it('keeps quota guidance when stream errors wrap a public JSON payload', () => {
+    const payload = toPublicErrorPayload(
+      new Error(
+        JSON.stringify({
+          error:
+            'The selected AI model has exhausted its quota. Choose another model or try again later.',
+          code: 'provider_quota',
+          type: 'general',
+          retryable: false
+        })
+      )
+    )
+
+    expect(payload.code).toBe('provider_quota')
+    expect(payload.type).toBe('general')
+    expect(payload.retryable).toBe(false)
+    expect(payload.error).toBe(
+      'The selected AI model has exhausted its quota. Choose another model or try again later.'
+    )
   })
 
   it('does not treat unrelated log-in wording as user authentication', () => {

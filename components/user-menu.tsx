@@ -7,6 +7,8 @@ import type { User } from '@supabase/supabase-js'
 import {
   IconLink as Link2,
   IconLogout as LogOut,
+  IconMessageCircle as MessageCircle,
+  IconSettings as Settings,
   IconUserCircle as UserRound
 } from '@tabler/icons-react'
 
@@ -32,9 +34,10 @@ import { ExternalLinkItems } from './external-link-items'
 
 interface UserMenuProps {
   user: User
+  onFeedback: () => void
 }
 
-export default function UserMenu({ user }: UserMenuProps) {
+export default function UserMenu({ user, onFeedback }: UserMenuProps) {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
@@ -69,12 +72,20 @@ export default function UserMenu({ user }: UserMenuProps) {
     window.setTimeout(() => setAccountOpen(true), 0)
   }
 
+  const handleFeedback = () => {
+    setMenuOpen(false)
+    window.setTimeout(onFeedback, 0)
+  }
+
   return (
     <>
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative size-6 rounded-full">
-            <Avatar className="size-6">
+          <Button
+            variant="ghost"
+            className="native-menu-trigger relative size-9 rounded-full text-muted-foreground hover:text-foreground"
+          >
+            <Avatar className="size-7">
               <AvatarImage src={avatarUrl} alt={userName} />
               <AvatarFallback>
                 {getInitials(userName, user.email)}
@@ -102,6 +113,24 @@ export default function UserMenu({ user }: UserMenuProps) {
           >
             <UserRound className="size-4" />
             <span>Account</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              setMenuOpen(false)
+              router.push('/settings')
+            }}
+          >
+            <Settings className="size-4" />
+            <span>Search Settings</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={event => {
+              event.preventDefault()
+              handleFeedback()
+            }}
+          >
+            <MessageCircle className="size-4" />
+            <span>Feedback</span>
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>

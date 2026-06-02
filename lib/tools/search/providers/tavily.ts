@@ -51,6 +51,11 @@ export class TavilySearchProvider extends BaseSearchProvider {
       console.error(
         `Tavily API error: ${response.status} ${response.statusText}`
       )
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(
+          'TAVILY_API_KEY was rejected by Tavily. Update the key or choose another SEARCH_API provider.'
+        )
+      }
       throw new Error('Search failed')
     }
 

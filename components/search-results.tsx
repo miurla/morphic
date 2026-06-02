@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 
 import { SearchResultItem } from '@/lib/types'
 import { displayUrlName } from '@/lib/utils/domain'
@@ -9,6 +8,8 @@ import { displayUrlName } from '@/lib/utils/domain'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+
+import { GuardedExternalLink } from '@/components/navigation/guarded-external-link'
 
 export interface SearchResultsProps {
   results: SearchResultItem[]
@@ -35,10 +36,9 @@ export function SearchResults({
     return (
       <div className="flex flex-col gap-2">
         {results.map((result, index) => (
-          <Link
+          <GuardedExternalLink
             href={result.url}
             key={index}
-            passHref
             target="_blank"
             className="block"
           >
@@ -70,7 +70,7 @@ export function SearchResults({
                 </div>
               </CardContent>
             </Card>
-          </Link>
+          </GuardedExternalLink>
         ))}
       </div>
     )
@@ -81,7 +81,7 @@ export function SearchResults({
     <div className="flex flex-col gap-1 md:-m-1 md:flex-row md:flex-wrap md:gap-0">
       {displayedGridResults.map((result, index) => (
         <div className="min-w-0 md:w-1/4 md:p-1" key={index}>
-          <Link href={result.url} passHref target="_blank">
+          <GuardedExternalLink href={result.url} target="_blank">
             <Card className="h-full flex-1 rounded-md hover:bg-muted/50 transition-colors">
               <CardContent className="flex h-full min-w-0 items-center justify-between gap-2 p-2 md:flex-col md:items-stretch">
                 <p className="min-w-0 flex-1 line-clamp-1 text-xs md:min-h-8 md:line-clamp-2">
@@ -105,7 +105,7 @@ export function SearchResults({
                 </div>
               </CardContent>
             </Card>
-          </Link>
+          </GuardedExternalLink>
         </div>
       ))}
       {!showAllResults && additionalResultsCount > 0 && (

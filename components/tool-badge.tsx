@@ -1,6 +1,10 @@
 import React from 'react'
 
-import { IconLink as Link, IconSearch as Search } from '@tabler/icons-react'
+import {
+  IconLink as Link,
+  IconRss as Rss,
+  IconSearch as Search
+} from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
 
@@ -21,6 +25,7 @@ export const ToolBadge: React.FC<ToolBadgeProps> = ({
 }) => {
   const icon: Record<string, React.ReactNode> = {
     search: <Search size={14} />,
+    feedSearch: <Rss size={14} />,
     fetch: <Link size={14} />
   }
 

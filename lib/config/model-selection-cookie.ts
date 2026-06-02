@@ -1,16 +1,18 @@
 export const MODEL_SELECTION_COOKIE = 'selectedModel'
+export const MODEL_SELECTION_COOKIE_VERSION = 2
 
 export interface ParsedModelSelectionCookie {
   providerId: string
   modelId: string
+  version: number
 }
 
 export function serializeModelSelectionCookie(
-  value: ParsedModelSelectionCookie
+  value: Pick<ParsedModelSelectionCookie, 'providerId' | 'modelId'>
 ): string {
-  return `${encodeURIComponent(value.providerId)}:${encodeURIComponent(
-    value.modelId
-  )}`
+  return `v${MODEL_SELECTION_COOKIE_VERSION}:${encodeURIComponent(
+    value.providerId
+  )}:${encodeURIComponent(value.modelId)}`
 }
 
 export function parseModelSelectionCookie(
@@ -20,20 +22,28 @@ export function parseModelSelectionCookie(
     return null
   }
 
-  const separatorIndex = rawValue.indexOf(':')
-  if (separatorIndex <= 0 || separatorIndex === rawValue.length - 1) {
+  const versionMatch = rawValue.match(/^v(\d+):(.+)$/)
+  const encodedValue = versionMatch ? versionMatch[2] : rawValue
+  const version = versionMatch ? Number(versionMatch[1]) : 1
+
+  if (!Number.isInteger(version) || version < 1) {
+    return null
+  }
+
+  const separatorIndex = encodedValue.indexOf(':')
+  if (separatorIndex <= 0 || separatorIndex === encodedValue.length - 1) {
     return null
   }
 
   try {
-    const providerId = decodeURIComponent(rawValue.slice(0, separatorIndex))
-    const modelId = decodeURIComponent(rawValue.slice(separatorIndex + 1))
+    const providerId = decodeURIComponent(encodedValue.slice(0, separatorIndex))
+    const modelId = decodeURIComponent(encodedValue.slice(separatorIndex + 1))
 
     if (!providerId || !modelId) {
       return null
     }
 
-    return { providerId, modelId }
+    return { providerId, modelId, version }
   } catch {
     return null
   }

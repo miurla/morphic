@@ -21,13 +21,6 @@ const providers: Record<string, any> = {
   anthropic,
   google,
   mistral,
-  nvidia: createOpenAICompatible({
-    name: 'nvidia',
-    apiKey: process.env.NVIDIA_API_KEY,
-    baseURL: normalizeOpenAICompatibleBaseURL(
-      process.env.NVIDIA_API_BASE_URL || 'https://integrate.api.nvidia.com'
-    )
-  }),
   'openai-compatible': createOpenAICompatible({
     // Keep the SDK provider key stable. OPENAI_COMPATIBLE_PROVIDER_NAME is
     // only a UI label used by the model selector.
@@ -35,6 +28,13 @@ const providers: Record<string, any> = {
     apiKey: process.env.OPENAI_COMPATIBLE_API_KEY,
     baseURL: normalizeOpenAICompatibleBaseURL(
       process.env.OPENAI_COMPATIBLE_API_BASE_URL || ''
+    )
+  }),
+  nvidia: createOpenAICompatible({
+    name: 'nvidia',
+    apiKey: process.env.NVIDIA_API_KEY,
+    baseURL: normalizeOpenAICompatibleBaseURL(
+      process.env.NVIDIA_API_BASE_URL || 'https://integrate.api.nvidia.com'
     )
   }),
   gateway: createGateway({
@@ -88,8 +88,6 @@ export function isProviderEnabled(providerId: string): boolean {
       return !!process.env.ANTHROPIC_API_KEY
     case 'google':
       return !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
-    case 'nvidia':
-      return !!process.env.NVIDIA_API_KEY
     case 'openai-compatible':
       return (
         !!process.env.OPENAI_COMPATIBLE_API_KEY &&
@@ -104,6 +102,8 @@ export function isProviderEnabled(providerId: string): boolean {
         !!process.env.CLOUDFLARE_API_TOKEN &&
         !!process.env.CLOUDFLARE_ACCOUNT_ID
       )
+    case 'nvidia':
+      return !!process.env.NVIDIA_API_KEY
     case 'mistral':
       return !!process.env.MISTRAL_API_KEY
     default:

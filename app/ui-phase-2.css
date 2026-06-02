@@ -1,0 +1,54 @@
+.native-composer-surface {
+  background: color-mix(in oklch, var(--background) 78%, transparent);
+  border-color: color-mix(in oklch, var(--border) 70%, transparent);
+  box-shadow: var(--native-shadow-card);
+}
+
+@supports (
+  (backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))
+) {
+  .platform-apple-like .native-composer-surface {
+    background: color-mix(in oklch, var(--background) 72%, transparent);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+  }
+
+  [data-slot='dropdown-menu-content'],
+  [data-slot='dropdown-menu-sub-content'] {
+    background: color-mix(in oklch, var(--popover) 82%, transparent);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+  }
+}
+
+[data-slot='dropdown-menu-content'],
+[data-slot='dropdown-menu-sub-content'] {
+  border-color: var(--native-hairline);
+  border-radius: var(--native-radius-control);
+  box-shadow: var(--native-shadow-card);
+}
+
+[data-slot='dropdown-menu-item'],
+[data-slot='dropdown-menu-sub-trigger'],
+[data-slot='dropdown-menu-checkbox-item'],
+[data-slot='dropdown-menu-radio-item'] {
+  min-height: 36px;
+  border-radius: calc(var(--native-radius-control) - 6px);
+}
+
+.native-menu-trigger {
+  min-width: var(--native-min-touch-target);
+  min-height: var(--native-min-touch-target);
+  border: 1px solid var(--native-hairline);
+  background: color-mix(in oklch, var(--background) 74%, transparent);
+  box-shadow: 0 8px 24px hsl(0 0% 0% / 0.08);
+}
+
+@supports (
+  (backdrop-filter: blur(18px)) or (-webkit-backdrop-filter: blur(18px))
+) {
+  .native-menu-trigger {
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+  }
+}

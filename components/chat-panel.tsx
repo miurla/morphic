@@ -185,7 +185,10 @@ export function ChatPanel({
 
     return (
       (lastPart?.type === 'tool-search' ||
+        lastPart?.type === 'tool-feedSearch' ||
         lastPart?.type === 'tool-fetch' ||
+        lastPart?.type === 'tool-researchSubtask' ||
+        lastPart?.type === 'tool-mapSearch' ||
         lastPart?.type === 'tool-askQuestion') &&
       ((lastPart as any)?.state === 'input-streaming' ||
         (lastPart as any)?.state === 'input-available')
@@ -303,7 +306,7 @@ export function ChatPanel({
 
         <div
           className={cn(
-            'relative flex w-full flex-col gap-2 rounded-3xl border border-input bg-muted transition-[box-shadow] duration-[140ms] ease-[var(--motion-ease-out)]',
+            'native-composer-surface relative flex w-full flex-col gap-2 rounded-3xl border border-input bg-muted transition-[box-shadow] duration-[140ms] ease-[var(--motion-ease-out)]',
             isInputFocused &&
               'ring-1 ring-ring/20 ring-offset-1 ring-offset-background/50'
           )}

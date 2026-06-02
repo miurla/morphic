@@ -3,6 +3,50 @@ import { z } from 'zod'
 
 import { getSearchTypeDescription } from '@/lib/utils/search-config'
 
+const contentTypeValues = ['web', 'video', 'image', 'news'] as const
+const contentTypeSchema = z.enum(contentTypeValues)
+
+function parseStringArray(value: string): string[] | unknown {
+  const trimmed = value.trim()
+  if (!trimmed || /^none|null$/i.test(trimmed)) {
+    return []
+  }
+
+  try {
+    const normalized = trimmed
+      .replace(/^\[/, '[')
+      .replace(/\]$/, ']')
+      .replace(/'/g, '"')
+    const parsed = JSON.parse(normalized)
+    if (Array.isArray(parsed)) {
+      return parsed
+    }
+  } catch {
+    // Fall through to comma-separated parsing.
+  }
+
+  return trimmed
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+const flexibleStringArray = z.preprocess(value => {
+  if (typeof value === 'string') {
+    return parseStringArray(value)
+  }
+
+  return value
+}, z.array(z.string()))
+
+const flexibleContentTypes = z.preprocess(value => {
+  if (typeof value === 'string') {
+    return parseStringArray(value)
+  }
+
+  return value
+}, z.array(contentTypeSchema))
+
 export const searchSchema = z.object({
   query: z.string().describe('The query to search for'),
   type: z
@@ -10,14 +54,13 @@ export const searchSchema = z.object({
     .optional()
     .default('optimized')
     .describe(getSearchTypeDescription()),
-  content_types: z
-    .array(z.enum(['web', 'video', 'image', 'news']))
+  content_types: flexibleContentTypes
     .optional()
     .default(['web'])
     .describe(
       'Types of content to include in search results. Only applicable when type is "general" and a dedicated general search provider is configured. Ignored otherwise.'
     ),
-  max_results: z
+  max_results: z.coerce
     .number()
     .optional()
     .default(20)
@@ -29,15 +72,13 @@ export const searchSchema = z.object({
     .describe(
       'The depth of the search. Allowed values are "basic" or "advanced"'
     ),
-  include_domains: z
-    .array(z.string())
+  include_domains: flexibleStringArray
     .nullish()
     .transform(val => val ?? [])
     .describe(
       'A list of domains to specifically include in the search results. Default is None, which includes all domains.'
     ),
-  exclude_domains: z
-    .array(z.string())
+  exclude_domains: flexibleStringArray
     .nullish()
     .transform(val => val ?? [])
     .describe(

@@ -4,6 +4,7 @@ import { UseChatHelpers } from '@ai-sdk/react'
 
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
+import { FeedSection } from './feed-section'
 import FetchSection from './fetch-section'
 import { MapSection } from './map-section'
 import { QuestionConfirmation } from './question-confirmation'
@@ -78,6 +79,17 @@ export function ToolSection({
           isOpen={isOpen}
           onOpenChange={onOpenChange}
           status={status}
+          borderless={borderless}
+          isFirst={isFirst}
+          isLast={isLast}
+        />
+      )
+    case 'tool-feedSearch':
+      return (
+        <FeedSection
+          tool={tool as ToolPart<'feedSearch'>}
+          isOpen={isOpen}
+          onOpenChange={onOpenChange}
           borderless={borderless}
           isFirst={isFirst}
           isLast={isLast}

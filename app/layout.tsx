@@ -10,7 +10,6 @@ import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 
-import { PlatformProvider } from '@/components/platform/platform-provider'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -18,6 +17,7 @@ import AppSidebar from '@/components/app-sidebar'
 import ArtifactRoot from '@/components/artifact/artifact-root'
 import Header from '@/components/header'
 import { KeyboardShortcutHandler } from '@/components/keyboard-shortcut-handler'
+import { PlatformProvider } from '@/components/platform/platform-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 
 import './globals.css'

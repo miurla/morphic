@@ -41,6 +41,8 @@ type ErrorSnapshot = {
 
 const DEFAULT_PUBLIC_ERROR_MESSAGE =
   'We could not generate a response. Please try again.'
+const PROVIDER_QUOTA_PUBLIC_MESSAGE =
+  'The selected AI model has exhausted its quota. Choose another model or try again later.'
 
 const PUBLIC_ERROR_CODES: ReadonlySet<string> = new Set([
   'auth_required',
@@ -73,6 +75,8 @@ const BILLING_PATTERNS = [
   /insufficient[_\s-]?quota/i,
   /insufficient[_\s-]?credit/i,
   /exceeded your current quota/i,
+  /exhausted (its|your) quota/i,
+  /provider[_\s-]?quota/i,
   /quota exceeded/i
 ]
 
@@ -294,12 +298,15 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
   }
 
   if (matchesAny(combined, BILLING_PATTERNS)) {
+    const isQuotaError = /quota/i.test(combined)
     return {
-      code: /quota/i.test(combined)
+      code: isQuotaError
         ? ('provider_quota' as const)
         : ('provider_billing' as const),
       type: 'general' as const,
-      error: 'The AI service is currently unavailable.',
+      error: isQuotaError
+        ? PROVIDER_QUOTA_PUBLIC_MESSAGE
+        : 'The AI service is currently unavailable.',
       retryable: false
     }
   }

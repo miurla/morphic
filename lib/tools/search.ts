@@ -1,5 +1,8 @@
+import { cookies } from 'next/headers'
+
 import { tool, UIToolInvocation } from 'ai'
 
+import { DEFAULT_SEARCH_PREFERENCES } from '@/lib/config/search-preferences'
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { SearchResultItem, SearchResults } from '@/lib/types'
 import {
@@ -81,6 +84,25 @@ export function createSearchTool(fullModel: string) {
         `Using search API: ${searchAPI}, Type: ${type}, Search Depth: ${effectiveSearchDepthForAPI}`
       )
 
+      // Read user search preferences from cookies
+      let userPrefs = { ...DEFAULT_SEARCH_PREFERENCES }
+      try {
+        const cookieStore = await cookies()
+        const raw = cookieStore.get('searchPreferences')?.value
+        if (raw) {
+          const parsed = JSON.parse(decodeURIComponent(raw))
+          userPrefs = { ...userPrefs, ...parsed }
+        }
+      } catch {
+        // Use defaults if cookies are unavailable
+      }
+
+      const searchPreferences = {
+        language: userPrefs.language,
+        region: userPrefs.region,
+        safeSearch: userPrefs.safeSearch as 'off' | 'moderate' | 'strict'
+      }
+
       try {
         if (
           searchAPI === 'searxng' &&
@@ -122,7 +144,8 @@ export function createSearchTool(fullModel: string) {
                 type: type as 'general' | 'optimized',
                 content_types: content_types as Array<
                   'web' | 'video' | 'image' | 'news'
-                >
+                >,
+                preferences: searchPreferences
               }
             )
           } else {
@@ -131,7 +154,10 @@ export function createSearchTool(fullModel: string) {
               effectiveMaxResults,
               effectiveSearchDepthForAPI,
               include_domains,
-              exclude_domains
+              exclude_domains,
+              {
+                preferences: searchPreferences
+              }
             )
           }
         }

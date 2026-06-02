@@ -3,6 +3,8 @@ import { createGateway } from '@ai-sdk/gateway'
 import { Model } from '@/lib/types/models'
 import { isProviderEnabled } from '@/lib/utils/registry'
 
+import { isSearchCompatibleModel } from './compatibility'
+
 export type ModelsByProvider = Record<string, Model[]>
 
 const MODEL_CACHE_TTL_MS = 2 * 60 * 1000
@@ -146,7 +148,9 @@ function formatProviderModelName(id: string): string {
 function modelsFromStaticList(
   staticList: string,
   provider: string,
-  providerId: string
+  providerId: string,
+  isCompatible: (id: string) => boolean = id =>
+    passesOpenAICompatibleFilters(id) && isSearchCompatibleModel(providerId, id)
 ): Model[] {
   return sortModels(
     dedupeModels(
@@ -154,7 +158,7 @@ function modelsFromStaticList(
         .split(',')
         .map(id => id.trim())
         .filter(Boolean)
-        .filter(passesOpenAICompatibleFilters)
+        .filter(isCompatible)
         .map(id => ({
           id,
           name: formatProviderModelName(id),
@@ -437,6 +441,7 @@ export async function fetchNvidiaModels(): Promise<Model[]> {
           .map(item => String(item?.id ?? ''))
           .filter(Boolean)
           .filter(passesOpenAICompatibleFilters)
+          .filter(id => isSearchCompatibleModel('nvidia', id))
           .map(id => ({
             id,
             name: formatProviderModelName(id),

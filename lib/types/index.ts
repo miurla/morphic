@@ -83,6 +83,7 @@ export interface SearXNGResponse {
   query: string
   number_of_results: number
   results: SearXNGResult[]
+  unresponsive_engines?: [string, string][]
 }
 
 export type SearXNGImageResult = string

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 
 import {
@@ -15,7 +15,7 @@ import {
 import { ModelSelectorData } from '@/lib/types/model-selector'
 import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
-import { setCookie } from '@/lib/utils/cookies'
+import { getCookie, setCookie } from '@/lib/utils/cookies'
 
 import { Button } from './ui/button'
 import {
@@ -90,6 +90,21 @@ export function ModelSelectorClient({ data }: ModelSelectorClientProps) {
   )
 
   const selectedModel = selectableByKey[selectedModelKey]
+
+  useEffect(() => {
+    if (!data.enabled || !selectedModel) {
+      return
+    }
+
+    const serialized = serializeModelSelectionCookie({
+      providerId: selectedModel.providerId,
+      modelId: selectedModel.id
+    })
+
+    if (getCookie(MODEL_SELECTION_COOKIE) !== serialized) {
+      setCookie(MODEL_SELECTION_COOKIE, serialized)
+    }
+  }, [data.enabled, selectedModel])
 
   if (!data.enabled) {
     return null

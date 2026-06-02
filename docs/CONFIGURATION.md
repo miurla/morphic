@@ -144,6 +144,24 @@ SEARXNG_API_URL=http://localhost:8080
 SEARXNG_SECRET=""  # generate with: openssl rand -base64 32
 ```
 
+Qwant is the default search provider. To use Qwant without a Qwant API key, run SearXNG and select the Qwant-backed provider:
+
+```bash
+SEARCH_API=qwant
+SEARXNG_API_URL=http://localhost:8080
+```
+
+Qwant does not publish a supported public search API for application developers. Morphic's Qwant option routes searches through SearXNG's Qwant engine instead of scraping Qwant result pages directly.
+
+DuckDuckGo can be selected the same way:
+
+```bash
+SEARCH_API=duckduckgo
+SEARXNG_API_URL=http://localhost:8080
+```
+
+DuckDuckGo's official endpoint (`https://api.duckduckgo.com/`) is an Instant Answer API, not a full search-results API. Morphic's DuckDuckGo option routes searches through SearXNG's DuckDuckGo engine so the app can return normal result lists without adding DuckDuckGo page scraping to Morphic.
+
 #### Advanced Configuration
 
 ```bash
@@ -155,6 +173,7 @@ SEARXNG_TIME_RANGE=None  # day, week, month, year, or None
 SEARXNG_SAFESEARCH=0  # 0: off, 1: moderate, 2: strict
 
 # Server
+SEARXNG_HOST_PORT=8080
 SEARXNG_PORT=8080
 SEARXNG_BIND_ADDRESS=0.0.0.0
 SEARXNG_IMAGE_PROXY=true

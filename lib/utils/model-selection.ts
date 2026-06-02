@@ -7,48 +7,43 @@ import {
   parseModelSelectionCookie
 } from '@/lib/config/model-selection-cookie'
 import { getModelForMode } from '@/lib/config/model-types'
+import {
+  getSearchModelPreferenceScore,
+  isSearchCompatibleModel
+} from '@/lib/models/compatibility'
 import { fetchAvailableModels } from '@/lib/models/fetch-models'
 import { Model } from '@/lib/types/models'
 import { SearchMode } from '@/lib/types/search'
 import { isProviderEnabled } from '@/lib/utils/registry'
 
 const MODE_FALLBACK_ORDER: SearchMode[] = ['quick', 'adaptive']
-const PROVIDER_LABELS: Record<string, string> = {
-  openai: 'OpenAI',
-  anthropic: 'Anthropic',
-  google: 'Google',
-  ollama: 'Ollama',
-  gateway: 'Gateway',
-  'openai-compatible': 'OpenAI Compatible',
-  cloudflare: 'Cloudflare Workers AI',
-  nvidia: 'NVIDIA NIM',
-  mistral: 'Mistral'
-}
-
-function buildProviderOptions(
-  providerId: string,
-  _modelId: string
-): Model['providerOptions'] | undefined {
-  if (providerId === 'ollama') {
-    return {
-      ollama: {
-        think: true
-      }
-    }
-  }
-
-  return undefined
-}
 
 function pickFirstFetchedModel(
-  modelsByProvider: Record<string, Model[]>
+  modelsByProvider: Record<string, Model[]>,
+  preferredProviderId?: string
 ): Model | null {
-  const providers = Object.keys(modelsByProvider).sort((a, b) =>
-    a.localeCompare(b)
-  )
+  const hasPreferredProvider = (provider: string) =>
+    Boolean(
+      preferredProviderId &&
+        modelsByProvider[provider]?.some(
+          model => model.providerId === preferredProviderId
+        )
+    )
+
+  const providers = Object.keys(modelsByProvider).sort((a, b) => {
+    if (hasPreferredProvider(a)) return -1
+    if (hasPreferredProvider(b)) return 1
+    return a.localeCompare(b)
+  })
 
   for (const provider of providers) {
-    const firstModel = modelsByProvider[provider]?.[0]
+    const firstModel = [...(modelsByProvider[provider] ?? [])]
+      .sort(
+        (a, b) =>
+          getSearchModelPreferenceScore(a.providerId, a.id) -
+          getSearchModelPreferenceScore(b.providerId, b.id)
+      )
+      .find(model => isSearchCompatibleModel(model.providerId, model.id))
     if (firstModel) {
       return firstModel
     }
@@ -57,21 +52,26 @@ function pickFirstFetchedModel(
   return null
 }
 
+function findFetchedModel(
+  modelsByProvider: Record<string, Model[]>,
+  providerId: string,
+  modelId: string
+): Model | null {
+  return (
+    Object.values(modelsByProvider)
+      .flat()
+      .find(
+        model =>
+          model.providerId === providerId &&
+          model.id === modelId &&
+          isSearchCompatibleModel(model.providerId, model.id)
+      ) ?? null
+  )
+}
+
 interface ModelSelectionParams {
   searchMode?: SearchMode
   cookieStore?: ReadonlyRequestCookies
-}
-
-function buildLocalCookieModel(providerId: string, modelId: string): Model {
-  const providerOptions = buildProviderOptions(providerId, modelId)
-
-  return {
-    id: modelId,
-    name: modelId,
-    provider: PROVIDER_LABELS[providerId] ?? providerId,
-    providerId,
-    ...(providerOptions ? { providerOptions } : {})
-  }
 }
 
 function resolveModelForMode(mode: SearchMode): Model | undefined {
@@ -123,10 +123,41 @@ export async function selectModel({
             `[ModelSelection] Saved model provider "${parsedCookie.providerId}" is not enabled.`
           )
         } else {
-          return buildLocalCookieModel(
+          const availableModels = await fetchAvailableModels()
+          const matchedModel = findFetchedModel(
+            availableModels,
             parsedCookie.providerId,
             parsedCookie.modelId
           )
+
+          if (matchedModel) {
+            return matchedModel
+          }
+
+          if (
+            !isSearchCompatibleModel(
+              parsedCookie.providerId,
+              parsedCookie.modelId
+            )
+          ) {
+            console.warn(
+              `[ModelSelection] Saved model "${parsedCookie.providerId}:${parsedCookie.modelId}" is not compatible with search.`
+            )
+          } else {
+            console.warn(
+              `[ModelSelection] Saved model "${parsedCookie.providerId}:${parsedCookie.modelId}" is no longer available.`
+            )
+          }
+
+          const sameProviderFallback = pickFirstFetchedModel(
+            availableModels,
+            parsedCookie.providerId
+          )
+          if (sameProviderFallback) {
+            return sameProviderFallback
+          }
+
+          return pickFirstFetchedModel(availableModels)
         }
       } catch (error) {
         console.error(
