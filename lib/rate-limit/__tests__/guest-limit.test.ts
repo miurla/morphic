@@ -6,10 +6,12 @@ const mockRedisIncr = vi.fn()
 const mockRedisExpire = vi.fn()
 
 vi.mock('@upstash/redis', () => ({
-  Redis: vi.fn().mockImplementation(() => ({
-    incr: mockRedisIncr,
-    expire: mockRedisExpire
-  }))
+  Redis: vi.fn().mockImplementation(function () {
+    return {
+      incr: mockRedisIncr,
+      expire: mockRedisExpire
+    }
+  })
 }))
 
 describe('checkAndEnforceGuestLimit', () => {
