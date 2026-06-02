@@ -53,6 +53,49 @@ describe('QwantSearchProvider', () => {
       'http://localhost:18080/image-proxy?url=example'
     ])
   })
+
+  it('falls back to DuckDuckGo when SearXNG reports Qwant as unresponsive', async () => {
+    process.env.SEARXNG_API_URL = 'http://localhost:18080'
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          query: 'morphic',
+          number_of_results: 0,
+          results: [],
+          unresponsive_engines: [['qwant', 'access denied']]
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          query: 'morphic',
+          number_of_results: 1,
+          results: [
+            {
+              title: 'Morphic',
+              url: 'https://www.morphic.sh/',
+              content: 'Open-source AI search engine.',
+              img_src: ''
+            }
+          ]
+        })
+      })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const provider = new QwantSearchProvider()
+    const results = await provider.search('morphic', 10, 'basic', [], [])
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get('engines')).toBe(
+      'qwant'
+    )
+    expect(new URL(fetchMock.mock.calls[1][0]).searchParams.get('engines')).toBe(
+      'duckduckgo'
+    )
+    expect(results.results[0]?.url).toBe('https://www.morphic.sh/')
+  })
 })
 
 describe('DuckDuckGoSearchProvider', () => {
