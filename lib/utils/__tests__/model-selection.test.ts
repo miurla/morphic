@@ -7,14 +7,17 @@ import type { SearchMode } from '@/lib/types/search'
 
 vi.mock('@/lib/config/load-models-config')
 vi.mock('@/lib/config/model-types')
+vi.mock('@/lib/models/fetch-models')
 vi.mock('@/lib/utils/registry')
 
 import { getModelForMode } from '@/lib/config/model-types'
+import { fetchAvailableModels } from '@/lib/models/fetch-models'
 import { DEFAULT_MODEL, selectModel } from '@/lib/utils/model-selection'
 import { isProviderEnabled } from '@/lib/utils/registry'
 
 const mockIsCloudDeployment = vi.mocked(isCloudDeployment)
 const mockGetModelForMode = vi.mocked(getModelForMode)
+const mockFetchAvailableModels = vi.mocked(fetchAvailableModels)
 const mockIsProviderEnabled = vi.mocked(isProviderEnabled)
 
 type Matrix = Partial<Record<SearchMode, Model>>
@@ -61,6 +64,7 @@ describe('selectModel', () => {
     }
     setMatrixImplementation()
     mockIsProviderEnabled.mockReturnValue(true)
+    mockFetchAvailableModels.mockResolvedValue({})
   })
 
   it('returns the cloud model for the active mode when available', async () => {
@@ -146,6 +150,50 @@ describe('selectModel', () => {
       cookieStore: createCookieStore('provider-l:local-model')
     })
     expect(result).toEqual(DEFAULT_MODEL)
+  })
+
+  it('falls back to a compatible NVIDIA model when the local cookie model cannot use search', async () => {
+    mockIsCloudDeployment.mockReturnValue(false)
+    mockIsProviderEnabled.mockImplementation(providerId =>
+      providerId === 'nvidia' || providerId === DEFAULT_MODEL.providerId
+        ? true
+        : false
+    )
+    mockFetchAvailableModels.mockResolvedValue({
+      'NVIDIA NIM': [
+        {
+          id: 'microsoft/phi-4-multimodal-instruct',
+          name: 'Phi 4 Multimodal Instruct',
+          provider: 'NVIDIA NIM',
+          providerId: 'nvidia'
+        },
+        {
+          id: 'meta/llama-3.1-70b-instruct',
+          name: 'Llama 3.1 70b Instruct',
+          provider: 'NVIDIA NIM',
+          providerId: 'nvidia'
+        },
+        {
+          id: 'meta/llama-3.1-8b-instruct',
+          name: 'Llama 3.1 8b Instruct',
+          provider: 'NVIDIA NIM',
+          providerId: 'nvidia'
+        }
+      ]
+    })
+
+    const result = await selectModel({
+      cookieStore: createCookieStore(
+        'nvidia:microsoft/phi-4-multimodal-instruct'
+      )
+    })
+
+    expect(result).toEqual({
+      id: 'meta/llama-3.1-8b-instruct',
+      name: 'Llama 3.1 8b Instruct',
+      provider: 'NVIDIA NIM',
+      providerId: 'nvidia'
+    })
   })
 
   it('sets ollama think provider options for thinking models from cookie', async () => {

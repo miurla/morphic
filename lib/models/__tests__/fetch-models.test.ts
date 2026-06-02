@@ -370,6 +370,8 @@ describe('fetch-models', () => {
           data: [
             { id: 'meta/llama-3.1-8b-instruct' },
             { id: 'nvidia/llama-3.1-nemotron-70b-instruct' },
+            { id: 'nvidia/ai-synthetic-video-detector' },
+            { id: 'microsoft/phi-4-multimodal-instruct' },
             { id: 'nvidia/nv-embedqa-e5-v5' },
             { id: 'nvidia/rerankqa-mistral-4b-v3' }
           ]
@@ -402,7 +404,7 @@ describe('fetch-models', () => {
       )
       process.env.NVIDIA_API_KEY = 'nvapi-test'
       process.env.NVIDIA_MODELS =
-        'meta/llama-3.1-8b-instruct, nvidia/llama-3.1-nemotron-70b-instruct'
+        'meta/llama-3.1-8b-instruct, microsoft/phi-4-multimodal-instruct, nvidia/llama-3.1-nemotron-70b-instruct'
 
       const fetchMock = vi.fn()
       vi.stubGlobal('fetch', fetchMock)

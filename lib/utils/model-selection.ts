@@ -7,6 +7,7 @@ import {
   parseModelSelectionCookie
 } from '@/lib/config/model-selection-cookie'
 import { getModelForMode } from '@/lib/config/model-types'
+import { isSearchCompatibleModel } from '@/lib/models/compatibility'
 import { fetchAvailableModels } from '@/lib/models/fetch-models'
 import { Model } from '@/lib/types/models'
 import { SearchMode } from '@/lib/types/search'
@@ -41,20 +42,44 @@ function buildProviderOptions(
 }
 
 function pickFirstFetchedModel(
-  modelsByProvider: Record<string, Model[]>
+  modelsByProvider: Record<string, Model[]>,
+  preferredProviderId?: string
 ): Model | null {
-  const providers = Object.keys(modelsByProvider).sort((a, b) =>
-    a.localeCompare(b)
-  )
+  const hasPreferredProvider = (provider: string) =>
+    Boolean(
+      preferredProviderId &&
+        modelsByProvider[provider]?.some(
+          model => model.providerId === preferredProviderId
+        )
+    )
+
+  const providers = Object.keys(modelsByProvider).sort((a, b) => {
+    if (hasPreferredProvider(a)) return -1
+    if (hasPreferredProvider(b)) return 1
+    return a.localeCompare(b)
+  })
 
   for (const provider of providers) {
-    const firstModel = modelsByProvider[provider]?.[0]
+    const firstModel = [...(modelsByProvider[provider] ?? [])]
+      .sort((a, b) => getModelPreferenceScore(a) - getModelPreferenceScore(b))
+      .find(model => isSearchCompatibleModel(model.providerId, model.id))
     if (firstModel) {
       return firstModel
     }
   }
 
   return null
+}
+
+function getModelPreferenceScore(model: Model): number {
+  if (model.providerId === 'nvidia') {
+    const id = model.id.toLowerCase()
+    if (id === 'meta/llama-3.1-8b-instruct') return 0
+    if (id === 'meta/llama-3.1-70b-instruct') return 10
+    if (id.includes('nemotron') && id.includes('instruct')) return 20
+  }
+
+  return 100
 }
 
 interface ModelSelectionParams {
@@ -123,6 +148,24 @@ export async function selectModel({
             `[ModelSelection] Saved model provider "${parsedCookie.providerId}" is not enabled.`
           )
         } else {
+          if (
+            !isSearchCompatibleModel(
+              parsedCookie.providerId,
+              parsedCookie.modelId
+            )
+          ) {
+            console.warn(
+              `[ModelSelection] Saved model "${parsedCookie.providerId}:${parsedCookie.modelId}" is not compatible with search.`
+            )
+            const sameProviderFallback = pickFirstFetchedModel(
+              await fetchAvailableModels(),
+              parsedCookie.providerId
+            )
+            if (sameProviderFallback) {
+              return sameProviderFallback
+            }
+          }
+
           return buildLocalCookieModel(
             parsedCookie.providerId,
             parsedCookie.modelId
