@@ -121,15 +121,53 @@ describe('selectModel', () => {
     mockIsProviderEnabled.mockImplementation(
       providerId => providerId === 'provider-l'
     )
+    mockFetchAvailableModels.mockResolvedValue({
+      'Provider L': [
+        {
+          id: 'local-model',
+          name: 'Local Model',
+          provider: 'Provider L',
+          providerId: 'provider-l'
+        }
+      ]
+    })
 
     const result = await selectModel({
       cookieStore: createCookieStore('provider-l:local-model')
     })
     expect(result).toEqual({
       id: 'local-model',
-      name: 'local-model',
-      provider: 'provider-l',
+      name: 'Local Model',
+      provider: 'Provider L',
       providerId: 'provider-l'
+    })
+  })
+
+  it('does not trust local cookie models that are no longer available', async () => {
+    mockIsCloudDeployment.mockReturnValue(false)
+    mockIsProviderEnabled.mockImplementation(
+      providerId => providerId === 'provider-l' || providerId === 'provider-f'
+    )
+    mockFetchAvailableModels.mockResolvedValue({
+      'Provider F': [
+        {
+          id: 'fallback-model',
+          name: 'Fallback Model',
+          provider: 'Provider F',
+          providerId: 'provider-f'
+        }
+      ]
+    })
+
+    const result = await selectModel({
+      cookieStore: createCookieStore('provider-l:removed-model')
+    })
+
+    expect(result).toEqual({
+      id: 'fallback-model',
+      name: 'Fallback Model',
+      provider: 'Provider F',
+      providerId: 'provider-f'
     })
   })
 
@@ -201,6 +239,21 @@ describe('selectModel', () => {
     mockIsProviderEnabled.mockImplementation(
       providerId => providerId === 'ollama'
     )
+    mockFetchAvailableModels.mockResolvedValue({
+      Ollama: [
+        {
+          id: 'deepseek-r1:8b',
+          name: 'deepseek-r1:8b',
+          provider: 'Ollama',
+          providerId: 'ollama',
+          providerOptions: {
+            ollama: {
+              think: true
+            }
+          }
+        }
+      ]
+    })
 
     const result = await selectModel({
       cookieStore: createCookieStore('ollama:deepseek-r1:8b')
@@ -224,6 +277,21 @@ describe('selectModel', () => {
     mockIsProviderEnabled.mockImplementation(
       providerId => providerId === 'ollama'
     )
+    mockFetchAvailableModels.mockResolvedValue({
+      Ollama: [
+        {
+          id: 'llama3.2:3b',
+          name: 'llama3.2:3b',
+          provider: 'Ollama',
+          providerId: 'ollama',
+          providerOptions: {
+            ollama: {
+              think: true
+            }
+          }
+        }
+      ]
+    })
 
     const result = await selectModel({
       cookieStore: createCookieStore('ollama:llama3.2:3b')

@@ -6,6 +6,10 @@ import {
   parseModelSelectionCookie
 } from '@/lib/config/model-selection-cookie'
 import { fetchAvailableModels } from '@/lib/models/fetch-models'
+import {
+  getSearchModelPreferenceScore,
+  isSearchCompatibleModel
+} from '@/lib/models/compatibility'
 import { ModelSelectorData } from '@/lib/types/model-selector'
 import { Model } from '@/lib/types/models'
 import { isProviderEnabled } from '@/lib/utils/registry'
@@ -24,7 +28,13 @@ function pickFirstAvailableModel(
   )
 
   for (const provider of providers) {
-    const firstModel = modelsByProvider[provider]?.[0]
+    const firstModel = [...(modelsByProvider[provider] ?? [])]
+      .sort(
+        (a, b) =>
+          getSearchModelPreferenceScore(a.providerId, a.id) -
+          getSearchModelPreferenceScore(b.providerId, b.id)
+      )
+      .find(model => isSearchCompatibleModel(model.providerId, model.id))
     if (firstModel) {
       return firstModel
     }
@@ -48,7 +58,8 @@ function resolveSelectedModelKey(
     .some(
       model =>
         model.providerId === parsedCookie.providerId &&
-        model.id === parsedCookie.modelId
+        model.id === parsedCookie.modelId &&
+        isSearchCompatibleModel(model.providerId, model.id)
     )
 
   return matched
