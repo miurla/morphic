@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 import {
+  IconAdjustments as Adjustments,
   IconLink as Link2,
   IconLogin as LogIn,
   IconMessageCircle as MessageCircle,
@@ -65,6 +66,12 @@ export default function GuestMenu({ onFeedback }: GuestMenuProps) {
         >
           <MessageCircle className="size-4" />
           <span>Feedback</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/settings">
+            <Adjustments className="size-4" />
+            <span>Search Settings</span>
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>

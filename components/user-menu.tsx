@@ -8,6 +8,7 @@ import {
   IconLink as Link2,
   IconLogout as LogOut,
   IconMessageCircle as MessageCircle,
+  IconSettings as Settings,
   IconUserCircle as UserRound
 } from '@tabler/icons-react'
 
@@ -112,6 +113,15 @@ export default function UserMenu({ user, onFeedback }: UserMenuProps) {
           >
             <UserRound className="size-4" />
             <span>Account</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              setMenuOpen(false)
+              router.push('/settings')
+            }}
+          >
+            <Settings className="size-4" />
+            <span>Search Settings</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={event => {
