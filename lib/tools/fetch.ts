@@ -2,6 +2,11 @@ import { tool, UIToolInvocation } from 'ai'
 
 import { fetchSchema } from '@/lib/schema/fetch'
 import { SearchResults as SearchResultsType } from '@/lib/types'
+import {
+  readResponseWithLimit,
+  safeFetch,
+  validateOutboundUrl
+} from '@/lib/utils/ssrf-guard'
 
 const CONTENT_CHARACTER_LIMIT = 50000
 const TITLE_CHARACTER_LIMIT = 100
@@ -11,16 +16,23 @@ async function fetchRegularData(url: string): Promise<SearchResultsType> {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Morphic/1.0)',
-        Accept:
-          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-      }
-    })
+    let response: Response
+    try {
+      response = await safeFetch(url, {
+        signal: controller.signal,
+        maxRedirects: 3,
+        maxResponseBytes: 1_000_000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Morphic/1.0)',
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+      })
+    } finally {
+      clearTimeout(timeoutId)
+    }
 
-    clearTimeout(timeoutId)
+    const finalUrl = response.url || url
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -34,11 +46,13 @@ async function fetchRegularData(url: string): Promise<SearchResultsType> {
       throw new Error(`Unsupported content type: ${contentType}`)
     }
 
-    const html = await response.text()
+    const html = await readResponseWithLimit(response, 1_000_000)
 
     // Extract title
     const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
-    const rawTitle = titleMatch ? titleMatch[1].trim() : new URL(url).hostname
+    const rawTitle = titleMatch
+      ? titleMatch[1].trim()
+      : new URL(finalUrl).hostname
     const title =
       rawTitle.length > TITLE_CHARACTER_LIMIT
         ? rawTitle.substring(0, TITLE_CHARACTER_LIMIT) + '...'
@@ -72,7 +86,7 @@ async function fetchRegularData(url: string): Promise<SearchResultsType> {
         {
           title,
           content: truncatedContent,
-          url
+          url: finalUrl
         }
       ],
       query: '',
@@ -89,6 +103,7 @@ async function fetchRegularData(url: string): Promise<SearchResultsType> {
 
 async function fetchJinaReaderData(url: string): Promise<SearchResultsType> {
   try {
+    await validateOutboundUrl(url)
     const response = await fetch(`https://r.jina.ai/${url}`, {
       method: 'GET',
       headers: {
@@ -122,6 +137,7 @@ async function fetchJinaReaderData(url: string): Promise<SearchResultsType> {
 
 async function fetchTavilyExtractData(url: string): Promise<SearchResultsType> {
   try {
+    await validateOutboundUrl(url)
     const apiKey = process.env.TAVILY_API_KEY
     const response = await fetch('https://api.tavily.com/extract', {
       method: 'POST',
