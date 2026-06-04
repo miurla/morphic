@@ -111,17 +111,17 @@ function detectFeedFormatFromVersion(version?: string): FeedFormat {
   const normalized = version?.toLowerCase() ?? ''
   if (normalized.includes('jsonfeed')) return 'json'
   if (normalized.includes('atom')) return 'atom'
-  if (normalized.includes('rdf')) return 'rdf'
-  if (normalized.includes('rss')) return 'rss'
+  if (normalized.includes('rdf') || normalized.includes('rss 1') || normalized === '1.0') return 'rss1'
+  if (normalized.includes('rss') || normalized === '2.0') return 'rss2'
   return 'unknown'
 }
 
 function detectFeedFormat(parsed: any, contentType?: string): FeedFormat {
   const type = contentType?.toLowerCase() ?? ''
   if (type.includes('json')) return 'json'
-  if (parsed?.rss) return 'rss'
+  if (parsed?.rss) return 'rss2'
   if (parsed?.feed) return 'atom'
-  if (parsed?.['rdf:RDF'] || parsed?.RDF) return 'rdf'
+  if (parsed?.['rdf:RDF'] || parsed?.RDF) return 'rss1'
   return 'unknown'
 }
 
@@ -237,8 +237,8 @@ function discoverFromHtml(
           : type.includes('json')
             ? 'json'
             : type.includes('rdf')
-              ? 'rdf'
-              : 'rss',
+              ? 'rss1'
+              : 'rss2',
         source: 'html-autodiscovery' as const
       }
       return result
@@ -424,7 +424,7 @@ function parseRssFeed(
     format,
     version:
       attrValue(parsed.rss, 'version') ??
-      (format === 'rdf' ? 'rdf' : undefined),
+      (format === 'rss1' ? '1.0' : '2.0'),
     language: firstText(channel?.language),
     image:
       attrValue(channel?.['itunes:image'], 'href') ??
@@ -555,7 +555,7 @@ export async function parseFeedUrl(
 
   const parsed = xmlParser.parse(trimmed)
   const format = detectFeedFormat(parsed, contentType)
-  if (format === 'rss' || format === 'rdf') {
+  if (format === 'rss2' || format === 'rss1') {
     return limitFeedItems(parseRssFeed(parsed, finalUrl, format), maxItems)
   }
   if (format === 'atom') {
@@ -602,7 +602,7 @@ async function discoverFeeds(url: string): Promise<FeedDiscoveryResult[]> {
 export function createFeedTool() {
   return tool({
     description:
-      'Discover and read RSS, Atom, RDF/RSS 1.0, JSON Feed, and podcast feeds. Use this for feed URLs, websites that may expose feeds, podcast feeds, Podcasting 2.0 metadata, episode lists, transcripts, chapters, funding, value blocks, and WebSub/feed metadata. Feed discovery uses feedsearch.dev plus HTML autodiscovery fallback.',
+      'Discover and read RSS 2.0, RSS 1.0 (RDF), Atom, JSON Feed, and podcast feeds. Use this for feed URLs, websites that may expose feeds, podcast feeds, Podcasting 2.0 metadata, episode lists, transcripts, chapters, funding, value blocks, and WebSub/feed metadata. Feed discovery uses feedsearch.dev plus HTML autodiscovery fallback.',
     inputSchema: feedSchema,
     async *execute(
       { action, url, max_items = 10, include_podcast_metadata = true },

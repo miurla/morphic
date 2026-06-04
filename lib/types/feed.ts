@@ -1,6 +1,6 @@
 export type FeedAction = 'discover' | 'read'
 
-export type FeedFormat = 'rss' | 'atom' | 'rdf' | 'json' | 'unknown'
+export type FeedFormat = 'rss2' | 'rss1' | 'atom' | 'json' | 'unknown'
 
 export interface FeedDiscoveryResult {
   title?: string

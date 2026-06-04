@@ -52,7 +52,7 @@ describe('parseFeedUrl', () => {
 
     const feed = await parseFeedUrl('https://example.com/feed.xml', 10)
 
-    expect(feed.format).toBe('rss')
+    expect(feed.format).toBe('rss2')
     expect(feed.isPodcast).toBe(true)
     expect(feed.podcast?.guid).toBe('podcast-guid-123')
     expect(feed.podcast?.locked?.value).toBe(true)
@@ -133,7 +133,7 @@ describe('parseFeedUrl', () => {
 
     const feed = await parseFeedUrl('https://example.com/rss1.xml', 10)
 
-    expect(feed.format).toBe('rdf')
+    expect(feed.format).toBe('rss1')
     expect(feed.items[0].title).toBe('RDF Item')
   })
 })
