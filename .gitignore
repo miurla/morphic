@@ -29,6 +29,10 @@ yarn-error.log*
 .env
 .env*.local
 
+# local private planning docs
+/docs/private/
+*.local.md
+
 # vercel
 .vercel
 
