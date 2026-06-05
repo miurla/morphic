@@ -676,6 +676,81 @@ export async function fetchCloudflareModels(): Promise<Model[]> {
   }
 }
 
+export async function fetchOpenRouterModels(): Promise<Model[]> {
+  if (!isProviderEnabled('openrouter')) {
+    return []
+  }
+
+  const fallbacks: Model[] = [
+    {
+      id: 'google/gemini-2.5-flash',
+      name: 'Gemini 2.5 Flash',
+      provider: 'OpenRouter',
+      providerId: 'openrouter'
+    },
+    {
+      id: 'google/gemini-2.5-pro',
+      name: 'Gemini 2.5 Pro',
+      provider: 'OpenRouter',
+      providerId: 'openrouter'
+    },
+    {
+      id: 'meta-llama/llama-3.3-70b-instruct',
+      name: 'Llama 3.3 70B Instruct',
+      provider: 'OpenRouter',
+      providerId: 'openrouter'
+    },
+    {
+      id: 'deepseek/deepseek-chat',
+      name: 'DeepSeek V3',
+      provider: 'OpenRouter',
+      providerId: 'openrouter'
+    }
+  ]
+
+  const staticList = process.env.OPENROUTER_MODELS
+  if (staticList) {
+    return modelsFromStaticList(staticList, 'OpenRouter', 'openrouter')
+  }
+
+  try {
+    const json = await fetchJson('https://openrouter.ai/api/v1/models', {
+      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`
+    })
+
+    const data = Array.isArray(json?.data) ? json.data : []
+    if (data.length === 0) {
+      return fallbacks
+    }
+
+    const fetchedModels = data
+      .map(item => ({
+        id: String(item?.id ?? ''),
+        name: String(item?.name ?? '')
+      }))
+      .filter(
+        item =>
+          item.id &&
+          passesOpenAICompatibleFilters(item.id) &&
+          !item.id.toLowerCase().includes('moderation') &&
+          !item.id.toLowerCase().includes('guard')
+      )
+      .map(item => ({
+        id: item.id,
+        name: item.name || formatProviderModelName(item.id),
+        provider: 'OpenRouter',
+        providerId: 'openrouter'
+      }))
+
+    return fetchedModels.length > 0
+      ? sortModels(dedupeModels(fetchedModels))
+      : fallbacks
+  } catch (error) {
+    console.warn('[ModelFetch] Failed to fetch OpenRouter models:', error)
+    return fallbacks
+  }
+}
+
 export async function fetchAvailableModels(options?: {
   forceRefresh?: boolean
 }): Promise<ModelsByProvider> {
@@ -695,7 +770,8 @@ export async function fetchAvailableModels(options?: {
     ollama,
     gateway,
     cloudflare,
-    mistralModels
+    mistralModels,
+    openrouterModels
   ] = await Promise.all([
     fetchOpenAIModels(),
     fetchAnthropicModels(),
@@ -705,7 +781,8 @@ export async function fetchAvailableModels(options?: {
     fetchOllamaModels(),
     fetchGatewayModels(),
     fetchCloudflareModels(),
-    fetchMistralModels()
+    fetchMistralModels(),
+    fetchOpenRouterModels()
   ])
 
   const grouped = groupByProvider(
@@ -718,7 +795,8 @@ export async function fetchAvailableModels(options?: {
       ...ollama,
       ...gateway,
       ...cloudflare,
-      ...mistralModels
+      ...mistralModels,
+      ...openrouterModels
     ])
   )
 

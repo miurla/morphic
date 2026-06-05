@@ -43,6 +43,14 @@ const providers: Record<string, any> = {
   cloudflare: createOpenAI({
     apiKey: process.env.CLOUDFLARE_API_TOKEN,
     baseURL: `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/v1`
+  }),
+  openrouter: createOpenAI({
+    apiKey: process.env.OPENROUTER_API_KEY,
+    baseURL: 'https://openrouter.ai/api/v1',
+    headers: {
+      'HTTP-Referer': 'https://github.com/outlaw-dame/morphic',
+      'X-Title': 'Morphic AI Research Client'
+    }
   })
 }
 
@@ -106,6 +114,8 @@ export function isProviderEnabled(providerId: string): boolean {
       return !!process.env.NVIDIA_API_KEY
     case 'mistral':
       return !!process.env.MISTRAL_API_KEY
+    case 'openrouter':
+      return !!process.env.OPENROUTER_API_KEY
     default:
       return false
   }

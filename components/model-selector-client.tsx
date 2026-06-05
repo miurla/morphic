@@ -38,7 +38,8 @@ const PROVIDER_LOGO_BY_ID: Record<string, string> = {
   google: '/providers/logos/google.svg',
   gateway: '/providers/logos/gateway.svg',
   'openai-compatible': '/providers/logos/openai-compatible.svg',
-  ollama: '/providers/logos/ollama.svg'
+  ollama: '/providers/logos/ollama.svg',
+  openrouter: '/providers/logos/openrouter.svg'
 }
 
 function ProviderLogo({ providerId }: { providerId: string }) {

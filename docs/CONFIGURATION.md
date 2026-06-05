@@ -130,6 +130,20 @@ OPENAI_COMPATIBLE_MODELS=orcarouter/openai/gpt-5.5,orcarouter/anthropic/claude-o
 
 Morphic's research agents rely on tool calling, so make sure any model you select supports it. Restricting `OPENAI_COMPATIBLE_MODELS` to known tool-capable models (as above) is the simplest way to keep the selector clean and avoid hitting non-tool-capable upstreams.
 
+#### OpenRouter
+
+[OpenRouter](https://openrouter.ai/) provides a unified interface to access a wide variety of models.
+
+```bash
+OPENROUTER_API_KEY=[YOUR_OPENROUTER_API_KEY]
+```
+
+By default, Morphic will fetch available models from the OpenRouter models API. If you want to pin a custom whitelist of models to display in the UI and avoid calling their endpoint on startup, define the models statically:
+
+```bash
+OPENROUTER_MODELS=google/gemini-2.5-flash,meta-llama/llama-3.3-70b-instruct,deepseek/deepseek-chat
+```
+
 ## Search Providers
 
 ### SearXNG Configuration

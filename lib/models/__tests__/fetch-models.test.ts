@@ -418,4 +418,95 @@ describe('fetch-models', () => {
       ])
     })
   })
+
+  describe('fetchOpenRouterModels', () => {
+    afterEach(() => {
+      delete process.env.OPENROUTER_API_KEY
+      delete process.env.OPENROUTER_MODELS
+    })
+
+    it('returns empty list when provider is not enabled', async () => {
+      mockIsProviderEnabled.mockImplementation(() => false)
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOpenRouterModels()
+      expect(models).toEqual([])
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('fetches OpenRouter models, filters non-chat/moderation models, and sorts them', async () => {
+      mockIsProviderEnabled.mockImplementation(
+        providerId => providerId === 'openrouter'
+      )
+      process.env.OPENROUTER_API_KEY = 'or-test-key'
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({
+          data: [
+            { id: 'google/gemini-2.5-flash', name: 'Google: Gemini 2.5 Flash' },
+            { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Meta: Llama 3.3 70B Instruct' },
+            { id: 'openai/text-embedding-3-small', name: 'OpenAI: Text Embedding' },
+            { id: 'meta-llama/llama-guard-3-8b', name: 'Meta: Llama Guard 3 8B (Moderation)' }
+          ]
+        })
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOpenRouterModels()
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://openrouter.ai/api/v1/models',
+        expect.objectContaining({
+          headers: { Authorization: 'Bearer or-test-key' },
+          method: 'GET'
+        })
+      )
+      expect(models.map(m => m.id)).toEqual([
+        'google/gemini-2.5-flash',
+        'meta-llama/llama-3.3-70b-instruct'
+      ])
+      expect(models[0]).toEqual({
+        id: 'google/gemini-2.5-flash',
+        name: 'Google: Gemini 2.5 Flash',
+        provider: 'OpenRouter',
+        providerId: 'openrouter'
+      })
+    })
+
+    it('falls back to default models if fetch fails', async () => {
+      mockIsProviderEnabled.mockImplementation(
+        providerId => providerId === 'openrouter'
+      )
+      process.env.OPENROUTER_API_KEY = 'or-test-key'
+
+      const fetchMock = vi.fn().mockRejectedValue(new Error('Network failure'))
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOpenRouterModels()
+      expect(models.length).toBeGreaterThan(0)
+      expect(models[0].providerId).toBe('openrouter')
+    })
+
+    it('uses static list when OPENROUTER_MODELS is configured', async () => {
+      mockIsProviderEnabled.mockImplementation(
+        providerId => providerId === 'openrouter'
+      )
+      process.env.OPENROUTER_API_KEY = 'or-test-key'
+      process.env.OPENROUTER_MODELS = 'google/gemini-2.5-flash, deepseek/deepseek-chat'
+
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOpenRouterModels()
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(models.map(m => m.id)).toEqual([
+        'deepseek/deepseek-chat',
+        'google/gemini-2.5-flash'
+      ])
+    })
+  })
 })
