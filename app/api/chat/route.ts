@@ -129,7 +129,7 @@ export async function POST(req: Request) {
       })
     }
 
-    if (!isProviderEnabled(selectedModel.providerId)) {
+    if (!isProviderEnabled(selectedModel.providerId, cookieStore)) {
       return new Response(
         `Selected provider is not enabled ${selectedModel.providerId}`,
         {

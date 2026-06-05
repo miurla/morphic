@@ -81,9 +81,9 @@ export async function getModelSelectorData(): Promise<ModelSelectorData> {
 
   const modelsByProvider = await fetchAvailableModels()
   const fallbackModel = pickFirstAvailableModel(modelsByProvider)
-  const hasAvailableModels =
-    fallbackModel !== null || isProviderEnabled(DEFAULT_MODEL.providerId)
   const cookieStore = await cookies()
+  const hasAvailableModels =
+    fallbackModel !== null || isProviderEnabled(DEFAULT_MODEL.providerId, cookieStore)
   const selectedModelKey = resolveSelectedModelKey(
     modelsByProvider,
     fallbackModel,

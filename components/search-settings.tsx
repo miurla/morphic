@@ -1,10 +1,12 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 import {
   IconArrowLeft,
   IconFilter,
+  IconKey,
   IconLanguage,
   IconMapPin,
   IconNews,
@@ -18,8 +20,10 @@ import {
   SAFE_SEARCH_OPTIONS
 } from '@/lib/config/search-preferences'
 import { useSearchPreferences } from '@/lib/hooks/use-search-preferences'
+import { getCookie, setCookie } from '@/lib/utils/cookies'
 
 import { Label } from './ui/label'
+import { PasswordInput } from './ui/password-input'
 import {
   Select,
   SelectContent,
@@ -32,6 +36,21 @@ import { Switch } from './ui/switch'
 
 export function SearchSettings() {
   const { preferences, setPreferences } = useSearchPreferences()
+  const [openrouterKey, setOpenrouterKey] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return getCookie('openrouter_api_key') || ''
+    }
+    return ''
+  })
+
+  const handleKeyChange = (val: string) => {
+    setOpenrouterKey(val)
+    setCookie('openrouter_api_key', val, 365)
+  }
+
+  const handleBlur = () => {
+    toast.success('OpenRouter API Key saved', { duration: 1500 })
+  }
 
   const update = (
     key: string,
@@ -216,6 +235,35 @@ export function SearchSettings() {
               checked={preferences.showAds}
               onCheckedChange={v => update('showAds', v, 'Ads preference')}
             />
+          </div>
+        </div>
+
+        {/* ── OpenRouter API Key ────────────────────────────────────── */}
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+              <div className="mt-0.5 rounded-lg bg-primary/10 p-2">
+                <IconKey className="size-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <Label htmlFor="openrouter-key" className="text-sm font-semibold">
+                  OpenRouter API Key (Optional)
+                </Label>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Provide your own OpenRouter key to access more models. Saved securely in your browser.
+                </p>
+              </div>
+            </div>
+            <div className="w-full">
+              <PasswordInput
+                id="openrouter-key"
+                value={openrouterKey}
+                onChange={e => handleKeyChange(e.target.value)}
+                onBlur={handleBlur}
+                placeholder="sk-or-v1-..."
+                className="w-full pr-10"
+              />
+            </div>
           </div>
         </div>
       </div>

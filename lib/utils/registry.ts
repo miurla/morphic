@@ -1,3 +1,6 @@
+import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies'
+import { cookies } from 'next/headers'
+
 import { anthropic } from '@ai-sdk/anthropic'
 import { createGateway } from '@ai-sdk/gateway'
 import { google } from '@ai-sdk/google'
@@ -45,11 +48,30 @@ const providers: Record<string, any> = {
     baseURL: `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/v1`
   }),
   openrouter: createOpenAI({
-    apiKey: process.env.OPENROUTER_API_KEY,
     baseURL: 'https://openrouter.ai/api/v1',
-    headers: {
-      'HTTP-Referer': 'https://github.com/outlaw-dame/morphic',
-      'X-Title': 'Morphic AI Research Client'
+    fetch: async (url, options) => {
+      let apiKey = process.env.OPENROUTER_API_KEY
+      try {
+        const cookieStore = await cookies()
+        const userKey = cookieStore.get('openrouter_api_key')?.value
+        if (userKey) {
+          apiKey = userKey
+        }
+      } catch (e) {
+        // cookies() might throw outside request context
+      }
+
+      const headers = new Headers(options?.headers)
+      if (apiKey) {
+        headers.set('Authorization', `Bearer ${apiKey}`)
+      }
+      headers.set('HTTP-Referer', 'https://github.com/outlaw-dame/morphic')
+      headers.set('X-Title', 'Morphic AI Research Client')
+
+      return fetch(url, {
+        ...options,
+        headers
+      })
     }
   })
 }
@@ -88,7 +110,10 @@ export function getModel(model: string): LanguageModel {
   )
 }
 
-export function isProviderEnabled(providerId: string): boolean {
+export function isProviderEnabled(
+  providerId: string,
+  cookieStore?: ReadonlyRequestCookies
+): boolean {
   switch (providerId) {
     case 'openai':
       return !!process.env.OPENAI_API_KEY
@@ -114,8 +139,12 @@ export function isProviderEnabled(providerId: string): boolean {
       return !!process.env.NVIDIA_API_KEY
     case 'mistral':
       return !!process.env.MISTRAL_API_KEY
-    case 'openrouter':
-      return !!process.env.OPENROUTER_API_KEY
+    case 'openrouter': {
+      const hasCookie = cookieStore
+        ? !!cookieStore.get('openrouter_api_key')?.value
+        : false
+      return hasCookie || !!process.env.OPENROUTER_API_KEY
+    }
     default:
       return false
   }

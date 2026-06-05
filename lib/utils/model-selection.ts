@@ -74,14 +74,17 @@ interface ModelSelectionParams {
   cookieStore?: ReadonlyRequestCookies
 }
 
-function resolveModelForMode(mode: SearchMode): Model | undefined {
+function resolveModelForMode(
+  mode: SearchMode,
+  cookieStore?: ReadonlyRequestCookies
+): Model | undefined {
   try {
     const model = getModelForMode(mode)
     if (!model) {
       return undefined
     }
 
-    if (!isProviderEnabled(model.providerId)) {
+    if (!isProviderEnabled(model.providerId, cookieStore)) {
       console.warn(
         `[ModelSelection] Provider "${model.providerId}" is not enabled for mode "${mode}"`
       )
@@ -118,7 +121,7 @@ export async function selectModel({
 
     if (parsedCookie) {
       try {
-        if (!isProviderEnabled(parsedCookie.providerId)) {
+        if (!isProviderEnabled(parsedCookie.providerId, cookieStore)) {
           console.warn(
             `[ModelSelection] Saved model provider "${parsedCookie.providerId}" is not enabled.`
           )
@@ -167,7 +170,7 @@ export async function selectModel({
       }
     }
 
-    if (isProviderEnabled(DEFAULT_MODEL.providerId)) {
+    if (isProviderEnabled(DEFAULT_MODEL.providerId, cookieStore)) {
       return DEFAULT_MODEL
     }
 
@@ -184,13 +187,13 @@ export async function selectModel({
   )
 
   for (const candidateMode of modePreferenceOrder) {
-    const model = resolveModelForMode(candidateMode)
+    const model = resolveModelForMode(candidateMode, cookieStore)
     if (model) {
       return model
     }
   }
 
-  if (isProviderEnabled(DEFAULT_MODEL.providerId)) {
+  if (isProviderEnabled(DEFAULT_MODEL.providerId, cookieStore)) {
     return DEFAULT_MODEL
   }
 

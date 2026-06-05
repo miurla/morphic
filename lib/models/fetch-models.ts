@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers'
+
 import { createGateway } from '@ai-sdk/gateway'
 
 import { Model } from '@/lib/types/models'
@@ -677,7 +679,12 @@ export async function fetchCloudflareModels(): Promise<Model[]> {
 }
 
 export async function fetchOpenRouterModels(): Promise<Model[]> {
-  if (!isProviderEnabled('openrouter')) {
+  let cookieStore: any
+  try {
+    cookieStore = await cookies()
+  } catch (e) {}
+
+  if (!isProviderEnabled('openrouter', cookieStore)) {
     return []
   }
 
@@ -713,9 +720,12 @@ export async function fetchOpenRouterModels(): Promise<Model[]> {
     return modelsFromStaticList(staticList, 'OpenRouter', 'openrouter')
   }
 
+  const userKey = cookieStore?.get('openrouter_api_key')?.value
+  const apiKey = userKey || process.env.OPENROUTER_API_KEY
+
   try {
     const json = await fetchJson('https://openrouter.ai/api/v1/models', {
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`
+      Authorization: `Bearer ${apiKey}`
     })
 
     const data = Array.isArray(json?.data) ? json.data : []
