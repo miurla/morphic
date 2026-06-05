@@ -12,6 +12,7 @@ import {
   PodcastMetadata,
   PodcastValueRecipient
 } from '@/lib/types/feed'
+import { readResponseWithLimit, safeFetch } from '@/lib/utils/ssrf-guard'
 
 const FEEDSEARCH_API_URL = 'https://feedsearch.dev/api/v1/search'
 const FEEDSEARCH_ATTRIBUTION = {
@@ -130,7 +131,8 @@ async function fetchText(url: string): Promise<{
   contentType: string
   finalUrl: string
 }> {
-  const response = await fetch(withDefaultScheme(url), {
+  const safeUrl = withDefaultScheme(url)
+  const response = await safeFetch(safeUrl, {
     headers: {
       Accept: FEED_ACCEPT_HEADER,
       'User-Agent': USER_AGENT
@@ -142,7 +144,7 @@ async function fetchText(url: string): Promise<{
   }
 
   return {
-    body: await response.text(),
+    body: await readResponseWithLimit(response),
     contentType: response.headers.get('content-type') ?? '',
     finalUrl: response.url || url
   }
