@@ -1,6 +1,7 @@
 import type { ComponentType, SVGProps } from 'react'
 
 import {
+  Attachment,
   Check,
   Copy,
   EditPencil,
@@ -28,6 +29,7 @@ import {
 export type NativeIconComponent = ComponentType<SVGProps<SVGSVGElement>>
 
 export const nativeIconMap = {
+  attachment: Attachment,
   check: Check,
   chevronDown: NavArrowDown,
   close: Xmark,
