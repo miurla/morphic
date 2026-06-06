@@ -12,6 +12,7 @@ import {
 } from '@/lib/utils/cookies'
 
 import { NativeIcon } from './native/native-icon'
+import { NativePressable } from './native/native-pressable'
 import { Button } from './ui/button'
 import {
   DropdownMenu,
@@ -185,8 +186,9 @@ export function SearchModeSelector({
                   closeDelay={50}
                 >
                   <HoverCardTrigger asChild>
-                    <button
+                    <NativePressable
                       type="button"
+                      pressScale={0.94}
                       onClick={() => handleModeSelect(config.value)}
                       className={cn(
                         'relative z-10 flex-1 items-center justify-center rounded-full px-3 py-2 transition-colors duration-[140ms] ease-[var(--motion-ease-out)]',
@@ -204,7 +206,7 @@ export function SearchModeSelector({
                           isSelected ? config.color : ''
                         )}
                       />
-                    </button>
+                    </NativePressable>
                   </HoverCardTrigger>
 
                   <HoverCardContent
