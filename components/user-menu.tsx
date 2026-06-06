@@ -15,6 +15,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { NativePressable } from '@/components/native/native-pressable'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +30,6 @@ import {
 
 import { AccountSettingsDialog } from '@/components/account-settings-dialog'
 
-import { Button } from './ui/button'
 import { ExternalLinkItems } from './external-link-items'
 
 interface UserMenuProps {
@@ -81,9 +81,10 @@ export default function UserMenu({ user, onFeedback }: UserMenuProps) {
     <>
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="native-menu-trigger relative size-9 rounded-full text-muted-foreground hover:text-foreground"
+          <NativePressable
+            type="button"
+            pressScale={0.94}
+            className="native-menu-trigger relative inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-[background-color,color,box-shadow,transform] duration-[140ms] ease-[var(--motion-ease-out)] hover:bg-accent hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <Avatar className="size-7">
               <AvatarImage src={avatarUrl} alt={userName} />
@@ -91,7 +92,7 @@ export default function UserMenu({ user, onFeedback }: UserMenuProps) {
                 {getInitials(userName, user.email)}
               </AvatarFallback>
             </Avatar>
-          </Button>
+          </NativePressable>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-60" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
