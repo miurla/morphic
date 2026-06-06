@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation'
 
 import type { User } from '@supabase/supabase-js'
 import {
-  IconLink as Link2,
-  IconLogout as LogOut,
-  IconMessageCircle as MessageCircle,
-  IconSettings as Settings,
-  IconUserCircle as UserRound
-} from '@tabler/icons-react'
+  Link as LinkIcon,
+  LogOut,
+  Message,
+  Settings,
+  UserCircle
+} from 'iconoir-react'
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -111,7 +111,7 @@ export default function UserMenu({ user, onFeedback }: UserMenuProps) {
               handleOpenAccount()
             }}
           >
-            <UserRound className="size-4" />
+            <UserCircle className="size-4" />
             <span>Account</span>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -129,12 +129,12 @@ export default function UserMenu({ user, onFeedback }: UserMenuProps) {
               handleFeedback()
             }}
           >
-            <MessageCircle className="size-4" />
+            <Message className="size-4" />
             <span>Feedback</span>
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Link2 className="size-4" />
+              <LinkIcon className="size-4" />
               <span>Links</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
