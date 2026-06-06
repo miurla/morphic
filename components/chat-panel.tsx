@@ -11,12 +11,6 @@ import Textarea from 'react-textarea-autosize'
 import { useRouter } from 'next/navigation'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import {
-  IconArrowUp as ArrowUp,
-  IconChevronDown as ChevronDown,
-  IconMessageCirclePlus as MessageCirclePlus,
-  IconSquare as Square
-} from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
@@ -35,15 +29,16 @@ import {
   subscribeToCookieChange
 } from '@/lib/utils/cookies'
 
-import { useArtifact } from './artifact/artifact-context'
-import { Button } from './ui/button'
-import { IconBlinkingLogo } from './ui/icons'
 import { ActionButtons } from './action-buttons'
+import { useArtifact } from './artifact/artifact-context'
 import { FileUploadButton } from './file-upload-button'
 import { MessageNavigationDots } from './message-navigation-dots'
 import { ModelSelectorClient } from './model-selector-client'
+import { NativeIcon } from './native/native-icon'
 import { SearchModeSelector } from './search-mode-selector'
 import { UploadedFileList } from './uploaded-file-list'
+import { Button } from './ui/button'
+import { IconBlinkingLogo } from './ui/icons'
 
 // Constants for timing delays
 const INPUT_UPDATE_DELAY_MS = 10 // Delay to ensure input value is updated before form submission
@@ -286,7 +281,7 @@ export function ChatPanel({
               onClick={handleScrollToBottom}
               title="Scroll to bottom"
             >
-              <ChevronDown size={16} />
+              <NativeIcon name="scrollDown" size={16} />
             </Button>
           </div>
         )}
@@ -444,7 +439,10 @@ export function ChatPanel({
                   type="button"
                   disabled={isLoading}
                 >
-                  <MessageCirclePlus className="size-4 transition-transform duration-[140ms] ease-[var(--motion-ease-out)] group-hover:rotate-12" />
+                  <NativeIcon
+                    name="newChat"
+                    className="size-4 transition-transform duration-[140ms] ease-[var(--motion-ease-out)] group-hover:rotate-12"
+                  />
                 </Button>
               )}
               <Button
@@ -465,9 +463,9 @@ export function ChatPanel({
                 }
               >
                 {isLoading ? (
-                  <Square className="size-4 md:size-5" />
+                  <NativeIcon name="stop" className="size-4 md:size-5" />
                 ) : (
-                  <ArrowUp className="size-4 md:size-5" />
+                  <NativeIcon name="send" className="size-4 md:size-5" />
                 )}
               </Button>
             </div>
