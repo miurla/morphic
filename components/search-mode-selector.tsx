@@ -2,11 +2,6 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 
-import {
-  IconCheck as Check,
-  IconChevronDown as ChevronDown
-} from '@tabler/icons-react'
-
 import { SEARCH_MODE_CONFIGS } from '@/lib/config/search-modes'
 import { SearchMode } from '@/lib/types/search'
 import { cn } from '@/lib/utils'
@@ -16,6 +11,7 @@ import {
   subscribeToCookieChange
 } from '@/lib/utils/cookies'
 
+import { NativeIcon } from './native/native-icon'
 import { Button } from './ui/button'
 import {
   DropdownMenu,
@@ -116,7 +112,8 @@ export function SearchModeSelector({
                 />
               )}
               <span className="text-xs font-medium">{selectedMode?.label}</span>
-              <ChevronDown
+              <NativeIcon
+                name="chevronDown"
                 className={cn(
                   'ml-0.5 size-3 opacity-50 transition-transform duration-[160ms] ease-[var(--motion-ease-out)]',
                   dropdownOpen && 'rotate-180'
@@ -135,7 +132,10 @@ export function SearchModeSelector({
                   className="relative flex flex-col items-start gap-1 py-2 pl-8 pr-2 cursor-pointer focus:outline-none"
                 >
                   {isSelected && (
-                    <Check className="absolute left-2 top-2.5 size-4" />
+                    <NativeIcon
+                      name="check"
+                      className="absolute left-2 top-2.5 size-4"
+                    />
                   )}
                   <div className="flex items-center gap-2">
                     <ModeIcon
@@ -169,7 +169,7 @@ export function SearchModeSelector({
 
           {/* Mode buttons */}
           <div className="relative flex items-center">
-            {SEARCH_MODE_CONFIGS.map((config, index) => {
+            {SEARCH_MODE_CONFIGS.map(config => {
               const Icon = config.icon
               const isSelected = value === config.value
 
