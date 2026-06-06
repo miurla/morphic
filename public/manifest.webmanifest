@@ -13,10 +13,16 @@
   "categories": ["productivity", "utilities", "news"],
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/icons/icon-any.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
