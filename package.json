@@ -69,6 +69,7 @@
     "embla-carousel-react": "^8.0.0",
     "exa-js": "^1.0.12",
     "fast-xml-parser": "^5.2.5",
+    "iconoir-react": "^7.11.0",
     "js-tiktoken": "^1.0.20",
     "jsdom": "^26.1.0",
     "katex": "^0.16.10",
