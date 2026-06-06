@@ -33,7 +33,18 @@ export default defineConfig([
           groups: importSortGroups
         }
       ],
-      'simple-import-sort/exports': 'error'
+      'simple-import-sort/exports': 'error',
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@tabler/icons-react',
+              message: 'Please use NativeIcon from @/components/native/native-icon instead.'
+            }
+          ]
+        }
+      ]
     }
   },
   globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts'])

@@ -53,7 +53,6 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
-    "@tabler/icons-react": "^3.44.0",
     "@tailwindcss/typography": "^0.5.12",
     "@upstash/redis": "^1.35.5",
     "@vercel/analytics": "^1.5.0",

@@ -25,6 +25,7 @@ import {
   Xmark,
   XmarkCircle
 } from 'iconoir-react'
+import { IconLogoOutline } from '@/components/ui/icons'
 
 export type NativeIconComponent = ComponentType<SVGProps<SVGSVGElement>>
 
@@ -54,7 +55,8 @@ export const nativeIconMap = {
   stop: Square,
   summarize: Page,
   upload: Upload,
-  warning: WarningTriangle
+  warning: WarningTriangle,
+  adaptive: IconLogoOutline
 } satisfies Record<string, NativeIconComponent>
 
 export type NativeIconName = keyof typeof nativeIconMap

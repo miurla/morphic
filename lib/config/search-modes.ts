@@ -1,14 +1,11 @@
-import { IconSearch as Search } from '@tabler/icons-react'
-
+import { NativeIconName } from '@/lib/native/icon-map'
 import { SearchMode } from '@/lib/types/search'
-
-import { IconLogoOutline } from '@/components/ui/icons'
 
 export interface SearchModeConfig {
   value: SearchMode
   label: string
   description: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: NativeIconName
   color: string
 }
 
@@ -18,14 +15,14 @@ export const SEARCH_MODE_CONFIGS: SearchModeConfig[] = [
     value: 'quick',
     label: 'Quick',
     description: 'Streamlined search for fast, concise responses',
-    icon: Search,
+    icon: 'search',
     color: 'text-amber-500'
   },
   {
     value: 'adaptive',
     label: 'Adaptive',
     description: 'Adaptive agentic search with intelligent query understanding',
-    icon: IconLogoOutline,
+    icon: 'adaptive',
     color: 'text-violet-500'
   }
 ]

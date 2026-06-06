@@ -85,7 +85,6 @@ export function SearchModeSelector({
   const selectedMode = SEARCH_MODE_CONFIGS.find(
     config => config.value === value
   )
-  const SelectedIcon = selectedMode?.icon
   const selectedIndex = Math.max(
     SEARCH_MODE_CONFIGS.findIndex(config => config.value === value),
     0
@@ -103,11 +102,12 @@ export function SearchModeSelector({
               size="sm"
               className="gap-1 rounded-full text-xs shadow-none transition-[background-color,color,box-shadow,transform]"
             >
-              {SelectedIcon && (
-                <SelectedIcon
+              {selectedMode && (
+                <NativeIcon
+                  name={selectedMode.icon}
                   className={cn(
                     'size-3.5 transition-colors',
-                    selectedMode?.color
+                    selectedMode.color
                   )}
                 />
               )}
@@ -123,7 +123,6 @@ export function SearchModeSelector({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64" sideOffset={5}>
             {SEARCH_MODE_CONFIGS.map(config => {
-              const ModeIcon = config.icon
               const isSelected = value === config.value
               return (
                 <DropdownMenuItem
@@ -138,7 +137,8 @@ export function SearchModeSelector({
                     />
                   )}
                   <div className="flex items-center gap-2">
-                    <ModeIcon
+                    <NativeIcon
+                      name={config.icon}
                       className={cn('size-4 transition-colors', config.color)}
                     />
                     <span className="text-sm font-medium">{config.label}</span>
@@ -170,7 +170,6 @@ export function SearchModeSelector({
           {/* Mode buttons */}
           <div className="relative flex items-center">
             {SEARCH_MODE_CONFIGS.map(config => {
-              const Icon = config.icon
               const isSelected = value === config.value
 
               return (
@@ -198,7 +197,8 @@ export function SearchModeSelector({
                       aria-label={`${config.label} mode`}
                       aria-pressed={isSelected}
                     >
-                      <Icon
+                      <NativeIcon
+                        name={config.icon}
                         className={cn(
                           'h-3.5 w-3.5 transition-colors',
                           isSelected ? config.color : ''
@@ -214,7 +214,10 @@ export function SearchModeSelector({
                   >
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Icon className={cn('size-5', config.color)} />
+                        <NativeIcon
+                          name={config.icon}
+                          className={cn('size-5', config.color)}
+                        />
                         <h4 className="text-sm font-semibold">
                           {config.label}
                         </h4>

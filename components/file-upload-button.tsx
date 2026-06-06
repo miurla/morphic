@@ -2,11 +2,11 @@
 
 import { useRef, useState } from 'react'
 
-import { IconPaperclip as Paperclip } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
 
+import { NativeIcon } from './native/native-icon'
 import { Button } from './ui/button'
 
 const allowedImageTypes = ['image/png', 'image/jpeg']
@@ -81,7 +81,7 @@ export function FileUploadButton({
         type="button"
         onClick={() => inputRef.current?.click()}
       >
-        <Paperclip size={18} />
+        <NativeIcon name="attachment" size={18} />
       </Button>
     </div>
   )
