@@ -4,9 +4,9 @@ import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
-import { NativeIcon } from '@/components/native/native-icon'
 import { Button } from '@/components/ui/button'
 import { useSidebar } from '@/components/ui/sidebar'
+import { NativeIcon } from '@/components/native/native-icon'
 
 const NativeSidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
