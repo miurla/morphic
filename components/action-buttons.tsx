@@ -2,16 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import {
-  IconFileText as FileText,
-  IconHelpCircle as HelpCircle,
-  IconNews as Newspaper,
-  IconScale as Scale,
-  IconSearch as Search,
-  type TablerIcon
-} from '@tabler/icons-react'
-
+import type { NativeIconName } from '@/lib/native/icon-map'
 import { cn } from '@/lib/utils'
+
+import { NativeIcon } from '@/components/native/native-icon'
 
 import { Button } from './ui/button'
 
@@ -19,34 +13,34 @@ import { Button } from './ui/button'
 const FOCUS_OUT_DELAY_MS = 100 // Delay to ensure focus has actually moved
 
 interface ActionCategory {
-  icon: TablerIcon
+  icon: NativeIconName
   label: string
   key: string
 }
 
 const actionCategories: ActionCategory[] = [
   {
-    icon: Search,
+    icon: 'research',
     label: 'Research',
     key: 'research'
   },
   {
-    icon: Scale,
+    icon: 'compare',
     label: 'Compare',
     key: 'compare'
   },
   {
-    icon: Newspaper,
+    icon: 'latest',
     label: 'Latest',
     key: 'latest'
   },
   {
-    icon: FileText,
+    icon: 'summarize',
     label: 'Summarize',
     key: 'summarize'
   },
   {
-    icon: HelpCircle,
+    icon: 'explain',
     label: 'Explain',
     key: 'explain'
   }
@@ -180,7 +174,6 @@ export function ActionButtons({
         >
           <div className="flex flex-wrap justify-center gap-2 px-2">
             {actionCategories.map(category => {
-              const Icon = category.icon
               return (
                 <Button
                   key={category.key}
@@ -193,7 +186,10 @@ export function ActionButtons({
                   )}
                   onClick={() => handleCategoryClick(category)}
                 >
-                  <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <NativeIcon
+                    name={category.icon}
+                    className="h-3 w-3 sm:h-4 sm:w-4"
+                  />
                   <span>{category.label}</span>
                 </Button>
               )
@@ -220,7 +216,10 @@ export function ActionButtons({
                 )}
                 onClick={() => handlePromptClick(prompt)}
               >
-                <Search className="h-3 w-3 text-muted-foreground flex-shrink-0 group-hover:text-foreground" />
+                <NativeIcon
+                  name="search"
+                  className="h-3 w-3 text-muted-foreground flex-shrink-0 group-hover:text-foreground"
+                />
                 <span className="line-clamp-1">{prompt}</span>
               </button>
             ))}
