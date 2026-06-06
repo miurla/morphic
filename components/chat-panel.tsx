@@ -29,16 +29,17 @@ import {
   subscribeToCookieChange
 } from '@/lib/utils/cookies'
 
-import { ActionButtons } from './action-buttons'
 import { useArtifact } from './artifact/artifact-context'
+import { NativeIcon } from './native/native-icon'
+import { NativePressable } from './native/native-pressable'
+import { Button } from './ui/button'
+import { IconBlinkingLogo } from './ui/icons'
+import { ActionButtons } from './action-buttons'
 import { FileUploadButton } from './file-upload-button'
 import { MessageNavigationDots } from './message-navigation-dots'
 import { ModelSelectorClient } from './model-selector-client'
-import { NativeIcon } from './native/native-icon'
 import { SearchModeSelector } from './search-mode-selector'
 import { UploadedFileList } from './uploaded-file-list'
-import { Button } from './ui/button'
-import { IconBlinkingLogo } from './ui/icons'
 
 // Constants for timing delays
 const INPUT_UPDATE_DELAY_MS = 10 // Delay to ensure input value is updated before form submission
@@ -273,16 +274,14 @@ export function ChatPanel({
                 : 'pointer-events-none opacity-0'
             )}
           >
-            <Button
+            <NativePressable
               type="button"
-              variant="outline"
-              size="icon"
-              className="absolute -top-10 right-0 z-20 size-8 rounded-full shadow-md"
+              className="absolute -top-10 right-0 z-20 flex size-8 items-center justify-center rounded-full border border-input bg-background shadow-md"
               onClick={handleScrollToBottom}
               title="Scroll to bottom"
             >
               <NativeIcon name="scrollDown" size={16} />
-            </Button>
+            </NativePressable>
           </div>
         )}
         {/* Message navigation dots */}
@@ -431,11 +430,9 @@ export function ChatPanel({
                 <ModelSelectorClient data={modelSelectorData} />
               )}
               {messages.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="icon"
+                <NativePressable
                   onClick={handleNewChat}
-                  className="shrink-0 size-8 md:size-10 rounded-full group"
+                  className="group flex size-8 shrink-0 items-center justify-center rounded-full border border-input bg-background md:size-10"
                   type="button"
                   disabled={isLoading}
                 >
@@ -443,14 +440,15 @@ export function ChatPanel({
                     name="newChat"
                     className="size-4 transition-transform duration-[140ms] ease-[var(--motion-ease-out)] group-hover:rotate-12"
                   />
-                </Button>
+                </NativePressable>
               )}
-              <Button
+              <NativePressable
                 type={isLoading ? 'button' : 'submit'}
-                size={'icon'}
                 className={cn(
+                  'flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground md:size-10',
                   isLoading && 'animate-pulse',
-                  'size-8 md:size-10 rounded-full'
+                  ((input.length === 0 && !isLoading) || !hasAvailableModels) &&
+                    'pointer-events-none opacity-50'
                 )}
                 disabled={
                   (input.length === 0 && !isLoading) || !hasAvailableModels
@@ -467,7 +465,7 @@ export function ChatPanel({
                 ) : (
                   <NativeIcon name="send" className="size-4 md:size-5" />
                 )}
-              </Button>
+              </NativePressable>
             </div>
           </div>
         </div>

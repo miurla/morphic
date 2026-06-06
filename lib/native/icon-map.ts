@@ -25,6 +25,7 @@ import {
   Xmark,
   XmarkCircle
 } from 'iconoir-react'
+
 import { IconLogoOutline } from '@/components/ui/icons'
 
 export type NativeIconComponent = ComponentType<SVGProps<SVGSVGElement>>

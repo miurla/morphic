@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 
-import { motion, useReducedMotion, type HTMLMotionProps } from 'motion/react'
+import { type HTMLMotionProps,motion, useReducedMotion } from 'motion/react'
 
 import { nativeMotion } from '@/lib/native/motion'
 import { cn } from '@/lib/utils'
