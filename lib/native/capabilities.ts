@@ -20,7 +20,7 @@ export interface NativeCapabilitySignals {
 
 export interface NativeCapabilities {
   canShare: boolean
-  canCanShare: boolean
+  canShareFiles: boolean
   canClipboardRead: boolean
   canClipboardWrite: boolean
   canPush: boolean
@@ -37,7 +37,7 @@ export interface NativeCapabilities {
 
 export const defaultNativeCapabilities: NativeCapabilities = {
   canShare: false,
-  canCanShare: false,
+  canShareFiles: false,
   canClipboardRead: false,
   canClipboardWrite: false,
   canPush: false,
@@ -60,6 +60,16 @@ function hasObject(value: unknown): boolean {
   return typeof value === 'object' && value !== null
 }
 
+function canShareFiles(nav: NativeCapabilitySignals['navigator']): boolean {
+  if (!hasFunction(nav?.canShare)) return false
+
+  try {
+    return nav.canShare({ files: [] })
+  } catch {
+    return false
+  }
+}
+
 export function detectNativeCapabilities(
   signals: NativeCapabilitySignals = {}
 ): NativeCapabilities {
@@ -75,7 +85,7 @@ export function detectNativeCapabilities(
 
   return {
     canShare: hasFunction(nav?.share),
-    canCanShare: hasFunction(nav?.canShare),
+    canShareFiles: canShareFiles(nav),
     canClipboardRead: hasFunction(clipboard?.readText) || hasFunction(clipboard?.read),
     canClipboardWrite:
       hasFunction(clipboard?.writeText) || hasFunction(clipboard?.write),
