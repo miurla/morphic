@@ -17,6 +17,7 @@ import AppSidebar from '@/components/app-sidebar'
 import ArtifactRoot from '@/components/artifact/artifact-root'
 import Header from '@/components/header'
 import { KeyboardShortcutHandler } from '@/components/keyboard-shortcut-handler'
+import { NativeEnvironmentProvider } from '@/components/native/native-environment-provider'
 import { PlatformProvider } from '@/components/platform/platform-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 
@@ -100,27 +101,29 @@ export default async function RootLayout({
         )}
       >
         <PlatformProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <UserProvider hasUser={!!userId}>
-              <SidebarProvider defaultOpen={false}>
-                {userId && <AppSidebar />}
-                <KeyboardShortcutHandler />
-                <div className="flex flex-col flex-1 min-w-0 native-app-frame">
-                  <Header user={user} />
-                  <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden native-app-main">
-                    <ArtifactRoot>{children}</ArtifactRoot>
-                  </main>
-                </div>
-              </SidebarProvider>
-            </UserProvider>
-            <Toaster />
-            <Analytics />
-          </ThemeProvider>
+          <NativeEnvironmentProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <UserProvider hasUser={!!userId}>
+                <SidebarProvider defaultOpen={false}>
+                  {userId && <AppSidebar />}
+                  <KeyboardShortcutHandler />
+                  <div className="flex flex-col flex-1 min-w-0 native-app-frame">
+                    <Header user={user} />
+                    <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden native-app-main">
+                      <ArtifactRoot>{children}</ArtifactRoot>
+                    </main>
+                  </div>
+                </SidebarProvider>
+              </UserProvider>
+              <Toaster />
+              <Analytics />
+            </ThemeProvider>
+          </NativeEnvironmentProvider>
         </PlatformProvider>
       </body>
     </html>
