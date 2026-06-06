@@ -41,7 +41,11 @@ export const metadata: Metadata = {
   applicationName: title,
   manifest: '/manifest.webmanifest',
   icons: {
-    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }]
+    icon: [
+      { url: '/icons/icon-any.svg', type: 'image/svg+xml' },
+      { url: '/icon.svg', type: 'image/svg+xml' }
+    ],
+    apple: [{ url: '/icons/icon-any.svg', type: 'image/svg+xml' }]
   },
   appleWebApp: {
     capable: true,
