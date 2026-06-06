@@ -31,7 +31,10 @@ yarn-error.log*
 
 # local private planning docs
 /docs/private/
+/docs/internal/
+/docs/FRONTEND_NATIVE_APP_*.md
 *.local.md
+*.private.md
 
 # vercel
 .vercel
