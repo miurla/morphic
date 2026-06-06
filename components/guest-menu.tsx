@@ -4,13 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 import {
-  IconAdjustments as Adjustments,
-  IconLink as Link2,
-  IconLogin as LogIn,
-  IconMessageCircle as MessageCircle,
-  IconPalette as Palette,
-  IconSettings as Settings2
-} from '@tabler/icons-react'
+  Link as LinkIcon,
+  LogIn,
+  Message,
+  Palette,
+  Settings
+} from 'iconoir-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -47,7 +46,7 @@ export default function GuestMenu({ onFeedback }: GuestMenuProps) {
           size="icon"
           className="native-menu-trigger size-9 rounded-full text-muted-foreground hover:text-foreground"
         >
-          <Settings2 className="size-4" />
+          <Settings className="size-4" />
           <span className="sr-only">Open menu</span>
         </Button>
       </DropdownMenuTrigger>
@@ -64,12 +63,12 @@ export default function GuestMenu({ onFeedback }: GuestMenuProps) {
             handleFeedback()
           }}
         >
-          <MessageCircle className="size-4" />
+          <Message className="size-4" />
           <span>Feedback</span>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/settings">
-            <Adjustments className="size-4" />
+            <Settings className="size-4" />
             <span>Search Settings</span>
           </Link>
         </DropdownMenuItem>
@@ -85,7 +84,7 @@ export default function GuestMenu({ onFeedback }: GuestMenuProps) {
         </DropdownMenuSub>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <Link2 className="size-4" />
+            <LinkIcon className="size-4" />
             <span>Links</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="p-1.5">
