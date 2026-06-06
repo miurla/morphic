@@ -8,12 +8,12 @@ import {
   SidebarContent,
   SidebarHeader,
   SidebarMenu,
-  SidebarRail,
-  SidebarTrigger
+  SidebarRail
 } from '@/components/ui/sidebar'
 
 import { ChatHistorySection } from './sidebar/chat-history-section'
 import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
+import { NativeSidebarTrigger } from './sidebar/native-sidebar-trigger'
 import { NewChatMenuItem } from './sidebar/new-chat-menu-item'
 import { IconLogo } from './ui/icons'
 
@@ -25,7 +25,7 @@ export default function AppSidebar() {
           <IconLogo className={cn('size-5')} />
           <span className="font-semibold text-sm">Morphic</span>
         </Link>
-        <SidebarTrigger />
+        <NativeSidebarTrigger />
       </SidebarHeader>
       <SidebarContent className="flex flex-col px-2 py-4 h-full">
         <SidebarMenu>
