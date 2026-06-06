@@ -14,7 +14,7 @@ describe('detectNativeCapabilities', () => {
     const capabilities = detectNativeCapabilities({
       navigator: {
         share: () => Promise.resolve(),
-        canShare: () => true,
+        canShare: data => Boolean(data?.files),
         clipboard: {
           writeText: () => Promise.resolve()
         }
@@ -22,9 +22,21 @@ describe('detectNativeCapabilities', () => {
     })
 
     expect(capabilities.canShare).toBe(true)
-    expect(capabilities.canCanShare).toBe(true)
+    expect(capabilities.canShareFiles).toBe(true)
     expect(capabilities.canClipboardRead).toBe(false)
     expect(capabilities.canClipboardWrite).toBe(true)
+  })
+
+  it('treats throwing file-share probes as unsupported', () => {
+    const capabilities = detectNativeCapabilities({
+      navigator: {
+        canShare: () => {
+          throw new Error('unsupported share payload')
+        }
+      }
+    })
+
+    expect(capabilities.canShareFiles).toBe(false)
   })
 
   it('detects native browser feature surfaces from mocked objects', () => {
