@@ -73,6 +73,7 @@
     "jsdom": "^26.1.0",
     "katex": "^0.16.10",
     "langfuse-vercel": "^3.38.4",
+    "motion": "^12.23.24",
     "next": "^16.2.6",
     "node-html-parser": "^6.1.13",
     "postgres": "^3.4.5",
