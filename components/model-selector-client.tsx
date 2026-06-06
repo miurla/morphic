@@ -14,7 +14,6 @@ import { getCookie, setCookie } from '@/lib/utils/cookies'
 
 import { NativeIcon } from './native/native-icon'
 import { NativePressable } from './native/native-pressable'
-import { Button } from './ui/button'
 import {
   Command,
   CommandEmpty,
