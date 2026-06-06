@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Morphic maskable icon</title>
+  <desc id="desc">Morphic app icon with safe area padding for maskable launchers</desc>
+  <defs>
+    <linearGradient id="bg" x1="80" y1="48" x2="432" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#dbeafe"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="164" y1="156" x2="348" y2="356" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#334155"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <rect x="56" y="56" width="400" height="400" rx="96" fill="#ffffff" opacity="0.44"/>
+  <path fill="url(#mark)" d="M150 342V178h42l64 75 64-75h42v164h-45v-99l-49 57h-24l-49-57v99h-45Z"/>
+  <circle cx="256" cy="376" r="15" fill="#0f172a" opacity="0.84"/>
+</svg>
