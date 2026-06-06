@@ -1,10 +1,6 @@
 'use client'
 
-import {
-  IconDeviceLaptop as Laptop,
-  IconMoon as Moon,
-  IconSun as Sun
-} from '@tabler/icons-react'
+import { HalfMoon, Laptop, SunLight } from 'iconoir-react'
 
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
@@ -16,11 +12,11 @@ export function ThemeMenuItems() {
   return (
     <>
       <DropdownMenuItem onClick={() => setTheme('light')}>
-        <Sun className="size-4" />
+        <SunLight className="size-4" />
         <span>Light</span>
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => setTheme('dark')}>
-        <Moon className="size-4" />
+        <HalfMoon className="size-4" />
         <span>Dark</span>
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => setTheme('system')}>
