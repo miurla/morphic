@@ -4,11 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 
 import {
-  IconCheck as Check,
-  IconChevronDown as ChevronDown
-} from '@tabler/icons-react'
-
-import {
   MODEL_SELECTION_COOKIE,
   serializeModelSelectionCookie
 } from '@/lib/config/model-selection-cookie'
@@ -17,6 +12,7 @@ import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { getCookie, setCookie } from '@/lib/utils/cookies'
 
+import { NativeIcon } from './native/native-icon'
 import { Button } from './ui/button'
 import {
   Command,
@@ -143,7 +139,8 @@ export function ModelSelectorClient({ data }: ModelSelectorClientProps) {
           <span className="truncate max-w-40 text-xs font-medium">
             {selectedModel.name}
           </span>
-          <ChevronDown
+          <NativeIcon
+            name="chevronDown"
             className={cn(
               'ml-0.5 h-3 w-3 opacity-50 transition-transform duration-[160ms] ease-[var(--motion-ease-out)]',
               open && 'rotate-180'
@@ -183,7 +180,8 @@ export function ModelSelectorClient({ data }: ModelSelectorClientProps) {
                       }}
                       className="cursor-pointer"
                     >
-                      <Check
+                      <NativeIcon
+                        name="check"
                         className={cn(
                           'h-4 w-4',
                           isSelected ? 'opacity-100' : 'opacity-0'
