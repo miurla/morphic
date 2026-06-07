@@ -2,10 +2,13 @@ export interface NativeCapabilitySignals {
   navigator?: Partial<Navigator> & {
     canShare?: Navigator['canShare']
     clipboard?: Partial<Clipboard>
+    setAppBadge?: (contents?: number) => Promise<void>
+    clearAppBadge?: () => Promise<void>
     standalone?: boolean
     userActivation?: { isActive?: boolean; hasBeenActive?: boolean }
     virtualKeyboard?: unknown
     wakeLock?: unknown
+    windowControlsOverlay?: unknown
   }
   notification?: typeof Notification
   pushManager?: typeof PushManager
@@ -95,8 +98,8 @@ export function detectNativeCapabilities(
       Boolean(signals.pushManager) &&
       hasObject(serviceWorkerRegistration?.pushManager),
     canBadge:
-      hasFunction(serviceWorkerRegistration?.setAppBadge) &&
-      hasFunction(serviceWorkerRegistration?.clearAppBadge),
+      hasFunction(nav?.setAppBadge) &&
+      hasFunction(nav?.clearAppBadge),
     canInstallPrompt: Boolean(win?.BeforeInstallPromptEvent),
     canUseFileSystemAccess: Boolean(win?.FileSystemFileHandle),
     canUseFilePicker: hasFunction(win?.showOpenFilePicker),
@@ -120,7 +123,7 @@ export function detectCurrentNativeCapabilities(): NativeCapabilities {
     serviceWorkerRegistration:
       typeof ServiceWorkerRegistration === 'undefined'
         ? undefined
-        : ServiceWorkerRegistration.prototype,
+        : ('pushManager' in ServiceWorkerRegistration.prototype ? { pushManager: {} as any } : {}),
     window
   })
 }

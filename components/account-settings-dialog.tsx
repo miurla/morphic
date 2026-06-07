@@ -4,12 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
 import type { User } from '@supabase/supabase-js'
-import {
-  IconDeviceLaptop as Laptop,
-  IconMoon as Moon,
-  IconSun as Sun,
-  IconTrash as Trash2
-} from '@tabler/icons-react'
+import { NativeIcon } from '@/components/native/native-icon'
 import { toast } from 'sonner'
 
 import { deleteAccount } from '@/lib/actions/account'
@@ -46,9 +41,9 @@ interface AccountSettingsDialogProps {
 }
 
 const themeOptions = [
-  { value: 'light', label: 'Light', icon: Sun },
-  { value: 'dark', label: 'Dark', icon: Moon },
-  { value: 'system', label: 'System', icon: Laptop }
+  { value: 'light', label: 'Light', icon: 'themeLight' as const },
+  { value: 'dark', label: 'Dark', icon: 'themeDark' as const },
+  { value: 'system', label: 'System', icon: 'themeSystem' as const }
 ]
 
 export function AccountSettingsDialog({
@@ -130,7 +125,6 @@ export function AccountSettingsDialog({
             </div>
             <div className="grid grid-cols-3 gap-2">
               {themeOptions.map(option => {
-                const Icon = option.icon
                 const selected = activeTheme === option.value
 
                 return (
@@ -142,7 +136,7 @@ export function AccountSettingsDialog({
                     aria-pressed={selected}
                     onClick={() => setTheme(option.value)}
                   >
-                    <Icon className="size-4" />
+                    <NativeIcon name={option.icon} className="size-4" />
                     <span className="text-xs">{option.label}</span>
                   </Button>
                 )
@@ -178,7 +172,7 @@ export function AccountSettingsDialog({
                   className="w-fit gap-2"
                   disabled={isDeleting}
                 >
-                  <Trash2 className="size-4" />
+                  <NativeIcon name="trash" className="size-4" />
                   Delete account
                 </Button>
               </AlertDialogTrigger>

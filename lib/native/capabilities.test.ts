@@ -17,7 +17,7 @@ describe('detectNativeCapabilities', () => {
         canShare: data => Boolean(data?.files),
         clipboard: {
           writeText: () => Promise.resolve()
-        }
+        } as any
       }
     })
 
@@ -44,8 +44,8 @@ describe('detectNativeCapabilities', () => {
       navigator: {
         vibrate: () => true,
         virtualKeyboard: {},
-        wakeLock: {},
-        windowControlsOverlay: {}
+        wakeLock: {} as any,
+        windowControlsOverlay: {} as any
       },
       window: {
         BeforeInstallPromptEvent: {},
@@ -70,8 +70,8 @@ describe('detectNativeCapabilities', () => {
       notification: {} as typeof Notification,
       pushManager: {} as typeof PushManager,
       serviceWorkerRegistration: {
-        pushManager: {}
-      }
+        pushManager: {} as any
+      } as any
     })
 
     expect(capabilities.canPush).toBe(true)
