@@ -30,6 +30,11 @@ export function initPostHog(): void {
   initialized = true
 }
 
+export function getDistinctId(): string | undefined {
+  if (!clientKey()) return undefined
+  return posthog.get_distinct_id?.()
+}
+
 export function identify(distinctId: string): void {
   if (!clientKey()) return
   posthog.identify(distinctId)
