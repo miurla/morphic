@@ -21,7 +21,7 @@ jobs:
           bun-version: 1.2.12
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Run linting
         run: bun lint
@@ -40,7 +40,7 @@ jobs:
           bun-version: 1.2.12
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Run type checking
         run: bun typecheck
@@ -59,7 +59,7 @@ jobs:
           bun-version: 1.2.12
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Check formatting
         run: bun format:check
@@ -78,7 +78,7 @@ jobs:
           bun-version: 1.2.12
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Run tests
         run: |
@@ -104,7 +104,7 @@ jobs:
           bun-version: 1.2.12
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Build application
         run: bun run build
