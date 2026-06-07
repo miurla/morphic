@@ -5,9 +5,15 @@ import { useMemo } from 'react'
 import { ActionProvider, JSONUIProvider, Renderer } from '@json-render/react'
 import { toast } from 'sonner'
 
+import { captureClient, chatIdFromPath } from '@/lib/analytics/posthog-client'
 import { useChatContext } from '@/lib/contexts/chat-context'
 import { registry } from '@/lib/render/registry'
 import type { SpecFenceResult } from '@/lib/render/spec-fence'
+
+function currentChatId(): string | undefined {
+  if (typeof window === 'undefined') return undefined
+  return chatIdFromPath(window.location.pathname)
+}
 
 type SpecBlockProps = {
   result: SpecFenceResult
@@ -31,6 +37,8 @@ export function SpecBlock({ result }: SpecBlockProps) {
           toast.info('Please wait for the current response to finish.')
           return
         }
+
+        captureClient('related_question_clicked', { chatId: currentChatId() })
 
         chatContext.sendMessage({
           role: 'user',

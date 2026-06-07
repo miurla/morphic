@@ -1,54 +1,29 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mockTrack = vi.hoisted(() => vi.fn())
+const mockCapture = vi.hoisted(() => vi.fn())
+const mockDeletePerson = vi.hoisted(() => vi.fn())
 
-vi.mock('@vercel/analytics/server', () => ({
-  track: (...args: unknown[]) => mockTrack(...args)
+vi.mock('@/lib/analytics/dispatch', () => ({
+  capture: (...args: unknown[]) => mockCapture(...args),
+  deleteAnalyticsPerson: (...args: unknown[]) => mockDeletePerson(...args)
 }))
 
 import { trackAccountDeleted } from '@/lib/analytics/track-account-event'
 
-const originalCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT
-
 describe('trackAccountDeleted', () => {
   beforeEach(() => {
-    mockTrack.mockReset()
-    mockTrack.mockResolvedValue(undefined)
-    process.env.MORPHIC_CLOUD_DEPLOYMENT = 'true'
+    mockCapture.mockReset().mockResolvedValue(undefined)
+    mockDeletePerson.mockReset().mockResolvedValue(undefined)
   })
 
-  afterEach(() => {
-    process.env.MORPHIC_CLOUD_DEPLOYMENT = originalCloudDeployment
-  })
+  it('captures an anonymous deletion event and deletes the person', async () => {
+    await trackAccountDeleted('user-123')
 
-  it('tracks an anonymous account deletion event in cloud deployment', async () => {
-    await trackAccountDeleted()
-
-    expect(mockTrack).toHaveBeenCalledTimes(1)
-    expect(mockTrack).toHaveBeenCalledWith('account_deleted')
-  })
-
-  it('does not track outside cloud deployment', async () => {
-    process.env.MORPHIC_CLOUD_DEPLOYMENT = 'false'
-
-    await trackAccountDeleted()
-
-    expect(mockTrack).not.toHaveBeenCalled()
-  })
-
-  it('does not throw when analytics tracking fails', async () => {
-    const consoleError = vi
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined)
-    mockTrack.mockRejectedValue(new Error('Analytics unavailable'))
-
-    await expect(trackAccountDeleted()).resolves.toBeUndefined()
-
-    expect(consoleError).toHaveBeenCalledWith(
-      'Failed to track account deletion event:',
-      expect.any(Error)
-    )
-
-    consoleError.mockRestore()
+    expect(mockCapture).toHaveBeenCalledTimes(1)
+    expect(mockCapture).toHaveBeenCalledWith({
+      event: 'account_deleted',
+      distinctId: 'account-lifecycle'
+    })
+    expect(mockDeletePerson).toHaveBeenCalledWith('user-123')
   })
 })

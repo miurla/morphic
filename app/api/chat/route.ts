@@ -2,7 +2,11 @@ import { revalidateTag } from 'next/cache'
 import { cookies } from 'next/headers'
 
 import { loadChat } from '@/lib/actions/chat'
-import { calculateConversationTurn, trackChatEvent } from '@/lib/analytics'
+import {
+  calculateConversationTurn,
+  deriveQueryShape,
+  trackChatEvent
+} from '@/lib/analytics'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { checkAndEnforceAdaptiveLimit } from '@/lib/rate-limit/adaptive-limit'
 import { checkAndEnforceOverallChatLimit } from '@/lib/rate-limit/chat-limits'
@@ -14,6 +18,7 @@ import {
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-ephemeral-chat-stream-response'
 import { SearchMode } from '@/lib/types/search'
+import { getTextFromParts } from '@/lib/utils/message-utils'
 import { selectModel } from '@/lib/utils/model-selection'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { resetAllCounters } from '@/lib/utils/perf-tracking'
@@ -192,17 +197,24 @@ export async function POST(req: Request) {
         }
 
         if (!isGuest && userId) {
+          const resolvedTrigger =
+            (trigger as 'submit-message' | 'regenerate-message') ??
+            'submit-message'
+          const queryShape =
+            resolvedTrigger === 'submit-message' && message?.parts
+              ? deriveQueryShape(getTextFromParts(message.parts))
+              : undefined
+
           await trackChatEvent({
             searchMode,
             conversationTurn,
             isNewChat: isNewChat ?? false,
-            trigger:
-              (trigger as 'submit-message' | 'regenerate-message') ??
-              'submit-message',
+            trigger: resolvedTrigger,
             chatId,
             userId,
             providerId: selectedModel.providerId,
-            modelId: selectedModel.id
+            modelId: selectedModel.id,
+            queryShape
           })
         }
       } catch (error) {

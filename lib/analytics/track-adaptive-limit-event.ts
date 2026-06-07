@@ -1,4 +1,4 @@
-import { track } from '@vercel/analytics/server'
+import { capture } from './dispatch'
 
 export interface AdaptiveLimitEventData {
   /** Outcome of the adaptive-mode rate-limit check */
@@ -19,24 +19,15 @@ export interface AdaptiveLimitEventData {
  *   can plot daily usage distribution and percentiles.
  * - `outcome: "blocked"` when the request is denied, so we can monitor the
  *   429 hit-rate over time and decide whether to relax / tighten the cap.
- *
- * No-op outside cloud deployment; never throws.
  */
 export async function trackAdaptiveLimitEvent(
   data: AdaptiveLimitEventData
 ): Promise<void> {
-  if (process.env.MORPHIC_CLOUD_DEPLOYMENT !== 'true') {
-    return
-  }
+  const { userId, outcome, used, limit } = data
 
-  try {
-    await track('adaptive_limit_check', {
-      outcome: data.outcome,
-      userId: data.userId,
-      used: data.used,
-      limit: data.limit
-    })
-  } catch (error) {
-    console.error('Failed to track adaptive limit event:', error)
-  }
+  await capture({
+    event: 'adaptive_limit_check',
+    distinctId: userId,
+    properties: { outcome, userId, used, limit }
+  })
 }

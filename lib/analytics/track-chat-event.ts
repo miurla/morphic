@@ -1,53 +1,22 @@
-import { track } from '@vercel/analytics/server'
-
+import { capture } from './dispatch'
 import type { ChatEventData } from './types'
 
 /**
- * Track a chat event to analytics provider
+ * Track a chat event.
  *
- * Currently uses Vercel Analytics. Only sends events when MORPHIC_CLOUD_DEPLOYMENT=true.
- * Errors are logged but do not interrupt the application flow.
- *
- * Future extensibility: This function can be modified to support multiple providers
- * by checking an environment variable (e.g., ANALYTICS_PROVIDER) and routing to
- * the appropriate provider implementation.
- *
- * @param data - Chat event data to track
- *
- * @example
- * ```typescript
- * await trackChatEvent({
- *   searchMode: 'quick',
- *   conversationTurn: 1,
- *   isNewChat: true,
- *   trigger: 'submit-message',
- *   chatId: 'clx3k2j5m0000qzrmn4y8b9wy',
- *   userId: '550e8400-e29b-41d4-a716-446655440000',
- *   providerId: 'openai',
- *   modelId: 'gpt-4'
- * })
- * ```
+ * Sent only when MORPHIC_CLOUD_DEPLOYMENT=true. The raw query is never sent;
+ * only the derived query shape is included.
  */
 export async function trackChatEvent(data: ChatEventData): Promise<void> {
-  // Only track events in cloud deployment environment
-  if (process.env.MORPHIC_CLOUD_DEPLOYMENT !== 'true') {
-    return
-  }
+  const { userId, queryShape, ...rest } = data
 
-  try {
-    // Send event to Vercel Analytics
-    await track('chat_message_sent', {
-      searchMode: data.searchMode,
-      conversationTurn: data.conversationTurn,
-      isNewChat: data.isNewChat,
-      trigger: data.trigger,
-      chatId: data.chatId, // CUID2 - safe for tracking
-      userId: data.userId, // Supabase UUID - pseudonymized identifier
-      providerId: data.providerId,
-      modelId: data.modelId
-    })
-  } catch (error) {
-    // Log error but don't throw - analytics should never break the app
-    console.error('Failed to track analytics event:', error)
-  }
+  await capture({
+    event: 'chat_message_sent',
+    distinctId: userId,
+    properties: {
+      ...rest,
+      userId,
+      ...queryShape
+    }
+  })
 }

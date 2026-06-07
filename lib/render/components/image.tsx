@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 import type { ComponentFn } from '@json-render/react'
 
+import { captureClient, chatIdFromPath } from '@/lib/analytics/posthog-client'
 import { cn } from '@/lib/utils'
 
 import {
@@ -36,7 +37,18 @@ export const Image: ComponentFn<CatalogType, 'Image'> = ({ props }) => {
   const alt = title || description || 'Image'
 
   return (
-    <Dialog>
+    <Dialog
+      onOpenChange={open => {
+        if (!open) return
+        captureClient('genui_component_clicked', {
+          type: 'image',
+          chatId:
+            typeof window === 'undefined'
+              ? undefined
+              : chatIdFromPath(window.location.pathname)
+        })
+      }}
+    >
       <DialogTrigger asChild>
         <button
           type="button"
