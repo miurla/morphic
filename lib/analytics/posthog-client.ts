@@ -14,8 +14,14 @@ export function initPostHog(): void {
   const key = clientKey()
   if (!key) return
 
+  // The /relay reverse proxy (next.config rewrites) only targets US cloud.
+  // EU / self-hosted deployments keep talking to their configured host directly.
+  const host = process.env.NEXT_PUBLIC_POSTHOG_HOST
+  const useRelay = !host || host.includes('us.i.posthog.com')
+
   posthog.init(key, {
-    api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    api_host: useRelay ? '/relay' : host,
+    ...(useRelay ? { ui_host: 'https://us.posthog.com' } : {}),
     autocapture: false,
     capture_pageview: false,
     disable_session_recording: true,

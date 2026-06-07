@@ -1,5 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Reverse proxy for PostHog to reduce tracking-blocker interception.
+  skipTrailingSlashRedirect: true,
+  async rewrites() {
+    return [
+      {
+        source: '/relay/static/:path*',
+        destination: 'https://us-assets.i.posthog.com/static/:path*'
+      },
+      {
+        source: '/relay/array/:path*',
+        destination: 'https://us-assets.i.posthog.com/array/:path*'
+      },
+      {
+        source: '/relay/:path*',
+        destination: 'https://us.i.posthog.com/:path*'
+      }
+    ]
+  },
   images: {
     remotePatterns: [
       {
