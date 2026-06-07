@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 import { NativeIcon } from '@/components/native/native-icon'
-import { Button } from '@/components/ui/button'
+import { NativePressable } from '@/components/native/native-pressable'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,14 +34,14 @@ export default function GuestMenu({ onFeedback }: GuestMenuProps) {
   return (
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="native-menu-trigger size-9 rounded-full text-muted-foreground hover:text-foreground"
+        <NativePressable
+          type="button"
+          pressScale={0.94}
+          className="native-menu-trigger relative inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-[background-color,color,box-shadow,transform] duration-[140ms] ease-[var(--motion-ease-out)] hover:bg-accent hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <NativeIcon name="settings" className="size-4" />
           <span className="sr-only">Open menu</span>
-        </Button>
+        </NativePressable>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 p-1.5" align="end" forceMount>
         <DropdownMenuItem asChild>

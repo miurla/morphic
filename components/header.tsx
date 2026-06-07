@@ -1,15 +1,14 @@
 'use client'
 
 import React, { useState } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 import { User } from '@supabase/supabase-js'
 
 import { cn } from '@/lib/utils'
 
 import { useSidebar } from '@/components/ui/sidebar'
-import { Button } from '@/components/ui/button'
+import { NativePressable } from '@/components/native/native-pressable'
 import { NativeIcon } from '@/components/native/native-icon'
 
 import { FeedbackModal } from './feedback-modal'
@@ -23,6 +22,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ user }) => {
   const { open } = useSidebar()
   const pathname = usePathname()
+  const router = useRouter()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const isSearchPage = pathname === '/' || pathname.startsWith('/search')
   const showBackButton = pathname.startsWith('/search') && pathname !== '/'
@@ -39,16 +39,15 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
         {/* This div can be used for a logo or title on the left if needed */}
         <div>
           {showBackButton && (
-            <Link href="/" passHref legacyBehavior>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-9 rounded-full text-muted-foreground hover:text-foreground"
-                aria-label="Back to search"
-              >
-                <NativeIcon name="arrowLeft" className="size-4" />
-              </Button>
-            </Link>
+            <NativePressable
+              type="button"
+              pressScale={0.94}
+              onClick={() => router.push('/')}
+              className="relative inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-[background-color,color,box-shadow,transform] duration-[140ms] ease-[var(--motion-ease-out)] hover:bg-accent hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label="Back to search"
+            >
+              <NativeIcon name="arrowLeft" className="size-4" />
+            </NativePressable>
           )}
         </div>
 
