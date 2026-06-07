@@ -1,19 +1,19 @@
-import { track } from '@vercel/analytics/server'
+import { capture, deleteAnalyticsPerson } from './dispatch'
+
+/** Distinct id for the anonymous deletion counter (no link to the user). */
+const ACCOUNT_LIFECYCLE_DISTINCT_ID = 'account-lifecycle'
 
 /**
- * Track successful account deletion.
+ * Track a successful account deletion.
  *
- * Keep this event anonymous: the account has just been deleted, and the only
- * metric we need is the aggregate deletion count.
+ * Records an anonymous aggregate count, then removes the deleted user's
+ * person and events from analytics.
  */
-export async function trackAccountDeleted(): Promise<void> {
-  if (process.env.MORPHIC_CLOUD_DEPLOYMENT !== 'true') {
-    return
-  }
+export async function trackAccountDeleted(userId: string): Promise<void> {
+  await capture({
+    event: 'account_deleted',
+    distinctId: ACCOUNT_LIFECYCLE_DISTINCT_ID
+  })
 
-  try {
-    await track('account_deleted')
-  } catch (error) {
-    console.error('Failed to track account deletion event:', error)
-  }
+  await deleteAnalyticsPerson(userId)
 }

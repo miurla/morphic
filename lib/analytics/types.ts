@@ -1,9 +1,22 @@
 /**
  * Analytics module types
- *
- * This module provides type definitions for analytics tracking.
- * The interfaces are provider-agnostic to allow future extensibility.
  */
+
+/** Length bucket of the user query. Avoids sending the raw text. */
+export type QueryLenBucket = '0-20' | '21-50' | '51-120' | '120+'
+
+/** Coarse language of the user query. */
+export type QueryLang = 'ja' | 'en' | 'other'
+
+/**
+ * Privacy-preserving "shape" of a user query. The raw query stays in the DB;
+ * only these derived signals are sent to analytics.
+ */
+export interface QueryShape {
+  queryLenBucket: QueryLenBucket
+  hasUrl: boolean
+  lang: QueryLang
+}
 
 /**
  * Chat event data structure
@@ -26,17 +39,6 @@ export interface ChatEventData {
   providerId: string
   /** Model identifier used for the chat */
   modelId: string
-}
-
-/**
- * Analytics provider interface
- * Future extensibility point: implement this interface for other providers
- * (e.g., PostHog, DataBuddy, custom analytics)
- */
-export interface AnalyticsProvider {
-  /**
-   * Track a chat event
-   * @param data - Chat event data to track
-   */
-  trackChatEvent(data: ChatEventData): Promise<void>
+  /** Derived query shape (omitted for regenerate, where no new query exists) */
+  queryShape?: QueryShape
 }

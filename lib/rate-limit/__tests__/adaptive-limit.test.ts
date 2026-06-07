@@ -15,8 +15,8 @@ vi.mock('@upstash/redis', () => ({
   })
 }))
 
-vi.mock('@vercel/analytics/server', () => ({
-  track: (...args: unknown[]) => mockTrack(...args)
+vi.mock('@/lib/analytics/dispatch', () => ({
+  capture: (...args: unknown[]) => mockTrack(...args)
 }))
 
 describe('checkAndEnforceAdaptiveLimit', () => {
@@ -105,11 +105,15 @@ describe('checkAndEnforceAdaptiveLimit', () => {
     await new Promise(resolve => setImmediate(resolve))
 
     expect(mockTrack).toHaveBeenCalledTimes(1)
-    expect(mockTrack).toHaveBeenCalledWith('adaptive_limit_check', {
-      outcome: 'allowed',
-      userId: 'user-7',
-      used: 7,
-      limit: 30
+    expect(mockTrack).toHaveBeenCalledWith({
+      event: 'adaptive_limit_check',
+      distinctId: 'user-7',
+      properties: {
+        outcome: 'allowed',
+        userId: 'user-7',
+        used: 7,
+        limit: 30
+      }
     })
   })
 
@@ -122,11 +126,15 @@ describe('checkAndEnforceAdaptiveLimit', () => {
     await new Promise(resolve => setImmediate(resolve))
 
     expect(mockTrack).toHaveBeenCalledTimes(1)
-    expect(mockTrack).toHaveBeenCalledWith('adaptive_limit_check', {
-      outcome: 'blocked',
-      userId: 'user-8',
-      used: 31,
-      limit: 30
+    expect(mockTrack).toHaveBeenCalledWith({
+      event: 'adaptive_limit_check',
+      distinctId: 'user-8',
+      properties: {
+        outcome: 'blocked',
+        userId: 'user-8',
+        used: 31,
+        limit: 30
+      }
     })
   })
 

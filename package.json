@@ -74,6 +74,7 @@
     "next": "^16.2.6",
     "node-html-parser": "^6.1.13",
     "postgres": "^3.4.5",
+    "posthog-node": "^5.36.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-textarea-autosize": "^8.5.3",

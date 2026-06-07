@@ -71,7 +71,7 @@ export async function deleteAccount(): Promise<{
     }
 
     revalidateTag('chat', 'max')
-    await trackAccountDeleted()
+    await trackAccountDeleted(user.id)
 
     return { success: true }
   } catch (error) {
