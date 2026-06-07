@@ -9,8 +9,10 @@ import {
   HelpCircle,
   InfoCircle,
   JournalPage,
+  Message,
   NavArrowDown,
   Page,
+  Palette,
   Plus,
   Refresh,
   Search,
@@ -21,6 +23,7 @@ import {
   SidebarExpand,
   Square,
   Upload,
+  UserCircle,
   WarningTriangle,
   Xmark,
   XmarkCircle
@@ -31,6 +34,7 @@ import { IconLogoOutline } from '@/components/ui/icons'
 export type NativeIconComponent = ComponentType<SVGProps<SVGSVGElement>>
 
 export const nativeIconMap = {
+  account: UserCircle,
   attachment: Attachment,
   check: Check,
   chevronDown: NavArrowDown,
@@ -43,6 +47,7 @@ export const nativeIconMap = {
   feedback: EditPencil,
   info: InfoCircle,
   latest: JournalPage,
+  message: Message,
   newChat: Plus,
   refresh: Refresh,
   research: Search,
@@ -55,6 +60,7 @@ export const nativeIconMap = {
   sidebarOpen: SidebarCollapse,
   stop: Square,
   summarize: Page,
+  theme: Palette,
   upload: Upload,
   warning: WarningTriangle,
   adaptive: IconLogoOutline
