@@ -39,6 +39,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const { message, messages, chatId, trigger, messageId, isNewChat } = body
+    const analyticsId: unknown = body.analyticsId
 
     // Normalize the message id up front so persistence and analytics agree on it.
     if (message && !message.id) {
@@ -191,40 +192,48 @@ export async function POST(req: Request) {
     // Calculate conversation turn by loading chat history
     ;(async () => {
       try {
-        let conversationTurn = 1 // Default for new chats
+        // Attribute to the authenticated user id, or the client-provided
+        // PostHog distinct id for guests (so it merges with their client events).
+        const distinctId =
+          userId ?? (typeof analyticsId === 'string' ? analyticsId : undefined)
+        if (!distinctId) return
 
-        // For existing chats, load history and calculate turn number
-        if (!isNewChat && !isGuest) {
-          const chat = await loadChat(chatId, userId)
-          if (chat?.messages) {
-            conversationTurn = calculateConversationTurn(
-              chat.messages,
-              message?.id
-            )
+        let conversationTurn = 1 // Default for new chats
+        if (!isNewChat) {
+          if (!isGuest && userId) {
+            const chat = await loadChat(chatId, userId)
+            if (chat?.messages) {
+              conversationTurn = calculateConversationTurn(
+                chat.messages,
+                message?.id
+              )
+            }
+          } else if (isGuest && Array.isArray(messages)) {
+            conversationTurn = calculateConversationTurn(messages, message?.id)
           }
         }
 
-        if (!isGuest && userId) {
-          const resolvedTrigger =
-            (trigger as 'submit-message' | 'regenerate-message') ??
-            'submit-message'
-          const queryShape =
-            resolvedTrigger === 'submit-message' && message?.parts
-              ? deriveQueryShape(getTextFromParts(message.parts))
-              : undefined
+        const resolvedTrigger =
+          (trigger as 'submit-message' | 'regenerate-message') ??
+          'submit-message'
+        const queryShape =
+          resolvedTrigger === 'submit-message' && message?.parts
+            ? deriveQueryShape(getTextFromParts(message.parts))
+            : undefined
 
-          await trackChatEvent({
-            searchMode,
-            conversationTurn,
-            isNewChat: isNewChat ?? false,
-            trigger: resolvedTrigger,
-            chatId,
-            userId,
-            providerId: selectedModel.providerId,
-            modelId: selectedModel.id,
-            queryShape
-          })
-        }
+        await trackChatEvent({
+          searchMode,
+          conversationTurn,
+          isNewChat: isNewChat ?? false,
+          trigger: resolvedTrigger,
+          chatId,
+          distinctId,
+          isGuest,
+          userId: userId ?? undefined,
+          providerId: selectedModel.providerId,
+          modelId: selectedModel.id,
+          queryShape
+        })
       } catch (error) {
         // Log error but don't throw - analytics should never break the app
         console.error('Analytics tracking failed:', error)

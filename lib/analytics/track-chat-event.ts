@@ -8,14 +8,13 @@ import type { ChatEventData } from './types'
  * only the derived query shape is included.
  */
 export async function trackChatEvent(data: ChatEventData): Promise<void> {
-  const { userId, queryShape, ...rest } = data
+  const { distinctId, queryShape, ...rest } = data
 
   await capture({
     event: 'chat_message_sent',
-    distinctId: userId,
+    distinctId,
     properties: {
       ...rest,
-      userId,
       ...queryShape
     }
   })
