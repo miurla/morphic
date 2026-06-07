@@ -191,8 +191,10 @@ export async function POST(req: Request) {
         if (!isNewChat && !isGuest) {
           const chat = await loadChat(chatId, userId)
           if (chat?.messages) {
-            // Add 1 to account for the current message being sent
-            conversationTurn = calculateConversationTurn(chat.messages) + 1
+            conversationTurn = calculateConversationTurn(
+              chat.messages,
+              message?.id
+            )
           }
         }
 
