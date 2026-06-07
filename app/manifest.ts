@@ -5,23 +5,35 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Morphic',
     short_name: 'Morphic',
     description:
-      'A fully open-source AI-powered answer engine with a generative UI.',
+      'An AI-powered answer engine with a native-feeling search and chat experience.',
     start_url: '/',
     scope: '/',
     display: 'standalone',
-    orientation: 'portrait',
-    background_color: '#fafafa',
-    theme_color: '#fafafa',
-    categories: ['productivity', 'utilities', 'education'],
+    orientation: 'any',
+    background_color: '#000000',
+    theme_color: '#000000',
+    categories: ['productivity', 'utilities', 'news'],
     icons: [
       {
-        src: '/icon.svg',
+        src: '/icons/icon-192.png',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'any'
+      },
+      {
+        src: '/icons/icon-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'any'
+      },
+      {
+        src: '/icons/icon-any.svg',
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'any'
       },
       {
-        src: '/icon.svg',
+        src: '/icons/icon-maskable.svg',
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'maskable'
