@@ -8,7 +8,7 @@ import {
 const origin = 'https://morphic.local'
 
 describe('service worker cache policy', () => {
-  it('allows static app shell assets', () => {
+  it('allows static app shell assets that are committed to the repo', () => {
     expect(
       shouldCacheServiceWorkerRequest({
         origin,
@@ -19,7 +19,14 @@ describe('service worker cache policy', () => {
     expect(
       shouldCacheServiceWorkerRequest({
         origin,
-        url: `${origin}/icons/icon-512.png`
+        url: `${origin}/icons/icon-any.svg`
+      })
+    ).toBe(true)
+
+    expect(
+      shouldCacheServiceWorkerRequest({
+        origin,
+        url: `${origin}/icons/icon-maskable.svg`
       })
     ).toBe(true)
 
@@ -63,14 +70,14 @@ describe('service worker cache policy', () => {
       shouldCacheServiceWorkerRequest({
         method: 'POST',
         origin,
-        url: `${origin}/icons/icon-512.png`
+        url: `${origin}/icons/icon-any.svg`
       })
     ).toBe(false)
 
     expect(
       shouldCacheServiceWorkerRequest({
         origin,
-        url: 'https://example.com/icons/icon-512.png'
+        url: 'https://example.com/icons/icon-any.svg'
       })
     ).toBe(false)
   })
