@@ -61,10 +61,11 @@ function hasObject(value: unknown): boolean {
 }
 
 function canShareFiles(nav: NativeCapabilitySignals['navigator']): boolean {
-  if (!hasFunction(nav?.canShare)) return false
+  const canShare = nav?.canShare
+  if (typeof canShare !== 'function') return false
 
   try {
-    return nav.canShare({ files: [] })
+    return canShare({ files: [] })
   } catch {
     return false
   }
