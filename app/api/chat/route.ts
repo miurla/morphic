@@ -8,6 +8,7 @@ import {
   trackChatEvent
 } from '@/lib/analytics'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { generateId } from '@/lib/db/schema'
 import { checkAndEnforceAdaptiveLimit } from '@/lib/rate-limit/adaptive-limit'
 import { checkAndEnforceOverallChatLimit } from '@/lib/rate-limit/chat-limits'
 import { checkAndEnforceGuestLimit } from '@/lib/rate-limit/guest-limit'
@@ -38,6 +39,11 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const { message, messages, chatId, trigger, messageId, isNewChat } = body
+
+    // Normalize the message id up front so persistence and analytics agree on it.
+    if (message && !message.id) {
+      message.id = generateId()
+    }
 
     perfLog(
       `API Route - Start: chatId=${chatId}, trigger=${trigger}, isNewChat=${isNewChat}`
@@ -191,8 +197,10 @@ export async function POST(req: Request) {
         if (!isNewChat && !isGuest) {
           const chat = await loadChat(chatId, userId)
           if (chat?.messages) {
-            // Add 1 to account for the current message being sent
-            conversationTurn = calculateConversationTurn(chat.messages) + 1
+            conversationTurn = calculateConversationTurn(
+              chat.messages,
+              message?.id
+            )
           }
         }
 

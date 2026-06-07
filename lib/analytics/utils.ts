@@ -32,25 +32,22 @@ export function deriveQueryShape(text: string): QueryShape {
 }
 
 /**
- * Calculate the conversation turn number from message history
+ * Calculate the conversation turn number (1-indexed) for the message being sent.
  *
- * The turn number represents how many user messages have been sent,
- * which indicates the follow-up count (1 = initial message, 2+ = follow-ups)
+ * Counts distinct user messages by id. `currentMessageId` is included so the
+ * result is stable whether or not the history (which may be cached) already
+ * contains the message being sent.
  *
- * @param messages - Array of UI messages from the conversation
- * @returns Turn number (1-indexed)
- *
- * @example
- * ```typescript
- * const messages = [
- *   { role: 'user', parts: [...] },
- *   { role: 'assistant', parts: [...] },
- *   { role: 'user', parts: [...] }
- * ]
- * calculateConversationTurn(messages) // Returns 2
- * ```
+ * @param messages - User/assistant messages from the conversation
+ * @param currentMessageId - Id of the message being sent, if any
  */
-export function calculateConversationTurn(messages: UIMessage[]): number {
-  const userMessageCount = messages.filter(msg => msg.role === 'user').length
-  return Math.max(1, userMessageCount)
+export function calculateConversationTurn(
+  messages: UIMessage[],
+  currentMessageId?: string
+): number {
+  const userIds = new Set(
+    messages.filter(msg => msg.role === 'user').map(msg => msg.id)
+  )
+  if (currentMessageId) userIds.add(currentMessageId)
+  return Math.max(1, userIds.size)
 }
