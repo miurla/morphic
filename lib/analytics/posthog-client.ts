@@ -32,6 +32,9 @@ export function initPostHog(): void {
 
 export function getDistinctId(): string | undefined {
   if (!clientKey()) return undefined
+  // Self-initialize so the id is available regardless of effect ordering
+  // (a child auto-send effect can run before the provider's init effect).
+  initPostHog()
   return posthog.get_distinct_id?.()
 }
 
@@ -50,6 +53,7 @@ export function captureClient(
   properties?: Record<string, unknown>
 ): void {
   if (!clientKey()) return
+  initPostHog()
   posthog.capture(event, properties)
 }
 
