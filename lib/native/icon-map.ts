@@ -29,6 +29,7 @@ import {
   SidebarExpand,
   Square,
   SunLight,
+  Trash,
   Upload,
   UserCircle,
   WarningTriangle,
@@ -75,6 +76,7 @@ export const nativeIconMap = {
   themeDark: HalfMoon,
   themeLight: SunLight,
   themeSystem: Laptop,
+  trash: Trash,
   upload: Upload,
   warning: WarningTriangle,
   adaptive: IconLogoOutline
