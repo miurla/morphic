@@ -43,6 +43,13 @@ export function identify(distinctId: string): void {
   posthog.identify(distinctId)
 }
 
+/** Whether PostHog currently holds an identified (logged-in) distinct id. */
+export function isIdentified(): boolean {
+  if (!clientKey()) return false
+  initPostHog()
+  return posthog.get_property?.('$user_state') === 'identified'
+}
+
 export function reset(): void {
   if (!clientKey()) return
   posthog.reset()

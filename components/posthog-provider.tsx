@@ -7,6 +7,7 @@ import {
   captureClient,
   identify,
   initPostHog,
+  isIdentified,
   reset
 } from '@/lib/analytics/posthog-client'
 
@@ -24,7 +25,9 @@ export function PostHogProvider({
   useEffect(() => {
     if (userId) {
       identify(userId)
-    } else {
+    } else if (isIdentified()) {
+      // Only reset on an actual logout, not on every guest mount, so a guest
+      // keeps a stable distinct id (persisted in localStorage) across loads.
       reset()
     }
   }, [userId])
