@@ -1,7 +1,6 @@
 'use client'
 
-import { HalfMoon, Laptop, SunLight } from 'iconoir-react'
-
+import { NativeIcon } from '@/components/native/native-icon'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
 import { useTheme } from '@/components/theme-provider'
@@ -12,15 +11,15 @@ export function ThemeMenuItems() {
   return (
     <>
       <DropdownMenuItem onClick={() => setTheme('light')}>
-        <SunLight className="size-4" />
+        <NativeIcon name="themeLight" className="size-4" />
         <span>Light</span>
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => setTheme('dark')}>
-        <HalfMoon className="size-4" />
+        <NativeIcon name="themeDark" className="size-4" />
         <span>Dark</span>
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => setTheme('system')}>
-        <Laptop className="size-4" />
+        <NativeIcon name="themeSystem" className="size-4" />
         <span>System</span>
       </DropdownMenuItem>
     </>
