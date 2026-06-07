@@ -2,8 +2,7 @@
 
 import Link from 'next/link'
 
-import { OpenNewWindow } from 'iconoir-react'
-
+import { NativeIcon } from '@/components/native/native-icon'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
 const externalLinks = [
@@ -27,7 +26,7 @@ export function ExternalLinkItems() {
       {externalLinks.map(link => (
         <DropdownMenuItem key={link.name} asChild>
           <Link href={link.href} target="_blank" rel="noopener noreferrer">
-            <OpenNewWindow className="size-4" />
+            <NativeIcon name="externalLink" className="size-4" />
             <span>{link.name}</span>
           </Link>
         </DropdownMenuItem>
