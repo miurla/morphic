@@ -7,6 +7,8 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 
+import { summarizeGenui } from '@/lib/analytics/genui-summary'
+import { captureClient } from '@/lib/analytics/posthog-client'
 import { ChatProvider } from '@/lib/contexts/chat-context'
 import { generateId } from '@/lib/db/schema'
 import {
@@ -29,6 +31,7 @@ import {
 import type { ModelSelectorData } from '@/lib/types/model-selector'
 import { cn } from '@/lib/utils'
 import { getCookie } from '@/lib/utils/cookies'
+import { getTextFromParts } from '@/lib/utils/message-utils'
 
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
 
@@ -163,9 +166,14 @@ export function Chat({
       }
     }),
     messages: savedMessages,
-    onFinish: () => {
+    onFinish: ({ message }) => {
       isStreamingRef.current = false
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
+
+      const summary = summarizeGenui(getTextFromParts(message.parts))
+      if (summary) {
+        captureClient('genui_component_shown', { chatId, ...summary })
+      }
     },
     onError: error => {
       isStreamingRef.current = false
