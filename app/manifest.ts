@@ -9,6 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/',
     scope: '/',
     display: 'standalone',
+    display_override: ['window-controls-overlay', 'standalone', 'browser'],
     orientation: 'any',
     background_color: '#000000',
     theme_color: '#000000',
@@ -37,6 +38,14 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'maskable'
+      }
+    ],
+    shortcuts: [
+      {
+        name: 'New Search',
+        short_name: 'Search',
+        description: 'Start a new Morphic search',
+        url: '/'
       }
     ]
   }
