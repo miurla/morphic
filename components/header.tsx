@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 import { User } from '@supabase/supabase-js'
@@ -8,6 +9,8 @@ import { User } from '@supabase/supabase-js'
 import { cn } from '@/lib/utils'
 
 import { useSidebar } from '@/components/ui/sidebar'
+import { Button } from '@/components/ui/button'
+import { NativeIcon } from '@/components/native/native-icon'
 
 import { FeedbackModal } from './feedback-modal'
 import GuestMenu from './guest-menu'
@@ -22,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
   const pathname = usePathname()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const isSearchPage = pathname === '/' || pathname.startsWith('/search')
+  const showBackButton = pathname.startsWith('/search') && pathname !== '/'
 
   return (
     <>
@@ -33,7 +37,20 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
         )}
       >
         {/* This div can be used for a logo or title on the left if needed */}
-        <div></div>
+        <div>
+          {showBackButton && (
+            <Link href="/" passHref legacyBehavior>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-9 rounded-full text-muted-foreground hover:text-foreground"
+                aria-label="Back to search"
+              >
+                <NativeIcon name="arrowLeft" className="size-4" />
+              </Button>
+            </Link>
+          )}
+        </div>
 
         <div className="flex items-center gap-2">
           {user ? (
