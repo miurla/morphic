@@ -14,8 +14,7 @@ function lenBucket(length: number): QueryLenBucket {
 }
 
 function detectLang(text: string): QueryLang {
-  if (JAPANESE_PATTERN.test(text)) return 'ja'
-  if (LATIN_PATTERN.test(text)) return 'en'
+  if (LATIN_PATTERN.test(text) && !JAPANESE_PATTERN.test(text)) return 'en'
   return 'other'
 }
 

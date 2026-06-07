@@ -6,7 +6,7 @@
 export type QueryLenBucket = '0-20' | '21-50' | '51-120' | '120+'
 
 /** Coarse language of the user query. */
-export type QueryLang = 'ja' | 'en' | 'other'
+export type QueryLang = 'en' | 'other'
 
 /**
  * Privacy-preserving "shape" of a user query. The raw query stays in the DB;

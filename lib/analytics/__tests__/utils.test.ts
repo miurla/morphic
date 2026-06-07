@@ -16,8 +16,9 @@ describe('deriveQueryShape', () => {
   })
 
   it('detects coarse language', () => {
-    expect(deriveQueryShape('日本語のクエリ').lang).toBe('ja')
     expect(deriveQueryShape('english query').lang).toBe('en')
+    expect(deriveQueryShape('日本語のクエリ').lang).toBe('other')
+    expect(deriveQueryShape('日本語 with latin').lang).toBe('other')
     expect(deriveQueryShape('12345').lang).toBe('other')
   })
 })
