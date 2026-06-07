@@ -4,18 +4,12 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import type { User } from '@supabase/supabase-js'
-import {
-  Link as LinkIcon,
-  LogOut,
-  Message,
-  Settings,
-  UserCircle
-} from 'iconoir-react'
 
 import { createClient } from '@/lib/supabase/client'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { NativeIcon } from '@/components/native/native-icon'
 import { NativePressable } from '@/components/native/native-pressable'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -112,7 +106,7 @@ export default function UserMenu({ user, onFeedback }: UserMenuProps) {
               handleOpenAccount()
             }}
           >
-            <UserCircle className="size-4" />
+            <NativeIcon name="account" className="size-4" />
             <span>Account</span>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -121,7 +115,7 @@ export default function UserMenu({ user, onFeedback }: UserMenuProps) {
               router.push('/settings')
             }}
           >
-            <Settings className="size-4" />
+            <NativeIcon name="settings" className="size-4" />
             <span>Search Settings</span>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -130,12 +124,12 @@ export default function UserMenu({ user, onFeedback }: UserMenuProps) {
               handleFeedback()
             }}
           >
-            <Message className="size-4" />
+            <NativeIcon name="message" className="size-4" />
             <span>Feedback</span>
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <LinkIcon className="size-4" />
+              <NativeIcon name="link" className="size-4" />
               <span>Links</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
@@ -144,7 +138,7 @@ export default function UserMenu({ user, onFeedback }: UserMenuProps) {
           </DropdownMenuSub>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
-            <LogOut className="size-4" />
+            <NativeIcon name="logout" className="size-4" />
             <span>Logout</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
