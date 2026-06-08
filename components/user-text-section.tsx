@@ -17,9 +17,9 @@ import { cn } from '@/lib/utils'
 import { Button } from './ui/button'
 import { CollapsibleMessage } from './collapsible-message'
 
-// Prototype: messages may carry the user's target material wrapped in
-// <user-content> tags (see chat-panel). Split it out so we can render it as
-// a collapsed card and keep the instruction as the prominent text.
+// Messages may carry the user's target material wrapped in <user-content>
+// tags (see chat-panel). Split it out so we can render it as a collapsed card
+// and keep the instruction as the prominent text.
 const PASTED_RE = /<user-content>\n?([\s\S]*?)\n?<\/user-content>/g
 
 function splitPastedContent(content: string): {

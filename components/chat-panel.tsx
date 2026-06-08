@@ -55,8 +55,8 @@ import { UploadedFileList } from './uploaded-file-list'
 
 // Constants for timing delays
 const INPUT_UPDATE_DELAY_MS = 10 // Delay to ensure input value is updated before form submission
-// Prototype: only paste events at/over this size (or line count) become a
-// content card, so short/normal pastes stay inline.
+// Only paste events at/over this size (or line count) become a content card,
+// so short/normal pastes stay inline.
 const PASTE_CARD_MIN_CHARS = 400
 const PASTE_CARD_MIN_LINES = 6
 
@@ -121,8 +121,8 @@ export function ChatPanel({
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
   const [isInputFocused, setIsInputFocused] = useState(false) // Track input focus
-  // Prototype: large pastes become separate "content cards" (the target),
-  // keeping the textarea for the instruction. See PASTE_CARD_MIN_CHARS.
+  // Large pastes become separate "content cards" (the target), keeping the
+  // textarea for the instruction. See PASTE_CARD_MIN_CHARS.
   const [contentCards, setContentCards] = useState<string[]>([])
   const { close: closeArtifact } = useArtifact()
   const isLoading = status === 'submitted' || status === 'streaming'
@@ -262,8 +262,8 @@ export function ChatPanel({
       )}
       <form
         onSubmit={e => {
-          // Prototype: fold content cards (target) + input (instruction) into
-          // one message, then re-submit through the normal path.
+          // Fold content cards (target) + input (instruction) into one
+          // message, then re-submit through the normal path.
           if (contentCards.length > 0) {
             e.preventDefault()
             const combined = [
