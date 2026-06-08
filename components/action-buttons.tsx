@@ -27,6 +27,11 @@ interface ActionCategory {
 
 const actionCategories: ActionCategory[] = [
   {
+    icon: Scale,
+    label: 'Decide',
+    key: 'decide'
+  },
+  {
     icon: Tool,
     label: 'Troubleshoot',
     key: 'troubleshoot'
@@ -35,11 +40,6 @@ const actionCategories: ActionCategory[] = [
     icon: Settings,
     label: 'How-to',
     key: 'howto'
-  },
-  {
-    icon: Scale,
-    label: 'Decide',
-    key: 'decide'
   },
   {
     icon: Bulb,
@@ -71,8 +71,8 @@ const promptSamples: Record<string, string[]> = {
     'Set up a Plex media server to stream my movies'
   ],
   decide: [
-    'Standing vs sitting desk for lower-back pain — which and why?',
     'Tesla vs Rivian — which should I buy?',
+    'Standing vs sitting desk for lower-back pain — which and why?',
     'A budget mirrorless camera for travel under $1,000',
     'Notion vs Obsidian for a personal knowledge base'
   ],
