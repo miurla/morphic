@@ -73,15 +73,15 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
   messageId,
   onUpdateMessage
 }) => {
+  const { cards, rest } = splitPastedContent(content)
   const [isEditing, setIsEditing] = useState(false)
-  const [editedContent, setEditedContent] = useState(content)
+  const [editedContent, setEditedContent] = useState(rest)
   const [isComposing, setIsComposing] = useState(false)
   const [enterDisabled, setEnterDisabled] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [isClamped, setIsClamped] = useState(false)
   const enterResetTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const { cards, rest } = splitPastedContent(content)
 
   const contentRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
@@ -110,7 +110,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
 
   const handleEditClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
-    setEditedContent(content)
+    setEditedContent(rest)
     setIsEditing(true)
   }
 
@@ -123,8 +123,16 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
 
     setIsEditing(false)
 
+    // Re-wrap the preserved pasted cards (target) with the edited instruction.
+    const wrapped = [
+      ...cards.map(c => `<pasted-content>\n${c}\n</pasted-content>`),
+      editedContent
+    ]
+      .filter(s => s && s.trim())
+      .join('\n\n')
+
     try {
-      await onUpdateMessage(messageId, editedContent)
+      await onUpdateMessage(messageId, wrapped)
     } catch (error) {
       console.error('Failed to save message:', error)
     }
@@ -194,6 +202,13 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
       >
         {isEditing ? (
           <div className="flex flex-col gap-2">
+            {cards.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {cards.map((c, i) => (
+                  <PastedContentCard key={i} text={c} />
+                ))}
+              </div>
+            )}
             <TextareaAutosize
               value={editedContent}
               onChange={e => setEditedContent(e.target.value)}
