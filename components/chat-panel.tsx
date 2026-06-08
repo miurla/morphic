@@ -40,6 +40,12 @@ import {
 import { useArtifact } from './artifact/artifact-context'
 import { Button } from './ui/button'
 import { IconBlinkingLogo } from './ui/icons'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from './ui/tooltip'
 import { ActionButtons } from './action-buttons'
 import { FileUploadButton } from './file-upload-button'
 import { MessageNavigationDots } from './message-navigation-dots'
@@ -351,23 +357,33 @@ export function ChatPanel({
                       <FileText className="size-3.5 shrink-0" />
                       Pasted content · {card.length.toLocaleString()} chars
                     </span>
-                    <button
-                      type="button"
-                      title="Expand to text"
-                      aria-label="Expand to text"
-                      className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                      onClick={() => {
-                        setContentCards(prev => prev.filter((_, j) => j !== i))
-                        handleInputChange({
-                          target: {
-                            value: input ? `${input}\n\n${card}` : card
-                          }
-                        } as React.ChangeEvent<HTMLTextAreaElement>)
-                        inputRef.current?.focus()
-                      }}
-                    >
-                      <ArrowsDiagonal className="size-3.5" />
-                    </button>
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="Expand to text"
+                            className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            onClick={() => {
+                              setContentCards(prev =>
+                                prev.filter((_, j) => j !== i)
+                              )
+                              handleInputChange({
+                                target: {
+                                  value: input ? `${input}\n\n${card}` : card
+                                }
+                              } as React.ChangeEvent<HTMLTextAreaElement>)
+                              inputRef.current?.focus()
+                            }}
+                          >
+                            <ArrowsDiagonal className="size-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-xs">
+                          Expand to text
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <p className="line-clamp-2 whitespace-pre-wrap break-words text-xs text-muted-foreground/80">
                     {card}
