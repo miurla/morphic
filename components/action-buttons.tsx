@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from 'react'
 
 import {
-  IconFileText as FileText,
-  IconHelpCircle as HelpCircle,
-  IconNews as Newspaper,
+  IconBulb as Bulb,
+  IconPencil as Pencil,
   IconScale as Scale,
   IconSearch as Search,
+  IconSettings as Settings,
+  IconTool as Tool,
   type TablerIcon
 } from '@tabler/icons-react'
 
@@ -26,62 +27,67 @@ interface ActionCategory {
 
 const actionCategories: ActionCategory[] = [
   {
-    icon: Search,
-    label: 'Research',
-    key: 'research'
+    icon: Tool,
+    label: 'Troubleshoot',
+    key: 'troubleshoot'
+  },
+  {
+    icon: Settings,
+    label: 'How-to',
+    key: 'howto'
   },
   {
     icon: Scale,
-    label: 'Compare',
-    key: 'compare'
+    label: 'Decide',
+    key: 'decide'
   },
   {
-    icon: Newspaper,
-    label: 'Latest',
-    key: 'latest'
+    icon: Bulb,
+    label: 'Understand',
+    key: 'understand'
   },
   {
-    icon: FileText,
-    label: 'Summarize',
-    key: 'summarize'
-  },
-  {
-    icon: HelpCircle,
-    label: 'Explain',
-    key: 'explain'
+    icon: Pencil,
+    label: 'Create',
+    key: 'create'
   }
 ]
 
+// Onboarding examples are tuned to showcase grounded, GenUI-rich answers
+// (images, comparison tables, structured depth) for concrete, self-contained
+// tasks — the patterns that correlate with follow-up in real usage. Keep each
+// example self-contained (no "my notes"/"this file" referencing absent context).
 const promptSamples: Record<string, string[]> = {
-  research: [
-    'Why is Nvidia growing so rapidly?',
-    'Research the latest AI developments',
-    'What are the key trends in robotics?',
-    'What are the latest breakthroughs in renewable energy?'
+  troubleshoot: [
+    'My car starts then immediately stalls, but the electronics still work',
+    'Wi-Fi keeps dropping on one laptop but not my phone — how do I fix it?',
+    "My sourdough starter isn't rising after a week — what's wrong?",
+    'Next.js build fails with "Module not found" only in production'
   ],
-  compare: [
-    'Tesla vs BYD vs Toyota comparison',
-    'Compare Next.js, Remix, and Astro',
-    'AWS vs GCP vs Azure',
-    'iPhone vs Android ecosystem comparison'
+  howto: [
+    'Move my photos off Google Photos without losing albums',
+    'Set up a Proxmox home server for self-hosting',
+    'Convert a folder of .txt files to clean HTML',
+    'Set up a Plex media server to stream my movies'
   ],
-  latest: [
-    'Latest news today',
-    'What happened in tech this week?',
-    'Recent breakthroughs in medicine',
-    'Latest AI model releases'
+  decide: [
+    'Standing vs sitting desk for lower-back pain — which and why?',
+    'Tesla vs Rivian — which should I buy?',
+    'A budget mirrorless camera for travel under $1,000',
+    'Notion vs Obsidian for a personal knowledge base'
   ],
-  summarize: [
-    'Summarize: https://arxiv.org/pdf/2504.19678',
-    "Summarize this week's business news",
-    'Create an executive summary of AI trends',
-    'Summarize recent climate change research'
+  understand: [
+    'What causes the northern lights?',
+    'Why did the dinosaurs really go extinct?',
+    'How does a nuclear reactor actually generate electricity?',
+    // Timely slot — refresh seasonally (currently WWDC 2026).
+    'What did Apple announce at WWDC 2026?'
   ],
-  explain: [
-    'Explain neural networks simply',
-    'How does blockchain work?',
-    'What is quantum entanglement?',
-    'Explain CRISPR gene editing'
+  create: [
+    'Draft a 5-question Ancient Rome quiz with A–D answers',
+    'Outline a peer-support group for a prison setting',
+    'Create a high-protein meal plan for a week on a budget',
+    'Draft a beginner 3-day-per-week workout split'
   ]
 }
 
@@ -162,8 +168,8 @@ export function ActionButtons({
     }
   }, [activeCategory, inputRef])
 
-  // Calculate max height needed for samples (4 items * ~40px + padding)
-  const containerHeight = 'h-[180px]'
+  // Max height for samples (4 items up to 2 lines each + padding); overflow scrolls
+  const containerHeight = 'h-[232px]'
 
   return (
     <div
@@ -221,7 +227,7 @@ export function ActionButtons({
                 onClick={() => handlePromptClick(prompt)}
               >
                 <Search className="h-3 w-3 text-muted-foreground flex-shrink-0 group-hover:text-foreground" />
-                <span className="line-clamp-1">{prompt}</span>
+                <span className="line-clamp-2">{prompt}</span>
               </button>
             ))}
         </div>
