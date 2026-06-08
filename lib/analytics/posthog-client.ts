@@ -64,6 +64,23 @@ export function captureClient(
   posthog.capture(event, properties)
 }
 
+/**
+ * Whether a boolean feature flag is enabled for the current distinct id.
+ * Returns false until flags have loaded (so the control path is the default).
+ */
+export function isFeatureEnabled(key: string): boolean {
+  if (!clientKey()) return false
+  initPostHog()
+  return posthog.isFeatureEnabled?.(key) === true
+}
+
+/** Subscribe to feature-flag loads/changes. Returns an unsubscribe function. */
+export function subscribeFeatureFlags(callback: () => void): () => void {
+  if (!clientKey()) return () => {}
+  initPostHog()
+  return posthog.onFeatureFlags?.(() => callback()) ?? (() => {})
+}
+
 /** Extract the chat id from a /search/:id pathname. */
 export function chatIdFromPath(pathname: string): string | undefined {
   return /^\/search\/([^/]+)/.exec(pathname)?.[1]

@@ -6,8 +6,12 @@ export function getRelatedQuestionsSpecPrompt(): string {
   return `
 RELATED QUESTIONS (MANDATORY):
 After your conclusion, you MUST generate exactly 3 follow-up questions in a \`\`\`spec fenced code block.
-Each question should explore a different aspect of the topic not yet covered.
-Questions must be concise (max 10-12 words) and in the user's language.
+Write the three questions a genuinely curious reader would tap next — not a checklist of "other aspects". Anchor each to THIS answer (use concrete names, options, or numbers from it), and make the three intents distinct:
+- Deepen: go further on the single most interesting or surprising point.
+- Act/decide: the practical next step (e.g. "How do I…", "Which … for …?").
+- Broaden: a useful comparison, trade-off, or related angle.
+Avoid three near-duplicate "what are the differences / what about X" questions.
+Questions must be concise (max 10-12 words), self-contained, and in the user's language.
 
 The spec block uses JSONL (one JSON object per line) with RFC 6902 JSON Patch operations.
 Always include a Heading with title "Related" as the first child element.
