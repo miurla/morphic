@@ -267,9 +267,7 @@ export function ChatPanel({
           if (contentCards.length > 0) {
             e.preventDefault()
             const combined = [
-              ...contentCards.map(
-                c => `<pasted-content>\n${c}\n</pasted-content>`
-              ),
+              ...contentCards.map(c => `<user-content>\n${c}\n</user-content>`),
               input
             ]
               .filter(s => s && s.trim())

@@ -17,10 +17,10 @@ import { cn } from '@/lib/utils'
 import { Button } from './ui/button'
 import { CollapsibleMessage } from './collapsible-message'
 
-// Prototype: messages may carry pasted target content wrapped in
-// <pasted-content> tags (see chat-panel). Split it out so we can render it as
+// Prototype: messages may carry the user's target material wrapped in
+// <user-content> tags (see chat-panel). Split it out so we can render it as
 // a collapsed card and keep the instruction as the prominent text.
-const PASTED_RE = /<pasted-content>\n?([\s\S]*?)\n?<\/pasted-content>/g
+const PASTED_RE = /<user-content>\n?([\s\S]*?)\n?<\/user-content>/g
 
 function splitPastedContent(content: string): {
   cards: string[]
@@ -125,7 +125,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
 
     // Re-wrap the preserved pasted cards (target) with the edited instruction.
     const wrapped = [
-      ...cards.map(c => `<pasted-content>\n${c}\n</pasted-content>`),
+      ...cards.map(c => `<user-content>\n${c}\n</user-content>`),
       editedContent
     ]
       .filter(s => s && s.trim())
