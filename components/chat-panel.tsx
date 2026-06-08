@@ -21,6 +21,7 @@ import {
 } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
+import { captureClient } from '@/lib/analytics/posthog-client'
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
 import {
   isAdaptiveModeAuthBlocked,
@@ -272,6 +273,10 @@ export function ChatPanel({
             ]
               .filter(s => s && s.trim())
               .join('\n\n')
+            captureClient('content_card_submitted', {
+              cardCount: contentCards.length,
+              chars: contentCards.reduce((sum, c) => sum + c.length, 0)
+            })
             setContentCards([])
             handleInputChange({
               target: { value: combined }
@@ -363,6 +368,9 @@ export function ChatPanel({
                             aria-label="Expand to text"
                             className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                             onClick={() => {
+                              captureClient('content_card_expanded', {
+                                chars: card.length
+                              })
                               setContentCards(prev =>
                                 prev.filter((_, j) => j !== i)
                               )
@@ -415,6 +423,10 @@ export function ChatPanel({
               ) {
                 e.preventDefault()
                 setContentCards(prev => [...prev, text])
+                captureClient('content_card_created', {
+                  chars: text.length,
+                  lines: lineCount
+                })
               }
             }}
             onKeyDown={e => {
