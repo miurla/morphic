@@ -12,6 +12,7 @@ import {
   type TablerIcon
 } from '@tabler/icons-react'
 
+import { captureClient } from '@/lib/analytics/posthog-client'
 import { cn } from '@/lib/utils'
 
 import { Button } from './ui/button'
@@ -110,9 +111,14 @@ export function ActionButtons({
   const handleCategoryClick = (category: ActionCategory) => {
     setActiveCategory(category.key)
     onCategoryClick(category.label)
+    captureClient('example_category_opened', { category: category.key })
   }
 
   const handlePromptClick = (prompt: string) => {
+    captureClient('example_prompt_clicked', {
+      category: activeCategory,
+      prompt
+    })
     setActiveCategory(null)
     onSelectPrompt(prompt)
   }
