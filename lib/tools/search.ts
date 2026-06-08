@@ -1,7 +1,7 @@
 import { type JSONValue, tool, UIToolInvocation } from 'ai'
 
 import { getSearchSchemaForModel } from '@/lib/schema/search'
-import { SearchResultItem, SearchResults } from '@/lib/types'
+import { SearchResults } from '@/lib/types'
 import {
   getGeneralSearchProviderType,
   getSearchToolDescription
@@ -142,19 +142,10 @@ export function createSearchTool(fullModel: string) {
         throw error instanceof Error ? error : new Error('Unknown search error')
       }
 
-      // Add citation mapping and toolCallId to search results.
-      // citationMap fully duplicates results (citationMap[i+1] === results[i]);
-      // it is stripped from the model output (see toModelOutput below) but still
-      // lives in the persisted UI payload. Removing it at the source and having
-      // the UI index results[N-1] directly is a separate follow-up (UI +
-      // persisted-shape change, needs a fallback for existing messages).
-      if (searchResult.results && searchResult.results.length > 0) {
-        const citationMap: Record<number, SearchResultItem> = {}
-        searchResult.results.forEach((result, index) => {
-          citationMap[index + 1] = result // Citation numbers start at 1
-        })
-        searchResult.citationMap = citationMap
-      }
+      // No citationMap is attached: it fully duplicated `results`
+      // (citationMap[N] === results[N-1]). The UI derives citations from
+      // `results` by index instead (see extractCitationMaps), with a fallback
+      // for older persisted messages that still carry citationMap.
 
       // Add toolCallId from context
       if (context?.toolCallId) {
@@ -165,7 +156,6 @@ export function createSearchTool(fullModel: string) {
 
       logToolPayload('search', query, {
         results: searchResult.results,
-        citationMap: searchResult.citationMap,
         images: searchResult.images
       })
 
@@ -175,12 +165,11 @@ export function createSearchTool(fullModel: string) {
         ...searchResult
       }
     },
-    // citationMap duplicates `results` (citationMap[i+1] === results[i]) and is
-    // only consumed by the UI for citation rendering; images are display
-    // thumbnails. The model needs neither, so strip them from what it (and every
-    // replayed turn carrying this tool result) sees — this roughly halves the
-    // search payload's token weight. toolCallId MUST stay: the prompt requires
-    // the model to cite as [number](#toolCallId), so it reads the id from here.
+    // Trim the model-facing tool result: images are UI-only thumbnails and
+    // state is a streaming marker. citationMap is no longer produced, but we
+    // still drop it defensively for any older persisted output replayed through
+    // here. toolCallId MUST stay: the prompt cites as [number](#toolCallId), so
+    // the model reads the id from here.
     toModelOutput: ({ output }) => {
       if (!output || typeof output !== 'object') {
         return { type: 'json', value: (output ?? null) as JSONValue }
