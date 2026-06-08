@@ -48,6 +48,14 @@ describe('context-window', () => {
       const maxTokens = getMaxAllowedTokens(mockModel)
       expect(maxTokens).toBeGreaterThanOrEqual(1000)
     })
+
+    test('uses the real ~1M window for production Gemini models', () => {
+      // (1048576 - 65536) - floor(1048576 * 0.1) = 983040 - 104857 = 878183
+      for (const id of ['gemini-3-flash-preview', 'gemini-3.1-flash-lite']) {
+        const maxTokens = getMaxAllowedTokens({ ...mockModel, id })
+        expect(maxTokens).toBe(878183)
+      }
+    })
   })
 
   describe('shouldTruncateMessages', () => {
