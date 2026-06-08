@@ -53,16 +53,16 @@ SPEC RULES:
 export function getImageSpecPrompt(): string {
   return `
 INLINE IMAGE EMBEDDING:
-When images would meaningfully enhance the answer (e.g. visual subjects, people, places, products, events),
+Whenever the search results contain images relevant to the answer,
 embed one or more inline image groups anywhere in the markdown body using \`\`\`spec fenced code blocks.
-Actively include images whenever they help the reader's understanding of the answer — visual context often
-communicates faster and more clearly than prose.
+Default to including at least one image group when relevant images are available (check the "images"
+array in tool output), and use several groups for multi-part answers, each placed right where it
+illustrates the surrounding text (not only at the top). Prefer 2–4 images per group when good options
+exist; a single strong image is fine when only one fits. Visual context communicates faster and more
+clearly than prose.
 
-Use this when:
-- The search tool results contain relevant images (check the "images" array in tool output).
-- A picture helps the reader understand the topic (subjects, places, products, events, diagrams, comparisons).
-
-Skip images only for purely abstract or text-only topics where no image would add value.
+Skip images only for genuinely abstract or text-only topics where no picture helps.
+Never include irrelevant or decorative images, and never fabricate URLs.
 
 AVAILABLE COMPONENTS FOR IMAGES:
 - Grid: { columns: 1 | 2 | 3 | 4, gap?: "xs" | "sm" | "md" | "lg" } - A fixed-column container that reserves cell widths upfront so streaming images don't reflow.
