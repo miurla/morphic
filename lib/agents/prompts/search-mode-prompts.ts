@@ -9,6 +9,16 @@ import {
 
 // Search mode system prompts
 
+function getSourceDirectionGuidance(): string {
+  return `Source direction (include/exclude domains):
+- When the user signals a source preference, pass it to the search tool via \`include_domains\` / \`exclude_domains\`:
+  - Specific site(s): "search reddit", "from x.com", "on github" → \`include_domains: ["reddit.com"]\`
+  - Authoritative-only: "official sources", "peer-reviewed", "primary sources" → include the relevant authoritative domains (e.g. \`["pubmed.ncbi.nlm.nih.gov","nature.com"]\` for medical, \`["worldbank.org","oecd.org"]\` for economic data)
+  - Avoid a source: "not pinterest", "exclude forums" → \`exclude_domains: ["pinterest.com"]\`
+- Only apply domain filters when the user's intent clearly points to a source. Do NOT invent restrictions for ordinary queries.
+- Fallback: if a domain-restricted search returns too few or no results, run one more search without the restriction before answering.`
+}
+
 export function getQuickModePrompt(): string {
   const hasGeneralProvider = isGeneralSearchProviderAvailable()
 
@@ -52,6 +62,8 @@ Search tool usage:
 - This provides faster responses without needing additional fetch operations
 - Rely on the search results' content snippets for your answers
 ${hasGeneralProvider ? '- For video/image content, you can use type="general" with appropriate content_types' : '- Note: Video/image search requires a dedicated general search provider (not available)'}
+
+${getSourceDirectionGuidance()}
 
 Search requirement (MANDATORY):
 - If the user's message contains a URL, start directly with fetch tool - do NOT search first
@@ -228,6 +240,8 @@ Search tool usage - UNDERSTAND THE DIFFERENCE:
   - Use this when the query has semantic meaning to match against
 
 ${getContentTypesGuidance()}
+
+${getSourceDirectionGuidance()}
 
 Fetch tool usage:
 - Use when you need deeper content analysis beyond search snippets
