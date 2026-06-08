@@ -14,6 +14,7 @@ import { UseChatHelpers } from '@ai-sdk/react'
 import {
   IconArrowUp as ArrowUp,
   IconChevronDown as ChevronDown,
+  IconFileText as FileText,
   IconMessageCirclePlus as MessageCirclePlus,
   IconSquare as Square
 } from '@tabler/icons-react'
@@ -345,7 +346,8 @@ export function ChatPanel({
                   className="relative rounded-xl border border-input bg-background px-3 py-2"
                 >
                   <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <FileText className="size-3.5 shrink-0" />
                       Pasted content · {card.length.toLocaleString()} chars
                     </span>
                     <div className="flex items-center gap-1">
