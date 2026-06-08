@@ -47,6 +47,10 @@ import { UploadedFileList } from './uploaded-file-list'
 
 // Constants for timing delays
 const INPUT_UPDATE_DELAY_MS = 10 // Delay to ensure input value is updated before form submission
+// Prototype: only paste events at/over this size (or line count) become a
+// content card, so short/normal pastes stay inline.
+const PASTE_CARD_MIN_CHARS = 400
+const PASTE_CARD_MIN_LINES = 6
 
 function getSearchModeSnapshot(): SearchMode {
   return getCookie('searchMode') === 'adaptive' ? 'adaptive' : 'quick'
@@ -109,6 +113,9 @@ export function ChatPanel({
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
   const [isInputFocused, setIsInputFocused] = useState(false) // Track input focus
+  // Prototype: large pastes become separate "content cards" (the target),
+  // keeping the textarea for the instruction. See PASTE_CARD_MIN_CHARS.
+  const [contentCards, setContentCards] = useState<string[]>([])
   const { close: closeArtifact } = useArtifact()
   const isLoading = status === 'submitted' || status === 'streaming'
   const hasAvailableModels =
@@ -247,6 +254,28 @@ export function ChatPanel({
       )}
       <form
         onSubmit={e => {
+          // Prototype: fold content cards (target) + input (instruction) into
+          // one message, then re-submit through the normal path.
+          if (contentCards.length > 0) {
+            e.preventDefault()
+            const combined = [
+              ...contentCards.map(
+                c => `<pasted-content>\n${c}\n</pasted-content>`
+              ),
+              input
+            ]
+              .filter(s => s && s.trim())
+              .join('\n\n')
+            setContentCards([])
+            handleInputChange({
+              target: { value: combined }
+            } as React.ChangeEvent<HTMLTextAreaElement>)
+            setTimeout(
+              () => inputRef.current?.form?.requestSubmit(),
+              INPUT_UPDATE_DELAY_MS
+            )
+            return
+          }
           if (adaptiveModeSubmitBlocked) {
             e.preventDefault()
             onAdaptiveModeAuthRequired?.()
@@ -308,6 +337,56 @@ export function ChatPanel({
               'ring-1 ring-ring/20 ring-offset-1 ring-offset-background/50'
           )}
         >
+          {contentCards.length > 0 && (
+            <div className="flex flex-col gap-1.5 px-3 pt-3">
+              {contentCards.map((card, i) => (
+                <div
+                  key={i}
+                  className="relative rounded-xl border border-input bg-background px-3 py-2"
+                >
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Pasted content · {card.length.toLocaleString()} chars
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                        onClick={() => {
+                          setContentCards(prev =>
+                            prev.filter((_, j) => j !== i)
+                          )
+                          handleInputChange({
+                            target: {
+                              value: input ? `${input}\n\n${card}` : card
+                            }
+                          } as React.ChangeEvent<HTMLTextAreaElement>)
+                          inputRef.current?.focus()
+                        }}
+                      >
+                        Expand to text
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Remove pasted content"
+                        className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                        onClick={() =>
+                          setContentCards(prev =>
+                            prev.filter((_, j) => j !== i)
+                          )
+                        }
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  <p className="line-clamp-2 whitespace-pre-wrap break-words text-xs text-muted-foreground/80">
+                    {card}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
           <Textarea
             ref={inputRef}
             name="input"
@@ -324,6 +403,17 @@ export function ChatPanel({
             disabled={isLoading || isToolInvocationInProgress()}
             className="resize-none w-full min-h-12 bg-transparent border-0 p-3 md:p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
             onChange={handleInputChange}
+            onPaste={e => {
+              const text = e.clipboardData.getData('text')
+              const lineCount = text.split('\n').length
+              if (
+                text.length >= PASTE_CARD_MIN_CHARS ||
+                lineCount >= PASTE_CARD_MIN_LINES
+              ) {
+                e.preventDefault()
+                setContentCards(prev => [...prev, text])
+              }
+            }}
             onKeyDown={e => {
               // e.nativeEvent.isComposing stays true on the keydown that
               // confirms an IME candidate, even after React-level
