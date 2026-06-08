@@ -38,9 +38,21 @@ export function extractCitationMaps(
       part.toolCallId
     ) {
       const searchResults = part.output as SearchResults
-      if (searchResults.citationMap) {
+
+      // Prefer citationMap when present (older persisted messages still carry
+      // it). Newer search outputs omit the redundant citationMap, so derive it
+      // from results by index (citation N -> results[N-1]).
+      let citationMap = searchResults.citationMap
+      if (!citationMap && Array.isArray(searchResults.results)) {
+        citationMap = {}
+        searchResults.results.forEach((result, index) => {
+          citationMap![index + 1] = result // Citation numbers start at 1
+        })
+      }
+
+      if (citationMap && Object.keys(citationMap).length > 0) {
         // Store citation map with toolCallId as key
-        citationMaps[part.toolCallId] = searchResults.citationMap
+        citationMaps[part.toolCallId] = citationMap
       }
     }
   })

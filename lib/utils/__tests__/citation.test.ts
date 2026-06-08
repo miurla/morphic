@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import type { SearchResultItem } from '@/lib/types'
+import type { UIMessage } from '@/lib/types/ai'
 
-import { isCitationLabel, processCitations } from '../citation'
+import {
+  extractCitationMaps,
+  isCitationLabel,
+  processCitations
+} from '../citation'
 
 describe('processCitations', () => {
   const mockCitationMaps = {
@@ -180,6 +185,65 @@ describe('processCitations', () => {
     // 0 and 101 are out of bounds (1-100), so they're replaced with empty string
     // -1 doesn't match the regex pattern \d+, so it remains unchanged
     expect(result).toBe('Edge cases:   [-1](#toolCall1)')
+  })
+
+  describe('extractCitationMaps', () => {
+    const results = [
+      { title: 'Google', url: 'https://www.google.com', content: 'a' },
+      { title: 'GitHub', url: 'https://docs.github.com', content: 'b' }
+    ]
+
+    function messageWithSearchPart(output: unknown): UIMessage {
+      return {
+        id: 'm1',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-search',
+            state: 'output-available',
+            toolCallId: 'toolCall1',
+            output
+          }
+        ]
+      } as unknown as UIMessage
+    }
+
+    it('derives the citation map from results when citationMap is absent', () => {
+      const maps = extractCitationMaps(
+        messageWithSearchPart({ results, images: [], query: 'q' })
+      )
+
+      expect(maps.toolCall1[1]).toEqual(results[0])
+      expect(maps.toolCall1[2]).toEqual(results[1])
+    })
+
+    it('prefers an existing citationMap (older persisted messages)', () => {
+      const legacy = {
+        1: { title: 'Legacy', url: 'https://legacy.example.com', content: 'c' }
+      }
+      const maps = extractCitationMaps(
+        messageWithSearchPart({ results, citationMap: legacy })
+      )
+
+      expect(maps.toolCall1).toBe(legacy)
+    })
+
+    it('omits tool calls with no results and no citationMap', () => {
+      const maps = extractCitationMaps(
+        messageWithSearchPart({ results: [], images: [], query: 'q' })
+      )
+
+      expect(maps).toEqual({})
+    })
+
+    it('produces a map that processCitations can resolve', () => {
+      const maps = extractCitationMaps(
+        messageWithSearchPart({ results, images: [], query: 'q' })
+      )
+      const result = processCitations('See [1](#toolCall1)', maps)
+
+      expect(result).toBe('See [google](https://www.google.com)')
+    })
   })
 
   describe('isCitationLabel', () => {
