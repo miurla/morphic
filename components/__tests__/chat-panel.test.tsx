@@ -81,7 +81,7 @@ describe('ChatPanel', () => {
     await waitFor(() => {
       expect(append).toHaveBeenCalledWith({
         role: 'user',
-        content: 'latest news'
+        parts: [{ type: 'text', text: 'latest news' }]
       })
     })
     expect(onAdaptiveModeAuthRequired).not.toHaveBeenCalled()

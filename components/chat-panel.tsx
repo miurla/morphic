@@ -202,7 +202,7 @@ export function ChatPanel({
 
       append({
         role: 'user',
-        content: query
+        parts: [{ type: 'text', text: query }]
       })
       isFirstRender.current = false
     }
