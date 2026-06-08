@@ -39,18 +39,18 @@ function splitPastedContent(content: string): {
 function PastedContentCard({ text }: { text: string }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="rounded-xl border border-input bg-background/60 px-3 py-2">
+    <div>
       <button
         type="button"
-        className="flex w-full items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+        className="flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={() => setOpen(o => !o)}
       >
         <FileText className="size-3.5 shrink-0" />
         Pasted content · {text.length.toLocaleString()} chars
         {open ? (
-          <ChevronUp className="ml-auto size-3.5 shrink-0" />
+          <ChevronUp className="size-3.5 shrink-0" />
         ) : (
-          <ChevronDown className="ml-auto size-3.5 shrink-0" />
+          <ChevronDown className="size-3.5 shrink-0" />
         )}
       </button>
       {open && (
