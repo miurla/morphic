@@ -8,6 +8,7 @@ import {
   IconChevronDown as ChevronDown,
   IconChevronUp as ChevronUp,
   IconCopy as Copy,
+  IconFileText as FileText,
   IconPencil as Pencil
 } from '@tabler/icons-react'
 
@@ -15,6 +16,51 @@ import { cn } from '@/lib/utils'
 
 import { Button } from './ui/button'
 import { CollapsibleMessage } from './collapsible-message'
+
+// Prototype: messages may carry pasted target content wrapped in
+// <pasted-content> tags (see chat-panel). Split it out so we can render it as
+// a collapsed card and keep the instruction as the prominent text.
+const PASTED_RE = /<pasted-content>\n?([\s\S]*?)\n?<\/pasted-content>/g
+
+function splitPastedContent(content: string): {
+  cards: string[]
+  rest: string
+} {
+  const cards: string[] = []
+  const rest = content
+    .replace(PASTED_RE, (_, body: string) => {
+      cards.push(body)
+      return ''
+    })
+    .trim()
+  return { cards, rest }
+}
+
+function PastedContentCard({ text }: { text: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rounded-xl border border-input bg-background/60 px-3 py-2">
+      <button
+        type="button"
+        className="flex w-full items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+        onClick={() => setOpen(o => !o)}
+      >
+        <FileText className="size-3.5 shrink-0" />
+        Pasted content · {text.length.toLocaleString()} chars
+        {open ? (
+          <ChevronUp className="ml-auto size-3.5 shrink-0" />
+        ) : (
+          <ChevronDown className="ml-auto size-3.5 shrink-0" />
+        )}
+      </button>
+      {open && (
+        <p className="mt-1.5 max-h-60 overflow-auto whitespace-pre-wrap break-words text-xs text-muted-foreground/80">
+          {text}
+        </p>
+      )}
+    </div>
+  )
+}
 
 interface UserTextSectionProps {
   content: string
@@ -35,6 +81,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
   const [isExpanded, setIsExpanded] = useState(false)
   const [isClamped, setIsClamped] = useState(false)
   const enterResetTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const { cards, rest } = splitPastedContent(content)
 
   const contentRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
@@ -169,6 +216,13 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
           </div>
         ) : (
           <div className="relative">
+            {cards.length > 0 && (
+              <div className="mb-2 flex flex-col gap-1.5">
+                {cards.map((c, i) => (
+                  <PastedContentCard key={i} text={c} />
+                ))}
+              </div>
+            )}
             <div
               ref={contentRef}
               className={cn(
@@ -176,7 +230,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
                 !isExpanded && 'line-clamp-3'
               )}
             >
-              {content}
+              {rest}
             </div>
             {(isClamped || isExpanded) && (
               <button
