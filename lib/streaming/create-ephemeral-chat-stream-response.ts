@@ -20,6 +20,7 @@ import {
   shouldTruncateMessages,
   truncateMessages
 } from '../utils/context-window'
+import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { stripReasoningParts } from './helpers/strip-reasoning-parts'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
@@ -93,12 +94,28 @@ export async function createEphemeralChatStreamResponse(
       searchMode
     })
 
+    const modelId = `${model.providerId}:${model.id}`
     const result = await researchAgent.stream({
       messages: modelMessages,
       abortSignal,
-      experimental_transform: smoothStream({ chunking: 'word' })
+      experimental_transform: smoothStream({ chunking: 'word' }),
+      ...(isUsageLogging() && {
+        onStepFinish: step => {
+          logUsage(
+            { scope: 'step', modelId },
+            step.usage,
+            step.providerMetadata
+          )
+        }
+      })
     })
     result.consumeStream()
+
+    if (isUsageLogging()) {
+      Promise.resolve(result.totalUsage)
+        .then(usage => logUsage({ scope: 'total', modelId }, usage))
+        .catch(() => {})
+    }
 
     return result.toUIMessageStreamResponse({
       messageMetadata: ({ part }) => {

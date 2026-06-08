@@ -1,4 +1,4 @@
-import { tool, UIToolInvocation } from 'ai'
+import { type JSONValue, tool, UIToolInvocation } from 'ai'
 
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { SearchResultItem, SearchResults } from '@/lib/types'
@@ -7,6 +7,7 @@ import {
   getSearchToolDescription
 } from '@/lib/utils/search-config'
 import { getBaseUrlString } from '@/lib/utils/url'
+import { logToolPayload } from '@/lib/utils/usage-logging'
 
 import {
   createSearchProvider,
@@ -141,7 +142,12 @@ export function createSearchTool(fullModel: string) {
         throw error instanceof Error ? error : new Error('Unknown search error')
       }
 
-      // Add citation mapping and toolCallId to search results
+      // Add citation mapping and toolCallId to search results.
+      // citationMap fully duplicates results (citationMap[i+1] === results[i]);
+      // it is stripped from the model output (see toModelOutput below) but still
+      // lives in the persisted UI payload. Removing it at the source and having
+      // the UI index results[N-1] directly is a separate follow-up (UI +
+      // persisted-shape change, needs a fallback for existing messages).
       if (searchResult.results && searchResult.results.length > 0) {
         const citationMap: Record<number, SearchResultItem> = {}
         searchResult.results.forEach((result, index) => {
@@ -157,11 +163,35 @@ export function createSearchTool(fullModel: string) {
 
       console.log('completed search')
 
+      logToolPayload('search', query, {
+        results: searchResult.results,
+        citationMap: searchResult.citationMap,
+        images: searchResult.images
+      })
+
       // Yield final results with complete state
       yield {
         state: 'complete' as const,
         ...searchResult
       }
+    },
+    // citationMap duplicates `results` (citationMap[i+1] === results[i]) and is
+    // only consumed by the UI for citation rendering; images are display
+    // thumbnails. The model needs neither, so strip them from what it (and every
+    // replayed turn carrying this tool result) sees — this roughly halves the
+    // search payload's token weight. toolCallId MUST stay: the prompt requires
+    // the model to cite as [number](#toolCallId), so it reads the id from here.
+    toModelOutput: ({ output }) => {
+      if (!output || typeof output !== 'object') {
+        return { type: 'json', value: (output ?? null) as JSONValue }
+      }
+      const modelView: Record<string, unknown> = {
+        ...(output as Record<string, unknown>)
+      }
+      delete modelView.citationMap
+      delete modelView.images
+      delete modelView.state
+      return { type: 'json', value: modelView as JSONValue }
     }
   })
 }

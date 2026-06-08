@@ -23,6 +23,9 @@ function wrapSearchToolForQuickMode<
   return tool({
     description: originalTool.description,
     inputSchema: originalTool.inputSchema,
+    // Preserve the original tool's model-output trimming (strips the duplicated
+    // citationMap / UI-only images) so quick mode gets the same payload savings.
+    toModelOutput: originalTool.toModelOutput,
     async *execute(params, context) {
       const executeFunc = originalTool.execute
       if (!executeFunc) {
