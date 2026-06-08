@@ -8,6 +8,7 @@ import {
   IconChevronDown as ChevronDown,
   IconChevronUp as ChevronUp,
   IconCopy as Copy,
+  IconFileText as FileText,
   IconPencil as Pencil
 } from '@tabler/icons-react'
 
@@ -15,6 +16,51 @@ import { cn } from '@/lib/utils'
 
 import { Button } from './ui/button'
 import { CollapsibleMessage } from './collapsible-message'
+
+// Messages may carry the user's target material wrapped in <user-content>
+// tags (see chat-panel). Split it out so we can render it as a collapsed card
+// and keep the instruction as the prominent text.
+const PASTED_RE = /<user-content>\n?([\s\S]*?)\n?<\/user-content>/g
+
+function splitPastedContent(content: string): {
+  cards: string[]
+  rest: string
+} {
+  const cards: string[] = []
+  const rest = content
+    .replace(PASTED_RE, (_, body: string) => {
+      cards.push(body)
+      return ''
+    })
+    .trim()
+  return { cards, rest }
+}
+
+function PastedContentCard({ text }: { text: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div>
+      <button
+        type="button"
+        className="flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+        onClick={() => setOpen(o => !o)}
+      >
+        <FileText className="size-3.5 shrink-0" />
+        Pasted content · {text.length.toLocaleString()} chars
+        {open ? (
+          <ChevronUp className="size-3.5 shrink-0" />
+        ) : (
+          <ChevronDown className="size-3.5 shrink-0" />
+        )}
+      </button>
+      {open && (
+        <p className="mt-1.5 max-h-60 overflow-auto whitespace-pre-wrap break-words text-xs text-muted-foreground/80">
+          {text}
+        </p>
+      )}
+    </div>
+  )
+}
 
 interface UserTextSectionProps {
   content: string
@@ -27,8 +73,9 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
   messageId,
   onUpdateMessage
 }) => {
+  const { cards, rest } = splitPastedContent(content)
   const [isEditing, setIsEditing] = useState(false)
-  const [editedContent, setEditedContent] = useState(content)
+  const [editedContent, setEditedContent] = useState(rest)
   const [isComposing, setIsComposing] = useState(false)
   const [enterDisabled, setEnterDisabled] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -63,7 +110,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
 
   const handleEditClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
-    setEditedContent(content)
+    setEditedContent(rest)
     setIsEditing(true)
   }
 
@@ -76,8 +123,16 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
 
     setIsEditing(false)
 
+    // Re-wrap the preserved pasted cards (target) with the edited instruction.
+    const wrapped = [
+      ...cards.map(c => `<user-content>\n${c}\n</user-content>`),
+      editedContent
+    ]
+      .filter(s => s && s.trim())
+      .join('\n\n')
+
     try {
-      await onUpdateMessage(messageId, editedContent)
+      await onUpdateMessage(messageId, wrapped)
     } catch (error) {
       console.error('Failed to save message:', error)
     }
@@ -147,6 +202,13 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
       >
         {isEditing ? (
           <div className="flex flex-col gap-2">
+            {cards.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {cards.map((c, i) => (
+                  <PastedContentCard key={i} text={c} />
+                ))}
+              </div>
+            )}
             <TextareaAutosize
               value={editedContent}
               onChange={e => setEditedContent(e.target.value)}
@@ -169,6 +231,13 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
           </div>
         ) : (
           <div className="relative">
+            {cards.length > 0 && (
+              <div className="mb-2 flex flex-col gap-1.5">
+                {cards.map((c, i) => (
+                  <PastedContentCard key={i} text={c} />
+                ))}
+              </div>
+            )}
             <div
               ref={contentRef}
               className={cn(
@@ -176,7 +245,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
                 !isExpanded && 'line-clamp-3'
               )}
             >
-              {content}
+              {rest}
             </div>
             {(isClamped || isExpanded) && (
               <button

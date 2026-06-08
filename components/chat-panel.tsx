@@ -12,13 +12,16 @@ import { useRouter } from 'next/navigation'
 
 import { UseChatHelpers } from '@ai-sdk/react'
 import {
+  IconArrowsDiagonal as ArrowsDiagonal,
   IconArrowUp as ArrowUp,
   IconChevronDown as ChevronDown,
+  IconFileText as FileText,
   IconMessageCirclePlus as MessageCirclePlus,
   IconSquare as Square
 } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
+import { captureClient } from '@/lib/analytics/posthog-client'
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
 import {
   isAdaptiveModeAuthBlocked,
@@ -38,6 +41,12 @@ import {
 import { useArtifact } from './artifact/artifact-context'
 import { Button } from './ui/button'
 import { IconBlinkingLogo } from './ui/icons'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from './ui/tooltip'
 import { ActionButtons } from './action-buttons'
 import { FileUploadButton } from './file-upload-button'
 import { MessageNavigationDots } from './message-navigation-dots'
@@ -47,6 +56,10 @@ import { UploadedFileList } from './uploaded-file-list'
 
 // Constants for timing delays
 const INPUT_UPDATE_DELAY_MS = 10 // Delay to ensure input value is updated before form submission
+// Only paste events at/over this size (or line count) become a content card,
+// so short/normal pastes stay inline.
+const PASTE_CARD_MIN_CHARS = 400
+const PASTE_CARD_MIN_LINES = 6
 
 function getSearchModeSnapshot(): SearchMode {
   return getCookie('searchMode') === 'adaptive' ? 'adaptive' : 'quick'
@@ -109,6 +122,9 @@ export function ChatPanel({
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
   const [isInputFocused, setIsInputFocused] = useState(false) // Track input focus
+  // Large pastes become separate "content cards" (the target), keeping the
+  // textarea for the instruction. See PASTE_CARD_MIN_CHARS.
+  const [contentCards, setContentCards] = useState<string[]>([])
   const { close: closeArtifact } = useArtifact()
   const isLoading = status === 'submitted' || status === 'streaming'
   const hasAvailableModels =
@@ -247,6 +263,30 @@ export function ChatPanel({
       )}
       <form
         onSubmit={e => {
+          // Fold content cards (target) + input (instruction) into one
+          // message, then re-submit through the normal path.
+          if (contentCards.length > 0) {
+            e.preventDefault()
+            const combined = [
+              ...contentCards.map(c => `<user-content>\n${c}\n</user-content>`),
+              input
+            ]
+              .filter(s => s && s.trim())
+              .join('\n\n')
+            captureClient('content_card_submitted', {
+              cardCount: contentCards.length,
+              chars: contentCards.reduce((sum, c) => sum + c.length, 0)
+            })
+            setContentCards([])
+            handleInputChange({
+              target: { value: combined }
+            } as React.ChangeEvent<HTMLTextAreaElement>)
+            setTimeout(
+              () => inputRef.current?.form?.requestSubmit(),
+              INPUT_UPDATE_DELAY_MS
+            )
+            return
+          }
           if (adaptiveModeSubmitBlocked) {
             e.preventDefault()
             onAdaptiveModeAuthRequired?.()
@@ -308,6 +348,56 @@ export function ChatPanel({
               'ring-1 ring-ring/20 ring-offset-1 ring-offset-background/50'
           )}
         >
+          {contentCards.length > 0 && (
+            <div className="flex flex-col gap-1.5 px-3 pt-3">
+              {contentCards.map((card, i) => (
+                <div
+                  key={i}
+                  className="relative rounded-xl border border-input bg-background px-3 py-2"
+                >
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <FileText className="size-3.5 shrink-0" />
+                      Pasted content · {card.length.toLocaleString()} chars
+                    </span>
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="Expand to text"
+                            className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            onClick={() => {
+                              captureClient('content_card_expanded', {
+                                chars: card.length
+                              })
+                              setContentCards(prev =>
+                                prev.filter((_, j) => j !== i)
+                              )
+                              handleInputChange({
+                                target: {
+                                  value: input ? `${input}\n\n${card}` : card
+                                }
+                              } as React.ChangeEvent<HTMLTextAreaElement>)
+                              inputRef.current?.focus()
+                            }}
+                          >
+                            <ArrowsDiagonal className="size-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-xs">
+                          Expand to text
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <p className="line-clamp-2 whitespace-pre-wrap break-words text-xs text-muted-foreground/80">
+                    {card}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
           <Textarea
             ref={inputRef}
             name="input"
@@ -324,6 +414,21 @@ export function ChatPanel({
             disabled={isLoading || isToolInvocationInProgress()}
             className="resize-none w-full min-h-12 bg-transparent border-0 p-3 md:p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
             onChange={handleInputChange}
+            onPaste={e => {
+              const text = e.clipboardData.getData('text')
+              const lineCount = text.split('\n').length
+              if (
+                text.length >= PASTE_CARD_MIN_CHARS ||
+                lineCount >= PASTE_CARD_MIN_LINES
+              ) {
+                e.preventDefault()
+                setContentCards(prev => [...prev, text])
+                captureClient('content_card_created', {
+                  chars: text.length,
+                  lines: lineCount
+                })
+              }
+            }}
             onKeyDown={e => {
               // e.nativeEvent.isComposing stays true on the keydown that
               // confirms an IME candidate, even after React-level
