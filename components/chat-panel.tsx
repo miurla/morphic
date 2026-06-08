@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation'
 
 import { UseChatHelpers } from '@ai-sdk/react'
 import {
+  IconArrowsDiagonal as ArrowsDiagonal,
   IconArrowUp as ArrowUp,
   IconChevronDown as ChevronDown,
   IconFileText as FileText,
@@ -350,37 +351,23 @@ export function ChatPanel({
                       <FileText className="size-3.5 shrink-0" />
                       Pasted content · {card.length.toLocaleString()} chars
                     </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-                        onClick={() => {
-                          setContentCards(prev =>
-                            prev.filter((_, j) => j !== i)
-                          )
-                          handleInputChange({
-                            target: {
-                              value: input ? `${input}\n\n${card}` : card
-                            }
-                          } as React.ChangeEvent<HTMLTextAreaElement>)
-                          inputRef.current?.focus()
-                        }}
-                      >
-                        Expand to text
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Remove pasted content"
-                        className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-                        onClick={() =>
-                          setContentCards(prev =>
-                            prev.filter((_, j) => j !== i)
-                          )
-                        }
-                      >
-                        ✕
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      title="Expand to text"
+                      aria-label="Expand to text"
+                      className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      onClick={() => {
+                        setContentCards(prev => prev.filter((_, j) => j !== i))
+                        handleInputChange({
+                          target: {
+                            value: input ? `${input}\n\n${card}` : card
+                          }
+                        } as React.ChangeEvent<HTMLTextAreaElement>)
+                        inputRef.current?.focus()
+                      }}
+                    >
+                      <ArrowsDiagonal className="size-3.5" />
+                    </button>
                   </div>
                   <p className="line-clamp-2 whitespace-pre-wrap break-words text-xs text-muted-foreground/80">
                     {card}
