@@ -23,6 +23,7 @@ import {
 } from '../utils/context-window'
 import { getTextFromParts } from '../utils/message-utils'
 import { perfLog, perfTime } from '../utils/perf-logging'
+import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
@@ -183,9 +184,28 @@ export async function createChatStreamResponse(
     const result = await researchAgent.stream({
       messages: modelMessages,
       abortSignal,
-      experimental_transform: smoothStream({ chunking: 'word' })
+      experimental_transform: smoothStream({ chunking: 'word' }),
+      ...(isUsageLogging() && {
+        onStepFinish: step => {
+          logUsage(
+            { scope: 'step', modelId: context.modelId },
+            step.usage,
+            step.providerMetadata
+          )
+        }
+      })
     })
     result.consumeStream()
+
+    // Log the session-total usage once the stream settles (does not block the
+    // response; consumeStream above already drives it to completion).
+    if (isUsageLogging()) {
+      Promise.resolve(result.totalUsage)
+        .then(usage =>
+          logUsage({ scope: 'total', modelId: context.modelId }, usage)
+        )
+        .catch(() => {})
+    }
 
     return result.toUIMessageStreamResponse({
       messageMetadata: ({ part }) => {

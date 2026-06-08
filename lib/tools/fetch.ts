@@ -2,6 +2,7 @@ import { tool, UIToolInvocation } from 'ai'
 
 import { fetchSchema } from '@/lib/schema/fetch'
 import { SearchResults as SearchResultsType } from '@/lib/types'
+import { logToolPayload } from '@/lib/utils/usage-logging'
 
 const CONTENT_CHARACTER_LIMIT = 50000
 const TITLE_CHARACTER_LIMIT = 100
@@ -182,6 +183,8 @@ export const fetchTool = tool({
         results = await fetchTavilyExtractData(url)
       }
     }
+
+    logToolPayload('fetch', url, { results: results.results })
 
     // Yield final results with complete state
     yield {
