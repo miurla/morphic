@@ -17,7 +17,8 @@ import {
   IconChevronDown as ChevronDown,
   IconFileText as FileText,
   IconMessageCirclePlus as MessageCirclePlus,
-  IconSquare as Square
+  IconSquare as Square,
+  IconX as X
 } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
@@ -60,6 +61,10 @@ const INPUT_UPDATE_DELAY_MS = 10 // Delay to ensure input value is updated befor
 // so short/normal pastes stay inline.
 const PASTE_CARD_MIN_CHARS = 400
 const PASTE_CARD_MIN_LINES = 6
+// A paste that is a single bare URL becomes a lightweight favicon chip.
+// L0 prototype: client-only, no fetch — the URL rides into the query at send
+// time so the existing fetch tool picks it up.
+const BARE_URL_RE = /^https?:\/\/\S+$/
 
 function getSearchModeSnapshot(): SearchMode {
   return getCookie('searchMode') === 'adaptive' ? 'adaptive' : 'quick'
@@ -125,6 +130,8 @@ export function ChatPanel({
   // Large pastes become separate "content cards" (the target), keeping the
   // textarea for the instruction. See PASTE_CARD_MIN_CHARS.
   const [contentCards, setContentCards] = useState<string[]>([])
+  // A single pasted URL becomes a lightweight favicon chip (see BARE_URL_RE).
+  const [urlCards, setUrlCards] = useState<string[]>([])
   const { close: closeArtifact } = useArtifact()
   const isLoading = status === 'submitted' || status === 'streaming'
   const hasAvailableModels =
@@ -265,19 +272,28 @@ export function ChatPanel({
         onSubmit={e => {
           // Fold content cards (target) + input (instruction) into one
           // message, then re-submit through the normal path.
-          if (contentCards.length > 0) {
+          if (contentCards.length > 0 || urlCards.length > 0) {
             e.preventDefault()
             const combined = [
               ...contentCards.map(c => `<user-content>\n${c}\n</user-content>`),
+              ...urlCards,
               input
             ]
               .filter(s => s && s.trim())
               .join('\n\n')
-            captureClient('content_card_submitted', {
-              cardCount: contentCards.length,
-              chars: contentCards.reduce((sum, c) => sum + c.length, 0)
-            })
+            if (contentCards.length > 0) {
+              captureClient('content_card_submitted', {
+                cardCount: contentCards.length,
+                chars: contentCards.reduce((sum, c) => sum + c.length, 0)
+              })
+            }
+            if (urlCards.length > 0) {
+              captureClient('url_card_submitted', {
+                cardCount: urlCards.length
+              })
+            }
             setContentCards([])
+            setUrlCards([])
             handleInputChange({
               target: { value: combined }
             } as React.ChangeEvent<HTMLTextAreaElement>)
@@ -398,6 +414,43 @@ export function ChatPanel({
               ))}
             </div>
           )}
+          {urlCards.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 px-3 pt-3">
+              {urlCards.map((url, i) => {
+                let host = url
+                try {
+                  host = new URL(url).host.replace(/^www\./, '')
+                } catch {}
+                return (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background py-1 pl-2 pr-1 text-xs text-muted-foreground"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`https://www.google.com/s2/favicons?domain=${host}&sz=32`}
+                      alt=""
+                      width={14}
+                      height={14}
+                      className="size-3.5 shrink-0 rounded-sm"
+                    />
+                    <span className="max-w-[180px] truncate">{host}</span>
+                    <button
+                      type="button"
+                      aria-label="Remove URL"
+                      className="shrink-0 rounded p-0.5 hover:bg-muted hover:text-foreground"
+                      onClick={() => {
+                        captureClient('url_card_removed')
+                        setUrlCards(prev => prev.filter((_, j) => j !== i))
+                      }}
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                )
+              })}
+            </div>
+          )}
           <Textarea
             ref={inputRef}
             name="input"
@@ -416,6 +469,15 @@ export function ChatPanel({
             onChange={handleInputChange}
             onPaste={e => {
               const text = e.clipboardData.getData('text')
+              const trimmed = text.trim()
+              // Only when the textarea is empty — a URL pasted mid-sentence
+              // should stay inline, not get yanked into a chip.
+              if (BARE_URL_RE.test(trimmed) && input.trim().length === 0) {
+                e.preventDefault()
+                setUrlCards(prev => [...prev, trimmed])
+                captureClient('url_card_created')
+                return
+              }
               const lineCount = text.split('\n').length
               if (
                 text.length >= PASTE_CARD_MIN_CHARS ||
