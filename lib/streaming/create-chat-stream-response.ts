@@ -25,6 +25,7 @@ import { getTextFromParts } from '../utils/message-utils'
 import { perfLog, perfTime } from '../utils/perf-logging'
 import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
+import { convertDataPart } from './helpers/convert-data-part'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
 import { stripReasoningParts } from './helpers/strip-reasoning-parts'
@@ -141,7 +142,9 @@ export async function createChatStreamResponse(
       : messagesWithoutSpec
 
     // Convert to model messages and apply context window management
-    let modelMessages = await convertToModelMessages(messagesToConvert)
+    let modelMessages = await convertToModelMessages(messagesToConvert, {
+      convertDataPart
+    })
 
     // Prune messages to reduce token usage while keeping recent context
     modelMessages = pruneMessages({

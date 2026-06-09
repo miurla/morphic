@@ -270,17 +270,30 @@ export function ChatPanel({
       )}
       <form
         onSubmit={e => {
-          // Fold content cards (target) + input (instruction) into one
-          // message, then re-submit through the normal path.
+          // Pasted attachments (content cards / URL chips) are sent as
+          // structured data parts alongside the instruction text part — no
+          // in-band markers. The server maps them to the model prompt.
           if (contentCards.length > 0 || urlCards.length > 0) {
             e.preventDefault()
-            const combined = [
-              ...contentCards.map(c => `<user-content>\n${c}\n</user-content>`),
-              ...urlCards,
-              input
+            if (adaptiveModeSubmitBlocked) {
+              onAdaptiveModeAuthRequired?.()
+              return
+            }
+            if (!hasAvailableModels) {
+              toast.error('No enabled model is available')
+              return
+            }
+            const parts = [
+              ...contentCards.map(text => ({
+                type: 'data-pastedContent',
+                data: { text }
+              })),
+              ...urlCards.map(url => ({
+                type: 'data-sourceUrl',
+                data: { url }
+              })),
+              ...(input.trim() ? [{ type: 'text', text: input }] : [])
             ]
-              .filter(s => s && s.trim())
-              .join('\n\n')
             if (contentCards.length > 0) {
               captureClient('content_card_submitted', {
                 cardCount: contentCards.length,
@@ -295,12 +308,11 @@ export function ChatPanel({
             setContentCards([])
             setUrlCards([])
             handleInputChange({
-              target: { value: combined }
+              target: { value: '' }
             } as React.ChangeEvent<HTMLTextAreaElement>)
-            setTimeout(
-              () => inputRef.current?.form?.requestSubmit(),
-              INPUT_UPDATE_DELAY_MS
-            )
+            append({ role: 'user', parts })
+            setIsInputFocused(false)
+            inputRef.current?.blur()
             return
           }
           if (adaptiveModeSubmitBlocked) {

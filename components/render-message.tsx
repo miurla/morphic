@@ -11,6 +11,7 @@ import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 
 import { AnswerSection } from './answer-section'
 import { DynamicToolDisplay } from './dynamic-tool-display'
+import { PastedContentCard, UrlChip } from './pasted-parts'
 import ResearchProcessSection from './research-process-section'
 import { UserFileSection } from './user-file-section'
 import { UserTextSection } from './user-text-section'
@@ -73,6 +74,20 @@ export function RenderMessage({
                     url: part.url,
                     contentType: part.mediaType
                   }}
+                />
+              )
+            case 'data-pastedContent':
+              return (
+                <PastedContentCard
+                  key={`${messageId}-user-paste-${index}`}
+                  text={part.data?.text ?? ''}
+                />
+              )
+            case 'data-sourceUrl':
+              return (
+                <UrlChip
+                  key={`${messageId}-user-url-${index}`}
+                  url={part.data?.url ?? ''}
                 />
               )
             default:

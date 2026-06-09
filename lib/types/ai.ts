@@ -27,6 +27,9 @@ export type UIMessage<
 
 export type UIDataTypes = {
   sources?: any[]
+  // User-authored attachments (composer): a pasted text blob and a pasted URL.
+  pastedContent?: { text: string }
+  sourceUrl?: { url: string }
 }
 
 // Create todo tools instance for type inference
