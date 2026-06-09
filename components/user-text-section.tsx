@@ -36,6 +36,50 @@ function splitPastedContent(content: string): {
   return { cards, rest }
 }
 
+// URL cards (see chat-panel) are folded into the message as bare-URL lines
+// BEFORE the instruction. Only pull the LEADING run of URL lines, so the chip
+// count matches what the composer showed — a URL the user typed inside the
+// instruction body stays as plain text.
+const BARE_URL_RE = /^https?:\/\/\S+$/
+
+function splitUrls(content: string): { urls: string[]; rest: string } {
+  const lines = content.split('\n')
+  const urls: string[] = []
+  let i = 0
+  for (; i < lines.length; i++) {
+    const trimmed = lines[i].trim()
+    if (trimmed === '') continue // blank line between leading chips
+    if (!BARE_URL_RE.test(trimmed)) break // instruction starts here
+    urls.push(trimmed)
+  }
+  return { urls, rest: lines.slice(i).join('\n').trim() }
+}
+
+function UrlChip({ url }: { url: string }) {
+  let host = url
+  try {
+    host = new URL(url).host.replace(/^www\./, '')
+  } catch {}
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex w-fit items-center gap-1.5 rounded-full border border-input bg-background py-1 pl-2 pr-2.5 text-xs text-muted-foreground hover:text-foreground"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={`https://www.google.com/s2/favicons?domain=${host}&sz=32`}
+        alt=""
+        width={14}
+        height={14}
+        className="size-3.5 shrink-0 rounded-sm"
+      />
+      <span className="max-w-[220px] truncate">{host}</span>
+    </a>
+  )
+}
+
 function PastedContentCard({ text }: { text: string }) {
   const [open, setOpen] = useState(false)
   return (
@@ -73,7 +117,8 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
   messageId,
   onUpdateMessage
 }) => {
-  const { cards, rest } = splitPastedContent(content)
+  const { cards, rest: afterCards } = splitPastedContent(content)
+  const { urls, rest } = splitUrls(afterCards)
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(rest)
   const [isComposing, setIsComposing] = useState(false)
@@ -126,6 +171,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
     // Re-wrap the preserved pasted cards (target) with the edited instruction.
     const wrapped = [
       ...cards.map(c => `<user-content>\n${c}\n</user-content>`),
+      ...urls,
       editedContent
     ]
       .filter(s => s && s.trim())
@@ -209,6 +255,13 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
                 ))}
               </div>
             )}
+            {urls.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {urls.map((u, i) => (
+                  <UrlChip key={i} url={u} />
+                ))}
+              </div>
+            )}
             <TextareaAutosize
               value={editedContent}
               onChange={e => setEditedContent(e.target.value)}
@@ -235,6 +288,13 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
               <div className="mb-2 flex flex-col gap-1.5">
                 {cards.map((c, i) => (
                   <PastedContentCard key={i} text={c} />
+                ))}
+              </div>
+            )}
+            {urls.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {urls.map((u, i) => (
+                  <UrlChip key={i} url={u} />
                 ))}
               </div>
             )}
