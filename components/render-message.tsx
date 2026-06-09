@@ -52,9 +52,16 @@ export function RenderMessage({
 
   // Use provided citation maps (from all messages)
   if (message.role === 'user') {
+    const parts = (message.parts ?? []) as any[]
+    // Pasted attachments render below the instruction, indented to line up
+    // with the text column (past the avatar).
+    const attachments = parts.filter(
+      part =>
+        part.type === 'data-pastedContent' || part.type === 'data-sourceUrl'
+    )
     return (
       <>
-        {message.parts?.map((part: any, index: number) => {
+        {parts.map((part: any, index: number) => {
           switch (part.type) {
             case 'text':
               return (
@@ -76,24 +83,30 @@ export function RenderMessage({
                   }}
                 />
               )
-            case 'data-pastedContent':
-              return (
-                <PastedContentCard
-                  key={`${messageId}-user-paste-${index}`}
-                  text={part.data?.text ?? ''}
-                />
-              )
-            case 'data-sourceUrl':
-              return (
-                <UrlChip
-                  key={`${messageId}-user-url-${index}`}
-                  url={part.data?.url ?? ''}
-                />
-              )
             default:
               return null
           }
         })}
+        {attachments.length > 0 && (
+          <div className="flex">
+            <div className="w-5 shrink-0" aria-hidden />
+            <div className="mt-1 flex flex-1 flex-col items-start gap-1.5 px-3">
+              {attachments.map((part: any, index: number) =>
+                part.type === 'data-pastedContent' ? (
+                  <PastedContentCard
+                    key={`${messageId}-user-paste-${index}`}
+                    text={part.data?.text ?? ''}
+                  />
+                ) : (
+                  <UrlChip
+                    key={`${messageId}-user-url-${index}`}
+                    url={part.data?.url ?? ''}
+                  />
+                )
+              )}
+            </div>
+          </div>
+        )}
       </>
     )
   }
