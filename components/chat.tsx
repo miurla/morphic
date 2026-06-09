@@ -415,9 +415,18 @@ export function Chat({
         if (messageIndex === -1) return prevMessages
 
         const updatedMessages = [...prevMessages]
+        const original = updatedMessages[messageIndex]
+        // Only replace the text part — keep pasted-content / URL / file parts
+        // so editing the instruction doesn't drop the structured context.
+        const oldParts = (original.parts ?? []) as any[]
+        const newParts = oldParts.some((p: any) => p.type === 'text')
+          ? oldParts.map((p: any) =>
+              p.type === 'text' ? { type: 'text', text: newContentText } : p
+            )
+          : [...oldParts, { type: 'text', text: newContentText }]
         updatedMessages[messageIndex] = {
-          ...updatedMessages[messageIndex],
-          parts: [{ type: 'text', text: newContentText }]
+          ...original,
+          parts: newParts
         }
 
         return updatedMessages

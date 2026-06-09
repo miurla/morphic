@@ -283,6 +283,7 @@ export function ChatPanel({
               toast.error('No enabled model is available')
               return
             }
+            const uploaded = uploadedFiles.filter(f => f.status === 'uploaded')
             const parts = [
               ...contentCards.map(text => ({
                 type: 'data-pastedContent',
@@ -291,6 +292,12 @@ export function ChatPanel({
               ...urlCards.map(url => ({
                 type: 'data-sourceUrl',
                 data: { url }
+              })),
+              ...uploaded.map(f => ({
+                type: 'file',
+                url: f.url!,
+                filename: f.name!,
+                mediaType: f.file.type
               })),
               ...(input.trim() ? [{ type: 'text', text: input }] : [])
             ]
@@ -307,6 +314,7 @@ export function ChatPanel({
             }
             setContentCards([])
             setUrlCards([])
+            setUploadedFiles([])
             handleInputChange({
               target: { value: '' }
             } as React.ChangeEvent<HTMLTextAreaElement>)
