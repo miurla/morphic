@@ -11,7 +11,6 @@ import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 
 import { AnswerSection } from './answer-section'
 import { DynamicToolDisplay } from './dynamic-tool-display'
-import { PastedContentCard, UrlChip } from './pasted-parts'
 import ResearchProcessSection from './research-process-section'
 import { UserFileSection } from './user-file-section'
 import { UserTextSection } from './user-text-section'
@@ -53,59 +52,34 @@ export function RenderMessage({
   // Use provided citation maps (from all messages)
   if (message.role === 'user') {
     const parts = (message.parts ?? []) as any[]
-    // Pasted attachments render below the instruction, indented to line up
-    // with the text column (past the avatar).
-    const attachments = parts.filter(
-      part =>
-        part.type === 'data-pastedContent' || part.type === 'data-sourceUrl'
-    )
+    const textPart = parts.find((part: any) => part.type === 'text')
+    const files = parts.filter((part: any) => part.type === 'file')
+    const pastedTexts = parts
+      .filter((part: any) => part.type === 'data-pastedContent')
+      .map((part: any) => part.data?.text ?? '')
+    const urls = parts
+      .filter((part: any) => part.type === 'data-sourceUrl')
+      .map((part: any) => part.data?.url ?? '')
     return (
       <>
-        {parts.map((part: any, index: number) => {
-          switch (part.type) {
-            case 'text':
-              return (
-                <UserTextSection
-                  key={`${messageId}-user-text-${index}`}
-                  content={part.text}
-                  messageId={messageId}
-                  onUpdateMessage={onUpdateMessage}
-                />
-              )
-            case 'file':
-              return (
-                <UserFileSection
-                  key={`${messageId}-user-file-${index}`}
-                  file={{
-                    name: part.filename || 'Unknown file',
-                    url: part.url,
-                    contentType: part.mediaType
-                  }}
-                />
-              )
-            default:
-              return null
-          }
-        })}
-        {attachments.length > 0 && (
-          <div className="flex">
-            <div className="w-5 shrink-0" aria-hidden />
-            <div className="mt-1 flex flex-1 flex-col items-start gap-1.5 px-3">
-              {attachments.map((part: any, index: number) =>
-                part.type === 'data-pastedContent' ? (
-                  <PastedContentCard
-                    key={`${messageId}-user-paste-${index}`}
-                    text={part.data?.text ?? ''}
-                  />
-                ) : (
-                  <UrlChip
-                    key={`${messageId}-user-url-${index}`}
-                    url={part.data?.url ?? ''}
-                  />
-                )
-              )}
-            </div>
-          </div>
+        {files.map((part: any, index: number) => (
+          <UserFileSection
+            key={`${messageId}-user-file-${index}`}
+            file={{
+              name: part.filename || 'Unknown file',
+              url: part.url,
+              contentType: part.mediaType
+            }}
+          />
+        ))}
+        {(textPart || pastedTexts.length > 0 || urls.length > 0) && (
+          <UserTextSection
+            content={textPart?.text ?? ''}
+            pastedTexts={pastedTexts}
+            urls={urls}
+            messageId={messageId}
+            onUpdateMessage={onUpdateMessage}
+          />
         )}
       </>
     )

@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils'
 
 import { Button } from './ui/button'
 import { CollapsibleMessage } from './collapsible-message'
-import { PastedContentCard } from './pasted-parts'
+import { PastedContentCard, UrlChip } from './pasted-parts'
 
 // Legacy: old messages carry pasted material wrapped in <user-content> tags
 // (new messages use `data-pastedContent` parts). Split it out so we can render
@@ -38,16 +38,23 @@ function splitPastedContent(content: string): {
 
 interface UserTextSectionProps {
   content: string
+  // Pasted attachments (new data parts), placed below the instruction.
+  pastedTexts?: string[]
+  urls?: string[]
   messageId?: string
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
 }
 
 export const UserTextSection: React.FC<UserTextSectionProps> = ({
   content,
+  pastedTexts = [],
+  urls = [],
   messageId,
   onUpdateMessage
 }) => {
-  const { cards, rest } = splitPastedContent(content)
+  // Legacy cards live inside the text; new pasted texts arrive as props.
+  const { cards: legacyCards, rest } = splitPastedContent(content)
+  const cards = [...legacyCards, ...pastedTexts]
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(rest)
   const [isComposing, setIsComposing] = useState(false)
@@ -97,9 +104,10 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
 
     setIsEditing(false)
 
-    // Re-wrap the preserved pasted cards (target) with the edited instruction.
+    // Re-wrap only the legacy text-embedded cards; new pasted texts are
+    // separate parts and are not part of the editable text.
     const wrapped = [
-      ...cards.map(c => `<user-content>\n${c}\n</user-content>`),
+      ...legacyCards.map(c => `<user-content>\n${c}\n</user-content>`),
       editedContent
     ]
       .filter(s => s && s.trim())
@@ -168,6 +176,18 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
     }, 50)
   }
 
+  // Pasted attachments (cards + URL chips), placed below the instruction.
+  const attachments = (cards.length > 0 || urls.length > 0) && (
+    <div className="mt-2 flex flex-col items-start gap-1.5">
+      {cards.map((c, i) => (
+        <PastedContentCard key={`card-${i}`} text={c} />
+      ))}
+      {urls.map((u, i) => (
+        <UrlChip key={`url-${i}`} url={u} />
+      ))}
+    </div>
+  )
+
   return (
     <CollapsibleMessage role="user">
       <div
@@ -176,13 +196,6 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
       >
         {isEditing ? (
           <div className="flex flex-col gap-2">
-            {cards.length > 0 && (
-              <div className="flex flex-col gap-1.5">
-                {cards.map((c, i) => (
-                  <PastedContentCard key={i} text={c} />
-                ))}
-              </div>
-            )}
             <TextareaAutosize
               value={editedContent}
               onChange={e => setEditedContent(e.target.value)}
@@ -194,6 +207,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
               minRows={2}
               maxRows={10}
             />
+            {attachments}
             <div className="flex justify-end gap-2">
               <Button variant="secondary" size="sm" onClick={handleCancelClick}>
                 Cancel
@@ -205,13 +219,6 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
           </div>
         ) : (
           <div className="relative">
-            {cards.length > 0 && (
-              <div className="mb-2 flex flex-col gap-1.5">
-                {cards.map((c, i) => (
-                  <PastedContentCard key={i} text={c} />
-                ))}
-              </div>
-            )}
             <div
               ref={contentRef}
               className={cn(
@@ -238,6 +245,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
                 )}
               </button>
             )}
+            {attachments}
             <div
               className={cn(
                 'absolute -top-1 -right-1 flex items-center gap-0.5 p-0.5 transition-opacity bg-background rounded-full shadow-sm border',
