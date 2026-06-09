@@ -51,34 +51,36 @@ export function RenderMessage({
 
   // Use provided citation maps (from all messages)
   if (message.role === 'user') {
+    const parts = (message.parts ?? []) as any[]
+    const textPart = parts.find((part: any) => part.type === 'text')
+    const files = parts.filter((part: any) => part.type === 'file')
+    const pastedTexts = parts
+      .filter((part: any) => part.type === 'data-pastedContent')
+      .map((part: any) => part.data?.text ?? '')
+    const urls = parts
+      .filter((part: any) => part.type === 'data-sourceUrl')
+      .map((part: any) => part.data?.url ?? '')
     return (
       <>
-        {message.parts?.map((part: any, index: number) => {
-          switch (part.type) {
-            case 'text':
-              return (
-                <UserTextSection
-                  key={`${messageId}-user-text-${index}`}
-                  content={part.text}
-                  messageId={messageId}
-                  onUpdateMessage={onUpdateMessage}
-                />
-              )
-            case 'file':
-              return (
-                <UserFileSection
-                  key={`${messageId}-user-file-${index}`}
-                  file={{
-                    name: part.filename || 'Unknown file',
-                    url: part.url,
-                    contentType: part.mediaType
-                  }}
-                />
-              )
-            default:
-              return null
-          }
-        })}
+        {files.map((part: any, index: number) => (
+          <UserFileSection
+            key={`${messageId}-user-file-${index}`}
+            file={{
+              name: part.filename || 'Unknown file',
+              url: part.url,
+              contentType: part.mediaType
+            }}
+          />
+        ))}
+        {(textPart || pastedTexts.length > 0 || urls.length > 0) && (
+          <UserTextSection
+            content={textPart?.text ?? ''}
+            pastedTexts={pastedTexts}
+            urls={urls}
+            messageId={messageId}
+            onUpdateMessage={onUpdateMessage}
+          />
+        )}
       </>
     )
   }
