@@ -15,13 +15,14 @@ An AI-powered search engine with a generative UI.
 
 <a href="https://trendshift.io/repositories/9207" target="_blank"><img src="https://trendshift.io/api/badge/repositories/9207" alt="miurla%2Fmorphic | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
-<img src="./public/screenshot-2026-02-07.png" />
+<img src="./public/screenshot-2026-06-10.png" />
 
 </div>
 
 ## Features
 
-- AI-powered search with GenerativeUI
+- AI-powered search with grounded, cited answers
+- Generative UI — answers render rich inline components (source-credited images, grids, headings) live from a streamed JSON spec, beyond plain markdown
 - Search modes: Quick and Adaptive
 - Model selector with dynamic provider detection (OpenAI, Anthropic, Google, Ollama, Vercel AI Gateway, OpenAI-compatible providers)
 - Multiple search providers (Tavily, SearXNG, Brave, Exa)
