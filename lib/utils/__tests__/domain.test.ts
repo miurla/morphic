@@ -58,6 +58,15 @@ describe('displayUrlName', () => {
     expect(displayUrlName('https://techcrunch.com/article')).toBe('techcrunch')
   })
 
+  it('handles compound TLDs (ccTLD second-level domains)', () => {
+    expect(displayUrlName('https://www.saudiauto.com.sa')).toBe('saudiauto')
+    expect(displayUrlName('https://example.com.au')).toBe('example')
+    expect(displayUrlName('https://www.test.co.nz')).toBe('test')
+    expect(displayUrlName('https://website.co.jp')).toBe('website')
+    expect(displayUrlName('https://www.bbc.co.uk/news')).toBe('bbc')
+    expect(displayUrlName('https://news.example.co.uk')).toBe('example')
+  })
+
   it('handles stack overflow and similar domains', () => {
     expect(displayUrlName('https://stackoverflow.com/questions/123')).toBe(
       'stackoverflow'
