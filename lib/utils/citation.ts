@@ -19,6 +19,16 @@ export function isCitationLabel(label: string): boolean {
 }
 
 /**
+ * Strip a known provider/router prefix from a toolCallId.
+ * Some models prepend their own prefix (e.g. `toolu_`) to the search tool's
+ * call id when citing, which breaks an exact-match lookup. Normalizing both the
+ * cited id and the citation map keys lets these citations still resolve.
+ */
+function stripToolCallPrefix(toolCallId: string): string {
+  return toolCallId.replace(/^(toolu_|call_|search-)/, '')
+}
+
+/**
  * Extract citation maps from a message's tool parts
  * Returns a map of toolCallId to citation map
  */
@@ -105,8 +115,20 @@ export function processCitations(
         return '' // Return empty string for invalid citation numbers
       }
 
-      // Get the citation map for this toolCallId
-      const citationMap = citationMaps[toolCallId]
+      // Get the citation map for this toolCallId. Prefer an exact match to
+      // avoid side effects, then fall back to prefix-normalized matching so
+      // ids the model prepended a prefix to (e.g. `toolu_<id>`) still resolve.
+      let citationMap = citationMaps[toolCallId]
+      if (!citationMap) {
+        const normalizedId = stripToolCallPrefix(toolCallId)
+        citationMap =
+          citationMaps[normalizedId] ??
+          citationMaps[
+            Object.keys(citationMaps).find(
+              key => stripToolCallPrefix(key) === normalizedId
+            ) ?? ''
+          ]
+      }
       if (!citationMap) {
         return '' // Return empty string if no citation map found
       }

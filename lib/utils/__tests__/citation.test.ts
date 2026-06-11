@@ -125,6 +125,24 @@ describe('processCitations', () => {
     expect(result).toBe('Check  here')
   })
 
+  it('resolves citations where the model prepended a toolu_ prefix', () => {
+    // Models sometimes cite [1](#toolu_<id>) even though the search tool's
+    // call id has no prefix. The cited id should still resolve to the result.
+    const content = 'See [1](#toolu_toolCall1) and [2](#toolu_toolCall1)'
+    const result = processCitations(content, mockCitationMaps)
+
+    expect(result).toBe(
+      'See [google](https://www.google.com) and [github](https://docs.github.com)'
+    )
+  })
+
+  it('still prefers an exact toolCallId match over a normalized one', () => {
+    const content = 'See [1](#toolCall1)'
+    const result = processCitations(content, mockCitationMaps)
+
+    expect(result).toBe('See [google](https://www.google.com)')
+  })
+
   it('handles content with no citations', () => {
     const content = 'This is plain text without citations'
     const result = processCitations(content, mockCitationMaps)
