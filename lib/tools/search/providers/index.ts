@@ -1,5 +1,6 @@
 import { SearchProvider } from './base'
 import { BraveSearchProvider } from './brave'
+import { CrwSearchProvider } from './crw'
 import { ExaSearchProvider } from './exa'
 import { FirecrawlSearchProvider } from './firecrawl'
 import { SearXNGSearchProvider } from './searxng'
@@ -10,6 +11,7 @@ export type SearchProviderType =
   | 'exa'
   | 'searxng'
   | 'firecrawl'
+  | 'crw'
   | 'brave'
 export const DEFAULT_PROVIDER: SearchProviderType = 'tavily'
 
@@ -30,6 +32,8 @@ export function createSearchProvider(
       return new BraveSearchProvider()
     case 'firecrawl':
       return new FirecrawlSearchProvider()
+    case 'crw':
+      return new CrwSearchProvider()
     default:
       // Default to TavilySearchProvider if an unknown provider is specified
       return new TavilySearchProvider()
@@ -37,6 +41,7 @@ export function createSearchProvider(
 }
 
 export { BraveSearchProvider } from './brave'
+export type { CrwSearchProvider } from './crw'
 export type { ExaSearchProvider } from './exa'
 export type { FirecrawlSearchProvider } from './firecrawl'
 export { SearXNGSearchProvider } from './searxng'
