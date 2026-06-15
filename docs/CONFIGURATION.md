@@ -67,6 +67,22 @@ ANTHROPIC_API_KEY=[YOUR_API_KEY]
 GOOGLE_GENERATIVE_AI_API_KEY=[YOUR_API_KEY]
 ```
 
+#### Google Fact Check
+
+A key for Google Fact Check Tools API. If not set, the tool falls back to `GOOGLE_GENERATIVE_AI_API_KEY` or `GOOGLE_MAPS_API_KEY`.
+
+```bash
+GOOGLE_FACT_CHECK_API_KEY=[YOUR_API_KEY]
+```
+
+To show snippet-level evidence checks under assistant answers, enable claim verification:
+
+```bash
+ENABLE_CLAIM_VERIFICATION=true
+```
+
+When Google Fact Check results are present in a response, the evidence panel includes them as claim-review signals alongside ordinary citations.
+
 #### Vercel AI Gateway
 
 [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) provides access to 200+ models through a single API.
@@ -84,6 +100,32 @@ OLLAMA_BASE_URL=http://localhost:11434
 ```
 
 When configured, Ollama models are discovered dynamically and appear in the model selector.
+
+#### Ollama Cloud
+
+Ollama Cloud uses the hosted Ollama API with bearer-token authentication. It is separate from local Ollama so the model selector can show local and cloud models independently.
+
+```bash
+OLLAMA_API_KEY=[YOUR_OLLAMA_API_KEY]
+OLLAMA_CLOUD_BASE_URL=https://ollama.com
+```
+
+Morphic discovers cloud models from `/api/tags` and sends chat requests through the Ollama SDK provider. If you want to pin the visible models and skip cloud model discovery on startup, set:
+
+```bash
+OLLAMA_CLOUD_MODELS=gpt-oss:120b,qwen3:235b
+```
+
+Users can also add their own Ollama Cloud API key from Settings. User keys are stored in an HttpOnly cookie, are never returned by the settings API, and take precedence over `OLLAMA_API_KEY`.
+
+Ollama tag discovery does not currently return a complete per-model capability object, so Morphic infers the capabilities it needs for chat selection:
+
+- `chat`, `streaming`, and `toolCalling` are required for models shown in the selector.
+- `thinking` is enabled only for known thinking model families. GPT-OSS uses `think=medium`; Qwen3, DeepSeek R1, and similar reasoning families use `think=true`.
+- `vision` is marked for known multimodal families such as Gemma vision, Qwen VL, LLaVA, and Moondream.
+- `structuredOutputs` is marked for local Ollama only. Ollama Cloud models are not marked structured-output capable by default.
+- `webSearch` is marked for Ollama Cloud chat models because hosted cloud models can use Ollama's cloud web-search tools.
+- Embedding, rerank, moderation, image, audio, and speech models are filtered out of Morphic chat model selection.
 
 #### OpenAI-Compatible Providers
 
@@ -143,6 +185,30 @@ By default, Morphic will fetch available models from the OpenRouter models API. 
 ```bash
 OPENROUTER_MODELS=google/gemini-2.5-flash,meta-llama/llama-3.3-70b-instruct,deepseek/deepseek-chat
 ```
+
+Morphic's adaptive researcher uses an OpenRouter-inspired router pattern: simple questions search directly, while complex or high-cost questions use independent evidence paths, sub-agents, fact-checking, and a final self-review for consensus, contradictions, blind spots, and source quality.
+
+OpenRouter beta server tools are supported as an explicit opt-in. Morphic validates the `providerOptions.openrouter.serverTools` schema before the AI SDK call, carries the validated config through an internal request header, strips that header in the OpenRouter provider adapter, and appends OpenRouter's beta server-tool contracts to the outgoing JSON request body only for OpenRouter models.
+
+```bash
+OPENROUTER_SERVER_TOOLS_ENABLED=true
+OPENROUTER_SERVER_TOOLS=fusion,advisor
+OPENROUTER_FUSION_ANALYSIS_MODELS=~google/gemini-flash-latest,~anthropic/claude-sonnet-latest
+OPENROUTER_FUSION_JUDGE_MODEL=~openai/gpt-latest
+OPENROUTER_ADVISOR_MODEL=~anthropic/claude-opus-latest
+OPENROUTER_ADVISOR_TOOLS=web_search
+```
+
+Fusion requires at least one configured analysis model or judge model. Advisor requires a configured advisor model. Invalid or over-broad config fails closed and no beta server tools are attached.
+
+Private prompt experiments should stay local. Add override files to `prompts.local/quick.md`, `prompts.local/adaptive.md`, or `prompts.local/router.md`; these paths are gitignored. Overrides are appended by default with a safety boundary. Local-only deployments can replace a prompt explicitly:
+
+```bash
+MORPHIC_PROMPT_OVERRIDES_DIR=./prompts.local
+MORPHIC_PROMPT_OVERRIDE_MODE=replace
+```
+
+The Settings page also includes Personalization controls. These are sanitized before being added to model instructions and are treated only as user preference context, not as authority over source, citation, privacy, or security rules.
 
 ## Search Providers
 

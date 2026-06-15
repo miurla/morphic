@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
+  boolean,
   check,
   foreignKey,
   index,
@@ -10,6 +11,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar
 } from 'drizzle-orm/pg-core'
 
@@ -206,6 +208,110 @@ export const parts = pgTable(
   ]
 )
 
+export const sourceEvents = pgTable(
+  'source_events',
+  {
+    id: varchar({ length: 191 }).primaryKey().notNull(),
+    userId: varchar('user_id', { length: 255 }),
+    chatId: varchar('chat_id', { length: 191 }),
+    sourceId: varchar('source_id', { length: 256 }),
+    eventType: varchar('event_type', { length: 256 }).notNull(),
+    sourceUrl: text('source_url').notNull(),
+    sourceDomain: text('source_domain').notNull(),
+    pageUrl: text('page_url'),
+    metadata: jsonb(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .defaultNow()
+      .notNull()
+  },
+  table => [
+    index('source_events_user_id_created_at_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops'),
+      table.createdAt.desc().nullsLast().op('timestamp_ops')
+    ),
+    index('source_events_chat_id_idx').using(
+      'btree',
+      table.chatId.asc().nullsLast().op('text_ops')
+    ),
+    index('source_events_source_domain_idx').using(
+      'btree',
+      table.sourceDomain.asc().nullsLast().op('text_ops')
+    ),
+    index('source_events_event_type_created_at_idx').using(
+      'btree',
+      table.eventType.asc().nullsLast().op('text_ops'),
+      table.createdAt.desc().nullsLast().op('timestamp_ops')
+    ),
+    pgPolicy('anyone_can_insert_source_events', {
+      as: 'permissive',
+      for: 'insert',
+      to: ['public']
+    }),
+    check(
+      'source_events_event_type_valid',
+      sql`((event_type)::text = ANY ((ARRAY['impression'::character varying, 'open_original'::character varying, 'open_reader'::character varying, 'save'::character varying, 'copy_link'::character varying, 'report'::character varying])::text[]))`
+    )
+  ]
+)
+
+export const readingItems = pgTable(
+  'reading_items',
+  {
+    id: varchar({ length: 191 }).primaryKey().notNull(),
+    userId: varchar('user_id', { length: 255 }).notNull(),
+    sourceId: varchar('source_id', { length: 256 }),
+    url: text().notNull(),
+    canonicalUrl: text('canonical_url').notNull(),
+    title: text().notNull(),
+    author: text(),
+    siteName: text('site_name'),
+    domain: text(),
+    publishedAt: timestamp('published_at', { mode: 'string' }),
+    summary: text(),
+    imageUrl: text('image_url'),
+    faviconUrl: text('favicon_url'),
+    status: varchar({ length: 256 }).default('unread').notNull(),
+    savedFromChatId: varchar('saved_from_chat_id', { length: 191 }),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
+  },
+  table => [
+    index('reading_items_user_id_created_at_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops'),
+      table.createdAt.desc().nullsLast().op('timestamp_ops')
+    ),
+    index('reading_items_user_id_status_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops'),
+      table.status.asc().nullsLast().op('text_ops')
+    ),
+    index('reading_items_domain_idx').using(
+      'btree',
+      table.domain.asc().nullsLast().op('text_ops')
+    ),
+    uniqueIndex('reading_items_user_canonical_url_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops'),
+      table.canonicalUrl.asc().nullsLast().op('text_ops')
+    ),
+    pgPolicy('users_manage_own_reading_items', {
+      as: 'permissive',
+      for: 'all',
+      to: ['public'],
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    }),
+    check(
+      'reading_items_status_valid',
+      sql`((status)::text = ANY ((ARRAY['unread'::character varying, 'reading'::character varying, 'read'::character varying, 'archived'::character varying])::text[]))`
+    )
+  ]
+)
+
 export const feedback = pgTable(
   'feedback',
   {
@@ -228,13 +334,7 @@ export const feedback = pgTable(
       'btree',
       table.userId.asc().nullsLast().op('text_ops')
     ),
-    pgPolicy('feedback_select_policy', {
-      as: 'permissive',
-      for: 'select',
-      to: ['public'],
-      using: sql`true`
-    }),
-    pgPolicy('feedback_insert_policy', {
+    pgPolicy('anyone_can_insert_feedback', {
       as: 'permissive',
       for: 'insert',
       to: ['public']
@@ -246,5 +346,99 @@ export const feedback = pgTable(
       using: sql`user_id = current_setting('app.current_user_id', true)`,
       withCheck: sql`user_id IS NULL`
     })
+  ]
+)
+
+export const sourcePreferenceProfiles = pgTable(
+  'source_preference_profiles',
+  {
+    id: varchar({ length: 191 }).primaryKey().notNull(),
+    userId: varchar('user_id', { length: 255 }).notNull(),
+    name: text().notNull(),
+    slug: varchar({ length: 256 }).notNull(),
+    description: text(),
+    settings: jsonb().default({ includeTerms: [], excludeTerms: [] }).notNull(),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
+  },
+  table => [
+    uniqueIndex('source_preference_profiles_user_slug_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops'),
+      table.slug.asc().nullsLast().op('text_ops')
+    ),
+    index('source_preference_profiles_user_active_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops'),
+      table.isActive.asc().nullsLast().op('bool_ops')
+    ),
+    pgPolicy('users_manage_own_source_preference_profiles', {
+      as: 'permissive',
+      for: 'all',
+      to: ['public'],
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    })
+  ]
+)
+
+export const sourcePreferences = pgTable(
+  'source_preferences',
+  {
+    id: varchar({ length: 191 }).primaryKey().notNull(),
+    userId: varchar('user_id', { length: 255 }).notNull(),
+    profileId: varchar('profile_id', { length: 191 }),
+    target: text().notNull(),
+    targetType: varchar('target_type', { length: 256 }).notNull(),
+    domain: text().notNull(),
+    preference: varchar({ length: 256 }).notNull(),
+    note: text(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
+  },
+  table => [
+    uniqueIndex('source_preferences_user_global_target_idx')
+      .using(
+        'btree',
+        table.userId.asc().nullsLast().op('text_ops'),
+        table.target.asc().nullsLast().op('text_ops')
+      )
+      .where(sql`profile_id IS NULL`),
+    uniqueIndex('source_preferences_user_profile_target_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops'),
+      table.profileId.asc().nullsLast().op('text_ops'),
+      table.target.asc().nullsLast().op('text_ops')
+    ),
+    index('source_preferences_user_id_updated_at_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops'),
+      table.updatedAt.desc().nullsLast().op('timestamp_ops')
+    ),
+    index('source_preferences_user_domain_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops'),
+      table.domain.asc().nullsLast().op('text_ops')
+    ),
+    pgPolicy('users_manage_own_source_preferences', {
+      as: 'permissive',
+      for: 'all',
+      to: ['public'],
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    }),
+    check(
+      'source_preferences_target_type_valid',
+      sql`((target_type)::text = ANY ((ARRAY['domain'::character varying, 'url'::character varying])::text[]))`
+    ),
+    check(
+      'source_preferences_preference_valid',
+      sql`((preference)::text = ANY ((ARRAY['trust'::character varying, 'prefer'::character varying, 'mute'::character varying, 'block'::character varying])::text[]))`
+    )
   ]
 )

@@ -1,7 +1,4 @@
-import {
-  IconArrowRight as ArrowRight,
-  IconRepeat as Repeat2
-} from '@tabler/icons-react'
+import { ArrowRight, Repeat as Repeat2 } from 'iconoir-react'
 
 import { catalog } from '../catalog'
 

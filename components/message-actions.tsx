@@ -3,11 +3,7 @@
 import { useMemo, useState } from 'react'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import {
-  IconCopy as Copy,
-  IconThumbDown as ThumbsDown,
-  IconThumbUp as ThumbsUp
-} from '@tabler/icons-react'
+import { Copy, ThumbsDown, ThumbsUp } from 'iconoir-react'
 import { toast } from 'sonner'
 
 import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
@@ -118,7 +114,7 @@ export function MessageActions({
         onClick={handleCopy}
         className="rounded-full"
       >
-        <Copy size={14} />
+        <Copy width={14} height={14} />
       </Button>
       {traceId && (
         <>
@@ -131,7 +127,7 @@ export function MessageActions({
               className="rounded-full"
             >
               <ThumbsUp
-                size={14}
+                width={14} height={14}
                 className={feedbackScore === 1 ? 'fill-current' : ''}
               />
             </Button>
@@ -145,7 +141,7 @@ export function MessageActions({
               className="rounded-full"
             >
               <ThumbsDown
-                size={14}
+                width={14} height={14}
                 className={feedbackScore === -1 ? 'fill-current' : ''}
               />
             </Button>

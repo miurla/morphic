@@ -3,19 +3,31 @@
 import { useSyncExternalStore } from 'react'
 
 import {
+  DEFAULT_SEARCH_PREFERENCES,
   getSearchPreferences,
   SearchPreferences,
   setSearchPreferences
 } from '@/lib/config/search-preferences'
-import { subscribeToCookieChange } from '@/lib/utils/cookies'
+import { getCookie, subscribeToCookieChange } from '@/lib/utils/cookies'
+
+const COOKIE_NAME = 'searchPreferences'
+
+let cachedRawCookie: string | null | undefined
+let cachedSnapshot: SearchPreferences | undefined
 
 function getSnapshot(): SearchPreferences {
-  return getSearchPreferences()
+  const rawCookie = getCookie(COOKIE_NAME)
+  if (cachedSnapshot && cachedRawCookie === rawCookie) {
+    return cachedSnapshot
+  }
+
+  cachedRawCookie = rawCookie
+  cachedSnapshot = getSearchPreferences()
+  return cachedSnapshot
 }
 
 function getServerSnapshot(): SearchPreferences {
-  // Return defaults on server
-  return getSearchPreferences()
+  return DEFAULT_SEARCH_PREFERENCES
 }
 
 export function useSearchPreferences() {

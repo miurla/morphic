@@ -3,5 +3,6 @@ export interface Model {
   name: string
   provider: string
   providerId: string
+  capabilities?: string[]
   providerOptions?: Record<string, any>
 }

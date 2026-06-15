@@ -1,6 +1,6 @@
 'use client'
 
-import { IconUser as User2 } from '@tabler/icons-react'
+import { User as User2 } from 'iconoir-react'
 
 import { useCurrentUserImage } from '@/hooks/use-current-user-image'
 import { useCurrentUserName } from '@/hooks/use-current-user-name'
@@ -21,7 +21,7 @@ export const CurrentUserAvatar = () => {
       {profileImage && <AvatarImage src={profileImage} alt={initials} />}
       <AvatarFallback>
         {initials === '?' ? (
-          <User2 size={16} className="text-muted-foreground" />
+          <User2 width={16} height={16} className="text-muted-foreground" />
         ) : (
           initials
         )}

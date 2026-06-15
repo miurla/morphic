@@ -3,11 +3,7 @@
 import * as React from 'react'
 
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
-import {
-  IconCheck as CheckIcon,
-  IconChevronRight as ChevronRightIcon,
-  IconCircle as CircleIcon
-} from '@tabler/icons-react'
+import { Check as CheckIcon, NavArrowRight as ChevronRightIcon, Circle as CircleIcon } from 'iconoir-react'
 
 import { cn } from '@/lib/utils/index'
 

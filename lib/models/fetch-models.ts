@@ -2,10 +2,17 @@ import { cookies } from 'next/headers'
 
 import { createGateway } from '@ai-sdk/gateway'
 
+import { createOpenRouterServerToolsProviderOptionsFromEnv } from '@/lib/agents/openrouter-server-tools'
+import { getConfiguredOllamaCloudApiKey } from '@/lib/ollama/cloud-api-key'
 import { Model } from '@/lib/types/models'
 import { isProviderEnabled } from '@/lib/utils/registry'
 
 import { isSearchCompatibleModel } from './compatibility'
+import {
+  getOllamaChatSettings,
+  isOllamaAppChatModel,
+  normalizeOllamaApiCapabilities
+} from './ollama-capabilities'
 
 export type ModelsByProvider = Record<string, Model[]>
 
@@ -171,6 +178,115 @@ function modelsFromStaticList(
   )
 }
 
+function createOllamaModel(
+  name: string,
+  provider: string,
+  providerId: 'ollama' | 'ollama-cloud',
+  apiCapabilities?: string[]
+): Model {
+  const chatSettings = getOllamaChatSettings(name)
+
+  return {
+    id: name,
+    name,
+    provider,
+    providerId,
+    capabilities: normalizeOllamaApiCapabilities(
+      name,
+      providerId,
+      apiCapabilities
+    ),
+    ...(Object.keys(chatSettings).length > 0 && {
+      providerOptions: {
+        ollama: chatSettings
+      }
+    })
+  }
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length)
+  let nextIndex = 0
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const index = nextIndex++
+      results[index] = await mapper(items[index])
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, () => worker())
+  )
+
+  return results
+}
+
+async function fetchOllamaModelCapabilities(
+  baseUrl: string,
+  apiKey: string,
+  model: string
+): Promise<string[] | undefined> {
+  try {
+    const response = await fetch(new URL('/api/show', baseUrl).toString(), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ model }),
+      signal: AbortSignal.timeout(5000)
+    })
+
+    if (!response.ok) {
+      return undefined
+    }
+
+    const json = (await response.json()) as Record<string, unknown>
+    return Array.isArray(json?.capabilities)
+      ? json.capabilities.map(capability => String(capability))
+      : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function createOllamaModelsFromStaticList(
+  staticList: string,
+  provider: string,
+  providerId: 'ollama' | 'ollama-cloud'
+): Model[] {
+  return sortModels(
+    dedupeModels(
+      staticList
+        .split(',')
+        .map(name => name.trim())
+        .filter(Boolean)
+        .filter(name => isOllamaAppChatModel(name, providerId))
+        .map(name => createOllamaModel(name, provider, providerId))
+    )
+  )
+}
+
+function withOpenRouterProviderOptions(models: Model[]): Model[] {
+  const providerOptions = createOpenRouterServerToolsProviderOptionsFromEnv()
+  if (!providerOptions.openrouter) {
+    return models
+  }
+
+  return models.map(model => ({
+    ...model,
+    providerOptions: {
+      ...(model.providerOptions ?? {}),
+      ...providerOptions
+    }
+  }))
+}
+
 function passesGatewayFilters(id: string): boolean {
   if (hasDateSnapshotSuffix(id)) {
     return false
@@ -205,7 +321,11 @@ async function fetchJson(
 ): Promise<Record<string, any>> {
   const response = await fetch(url, { headers, method: 'GET' })
   if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    const error = new Error(
+      `HTTP ${response.status}: ${response.statusText}`
+    ) as Error & { status?: number }
+    error.status = response.status
+    throw error
   }
   return (await response.json()) as Record<string, any>
 }
@@ -476,25 +596,81 @@ export async function fetchOllamaModels(): Promise<Model[]> {
         data
           .map(item => String(item?.name ?? ''))
           .filter(Boolean)
-          .filter(name => !name.toLowerCase().includes('embed'))
-          .map(
-            name =>
-              ({
-                id: name,
-                name,
-                provider: 'Ollama',
-                providerId: 'ollama',
-                providerOptions: {
-                  ollama: {
-                    think: true
-                  }
-                }
-              }) satisfies Model
-          )
+          .filter(name => isOllamaAppChatModel(name, 'ollama'))
+          .map(name => createOllamaModel(name, 'Ollama', 'ollama'))
       )
     )
   } catch (error) {
     console.warn('[ModelFetch] Failed to fetch Ollama models:', error)
+    return []
+  }
+}
+
+export async function fetchOllamaCloudModels(): Promise<Model[]> {
+  let cookieStore: any
+  try {
+    cookieStore = await cookies()
+  } catch (e) {}
+
+  if (!isProviderEnabled('ollama-cloud', cookieStore)) {
+    return []
+  }
+
+  const apiKey = getConfiguredOllamaCloudApiKey(cookieStore)
+  if (!apiKey) {
+    return []
+  }
+
+  const staticList = process.env.OLLAMA_CLOUD_MODELS
+  if (staticList) {
+    return createOllamaModelsFromStaticList(
+      staticList,
+      'Ollama Cloud',
+      'ollama-cloud'
+    )
+  }
+
+  try {
+    const baseUrl = process.env.OLLAMA_CLOUD_BASE_URL || 'https://ollama.com'
+    const url = new URL('/api/tags', baseUrl).toString()
+    const json = await fetchJson(url, {
+      Authorization: `Bearer ${apiKey}`
+    })
+    const data = Array.isArray(json?.models) ? json.models : []
+    const names = data.map(item => String(item?.name ?? '')).filter(Boolean)
+    const capabilitiesByName = new Map(
+      await mapWithConcurrency(
+        names,
+        6,
+        async (name): Promise<[string, string[] | undefined]> => [
+          name,
+          await fetchOllamaModelCapabilities(baseUrl, apiKey, name)
+        ]
+      )
+    )
+
+    return sortModels(
+      dedupeModels(
+        names
+          .filter(name =>
+            isOllamaAppChatModel(
+              name,
+              'ollama-cloud',
+              capabilitiesByName.get(name)
+            )
+          )
+          .map(name =>
+            createOllamaModel(
+              name,
+              'Ollama Cloud',
+              'ollama-cloud',
+              capabilitiesByName.get(name)
+            )
+          )
+      )
+    )
+  } catch (error) {
+    console.warn('[ModelFetch] Failed to fetch Ollama Cloud models:', error)
     return []
   }
 }
@@ -634,14 +810,16 @@ export async function fetchCloudflareModels(): Promise<Model[]> {
 
   try {
     const json = await fetchJson(
-      `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/v1/models`,
+      `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/models/search`,
       {
         Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`
       }
     )
 
-    const data = Array.isArray(json?.result)
+    const data: Array<Record<string, unknown>> = Array.isArray(json?.result)
       ? json.result
+      : Array.isArray(json?.result?.data)
+        ? json.result.data
       : Array.isArray(json?.data)
         ? json.data
         : []
@@ -653,7 +831,7 @@ export async function fetchCloudflareModels(): Promise<Model[]> {
       .map(item => String(item?.id ?? ''))
       .filter(Boolean)
       .filter(
-        id =>
+        (id: string) =>
           id.startsWith('@cf/') &&
           (id.includes('llama') ||
             id.includes('mistral') ||
@@ -662,7 +840,7 @@ export async function fetchCloudflareModels(): Promise<Model[]> {
             id.includes('phi') ||
             id.includes('deepseek'))
       )
-      .map(id => ({
+      .map((id: string) => ({
         id,
         name: id.split('/').pop() || id,
         provider: 'Cloudflare',
@@ -673,7 +851,18 @@ export async function fetchCloudflareModels(): Promise<Model[]> {
       ? sortModels(dedupeModels(fetchedModels))
       : fallbacks
   } catch (error) {
-    console.warn('[ModelFetch] Failed to fetch Cloudflare models:', error)
+    const status =
+      error instanceof Error && 'status' in error
+        ? (error as Error & { status?: number }).status
+        : undefined
+    const message = error instanceof Error ? error.message : String(error)
+    if (status && status >= 400 && status < 500) {
+      console.info(
+        `[ModelFetch] Cloudflare model discovery unavailable (${message}); using fallback models.`
+      )
+    } else {
+      console.warn('[ModelFetch] Failed to fetch Cloudflare models:', error)
+    }
     return fallbacks
   }
 }
@@ -688,7 +877,7 @@ export async function fetchOpenRouterModels(): Promise<Model[]> {
     return []
   }
 
-  const fallbacks: Model[] = [
+  const fallbacks: Model[] = withOpenRouterProviderOptions([
     {
       id: 'google/gemini-2.5-flash',
       name: 'Gemini 2.5 Flash',
@@ -713,11 +902,13 @@ export async function fetchOpenRouterModels(): Promise<Model[]> {
       provider: 'OpenRouter',
       providerId: 'openrouter'
     }
-  ]
+  ])
 
   const staticList = process.env.OPENROUTER_MODELS
   if (staticList) {
-    return modelsFromStaticList(staticList, 'OpenRouter', 'openrouter')
+    return withOpenRouterProviderOptions(
+      modelsFromStaticList(staticList, 'OpenRouter', 'openrouter')
+    )
   }
 
   const userKey = cookieStore?.get('openrouter_api_key')?.value
@@ -753,7 +944,7 @@ export async function fetchOpenRouterModels(): Promise<Model[]> {
       }))
 
     return fetchedModels.length > 0
-      ? sortModels(dedupeModels(fetchedModels))
+      ? withOpenRouterProviderOptions(sortModels(dedupeModels(fetchedModels)))
       : fallbacks
   } catch (error) {
     console.warn('[ModelFetch] Failed to fetch OpenRouter models:', error)
@@ -778,6 +969,7 @@ export async function fetchAvailableModels(options?: {
     openaiCompatible,
     nvidia,
     ollama,
+    ollamaCloud,
     gateway,
     cloudflare,
     mistralModels,
@@ -789,6 +981,7 @@ export async function fetchAvailableModels(options?: {
     fetchOpenAICompatibleModels(),
     fetchNvidiaModels(),
     fetchOllamaModels(),
+    fetchOllamaCloudModels(),
     fetchGatewayModels(),
     fetchCloudflareModels(),
     fetchMistralModels(),
@@ -803,6 +996,7 @@ export async function fetchAvailableModels(options?: {
       ...openaiCompatible,
       ...nvidia,
       ...ollama,
+      ...ollamaCloud,
       ...gateway,
       ...cloudflare,
       ...mistralModels,

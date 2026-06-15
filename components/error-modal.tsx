@@ -2,11 +2,7 @@
 
 import Link from 'next/link'
 
-import {
-  IconAlertCircle as AlertCircle,
-  IconClock as Clock,
-  IconRefresh as RefreshCw
-} from '@tabler/icons-react'
+import { WarningCircle as AlertCircle, Clock, Refresh as RefreshCw } from 'iconoir-react'
 
 import { Button } from '@/components/ui/button'
 import {

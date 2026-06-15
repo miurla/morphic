@@ -6,11 +6,13 @@ import type {
   UIToolInvocation
 } from 'ai'
 
+import type { createFactCheckTool } from '../tools/factcheck'
 import type { createFeedTool } from '../tools/feed'
 import type { fetchTool } from '../tools/fetch'
 import type { createMapTool } from '../tools/map'
 import type { createQuestionTool } from '../tools/question'
 import type { createSearchTool } from '../tools/search'
+import type { createSourcePreferencesTool } from '../tools/source-preferences'
 import type { createResearchSubtaskTool } from '../tools/subtask-agent'
 import type { createTodoTools } from '../tools/todo'
 
@@ -22,6 +24,8 @@ export type ResearcherTools = {
   fetch: typeof fetchTool
   askQuestion: ReturnType<typeof createQuestionTool>
   researchSubtask: ReturnType<typeof createResearchSubtaskTool>
+  googleFactCheck: ReturnType<typeof createFactCheckTool>
+  sourcePreferences: ReturnType<typeof createSourcePreferencesTool>
 } & ReturnType<typeof createTodoTools>
 
 // Type alias for the researcher agent using ToolLoopAgent
@@ -52,6 +56,12 @@ export type MapSearchToolInvocation = UIToolInvocation<
 export type ResearchSubtaskToolInvocation = UIToolInvocation<
   ResearcherTools['researchSubtask']
 >
+export type GoogleFactCheckToolInvocation = UIToolInvocation<
+  ResearcherTools['googleFactCheck']
+>
+export type SourcePreferencesToolInvocation = UIToolInvocation<
+  ResearcherTools['sourcePreferences']
+>
 
 // Union type for all tool invocations
 export type ResearcherToolInvocation =
@@ -62,6 +72,8 @@ export type ResearcherToolInvocation =
   | QuestionToolInvocation
   | TodoWriteToolInvocation
   | ResearchSubtaskToolInvocation
+  | GoogleFactCheckToolInvocation
+  | SourcePreferencesToolInvocation
 
 // Helper type to extract tool names
 export type ResearcherToolName = keyof ResearcherTools

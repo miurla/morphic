@@ -22,11 +22,23 @@ describe('fetch-models', () => {
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     vi.unstubAllGlobals()
     delete process.env.OLLAMA_BASE_URL
+    delete process.env.OLLAMA_API_KEY
+    delete process.env.OLLAMA_CLOUD_BASE_URL
+    delete process.env.OLLAMA_CLOUD_MODELS
+    delete process.env.CLOUDFLARE_ACCOUNT_ID
+    delete process.env.CLOUDFLARE_API_TOKEN
     delete process.env.NVIDIA_API_KEY
     delete process.env.NVIDIA_API_BASE_URL
     delete process.env.NVIDIA_MODELS
+    delete process.env.OPENROUTER_SERVER_TOOLS_ENABLED
+    delete process.env.OPENROUTER_SERVER_TOOLS
+    delete process.env.OPENROUTER_FUSION_ANALYSIS_MODELS
+    delete process.env.OPENROUTER_FUSION_JUDGE_MODEL
+    delete process.env.OPENROUTER_ADVISOR_MODEL
+    delete process.env.OPENROUTER_ADVISOR_TOOLS
   })
 
   it('filters non-chat and snapshot OpenAI models', async () => {
@@ -194,6 +206,84 @@ describe('fetch-models', () => {
     expect(models.map(model => model.id)).toEqual(['gemini-2.5-pro'])
   })
 
+  it('fetches Cloudflare Workers AI models from the model search endpoint', async () => {
+    mockIsProviderEnabled.mockImplementation(
+      providerId => providerId === 'cloudflare'
+    )
+    process.env.CLOUDFLARE_ACCOUNT_ID = 'account-id'
+    process.env.CLOUDFLARE_API_TOKEN = 'cloudflare-token'
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({
+        result: {
+          data: [
+            { id: '@cf/meta/llama-3.3-70b-instruct' },
+            { id: '@cf/baai/bge-base-en-v1.5' },
+            { id: '@cf/qwen/qwen3-30b-a3b-fp8' }
+          ]
+        }
+      })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const models = await fetchModels.fetchCloudflareModels()
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.cloudflare.com/client/v4/accounts/account-id/ai/models/search',
+      expect.objectContaining({
+        headers: { Authorization: 'Bearer cloudflare-token' },
+        method: 'GET'
+      })
+    )
+    expect(models).toEqual([
+      {
+        id: '@cf/meta/llama-3.3-70b-instruct',
+        name: 'llama-3.3-70b-instruct',
+        provider: 'Cloudflare',
+        providerId: 'cloudflare'
+      },
+      {
+        id: '@cf/qwen/qwen3-30b-a3b-fp8',
+        name: 'qwen3-30b-a3b-fp8',
+        provider: 'Cloudflare',
+        providerId: 'cloudflare'
+      }
+    ])
+  })
+
+  it('falls back quietly when Cloudflare model discovery returns a client error', async () => {
+    mockIsProviderEnabled.mockImplementation(
+      providerId => providerId === 'cloudflare'
+    )
+    process.env.CLOUDFLARE_ACCOUNT_ID = 'account-id'
+    process.env.CLOUDFLARE_API_TOKEN = 'cloudflare-token'
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 405,
+      statusText: 'Method Not Allowed'
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const models = await fetchModels.fetchCloudflareModels()
+
+    expect(models.map(model => model.id)).toEqual([
+      '@cf/meta/llama-3.3-70b-instruct',
+      '@cf/meta/llama-3.1-8b-instruct',
+      '@cf/meta/llama-3.2-3b-instruct',
+      '@cf/qwen/qwen1.5-14b-chat-awq'
+    ])
+    expect(infoSpy).toHaveBeenCalledWith(
+      '[ModelFetch] Cloudflare model discovery unavailable (HTTP 405: Method Not Allowed); using fallback models.'
+    )
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+
   it('adds think provider options for ollama thinking models', async () => {
     mockIsProviderEnabled.mockImplementation(
       providerId => providerId === 'ollama'
@@ -217,6 +307,13 @@ describe('fetch-models', () => {
         name: 'deepseek-r1:8b',
         provider: 'Ollama',
         providerId: 'ollama',
+        capabilities: [
+          'chat',
+          'streaming',
+          'toolCalling',
+          'thinking',
+          'structuredOutputs'
+        ],
         providerOptions: {
           ollama: {
             think: true
@@ -228,13 +325,137 @@ describe('fetch-models', () => {
         name: 'llama3.2:3b',
         provider: 'Ollama',
         providerId: 'ollama',
-        providerOptions: {
-          ollama: {
-            think: true
-          }
-        }
+        capabilities: ['chat', 'streaming', 'toolCalling', 'structuredOutputs']
       }
     ])
+  })
+
+  describe('fetchOllamaCloudModels', () => {
+    it('returns empty list when Ollama Cloud is not enabled', async () => {
+      mockIsProviderEnabled.mockImplementation(() => false)
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOllamaCloudModels()
+
+      expect(models).toEqual([])
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('fetches Ollama Cloud models from ollama.com with bearer auth', async () => {
+      mockIsProviderEnabled.mockImplementation(
+        providerId => providerId === 'ollama-cloud'
+      )
+      process.env.OLLAMA_API_KEY = 'ollama-cloud-key'
+
+      const fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
+        if (url === 'https://ollama.com/api/tags') {
+          return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            json: async () => ({
+              models: [
+                { name: 'gpt-oss:120b' },
+                { name: 'nomic-embed-text' },
+                { name: 'qwen3-vl:235b' },
+                { name: 'gemma4:31b' }
+              ]
+            })
+          }
+        }
+
+        if (url === 'https://ollama.com/api/show') {
+          const body = JSON.parse(String(options?.body ?? '{}'))
+          const capabilitiesByModel: Record<string, string[]> = {
+            'gpt-oss:120b': ['completion', 'tools', 'thinking'],
+            'nomic-embed-text': ['embedding'],
+            'qwen3-vl:235b': ['completion', 'tools', 'thinking', 'vision'],
+            'gemma4:31b': ['completion', 'vision']
+          }
+          return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            json: async () => ({
+              capabilities: capabilitiesByModel[String(body.model)] ?? []
+            })
+          }
+        }
+
+        throw new Error(`Unexpected URL: ${url}`)
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOllamaCloudModels()
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://ollama.com/api/tags',
+        expect.objectContaining({
+          headers: { Authorization: 'Bearer ollama-cloud-key' },
+          method: 'GET'
+        })
+      )
+      expect(models).toEqual([
+        {
+          id: 'gpt-oss:120b',
+          name: 'gpt-oss:120b',
+          provider: 'Ollama Cloud',
+          providerId: 'ollama-cloud',
+          capabilities: [
+            'chat',
+            'streaming',
+            'toolCalling',
+            'thinking',
+            'webSearch'
+          ],
+          providerOptions: {
+            ollama: {
+              think: 'medium'
+            }
+          }
+        },
+        {
+          id: 'qwen3-vl:235b',
+          name: 'qwen3-vl:235b',
+          provider: 'Ollama Cloud',
+          providerId: 'ollama-cloud',
+          capabilities: [
+            'chat',
+            'streaming',
+            'toolCalling',
+            'thinking',
+            'vision',
+            'webSearch'
+          ],
+          providerOptions: {
+            ollama: {
+              think: true
+            }
+          }
+        }
+      ])
+    })
+
+    it('uses OLLAMA_CLOUD_MODELS static list when configured', async () => {
+      mockIsProviderEnabled.mockImplementation(
+        providerId => providerId === 'ollama-cloud'
+      )
+      process.env.OLLAMA_API_KEY = 'ollama-cloud-key'
+      process.env.OLLAMA_CLOUD_MODELS =
+        'qwen3:235b,nomic-embed-text,gpt-oss:120b'
+
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOllamaCloudModels()
+
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(models.map(model => model.id)).toEqual([
+        'gpt-oss:120b',
+        'qwen3:235b'
+      ])
+    })
   })
 
   describe('fetchOpenAICompatibleModels', () => {
@@ -448,9 +669,18 @@ describe('fetch-models', () => {
         json: async () => ({
           data: [
             { id: 'google/gemini-2.5-flash', name: 'Google: Gemini 2.5 Flash' },
-            { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Meta: Llama 3.3 70B Instruct' },
-            { id: 'openai/text-embedding-3-small', name: 'OpenAI: Text Embedding' },
-            { id: 'meta-llama/llama-guard-3-8b', name: 'Meta: Llama Guard 3 8B (Moderation)' }
+            {
+              id: 'meta-llama/llama-3.3-70b-instruct',
+              name: 'Meta: Llama 3.3 70B Instruct'
+            },
+            {
+              id: 'openai/text-embedding-3-small',
+              name: 'OpenAI: Text Embedding'
+            },
+            {
+              id: 'meta-llama/llama-guard-3-8b',
+              name: 'Meta: Llama Guard 3 8B (Moderation)'
+            }
           ]
         })
       })
@@ -496,7 +726,8 @@ describe('fetch-models', () => {
         providerId => providerId === 'openrouter'
       )
       process.env.OPENROUTER_API_KEY = 'or-test-key'
-      process.env.OPENROUTER_MODELS = 'google/gemini-2.5-flash, deepseek/deepseek-chat'
+      process.env.OPENROUTER_MODELS =
+        'google/gemini-2.5-flash, deepseek/deepseek-chat'
 
       const fetchMock = vi.fn()
       vi.stubGlobal('fetch', fetchMock)
@@ -507,6 +738,43 @@ describe('fetch-models', () => {
         'deepseek/deepseek-chat',
         'google/gemini-2.5-flash'
       ])
+    })
+
+    it('adds validated OpenRouter beta server-tool provider options from env', async () => {
+      mockIsProviderEnabled.mockImplementation(
+        providerId => providerId === 'openrouter'
+      )
+      process.env.OPENROUTER_API_KEY = 'or-test-key'
+      process.env.OPENROUTER_MODELS = 'google/gemini-2.5-flash'
+      process.env.OPENROUTER_SERVER_TOOLS_ENABLED = 'true'
+      process.env.OPENROUTER_SERVER_TOOLS = 'fusion,advisor'
+      process.env.OPENROUTER_FUSION_ANALYSIS_MODELS =
+        '~google/gemini-flash-latest'
+      process.env.OPENROUTER_FUSION_JUDGE_MODEL = '~openai/gpt-latest'
+      process.env.OPENROUTER_ADVISOR_MODEL = '~anthropic/claude-opus-latest'
+      process.env.OPENROUTER_ADVISOR_TOOLS = 'web_search'
+
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+
+      const models = await fetchModels.fetchOpenRouterModels()
+
+      expect(models[0].providerOptions).toEqual({
+        openrouter: {
+          serverTools: {
+            enabled: true,
+            tools: ['fusion', 'advisor'],
+            fusion: {
+              analysisModels: ['~google/gemini-flash-latest'],
+              model: '~openai/gpt-latest'
+            },
+            advisor: {
+              model: '~anthropic/claude-opus-latest',
+              tools: ['web_search']
+            }
+          }
+        }
+      })
     })
   })
 })

@@ -1,4 +1,6 @@
 // Re-export SearchMode for convenience
+import type { KnowledgeGraphEntity } from '@/lib/entities/knowledge-graph'
+
 export type { SearchMode } from './search'
 
 export type SearchResults = {
@@ -9,6 +11,7 @@ export type SearchResults = {
   query: string
   toolCallId?: string // ID of the search tool call
   citationMap?: Record<number, SearchResultItem> // Maps citation number to search result
+  entities?: KnowledgeGraphEntity[]
 }
 
 // If include_images_description is true, images are objects with url/description.
@@ -41,6 +44,18 @@ export type SearchResultItem = {
   title: string
   url: string
   content: string
+  sourceKind?: 'web' | 'news' | 'feed-item' | 'podcast' | 'video' | 'image'
+  provider?: string
+  retrievalMethod?: 'search' | 'feed'
+  publishedAt?: string
+  updatedAt?: string
+  siteName?: string
+  sourcePreference?: {
+    preference: 'trust' | 'prefer' | 'mute' | 'block'
+    matchedBy: 'domain' | 'url'
+    matchedValue: string
+  }
+  entities?: KnowledgeGraphEntity[]
 }
 
 export type ExaSearchResultItem = {

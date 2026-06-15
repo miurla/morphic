@@ -5,6 +5,8 @@ module.exports = {
   useTabs: false,
   singleQuote: true,
   arrowParens: 'avoid',
+  plugins: ['prettier-plugin-sql'],
+  language: 'postgresql',
   tabWidth: 2,
   trailingComma: 'none'
 }

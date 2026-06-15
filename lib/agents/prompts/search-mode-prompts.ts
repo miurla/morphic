@@ -69,6 +69,10 @@ Fetch tool usage:
 - **For PDF URLs (ending in .pdf)**: ALWAYS use \`type: "api"\` - regular type will fail on PDFs
 - **For regular web pages**: Use default \`type: "regular"\` for fast HTML fetching
 
+Fact Check tool usage (googleFactCheck):
+- Use when the user asks to verify, fact-check, or validate a specific claim, statement, news story, or rumor.
+- This queries Google's Fact Check Tools API to find claims and associated publisher ratings, reviews, and URLs.
+
 Citation Format (MANDATORY):
 [number](#toolCallId) - Always use this EXACT format
 - **CRITICAL**: Use the EXACT tool call identifier from the search response
@@ -103,6 +107,8 @@ If tool call ID is "ABC123xyz", cite as: [2](#ABC123xyz)
 
 Rule precedence:
 - Search requirement and citation integrity supersede brevity. If there is any conflict, prefer searching and proper citations over being brief.
+
+${getPlaceOverviewGuidance()}
 
 OUTPUT FORMAT (MANDATORY):
 - You MUST always format responses as Markdown.
@@ -215,6 +221,15 @@ Rule precedence:
 8. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question`
 }
 
+function getPlaceOverviewGuidance(): string {
+  return `PLACE AND CITY OVERVIEW GUIDANCE:
+- Treat broad place questions like "tell me about Lagos Portugal", "what is Kyoto like?", "visit Mexico City", or "tell me about this neighborhood" as requests for a rich, source-backed overview unless the user explicitly asks for brevity.
+- For place, city, travel, and locality queries, cover the dimensions that fit the sources and the user's wording: where it is, overall vibe, history/culture, notable areas or landmarks, beaches/nature if relevant, food/nightlife, practical travel context, seasonality/weather, safety/accessibility considerations, and who the place is best for.
+- Prefer several well-labeled sections over a two-sentence answer. A concise query can still receive a substantive overview when the topic is broad.
+- Only compress to one paragraph or two sentences when the user explicitly requests a brief answer, a summary, or a fixed length.
+- When images are available and useful for understanding the place, include an inline image spec near the relevant section.`
+}
+
 export function getAdaptiveModePrompt(): string {
   return `
 Instructions:
@@ -238,6 +253,8 @@ Language:
 - ALWAYS respond in the user's language.
 
 ${getApproachStrategy()}
+
+${getPlaceOverviewGuidance()}
 
 RESEARCH SUB-AGENT TOOL (researchSubtask):
 - Use this tool to delegate a focused research task to a specialized sub-agent
@@ -271,6 +288,10 @@ Fetch tool usage:
 - **For PDF URLs (ending in .pdf)**: ALWAYS use \`type: "api"\` - regular type will fail on PDFs
 - **For complex JavaScript-rendered pages**: Use \`type: "api"\` for better extraction
 - **For regular web pages**: Use default \`type: "regular"\` for fast HTML fetching
+
+Fact Check tool usage (googleFactCheck):
+- Use when the user asks to verify, fact-check, or validate a specific claim, statement, news story, or rumor.
+- This queries Google's Fact Check Tools API to find claims and associated publisher ratings, reviews, and URLs.
 
 When using the ask_question tool:
 - Create clear, concise questions

@@ -1,5 +1,5 @@
 'use client'
-import { IconCloudUpload as UploadCloud } from '@tabler/icons-react'
+import { CloudUpload as UploadCloud } from 'iconoir-react'
 
 import { cn } from '@/lib/utils'
 

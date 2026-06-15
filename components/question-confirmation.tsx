@@ -2,11 +2,7 @@
 
 import { useState } from 'react'
 
-import {
-  IconArrowRight as ArrowRight,
-  IconCheck as Check,
-  IconPlayerTrackNext as SkipForward
-} from '@tabler/icons-react'
+import { ArrowRight, Check, FastArrowRight as SkipForward } from 'iconoir-react'
 
 import type { ToolPart } from '@/lib/types/ai'
 
@@ -157,9 +153,9 @@ export function QuestionConfirmation({
         </CardTitle>
         <div className="flex items-center justify-start gap-1 w-full">
           {isSkipped ? (
-            <SkipForward size={16} className="text-yellow-500 w-4 h-4" />
+            <SkipForward width={16} height={16} className="text-yellow-500 w-4 h-4" />
           ) : (
-            <Check size={16} className="text-green-500 w-4 h-4" />
+            <Check width={16} height={16} className="text-green-500 w-4 h-4" />
           )}
           <h5 className="text-muted-foreground text-xs truncate">
             {updatedQuery()}
@@ -217,11 +213,11 @@ export function QuestionConfirmation({
 
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={handleSkip}>
-              <SkipForward size={16} className="mr-1" />
+              <SkipForward width={16} height={16} className="mr-1" />
               Skip
             </Button>
             <Button type="submit" disabled={isButtonDisabled}>
-              <ArrowRight size={16} className="mr-1" />
+              <ArrowRight width={16} height={16} className="mr-1" />
               Send
             </Button>
           </div>

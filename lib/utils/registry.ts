@@ -10,6 +10,10 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createProviderRegistry, LanguageModel } from 'ai'
 import { createOllama } from 'ai-sdk-ollama'
 
+import { appendOpenRouterServerToolsToRequest } from '@/lib/agents/openrouter-server-tools'
+import { getOllamaChatSettings } from '@/lib/models/ollama-capabilities'
+import { getConfiguredOllamaCloudApiKey } from '@/lib/ollama/cloud-api-key'
+
 // Strip a trailing /v1 from the configured base URL, then re-append it,
 // so both shapes work for OpenAI-compatible hosts:
 //   OPENAI_COMPATIBLE_API_BASE_URL=https://api.deepseek.com
@@ -40,6 +44,28 @@ const providers: Record<string, any> = {
       process.env.NVIDIA_API_BASE_URL || 'https://integrate.api.nvidia.com'
     )
   }),
+  'ollama-cloud': createOllama({
+    baseURL: process.env.OLLAMA_CLOUD_BASE_URL || 'https://ollama.com',
+    fetch: async (url, options) => {
+      let cookieStore: ReadonlyRequestCookies | undefined
+      try {
+        cookieStore = await cookies()
+      } catch (e) {
+        // cookies() might throw outside request context
+      }
+
+      const apiKey = getConfiguredOllamaCloudApiKey(cookieStore)
+      const headers = new Headers(options?.headers)
+      if (apiKey) {
+        headers.set('Authorization', `Bearer ${apiKey}`)
+      }
+
+      return fetch(url, {
+        ...options,
+        headers
+      })
+    }
+  }),
   gateway: createGateway({
     apiKey: process.env.AI_GATEWAY_API_KEY
   }),
@@ -67,10 +93,12 @@ const providers: Record<string, any> = {
       }
       headers.set('HTTP-Referer', 'https://github.com/outlaw-dame/morphic')
       headers.set('X-Title', 'Morphic AI Research Client')
+      const body = appendOpenRouterServerToolsToRequest(options?.body, headers)
 
       return fetch(url, {
         ...options,
-        headers
+        headers,
+        body
       })
     }
   })
@@ -92,11 +120,26 @@ export function getModel(model: string): LanguageModel {
   // that ai-sdk-ollama requires (think, supportedUrls override).
   if (model.startsWith('ollama:') && ollamaProvider) {
     const modelId = model.slice('ollama:'.length)
-    const lm = ollamaProvider(modelId, { think: true })
+    const lm = ollamaProvider(modelId, getOllamaChatSettings(modelId))
 
     // Ollama's Chat API only accepts base64 in the images field, not URLs.
     // Override supportedUrls to force AI SDK to download images and convert
     // them to base64 before sending to the model.
+    Object.defineProperty(lm, 'supportedUrls', {
+      value: {},
+      configurable: true
+    })
+
+    return lm
+  }
+
+  if (model.startsWith('ollama-cloud:')) {
+    const modelId = model.slice('ollama-cloud:'.length)
+    const lm = providers['ollama-cloud'](
+      modelId,
+      getOllamaChatSettings(modelId)
+    )
+
     Object.defineProperty(lm, 'supportedUrls', {
       value: {},
       configurable: true
@@ -130,6 +173,8 @@ export function isProviderEnabled(
       return !!process.env.AI_GATEWAY_API_KEY
     case 'ollama':
       return !!process.env.OLLAMA_BASE_URL
+    case 'ollama-cloud':
+      return !!getConfiguredOllamaCloudApiKey(cookieStore)
     case 'cloudflare':
       return (
         !!process.env.CLOUDFLARE_API_TOKEN &&

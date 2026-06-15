@@ -1,12 +1,7 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import {
-  IconAlertCircle as AlertCircle,
-  IconCheck as Check,
-  IconExternalLink as ExternalLink,
-  IconWorld as Globe
-} from '@tabler/icons-react'
+import { WarningCircle as AlertCircle, Check, OpenNewWindow as ExternalLink, Globe } from 'iconoir-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import { SearchResults as SearchResultsType } from '@/lib/types'
@@ -105,7 +100,7 @@ export function FetchSection({
       meta={
         displayStatus === 'success' && contentLength ? (
           <>
-            <Check size={16} className="text-green-500" />
+            <Check width={16} height={16} className="text-green-500" />
             <span>
               {contentLength > 1000
                 ? `${Math.round(contentLength / 1000)}k chars`
@@ -114,7 +109,7 @@ export function FetchSection({
           </>
         ) : displayStatus === 'error' ? (
           <>
-            <AlertCircle size={16} className="text-destructive" />
+            <AlertCircle width={16} height={16} className="text-destructive" />
             <span>{error}</span>
           </>
         ) : isToolLoading ? (

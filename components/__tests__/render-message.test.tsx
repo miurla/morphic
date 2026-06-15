@@ -8,8 +8,17 @@ import type { UIMessage } from '@/lib/types/ai'
 import { RenderMessage } from '../render-message'
 
 vi.mock('../answer-section', () => ({
-  AnswerSection: ({ content }: { content: string }) => (
-    <div data-testid="answer-section">{content}</div>
+  AnswerSection: ({
+    content,
+    supportingContent
+  }: {
+    content: string
+    supportingContent?: React.ReactNode
+  }) => (
+    <div data-testid="answer-section">
+      {content}
+      {supportingContent}
+    </div>
   )
 }))
 
@@ -24,6 +33,22 @@ vi.mock('../research-process-section', () => ({
 
 vi.mock('../dynamic-tool-display', () => ({
   DynamicToolDisplay: () => <div data-testid="dynamic-tool" />
+}))
+
+vi.mock('../sources/source-card-list', () => ({
+  SourceCardList: ({ sources }: { sources: Array<{ title: string }> }) => (
+    <div data-testid="source-card-list">
+      {sources.map(source => source.title).join(',')}
+    </div>
+  )
+}))
+
+vi.mock('../gist/gist-module', () => ({
+  GistModule: ({ sources }: { sources: Array<{ title: string }> }) => (
+    <div data-testid="gist-module">
+      {sources.map(source => source.title).join(',')}
+    </div>
+  )
 }))
 
 vi.mock('../user-file-section', () => ({
@@ -79,5 +104,66 @@ describe('RenderMessage', () => {
       )
     ).map(node => node.getAttribute('data-testid'))
     expect(order).toEqual(['research-process', 'answer-section'])
+  })
+
+  test('renders Gist before research and source cards inside the final answer stack', () => {
+    const message: UIMessage = {
+      id: 'assistant-msg',
+      role: 'assistant',
+      parts: [
+        {
+          type: 'tool-search',
+          toolCallId: 'tool-1',
+          state: 'output-available',
+          input: { query: 'source first' },
+          output: {
+            state: 'complete',
+            query: 'source first',
+            images: [],
+            results: [
+              {
+                title: 'Primary source',
+                url: 'https://example.com/report',
+                content: 'Search snippet'
+              },
+              {
+                title: 'Secondary source',
+                url: 'https://example.org/report',
+                content: 'Second search snippet'
+              }
+            ]
+          }
+        } as any,
+        { type: 'text', text: 'Final answer' } as any
+      ]
+    } as UIMessage
+
+    const { container } = render(
+      <RenderMessage
+        message={message}
+        messageId={message.id}
+        getIsOpen={() => true}
+        onOpenChange={() => {}}
+      />
+    )
+
+    expect(screen.getByTestId('gist-module')).toHaveTextContent(
+      'Primary source,Secondary source'
+    )
+    expect(screen.getByTestId('source-card-list')).toHaveTextContent(
+      'Primary source,Secondary source'
+    )
+
+    const order = Array.from(
+      container.querySelectorAll(
+        '[data-testid="research-process"], [data-testid="gist-module"], [data-testid="source-card-list"], [data-testid="answer-section"]'
+      )
+    ).map(node => node.getAttribute('data-testid'))
+    expect(order).toEqual([
+      'gist-module',
+      'research-process',
+      'answer-section',
+      'source-card-list'
+    ])
   })
 })

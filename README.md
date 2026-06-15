@@ -112,6 +112,53 @@ Visit http://localhost:3000.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmiurla%2Fmorphic&env=OPENAI_API_KEY,TAVILY_API_KEY,ENABLE_AUTH)
 
+## Mobile (iOS & Android)
+
+Morphic is packaged as a native iOS and Android app using [Capacitor](https://capacitorjs.com/).
+The native shell is a hosted WebView that loads the production web app — the server-side architecture
+(Next.js API routes, AI streaming, database, auth) runs unchanged.
+
+### Prerequisites
+
+| Tool | Required for |
+|------|-------------|
+| [Xcode](https://apps.apple.com/app/xcode/id497799835) (macOS) | iOS builds |
+| [Android Studio](https://developer.android.com/studio) | Android builds |
+| Java 17+ | Android builds |
+
+### Scripts
+
+```bash
+# After any code change, sync web assets and plugin config into native projects:
+bun run cap:sync
+
+# Open the iOS project in Xcode:
+bun run cap:ios
+
+# Open the Android project in Android Studio:
+bun run cap:android
+```
+
+### Local Dev Server Testing
+
+To test the native shell against a local dev server, edit `capacitor.config.ts` temporarily:
+
+```ts
+server: {
+  url: 'http://localhost:3000',
+  cleartext: true            // localhost only — never commit this for production
+},
+loggingBehavior: 'debug'   // revert to 'none' before any release
+```
+
+Start the dev server first (use `bun run dev:webpack` for stable memory usage), then `cap sync` and
+run from Xcode or Android Studio.
+
+### Security
+
+See [`docs/NATIVE_SAFETY.md`](docs/NATIVE_SAFETY.md) for the full native security policy:
+no production logging, no API keys in the bundle, no sensitive data in native storage, HTTPS only.
+
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get started, including local development setup.

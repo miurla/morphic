@@ -11,7 +11,7 @@ import {
   useState
 } from 'react'
 
-import { IconPhoto as Images } from '@tabler/icons-react'
+import { MediaImage as Images } from 'iconoir-react'
 
 import { SearchResultImage } from '@/lib/types'
 
@@ -311,7 +311,7 @@ export const SearchResultsImageSection: React.FC<
                   index === imageSubset.length - 1 &&
                   filteredCount > 1 && (
                     <div className="absolute bottom-1.5 right-1.5 bg-black/40 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                      <Images size={14} />
+                      <Images width={14} height={14} />
                       <span>{filteredCount}</span>
                     </div>
                   )}

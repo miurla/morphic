@@ -3,7 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 
-import { IconLoader2 as Loader2, IconX as X } from '@tabler/icons-react'
+import { Refresh as Loader2, Xmark as X } from 'iconoir-react'
 
 import { UploadedFile } from '@/lib/types'
 
@@ -42,7 +42,7 @@ export const UploadedFileList = React.memo(function UploadedFileList({
               {/* Spinner overlay while uploading */}
               {it.status === 'uploading' && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
-                  <Loader2 className="animate-spin text-white" size={20} />
+                  <Loader2 className="animate-spin text-white" width={20} height={20} />
                 </div>
               )}
 
@@ -51,7 +51,7 @@ export const UploadedFileList = React.memo(function UploadedFileList({
                 onClick={() => onRemove(index)}
                 className="absolute top-1 right-1 bg-black/40 hover:bg-red-600 text-white rounded-full p-1 z-20"
               >
-                <X size={12} />
+                <X width={12} height={12} />
               </button>
             </div>
 

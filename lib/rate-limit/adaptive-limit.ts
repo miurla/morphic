@@ -3,6 +3,11 @@ import { Redis } from '@upstash/redis'
 import { trackAdaptiveLimitEvent } from '@/lib/analytics'
 import { perfLog } from '@/lib/utils/perf-logging'
 
+import {
+  getRateLimitFailurePolicy,
+  recordEmergencyRateLimitAttempt
+} from './failure-policy'
+
 const DEFAULT_ADAPTIVE_DAILY_LIMIT = 30
 
 function getAdaptiveDailyLimit(): number {
@@ -37,6 +42,8 @@ interface AdaptiveLimitCheckResult {
   limit: number
   /** True when the check ran against Redis (i.e. enforced) */
   enforced: boolean
+  unavailable?: boolean
+  emergencyLimit?: number
 }
 
 async function checkAdaptiveLimit(
@@ -99,6 +106,34 @@ async function checkAdaptiveLimit(
     }
   } catch (error) {
     console.error('Adaptive rate limit check failed:', error)
+    const policy = getRateLimitFailurePolicy('adaptive')
+
+    if (policy === 'fail-closed') {
+      return {
+        allowed: false,
+        used: 0,
+        remaining: 0,
+        resetAt: getNextMidnightTimestamp(),
+        limit,
+        enforced: false,
+        unavailable: true
+      }
+    }
+
+    if (policy === 'emergency-cap') {
+      const emergency = recordEmergencyRateLimitAttempt('adaptive', userId)
+      return {
+        allowed: emergency.allowed,
+        used: emergency.used,
+        remaining: emergency.remaining,
+        resetAt: emergency.resetAt,
+        limit: emergency.limit,
+        enforced: false,
+        unavailable: true,
+        emergencyLimit: emergency.limit
+      }
+    }
+
     return {
       allowed: true,
       used: 0,
@@ -139,7 +174,11 @@ export async function checkAndEnforceAdaptiveLimit(
         remaining: 0,
         resetAt: result.resetAt,
         limit: result.limit,
-        mode: 'adaptive'
+        mode: 'adaptive',
+        ...(result.unavailable && { rateLimitUnavailable: true }),
+        ...(result.emergencyLimit && {
+          emergencyLimit: result.emergencyLimit
+        })
       }),
       {
         status: 429,

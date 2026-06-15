@@ -2,11 +2,7 @@
 
 import { useState, useTransition } from 'react'
 
-import {
-  IconMoodNeutral as Meh,
-  IconMoodSad as Frown,
-  IconMoodSmile as Smile
-} from '@tabler/icons-react'
+import { EmojiTalkingHappy as Meh, EmojiSad as Frown, Emoji as Smile } from 'iconoir-react'
 import { toast } from 'sonner'
 
 import { submitFeedback } from '@/lib/actions/site-feedback'

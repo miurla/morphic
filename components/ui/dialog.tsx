@@ -3,7 +3,7 @@
 import * as React from 'react'
 
 import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { IconX as X } from '@tabler/icons-react'
+import { Xmark as X } from 'iconoir-react'
 
 import { cn } from '@/lib/utils'
 

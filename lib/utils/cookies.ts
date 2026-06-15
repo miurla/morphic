@@ -6,7 +6,11 @@ export function setCookie(name: string, value: string, days = 30) {
   const date = new Date()
   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000)
   const expires = `expires=${date.toUTCString()}`
-  document.cookie = `${name}=${value};${expires};path=/`
+  const secure =
+    typeof window !== 'undefined' && window.location.protocol === 'https:'
+      ? ';secure'
+      : ''
+  document.cookie = `${name}=${encodeURIComponent(value)};${expires};path=/;samesite=lax${secure}`
   window.dispatchEvent(new CustomEvent(COOKIE_CHANGE_EVENT, { detail: name }))
 }
 
@@ -17,7 +21,11 @@ export function getCookie(name: string): string | null {
   for (const cookie of cookies) {
     const [cookieName, cookieValue] = cookie.trim().split('=')
     if (cookieName === name) {
-      return cookieValue
+      try {
+        return decodeURIComponent(cookieValue)
+      } catch {
+        return cookieValue
+      }
     }
   }
   return null

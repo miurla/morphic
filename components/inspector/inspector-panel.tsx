@@ -1,12 +1,6 @@
 'use client'
 
-import {
-  IconBulb as LightbulbIcon,
-  IconListCheck as ListTodo,
-  IconMessage as MessageSquare,
-  IconSearch as Search,
-  IconX as X
-} from '@tabler/icons-react'
+import { LightBulb, List as ListTodo, MessageText as MessageSquare, Search, Xmark as X } from 'iconoir-react'
 
 import { Separator } from '@/components/ui/separator'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -27,27 +21,27 @@ export function InspectorPanel() {
       case 'tool-askQuestion':
         const toolName = part.type.replace('tool-', '')
         return {
-          icon: <Search size={18} />,
+          icon: <Search width={18} height={18} />,
           title: toolName
         }
       case 'tool-todoWrite':
         return {
-          icon: <ListTodo size={18} />,
+          icon: <ListTodo width={18} height={18} />,
           title: 'Todo List'
         }
       case 'reasoning':
         return {
-          icon: <LightbulbIcon size={18} />,
+          icon: <LightBulb width={18} height={18} />,
           title: 'Thoughts'
         }
       case 'text':
         return {
-          icon: <MessageSquare size={18} />,
+          icon: <MessageSquare width={18} height={18} />,
           title: 'Text'
         }
       default:
         return {
-          icon: <MessageSquare size={18} />,
+          icon: <MessageSquare width={18} height={18} />,
           title: 'Content'
         }
     }

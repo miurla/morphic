@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 
+import { Bookmark, Compass } from 'iconoir-react'
+
 import { cn } from '@/lib/utils'
 
 import {
@@ -8,6 +10,8 @@ import {
   SidebarContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
   SidebarTrigger
 } from '@/components/ui/sidebar'
@@ -30,6 +34,22 @@ export default function AppSidebar() {
       <SidebarContent className="flex flex-col px-2 py-4 h-full">
         <SidebarMenu>
           <NewChatMenuItem />
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/discovery" className="flex items-center gap-2">
+                <Compass className="size-4" />
+                <span>Discovery</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/library" className="flex items-center gap-2">
+                <Bookmark className="size-4" />
+                <span>Library</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
         <div className="flex-1 overflow-y-auto">
           <Suspense fallback={<ChatHistorySkeleton />}>

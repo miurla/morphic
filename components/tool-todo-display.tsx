@@ -1,7 +1,4 @@
-import {
-  IconCheck as Check,
-  IconListCheck as ListTodo
-} from '@tabler/icons-react'
+import { Check, List as ListTodo } from 'iconoir-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import { Part, TodoItem } from '@/lib/types/ai'

@@ -27,6 +27,8 @@ describe('checkAndEnforceAdaptiveLimit', () => {
     process.env.UPSTASH_REDIS_REST_URL = 'https://example.com'
     process.env.UPSTASH_REDIS_REST_TOKEN = 'token'
     delete process.env.ADAPTIVE_CHAT_DAILY_LIMIT
+    delete process.env.ADAPTIVE_RATE_LIMIT_FAILURE_MODE
+    delete process.env.ADAPTIVE_RATE_LIMIT_EMERGENCY_CAP
   })
 
   it('allows requests under the default limit', async () => {
@@ -78,10 +80,43 @@ describe('checkAndEnforceAdaptiveLimit', () => {
   })
 
   it('allows the request when redis fails (fail-open)', async () => {
+    process.env.ADAPTIVE_RATE_LIMIT_FAILURE_MODE = 'fail-open'
     mockRedisIncr.mockRejectedValue(new Error('boom'))
 
     const response = await checkAndEnforceAdaptiveLimit('user-5')
     expect(response).toBeNull()
+  })
+
+  it('blocks adaptive mode when redis fails and adaptive policy is fail-closed', async () => {
+    process.env.ADAPTIVE_RATE_LIMIT_FAILURE_MODE = 'fail-closed'
+    mockRedisIncr.mockRejectedValue(new Error('boom'))
+
+    const response = await checkAndEnforceAdaptiveLimit('user-fail-closed')
+    const body = await response!.json()
+
+    expect(response?.status).toBe(429)
+    expect(body).toMatchObject({
+      mode: 'adaptive',
+      rateLimitUnavailable: true
+    })
+  })
+
+  it('uses an emergency cap for adaptive mode when configured', async () => {
+    process.env.ADAPTIVE_RATE_LIMIT_FAILURE_MODE = 'emergency-cap'
+    process.env.ADAPTIVE_RATE_LIMIT_EMERGENCY_CAP = '1'
+    mockRedisIncr.mockRejectedValue(new Error('boom'))
+
+    expect(await checkAndEnforceAdaptiveLimit('user-cap')).toBeNull()
+
+    const response = await checkAndEnforceAdaptiveLimit('user-cap')
+    const body = await response!.json()
+
+    expect(response?.status).toBe(429)
+    expect(body).toMatchObject({
+      mode: 'adaptive',
+      rateLimitUnavailable: true,
+      emergencyLimit: 1
+    })
   })
 
   it('skips enforcement when not in cloud deployment', async () => {

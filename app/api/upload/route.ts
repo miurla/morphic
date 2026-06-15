@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { createId } from '@paralleldrive/cuid2'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import {
@@ -12,6 +13,11 @@ import {
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf']
+const MAGIC_BYTES: Record<string, number[]> = {
+  'image/jpeg': [0xff, 0xd8, 0xff],
+  'image/png': [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+  'application/pdf': [0x25, 0x50, 0x44, 0x46, 0x2d]
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -59,7 +65,15 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    const result = await uploadFileToR2(file, userId, chatId)
+    const buffer = Buffer.from(await file.arrayBuffer())
+    if (!hasValidMagicBytes(buffer, file.type)) {
+      return NextResponse.json(
+        { error: 'File content does not match declared type' },
+        { status: 400 }
+      )
+    }
+
+    const result = await uploadFileToR2(file, buffer, userId, chatId)
     return NextResponse.json({ success: true, file: result }, { status: 200 })
   } catch (err: any) {
     console.error('Upload Error:', err)
@@ -74,12 +88,25 @@ function sanitizeFilename(filename: string) {
   return filename.replace(/[^a-z0-9.\-_]/gi, '_').toLowerCase()
 }
 
-async function uploadFileToR2(file: File, userId: string, chatId: string) {
+function hasValidMagicBytes(buffer: Buffer, contentType: string) {
+  const expected = MAGIC_BYTES[contentType]
+  if (!expected || buffer.length < expected.length) {
+    return false
+  }
+
+  return expected.every((byte, index) => buffer[index] === byte)
+}
+
+async function uploadFileToR2(
+  file: File,
+  buffer: Buffer,
+  userId: string,
+  _chatId: string
+) {
   const sanitizedFileName = sanitizeFilename(file.name)
-  const filePath = `${userId}/chats/${chatId}/${Date.now()}-${sanitizedFileName}`
+  const filePath = `${userId}/uploads/${createId()}-${sanitizedFileName}`
 
   try {
-    const buffer = Buffer.from(await file.arrayBuffer())
     const r2Client = getR2Client()
 
     await r2Client.send(

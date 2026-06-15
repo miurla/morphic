@@ -121,6 +121,25 @@ function createToolPartMapping(
   } as DBMessagePart
 }
 
+function createDynamicBackedToolPartMapping(
+  basePart: Omit<DBMessagePart, 'type'>,
+  part: ExtendedToolPart,
+  toolName: string
+): DBMessagePart {
+  return {
+    ...basePart,
+    type: part.type,
+    tool_toolCallId: part.toolCallId || generateId(),
+    tool_state: part.state || ('input-available' as ToolState),
+    tool_errorText: part.errorText,
+    tool_dynamic_name: toolName,
+    tool_dynamic_type: 'tool',
+    tool_dynamic_input: part.input,
+    tool_dynamic_output:
+      part.state === 'output-available' ? part.output : undefined
+  } as DBMessagePart
+}
+
 /**
  * Convert UI message parts to DB format
  */
@@ -320,6 +339,14 @@ export function mapUIMessagePartsToDBParts(
 
       // Data parts
       default:
+        if (part.type.startsWith('tool-') && isExtendedToolPart(part)) {
+          return createDynamicBackedToolPartMapping(
+            basePart,
+            part,
+            part.type.substring(5)
+          )
+        }
+
         if (part.type.startsWith('data-')) {
           const dataType = part.type.substring(5) // Remove 'data-' prefix
           return {
@@ -411,6 +438,37 @@ export function mapDBPartToUIMessagePart(
             input: part.tool_dynamic_input,
             output: part.tool_dynamic_output,
             errorText: part.tool_errorText
+          }
+        }
+
+        if (part.tool_dynamic_name && part.tool_dynamic_type === 'tool') {
+          switch (part.tool_state) {
+            case 'input-streaming':
+            case 'input-available':
+              return {
+                type: `tool-${part.tool_dynamic_name}`,
+                state: part.tool_state,
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_dynamic_input
+              }
+            case 'output-available':
+              return {
+                type: `tool-${part.tool_dynamic_name}`,
+                state: 'output-available',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_dynamic_input,
+                output: part.tool_dynamic_output
+              }
+            case 'output-error':
+              return {
+                type: `tool-${part.tool_dynamic_name}`,
+                state: 'output-error',
+                toolCallId: part.tool_toolCallId || '',
+                input: part.tool_dynamic_input,
+                errorText: part.tool_errorText || ''
+              }
+            default:
+              throw new Error(`Unknown tool state: ${part.tool_state}`)
           }
         }
 
@@ -703,7 +761,7 @@ function getToolNameFromType(toolName: string): string {
     return 'dynamic'
   }
 
-  return toolNameMap[toolName] || toolName
+  return toolNameMap[toolName] || 'dynamic'
 }
 
 /**

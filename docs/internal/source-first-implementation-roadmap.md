@@ -343,6 +343,20 @@ app/api/source-events/route.ts
 - Source impressions and opens can be measured.
 - Product can later report outbound source click-through rate.
 
+### Implementation status
+
+Initial source-open tracking is implemented:
+
+- `source_events` schema and migration added with insert-only RLS.
+- `/api/source-events` validates event type, URL scheme, page URL, and metadata size.
+- Source cards send `open_original` events with minimal metadata and path-only page context.
+- Persistence failure returns a non-blocking `202` response so source navigation is not broken.
+
+Remaining follow-up:
+
+- Add impression tracking once source card visibility thresholds are defined.
+- Add publisher/source aggregate reporting once the event stream has production data.
+
 ## 7. Phase 4 — Feed-aware retrieval planner
 
 ### Goal
@@ -446,6 +460,23 @@ Avoid feed retrieval when:
 - Feed failures are isolated.
 - Search results and feed results dedupe by canonical URL.
 
+### Implementation status
+
+Initial feed-aware search blending is implemented:
+
+- `ENABLE_FEED_RETRIEVAL=true` enables deterministic feed blending.
+- `DEFAULT_NEWS_FEEDS` configures comma-separated RSS, Atom, RDF/RSS, or JSON feed URLs.
+- News/latest-style queries and `content_types=["news"]` searches trigger feed reads.
+- Feed item URLs are deduplicated against search result URLs by canonical URL.
+- Feed reads use an in-memory TTL cache and isolate per-feed failures.
+- Feed-derived search entries carry feed metadata so source cards can render them as feed/podcast sources.
+
+Remaining follow-up:
+
+- Add authenticated user feed subscriptions.
+- Persist feed item cache in `feed_items_cache` once subscription storage exists.
+- Add source-specific retrieval rules for followed sources and podcast episode queries.
+
 ## 8. Phase 5 — Reading queue and source library
 
 ### Goal
@@ -511,6 +542,23 @@ collection_items
 - Users can save a source from search results.
 - Users can view saved sources.
 - Saved source data is private by default.
+
+### Implementation status
+
+Initial reading queue support is implemented:
+
+- `reading_items` schema and migration added with user-scoped RLS.
+- `/api/reading-items` supports save, list, and status update.
+- Source cards include a Save action that stores normalized source metadata.
+- Duplicate saves update the existing item by user and canonical URL.
+- `/library` displays saved sources and opens originals through guarded navigation.
+- Account deletion removes saved reading items before auth deletion.
+
+Remaining follow-up:
+
+- Add collections and collection membership.
+- Add richer library filtering/search and status controls in the UI.
+- Add saved-source chips in chat/research spaces.
 
 ## 9. Phase 6 — Gist top module for standard search page
 
@@ -681,6 +729,25 @@ Start with:
 - Trending links appear underneath.
 - Feed-derived items are included.
 
+### Implementation status
+
+Initial Discovery support is implemented:
+
+- `/discovery` loads without requiring authentication.
+- Configured `DEFAULT_NEWS_FEEDS` are read through the existing hardened feed parser.
+- Feed failures are isolated so one broken feed does not break the page.
+- Feed items normalize into source records and dedupe by canonical URL.
+- Story clusters are built with simple deterministic title-key clustering and recency ranking.
+- The Gist module renders above clusters when source coverage is sufficient and disappears when it is not.
+- Trending links remain available underneath through guarded external navigation.
+
+Remaining follow-up:
+
+- Add persisted story cluster tables once clustering behavior stabilizes.
+- Add richer source-diversity clustering across search providers, feeds, podcasts, and followed sources.
+- Add category controls that can filter/refetch by topic instead of only displaying discovered categories.
+- Add user-specific followed feeds and reading queue shortcuts on the Discovery page.
+
 ## 11. Phase 8 — Claim-level evidence verification
 
 ### Goal
@@ -749,11 +816,36 @@ claim_sources
 - At least basic claim verification works behind a feature flag.
 - UI can show claim support states.
 
+### Implementation status
+
+Initial claim verification support is implemented:
+
+- `ENABLE_CLAIM_VERIFICATION=true` enables a deterministic snippet-level evidence panel under assistant answers.
+- Answer text is split into atomic sentence-level claims while preserving the app's `[number](#toolCallId)` citation format.
+- Cited claims are checked against existing citation-map snippets/content without triggering new retrieval.
+- Completed Google Fact Check tool outputs are consumed as external claim-review evidence when present.
+- Claims are classified as `supported`, `partially_supported`, `contradicted`, `uncited`, or `unavailable`.
+- Verifier failures are non-blocking and render an unavailable state instead of blocking the answer.
+- Evidence cards show support status, evidence type, source/review links, and source quotes or fact-check ratings.
+- Google Fact Check outputs persist through message storage using dynamic-backed tool columns and round-trip into Phase 8 evidence after reload.
+
+Remaining follow-up:
+
+- Persist `answer_claims` and `claim_sources` once verifier behavior is stable.
+- Add model-assisted verification behind a separate cost/rate-limit guard.
+- Add a claim details drawer or hover affordance tied directly to answer text spans.
+- Add source disagreement panels when multiple cited sources conflict.
+
 ## 12. Phase 9 — Source preferences and ranking controls
 
 ### Goal
 
 Let users explicitly control source ranking and filtering.
+
+Kagi reference point: Kagi exposes per-domain controls such as block, lower,
+normal, higher, and pin-to-top, then lets users manage those rules in settings.
+This phase implements the same product principle in Morphic terms: `trust`,
+`prefer`, `mute`, and `block`.
 
 ### Database additions
 
@@ -761,50 +853,75 @@ Let users explicitly control source ranking and filtering.
 source_preferences
 - id varchar primary key
 - user_id varchar not null
-- domain text nullable
-- source_url text nullable
+- profile_id varchar nullable
+- target text not null
+- target_type varchar not null
+- domain text not null
 - preference varchar not null
-  - prefer
   - trust
-  - block
+  - prefer
   - mute
-- topic text nullable
+  - block
+- note text nullable
 - created_at timestamp default now()
 - updated_at timestamp nullable
+```
 
+```text
 source_preference_profiles
 - id varchar primary key
 - user_id varchar not null
 - name text not null
+- slug varchar not null
 - settings jsonb not null
+- is_active boolean default true
 - created_at timestamp default now()
 ```
 
 ### UI
 
-- Trust/block buttons on source cards.
-- Settings page source controls.
-- Import/export source preferences.
-- Topic-specific source profiles later.
+- Settings page source controls for domain or URL rules.
+- Settings page source profile controls for topic-scoped rule sets.
+- Source cards show compact badges when a result matched a remembered rule.
+- Trust/block buttons on source cards are still a future shortcut.
+- Import/export source preferences remains deferred.
+- Import/export source profiles remains deferred.
 
 ### Retrieval integration
 
-- Use blocked domains as `exclude_domains` where provider supports it.
-- Use preferred domains as boosts or `include_domains` only when appropriate.
-- Never let preferences silently remove critical safety/official sources unless user explicitly asks.
+- Chat has a `sourcePreferences` tool. Use it only when users explicitly ask to
+  rely on, prefer, avoid, mute, block, or never use a source/domain/URL.
+- Search applies preferences after provider results and configured feed results
+  are blended:
+  - `block` removes matched results;
+  - `mute` demotes matched results;
+  - `prefer` boosts matched results;
+  - `trust` boosts matched results above ordinary preferred sources.
+- Search applies global preferences plus the best active source profile for the
+  query. Profile matching uses explicit include/exclude terms saved with the
+  profile; unrelated profile rules are not applied.
+- Chat can save a profile-scoped preference when the user explicitly says a
+  source rule applies to a topic, subject, or use case.
+- Provider-level `exclude_domains`/boost hints remain a future optimization.
+- Never infer durable preferences from one-off citations or casual mentions.
 
 ### Tests
 
 - blocked domains are excluded;
-- preferred domains are boosted;
-- preferences are user-scoped;
-- settings round-trip through UI;
-- invalid domains are rejected/sanitized.
+- preferred/trusted domains are boosted;
+- muted domains are demoted;
+- preferences are user-scoped through the API/action layer;
+- invalid domains and unsafe protocols are rejected/sanitized;
+- the researcher exposes the preference memory tool in Quick and Adaptive modes.
+- profile-scoped preferences only apply when the query matches the profile.
 
 ### Acceptance criteria
 
 - Users can block and prefer sources.
 - Retrieval respects source preferences.
+- Users can manually manage preferences in Settings.
+- Users can express explicit source preferences in chat and the app remembers them.
+- Users can create topic-scoped source profiles and attach source rules to them.
 
 ## 13. Phase 10 — Reader view and article interaction
 
@@ -816,11 +933,12 @@ Help users read original sources without replacing them.
 
 - Open original link.
 - Optional reader view for readability.
-- Section summary.
-- Ask questions about this source.
-- Highlight/source notes.
-- Save to collection.
 - Show publisher/source metadata.
+- Section summary remains deferred.
+- Ask questions about this source remains deferred.
+- Highlight/source notes remain deferred.
+- Save to collection is covered by the Phase 7 reading queue, with deeper
+  collection support deferred.
 
 ### Important boundary
 
@@ -828,16 +946,25 @@ Reader view should not become a large-scale article cloning system. It should be
 
 ### Tests
 
-- reader view requires explicit user action;
+- reader view requires explicit user action through source card/library links;
 - source URL remains visible;
 - unsupported content types are rejected;
-- private/internal URLs are blocked;
+- private/internal URLs are blocked through `safeFetch`;
 - source metadata remains attached.
 
 ### Acceptance criteria
 
 - User can open and inspect a source from the app.
 - Source remains central and clearly attributed.
+
+Implemented Phase 10 slice:
+
+- Added `/reader` and `/api/reader`.
+- Reader API accepts only explicit source URLs, normalizes attribution metadata,
+  fetches with SSRF/redirect hardening, rejects unsupported content types before
+  buffering, and caps response reads.
+- Source cards and Library entries expose an explicit Reader action while
+  keeping Read original visible.
 
 ## 14. Phase 11 — Production hardening
 
@@ -907,6 +1034,29 @@ ADAPTIVE_RATE_LIMIT_FAILURE_MODE=fail-closed
 
 - Public deployment has safe defaults.
 - Cost-abuse paths are controlled.
+
+Implemented Phase 11 slice:
+
+- Added configurable rate-limit backend failure policies:
+  `fail-open`, `fail-closed`, and `emergency-cap`.
+- Guest rate limiting now defaults to fail-closed in cloud deployment mode unless
+  explicitly overridden.
+- Adaptive and overall rate-limit failure behavior can be controlled with
+  limiter-specific environment variables.
+- DNS resolution failures in the SSRF guard now fail closed in cloud deployment
+  mode by default, with an explicit local-development fail-open override.
+- Uploads now validate JPEG, PNG, and PDF magic bytes before storage.
+- Upload object keys now use random object IDs under a user upload prefix rather
+  than predictable chat-scoped paths.
+- Added migration `0016_feedback_private_select` to remove public feedback
+  select policies while preserving public insert support.
+
+Still deferred:
+
+- Private bucket signed URL migration.
+- PDF malware/content scanning.
+- Upload retention and per-user storage quotas.
+- Per-mode/provider/tool cost budgets.
 
 ## 15. Phase 12 — Evaluation suite
 
@@ -987,10 +1137,10 @@ Some phases can overlap, but avoid building the full Gist experience before sour
 
 ### After that
 
-- Add Gist module skeleton.
-- Generate Gist cards from normalized sources.
-- Add Discovery/News route.
-- Add claim verifier behind flag.
+- Add Gist module skeleton. Implemented in Phase 6 as a source-backed standard-search top module.
+- Generate Gist cards from normalized sources. Implemented for deterministic summary, coverage, and read-originals cards; persisted deck generation remains future work.
+- Add Discovery/News route. Implemented in Phase 7 as a configured-feed Discovery page with deterministic story clusters.
+- Add claim verifier behind flag. Implemented in Phase 8 as deterministic snippet-level evidence verification.
 
 ## 18. Definition of done for the product direction
 

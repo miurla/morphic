@@ -1,10 +1,7 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import {
-  IconCheck as Check,
-  IconSearch as SearchIcon
-} from '@tabler/icons-react'
+import { Check, Search as SearchIcon } from 'iconoir-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
@@ -34,6 +31,7 @@ interface SearchSectionProps {
   borderless?: boolean
   isFirst?: boolean
   isLast?: boolean
+  compactResults?: boolean
 }
 
 export function SearchSection({
@@ -43,7 +41,8 @@ export function SearchSection({
   status,
   borderless,
   isFirst = false,
-  isLast = false
+  isLast = false,
+  compactResults = false
 }: SearchSectionProps) {
   const isLoading = status === 'submitted' || status === 'streaming'
 
@@ -176,7 +175,9 @@ export function SearchSection({
               </Section>
             ) : (isLoading && isToolLoading) || isSearching ? (
               <SearchSkeleton />
-            ) : searchResults?.results && searchResults.results.length > 0 ? (
+            ) : searchResults?.results &&
+              searchResults.results.length > 0 &&
+              !compactResults ? (
               <Section title="Sources">
                 <SearchResults results={searchResults.results} />
               </Section>

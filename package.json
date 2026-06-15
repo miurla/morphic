@@ -5,6 +5,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "dev": "next dev",
+    "dev:webpack": "NODE_OPTIONS='--max-old-space-size=6144' next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -14,7 +15,10 @@
     "migrate": "bun run lib/db/migrate.ts",
     "test": "NODE_ENV=test vitest run",
     "test:watch": "vitest --watch",
-    "chat": "bun run scripts/chat-cli.ts"
+    "chat": "bun run scripts/chat-cli.ts",
+    "cap:sync": "cap sync",
+    "cap:ios": "cap open ios",
+    "cap:android": "cap open android"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.77",
@@ -25,6 +29,9 @@
     "@ai-sdk/openai-compatible": "^2.0.48",
     "@ai-sdk/react": "^3.0.182",
     "@aws-sdk/client-s3": "^3.850.0",
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/ios": "^8.4.0",
     "@json-render/core": "^0.16.0",
     "@json-render/react": "^0.16.0",
     "@opentelemetry/api-logs": "0.57.2",
@@ -89,6 +96,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.0",
     "@tailwindcss/postcss": "^4.1.11",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -102,6 +110,7 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "postcss": "^8",
     "prettier": "^3.6.2",
+    "prettier-plugin-sql": "0.20.0",
     "tailwindcss": "^4.1.11",
     "typescript": "^5",
     "vitest": "^3.1.3"

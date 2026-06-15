@@ -2,8 +2,16 @@ import { cookies } from 'next/headers'
 
 import { tool, UIToolInvocation } from 'ai'
 
+import {
+  listSourcePreferenceProfiles,
+  listSourcePreferences
+} from '@/lib/actions/source-preferences'
+import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { DEFAULT_SEARCH_PREFERENCES } from '@/lib/config/search-preferences'
+import { enrichSearchResultsWithKnowledgeGraph } from '@/lib/entities/knowledge-graph'
 import { getSearchSchemaForModel } from '@/lib/schema/search'
+import { getEffectiveSourcePreferencesForQuery } from '@/lib/sources/source-preference-profiles'
+import { applySourcePreferencesToSearchResults } from '@/lib/sources/source-preferences'
 import { SearchResultItem, SearchResults } from '@/lib/types'
 import {
   getGeneralSearchProviderType,
@@ -11,6 +19,7 @@ import {
 } from '@/lib/utils/search-config'
 import { getBaseUrlString } from '@/lib/utils/url'
 
+import { blendConfiguredFeedResults } from './search/feed-blending'
 import {
   createSearchProvider,
   DEFAULT_PROVIDER,
@@ -166,6 +175,45 @@ export function createSearchTool(fullModel: string) {
         // Re-throw the error to let AI SDK handle it properly
         throw error instanceof Error ? error : new Error('Unknown search error')
       }
+
+      searchResult = await blendConfiguredFeedResults(searchResult, {
+        query: filledQuery,
+        contentTypes: content_types as Array<'web' | 'video' | 'image' | 'news'>
+      })
+
+      try {
+        const userId = await getCurrentUserId()
+        if (userId) {
+          const preferenceResult = await listSourcePreferences(userId)
+          if (
+            preferenceResult.success &&
+            preferenceResult.preferences.length > 0
+          ) {
+            const profileResult = await listSourcePreferenceProfiles(userId)
+            const effectivePreferences = getEffectiveSourcePreferencesForQuery(
+              preferenceResult.preferences,
+              profileResult.success ? profileResult.profiles : [],
+              filledQuery
+            )
+            const rankedResults = applySourcePreferencesToSearchResults(
+              searchResult.results,
+              effectivePreferences
+            )
+            searchResult = {
+              ...searchResult,
+              results: rankedResults,
+              number_of_results: rankedResults.length
+            }
+          }
+        }
+      } catch (error) {
+        console.warn(
+          '[Search] Source preferences unavailable; continuing without personalization.',
+          error
+        )
+      }
+
+      searchResult = await enrichSearchResultsWithKnowledgeGraph(searchResult)
 
       // Add citation mapping and toolCallId to search results
       if (searchResult.results && searchResult.results.length > 0) {

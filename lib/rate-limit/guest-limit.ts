@@ -1,5 +1,10 @@
 import { Redis } from '@upstash/redis'
 
+import {
+  getRateLimitFailurePolicy,
+  recordEmergencyRateLimitAttempt
+} from './failure-policy'
+
 const DEFAULT_GUEST_DAILY_LIMIT = 10
 
 function getGuestDailyLimit(): number {
@@ -30,6 +35,8 @@ async function checkGuestLimit(ip: string): Promise<{
   remaining: number
   resetAt: number
   limit: number
+  unavailable?: boolean
+  emergencyLimit?: number
 }> {
   if (process.env.MORPHIC_CLOUD_DEPLOYMENT !== 'true') {
     return { allowed: true, remaining: Infinity, resetAt: 0, limit: 0 }
@@ -74,6 +81,30 @@ async function checkGuestLimit(ip: string): Promise<{
     }
   } catch (error) {
     console.error('Guest rate limit check failed:', error)
+    const policy = getRateLimitFailurePolicy('guest')
+
+    if (policy === 'fail-closed') {
+      return {
+        allowed: false,
+        remaining: 0,
+        resetAt: getNextMidnightTimestamp(),
+        limit: 0,
+        unavailable: true
+      }
+    }
+
+    if (policy === 'emergency-cap') {
+      const emergency = recordEmergencyRateLimitAttempt('guest', ip)
+      return {
+        allowed: emergency.allowed,
+        remaining: emergency.remaining,
+        resetAt: emergency.resetAt,
+        limit: emergency.limit,
+        unavailable: true,
+        emergencyLimit: emergency.limit
+      }
+    }
+
     return { allowed: true, remaining: Infinity, resetAt: 0, limit: 0 }
   }
 }
@@ -91,7 +122,11 @@ export async function checkAndEnforceGuestLimit(
         authRequired: true,
         remaining: 0,
         resetAt: result.resetAt,
-        limit: result.limit
+        limit: result.limit,
+        ...(result.unavailable && { rateLimitUnavailable: true }),
+        ...(result.emergencyLimit && {
+          emergencyLimit: result.emergencyLimit
+        })
       }),
       {
         status: 401,

@@ -1,4 +1,4 @@
-import { IconChevronDown as ChevronDown } from '@tabler/icons-react'
+import { NavArrowDown as ChevronDown } from 'iconoir-react'
 
 import { cn } from '@/lib/utils'
 

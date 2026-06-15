@@ -1,1 +1,3 @@
-ALTER TABLE "messages" ALTER COLUMN "metadata" SET DATA TYPE jsonb;
+ALTER TABLE "messages"
+ALTER COLUMN "metadata"
+SET DATA TYPE jsonb;

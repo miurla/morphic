@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import { IconExternalLink, IconVolume } from '@tabler/icons-react'
+import { OpenNewWindow as IconExternalLink, SoundHigh as IconVolume } from 'iconoir-react'
 
 import { SerperSearchResultItem } from '@/lib/types'
 

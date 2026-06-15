@@ -28,6 +28,12 @@ describe('Account Actions', () => {
 
     vi.mocked(getCurrentUser).mockResolvedValue(user as any)
     vi.mocked(dbActions.deleteUserChats).mockResolvedValue({ success: true })
+    vi.mocked(dbActions.deleteUserReadingItems).mockResolvedValue({
+      success: true
+    })
+    vi.mocked(dbActions.deleteUserSourcePreferences).mockResolvedValue({
+      success: true
+    })
     vi.mocked(dbActions.anonymizeUserFeedback).mockResolvedValue({
       success: true
     })
@@ -91,6 +97,8 @@ describe('Account Actions', () => {
 
     expect(result).toEqual({ success: true })
     expect(dbActions.deleteUserChats).toHaveBeenCalledWith(user.id)
+    expect(dbActions.deleteUserReadingItems).toHaveBeenCalledWith(user.id)
+    expect(dbActions.deleteUserSourcePreferences).toHaveBeenCalledWith(user.id)
     expect(dbActions.anonymizeUserFeedback).toHaveBeenCalledWith(user.id)
     expect(deleteUserObjects).toHaveBeenCalledWith(user.id)
     expect(deleteUser).toHaveBeenCalledWith(user.id)
@@ -115,6 +123,23 @@ describe('Account Actions', () => {
     expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
 
+  it('stops before storage and auth deletion when reading item deletion fails', async () => {
+    vi.mocked(dbActions.deleteUserReadingItems).mockResolvedValue({
+      success: false,
+      error: 'Failed to delete user reading items'
+    })
+
+    const result = await deleteAccount()
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Failed to delete user reading items'
+    })
+    expect(deleteUserObjects).not.toHaveBeenCalled()
+    expect(deleteUser).not.toHaveBeenCalled()
+    expect(trackAccountDeleted).not.toHaveBeenCalled()
+  })
+
   it('stops before storage and auth deletion when feedback anonymization fails', async () => {
     vi.mocked(dbActions.anonymizeUserFeedback).mockResolvedValue({
       success: false,
@@ -127,6 +152,8 @@ describe('Account Actions', () => {
       success: false,
       error: 'Failed to anonymize user feedback'
     })
+    expect(dbActions.deleteUserReadingItems).toHaveBeenCalledWith(user.id)
+    expect(dbActions.deleteUserSourcePreferences).toHaveBeenCalledWith(user.id)
     expect(deleteUserObjects).not.toHaveBeenCalled()
     expect(deleteUser).not.toHaveBeenCalled()
     expect(trackAccountDeleted).not.toHaveBeenCalled()

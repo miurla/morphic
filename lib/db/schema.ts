@@ -2,6 +2,7 @@ import { createId } from '@paralleldrive/cuid2'
 import { InferSelectModel, sql } from 'drizzle-orm'
 import {
   check,
+  boolean,
   index,
   integer,
   json,
@@ -10,6 +11,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar
 } from 'drizzle-orm/pg-core'
 
@@ -260,6 +262,225 @@ export const parts = pgTable(
 export type Part = InferSelectModel<typeof parts>
 export type NewPart = typeof parts.$inferInsert
 
+// Source events table
+export const sourceEvents = pgTable(
+  'source_events',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }),
+    chatId: varchar('chat_id', { length: ID_LENGTH }),
+    sourceId: varchar('source_id', { length: VARCHAR_LENGTH }),
+    eventType: varchar('event_type', {
+      length: VARCHAR_LENGTH,
+      enum: [
+        'impression',
+        'open_original',
+        'open_reader',
+        'save',
+        'copy_link',
+        'report'
+      ]
+    }).notNull(),
+    sourceUrl: text('source_url').notNull(),
+    sourceDomain: text('source_domain').notNull(),
+    pageUrl: text('page_url'),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>(),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    index('source_events_user_id_created_at_idx').on(
+      table.userId,
+      table.createdAt.desc()
+    ),
+    index('source_events_chat_id_idx').on(table.chatId),
+    index('source_events_source_domain_idx').on(table.sourceDomain),
+    index('source_events_event_type_created_at_idx').on(
+      table.eventType,
+      table.createdAt.desc()
+    ),
+
+    check(
+      'source_events_event_type_valid',
+      sql`event_type IN ('impression', 'open_original', 'open_reader', 'save', 'copy_link', 'report')`
+    ),
+
+    // Allow source events to be inserted anonymously or with user context.
+    // Reads are intentionally not exposed through a public RLS policy.
+    pgPolicy('anyone_can_insert_source_events', {
+      for: 'insert',
+      to: 'public',
+      withCheck: sql`true`
+    })
+  ]
+).enableRLS()
+
+export type SourceEvent = InferSelectModel<typeof sourceEvents>
+
+// Reading queue table
+export const readingItems = pgTable(
+  'reading_items',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    sourceId: varchar('source_id', { length: VARCHAR_LENGTH }),
+    url: text('url').notNull(),
+    canonicalUrl: text('canonical_url').notNull(),
+    title: text('title').notNull(),
+    author: text('author'),
+    siteName: text('site_name'),
+    domain: text('domain'),
+    publishedAt: timestamp('published_at'),
+    summary: text('summary'),
+    imageUrl: text('image_url'),
+    faviconUrl: text('favicon_url'),
+    status: varchar('status', {
+      length: VARCHAR_LENGTH,
+      enum: ['unread', 'reading', 'read', 'archived']
+    })
+      .notNull()
+      .default('unread'),
+    savedFromChatId: varchar('saved_from_chat_id', { length: ID_LENGTH }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+  },
+  table => [
+    uniqueIndex('reading_items_user_canonical_url_idx').on(
+      table.userId,
+      table.canonicalUrl
+    ),
+    index('reading_items_user_id_created_at_idx').on(
+      table.userId,
+      table.createdAt.desc()
+    ),
+    index('reading_items_user_id_status_idx').on(table.userId, table.status),
+    index('reading_items_domain_idx').on(table.domain),
+
+    check(
+      'reading_items_status_valid',
+      sql`status IN ('unread', 'reading', 'read', 'archived')`
+    ),
+
+    pgPolicy('users_manage_own_reading_items', {
+      as: 'permissive',
+      for: 'all',
+      to: 'public',
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    })
+  ]
+).enableRLS()
+
+export type ReadingItem = InferSelectModel<typeof readingItems>
+
+// Source preference profile table
+export const sourcePreferenceProfiles = pgTable(
+  'source_preference_profiles',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    name: text('name').notNull(),
+    slug: varchar('slug', { length: VARCHAR_LENGTH }).notNull(),
+    description: text('description'),
+    settings: jsonb('settings')
+      .$type<{
+        includeTerms: string[]
+        excludeTerms: string[]
+      }>()
+      .notNull()
+      .default({ includeTerms: [], excludeTerms: [] }),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+  },
+  table => [
+    uniqueIndex('source_preference_profiles_user_slug_idx').on(
+      table.userId,
+      table.slug
+    ),
+    index('source_preference_profiles_user_active_idx').on(
+      table.userId,
+      table.isActive
+    ),
+
+    pgPolicy('users_manage_own_source_preference_profiles', {
+      as: 'permissive',
+      for: 'all',
+      to: 'public',
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    })
+  ]
+).enableRLS()
+
+export type SourcePreferenceProfile = InferSelectModel<
+  typeof sourcePreferenceProfiles
+>
+
+// Source preference table
+export const sourcePreferences = pgTable(
+  'source_preferences',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    profileId: varchar('profile_id', { length: ID_LENGTH }),
+    target: text('target').notNull(),
+    targetType: varchar('target_type', {
+      length: VARCHAR_LENGTH,
+      enum: ['domain', 'url']
+    }).notNull(),
+    domain: text('domain').notNull(),
+    preference: varchar('preference', {
+      length: VARCHAR_LENGTH,
+      enum: ['trust', 'prefer', 'mute', 'block']
+    }).notNull(),
+    note: text('note'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+  },
+  table => [
+    uniqueIndex('source_preferences_user_global_target_idx')
+      .on(table.userId, table.target)
+      .where(sql`profile_id IS NULL`),
+    uniqueIndex('source_preferences_user_profile_target_idx').on(
+      table.userId,
+      table.profileId,
+      table.target
+    ),
+    index('source_preferences_user_id_updated_at_idx').on(
+      table.userId,
+      table.updatedAt.desc()
+    ),
+    index('source_preferences_user_domain_idx').on(table.userId, table.domain),
+
+    check(
+      'source_preferences_target_type_valid',
+      sql`target_type IN ('domain', 'url')`
+    ),
+    check(
+      'source_preferences_preference_valid',
+      sql`preference IN ('trust', 'prefer', 'mute', 'block')`
+    ),
+
+    pgPolicy('users_manage_own_source_preferences', {
+      as: 'permissive',
+      for: 'all',
+      to: 'public',
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    })
+  ]
+).enableRLS()
+
+export type SourcePreference = InferSelectModel<typeof sourcePreferences>
+
 // Feedback table
 export const feedback = pgTable(
   'feedback',
@@ -281,14 +502,6 @@ export const feedback = pgTable(
     // Indexes
     index('feedback_user_id_idx').on(table.userId),
     index('feedback_created_at_idx').on(table.createdAt),
-
-    // RLS Policies - Allow reads (for INSERT ... RETURNING and app visibility)
-    pgPolicy('feedback_select_policy', {
-      as: 'permissive',
-      for: 'select',
-      to: 'public',
-      using: sql`true`
-    }),
 
     // RLS Policy - Allow anyone to insert feedback
     pgPolicy('anyone_can_insert_feedback', {

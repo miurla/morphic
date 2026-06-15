@@ -2,10 +2,7 @@
 
 import * as React from 'react'
 
-import {
-  IconArrowLeft as ArrowLeft,
-  IconArrowRight as ArrowRight
-} from '@tabler/icons-react'
+import { ArrowLeft, ArrowRight } from 'iconoir-react'
 import useEmblaCarousel, {
   type UseEmblaCarouselType
 } from 'embla-carousel-react'

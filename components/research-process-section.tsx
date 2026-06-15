@@ -4,10 +4,7 @@ import { useCallback, useState } from 'react'
 
 import type { ReasoningPart } from '@ai-sdk/provider-utils'
 import { UseChatHelpers } from '@ai-sdk/react'
-import {
-  IconChevronDown as ChevronDown,
-  IconRoute as Waypoints
-} from '@tabler/icons-react'
+import { NavArrowDown as ChevronDown, MapsGoStraight as Waypoints } from 'iconoir-react'
 
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
@@ -235,6 +232,7 @@ function RenderPart({
         borderless={!isSingle}
         isFirst={isFirstGroup && partIndex === 0}
         isLast={isLastGroup && partIndex === groupLength - 1}
+        hasSubsequentContent={hasSubsequent}
       />
     )
   }

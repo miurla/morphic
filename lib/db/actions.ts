@@ -13,7 +13,16 @@ import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
 
 import type { Chat, Message } from './schema'
-import { chats, feedback, generateId, messages, parts } from './schema'
+import {
+  chats,
+  feedback,
+  generateId,
+  messages,
+  parts,
+  readingItems,
+  sourcePreferenceProfiles,
+  sourcePreferences
+} from './schema'
 import { withOptionalRLS, withRLS } from './with-rls'
 import { db } from '.'
 
@@ -359,6 +368,45 @@ export async function deleteUserChats(
   } catch (error) {
     console.error('Error deleting user chats:', error)
     return { success: false, error: 'Failed to delete user chats' }
+  }
+}
+
+/**
+ * Delete all saved reading items for a user.
+ */
+export async function deleteUserReadingItems(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    return withRLS(userId, async tx => {
+      await tx.delete(readingItems).where(eq(readingItems.userId, userId))
+      return { success: true }
+    })
+  } catch (error) {
+    console.error('Error deleting user reading items:', error)
+    return { success: false, error: 'Failed to delete user reading items' }
+  }
+}
+
+/**
+ * Delete all remembered source preferences for a user.
+ */
+export async function deleteUserSourcePreferences(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    return withRLS(userId, async tx => {
+      await tx
+        .delete(sourcePreferences)
+        .where(eq(sourcePreferences.userId, userId))
+      await tx
+        .delete(sourcePreferenceProfiles)
+        .where(eq(sourcePreferenceProfiles.userId, userId))
+      return { success: true }
+    })
+  } catch (error) {
+    console.error('Error deleting user source preferences:', error)
+    return { success: false, error: 'Failed to delete user source preferences' }
   }
 }
 

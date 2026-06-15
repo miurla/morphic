@@ -29,6 +29,25 @@ export function ResearchSubtaskSection({
     tool.state === 'input-streaming' || tool.state === 'input-available'
   const isDone = tool.state === 'output-available'
   const isError = tool.state === 'output-error'
+  const output = tool.output as
+    | {
+        agentId?: string
+        agentRole?: string
+        model?: string
+        parentModel?: string
+        routing?: string
+        skippedDuplicate?: boolean
+        duplicateOf?: string
+        notes?: string
+      }
+    | undefined
+  const metadataItems = [
+    ['Role', output?.agentRole],
+    ['Agent', output?.agentId],
+    ['Model', output?.model],
+    ['Parent', output?.parentModel],
+    ['Route', output?.routing]
+  ].filter((item): item is [string, string] => Boolean(item[1]))
 
   const taskLabel = tool.input?.task
     ? `Researching: ${tool.input.task}`
@@ -52,9 +71,7 @@ export function ResearchSubtaskSection({
         </span>
       }
       meta={
-        isDone ? (
-          <CheckCircle2 className="size-4 text-green-500" />
-        ) : undefined
+        isDone ? <CheckCircle2 className="size-4 text-green-500" /> : undefined
       }
       ariaExpanded={isOpen}
     />
@@ -103,9 +120,35 @@ export function ResearchSubtaskSection({
             </>
           )}
           <div className="flex-1 px-3 pb-3 text-sm text-muted-foreground">
-            {isDone && tool.output?.notes ? (
-              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-xs leading-relaxed">
-                {tool.output.notes}
+            {isDone && output ? (
+              <div className="space-y-2">
+                {output.skippedDuplicate && (
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="rounded-full border border-border bg-muted px-2 py-0.5 font-medium text-foreground">
+                      Skipped
+                    </span>
+                    {output.duplicateOf && (
+                      <span>Duplicate of {output.duplicateOf}</span>
+                    )}
+                  </div>
+                )}
+                {metadataItems.length > 0 && (
+                  <dl className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-relaxed">
+                    {metadataItems.map(([label, value]) => (
+                      <div key={label} className="flex min-w-0 gap-1">
+                        <dt className="text-muted-foreground/80">{label}:</dt>
+                        <dd className="min-w-0 break-all text-foreground/80">
+                          {value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {output.notes && (
+                  <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-xs leading-relaxed">
+                    {output.notes}
+                  </div>
+                )}
               </div>
             ) : isError ? (
               <p className="text-xs text-destructive">

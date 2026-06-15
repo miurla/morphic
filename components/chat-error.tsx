@@ -1,4 +1,4 @@
-import { IconAlertCircle as AlertCircle } from '@tabler/icons-react'
+import { WarningCircle as AlertCircle } from 'iconoir-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
 

@@ -2,17 +2,7 @@
 
 import React from 'react'
 
-import {
-  IconCheck as Check,
-  IconChecklist as BookCheck,
-  IconFile as File,
-  IconFileText as FileText,
-  IconMessageCircle as MessageCircleMore,
-  IconMovie as Film,
-  IconPhoto as Image,
-  IconRepeat as Repeat2,
-  IconSearch as Search
-} from '@tabler/icons-react'
+import { Check, List as BookCheck, Page as File, PageEdit as FileText, ChatBubble as MessageCircleMore, Movie as Film, MediaImage as Image, Repeat as Repeat2, Search } from 'iconoir-react'
 
 import { cn } from '@/lib/utils'
 
@@ -43,31 +33,31 @@ export const Section: React.FC<SectionProps> = ({
   switch (title) {
     case 'Images':
       // eslint-disable-next-line jsx-a11y/alt-text
-      icon = <Image size={iconSize} className={iconClassName} />
+      icon = <Image width={iconSize} height={iconSize} className={iconClassName} />
       break
     case 'Videos':
-      icon = <Film size={iconSize} className={iconClassName} />
+      icon = <Film width={iconSize} height={iconSize} className={iconClassName} />
       type = 'badge'
       break
     case 'Sources':
-      icon = <FileText size={iconSize} className={iconClassName} />
+      icon = <FileText width={iconSize} height={iconSize} className={iconClassName} />
       type = 'badge'
       break
     case 'Answer':
-      icon = <BookCheck size={iconSize} className={iconClassName} />
+      icon = <BookCheck width={iconSize} height={iconSize} className={iconClassName} />
       break
     case 'Related':
-      icon = <Repeat2 size={iconSize} className={iconClassName} />
+      icon = <Repeat2 width={iconSize} height={iconSize} className={iconClassName} />
       break
     case 'Follow-up':
-      icon = <MessageCircleMore size={iconSize} className={iconClassName} />
+      icon = <MessageCircleMore width={iconSize} height={iconSize} className={iconClassName} />
       break
     case 'Content':
-      icon = <File size={iconSize} className={iconClassName} />
+      icon = <File width={iconSize} height={iconSize} className={iconClassName} />
       type = 'badge'
       break
     default:
-      icon = <Search size={iconSize} className={iconClassName} />
+      icon = <Search width={iconSize} height={iconSize} className={iconClassName} />
   }
 
   return (

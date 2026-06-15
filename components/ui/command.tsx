@@ -3,7 +3,7 @@
 import * as React from 'react'
 
 import { type DialogProps } from '@radix-ui/react-dialog'
-import { IconSearch as Search } from '@tabler/icons-react'
+import { Search } from 'iconoir-react'
 import { Command as CommandPrimitive } from 'cmdk'
 
 import { cn } from '@/lib/utils'

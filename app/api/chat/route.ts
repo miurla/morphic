@@ -3,6 +3,10 @@ import { cookies } from 'next/headers'
 
 import { loadChat } from '@/lib/actions/chat'
 import { calculateConversationTurn, trackChatEvent } from '@/lib/analytics'
+import {
+  parsePersonalizationCookie,
+  PERSONALIZATION_COOKIE_NAME
+} from '@/lib/agents/personalization'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { checkAndEnforceAdaptiveLimit } from '@/lib/rate-limit/adaptive-limit'
 import { checkAndEnforceOverallChatLimit } from '@/lib/rate-limit/chat-limits'
@@ -89,6 +93,9 @@ export async function POST(req: Request) {
     }
 
     const cookieStore = await cookies()
+    const personalization = parsePersonalizationCookie(
+      cookieStore.get(PERSONALIZATION_COOKIE_NAME)?.value
+    )
 
     // Get search mode from cookie
     const searchModeCookie = cookieStore.get('searchMode')?.value
@@ -160,7 +167,8 @@ export async function POST(req: Request) {
           model: selectedModel,
           abortSignal,
           searchMode,
-          chatId
+          chatId,
+          personalization
         })
       : await createChatStreamResponse({
           message,
@@ -171,7 +179,8 @@ export async function POST(req: Request) {
           messageId,
           abortSignal,
           isNewChat,
-          searchMode
+          searchMode,
+          personalization
         })
 
     perfTime('createChatStreamResponse resolved', streamStart)

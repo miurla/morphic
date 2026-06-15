@@ -4,7 +4,12 @@ import * as React from 'react'
 
 import { assessExternalNavigation } from '@/lib/security/external-navigation'
 
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle
+} from '@/components/ui/dialog'
 
 import { LeavingMorphicDialog } from './leaving-morphic-dialog'
 
@@ -64,6 +69,9 @@ export function GuardedExternalLink({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="border-0 bg-transparent p-0 shadow-none sm:max-w-md">
           <DialogTitle className="sr-only">Leaving Morphic</DialogTitle>
+          <DialogDescription className="sr-only">
+            Review the destination before opening this external source.
+          </DialogDescription>
           <LeavingMorphicDialog
             href={href}
             appOrigin={appOrigin}

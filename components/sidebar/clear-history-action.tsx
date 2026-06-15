@@ -3,10 +3,7 @@
 import { useCallback, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
-import {
-  IconDots as MoreHorizontal,
-  IconTrash as Trash2
-} from '@tabler/icons-react'
+import { MoreHoriz as MoreHorizontal, Trash as Trash2 } from 'iconoir-react'
 import { toast } from 'sonner'
 
 import { clearChats } from '@/lib/actions/chat'
@@ -80,7 +77,7 @@ export function ClearHistoryAction({ empty }: ClearHistoryActionProps) {
     <DropdownMenu open={isMenuOpen} onOpenChange={handleMenuOpenChange}>
       <DropdownMenuTrigger asChild>
         <SidebarGroupAction disabled={empty} className="static size-7 p-1">
-          <MoreHorizontal size={16} />
+          <MoreHorizontal width={16} height={16} />
           <span className="sr-only">History Actions</span>
         </SidebarGroupAction>
       </DropdownMenuTrigger>
@@ -95,7 +92,7 @@ export function ClearHistoryAction({ empty }: ClearHistoryActionProps) {
                 event.preventDefault()
               }}
             >
-              <Trash2 size={14} /> Clear History
+              <Trash2 width={14} height={14} /> Clear History
             </DropdownMenuItem>
           </AlertDialogTrigger>
 

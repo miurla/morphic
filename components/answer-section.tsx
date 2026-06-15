@@ -1,8 +1,12 @@
 'use client'
 
+import type { ReactNode } from 'react'
+
 import { UseChatHelpers } from '@ai-sdk/react'
 import { ChatRequestOptions } from 'ai'
 
+import { verifyAnswerClaims } from '@/lib/claims/evidence-verification'
+import type { FactCheckSearchResults } from '@/lib/tools/factcheck'
 import type { SearchResultItem } from '@/lib/types'
 import type {
   UIDataTypes,
@@ -11,6 +15,7 @@ import type {
   UITools
 } from '@/lib/types/ai'
 
+import { EvidencePanel } from './evidence/evidence-panel'
 import { CollapsibleMessage } from './collapsible-message'
 import { MarkdownMessage } from './message'
 import { MessageActions } from './message-actions'
@@ -29,7 +34,32 @@ export type AnswerSectionProps = {
     options?: ChatRequestOptions
   ) => Promise<void | string | null | undefined>
   citationMaps?: Record<string, Record<number, SearchResultItem>>
+  factCheckResults?: FactCheckSearchResults[]
   isGuest?: boolean
+  supportingContent?: ReactNode
+}
+
+function splitTrailingRelatedSpecBlock(content: string) {
+  const specBlockRegex = /```spec[\s\S]*?```/g
+  const matches = [...content.matchAll(specBlockRegex)]
+  const lastMatch = matches.at(-1)
+
+  if (
+    !lastMatch ||
+    lastMatch.index === undefined ||
+    content.slice(lastMatch.index + lastMatch[0].length).trim().length > 0 ||
+    !/"title"\s*:\s*"Related"/.test(lastMatch[0])
+  ) {
+    return {
+      mainContent: content,
+      relatedSpecBlock: ''
+    }
+  }
+
+  return {
+    mainContent: content.slice(0, lastMatch.index).trimEnd(),
+    relatedSpecBlock: lastMatch[0]
+  }
 }
 
 export function AnswerSection({
@@ -43,10 +73,22 @@ export function AnswerSection({
   status,
   reload,
   citationMaps,
-  isGuest = false
+  factCheckResults = [],
+  isGuest = false,
+  supportingContent
 }: AnswerSectionProps) {
   const enableShare =
     process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined && !isGuest
+  const enableClaimVerification =
+    process.env.ENABLE_CLAIM_VERIFICATION === 'true'
+  const claimVerification =
+    enableClaimVerification && content
+      ? verifyAnswerClaims({
+          answer: content,
+          citationMaps: citationMaps || {},
+          factCheckResults
+        })
+      : undefined
 
   const handleReload = () => {
     if (reload) {
@@ -54,6 +96,8 @@ export function AnswerSection({
     }
     return Promise.resolve(undefined)
   }
+  const { mainContent, relatedSpecBlock } =
+    splitTrailingRelatedSpecBlock(content)
 
   return (
     <CollapsibleMessage
@@ -66,7 +110,19 @@ export function AnswerSection({
     >
       {content && (
         <div className="flex flex-col gap-1">
-          <MarkdownMessage message={content} citationMaps={citationMaps} />
+          <MarkdownMessage message={mainContent} citationMaps={citationMaps} />
+          {claimVerification ? (
+            <EvidencePanel result={claimVerification} />
+          ) : null}
+          {supportingContent ? (
+            <div className="my-3">{supportingContent}</div>
+          ) : null}
+          {relatedSpecBlock ? (
+            <MarkdownMessage
+              message={relatedSpecBlock}
+              citationMaps={citationMaps}
+            />
+          ) : null}
           <MessageActions
             message={content} // Provide original message; copy path remaps citations
             messageId={messageId}

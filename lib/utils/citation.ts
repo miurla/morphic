@@ -81,10 +81,10 @@ export function processCitations(
     return content || ''
   }
 
-  // Replace [number](#toolCallId) with [domain](actual-url)
+  // Replace [number](#toolCallId) or [number](#toolCallId] with [domain](actual-url)
   // Also handle cases with spaces: [ number ]
   return content.replace(
-    /\[\s*(\d+)\s*\]\(#([^)]+)\)/g,
+    /\[\s*(\d+)\s*\]\(#([^)\]]+)[\)\]]/g,
     (_match, num, toolCallId) => {
       const citationNum = parseInt(num, 10)
 

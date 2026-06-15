@@ -1,5 +1,10 @@
 import { UseChatHelpers } from '@ai-sdk/react'
 
+import { collectFactCheckResultsFromMessageParts } from '@/lib/claims/fact-check-results'
+import {
+  collectEntitiesFromMessageParts,
+  collectSourcesFromMessageParts
+} from '@/lib/sources/message-sources'
 import type { SearchResultItem } from '@/lib/types'
 import type {
   UIDataTypes,
@@ -9,6 +14,8 @@ import type {
 } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 
+import { GistModule } from './gist/gist-module'
+import { SourceCardList } from './sources/source-card-list'
 import { AnswerSection } from './answer-section'
 import { DynamicToolDisplay } from './dynamic-tool-display'
 import ResearchProcessSection from './research-process-section'
@@ -86,6 +93,38 @@ export function RenderMessage({
   // New rendering: interleave text parts with grouped non-text segments
   const elements: React.ReactNode[] = []
   let buffer: any[] = []
+  let hasRenderedGist = false
+  let hasRenderedSources = false
+  const messageSources = collectSourcesFromMessageParts(message.parts as any[])
+  const messageEntities = collectEntitiesFromMessageParts(
+    message.parts as any[]
+  )
+  const factCheckResults = collectFactCheckResultsFromMessageParts(
+    message.parts as any[]
+  )
+
+  const renderGistOnce = (keySuffix: string) => {
+    if (hasRenderedGist || messageSources.length === 0) {
+      return
+    }
+
+    elements.push(
+      <div key={`${messageId}-gist-${keySuffix}`} className="mb-3">
+        <GistModule sources={messageSources} entities={messageEntities} />
+      </div>
+    )
+    hasRenderedGist = true
+  }
+
+  const renderSourceCardsOnce = () => {
+    if (hasRenderedSources || messageSources.length === 0) {
+      return null
+    }
+
+    hasRenderedSources = true
+    return <SourceCardList sources={messageSources} />
+  }
+
   const flushBuffer = (keySuffix: string) => {
     if (buffer.length === 0) return
     elements.push(
@@ -109,6 +148,8 @@ export function RenderMessage({
       if (!isNonEmptyTextPart(part)) {
         return
       }
+
+      renderGistOnce(`before-text-${index}`)
 
       // Check if there's buffered content before this text part
       const hasBufferedContent = buffer.length > 0
@@ -160,6 +201,8 @@ export function RenderMessage({
           reload={reload}
           status={status}
           citationMaps={citationMaps}
+          factCheckResults={factCheckResults}
+          supportingContent={isLastTextPart ? renderSourceCardsOnce() : null}
         />
       )
     } else if (part.type === 'reasoning' || part.type?.startsWith?.('tool-')) {

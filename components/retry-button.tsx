@@ -1,6 +1,6 @@
 'use client'
 
-import { IconRefresh as RotateCcw } from '@tabler/icons-react'
+import { Refresh as RotateCcw } from 'iconoir-react'
 
 import { Button } from './ui/button'
 

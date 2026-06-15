@@ -45,3 +45,9 @@ next-env.d.ts
 
 # temporary files
 .tmp/
+
+# capacitor
+# Generated native projects — regenerate with: bun run cap:sync
+/ios/
+/android/
+.capacitor/

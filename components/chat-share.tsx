@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 
-import { IconShare as Share } from '@tabler/icons-react'
+import { ShareIos as Share } from 'iconoir-react'
 import { toast } from 'sonner'
 
 import { shareChat } from '@/lib/actions/chat'
@@ -77,7 +77,7 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
             variant={'ghost'}
             onClick={() => setOpen(true)}
           >
-            <Share size={14} />
+            <Share width={14} height={14} />
           </Button>
         </DialogTrigger>
         <DialogContent>

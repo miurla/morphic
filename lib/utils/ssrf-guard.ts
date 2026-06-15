@@ -17,10 +17,7 @@ import { isIP, isIPv4, isIPv6 } from 'node:net'
 // Configuration
 // ---------------------------------------------------------------------------
 
-const MAX_REDIRECTS = parseInt(
-  process.env.SSRF_MAX_REDIRECTS ?? '5',
-  10
-)
+const MAX_REDIRECTS = parseInt(process.env.SSRF_MAX_REDIRECTS ?? '5', 10)
 const MAX_RESPONSE_BYTES = parseInt(
   process.env.SSRF_MAX_RESPONSE_BYTES ?? '10485760', // 10 MB
   10
@@ -144,14 +141,29 @@ const BLOCKED_IPV6 = [
   '::', // Unspecified
   '::ffff:127.', // IPv4-mapped loopback
   '::ffff:10.', // IPv4-mapped private
-  '::ffff:172.16.', '::ffff:172.17.', '::ffff:172.18.', '::ffff:172.19.',
-  '::ffff:172.20.', '::ffff:172.21.', '::ffff:172.22.', '::ffff:172.23.',
-  '::ffff:172.24.', '::ffff:172.25.', '::ffff:172.26.', '::ffff:172.27.',
-  '::ffff:172.28.', '::ffff:172.29.', '::ffff:172.30.', '::ffff:172.31.',
+  '::ffff:172.16.',
+  '::ffff:172.17.',
+  '::ffff:172.18.',
+  '::ffff:172.19.',
+  '::ffff:172.20.',
+  '::ffff:172.21.',
+  '::ffff:172.22.',
+  '::ffff:172.23.',
+  '::ffff:172.24.',
+  '::ffff:172.25.',
+  '::ffff:172.26.',
+  '::ffff:172.27.',
+  '::ffff:172.28.',
+  '::ffff:172.29.',
+  '::ffff:172.30.',
+  '::ffff:172.31.',
   '::ffff:192.168.', // IPv4-mapped private
   '::ffff:169.254.', // IPv4-mapped link-local
   '::ffff:0.', // IPv4-mapped current network
-  '::ffff:100.64.', '::ffff:100.65.', '::ffff:100.66.', '::ffff:100.67.',
+  '::ffff:100.64.',
+  '::ffff:100.65.',
+  '::ffff:100.66.',
+  '::ffff:100.67.',
   'fe80:', // Link-local unicast
   'fc00:', // Unique local (ULA)
   'fd' // Unique local (ULA) fd00::/8
@@ -224,8 +236,16 @@ export async function resolveAndValidateHost(
       verbatim: true
     })
   } catch {
-    // DNS resolution failure — let the fetch itself fail naturally.
-    return
+    const failOpen =
+      process.env.SSRF_DNS_FAILURE_MODE === 'fail-open' ||
+      (process.env.MORPHIC_CLOUD_DEPLOYMENT !== 'true' &&
+        process.env.SSRF_DNS_FAILURE_MODE !== 'fail-closed')
+    if (failOpen) {
+      return
+    }
+
+    logBlockedAttempt(originalUrl, `DNS resolution failed: ${hostname}`)
+    throw new SSRFError(originalUrl, `DNS resolution failed: ${hostname}`)
   }
 
   for (const { address } of results) {

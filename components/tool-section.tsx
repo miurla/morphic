@@ -21,6 +21,7 @@ interface ToolSectionProps {
   borderless?: boolean
   isFirst?: boolean
   isLast?: boolean
+  hasSubsequentContent?: boolean
 }
 
 export function ToolSection({
@@ -31,7 +32,8 @@ export function ToolSection({
   addToolResult,
   borderless = false,
   isFirst = false,
-  isLast = false
+  isLast = false,
+  hasSubsequentContent = false
 }: ToolSectionProps) {
   // Special handling for ask_question tool
   if (tool.type === 'tool-askQuestion') {
@@ -82,6 +84,7 @@ export function ToolSection({
           borderless={borderless}
           isFirst={isFirst}
           isLast={isLast}
+          compactResults={hasSubsequentContent}
         />
       )
     case 'tool-feedSearch':
