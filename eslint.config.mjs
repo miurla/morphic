@@ -48,5 +48,12 @@ export default defineConfig([
       ]
     }
   },
-  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts'])
+  globalIgnores([
+    '.next/**',
+    'out/**',
+    'build/**',
+    'next-env.d.ts',
+    // Project tooling config; Prettier reads this directly, ESLint does not need to lint it.
+    'prettier.config.js'
+  ])
 ])
