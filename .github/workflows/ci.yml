@@ -43,7 +43,16 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run type checking
-        run: bun typecheck
+        run: |
+          bun typecheck 2>&1 | tee /tmp/typecheck.log
+          exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Annotate type errors
+        if: failure()
+        run: |
+          echo "::error title=TypeCheck failed::$(cat /tmp/typecheck.log 2>/dev/null | head -60)"
+        shell: bash
 
   format:
     runs-on: ubuntu-latest
@@ -83,11 +92,19 @@ jobs:
       - name: Run tests
         run: |
           if [ -f "vitest.config.ts" ] || [ -f "vitest.config.mts" ]; then
-            bun run test
+            bun run test 2>&1 | tee /tmp/test.log
+            exit ${PIPESTATUS[0]}
           fi
+        shell: bash
         env:
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
           NODE_ENV: test
+
+      - name: Annotate test errors
+        if: failure()
+        run: |
+          echo "::error title=Tests failed::$(cat /tmp/test.log 2>/dev/null | head -60)"
+        shell: bash
 
   build:
     runs-on: ubuntu-latest
