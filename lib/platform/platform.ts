@@ -7,7 +7,12 @@ export type PlatformKind =
   | 'linux'
   | 'unknown'
 
-export type PlatformFamily = 'apple' | 'android' | 'windows' | 'linux' | 'unknown'
+export type PlatformFamily =
+  | 'apple'
+  | 'android'
+  | 'windows'
+  | 'linux'
+  | 'unknown'
 
 export type DisplayMode =
   | 'browser'
@@ -32,8 +37,13 @@ function normalize(value: string | undefined): string {
   return (value || '').toLowerCase()
 }
 
-function hasMacTouchProfile(userAgent: string, maxTouchPoints: number): boolean {
-  return userAgent.includes('macintosh') && maxTouchPoints >= APPLE_TOUCH_POINTS_MIN
+function hasMacTouchProfile(
+  userAgent: string,
+  maxTouchPoints: number
+): boolean {
+  return (
+    userAgent.includes('macintosh') && maxTouchPoints >= APPLE_TOUCH_POINTS_MIN
+  )
 }
 
 function platformFamily(kind: PlatformKind): PlatformFamily {
@@ -68,7 +78,10 @@ export function detectPlatformKind(input?: {
     return 'ios'
   }
 
-  if (userAgent.includes('ipad') || hasMacTouchProfile(userAgent, maxTouchPoints)) {
+  if (
+    userAgent.includes('ipad') ||
+    hasMacTouchProfile(userAgent, maxTouchPoints)
+  ) {
     return 'ipados'
   }
 
@@ -104,7 +117,9 @@ export function detectPlatformKind(input?: {
   return 'unknown'
 }
 
-export function resolveDisplayMode(matchMedia?: Window['matchMedia']): DisplayMode {
+export function resolveDisplayMode(
+  matchMedia?: Window['matchMedia']
+): DisplayMode {
   if (!matchMedia) return 'unknown'
 
   const modes: DisplayMode[] = [
@@ -145,7 +160,8 @@ export function buildPlatformInfo(input?: {
 
   // Apple is the intentional fallback visual language. Unknown and Linux
   // environments stay Apple-like unless a more specific profile is detected.
-  const isAppleLike = family === 'apple' || family === 'unknown' || family === 'linux'
+  const isAppleLike =
+    family === 'apple' || family === 'unknown' || family === 'linux'
 
   return {
     kind,

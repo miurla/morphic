@@ -3,8 +3,8 @@
 import * as React from 'react'
 
 import * as SheetPrimitive from '@radix-ui/react-dialog'
-import { Xmark as X } from 'iconoir-react'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { Xmark as X } from 'iconoir-react'
 
 import { cn } from '@/lib/utils/index'
 

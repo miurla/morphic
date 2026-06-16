@@ -3,8 +3,8 @@
 import * as React from 'react'
 
 import { type DialogProps } from '@radix-ui/react-dialog'
-import { Search } from 'iconoir-react'
 import { Command as CommandPrimitive } from 'cmdk'
+import { Search } from 'iconoir-react'
 
 import { cn } from '@/lib/utils'
 

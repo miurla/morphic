@@ -1,5 +1,4 @@
 import dns from 'node:dns'
-
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { resolveAndValidateHost, SSRFError } from '../ssrf-guard'

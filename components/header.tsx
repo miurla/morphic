@@ -8,8 +8,9 @@ import { User } from '@supabase/supabase-js'
 import { cn } from '@/lib/utils'
 
 import { useSidebar } from '@/components/ui/sidebar'
-import { NativePressable } from '@/components/native/native-pressable'
+
 import { NativeIcon } from '@/components/native/native-icon'
+import { NativePressable } from '@/components/native/native-pressable'
 
 import { FeedbackModal } from './feedback-modal'
 import GuestMenu from './guest-menu'

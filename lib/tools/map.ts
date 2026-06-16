@@ -27,7 +27,9 @@ export function createMapTool() {
 
       try {
         const mapProvider = createMapProvider(provider as MapProviderType)
-        const resolvedProvider = (provider || process.env.MAPS_API || 'google') as 'google' | 'apple'
+        const resolvedProvider = (provider ||
+          process.env.MAPS_API ||
+          'google') as 'google' | 'apple'
 
         if (action === 'get_directions') {
           if (!origin || !destination) {
@@ -35,7 +37,10 @@ export function createMapTool() {
               'Both "origin" and "destination" are required for get_directions.'
             )
           }
-          const directions = await mapProvider.getDirections(origin, destination)
+          const directions = await mapProvider.getDirections(
+            origin,
+            destination
+          )
           result = {
             action: 'get_directions',
             provider: resolvedProvider,

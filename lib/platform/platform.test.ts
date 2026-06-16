@@ -77,7 +77,9 @@ describe('platform profile resolution', () => {
   })
 
   it('uses non-Apple alternate profile for Android', () => {
-    const info = buildPlatformInfo({ userAgent: 'Mozilla/5.0 (Linux; Android 15)' })
+    const info = buildPlatformInfo({
+      userAgent: 'Mozilla/5.0 (Linux; Android 15)'
+    })
     expect(info.family).toBe('android')
     expect(info.isAppleLike).toBe(false)
     expect(info.classes).toContain('platform-native-alt')

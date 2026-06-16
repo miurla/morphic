@@ -1,6 +1,12 @@
 'use client'
 
-import { LightBulb, List as ListTodo, MessageText as MessageSquare, Search, Xmark as X } from 'iconoir-react'
+import {
+  LightBulb,
+  List as ListTodo,
+  MessageText as MessageSquare,
+  Search,
+  Xmark as X
+} from 'iconoir-react'
 
 import { Separator } from '@/components/ui/separator'
 import { TooltipProvider } from '@/components/ui/tooltip'

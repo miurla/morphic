@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 
-import { NativeIcon } from '@/components/native/native-icon'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+
+import { NativeIcon } from '@/components/native/native-icon'
 
 const externalLinks = [
   {

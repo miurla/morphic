@@ -126,19 +126,17 @@ export class SearXNGEngineSearchProvider extends BaseSearchProvider {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error(`${label} via SearXNG error (${response.status}):`, errorText)
+      console.error(
+        `${label} via SearXNG error (${response.status}):`,
+        errorText
+      )
       throw new Error(`${label} search failed`)
     }
 
     return response.json()
   }
 
-  private isEngineUnresponsive(
-    data: SearXNGResponse,
-    engine: string
-  ): boolean {
-    return Boolean(
-      data.unresponsive_engines?.some(([name]) => name === engine)
-    )
+  private isEngineUnresponsive(data: SearXNGResponse, engine: string): boolean {
+    return Boolean(data.unresponsive_engines?.some(([name]) => name === engine))
   }
 }

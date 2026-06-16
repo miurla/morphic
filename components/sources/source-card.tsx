@@ -2,7 +2,17 @@
 
 import { useState } from 'react'
 
-import { Bookmark, Check, OpenNewWindow as ExternalLink, PageEdit as FileText, Headset as Headphones, MediaImage as Photo, Book as Reader, RssFeed as Rss, Globe as World } from 'iconoir-react'
+import {
+  Book as Reader,
+  Bookmark,
+  Check,
+  Globe as World,
+  Headset as Headphones,
+  MediaImage as Photo,
+  OpenNewWindow as ExternalLink,
+  PageEdit as FileText,
+  RssFeed as Rss
+} from 'iconoir-react'
 import { toast } from 'sonner'
 
 import {

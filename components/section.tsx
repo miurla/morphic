@@ -2,7 +2,17 @@
 
 import React from 'react'
 
-import { Check, List as BookCheck, Page as File, PageEdit as FileText, ChatBubble as MessageCircleMore, Movie as Film, MediaImage as Image, Repeat as Repeat2, Search } from 'iconoir-react'
+import {
+  ChatBubble as MessageCircleMore,
+  Check,
+  List as BookCheck,
+  MediaImage as Image,
+  Movie as Film,
+  Page as File,
+  PageEdit as FileText,
+  Repeat as Repeat2,
+  Search
+} from 'iconoir-react'
 
 import { cn } from '@/lib/utils'
 
@@ -32,32 +42,59 @@ export const Section: React.FC<SectionProps> = ({
   let type: 'text' | 'badge' = 'text'
   switch (title) {
     case 'Images':
-      // eslint-disable-next-line jsx-a11y/alt-text
-      icon = <Image width={iconSize} height={iconSize} className={iconClassName} />
+      icon = (
+        <Image width={iconSize} height={iconSize} className={iconClassName} />
+      )
       break
     case 'Videos':
-      icon = <Film width={iconSize} height={iconSize} className={iconClassName} />
+      icon = (
+        <Film width={iconSize} height={iconSize} className={iconClassName} />
+      )
       type = 'badge'
       break
     case 'Sources':
-      icon = <FileText width={iconSize} height={iconSize} className={iconClassName} />
+      icon = (
+        <FileText
+          width={iconSize}
+          height={iconSize}
+          className={iconClassName}
+        />
+      )
       type = 'badge'
       break
     case 'Answer':
-      icon = <BookCheck width={iconSize} height={iconSize} className={iconClassName} />
+      icon = (
+        <BookCheck
+          width={iconSize}
+          height={iconSize}
+          className={iconClassName}
+        />
+      )
       break
     case 'Related':
-      icon = <Repeat2 width={iconSize} height={iconSize} className={iconClassName} />
+      icon = (
+        <Repeat2 width={iconSize} height={iconSize} className={iconClassName} />
+      )
       break
     case 'Follow-up':
-      icon = <MessageCircleMore width={iconSize} height={iconSize} className={iconClassName} />
+      icon = (
+        <MessageCircleMore
+          width={iconSize}
+          height={iconSize}
+          className={iconClassName}
+        />
+      )
       break
     case 'Content':
-      icon = <File width={iconSize} height={iconSize} className={iconClassName} />
+      icon = (
+        <File width={iconSize} height={iconSize} className={iconClassName} />
+      )
       type = 'badge'
       break
     default:
-      icon = <Search width={iconSize} height={iconSize} className={iconClassName} />
+      icon = (
+        <Search width={iconSize} height={iconSize} className={iconClassName} />
+      )
   }
 
   return (

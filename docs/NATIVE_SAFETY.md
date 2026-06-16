@@ -67,9 +67,9 @@ Before adding any new Capacitor plugin:
 
 #### Approved Plugins
 
-| Plugin | Reason | Added |
-|--------|--------|-------|
-| _(none yet)_ | Phase A is hosted-shell only | — |
+| Plugin       | Reason                       | Added |
+| ------------ | ---------------------------- | ----- |
+| _(none yet)_ | Phase A is hosted-shell only | —     |
 
 ---
 

@@ -2,17 +2,21 @@
 
 import * as React from 'react'
 
-import { type HTMLMotionProps,motion, useReducedMotion } from 'motion/react'
+import { type HTMLMotionProps, motion, useReducedMotion } from 'motion/react'
 
 import { nativeMotion } from '@/lib/native/motion'
 import { cn } from '@/lib/utils'
 
-export interface NativePressableProps extends React.ComponentProps<typeof motion.button> {
+export interface NativePressableProps
+  extends React.ComponentProps<typeof motion.button> {
   pressScale?: number
   liftOnHover?: boolean
 }
 
-const NativePressable = React.forwardRef<HTMLButtonElement, NativePressableProps>(
+const NativePressable = React.forwardRef<
+  HTMLButtonElement,
+  NativePressableProps
+>(
   (
     {
       className,

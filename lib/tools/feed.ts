@@ -112,7 +112,12 @@ function detectFeedFormatFromVersion(version?: string): FeedFormat {
   const normalized = version?.toLowerCase() ?? ''
   if (normalized.includes('jsonfeed')) return 'json'
   if (normalized.includes('atom')) return 'atom'
-  if (normalized.includes('rdf') || normalized.includes('rss 1') || normalized === '1.0') return 'rss1'
+  if (
+    normalized.includes('rdf') ||
+    normalized.includes('rss 1') ||
+    normalized === '1.0'
+  )
+    return 'rss1'
   if (normalized.includes('rss') || normalized === '2.0') return 'rss2'
   return 'unknown'
 }
@@ -425,8 +430,7 @@ function parseRssFeed(
     siteUrl: firstText(channel?.link),
     format,
     version:
-      attrValue(parsed.rss, 'version') ??
-      (format === 'rss1' ? '1.0' : '2.0'),
+      attrValue(parsed.rss, 'version') ?? (format === 'rss1' ? '1.0' : '2.0'),
     language: firstText(channel?.language),
     image:
       attrValue(channel?.['itunes:image'], 'href') ??

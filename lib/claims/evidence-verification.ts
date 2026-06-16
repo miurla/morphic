@@ -1,5 +1,5 @@
-import type { SearchResultItem } from '@/lib/types'
 import type { FactCheckSearchResults } from '@/lib/tools/factcheck'
+import type { SearchResultItem } from '@/lib/types'
 
 export type ClaimSupportStatus =
   | 'supported'

@@ -3,8 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-import { NativeIcon } from '@/components/native/native-icon'
-import { NativePressable } from '@/components/native/native-pressable'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +13,9 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+
+import { NativeIcon } from '@/components/native/native-icon'
+import { NativePressable } from '@/components/native/native-pressable'
 
 import { ExternalLinkItems } from './external-link-items'
 import { ThemeMenuItems } from './theme-menu-items'

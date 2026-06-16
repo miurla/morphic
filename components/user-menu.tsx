@@ -7,8 +7,6 @@ import type { User } from '@supabase/supabase-js'
 
 import { createClient } from '@/lib/supabase/client'
 
-import { NativeIcon } from '@/components/native/native-icon'
-import { NativePressable } from '@/components/native/native-pressable'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -23,6 +21,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 import { AccountSettingsDialog } from '@/components/account-settings-dialog'
+import { NativeIcon } from '@/components/native/native-icon'
+import { NativePressable } from '@/components/native/native-pressable'
 
 import { ExternalLinkItems } from './external-link-items'
 

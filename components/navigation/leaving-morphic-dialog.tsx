@@ -36,9 +36,7 @@ export function LeavingMorphicDialog({
         <div className="space-y-3">
           <div>
             <h2 className="font-semibold">Leaving Morphic</h2>
-            <p className="text-sm text-muted-foreground">
-              {assessment.reason}
-            </p>
+            <p className="text-sm text-muted-foreground">{assessment.reason}</p>
           </div>
 
           {assessment.displayHost && (

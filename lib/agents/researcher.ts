@@ -17,14 +17,14 @@ import { getModel } from '../utils/registry'
 import { isTracingEnabled } from '../utils/telemetry'
 
 import {
-  buildPersonalizationPrompt,
-  type PersonalizationSettings
-} from './personalization'
-import { buildOpenRouterServerToolHeaders } from './openrouter-server-tools'
-import {
   getAdaptiveModePrompt,
   QUICK_MODE_PROMPT
 } from './prompts/search-mode-prompts'
+import { buildOpenRouterServerToolHeaders } from './openrouter-server-tools'
+import {
+  buildPersonalizationPrompt,
+  type PersonalizationSettings
+} from './personalization'
 import { applyPromptOverrideSync } from './prompt-overrides'
 
 // Enhanced wrapper function with better type safety and streaming support

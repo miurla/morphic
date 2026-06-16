@@ -1,8 +1,8 @@
 'use client'
 
-import { NativeIcon } from '@/components/native/native-icon'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
+import { NativeIcon } from '@/components/native/native-icon'
 import { useTheme } from '@/components/theme-provider'
 
 export function ThemeMenuItems() {

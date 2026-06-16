@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
   buildPersonalizationPrompt,
-  PERSONALIZATION_LIMITS,
   parsePersonalizationCookie,
+  PERSONALIZATION_LIMITS,
   sanitizePersonalizationSettings,
   serializePersonalizationCookie
 } from '../personalization'

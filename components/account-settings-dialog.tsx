@@ -4,7 +4,6 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
 import type { User } from '@supabase/supabase-js'
-import { NativeIcon } from '@/components/native/native-icon'
 import { toast } from 'sonner'
 
 import { deleteAccount } from '@/lib/actions/account'
@@ -32,6 +31,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 
+import { NativeIcon } from '@/components/native/native-icon'
 import { useTheme } from '@/components/theme-provider'
 
 interface AccountSettingsDialogProps {

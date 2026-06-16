@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useState } from 'react'
 
-import { EyeSolid as Eye, EyeClosed as EyeOff } from 'iconoir-react'
+import { EyeClosed as EyeOff, EyeSolid as Eye } from 'iconoir-react'
 
 import { Input, InputProps } from '@/components/ui/input'
 

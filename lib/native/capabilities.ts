@@ -90,16 +90,15 @@ export function detectNativeCapabilities(
   return {
     canShare: hasFunction(nav?.share),
     canShareFiles: canShareFiles(nav),
-    canClipboardRead: hasFunction(clipboard?.readText) || hasFunction(clipboard?.read),
+    canClipboardRead:
+      hasFunction(clipboard?.readText) || hasFunction(clipboard?.read),
     canClipboardWrite:
       hasFunction(clipboard?.writeText) || hasFunction(clipboard?.write),
     canPush:
       Boolean(signals.notification) &&
       Boolean(signals.pushManager) &&
       hasObject(serviceWorkerRegistration?.pushManager),
-    canBadge:
-      hasFunction(nav?.setAppBadge) &&
-      hasFunction(nav?.clearAppBadge),
+    canBadge: hasFunction(nav?.setAppBadge) && hasFunction(nav?.clearAppBadge),
     canInstallPrompt: Boolean(win?.BeforeInstallPromptEvent),
     canUseFileSystemAccess: Boolean(win?.FileSystemFileHandle),
     canUseFilePicker: hasFunction(win?.showOpenFilePicker),
@@ -118,12 +117,15 @@ export function detectCurrentNativeCapabilities(): NativeCapabilities {
 
   return detectNativeCapabilities({
     navigator,
-    notification: typeof Notification === 'undefined' ? undefined : Notification,
+    notification:
+      typeof Notification === 'undefined' ? undefined : Notification,
     pushManager: typeof PushManager === 'undefined' ? undefined : PushManager,
     serviceWorkerRegistration:
       typeof ServiceWorkerRegistration === 'undefined'
         ? undefined
-        : ('pushManager' in ServiceWorkerRegistration.prototype ? { pushManager: {} as any } : {}),
+        : 'pushManager' in ServiceWorkerRegistration.prototype
+          ? { pushManager: {} as any }
+          : {},
     window
   })
 }

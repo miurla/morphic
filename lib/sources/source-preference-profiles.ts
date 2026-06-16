@@ -1,6 +1,5 @@
-import type { SourcePreferenceRecord } from './source-preferences'
-
 import { normalizeSourceText } from './source-metadata'
+import type { SourcePreferenceRecord } from './source-preferences'
 
 export interface SourcePreferenceProfileSettings {
   includeTerms: string[]

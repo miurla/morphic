@@ -56,7 +56,9 @@ export class KagiSearchProvider extends BaseSearchProvider {
       })
 
       if (!response.ok) {
-        throw new Error(`Kagi API error: ${response.status} ${response.statusText}`)
+        throw new Error(
+          `Kagi API error: ${response.status} ${response.statusText}`
+        )
       }
 
       const data: KagiResponse = await response.json()

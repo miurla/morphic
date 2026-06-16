@@ -1,4 +1,4 @@
-import { importPKCS8,SignJWT } from 'jose'
+import { importPKCS8, SignJWT } from 'jose'
 
 import { MapDirections, MapPlace } from '@/lib/types/map'
 

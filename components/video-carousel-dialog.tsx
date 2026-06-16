@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import { OpenNewWindow as IconExternalLink, SoundHigh as IconVolume } from 'iconoir-react'
+import {
+  OpenNewWindow as IconExternalLink,
+  SoundHigh as IconVolume
+} from 'iconoir-react'
 
 import { SerperSearchResultItem } from '@/lib/types'
 
@@ -139,7 +142,10 @@ export function VideoCarouselDialog({
       try {
         const mediaElements = document.querySelectorAll('video, audio')
         mediaElements.forEach(el => {
-          if (el instanceof HTMLVideoElement || el instanceof HTMLAudioElement) {
+          if (
+            el instanceof HTMLVideoElement ||
+            el instanceof HTMLAudioElement
+          ) {
             el.pause()
           }
         })
@@ -216,7 +222,8 @@ export function VideoCarouselDialog({
                               alt={video.title}
                               className="w-24 h-24 object-cover rounded-md shadow-xs"
                               onError={e => {
-                                (e.target as HTMLElement).style.display = 'none'
+                                ;(e.target as HTMLElement).style.display =
+                                  'none'
                               }}
                             />
                           ) : (
@@ -224,9 +231,17 @@ export function VideoCarouselDialog({
                               <IconVolume className="size-8" />
                             </div>
                           )}
-                          <h3 className="font-semibold text-sm line-clamp-1">{video.title}</h3>
-                          <audio src={media.rawUrl} controls className="w-full" />
-                          <p className="text-xs text-muted-foreground line-clamp-2">{video.snippet}</p>
+                          <h3 className="font-semibold text-sm line-clamp-1">
+                            {video.title}
+                          </h3>
+                          <audio
+                            src={media.rawUrl}
+                            controls
+                            className="w-full"
+                          />
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {video.snippet}
+                          </p>
                         </div>
                       ) : media.type === 'image' ? (
                         <div className="flex flex-col items-center justify-center p-4 bg-black/5 rounded-lg w-full h-full relative">
@@ -235,7 +250,9 @@ export function VideoCarouselDialog({
                             alt={video.title}
                             className="max-w-full max-h-[50vh] object-contain rounded-lg"
                           />
-                          <p className="mt-2 text-xs text-center text-muted-foreground line-clamp-1">{video.title}</p>
+                          <p className="mt-2 text-xs text-center text-muted-foreground line-clamp-1">
+                            {video.title}
+                          </p>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center p-6 bg-card border rounded-lg w-full max-w-md mx-auto text-center gap-4">
@@ -245,12 +262,17 @@ export function VideoCarouselDialog({
                               alt={video.title}
                               className="w-full aspect-video object-cover rounded-md shadow-xs"
                               onError={e => {
-                                (e.target as HTMLElement).style.display = 'none'
+                                ;(e.target as HTMLElement).style.display =
+                                  'none'
                               }}
                             />
                           )}
-                          <h3 className="font-semibold text-sm line-clamp-1">{video.title}</h3>
-                          <p className="text-xs text-muted-foreground line-clamp-2">{video.snippet}</p>
+                          <h3 className="font-semibold text-sm line-clamp-1">
+                            {video.title}
+                          </h3>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {video.snippet}
+                          </p>
                           <a
                             href={video.link}
                             target="_blank"

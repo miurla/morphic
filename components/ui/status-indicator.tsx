@@ -1,7 +1,5 @@
 import { ReactNode } from 'react'
 
-
-
 interface StatusIndicatorProps {
   icon: React.ComponentType<any>
   iconClassName?: string

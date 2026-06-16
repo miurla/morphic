@@ -50,7 +50,9 @@ export function createFactCheckTool() {
         )
       }
 
-      const url = new URL('https://factchecktools.googleapis.com/v1alpha1/claims:search')
+      const url = new URL(
+        'https://factchecktools.googleapis.com/v1alpha1/claims:search'
+      )
       url.searchParams.append('query', query)
       url.searchParams.append('key', apiKey)
       if (languageCode) {

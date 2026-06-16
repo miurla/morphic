@@ -98,52 +98,57 @@ function walk(dir: string, fileList: string[] = []) {
   return fileList
 }
 
-const files = [
-  ...walk('components'),
-  ...walk('app'),
-  ...walk('lib')
-]
+const files = [...walk('components'), ...walk('app'), ...walk('lib')]
 
 for (const file of files) {
   let content = fs.readFileSync(file, 'utf8')
-  
+
   // Replace the import statement completely
   // We need to parse the import to get the aliases
-  const importRegex = /import\s+{([^}]+)}\s+from\s+['"]@tabler\/icons-react['"]/m
+  const importRegex =
+    /import\s+{([^}]+)}\s+from\s+['"]@tabler\/icons-react['"]/m
   const match = content.match(importRegex)
-  
+
   if (match) {
-    const imports = match[1].split(',').map(s => s.trim()).filter(Boolean)
+    const imports = match[1]
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
     const newImports = []
-    
+
     for (const imp of imports) {
-      if (imp === 'type TablerIcon') continue; // we don't need this anymore
+      if (imp === 'type TablerIcon') continue // we don't need this anymore
       const parts = imp.split(' as ')
       const tablerName = parts[0].trim()
       const alias = parts.length > 1 ? parts[1].trim() : tablerName
-      
+
       const iconoirName = iconMap[tablerName] || tablerName
-      
+
       if (iconoirName === alias) {
         newImports.push(iconoirName)
       } else {
         newImports.push(`${iconoirName} as ${alias}`)
       }
     }
-    
+
     if (newImports.length > 0) {
       const newImportString = `import { ${newImports.join(', ')} } from 'iconoir-react'`
       content = content.replace(importRegex, newImportString)
     } else {
       content = content.replace(importRegex, '') // Removed completely if only `type TablerIcon`
     }
-    
+
     // Replace `type TablerIcon` usages if any with `React.ComponentType<any>` or `any`
     content = content.replace(/TablerIcon/g, 'React.ComponentType<any>')
-    
+
     // One specific case for `status-indicator.tsx` which uses `type TablerIcon`
-    if (content.includes('import { type TablerIcon } from \'@tabler/icons-react\'')) {
-      content = content.replace('import { type TablerIcon } from \'@tabler/icons-react\'', '')
+    if (
+      content.includes("import { type TablerIcon } from '@tabler/icons-react'")
+    ) {
+      content = content.replace(
+        "import { type TablerIcon } from '@tabler/icons-react'",
+        ''
+      )
     }
 
     fs.writeFileSync(file, content)

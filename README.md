@@ -120,11 +120,11 @@ The native shell is a hosted WebView that loads the production web app — the s
 
 ### Prerequisites
 
-| Tool | Required for |
-|------|-------------|
-| [Xcode](https://apps.apple.com/app/xcode/id497799835) (macOS) | iOS builds |
-| [Android Studio](https://developer.android.com/studio) | Android builds |
-| Java 17+ | Android builds |
+| Tool                                                          | Required for   |
+| ------------------------------------------------------------- | -------------- |
+| [Xcode](https://apps.apple.com/app/xcode/id497799835) (macOS) | iOS builds     |
+| [Android Studio](https://developer.android.com/studio)        | Android builds |
+| Java 17+                                                      | Android builds |
 
 ### Scripts
 

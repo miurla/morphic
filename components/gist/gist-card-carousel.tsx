@@ -2,7 +2,10 @@
 
 import { useMemo, useRef, useState } from 'react'
 
-import { NavArrowLeft as ChevronLeft, NavArrowRight as ChevronRight } from 'iconoir-react'
+import {
+  NavArrowLeft as ChevronLeft,
+  NavArrowRight as ChevronRight
+} from 'iconoir-react'
 
 import type { NormalizedSource } from '@/lib/sources/source-types'
 import { cn } from '@/lib/utils'

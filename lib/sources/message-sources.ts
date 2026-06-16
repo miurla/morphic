@@ -1,6 +1,6 @@
+import type { KnowledgeGraphEntity } from '@/lib/entities/knowledge-graph'
 import type { SearchResults } from '@/lib/types'
 import type { FeedSearchResults } from '@/lib/types/feed'
-import type { KnowledgeGraphEntity } from '@/lib/entities/knowledge-graph'
 
 import {
   normalizeFeedResults,

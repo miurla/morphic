@@ -40,7 +40,8 @@ export default defineConfig([
           paths: [
             {
               name: '@tabler/icons-react',
-              message: 'Please use NativeIcon from @/components/native/native-icon instead.'
+              message:
+                'Please use NativeIcon from @/components/native/native-icon instead.'
             }
           ]
         }

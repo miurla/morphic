@@ -1,4 +1,4 @@
-import { parse, HTMLElement } from 'node-html-parser'
+import { HTMLElement, parse } from 'node-html-parser'
 
 import {
   canonicalizeSourceUrl,

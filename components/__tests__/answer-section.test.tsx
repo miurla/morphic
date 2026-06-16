@@ -121,7 +121,9 @@ describe('AnswerSection evidence verification', () => {
       />
     )
 
-    expect(screen.getByText('Lagos is a coastal city in the Algarve.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Lagos is a coastal city in the Algarve.')
+    ).toBeInTheDocument()
     expect(screen.getByTestId('supporting-sources')).toBeInTheDocument()
     expect(screen.getByText('Related')).toBeInTheDocument()
 

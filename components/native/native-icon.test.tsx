@@ -5,7 +5,9 @@ import { NativeIcon } from './native-icon'
 
 describe('NativeIcon', () => {
   it('renders decorative icons as hidden by default', () => {
-    const { container } = render(<NativeIcon name="search" className="size-4" />)
+    const { container } = render(
+      <NativeIcon name="search" className="size-4" />
+    )
     const svg = container.querySelector('svg')
 
     expect(svg).toBeInTheDocument()

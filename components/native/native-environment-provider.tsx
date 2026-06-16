@@ -1,12 +1,6 @@
 'use client'
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState
-} from 'react'
+import { createContext, useContext, useMemo, useState } from 'react'
 
 import {
   defaultNativeCapabilities,
@@ -38,16 +32,12 @@ export function NativeEnvironmentProvider({
 }: {
   children: React.ReactNode
 }) {
-  const [environment, setEnvironment] = useState<NativeEnvironment>(
-    defaultNativeEnvironment
-  )
-
-  useEffect(() => {
-    setEnvironment({
-      platform: getClientPlatformInfo(),
-      capabilities: detectCurrentNativeCapabilities()
-    })
-  }, [])
+  // Lazy initialiser: runs once on mount (client-side) without triggering a
+  // second render cycle. Satisfies react-compiler/react-compiler lint rule.
+  const [environment] = useState<NativeEnvironment>(() => ({
+    platform: getClientPlatformInfo(),
+    capabilities: detectCurrentNativeCapabilities()
+  }))
 
   const value = useMemo(() => environment, [environment])
 

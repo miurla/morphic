@@ -50,8 +50,10 @@ function isSensitivePath(pathname) {
 function isCacheableStaticPath(pathname) {
   if (CACHEABLE_STATIC_PATHS.has(pathname)) return true
 
-  return CACHEABLE_STATIC_PREFIXES.some(prefix => pathname.startsWith(prefix)) &&
+  return (
+    CACHEABLE_STATIC_PREFIXES.some(prefix => pathname.startsWith(prefix)) &&
     hasCacheableExtension(pathname)
+  )
 }
 
 function shouldCacheRequest(request) {
@@ -78,9 +80,7 @@ async function cacheStaticAssets() {
 async function deleteOldCaches() {
   const keys = await caches.keys()
   await Promise.all(
-    keys
-      .filter(key => key !== CACHE_VERSION)
-      .map(key => caches.delete(key))
+    keys.filter(key => key !== CACHE_VERSION).map(key => caches.delete(key))
   )
 }
 

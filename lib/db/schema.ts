@@ -1,8 +1,8 @@
 import { createId } from '@paralleldrive/cuid2'
 import { InferSelectModel, sql } from 'drizzle-orm'
 import {
-  check,
   boolean,
+  check,
   index,
   integer,
   json,

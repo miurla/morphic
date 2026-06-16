@@ -42,7 +42,11 @@ export const UploadedFileList = React.memo(function UploadedFileList({
               {/* Spinner overlay while uploading */}
               {it.status === 'uploading' && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
-                  <Loader2 className="animate-spin text-white" width={20} height={20} />
+                  <Loader2
+                    className="animate-spin text-white"
+                    width={20}
+                    height={20}
+                  />
                 </div>
               )}
 

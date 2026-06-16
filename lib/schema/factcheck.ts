@@ -3,7 +3,9 @@ import { z } from 'zod'
 export const factCheckSchema = z.object({
   query: z
     .string()
-    .describe('The query or statement to fact-check using Google Fact Check Tools API.'),
+    .describe(
+      'The query or statement to fact-check using Google Fact Check Tools API.'
+    ),
   languageCode: z
     .string()
     .optional()

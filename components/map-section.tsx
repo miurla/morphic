@@ -2,7 +2,14 @@
 
 import React from 'react'
 
-import { Clock, ExternalLink, Map, MapPin, Navigation, Ruler } from 'lucide-react'
+import {
+  Clock,
+  ExternalLink,
+  Map,
+  MapPin,
+  Navigation,
+  Ruler
+} from 'lucide-react'
 
 import { MapDirections, MapPlace } from '@/lib/types/map'
 
@@ -23,7 +30,12 @@ interface MapSectionProps {
   directions?: MapDirections
 }
 
-function GoogleMapEmbed({ query, origin, destination, apiKey }: {
+function GoogleMapEmbed({
+  query,
+  origin,
+  destination,
+  apiKey
+}: {
   query?: string
   origin?: string
   destination?: string
@@ -54,7 +66,11 @@ function GoogleMapEmbed({ query, origin, destination, apiKey }: {
   )
 }
 
-function AppleMapsLink({ query, origin, destination }: {
+function AppleMapsLink({
+  query,
+  origin,
+  destination
+}: {
   query?: string
   origin?: string
   destination?: string
@@ -86,7 +102,8 @@ function AppleMapsLink({ query, origin, destination }: {
 }
 
 function PlacesList({ places }: { places: MapPlace[] }) {
-  if (!places.length) return <p className="text-sm text-muted-foreground">No places found.</p>
+  if (!places.length)
+    return <p className="text-sm text-muted-foreground">No places found.</p>
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
@@ -99,14 +116,20 @@ function PlacesList({ places }: { places: MapPlace[] }) {
             <MapPin className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
             <div>
               <h4 className="font-semibold text-sm">{place.name}</h4>
-              <p className="text-xs text-muted-foreground leading-snug">{place.address}</p>
+              <p className="text-xs text-muted-foreground leading-snug">
+                {place.address}
+              </p>
             </div>
           </div>
           {place.rating !== undefined && (
-            <p className="text-xs ml-6 text-muted-foreground">⭐ {place.rating} / 5</p>
+            <p className="text-xs ml-6 text-muted-foreground">
+              ⭐ {place.rating} / 5
+            </p>
           )}
           {place.phoneNumber && (
-            <p className="text-xs ml-6 text-muted-foreground">{place.phoneNumber}</p>
+            <p className="text-xs ml-6 text-muted-foreground">
+              {place.phoneNumber}
+            </p>
           )}
           {place.url && (
             <a
@@ -167,7 +190,9 @@ export function MapSection({
   directions
 }: MapSectionProps) {
   const [isOpen, setIsOpen] = React.useState(true)
-  const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+  const googleApiKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY ||
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
   const isSearching = state === 'searching'
   const isDirections = action === 'get_directions'
@@ -177,8 +202,8 @@ export function MapSection({
       ? `Getting directions...`
       : `Searching map for "${query}"`
     : isDirections
-    ? `Directions: ${origin} → ${destination}`
-    : `Places near "${query}"`
+      ? `Directions: ${origin} → ${destination}`
+      : `Places near "${query}"`
 
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -186,9 +211,11 @@ export function MapSection({
         <CollapsibleTrigger asChild>
           <div className="flex items-center gap-2 cursor-pointer w-fit">
             <div className="p-2 bg-primary/10 rounded-full">
-              {isDirections
-                ? <Navigation className="w-4 h-4 text-primary" />
-                : <Map className="w-4 h-4 text-primary" />}
+              {isDirections ? (
+                <Navigation className="w-4 h-4 text-primary" />
+              ) : (
+                <Map className="w-4 h-4 text-primary" />
+              )}
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium">{title}</span>

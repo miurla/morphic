@@ -1,7 +1,12 @@
 'use client'
 
 import { UseChatHelpers } from '@ai-sdk/react'
-import { WarningCircle as AlertCircle, Check, OpenNewWindow as ExternalLink, Globe } from 'iconoir-react'
+import {
+  Check,
+  Globe,
+  OpenNewWindow as ExternalLink,
+  WarningCircle as AlertCircle
+} from 'iconoir-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import { SearchResults as SearchResultsType } from '@/lib/types'

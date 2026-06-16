@@ -88,12 +88,12 @@ describe('QwantSearchProvider', () => {
     const results = await provider.search('morphic', 10, 'basic', [], [])
 
     expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get('engines')).toBe(
-      'qwant'
-    )
-    expect(new URL(fetchMock.mock.calls[1][0]).searchParams.get('engines')).toBe(
-      'duckduckgo'
-    )
+    expect(
+      new URL(fetchMock.mock.calls[0][0]).searchParams.get('engines')
+    ).toBe('qwant')
+    expect(
+      new URL(fetchMock.mock.calls[1][0]).searchParams.get('engines')
+    ).toBe('duckduckgo')
     expect(results.results[0]?.url).toBe('https://www.morphic.sh/')
   })
 })

@@ -2,7 +2,12 @@
 
 import type React from 'react'
 
-import { Check, OpenNewWindow as ExternalLink, Headset as Headphones, RssFeed as Rss } from 'iconoir-react'
+import {
+  Check,
+  Headset as Headphones,
+  OpenNewWindow as ExternalLink,
+  RssFeed as Rss
+} from 'iconoir-react'
 
 import type { ToolPart } from '@/lib/types/ai'
 import type {

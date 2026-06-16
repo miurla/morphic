@@ -57,7 +57,10 @@ export class GoogleMapsProvider extends BaseMapProvider {
     }))
   }
 
-  async getDirections(origin: string, destination: string): Promise<MapDirections> {
+  async getDirections(
+    origin: string,
+    destination: string
+  ): Promise<MapDirections> {
     const apiKey = process.env.GOOGLE_MAPS_API_KEY
     this.validateApiKey(apiKey, 'GOOGLE_MAPS')
 
@@ -98,12 +101,14 @@ export class GoogleMapsProvider extends BaseMapProvider {
     const steps: string[] = (leg.steps || [])
       .map(
         (step: Record<string, unknown>) =>
-          (step.navigationInstruction as Record<string, string>)?.instructions || ''
+          (step.navigationInstruction as Record<string, string>)
+            ?.instructions || ''
       )
       .filter(Boolean)
 
     return {
-      distanceText: leg.localizedValues?.distance?.text || `${leg.distanceMeters}m`,
+      distanceText:
+        leg.localizedValues?.distance?.text || `${leg.distanceMeters}m`,
       durationText: leg.localizedValues?.duration?.text || leg.duration,
       startAddress: origin,
       endAddress: destination,

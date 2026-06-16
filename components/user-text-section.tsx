@@ -3,7 +3,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
-import { Check, NavArrowDown as ChevronDown, NavArrowUp as ChevronUp, Copy, EditPencil as Pencil } from 'iconoir-react'
+import {
+  Check,
+  Copy,
+  EditPencil as Pencil,
+  NavArrowDown as ChevronDown,
+  NavArrowUp as ChevronUp
+} from 'iconoir-react'
 
 import { cn } from '@/lib/utils'
 

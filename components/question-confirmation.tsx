@@ -153,7 +153,11 @@ export function QuestionConfirmation({
         </CardTitle>
         <div className="flex items-center justify-start gap-1 w-full">
           {isSkipped ? (
-            <SkipForward width={16} height={16} className="text-yellow-500 w-4 h-4" />
+            <SkipForward
+              width={16}
+              height={16}
+              className="text-yellow-500 w-4 h-4"
+            />
           ) : (
             <Check width={16} height={16} className="text-green-500 w-4 h-4" />
           )}

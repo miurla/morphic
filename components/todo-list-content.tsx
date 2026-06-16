@@ -1,6 +1,6 @@
 'use client'
 
-import { WarningCircle as AlertCircle, Check } from 'iconoir-react'
+import { Check, WarningCircle as AlertCircle } from 'iconoir-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import type { TodoItem } from '@/lib/types/ai'

@@ -12,38 +12,38 @@ import { normalizeSourcePreferenceProfileInput } from '@/lib/sources/source-pref
 import { normalizeSourcePreferenceInput } from '@/lib/sources/source-preferences'
 
 export const sourcePreferencesToolSchema = z.object({
-    action: z
-      .enum(['list', 'save'])
-      .describe(
-        'list = inspect remembered preferences, save = remember an explicit user source preference.'
-      ),
-    target: z
-      .string()
-      .optional()
-      .describe('Domain or source URL the user wants to tune.'),
-    preference: z
-      .enum(['trust', 'prefer', 'mute', 'block'])
-      .optional()
-      .describe(
-        'trust = rely on more, prefer = rank higher, mute = avoid/demote, block = never use.'
-      ),
-    note: z.string().optional().describe('Brief user-stated reason.'),
-    profileName: z
-      .string()
-      .optional()
-      .describe(
-        'Optional topic profile name when the user scopes the preference to a topic, e.g. "climate research".'
-      ),
-    profileTerms: z
-      .array(z.string())
-      .optional()
-      .describe('Optional query terms that should activate this topic profile.'),
-    profileExcludeTerms: z
-      .array(z.string())
-      .optional()
-      .describe(
-        'Optional query terms that should prevent this profile from matching.'
-      )
+  action: z
+    .enum(['list', 'save'])
+    .describe(
+      'list = inspect remembered preferences, save = remember an explicit user source preference.'
+    ),
+  target: z
+    .string()
+    .optional()
+    .describe('Domain or source URL the user wants to tune.'),
+  preference: z
+    .enum(['trust', 'prefer', 'mute', 'block'])
+    .optional()
+    .describe(
+      'trust = rely on more, prefer = rank higher, mute = avoid/demote, block = never use.'
+    ),
+  note: z.string().optional().describe('Brief user-stated reason.'),
+  profileName: z
+    .string()
+    .optional()
+    .describe(
+      'Optional topic profile name when the user scopes the preference to a topic, e.g. "climate research".'
+    ),
+  profileTerms: z
+    .array(z.string())
+    .optional()
+    .describe('Optional query terms that should activate this topic profile.'),
+  profileExcludeTerms: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Optional query terms that should prevent this profile from matching.'
+    )
 })
 
 async function requireUserId() {

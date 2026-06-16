@@ -4,11 +4,31 @@ import type { ComponentType, FormEvent } from 'react'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
-import { ArrowLeft as IconArrowLeft, Xmark as IconBan, Bookmark as IconBookmark, CheckCircle as IconCircleCheck, Filter as IconFilter, Key as IconKey, Language as IconLanguage, MapPin as IconMapPin, JournalPage as IconNews, ShieldCheck as IconShieldCheck, Megaphone as IconSpeakerphone, Trash as IconTrash, ProfileCircle as IconUserCircle, SoundOff as IconVolumeOff } from 'iconoir-react'
+import {
+  ArrowLeft as IconArrowLeft,
+  Bookmark as IconBookmark,
+  CheckCircle as IconCircleCheck,
+  Filter as IconFilter,
+  JournalPage as IconNews,
+  Key as IconKey,
+  Language as IconLanguage,
+  MapPin as IconMapPin,
+  Megaphone as IconSpeakerphone,
+  ProfileCircle as IconUserCircle,
+  ShieldCheck as IconShieldCheck,
+  SoundOff as IconVolumeOff,
+  Trash as IconTrash,
+  Xmark as IconBan
+} from 'iconoir-react'
 import { toast } from 'sonner'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import {
+  parsePersonalizationCookie,
+  PERSONALIZATION_COOKIE_NAME,
+  type PersonalizationSettings,
+  sanitizePersonalizationSettings,
+  serializePersonalizationCookie
+} from '@/lib/agents/personalization'
 import {
   LANGUAGES,
   REGIONS,
@@ -16,13 +36,9 @@ import {
 } from '@/lib/config/search-preferences'
 import { useSearchPreferences } from '@/lib/hooks/use-search-preferences'
 import { getCookie, setCookie } from '@/lib/utils/cookies'
-import {
-  PERSONALIZATION_COOKIE_NAME,
-  parsePersonalizationCookie,
-  sanitizePersonalizationSettings,
-  serializePersonalizationCookie,
-  type PersonalizationSettings
-} from '@/lib/agents/personalization'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 import { Label } from './ui/label'
 import { PasswordInput } from './ui/password-input'

@@ -820,9 +820,9 @@ export async function fetchCloudflareModels(): Promise<Model[]> {
       ? json.result
       : Array.isArray(json?.result?.data)
         ? json.result.data
-      : Array.isArray(json?.data)
-        ? json.data
-        : []
+        : Array.isArray(json?.data)
+          ? json.data
+          : []
     if (data.length === 0) {
       return fallbacks
     }

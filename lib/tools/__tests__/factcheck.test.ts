@@ -33,7 +33,10 @@ describe('googleFactCheckTool', () => {
   test('throws error if no API key is available', async () => {
     const tool = createFactCheckTool()
     const executePromise = (async () => {
-      const result = tool.execute!({ query: 'test claim' }, { toolCallId: 'test', messages: [] })
+      const result = tool.execute!(
+        { query: 'test claim' },
+        { toolCallId: 'test', messages: [] }
+      )
       for await (const _ of result as AsyncIterable<any>) {
         // consume the generator
       }
@@ -67,8 +70,11 @@ describe('googleFactCheckTool', () => {
     })
 
     const tool = createFactCheckTool()
-    const generator = tool.execute!({ query: 'flat earth', languageCode: 'en' }, { toolCallId: 'test-call', messages: [] })
-    
+    const generator = tool.execute!(
+      { query: 'flat earth', languageCode: 'en' },
+      { toolCallId: 'test-call', messages: [] }
+    )
+
     const chunks = []
     for await (const chunk of generator as AsyncIterable<any>) {
       chunks.push(chunk)
@@ -76,7 +82,7 @@ describe('googleFactCheckTool', () => {
 
     // Checking the intermediate state (searching) and final state (complete)
     expect(chunks[0]).toEqual({ state: 'searching', query: 'flat earth' })
-    
+
     const finalResult = chunks[1] as any
     expect(finalResult.state).toBe('complete')
     expect(finalResult.query).toBe('flat earth')
@@ -85,7 +91,9 @@ describe('googleFactCheckTool', () => {
     expect(finalResult.claims[0].text).toBe('The Earth is flat.')
     expect(finalResult.claims[0].claimant).toBe('Flat Earth Society')
     expect(finalResult.claims[0].claimReview[0].textualRating).toBe('False')
-    expect(finalResult.claims[0].claimReview[0].publisher.name).toBe('Science Check')
+    expect(finalResult.claims[0].claimReview[0].publisher.name).toBe(
+      'Science Check'
+    )
 
     // Verify correct URL and key were passed
     expect(globalThis.fetch).toHaveBeenCalled()
@@ -100,8 +108,12 @@ describe('googleFactCheckTool', () => {
     mockFetchResponse(200, { claims: [] })
 
     const tool = createFactCheckTool()
-    const generator = tool.execute!({ query: 'test' }, { toolCallId: 'test', messages: [] })
-    for await (const _ of generator as AsyncIterable<any>) {}
+    const generator = tool.execute!(
+      { query: 'test' },
+      { toolCallId: 'test', messages: [] }
+    )
+    for await (const _ of generator as AsyncIterable<any>) {
+    }
 
     const fetchUrl = (globalThis.fetch as any).mock.calls[0][0]
     expect(fetchUrl).toContain('key=key_gemini')
@@ -112,8 +124,12 @@ describe('googleFactCheckTool', () => {
     mockFetchResponse(200, { claims: [] })
 
     const tool = createFactCheckTool()
-    const generator = tool.execute!({ query: 'test' }, { toolCallId: 'test', messages: [] })
-    for await (const _ of generator as AsyncIterable<any>) {}
+    const generator = tool.execute!(
+      { query: 'test' },
+      { toolCallId: 'test', messages: [] }
+    )
+    for await (const _ of generator as AsyncIterable<any>) {
+    }
 
     const fetchUrl = (globalThis.fetch as any).mock.calls[0][0]
     expect(fetchUrl).toContain('key=key_maps')
@@ -124,8 +140,12 @@ describe('googleFactCheckTool', () => {
     mockFetchResponse(200, { claims: [] })
 
     const tool = createFactCheckTool()
-    const generator = tool.execute!({ query: 'test' }, { toolCallId: 'test', messages: [] })
-    for await (const _ of generator as AsyncIterable<any>) {}
+    const generator = tool.execute!(
+      { query: 'test' },
+      { toolCallId: 'test', messages: [] }
+    )
+    for await (const _ of generator as AsyncIterable<any>) {
+    }
 
     const fetchUrl = (globalThis.fetch as any).mock.calls[0][0]
     expect(fetchUrl).toContain('key=key_public_maps')
@@ -137,8 +157,12 @@ describe('googleFactCheckTool', () => {
 
     const tool = createFactCheckTool()
     const executePromise = (async () => {
-      const result = tool.execute!({ query: 'test' }, { toolCallId: 'test', messages: [] })
-      for await (const _ of result as AsyncIterable<any>) {}
+      const result = tool.execute!(
+        { query: 'test' },
+        { toolCallId: 'test', messages: [] }
+      )
+      for await (const _ of result as AsyncIterable<any>) {
+      }
     })()
 
     await expect(executePromise).rejects.toThrow(

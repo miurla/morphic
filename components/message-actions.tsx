@@ -127,7 +127,8 @@ export function MessageActions({
               className="rounded-full"
             >
               <ThumbsUp
-                width={14} height={14}
+                width={14}
+                height={14}
                 className={feedbackScore === 1 ? 'fill-current' : ''}
               />
             </Button>
@@ -141,7 +142,8 @@ export function MessageActions({
               className="rounded-full"
             >
               <ThumbsDown
-                width={14} height={14}
+                width={14}
+                height={14}
                 className={feedbackScore === -1 ? 'fill-current' : ''}
               />
             </Button>
