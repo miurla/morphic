@@ -48,10 +48,13 @@ jobs:
           exit ${PIPESTATUS[0]}
         shell: bash
 
-      - name: Annotate type errors
+      - name: Surface type errors
         if: failure()
         run: |
-          echo "::error title=TypeCheck failed::$(cat /tmp/typecheck.log 2>/dev/null | head -60)"
+          echo '## TypeCheck failure' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/typecheck.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
         shell: bash
 
   format:
@@ -98,12 +101,16 @@ jobs:
         shell: bash
         env:
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
+          DATABASE_RESTRICTED_URL: postgresql://user:pass@localhost:5432/db
           NODE_ENV: test
 
-      - name: Annotate test errors
+      - name: Surface test errors
         if: failure()
         run: |
-          echo "::error title=Tests failed::$(cat /tmp/test.log 2>/dev/null | head -60)"
+          echo '## Test failure' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/test.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
         shell: bash
 
   build:
