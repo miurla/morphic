@@ -6,7 +6,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
  * Architecture: Next.js App Router + React PWA → Capacitor → iOS / Android
  *
  * The native WebView loads the hosted Morphic app via server.url.
- * webDir ('out') is the target for future static export in Phase B.
+ * webDir ('capacitor-shell') is a committed placeholder; see docs/NATIVE_RUNTIME_ARCHITECTURE.md.
  *
  * SECURITY NOTES (see docs/NATIVE_SAFETY.md):
  * - loggingBehavior is 'none' — never enable in production builds
@@ -22,9 +22,10 @@ const config: CapacitorConfig = {
   appId: 'social.morphic.app',
   appName: 'Morphic',
 
-  // Points to built static assets (needed by Capacitor; used in Phase B static export).
-  // In hosted-shell mode (server.url set), this directory is not served locally.
-  webDir: 'out',
+  // Committed placeholder shell directory — satisfies Capacitor's webDir requirement.
+  // In hosted-shell mode (server.url set), this directory is not served to users.
+  // See capacitor-shell/index.html for details.
+  webDir: 'capacitor-shell',
 
   server: {
     // Native WebView loads the hosted production app.

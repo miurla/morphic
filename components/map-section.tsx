@@ -2,16 +2,9 @@
 
 import React from 'react'
 
-import {
-  Clock,
-  ExternalLink,
-  Map,
-  MapPin,
-  Navigation,
-  Ruler
-} from 'lucide-react'
-
 import { MapDirections, MapPlace } from '@/lib/types/map'
+
+import { NativeIcon } from '@/components/native/native-icon'
 
 import {
   Collapsible,
@@ -95,7 +88,7 @@ function AppleMapsLink({
       rel="noopener noreferrer"
       className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
     >
-      <ExternalLink className="w-4 h-4" />
+      <NativeIcon name="externalLink" className="w-4 h-4" />
       {label}
     </a>
   )
@@ -113,7 +106,10 @@ function PlacesList({ places }: { places: MapPlace[] }) {
           className="p-4 border rounded-xl bg-card text-card-foreground shadow-sm flex flex-col gap-1.5"
         >
           <div className="flex items-start gap-2">
-            <MapPin className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+            <NativeIcon
+              name="mapPin"
+              className="w-4 h-4 mt-0.5 text-primary flex-shrink-0"
+            />
             <div>
               <h4 className="font-semibold text-sm">{place.name}</h4>
               <p className="text-xs text-muted-foreground leading-snug">
@@ -138,7 +134,7 @@ function PlacesList({ places }: { places: MapPlace[] }) {
               rel="noopener noreferrer"
               className="text-xs ml-6 text-primary hover:underline inline-flex items-center gap-1"
             >
-              <ExternalLink className="w-3 h-3" />
+              <NativeIcon name="externalLink" className="w-3 h-3" />
               Website
             </a>
           )}
@@ -154,11 +150,11 @@ function DirectionsPanel({ directions }: { directions: MapDirections }) {
       {/* Summary bar */}
       <div className="flex items-center gap-6 p-3 rounded-xl border bg-muted/40">
         <div className="flex items-center gap-2">
-          <Ruler className="w-4 h-4 text-primary" />
+          <NativeIcon name="ruler" className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">{directions.distanceText}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-primary" />
+          <NativeIcon name="clock" className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">{directions.durationText}</span>
         </div>
       </div>
@@ -212,9 +208,12 @@ export function MapSection({
           <div className="flex items-center gap-2 cursor-pointer w-fit">
             <div className="p-2 bg-primary/10 rounded-full">
               {isDirections ? (
-                <Navigation className="w-4 h-4 text-primary" />
+                <NativeIcon
+                  name="navigation"
+                  className="w-4 h-4 text-primary"
+                />
               ) : (
-                <Map className="w-4 h-4 text-primary" />
+                <NativeIcon name="map" className="w-4 h-4 text-primary" />
               )}
             </div>
             <div className="flex flex-col">

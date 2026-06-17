@@ -16,7 +16,8 @@
     "test": "NODE_ENV=test vitest run",
     "test:watch": "vitest --watch",
     "chat": "bun run scripts/chat-cli.ts",
-    "cap:sync": "cap sync",
+    "cap:verify": "bun run scripts/native/verify-capacitor-config.ts",
+    "cap:sync": "bun run cap:verify && cap sync",
     "cap:ios": "cap open ios",
     "cap:android": "cap open android"
   },

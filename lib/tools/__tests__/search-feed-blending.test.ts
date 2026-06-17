@@ -39,6 +39,25 @@ vi.mock('next/headers', () => ({
   )
 }))
 
+vi.mock('@/lib/auth/get-current-user', () => ({
+  getCurrentUserId: vi.fn(() => Promise.resolve(null))
+}))
+
+vi.mock('@/lib/entities/knowledge-graph', () => ({
+  enrichSearchResultsWithKnowledgeGraph: vi.fn((results: unknown) =>
+    Promise.resolve(results)
+  )
+}))
+
+vi.mock('@/lib/actions/source-preferences', () => ({
+  listSourcePreferences: vi.fn(() =>
+    Promise.resolve({ success: false, preferences: [] })
+  ),
+  listSourcePreferenceProfiles: vi.fn(() =>
+    Promise.resolve({ success: false, profiles: [] })
+  )
+}))
+
 vi.mock('../search/providers', () => ({
   DEFAULT_PROVIDER: 'qwant',
   createSearchProvider: vi.fn(() => ({

@@ -1,9 +1,9 @@
 'use client'
 
-import { BotMessageSquare, CheckCircle2 } from 'lucide-react'
-
 import type { ToolPart } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
+
+import { NativeIcon } from '@/components/native/native-icon'
 
 import { CollapsibleMessage } from './collapsible-message'
 import ProcessHeader from './process-header'
@@ -58,7 +58,10 @@ export function ResearchSubtaskSection({
       isLoading={isLoading}
       label={
         <span className="inline-flex items-center gap-2 min-w-0 overflow-hidden">
-          <BotMessageSquare className="size-4 text-muted-foreground shrink-0" />
+          <NativeIcon
+            name="bot"
+            className="size-4 text-muted-foreground shrink-0"
+          />
           <span className="truncate">
             {isDone
               ? tool.output?.task
@@ -71,7 +74,9 @@ export function ResearchSubtaskSection({
         </span>
       }
       meta={
-        isDone ? <CheckCircle2 className="size-4 text-green-500" /> : undefined
+        isDone ? (
+          <NativeIcon name="checkCircle" className="size-4 text-green-500" />
+        ) : undefined
       }
       ariaExpanded={isOpen}
     />

@@ -1,11 +1,11 @@
 'use client'
 
-import { AlertTriangle, ExternalLink } from 'lucide-react'
-
 import {
   assessExternalNavigation,
   type ExternalNavigationAssessment
 } from '@/lib/security/external-navigation'
+
+import { NativeIcon } from '@/components/native/native-icon'
 
 interface LeavingMorphicDialogProps {
   href: string
@@ -32,7 +32,7 @@ export function LeavingMorphicDialog({
   return (
     <div className="native-translucent-surface rounded-[var(--native-radius-sheet)] border p-5 shadow-lg">
       <div className="flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 shrink-0" />
+        <NativeIcon name="warning" className="h-5 w-5 shrink-0" />
         <div className="space-y-3">
           <div>
             <h2 className="font-semibold">Leaving Morphic</h2>
@@ -60,7 +60,7 @@ export function LeavingMorphicDialog({
               onClick={onContinue}
             >
               Continue
-              <ExternalLink className="h-4 w-4" />
+              <NativeIcon name="externalLink" className="h-4 w-4" />
             </button>
           </div>
         </div>
