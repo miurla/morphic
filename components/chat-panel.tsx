@@ -57,10 +57,10 @@ import { UploadedFileList } from './uploaded-file-list'
 
 // Constants for timing delays
 const INPUT_UPDATE_DELAY_MS = 10 // Delay to ensure input value is updated before form submission
-// Only paste events at/over this size (or line count) become a content card,
-// so short/normal pastes stay inline.
+// Only paste events at/over this size become a content card, so short/normal
+// pastes stay inline. Sized by chars, not lines — a line-count trigger carded
+// short, many-line pastes that read fine inline and were mostly reverted.
 const PASTE_CARD_MIN_CHARS = 400
-const PASTE_CARD_MIN_LINES = 6
 // A paste that is a single bare URL becomes a lightweight favicon chip.
 // L0 prototype: client-only, no fetch — the URL rides into the query at send
 // time so the existing fetch tool picks it up.
@@ -498,16 +498,12 @@ export function ChatPanel({
                 captureClient('url_card_created')
                 return
               }
-              const lineCount = text.split('\n').length
-              if (
-                text.length >= PASTE_CARD_MIN_CHARS ||
-                lineCount >= PASTE_CARD_MIN_LINES
-              ) {
+              if (text.length >= PASTE_CARD_MIN_CHARS) {
                 e.preventDefault()
                 setContentCards(prev => [...prev, text])
                 captureClient('content_card_created', {
                   chars: text.length,
-                  lines: lineCount
+                  lines: text.split('\n').length
                 })
               }
             }}
