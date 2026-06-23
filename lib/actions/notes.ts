@@ -5,6 +5,12 @@ import * as dbActions from '@/lib/db/actions'
 import type { Note } from '@/lib/db/schema'
 
 const MAX_TITLE_LENGTH = 120
+const DEFAULT_NOTES_PAGE_SIZE = 25
+
+export type NotesListCursor = {
+  updatedAt: string
+  id: string
+}
 
 function stripMarkdownTitle(value: string) {
   return value
@@ -81,9 +87,17 @@ export async function saveNote({
   }
 }
 
-export async function listNotes(): Promise<{
+export async function listNotes({
+  limit = DEFAULT_NOTES_PAGE_SIZE,
+  cursor
+}: {
+  limit?: number
+  cursor?: NotesListCursor | null
+} = {}): Promise<{
   success: boolean
   notes?: Note[]
+  nextCursor?: NotesListCursor | null
+  hasMore?: boolean
   error?: string
 }> {
   const { userId, error } = await requireNoteUserId()
@@ -96,11 +110,25 @@ export async function listNotes(): Promise<{
   }
 
   try {
-    const notes = await dbActions.getNotes(userId)
-    return { success: true, notes }
+    const page = await dbActions.getNotes(userId, {
+      limit,
+      cursor: cursor ?? undefined
+    })
+    return {
+      success: true,
+      notes: page.notes,
+      nextCursor: page.nextCursor,
+      hasMore: page.hasMore
+    }
   } catch (error) {
     console.error('Error listing notes:', error)
-    return { success: false, notes: [], error: 'Failed to load notes.' }
+    return {
+      success: false,
+      notes: [],
+      nextCursor: null,
+      hasMore: false,
+      error: 'Failed to load notes.'
+    }
   }
 }
 

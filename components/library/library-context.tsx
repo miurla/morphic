@@ -12,8 +12,15 @@ import type { Note } from '@/lib/db/schema'
 
 import { useSidebar } from '../ui/sidebar'
 
+type NotesListCursor = {
+  updatedAt: string
+  id: string
+}
+
 type NotesCache = {
   notes: Note[]
+  nextCursor: NotesListCursor | null
+  hasMore: boolean
   updatedAt: number
 }
 
@@ -24,7 +31,16 @@ type LibraryContextValue = {
   openLibrary: () => void
   closeLibrary: () => void
   toggleLibrary: () => void
-  replaceNotesCache: (notes: Note[]) => void
+  replaceNotesCache: (page: {
+    notes: Note[]
+    nextCursor: NotesListCursor | null
+    hasMore: boolean
+  }) => void
+  appendNotesCache: (page: {
+    notes: Note[]
+    nextCursor: NotesListCursor | null
+    hasMore: boolean
+  }) => void
   upsertCachedNote: (note: Note) => void
   removeCachedNote: (noteId: string) => void
   refreshLibrary: () => void
@@ -51,15 +67,51 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       return !open
     })
   }, [setSidebarOpen])
-  const replaceNotesCache = useCallback((notes: Note[]) => {
-    setNotesCache({ notes, updatedAt: Date.now() })
-  }, [])
+  const replaceNotesCache = useCallback(
+    (page: {
+      notes: Note[]
+      nextCursor: NotesListCursor | null
+      hasMore: boolean
+    }) => {
+      setNotesCache({ ...page, updatedAt: Date.now() })
+    },
+    []
+  )
+  const appendNotesCache = useCallback(
+    (page: {
+      notes: Note[]
+      nextCursor: NotesListCursor | null
+      hasMore: boolean
+    }) => {
+      setNotesCache(cache => {
+        if (!cache) {
+          return { ...page, updatedAt: Date.now() }
+        }
+
+        const existingIds = new Set(cache.notes.map(note => note.id))
+        const mergedNotes = [
+          ...cache.notes,
+          ...page.notes.filter(note => !existingIds.has(note.id))
+        ]
+
+        return {
+          notes: mergedNotes,
+          nextCursor: page.nextCursor,
+          hasMore: page.hasMore,
+          updatedAt: Date.now()
+        }
+      })
+    },
+    []
+  )
   const upsertCachedNote = useCallback((note: Note) => {
     setNotesCache(cache => {
       if (!cache) return cache
 
       return {
         notes: [note, ...cache.notes.filter(item => item.id !== note.id)],
+        nextCursor: cache.nextCursor,
+        hasMore: cache.hasMore,
         updatedAt: Date.now()
       }
     })
@@ -70,6 +122,8 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
 
       return {
         notes: cache.notes.filter(note => note.id !== noteId),
+        nextCursor: cache.nextCursor,
+        hasMore: cache.hasMore,
         updatedAt: Date.now()
       }
     })
@@ -87,12 +141,14 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       closeLibrary,
       toggleLibrary,
       replaceNotesCache,
+      appendNotesCache,
       upsertCachedNote,
       removeCachedNote,
       refreshLibrary
     }),
     [
       closeLibrary,
+      appendNotesCache,
       isOpen,
       notesCache,
       openLibrary,

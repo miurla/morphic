@@ -27,7 +27,11 @@ describe('Note Actions', () => {
     process.env.ENABLE_AUTH = 'true'
     vi.mocked(getCurrentUserId).mockResolvedValue('user-1')
     vi.mocked(dbActions.createNote).mockResolvedValue(note)
-    vi.mocked(dbActions.getNotes).mockResolvedValue([note])
+    vi.mocked(dbActions.getNotes).mockResolvedValue({
+      notes: [note],
+      nextCursor: null,
+      hasMore: false
+    })
     vi.mocked(dbActions.getNote).mockResolvedValue(note)
     vi.mocked(dbActions.deleteNote).mockResolvedValue({ success: true })
   })
@@ -75,8 +79,30 @@ describe('Note Actions', () => {
   it('lists current user notes', async () => {
     const result = await listNotes()
 
-    expect(result).toEqual({ success: true, notes: [note] })
-    expect(dbActions.getNotes).toHaveBeenCalledWith('user-1')
+    expect(result).toEqual({
+      success: true,
+      notes: [note],
+      nextCursor: null,
+      hasMore: false
+    })
+    expect(dbActions.getNotes).toHaveBeenCalledWith('user-1', {
+      limit: 25,
+      cursor: undefined
+    })
+  })
+
+  it('lists current user notes from a cursor', async () => {
+    const cursor = {
+      updatedAt: '2026-06-17T00:00:00.000Z',
+      id: 'note-1'
+    }
+
+    await listNotes({ limit: 10, cursor })
+
+    expect(dbActions.getNotes).toHaveBeenCalledWith('user-1', {
+      limit: 10,
+      cursor
+    })
   })
 
   it('loads a current user note', async () => {

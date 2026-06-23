@@ -1,6 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition
+} from 'react'
 
 import {
   IconArrowLeft as ArrowLeft,
@@ -44,6 +51,7 @@ import { MarkdownMessage } from '@/components/message'
 import { useLibrary } from './library-context'
 
 const LIBRARY_CACHE_TTL_MS = 60_000
+const LIBRARY_PAGE_SIZE = 25
 
 function formatNoteDate(value: Date | string) {
   const date = value instanceof Date ? value : new Date(value)
@@ -144,14 +152,18 @@ export function LibraryPanel() {
     notesCache,
     refreshKey,
     replaceNotesCache,
+    appendNotesCache,
     removeCachedNote
   } = useLibrary()
   const [selectedNote, setSelectedNote] = useState<Note | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Note | null>(null)
   const [hasLoadAttempted, setHasLoadAttempted] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [isDeleting, startDeleteTransition] = useTransition()
   const lastFetchedRefreshKeyRef = useRef<number | null>(null)
   const previousIsOpenRef = useRef(false)
+  const listScrollRef = useRef<HTMLDivElement | null>(null)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const justOpened = isOpen && !previousIsOpenRef.current
@@ -181,7 +193,7 @@ export function LibraryPanel() {
 
     const loadReason = !hasCache ? 'cold' : isRefreshStale ? 'refresh' : 'ttl'
     let cancelled = false
-    listNotes().then(result => {
+    listNotes({ limit: LIBRARY_PAGE_SIZE }).then(result => {
       if (cancelled) return
 
       setHasLoadAttempted(true)
@@ -201,14 +213,19 @@ export function LibraryPanel() {
         source: 'network',
         reason: loadReason,
         noteCount: nextNotes.length,
+        hasMore: Boolean(result.hasMore),
         isEmpty: nextNotes.length === 0
       })
-      replaceNotesCache(nextNotes)
+      replaceNotesCache({
+        notes: nextNotes,
+        nextCursor: result.nextCursor ?? null,
+        hasMore: Boolean(result.hasMore)
+      })
       lastFetchedRefreshKeyRef.current = refreshKey
       setSelectedNote(current => {
         if (!current) return current
 
-        return nextNotes.find(note => note.id === current.id) ?? null
+        return nextNotes.find(note => note.id === current.id) ?? current
       })
     })
 
@@ -216,6 +233,67 @@ export function LibraryPanel() {
       cancelled = true
     }
   }, [isOpen, notesCache, refreshKey, replaceNotesCache])
+
+  const handleLoadMore = useCallback(async () => {
+    if (!notesCache?.hasMore || !notesCache.nextCursor || isLoadingMore) return
+
+    setIsLoadingMore(true)
+    try {
+      const result = await listNotes({
+        limit: LIBRARY_PAGE_SIZE,
+        cursor: notesCache.nextCursor
+      })
+
+      if (!result.success) {
+        captureClient('library_list_load_failed', {
+          source: 'network',
+          reason: 'load_more',
+          error: result.error ?? 'unknown'
+        })
+        toast.error(result.error ?? 'Failed to load library')
+        return
+      }
+
+      const nextNotes = result.notes ?? []
+      appendNotesCache({
+        notes: nextNotes,
+        nextCursor: result.nextCursor ?? null,
+        hasMore: Boolean(result.hasMore)
+      })
+      captureClient('library_list_loaded', {
+        source: 'network',
+        reason: 'load_more',
+        noteCount: nextNotes.length,
+        hasMore: Boolean(result.hasMore),
+        isEmpty: nextNotes.length === 0
+      })
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [appendNotesCache, isLoadingMore, notesCache])
+
+  useEffect(() => {
+    if (!isOpen || selectedNote || !notesCache?.hasMore || isLoadingMore) return
+
+    const sentinel = loadMoreRef.current
+    const scrollRoot = listScrollRef.current
+    if (!sentinel || !scrollRoot) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0]?.isIntersecting) {
+          void handleLoadMore()
+        }
+      },
+      { root: scrollRoot, rootMargin: '160px 0px' }
+    )
+
+    observer.observe(sentinel)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [handleLoadMore, isLoadingMore, isOpen, notesCache?.hasMore, selectedNote])
 
   const visibleNotes = notesCache?.notes ?? []
   const isLoading = !notesCache && !hasLoadAttempted
@@ -349,6 +427,7 @@ export function LibraryPanel() {
             </div>
           ) : (
             <div
+              ref={listScrollRef}
               data-vaul-no-drag
               className="min-h-0 flex-1 overflow-y-auto p-2"
             >
@@ -396,6 +475,14 @@ export function LibraryPanel() {
                       </div>
                     )
                   })}
+                  {notesCache?.hasMore && (
+                    <div
+                      ref={loadMoreRef}
+                      className="flex h-10 items-center justify-center text-muted-foreground"
+                    >
+                      {isLoadingMore && <Spinner />}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
