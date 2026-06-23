@@ -1,6 +1,6 @@
 'use server'
 
-import { and, asc, desc, eq, gt, inArray } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, lt, or } from 'drizzle-orm'
 
 import type { UIMessage } from '@/lib/types/ai'
 import type { PersistableUIMessage } from '@/lib/types/message-persistence'
@@ -372,13 +372,59 @@ export async function createNote(
   })
 }
 
-export async function getNotes(userId: string): Promise<Note[]> {
+export type NotesPageCursor = {
+  updatedAt: string
+  id: string
+}
+
+export async function getNotes(
+  userId: string,
+  {
+    limit = 25,
+    cursor
+  }: {
+    limit?: number
+    cursor?: NotesPageCursor
+  } = {}
+): Promise<{
+  notes: Note[]
+  nextCursor: NotesPageCursor | null
+  hasMore: boolean
+}> {
   return withRLS(userId, async tx => {
-    return tx
+    const cursorDate = cursor ? new Date(cursor.updatedAt) : null
+    const pageLimit = Math.max(1, Math.min(limit, 50))
+    const results = await tx
       .select()
       .from(notes)
-      .where(eq(notes.userId, userId))
-      .orderBy(desc(notes.updatedAt))
+      .where(
+        and(
+          eq(notes.userId, userId),
+          cursor && cursorDate && !Number.isNaN(cursorDate.getTime())
+            ? or(
+                lt(notes.updatedAt, cursorDate),
+                and(eq(notes.updatedAt, cursorDate), lt(notes.id, cursor.id))
+              )
+            : undefined
+        )
+      )
+      .orderBy(desc(notes.updatedAt), desc(notes.id))
+      .limit(pageLimit + 1)
+
+    const pageNotes = results.slice(0, pageLimit)
+    const lastNote = pageNotes[pageNotes.length - 1]
+
+    return {
+      notes: pageNotes,
+      nextCursor:
+        results.length > pageLimit && lastNote
+          ? {
+              updatedAt: lastNote.updatedAt.toISOString(),
+              id: lastNote.id
+            }
+          : null,
+      hasMore: results.length > pageLimit
+    }
   })
 }
 
