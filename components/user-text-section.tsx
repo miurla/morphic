@@ -40,6 +40,7 @@ interface UserTextSectionProps {
   content: string
   // Pasted attachments (new data parts), placed below the instruction.
   pastedTexts?: string[]
+  quotedContexts?: string[]
   urls?: string[]
   messageId?: string
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
@@ -48,6 +49,7 @@ interface UserTextSectionProps {
 export const UserTextSection: React.FC<UserTextSectionProps> = ({
   content,
   pastedTexts = [],
+  quotedContexts = [],
   urls = [],
   messageId,
   onUpdateMessage
@@ -177,10 +179,19 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
   }
 
   // Pasted attachments (cards + URL chips), placed below the instruction.
-  const attachments = (cards.length > 0 || urls.length > 0) && (
+  const attachments = (cards.length > 0 ||
+    quotedContexts.length > 0 ||
+    urls.length > 0) && (
     <div className="mt-2 flex flex-col items-start gap-1.5">
       {cards.map((c, i) => (
         <PastedContentCard key={`card-${i}`} text={c} />
+      ))}
+      {quotedContexts.map((c, i) => (
+        <PastedContentCard
+          key={`quoted-context-${i}`}
+          text={c}
+          label="Quoted context"
+        />
       ))}
       {urls.map((u, i) => (
         <UrlChip key={`url-${i}`} url={u} />

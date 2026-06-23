@@ -69,6 +69,8 @@ describe('ChatPanel', () => {
         scrollContainerRef={React.createRef<HTMLDivElement>()}
         uploadedFiles={[]}
         setUploadedFiles={vi.fn()}
+        quotedContexts={[]}
+        setQuotedContexts={vi.fn()}
         isGuest
         isCloudDeployment
         onAdaptiveModeAuthRequired={onAdaptiveModeAuthRequired}

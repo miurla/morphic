@@ -52,6 +52,14 @@ export async function deleteAccount(): Promise<{
       }
     }
 
+    const deleteNotesResult = await dbActions.deleteUserNotes(user.id)
+    if (!deleteNotesResult.success) {
+      return {
+        success: false,
+        error: deleteNotesResult.error ?? 'Failed to delete account data'
+      }
+    }
+
     const anonymizeFeedbackResult = await dbActions.anonymizeUserFeedback(
       user.id
     )

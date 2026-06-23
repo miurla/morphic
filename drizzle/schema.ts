@@ -204,6 +204,55 @@ export const parts = pgTable(
   ]
 )
 
+export const notes = pgTable(
+  'notes',
+  {
+    id: varchar({ length: 191 }).primaryKey().notNull(),
+    userId: varchar('user_id', { length: 255 }).notNull(),
+    chatId: varchar('chat_id', { length: 191 }),
+    sourceMessageId: varchar('source_message_id', { length: 191 }),
+    title: text().notNull(),
+    content: text().notNull(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
+      .defaultNow()
+      .notNull()
+  },
+  table => [
+    index('notes_chat_id_idx').using(
+      'btree',
+      table.chatId.asc().nullsLast().op('text_ops')
+    ),
+    index('notes_source_message_id_idx').using(
+      'btree',
+      table.sourceMessageId.asc().nullsLast().op('text_ops')
+    ),
+    index('notes_user_id_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops')
+    ),
+    index('notes_user_id_updated_at_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops'),
+      table.updatedAt.desc().nullsLast().op('timestamp_ops')
+    ),
+    foreignKey({
+      columns: [table.chatId],
+      foreignColumns: [chats.id],
+      name: 'notes_chat_id_chats_id_fk'
+    }).onDelete('set null'),
+    pgPolicy('users_manage_own_notes', {
+      as: 'permissive',
+      for: 'all',
+      to: ['public'],
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    })
+  ]
+)
+
 export const feedback = pgTable(
   'feedback',
   {

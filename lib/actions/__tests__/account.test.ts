@@ -28,6 +28,7 @@ describe('Account Actions', () => {
 
     vi.mocked(getCurrentUser).mockResolvedValue(user as any)
     vi.mocked(dbActions.deleteUserChats).mockResolvedValue({ success: true })
+    vi.mocked(dbActions.deleteUserNotes).mockResolvedValue({ success: true })
     vi.mocked(dbActions.anonymizeUserFeedback).mockResolvedValue({
       success: true
     })
@@ -91,6 +92,7 @@ describe('Account Actions', () => {
 
     expect(result).toEqual({ success: true })
     expect(dbActions.deleteUserChats).toHaveBeenCalledWith(user.id)
+    expect(dbActions.deleteUserNotes).toHaveBeenCalledWith(user.id)
     expect(dbActions.anonymizeUserFeedback).toHaveBeenCalledWith(user.id)
     expect(deleteUserObjects).toHaveBeenCalledWith(user.id)
     expect(deleteUser).toHaveBeenCalledWith(user.id)
@@ -109,6 +111,23 @@ describe('Account Actions', () => {
     expect(result).toEqual({
       success: false,
       error: 'Failed to delete user chats'
+    })
+    expect(deleteUserObjects).not.toHaveBeenCalled()
+    expect(deleteUser).not.toHaveBeenCalled()
+    expect(trackAccountDeleted).not.toHaveBeenCalled()
+  })
+
+  it('stops before storage and auth deletion when notes deletion fails', async () => {
+    vi.mocked(dbActions.deleteUserNotes).mockResolvedValue({
+      success: false,
+      error: 'Failed to delete user notes'
+    })
+
+    const result = await deleteAccount()
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Failed to delete user notes'
     })
     expect(deleteUserObjects).not.toHaveBeenCalled()
     expect(deleteUser).not.toHaveBeenCalled()
@@ -142,6 +161,7 @@ describe('Account Actions', () => {
       error: 'Storage error'
     })
     expect(dbActions.deleteUserChats).toHaveBeenCalledWith(user.id)
+    expect(dbActions.deleteUserNotes).toHaveBeenCalledWith(user.id)
     expect(deleteUser).not.toHaveBeenCalled()
     expect(trackAccountDeleted).not.toHaveBeenCalled()
   })

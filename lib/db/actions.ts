@@ -12,8 +12,8 @@ import {
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
 
-import type { Chat, Message } from './schema'
-import { chats, feedback, generateId, messages, parts } from './schema'
+import type { Chat, Message, NewNote, Note } from './schema'
+import { chats, feedback, generateId, messages, notes, parts } from './schema'
 import { withOptionalRLS, withRLS } from './with-rls'
 import { db } from '.'
 
@@ -359,6 +359,78 @@ export async function deleteUserChats(
   } catch (error) {
     console.error('Error deleting user chats:', error)
     return { success: false, error: 'Failed to delete user chats' }
+  }
+}
+
+export async function createNote(
+  note: Omit<NewNote, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<Note> {
+  return withRLS(note.userId, async tx => {
+    const [createdNote] = await tx.insert(notes).values(note).returning()
+
+    return createdNote
+  })
+}
+
+export async function getNotes(userId: string): Promise<Note[]> {
+  return withRLS(userId, async tx => {
+    return tx
+      .select()
+      .from(notes)
+      .where(eq(notes.userId, userId))
+      .orderBy(desc(notes.updatedAt))
+  })
+}
+
+export async function getNote(
+  noteId: string,
+  userId: string
+): Promise<Note | null> {
+  return withRLS(userId, async tx => {
+    const [note] = await tx
+      .select()
+      .from(notes)
+      .where(and(eq(notes.id, noteId), eq(notes.userId, userId)))
+      .limit(1)
+
+    return note ?? null
+  })
+}
+
+export async function deleteNote(
+  noteId: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    return withRLS(userId, async tx => {
+      const [deletedNote] = await tx
+        .delete(notes)
+        .where(and(eq(notes.id, noteId), eq(notes.userId, userId)))
+        .returning({ id: notes.id })
+
+      if (!deletedNote) {
+        return { success: false, error: 'Note not found' }
+      }
+
+      return { success: true }
+    })
+  } catch (error) {
+    console.error('Error deleting note:', error)
+    return { success: false, error: 'Failed to delete note' }
+  }
+}
+
+export async function deleteUserNotes(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    return withRLS(userId, async tx => {
+      await tx.delete(notes).where(eq(notes.userId, userId))
+      return { success: true }
+    })
+  } catch (error) {
+    console.error('Error deleting user notes:', error)
+    return { success: false, error: 'Failed to delete user notes' }
   }
 }
 

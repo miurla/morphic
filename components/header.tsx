@@ -5,11 +5,14 @@ import React, { useState } from 'react'
 import { usePathname } from 'next/navigation'
 
 import { User } from '@supabase/supabase-js'
+import { IconLibrary as LibraryIcon } from '@tabler/icons-react'
 
+import { captureClient } from '@/lib/analytics/posthog-client'
 import { cn } from '@/lib/utils'
 
 import { useSidebar } from '@/components/ui/sidebar'
 
+import { useLibrary } from './library/library-context'
 import { Button } from './ui/button'
 import { FeedbackModal } from './feedback-modal'
 // import { Button } from './ui/button' // No longer needed directly here for Sign In button
@@ -22,6 +25,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ user }) => {
   const { open } = useSidebar()
+  const { isOpen: libraryOpen, toggleLibrary } = useLibrary()
   const pathname = usePathname()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const isRootPage = pathname === '/'
@@ -46,6 +50,23 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
               onClick={() => setFeedbackOpen(true)}
             >
               Feedback
+            </Button>
+          )}
+          {user && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => {
+                toggleLibrary()
+                captureClient(
+                  libraryOpen ? 'library_closed' : 'library_opened',
+                  { source: 'header' }
+                )
+              }}
+            >
+              <LibraryIcon className="size-4" />
+              Library
             </Button>
           )}
           {user ? <UserMenu user={user} /> : <GuestMenu />}
