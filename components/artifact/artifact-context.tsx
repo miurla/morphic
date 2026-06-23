@@ -11,6 +11,7 @@ import {
 
 import type { Part } from '@/lib/types/ai'
 
+import { useLibrary } from '../library/library-context'
 import { useSidebar } from '../ui/sidebar'
 
 // Animation duration should match the inspector panel exit transition.
@@ -60,6 +61,7 @@ const ArtifactContext = createContext<ArtifactContextValue | undefined>(
 export function ArtifactProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(artifactReducer, initialState)
   const { setOpen, open: sidebarOpen } = useSidebar()
+  const { isOpen: libraryOpen, closeLibrary } = useLibrary()
 
   const close = useCallback(() => {
     dispatch({ type: 'CLOSE' })
@@ -74,12 +76,22 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
     if (sidebarOpen && state.isOpen) {
       close()
     }
-  }, [sidebarOpen, state.isOpen, close])
+    if (sidebarOpen && libraryOpen) {
+      closeLibrary()
+    }
+  }, [sidebarOpen, state.isOpen, libraryOpen, close, closeLibrary])
 
   const open = (part: Part) => {
+    closeLibrary()
     dispatch({ type: 'OPEN', payload: part })
     setOpen(false)
   }
+
+  useEffect(() => {
+    if (libraryOpen && state.isOpen) {
+      close()
+    }
+  }, [libraryOpen, state.isOpen, close])
 
   return (
     <ArtifactContext.Provider value={{ state, open, close }}>

@@ -87,6 +87,8 @@ interface ChatPanelProps {
   scrollContainerRef: React.RefObject<HTMLDivElement>
   uploadedFiles: UploadedFile[]
   setUploadedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>
+  quotedContexts: string[]
+  setQuotedContexts: React.Dispatch<React.SetStateAction<string[]>>
   /** Callback to reset chatId when starting a new chat */
   onNewChat?: () => void
   /** Whether the current session is guest */
@@ -113,6 +115,8 @@ export function ChatPanel({
   showScrollToBottomButton,
   uploadedFiles,
   setUploadedFiles,
+  quotedContexts,
+  setQuotedContexts,
   scrollContainerRef,
   onNewChat,
   isGuest = false,
@@ -134,6 +138,12 @@ export function ChatPanel({
   const [urlCards, setUrlCards] = useState<string[]>([])
   const { close: closeArtifact } = useArtifact()
   const isLoading = status === 'submitted' || status === 'streaming'
+  const hasPendingInput =
+    input.trim().length > 0 ||
+    contentCards.length > 0 ||
+    quotedContexts.length > 0 ||
+    urlCards.length > 0 ||
+    uploadedFiles.some(file => file.status === 'uploaded')
   const hasAvailableModels =
     isCloudDeployment || modelSelectorData?.hasAvailableModels !== false
   const searchMode = useSyncExternalStore(
@@ -273,7 +283,11 @@ export function ChatPanel({
           // Pasted attachments (content cards / URL chips) are sent as
           // structured data parts alongside the instruction text part — no
           // in-band markers. The server maps them to the model prompt.
-          if (contentCards.length > 0 || urlCards.length > 0) {
+          if (
+            contentCards.length > 0 ||
+            quotedContexts.length > 0 ||
+            urlCards.length > 0
+          ) {
             e.preventDefault()
             if (adaptiveModeSubmitBlocked) {
               onAdaptiveModeAuthRequired?.()
@@ -287,6 +301,10 @@ export function ChatPanel({
             const parts = [
               ...contentCards.map(text => ({
                 type: 'data-pastedContent',
+                data: { text }
+              })),
+              ...quotedContexts.map(text => ({
+                type: 'data-quotedContext',
                 data: { text }
               })),
               ...urlCards.map(url => ({
@@ -313,6 +331,7 @@ export function ChatPanel({
               })
             }
             setContentCards([])
+            setQuotedContexts([])
             setUrlCards([])
             setUploadedFiles([])
             handleInputChange({
@@ -434,6 +453,38 @@ export function ChatPanel({
               ))}
             </div>
           )}
+          {quotedContexts.length > 0 && (
+            <div className="flex flex-col gap-1.5 px-3 pt-3">
+              {quotedContexts.map((card, i) => (
+                <div
+                  key={i}
+                  className="relative rounded-xl border border-input bg-background px-3 py-2"
+                >
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <FileText className="size-3.5 shrink-0" />
+                      Quoted context · {card.length.toLocaleString()} chars
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Remove quoted context"
+                      className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      onClick={() => {
+                        setQuotedContexts(prev =>
+                          prev.filter((_, j) => j !== i)
+                        )
+                      }}
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                  <p className="line-clamp-2 whitespace-pre-wrap break-words text-xs text-muted-foreground/80">
+                    {card}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
           {urlCards.length > 0 && (
             <div className="flex flex-wrap gap-1.5 px-3 pt-3">
               {urlCards.map((url, i) => {
@@ -526,7 +577,7 @@ export function ChatPanel({
 
               // Plain Enter (no modifiers) → submit
               if (!e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
-                if (input.trim().length === 0) {
+                if (!hasPendingInput) {
                   e.preventDefault()
                   return
                 }
@@ -639,7 +690,7 @@ export function ChatPanel({
                   'size-8 md:size-10 rounded-full'
                 )}
                 disabled={
-                  (input.length === 0 && !isLoading) || !hasAvailableModels
+                  (!hasPendingInput && !isLoading) || !hasAvailableModels
                 }
                 onClick={isLoading ? stop : undefined}
                 title={

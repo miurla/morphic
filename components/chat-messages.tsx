@@ -26,12 +26,14 @@ interface ChatMessagesProps {
   status: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   chatId?: string
   isGuest?: boolean
+  isCloudDeployment?: boolean
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for the scroll container */
   scrollContainerRef: React.RefObject<HTMLDivElement>
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
   error?: Error | string | null | undefined
+  onQuoteContext?: (text: string) => void
 }
 
 const DESKTOP_LATEST_SECTION_OFFSET = 196
@@ -43,11 +45,13 @@ export function ChatMessages({
   status,
   chatId,
   isGuest = false,
+  isCloudDeployment = false,
   addToolResult,
   scrollContainerRef,
   onUpdateMessage,
   reload,
-  error
+  error,
+  onQuoteContext
 }: ChatMessagesProps) {
   // Track user-modified states (when user explicitly opens/closes)
   const [userModifiedStates, setUserModifiedStates] = useState<
@@ -222,11 +226,13 @@ export function ChatMessages({
                 onOpenChange={handleOpenChange}
                 chatId={chatId}
                 isGuest={isGuest}
+                isCloudDeployment={isCloudDeployment}
                 status={status}
                 addToolResult={addToolResult}
                 onUpdateMessage={onUpdateMessage}
                 reload={reload}
                 citationMaps={allCitationMaps}
+                onQuoteContext={onQuoteContext}
               />
             </div>
 
@@ -251,12 +257,14 @@ export function ChatMessages({
                     onOpenChange={handleOpenChange}
                     chatId={chatId}
                     isGuest={isGuest}
+                    isCloudDeployment={isCloudDeployment}
                     status={status}
                     addToolResult={addToolResult}
                     onUpdateMessage={onUpdateMessage}
                     reload={reload}
                     isLatestMessage={isLatestMessage}
                     citationMaps={allCitationMaps}
+                    onQuoteContext={onQuoteContext}
                   />
                 </div>
               )

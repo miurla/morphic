@@ -22,12 +22,14 @@ interface RenderMessageProps {
   onOpenChange: (id: string, open: boolean) => void
   chatId?: string
   isGuest?: boolean
+  isCloudDeployment?: boolean
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
   reload?: (messageId: string) => Promise<void | string | null | undefined>
   isLatestMessage?: boolean
   citationMaps?: Record<string, Record<number, SearchResultItem>>
+  onQuoteContext?: (text: string) => void
 }
 
 export function RenderMessage({
@@ -37,12 +39,14 @@ export function RenderMessage({
   onOpenChange,
   chatId,
   isGuest = false,
+  isCloudDeployment = false,
   status,
   addToolResult,
   onUpdateMessage,
   reload,
   isLatestMessage = false,
-  citationMaps = {}
+  citationMaps = {},
+  onQuoteContext
 }: RenderMessageProps) {
   const isNonEmptyTextPart = (part: any) =>
     part?.type === 'text' &&
@@ -56,6 +60,9 @@ export function RenderMessage({
     const files = parts.filter((part: any) => part.type === 'file')
     const pastedTexts = parts
       .filter((part: any) => part.type === 'data-pastedContent')
+      .map((part: any) => part.data?.text ?? '')
+    const quotedContexts = parts
+      .filter((part: any) => part.type === 'data-quotedContext')
       .map((part: any) => part.data?.text ?? '')
     const urls = parts
       .filter((part: any) => part.type === 'data-sourceUrl')
@@ -72,10 +79,14 @@ export function RenderMessage({
             }}
           />
         ))}
-        {(textPart || pastedTexts.length > 0 || urls.length > 0) && (
+        {(textPart ||
+          pastedTexts.length > 0 ||
+          quotedContexts.length > 0 ||
+          urls.length > 0) && (
           <UserTextSection
             content={textPart?.text ?? ''}
             pastedTexts={pastedTexts}
+            quotedContexts={quotedContexts}
             urls={urls}
             messageId={messageId}
             onUpdateMessage={onUpdateMessage}
@@ -156,12 +167,14 @@ export function RenderMessage({
           onOpenChange={open => onOpenChange(messageId, open)}
           chatId={chatId}
           isGuest={isGuest}
+          isCloudDeployment={isCloudDeployment}
           showActions={shouldShowActions}
           messageId={messageId}
           metadata={message.metadata as UIMessageMetadata | undefined}
           reload={reload}
           status={status}
           citationMaps={citationMaps}
+          onQuoteContext={onQuoteContext}
         />
       )
     } else if (part.type === 'reasoning' || part.type?.startsWith?.('tool-')) {

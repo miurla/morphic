@@ -16,6 +16,7 @@ import AppSidebar from '@/components/app-sidebar'
 import ArtifactRoot from '@/components/artifact/artifact-root'
 import Header from '@/components/header'
 import { KeyboardShortcutHandler } from '@/components/keyboard-shortcut-handler'
+import { LibraryProvider } from '@/components/library/library-context'
 import { PostHogProvider } from '@/components/posthog-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 
@@ -87,14 +88,16 @@ export default async function RootLayout({
           <PostHogProvider userId={user?.id ?? null}>
             <UserProvider hasUser={!!userId}>
               <SidebarProvider defaultOpen={false}>
-                {userId && <AppSidebar />}
-                <KeyboardShortcutHandler />
-                <div className="flex flex-col flex-1 min-w-0">
-                  <Header user={user} />
-                  <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
-                    <ArtifactRoot>{children}</ArtifactRoot>
-                  </main>
-                </div>
+                <LibraryProvider>
+                  {userId && <AppSidebar />}
+                  <KeyboardShortcutHandler />
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <Header user={user} />
+                    <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
+                      <ArtifactRoot>{children}</ArtifactRoot>
+                    </main>
+                  </div>
+                </LibraryProvider>
               </SidebarProvider>
             </UserProvider>
           </PostHogProvider>

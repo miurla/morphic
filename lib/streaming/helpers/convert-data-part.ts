@@ -25,6 +25,17 @@ export function convertDataPart(part: {
     }
   }
 
+  if (part.type === 'data-quotedContext') {
+    const data = part.data as { text?: unknown } | undefined
+    const text = typeof data?.text === 'string' ? data.text : ''
+    if (!text) return undefined
+    const nonce = randomUUID().slice(0, 8)
+    return {
+      type: 'text',
+      text: `[quoted-context ${nonce}]\n${text}\n[/quoted-context ${nonce}]`
+    }
+  }
+
   if (part.type === 'data-sourceUrl') {
     const data = part.data as { url?: unknown } | undefined
     const url = typeof data?.url === 'string' ? data.url : ''

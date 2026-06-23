@@ -9,6 +9,8 @@ import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 
 import { InspectorDrawer } from '@/components/inspector/inspector-drawer'
 import { InspectorPanel } from '@/components/inspector/inspector-panel'
+import { useLibrary } from '@/components/library/library-context'
+import { LibraryPanel } from '@/components/library/library-panel'
 
 import { useArtifact } from './artifact-context'
 
@@ -49,6 +51,9 @@ export function ChatArtifactContainer({
   const [isResizing, setIsResizing] = useState(false)
   const hasUser = useHasUser()
   const { open, isMobile: isMobileSidebar } = useSidebar()
+  const { isOpen: libraryOpen } = useLibrary()
+  const artifactOpen = state.isOpen && state.part
+  const panelOpen = Boolean(artifactOpen || libraryOpen)
 
   const setContainerRef = useCallback((node: HTMLDivElement | null) => {
     setContainerElement(node)
@@ -147,7 +152,7 @@ export function ChatArtifactContainer({
         <div className="flex-1 min-w-0 flex flex-col">{children}</div>
 
         {/* Resize Handle */}
-        {state.isOpen && state.part && (
+        {panelOpen && (
           <div
             className={cn(
               'w-1 mx-0.5 my-6 hover:bg-border transition-colors duration-200 cursor-col-resize select-none relative',
@@ -163,16 +168,20 @@ export function ChatArtifactContainer({
         <div
           className={cn(
             'bg-background overflow-hidden',
-            state.isOpen && state.part ? 'opacity-100' : 'w-0 opacity-0',
+            panelOpen ? 'opacity-100' : 'w-0 opacity-0',
             !isResizing &&
               'transition-[opacity,width] duration-[260ms] ease-[var(--motion-ease-in-out)]'
           )}
           style={{
-            width: state.isOpen && state.part ? `${width}px` : '0px'
+            width: panelOpen ? `${width}px` : '0px'
           }}
         >
           <div className="h-full" style={{ width: `${width}px` }}>
-            {state.isOpen && state.part && <InspectorPanel />}
+            {artifactOpen ? (
+              <InspectorPanel />
+            ) : libraryOpen ? (
+              <LibraryPanel />
+            ) : null}
           </div>
         </div>
       </div>

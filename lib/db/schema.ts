@@ -258,6 +258,48 @@ export const parts = pgTable(
 export type Part = InferSelectModel<typeof parts>
 export type NewPart = typeof parts.$inferInsert
 
+// Notes table
+export const notes = pgTable(
+  'notes',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    chatId: varchar('chat_id', { length: ID_LENGTH }).references(
+      () => chats.id,
+      { onDelete: 'set null' }
+    ),
+    sourceMessageId: varchar('source_message_id', {
+      length: ID_LENGTH
+    }),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('notes_user_id_idx').on(table.userId),
+    index('notes_user_id_updated_at_idx').on(
+      table.userId,
+      table.updatedAt.desc()
+    ),
+    index('notes_chat_id_idx').on(table.chatId),
+    index('notes_source_message_id_idx').on(table.sourceMessageId),
+
+    pgPolicy('users_manage_own_notes', {
+      as: 'permissive',
+      for: 'all',
+      to: 'public',
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    })
+  ]
+).enableRLS()
+
+export type Note = InferSelectModel<typeof notes>
+export type NewNote = typeof notes.$inferInsert
+
 // Feedback table
 export const feedback = pgTable(
   'feedback',

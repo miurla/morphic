@@ -76,6 +76,7 @@ export function Chat({
     // Clear other chat-related state that persists due to Next.js 16 component caching
     setInput('')
     setUploadedFiles([])
+    setQuotedContexts([])
     setErrorModal({
       open: false,
       type: 'general',
@@ -86,6 +87,7 @@ export function Chat({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [quotedContexts, setQuotedContexts] = useState<string[]>([])
   const [input, setInput] = useState('')
   const [errorModal, setErrorModal] = useState<{
     open: boolean
@@ -248,6 +250,16 @@ export function Chat({
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
   }
+
+  const handleQuoteContext = useCallback(
+    (text: string) => {
+      const trimmed = text.trim()
+      if (!trimmed) return
+
+      setQuotedContexts(prev => [...prev, trimmed])
+    },
+    [setQuotedContexts]
+  )
 
   // Convert messages array to sections array.
   // Deduplicate by message.id — @ai-sdk/react useChat can occasionally
@@ -530,6 +542,7 @@ export function Chat({
           status={status}
           chatId={chatId}
           isGuest={isGuest}
+          isCloudDeployment={isCloudDeployment}
           addToolResult={({
             toolCallId,
             result
@@ -570,6 +583,7 @@ export function Chat({
           onUpdateMessage={handleUpdateAndReloadMessage}
           reload={handleReloadFrom}
           error={error}
+          onQuoteContext={handleQuoteContext}
         />
         <ChatPanel
           chatId={chatId}
@@ -587,6 +601,8 @@ export function Chat({
           showScrollToBottomButton={!isAtBottom}
           uploadedFiles={uploadedFiles}
           setUploadedFiles={setUploadedFiles}
+          quotedContexts={quotedContexts}
+          setQuotedContexts={setQuotedContexts}
           scrollContainerRef={scrollContainerRef}
           onNewChat={handleNewChat}
           isGuest={isGuest}

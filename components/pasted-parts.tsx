@@ -10,7 +10,13 @@ import {
 
 // Collapsed card for a pasted text blob (a `data-pastedContent` part, or a
 // legacy `<user-content>` block in old messages).
-export function PastedContentCard({ text }: { text: string }) {
+export function PastedContentCard({
+  text,
+  label = 'Pasted content'
+}: {
+  text: string
+  label?: string
+}) {
   const [open, setOpen] = useState(false)
   return (
     <div>
@@ -20,7 +26,7 @@ export function PastedContentCard({ text }: { text: string }) {
         onClick={() => setOpen(o => !o)}
       >
         <FileText className="size-3.5 shrink-0" />
-        Pasted content · {text.length.toLocaleString()} chars
+        {label} · {text.length.toLocaleString()} chars
         {open ? (
           <ChevronUp className="size-3.5 shrink-0" />
         ) : (
