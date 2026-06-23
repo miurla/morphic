@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 
 import { UseChatHelpers } from '@ai-sdk/react'
@@ -80,19 +80,6 @@ export function MessageActions({
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const isLoading = status === 'submitted' || status === 'streaming'
   const showSaveButton = libraryAvailable && (!isGuest || isCloudDeployment)
-  const saveButtonShownRef = useRef(false)
-
-  useEffect(() => {
-    if (!visible || !showSaveButton || saveButtonShownRef.current) return
-
-    saveButtonShownRef.current = true
-    captureClient('note_save_button_shown', {
-      source: 'message_action',
-      chatId,
-      isGuest,
-      isCloudDeployment
-    })
-  }, [chatId, isCloudDeployment, isGuest, showSaveButton, visible])
 
   // Keep the element mounted during loading to preserve layout; otherwise skip rendering.
   if (!visible && !isLoading) {
