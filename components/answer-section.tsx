@@ -51,6 +51,7 @@ export type AnswerSectionProps = {
   citationMaps?: Record<string, Record<number, SearchResultItem>>
   isGuest?: boolean
   isCloudDeployment?: boolean
+  libraryAvailable?: boolean
   onQuoteContext?: (text: string) => void
 }
 
@@ -67,6 +68,7 @@ export function AnswerSection({
   citationMaps,
   isGuest = false,
   isCloudDeployment = false,
+  libraryAvailable = true,
   onQuoteContext
 }: AnswerSectionProps) {
   const contentRef = useRef<HTMLDivElement>(null)
@@ -81,7 +83,8 @@ export function AnswerSection({
   const { openLibrary, upsertCachedNote } = useLibrary()
   const enableShare =
     process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined && !isGuest
-  const showSelectionSaveButton = !isGuest || isCloudDeployment
+  const showSelectionSaveButton =
+    libraryAvailable && (!isGuest || isCloudDeployment)
   const showSelectionDeepDiveButton = Boolean(onQuoteContext)
 
   useEffect(() => {
@@ -316,6 +319,7 @@ export function AnswerSection({
             enableShare={enableShare}
             isGuest={isGuest}
             isCloudDeployment={isCloudDeployment}
+            libraryAvailable={libraryAvailable}
             reload={handleReload}
             status={status}
             visible={showActions}

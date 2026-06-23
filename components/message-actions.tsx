@@ -43,6 +43,7 @@ interface MessageActionsProps {
   enableShare?: boolean
   isGuest?: boolean
   isCloudDeployment?: boolean
+  libraryAvailable?: boolean
   className?: string
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   visible?: boolean
@@ -59,6 +60,7 @@ export function MessageActions({
   enableShare,
   isGuest = false,
   isCloudDeployment = false,
+  libraryAvailable = true,
   className,
   status,
   visible = true,
@@ -77,7 +79,7 @@ export function MessageActions({
 
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const isLoading = status === 'submitted' || status === 'streaming'
-  const showSaveButton = !isGuest || isCloudDeployment
+  const showSaveButton = libraryAvailable && (!isGuest || isCloudDeployment)
   const saveButtonShownRef = useRef(false)
 
   useEffect(() => {

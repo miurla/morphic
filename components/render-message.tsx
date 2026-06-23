@@ -23,6 +23,7 @@ interface RenderMessageProps {
   chatId?: string
   isGuest?: boolean
   isCloudDeployment?: boolean
+  libraryAvailable?: boolean
   status?: UseChatHelpers<UIMessage<unknown, UIDataTypes, UITools>>['status']
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
@@ -40,6 +41,7 @@ export function RenderMessage({
   chatId,
   isGuest = false,
   isCloudDeployment = false,
+  libraryAvailable = true,
   status,
   addToolResult,
   onUpdateMessage,
@@ -168,6 +170,7 @@ export function RenderMessage({
           chatId={chatId}
           isGuest={isGuest}
           isCloudDeployment={isCloudDeployment}
+          libraryAvailable={libraryAvailable}
           showActions={shouldShowActions}
           messageId={messageId}
           metadata={message.metadata as UIMessageMetadata | undefined}

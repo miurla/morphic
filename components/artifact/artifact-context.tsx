@@ -76,6 +76,8 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
     if (sidebarOpen && state.isOpen) {
       close()
     }
+    // LibraryProvider closes the sidebar before opening Library; this handles
+    // the inverse path when the sidebar is opened while Library is visible.
     if (sidebarOpen && libraryOpen) {
       closeLibrary()
     }

@@ -10,6 +10,8 @@ import {
 
 import type { Note } from '@/lib/db/schema'
 
+import { useSidebar } from '../ui/sidebar'
+
 type NotesCache = {
   notes: Note[]
   updatedAt: number
@@ -34,10 +36,21 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [notesCache, setNotesCache] = useState<NotesCache | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const { setOpen: setSidebarOpen } = useSidebar()
 
-  const openLibrary = useCallback(() => setIsOpen(true), [])
+  const openLibrary = useCallback(() => {
+    setSidebarOpen(false)
+    setIsOpen(true)
+  }, [setSidebarOpen])
   const closeLibrary = useCallback(() => setIsOpen(false), [])
-  const toggleLibrary = useCallback(() => setIsOpen(open => !open), [])
+  const toggleLibrary = useCallback(() => {
+    setIsOpen(open => {
+      if (!open) {
+        setSidebarOpen(false)
+      }
+      return !open
+    })
+  }, [setSidebarOpen])
   const replaceNotesCache = useCallback((notes: Note[]) => {
     setNotesCache({ notes, updatedAt: Date.now() })
   }, [])

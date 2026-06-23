@@ -53,6 +53,7 @@ export function Chat({
   query,
   isGuest = false,
   isCloudDeployment = false,
+  libraryAvailable = true,
   modelSelectorData
 }: {
   id?: string
@@ -60,6 +61,7 @@ export function Chat({
   query?: string
   isGuest?: boolean
   isCloudDeployment?: boolean
+  libraryAvailable?: boolean
   modelSelectorData?: ModelSelectorData
 }) {
   const router = useRouter()
@@ -543,6 +545,7 @@ export function Chat({
           chatId={chatId}
           isGuest={isGuest}
           isCloudDeployment={isCloudDeployment}
+          libraryAvailable={libraryAvailable}
           addToolResult={({
             toolCallId,
             result

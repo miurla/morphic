@@ -27,6 +27,7 @@ interface ChatMessagesProps {
   chatId?: string
   isGuest?: boolean
   isCloudDeployment?: boolean
+  libraryAvailable?: boolean
   addToolResult?: (params: { toolCallId: string; result: any }) => void
   /** Ref for the scroll container */
   scrollContainerRef: React.RefObject<HTMLDivElement>
@@ -46,6 +47,7 @@ export function ChatMessages({
   chatId,
   isGuest = false,
   isCloudDeployment = false,
+  libraryAvailable = true,
   addToolResult,
   scrollContainerRef,
   onUpdateMessage,
@@ -227,6 +229,7 @@ export function ChatMessages({
                 chatId={chatId}
                 isGuest={isGuest}
                 isCloudDeployment={isCloudDeployment}
+                libraryAvailable={libraryAvailable}
                 status={status}
                 addToolResult={addToolResult}
                 onUpdateMessage={onUpdateMessage}
@@ -258,6 +261,7 @@ export function ChatMessages({
                     chatId={chatId}
                     isGuest={isGuest}
                     isCloudDeployment={isCloudDeployment}
+                    libraryAvailable={libraryAvailable}
                     status={status}
                     addToolResult={addToolResult}
                     onUpdateMessage={onUpdateMessage}
