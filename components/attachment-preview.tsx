@@ -31,12 +31,14 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
                 {att.name ?? 'File'} unavailable
               </div>
             ) : isImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={url}
-                alt={att.name}
-                className="rounded-md border max-h-16 object-contain"
-              />
+              <div className="flex size-16 items-center justify-center overflow-hidden rounded-md border bg-muted/20">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url}
+                  alt={att.name ?? 'Attachment'}
+                  className="size-full object-contain"
+                />
+              </div>
             ) : isPdf ? (
               <a
                 href={url}
