@@ -164,4 +164,76 @@ describe('R2 client', () => {
       Key: 'user-id/file.png'
     })
   })
+
+  it('preserves existing file URLs when no object key is available', async () => {
+    const { signFilePartUrls } = await importR2Client()
+
+    await expect(
+      signFilePartUrls([
+        {
+          type: 'file',
+          mediaType: 'image/png',
+          filename: 'external.png',
+          url: 'https://external.example.com/external.png'
+        }
+      ])
+    ).resolves.toEqual([
+      {
+        type: 'file',
+        mediaType: 'image/png',
+        filename: 'external.png',
+        url: 'https://external.example.com/external.png'
+      }
+    ])
+  })
+
+  it('rejects object keys outside the allowed prefix', async () => {
+    const { signFilePartUrls } = await importR2Client()
+
+    await expect(
+      signFilePartUrls(
+        [
+          {
+            type: 'file',
+            key: 'other-user/chats/chat-123/file.png',
+            mediaType: 'image/png',
+            filename: 'file.png',
+            url: ''
+          }
+        ],
+        { allowedKeyPrefix: 'user-123/chats/chat-123/' }
+      )
+    ).rejects.toThrow('File object key is not allowed for this chat')
+
+    expect(s3Mocks.getSignedUrl).not.toHaveBeenCalled()
+  })
+
+  it('signs object keys inside the allowed prefix', async () => {
+    s3Mocks.getSignedUrl.mockResolvedValue('https://signed.example.com/file')
+
+    const { signFilePartUrls } = await importR2Client()
+
+    await expect(
+      signFilePartUrls(
+        [
+          {
+            type: 'file',
+            key: 'user-123/chats/chat-123/file.png',
+            mediaType: 'image/png',
+            filename: 'file.png',
+            url: ''
+          }
+        ],
+        { allowedKeyPrefix: 'user-123/chats/chat-123/' }
+      )
+    ).resolves.toEqual([
+      {
+        type: 'file',
+        key: 'user-123/chats/chat-123/file.png',
+        mediaType: 'image/png',
+        filename: 'file.png',
+        url: 'https://signed.example.com/file'
+      }
+    ])
+  })
 })

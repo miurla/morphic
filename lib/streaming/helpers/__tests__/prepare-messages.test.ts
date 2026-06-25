@@ -7,6 +7,7 @@ import {
   upsertMessage
 } from '@/lib/actions/chat'
 import type { Chat } from '@/lib/db/schema'
+import { signFilePartUrls } from '@/lib/storage/r2-client'
 import type { UIMessage } from '@/lib/types/ai'
 
 import { prepareMessages } from '../prepare-messages'
@@ -21,6 +22,12 @@ vi.mock('@/lib/db/schema', async () => {
     generateId: vi.fn(() => 'generated-id-123')
   }
 })
+vi.mock('@/lib/storage/r2-client', () => ({
+  getChatFileObjectKeyPrefix: vi.fn(
+    (userId: string, chatId: string) => `${userId}/chats/${chatId}/`
+  ),
+  signFilePartUrls: vi.fn(async (parts: any[]) => parts)
+}))
 
 describe('prepareMessages', () => {
   const userId = 'user-123'
@@ -373,6 +380,9 @@ describe('prepareMessages', () => {
       expect(context.pendingInitialUserMessage).toEqual({
         ...newMessage,
         id: 'msg-1'
+      })
+      expect(signFilePartUrls).toHaveBeenCalledWith(newMessage.parts, {
+        allowedKeyPrefix: 'user-123/chats/chat-123/'
       })
     })
 

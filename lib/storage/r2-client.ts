@@ -20,6 +20,10 @@ export const R2_SIGNED_URL_EXPIRES_SECONDS =
 
 let _r2Client: S3Client | null = null
 
+type SignFilePartUrlsOptions = {
+  allowedKeyPrefix?: string
+}
+
 export function getR2Client(): S3Client {
   if (_r2Client) {
     return _r2Client
@@ -68,6 +72,17 @@ function normalizeObjectKey(key: string) {
   return key.replace(/^\/+/, '')
 }
 
+export function getChatFileObjectKeyPrefix(userId: string, chatId: string) {
+  return `${normalizeObjectKey(userId)}/chats/${normalizeObjectKey(chatId)}/`
+}
+
+function isObjectKeyWithinPrefix(key: string, prefix: string) {
+  const normalizedKey = normalizeObjectKey(key)
+  const normalizedPrefix = normalizeObjectKey(prefix).replace(/\/+$/, '')
+
+  return normalizedPrefix.length > 0 && normalizedKey.startsWith(`${normalizedPrefix}/`)
+}
+
 export async function getSignedFileUrl(
   key: string,
   expiresIn = R2_SIGNED_URL_EXPIRES_SECONDS
@@ -87,7 +102,10 @@ export async function getSignedFileUrl(
   )
 }
 
-export async function signFilePartUrls(parts: any[] = []) {
+export async function signFilePartUrls(
+  parts: any[] = [],
+  options: SignFilePartUrlsOptions = {}
+) {
   return Promise.all(
     parts.map(async part => {
       if (part?.type !== 'file') {
@@ -95,7 +113,14 @@ export async function signFilePartUrls(parts: any[] = []) {
       }
 
       if (!part.key) {
-        return { ...part, url: '' }
+        return part
+      }
+
+      if (
+        options.allowedKeyPrefix &&
+        !isObjectKeyWithinPrefix(part.key, options.allowedKeyPrefix)
+      ) {
+        throw new Error('File object key is not allowed for this chat')
       }
 
       try {
