@@ -80,7 +80,10 @@ function isObjectKeyWithinPrefix(key: string, prefix: string) {
   const normalizedKey = normalizeObjectKey(key)
   const normalizedPrefix = normalizeObjectKey(prefix).replace(/\/+$/, '')
 
-  return normalizedPrefix.length > 0 && normalizedKey.startsWith(`${normalizedPrefix}/`)
+  return (
+    normalizedPrefix.length > 0 &&
+    normalizedKey.startsWith(`${normalizedPrefix}/`)
+  )
 }
 
 export async function getSignedFileUrl(
