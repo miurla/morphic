@@ -98,7 +98,6 @@ describe.skipIf(!RUN)('LLM inline image output (E2E)', () => {
     // Parse every spec block and check at least one contains an Image.
     const fixtureSrcs = new Set(FIXTURE_IMAGES.map(i => i.url))
     let imageCount = 0
-    let hasRelatedQuestions = false
 
     for (const source of blocks) {
       const spec = parseSpecBlock(source)
@@ -112,14 +111,9 @@ describe.skipIf(!RUN)('LLM inline image output (E2E)', () => {
           // src MUST be one of the fixture image URLs — no fabrication.
           expect(fixtureSrcs.has(src)).toBe(true)
         }
-        if (el.type === 'Button') {
-          hasRelatedQuestions = true
-        }
       }
     }
 
     expect(imageCount).toBeGreaterThanOrEqual(1)
-    // The related-questions block must still be emitted alongside images.
-    expect(hasRelatedQuestions).toBe(true)
   }, 120_000)
 })

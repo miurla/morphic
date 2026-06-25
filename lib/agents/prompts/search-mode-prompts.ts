@@ -123,7 +123,7 @@ OUTPUT FORMAT (MANDATORY):
 - Use bullets with bolded keywords for key points: \`- **Point:** concise explanation\`.
 - **Use tables for comparisons** (pricing, specs, features, pros/cons) - they're clearer than bullets for side-by-side data
 - Focus on delivering clear information with natural flow, avoiding rigid templates.
-- Only use fenced code blocks if the user explicitly asks for code or commands (the mandatory \`\`\`spec block for related questions is an exception).
+- Only use fenced code blocks if the user explicitly asks for code or commands (optional \`\`\`spec blocks for images or valuable related questions are exceptions).
 - Prefer natural, conversational tone while maintaining informativeness.
 - Always end with a brief conclusion that synthesizes the main points into a cohesive summary.
 - Response length guidance:
