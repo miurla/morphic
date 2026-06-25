@@ -5,9 +5,9 @@ import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import {
   getR2Client,
+  getSignedFileUrl,
   isObjectStorageConfigured,
-  R2_BUCKET_NAME,
-  R2_PUBLIC_URL
+  R2_BUCKET_NAME
 } from '@/lib/storage/r2-client'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         {
           error: 'File upload storage is not configured',
           message:
-            'Set R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_URL, and either R2_ACCOUNT_ID or S3_ENDPOINT.'
+            'Set R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and either R2_ACCOUNT_ID or S3_ENDPOINT.'
         },
         { status: 400 }
       )
@@ -92,11 +92,12 @@ async function uploadFileToR2(file: File, userId: string, chatId: string) {
       })
     )
 
-    const publicUrl = `${R2_PUBLIC_URL.replace(/\/+$/, '')}/${filePath}`
+    const signedUrl = await getSignedFileUrl(filePath)
 
     return {
       filename: file.name,
-      url: publicUrl,
+      key: filePath,
+      url: signedUrl,
       mediaType: file.type,
       type: 'file'
     }

@@ -142,6 +142,7 @@ export const parts = pgTable(
     file_mediaType: varchar('file_media_type', { length: VARCHAR_LENGTH }),
     file_filename: varchar('file_filename', { length: FILENAME_LENGTH }),
     file_url: text('file_url'),
+    file_key: text('file_key'),
 
     // Source URL parts
     source_url_sourceId: varchar('source_url_source_id', {
@@ -212,7 +213,7 @@ export const parts = pgTable(
     ),
     check(
       'file_fields_required',
-      sql`(type != 'file' OR (file_media_type IS NOT NULL AND file_filename IS NOT NULL AND file_url IS NOT NULL))`
+      sql`(type != 'file' OR (file_media_type IS NOT NULL AND file_filename IS NOT NULL AND (file_key IS NOT NULL OR file_url IS NOT NULL)))`
     ),
     check(
       'tool_state_valid',
@@ -299,6 +300,49 @@ export const notes = pgTable(
 
 export type Note = InferSelectModel<typeof notes>
 export type NewNote = typeof notes.$inferInsert
+
+// Library files table
+export const libraryFiles = pgTable(
+  'files',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    chatId: varchar('chat_id', { length: ID_LENGTH }).references(
+      () => chats.id,
+      { onDelete: 'set null' }
+    ),
+    filename: text('filename').notNull(),
+    url: text('url').notNull(),
+    objectKey: text('object_key'),
+    mediaType: varchar('media_type', { length: VARCHAR_LENGTH }).notNull(),
+    size: integer('size'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    index('files_user_id_idx').on(table.userId),
+    index('files_user_id_updated_at_idx').on(
+      table.userId,
+      table.updatedAt.desc()
+    ),
+    index('files_chat_id_idx').on(table.chatId),
+    index('files_media_type_idx').on(table.mediaType),
+    index('files_object_key_idx').on(table.objectKey),
+
+    pgPolicy('users_manage_own_files', {
+      as: 'permissive',
+      for: 'all',
+      to: 'public',
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    })
+  ]
+).enableRLS()
+
+export type LibraryFile = InferSelectModel<typeof libraryFiles>
+export type NewLibraryFile = typeof libraryFiles.$inferInsert
 
 // Feedback table
 export const feedback = pgTable(

@@ -112,6 +112,7 @@ export const parts = pgTable(
     fileMediaType: varchar('file_media_type', { length: 256 }),
     fileFilename: varchar('file_filename', { length: 1024 }),
     fileUrl: text('file_url'),
+    fileKey: text('file_key'),
     sourceUrlSourceId: varchar('source_url_source_id', { length: 256 }),
     sourceUrlUrl: text('source_url_url'),
     sourceUrlTitle: text('source_url_title'),
@@ -191,7 +192,7 @@ export const parts = pgTable(
     ),
     check(
       'file_fields_required',
-      sql`((type)::text <> 'file'::text) OR ((file_media_type IS NOT NULL) AND (file_filename IS NOT NULL) AND (file_url IS NOT NULL))`
+      sql`((type)::text <> 'file'::text) OR ((file_media_type IS NOT NULL) AND (file_filename IS NOT NULL) AND ((file_key IS NOT NULL) OR (file_url IS NOT NULL)))`
     ),
     check(
       'tool_state_valid',
@@ -244,6 +245,61 @@ export const notes = pgTable(
       name: 'notes_chat_id_chats_id_fk'
     }).onDelete('set null'),
     pgPolicy('users_manage_own_notes', {
+      as: 'permissive',
+      for: 'all',
+      to: ['public'],
+      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+    })
+  ]
+)
+
+export const files = pgTable(
+  'files',
+  {
+    id: varchar({ length: 191 }).primaryKey().notNull(),
+    userId: varchar('user_id', { length: 255 }).notNull(),
+    chatId: varchar('chat_id', { length: 191 }),
+    filename: text().notNull(),
+    url: text().notNull(),
+    objectKey: text('object_key'),
+    mediaType: varchar('media_type', { length: 256 }).notNull(),
+    size: integer(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
+      .defaultNow()
+      .notNull()
+  },
+  table => [
+    index('files_chat_id_idx').using(
+      'btree',
+      table.chatId.asc().nullsLast().op('text_ops')
+    ),
+    index('files_media_type_idx').using(
+      'btree',
+      table.mediaType.asc().nullsLast().op('text_ops')
+    ),
+    index('files_object_key_idx').using(
+      'btree',
+      table.objectKey.asc().nullsLast().op('text_ops')
+    ),
+    index('files_user_id_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops')
+    ),
+    index('files_user_id_updated_at_idx').using(
+      'btree',
+      table.userId.asc().nullsLast().op('text_ops'),
+      table.updatedAt.desc().nullsLast().op('timestamp_ops')
+    ),
+    foreignKey({
+      columns: [table.chatId],
+      foreignColumns: [chats.id],
+      name: 'files_chat_id_chats_id_fk'
+    }).onDelete('set null'),
+    pgPolicy('users_manage_own_files', {
       as: 'permissive',
       for: 'all',
       to: ['public'],

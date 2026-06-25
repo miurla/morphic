@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "migrate": "bun run lib/db/migrate.ts",
+    "backfill:file-keys": "bun run scripts/backfill-file-object-keys.ts",
     "test": "NODE_ENV=test vitest run",
     "test:watch": "vitest --watch",
     "chat": "bun run scripts/chat-cli.ts"
@@ -23,7 +24,8 @@
     "@ai-sdk/openai": "^3.0.63",
     "@ai-sdk/openai-compatible": "^2.0.47",
     "@ai-sdk/react": "^3.0.182",
-    "@aws-sdk/client-s3": "^3.850.0",
+    "@aws-sdk/client-s3": "3.859.0",
+    "@aws-sdk/s3-request-presigner": "3.859.0",
     "@json-render/core": "^0.16.0",
     "@json-render/react": "^0.16.0",
     "@opentelemetry/api-logs": "0.57.2",

@@ -8,6 +8,10 @@ import {
   upsertMessage
 } from '@/lib/actions/chat'
 import { generateId } from '@/lib/db/schema'
+import {
+  getChatFileObjectKeyPrefix,
+  signFilePartUrls
+} from '@/lib/storage/r2-client'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 
 import type { StreamContext } from './types'
@@ -85,7 +89,10 @@ export async function prepareMessages(
 
     const messageWithId = {
       ...message,
-      id: message.id || generateId()
+      id: message.id || generateId(),
+      parts: await signFilePartUrls(message.parts, {
+        allowedKeyPrefix: getChatFileObjectKeyPrefix(userId, chatId)
+      })
     }
 
     // Optimize for new chats: create chat and save message together

@@ -315,7 +315,9 @@ export function ChatPanel({
                 type: 'file',
                 url: f.url!,
                 filename: f.name!,
-                mediaType: f.file.type
+                mediaType:
+                  f.mediaType ?? f.file?.type ?? 'application/octet-stream',
+                key: f.key
               })),
               ...(input.trim() ? [{ type: 'text', text: input }] : [])
             ]
@@ -618,7 +620,7 @@ export function ChatPanel({
                     await Promise.all(
                       newFiles.map(async uf => {
                         const formData = new FormData()
-                        formData.append('file', uf.file)
+                        formData.append('file', uf.file!)
                         formData.append('chatId', chatId)
                         try {
                           const res = await fetch('/api/upload', {
@@ -639,13 +641,16 @@ export function ChatPanel({
                                     status: 'uploaded',
                                     url: uploaded.url,
                                     name: uploaded.filename,
-                                    key: uploaded.key
+                                    key: uploaded.key,
+                                    mediaType: uploaded.mediaType
                                   }
                                 : f
                             )
                           )
                         } catch (e) {
-                          toast.error(`Failed to upload ${uf.file.name}`)
+                          toast.error(
+                            `Failed to upload ${uf.file?.name ?? 'file'}`
+                          )
                           setUploadedFiles(prev =>
                             prev.map(f =>
                               f.file === uf.file ? { ...f, status: 'error' } : f

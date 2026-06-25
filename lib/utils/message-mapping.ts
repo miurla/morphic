@@ -24,6 +24,7 @@ type FileUIPart = {
   mediaType: string
   filename?: string
   url: string
+  key?: string
 }
 type SourceUrlUIPart = {
   type: 'source-url'
@@ -154,7 +155,8 @@ export function mapUIMessagePartsToDBParts(
           ...basePart,
           file_mediaType: part.mediaType,
           file_filename: part.filename,
-          file_url: part.url
+          file_url: part.key ? undefined : part.url,
+          file_key: part.key
         }
 
       case 'source-url':
@@ -363,7 +365,8 @@ export function mapDBPartToUIMessagePart(
         type: 'file',
         mediaType: part.file_mediaType || '',
         filename: part.file_filename || '',
-        url: part.file_url || ''
+        url: part.file_key ? '' : part.file_url || '',
+        key: part.file_key || undefined
       }
 
     case 'source-url':

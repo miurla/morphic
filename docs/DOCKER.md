@@ -73,8 +73,9 @@ File upload requires externally reachable object storage. Docker Compose does no
 
 Required environment variables:
 
-- `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_PUBLIC_URL`
+- `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
 - One of: `R2_ACCOUNT_ID` (Cloudflare R2) or `S3_ENDPOINT` (generic S3-compatible)
+- `R2_BUCKET_NAME`
 
 If these are not set, upload is disabled.
 

@@ -29,6 +29,9 @@ describe('Account Actions', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(user as any)
     vi.mocked(dbActions.deleteUserChats).mockResolvedValue({ success: true })
     vi.mocked(dbActions.deleteUserNotes).mockResolvedValue({ success: true })
+    vi.mocked(dbActions.deleteUserLibraryFiles).mockResolvedValue({
+      success: true
+    })
     vi.mocked(dbActions.anonymizeUserFeedback).mockResolvedValue({
       success: true
     })
@@ -93,6 +96,7 @@ describe('Account Actions', () => {
     expect(result).toEqual({ success: true })
     expect(dbActions.deleteUserChats).toHaveBeenCalledWith(user.id)
     expect(dbActions.deleteUserNotes).toHaveBeenCalledWith(user.id)
+    expect(dbActions.deleteUserLibraryFiles).toHaveBeenCalledWith(user.id)
     expect(dbActions.anonymizeUserFeedback).toHaveBeenCalledWith(user.id)
     expect(deleteUserObjects).toHaveBeenCalledWith(user.id)
     expect(deleteUser).toHaveBeenCalledWith(user.id)
@@ -151,6 +155,23 @@ describe('Account Actions', () => {
     expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
 
+  it('stops before storage and auth deletion when library file deletion fails', async () => {
+    vi.mocked(dbActions.deleteUserLibraryFiles).mockResolvedValue({
+      success: false,
+      error: 'Failed to delete user files'
+    })
+
+    const result = await deleteAccount()
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Failed to delete user files'
+    })
+    expect(deleteUserObjects).not.toHaveBeenCalled()
+    expect(deleteUser).not.toHaveBeenCalled()
+    expect(trackAccountDeleted).not.toHaveBeenCalled()
+  })
+
   it('stops before auth deletion when uploaded file deletion fails', async () => {
     vi.mocked(deleteUserObjects).mockRejectedValue(new Error('Storage error'))
 
@@ -162,6 +183,7 @@ describe('Account Actions', () => {
     })
     expect(dbActions.deleteUserChats).toHaveBeenCalledWith(user.id)
     expect(dbActions.deleteUserNotes).toHaveBeenCalledWith(user.id)
+    expect(dbActions.deleteUserLibraryFiles).toHaveBeenCalledWith(user.id)
     expect(deleteUser).not.toHaveBeenCalled()
     expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
