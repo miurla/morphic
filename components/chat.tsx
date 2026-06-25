@@ -489,7 +489,8 @@ export function Chat({
           type: 'file',
           url: f.url!,
           filename: f.name!,
-          mediaType: f.file.type
+          mediaType: f.mediaType ?? f.file?.type ?? 'application/octet-stream',
+          key: f.key
         })
       })
 

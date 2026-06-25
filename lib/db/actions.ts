@@ -13,7 +13,15 @@ import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
 
 import type { Chat, Message, NewNote, Note } from './schema'
-import { chats, feedback, generateId, messages, notes, parts } from './schema'
+import {
+  chats,
+  feedback,
+  generateId,
+  libraryFiles,
+  messages,
+  notes,
+  parts
+} from './schema'
 import { withOptionalRLS, withRLS } from './with-rls'
 import { db } from '.'
 
@@ -477,6 +485,20 @@ export async function deleteUserNotes(
   } catch (error) {
     console.error('Error deleting user notes:', error)
     return { success: false, error: 'Failed to delete user notes' }
+  }
+}
+
+export async function deleteUserLibraryFiles(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    return withRLS(userId, async tx => {
+      await tx.delete(libraryFiles).where(eq(libraryFiles.userId, userId))
+      return { success: true }
+    })
+  } catch (error) {
+    console.error('Error deleting user library files:', error)
+    return { success: false, error: 'Failed to delete user files' }
   }
 }
 

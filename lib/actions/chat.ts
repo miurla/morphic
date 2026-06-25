@@ -7,6 +7,7 @@ import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
 import type { Chat, Message } from '@/lib/db/schema'
 import { generateId } from '@/lib/db/schema'
+import { signFilePartUrlsInMessages } from '@/lib/storage/r2-client'
 import type { UIMessage } from '@/lib/types/ai'
 import { getTextFromParts } from '@/lib/utils/message-utils'
 
@@ -65,7 +66,13 @@ export async function loadChat(
   requestingUserId?: string
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
   // Use cached version for individual chat loading
-  return getCachedChatWithMessages(chatId, requestingUserId)
+  const chat = await getCachedChatWithMessages(chatId, requestingUserId)
+  if (!chat) return null
+
+  return {
+    ...chat,
+    messages: await signFilePartUrlsInMessages(chat.messages)
+  }
 }
 
 /**

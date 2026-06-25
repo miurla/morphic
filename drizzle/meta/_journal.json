@@ -92,6 +92,20 @@
       "when": 1781635200000,
       "tag": "0012_knowledge_library_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1782230400000,
+      "tag": "0013_library_files",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1782345600000,
+      "tag": "0014_private_file_object_keys",
+      "breakpoints": true
     }
   ]
 }

@@ -276,7 +276,8 @@ R2_SECRET_ACCESS_KEY=[YOUR_SECRET_KEY]
 R2_ACCOUNT_ID=[YOUR_ACCOUNT_ID]  # For Cloudflare R2
 # S3_ENDPOINT=[YOUR_S3_ENDPOINT]  # Optional: generic S3-compatible endpoint
 R2_BUCKET_NAME=[YOUR_BUCKET_NAME]
-R2_PUBLIC_URL=[YOUR_PUBLIC_BASE_URL]
+# Optional: signed GET URL lifetime in seconds (default: 3600)
+R2_SIGNED_URL_EXPIRES_SECONDS=3600
 ```
 
 If storage variables are not configured, `/api/upload` returns `400` and uploads are disabled.

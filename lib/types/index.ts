@@ -95,9 +95,11 @@ export type SearXNGSearchResults = {
 }
 
 export type UploadedFile = {
-  file: File
+  file?: File
   status: 'uploading' | 'uploaded' | 'error'
   url?: string
   name?: string
   key?: string
+  mediaType?: string
+  libraryFileId?: string
 }
