@@ -55,8 +55,8 @@ export const chats = pgTable(
       as: 'permissive',
       for: 'all',
       to: 'public',
-      using: sql`user_id = current_setting('app.current_user_id', true)`,
-      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+      using: sql`user_id = (select current_setting('app.current_user_id', true))`,
+      withCheck: sql`user_id = (select current_setting('app.current_user_id', true))`
     }),
     pgPolicy('public_chats_readable', {
       as: 'permissive',
@@ -292,8 +292,8 @@ export const notes = pgTable(
       as: 'permissive',
       for: 'all',
       to: 'public',
-      using: sql`user_id = current_setting('app.current_user_id', true)`,
-      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+      using: sql`user_id = (select current_setting('app.current_user_id', true))`,
+      withCheck: sql`user_id = (select current_setting('app.current_user_id', true))`
     })
   ]
 ).enableRLS()
@@ -334,8 +334,8 @@ export const libraryFiles = pgTable(
       as: 'permissive',
       for: 'all',
       to: 'public',
-      using: sql`user_id = current_setting('app.current_user_id', true)`,
-      withCheck: sql`user_id = current_setting('app.current_user_id', true)`
+      using: sql`user_id = (select current_setting('app.current_user_id', true))`,
+      withCheck: sql`user_id = (select current_setting('app.current_user_id', true))`
     })
   ]
 ).enableRLS()
@@ -385,7 +385,7 @@ export const feedback = pgTable(
       as: 'permissive',
       for: 'update',
       to: 'public',
-      using: sql`user_id = current_setting('app.current_user_id', true)`,
+      using: sql`user_id = (select current_setting('app.current_user_id', true))`,
       withCheck: sql`user_id IS NULL`
     })
   ]
