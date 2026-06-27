@@ -9,7 +9,7 @@ import {
 } from '@/lib/actions/chat'
 import { generateId } from '@/lib/db/schema'
 import {
-  getChatFileObjectKeyPrefix,
+  getUserFileObjectKeyPrefix,
   signFilePartUrls
 } from '@/lib/storage/r2-client'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
@@ -91,7 +91,7 @@ export async function prepareMessages(
       ...message,
       id: message.id || generateId(),
       parts: await signFilePartUrls(message.parts, {
-        allowedKeyPrefix: getChatFileObjectKeyPrefix(userId, chatId)
+        allowedKeyPrefix: getUserFileObjectKeyPrefix(userId)
       })
     }
 

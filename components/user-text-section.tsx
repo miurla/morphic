@@ -12,6 +12,7 @@ import {
 } from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
+import { stripMarkdownText } from '@/lib/utils/markdown'
 
 import { Button } from './ui/button'
 import { CollapsibleMessage } from './collapsible-message'
@@ -41,6 +42,7 @@ interface UserTextSectionProps {
   // Pasted attachments (new data parts), placed below the instruction.
   pastedTexts?: string[]
   quotedContexts?: string[]
+  noteContexts?: { title?: string; text: string }[]
   urls?: string[]
   messageId?: string
   onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>
@@ -50,6 +52,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
   content,
   pastedTexts = [],
   quotedContexts = [],
+  noteContexts = [],
   urls = [],
   messageId,
   onUpdateMessage
@@ -181,6 +184,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
   // Pasted attachments (cards + URL chips), placed below the instruction.
   const attachments = (cards.length > 0 ||
     quotedContexts.length > 0 ||
+    noteContexts.length > 0 ||
     urls.length > 0) && (
     <div className="mt-2 flex flex-col items-start gap-1.5">
       {cards.map((c, i) => (
@@ -191,6 +195,17 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
           key={`quoted-context-${i}`}
           text={c}
           label="Quoted context"
+        />
+      ))}
+      {noteContexts.map((note, i) => (
+        <PastedContentCard
+          key={`note-context-${i}`}
+          text={stripMarkdownText(note.text)}
+          label={
+            note.title
+              ? `Note: ${stripMarkdownText(note.title) || 'Untitled note'}`
+              : 'Note'
+          }
         />
       ))}
       {urls.map((u, i) => (

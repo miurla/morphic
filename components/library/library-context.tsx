@@ -8,6 +8,7 @@ import {
   useState
 } from 'react'
 
+import type { LibraryFileItem } from '@/lib/actions/files'
 import type { Note } from '@/lib/db/schema'
 
 import { useSidebar } from '../ui/sidebar'
@@ -24,9 +25,17 @@ type NotesCache = {
   updatedAt: number
 }
 
+type FilesCache = {
+  files: LibraryFileItem[]
+  nextCursor: NotesListCursor | null
+  hasMore: boolean
+  updatedAt: number
+}
+
 type LibraryContextValue = {
   isOpen: boolean
   notesCache: NotesCache | null
+  filesCache: FilesCache | null
   refreshKey: number
   openLibrary: () => void
   closeLibrary: () => void
@@ -43,6 +52,18 @@ type LibraryContextValue = {
   }) => void
   upsertCachedNote: (note: Note) => void
   removeCachedNote: (noteId: string) => void
+  replaceFilesCache: (page: {
+    files: LibraryFileItem[]
+    nextCursor: NotesListCursor | null
+    hasMore: boolean
+  }) => void
+  appendFilesCache: (page: {
+    files: LibraryFileItem[]
+    nextCursor: NotesListCursor | null
+    hasMore: boolean
+  }) => void
+  upsertCachedFile: (file: LibraryFileItem) => void
+  removeCachedFile: (fileId: string) => void
   refreshLibrary: () => void
 }
 
@@ -51,6 +72,7 @@ const LibraryContext = createContext<LibraryContextValue | null>(null)
 export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [notesCache, setNotesCache] = useState<NotesCache | null>(null)
+  const [filesCache, setFilesCache] = useState<FilesCache | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const { setOpen: setSidebarOpen } = useSidebar()
 
@@ -60,13 +82,11 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   }, [setSidebarOpen])
   const closeLibrary = useCallback(() => setIsOpen(false), [])
   const toggleLibrary = useCallback(() => {
-    setIsOpen(open => {
-      if (!open) {
-        setSidebarOpen(false)
-      }
-      return !open
-    })
-  }, [setSidebarOpen])
+    if (!isOpen) {
+      setSidebarOpen(false)
+    }
+    setIsOpen(open => !open)
+  }, [isOpen, setSidebarOpen])
   const replaceNotesCache = useCallback(
     (page: {
       notes: Note[]
@@ -128,6 +148,67 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       }
     })
   }, [])
+  const replaceFilesCache = useCallback(
+    (page: {
+      files: LibraryFileItem[]
+      nextCursor: NotesListCursor | null
+      hasMore: boolean
+    }) => {
+      setFilesCache({ ...page, updatedAt: Date.now() })
+    },
+    []
+  )
+  const appendFilesCache = useCallback(
+    (page: {
+      files: LibraryFileItem[]
+      nextCursor: NotesListCursor | null
+      hasMore: boolean
+    }) => {
+      setFilesCache(cache => {
+        if (!cache) {
+          return { ...page, updatedAt: Date.now() }
+        }
+
+        const existingIds = new Set(cache.files.map(file => file.id))
+        const mergedFiles = [
+          ...cache.files,
+          ...page.files.filter(file => !existingIds.has(file.id))
+        ]
+
+        return {
+          files: mergedFiles,
+          nextCursor: page.nextCursor,
+          hasMore: page.hasMore,
+          updatedAt: Date.now()
+        }
+      })
+    },
+    []
+  )
+  const upsertCachedFile = useCallback((file: LibraryFileItem) => {
+    setFilesCache(cache => {
+      if (!cache) return cache
+
+      return {
+        files: [file, ...cache.files.filter(item => item.id !== file.id)],
+        nextCursor: cache.nextCursor,
+        hasMore: cache.hasMore,
+        updatedAt: Date.now()
+      }
+    })
+  }, [])
+  const removeCachedFile = useCallback((fileId: string) => {
+    setFilesCache(cache => {
+      if (!cache) return cache
+
+      return {
+        files: cache.files.filter(file => file.id !== fileId),
+        nextCursor: cache.nextCursor,
+        hasMore: cache.hasMore,
+        updatedAt: Date.now()
+      }
+    })
+  }, [])
   const refreshLibrary = useCallback(() => {
     setRefreshKey(key => key + 1)
   }, [])
@@ -136,6 +217,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     () => ({
       isOpen,
       notesCache,
+      filesCache,
       refreshKey,
       openLibrary,
       closeLibrary,
@@ -144,18 +226,27 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       appendNotesCache,
       upsertCachedNote,
       removeCachedNote,
+      replaceFilesCache,
+      appendFilesCache,
+      upsertCachedFile,
+      removeCachedFile,
       refreshLibrary
     }),
     [
       closeLibrary,
       appendNotesCache,
+      appendFilesCache,
       isOpen,
+      filesCache,
       notesCache,
       openLibrary,
       removeCachedNote,
+      removeCachedFile,
+      replaceFilesCache,
       replaceNotesCache,
       refreshLibrary,
       toggleLibrary,
+      upsertCachedFile,
       upsertCachedNote,
       refreshKey
     ]

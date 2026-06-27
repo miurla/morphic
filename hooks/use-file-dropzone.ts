@@ -87,7 +87,8 @@ export function useFileDropzone({
                       url: uploaded.url,
                       name: uploaded.filename,
                       key: uploaded.key,
-                      mediaType: uploaded.mediaType
+                      mediaType: uploaded.mediaType,
+                      libraryFileId: uploaded.id
                     }
                   : f
               )

@@ -23,9 +23,7 @@ vi.mock('@/lib/db/schema', async () => {
   }
 })
 vi.mock('@/lib/storage/r2-client', () => ({
-  getChatFileObjectKeyPrefix: vi.fn(
-    (userId: string, chatId: string) => `${userId}/chats/${chatId}/`
-  ),
+  getUserFileObjectKeyPrefix: vi.fn((userId: string) => `${userId}/`),
   signFilePartUrls: vi.fn(async (parts: any[]) => parts)
 }))
 
@@ -382,7 +380,7 @@ describe('prepareMessages', () => {
         id: 'msg-1'
       })
       expect(signFilePartUrls).toHaveBeenCalledWith(newMessage.parts, {
-        allowedKeyPrefix: 'user-123/chats/chat-123/'
+        allowedKeyPrefix: 'user-123/'
       })
     })
 

@@ -66,6 +66,12 @@ export function RenderMessage({
     const quotedContexts = parts
       .filter((part: any) => part.type === 'data-quotedContext')
       .map((part: any) => part.data?.text ?? '')
+    const noteContexts = parts
+      .filter((part: any) => part.type === 'data-noteContext')
+      .map((part: any) => ({
+        title: part.data?.title,
+        text: part.data?.text ?? ''
+      }))
     const urls = parts
       .filter((part: any) => part.type === 'data-sourceUrl')
       .map((part: any) => part.data?.url ?? '')
@@ -84,11 +90,13 @@ export function RenderMessage({
         {(textPart ||
           pastedTexts.length > 0 ||
           quotedContexts.length > 0 ||
+          noteContexts.length > 0 ||
           urls.length > 0) && (
           <UserTextSection
             content={textPart?.text ?? ''}
             pastedTexts={pastedTexts}
             quotedContexts={quotedContexts}
+            noteContexts={noteContexts}
             urls={urls}
             messageId={messageId}
             onUpdateMessage={onUpdateMessage}

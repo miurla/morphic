@@ -203,7 +203,7 @@ describe('R2 client', () => {
         ],
         { allowedKeyPrefix: 'user-123/chats/chat-123/' }
       )
-    ).rejects.toThrow('File object key is not allowed for this chat')
+    ).rejects.toThrow('File object key is not allowed for this user')
 
     expect(s3Mocks.getSignedUrl).not.toHaveBeenCalled()
   })

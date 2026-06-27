@@ -36,6 +36,19 @@ export function convertDataPart(part: {
     }
   }
 
+  if (part.type === 'data-noteContext') {
+    const data = part.data as { title?: unknown; text?: unknown } | undefined
+    const text = typeof data?.text === 'string' ? data.text : ''
+    const title = typeof data?.title === 'string' ? data.title.trim() : ''
+    if (!text) return undefined
+    const nonce = randomUUID().slice(0, 8)
+    const body = title ? `Title: ${title}\n\n${text}` : text
+    return {
+      type: 'text',
+      text: `[note-context ${nonce}]\n${body}\n[/note-context ${nonce}]`
+    }
+  }
+
   if (part.type === 'data-sourceUrl') {
     const data = part.data as { url?: unknown } | undefined
     const url = typeof data?.url === 'string' ? data.url : ''

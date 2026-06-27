@@ -1,6 +1,6 @@
 'use server'
 
-import { and, asc, desc, eq, gt, inArray, lt, or } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, ilike, inArray, lt, or } from 'drizzle-orm'
 
 import type { UIMessage } from '@/lib/types/ai'
 import type { PersistableUIMessage } from '@/lib/types/message-persistence'
@@ -12,7 +12,14 @@ import {
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
 
-import type { Chat, Message, NewNote, Note } from './schema'
+import type {
+  Chat,
+  LibraryFile,
+  Message,
+  NewLibraryFile,
+  NewNote,
+  Note
+} from './schema'
 import {
   chats,
   feedback,
@@ -436,6 +443,29 @@ export async function getNotes(
   })
 }
 
+export async function searchNotes(
+  userId: string,
+  query: string,
+  { limit = 20 }: { limit?: number } = {}
+): Promise<Note[]> {
+  return withRLS(userId, async tx => {
+    const trimmed = query.trim()
+    const pageLimit = Math.max(1, Math.min(limit, 50))
+
+    return tx
+      .select()
+      .from(notes)
+      .where(
+        and(
+          eq(notes.userId, userId),
+          trimmed ? ilike(notes.title, `%${trimmed}%`) : undefined
+        )
+      )
+      .orderBy(desc(notes.updatedAt), desc(notes.id))
+      .limit(pageLimit)
+  })
+}
+
 export async function getNote(
   noteId: string,
   userId: string
@@ -485,6 +515,138 @@ export async function deleteUserNotes(
   } catch (error) {
     console.error('Error deleting user notes:', error)
     return { success: false, error: 'Failed to delete user notes' }
+  }
+}
+
+export async function createLibraryFile(
+  file: Omit<NewLibraryFile, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<LibraryFile> {
+  return withRLS(file.userId, async tx => {
+    let chatId = file.chatId ?? null
+
+    if (chatId) {
+      const [chat] = await tx
+        .select({ id: chats.id })
+        .from(chats)
+        .where(and(eq(chats.id, chatId), eq(chats.userId, file.userId)))
+        .limit(1)
+
+      chatId = chat ? chatId : null
+    }
+
+    const [createdFile] = await tx
+      .insert(libraryFiles)
+      .values({ ...file, chatId })
+      .returning()
+
+    return createdFile
+  })
+}
+
+export type FilesPageCursor = {
+  updatedAt: string
+  id: string
+}
+
+export async function getLibraryFiles(
+  userId: string,
+  {
+    limit = 25,
+    cursor
+  }: {
+    limit?: number
+    cursor?: FilesPageCursor
+  } = {}
+): Promise<{
+  files: LibraryFile[]
+  nextCursor: FilesPageCursor | null
+  hasMore: boolean
+}> {
+  return withRLS(userId, async tx => {
+    const cursorDate = cursor ? new Date(cursor.updatedAt) : null
+    const pageLimit = Math.max(1, Math.min(limit, 50))
+    const results = await tx
+      .select()
+      .from(libraryFiles)
+      .where(
+        and(
+          eq(libraryFiles.userId, userId),
+          cursor && cursorDate && !Number.isNaN(cursorDate.getTime())
+            ? or(
+                lt(libraryFiles.updatedAt, cursorDate),
+                and(
+                  eq(libraryFiles.updatedAt, cursorDate),
+                  lt(libraryFiles.id, cursor.id)
+                )
+              )
+            : undefined
+        )
+      )
+      .orderBy(desc(libraryFiles.updatedAt), desc(libraryFiles.id))
+      .limit(pageLimit + 1)
+
+    const pageFiles = results.slice(0, pageLimit)
+    const lastFile = pageFiles[pageFiles.length - 1]
+
+    return {
+      files: pageFiles,
+      nextCursor:
+        results.length > pageLimit && lastFile
+          ? {
+              updatedAt: lastFile.updatedAt.toISOString(),
+              id: lastFile.id
+            }
+          : null,
+      hasMore: results.length > pageLimit
+    }
+  })
+}
+
+export async function searchLibraryFiles(
+  userId: string,
+  query: string,
+  { limit = 20 }: { limit?: number } = {}
+): Promise<LibraryFile[]> {
+  return withRLS(userId, async tx => {
+    const trimmed = query.trim()
+    const pageLimit = Math.max(1, Math.min(limit, 50))
+
+    return tx
+      .select()
+      .from(libraryFiles)
+      .where(
+        and(
+          eq(libraryFiles.userId, userId),
+          trimmed ? ilike(libraryFiles.filename, `%${trimmed}%`) : undefined
+        )
+      )
+      .orderBy(desc(libraryFiles.updatedAt), desc(libraryFiles.id))
+      .limit(pageLimit)
+  })
+}
+
+export async function deleteLibraryFile(
+  fileId: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    return withRLS(userId, async tx => {
+      const [deletedFile] = await tx
+        .delete(libraryFiles)
+        .where(
+          and(eq(libraryFiles.id, fileId), eq(libraryFiles.userId, userId))
+        )
+        .returning({ id: libraryFiles.id })
+
+      if (!deletedFile) {
+        return { success: false, error: 'File not found' }
+      }
+
+      return { success: true }
+    })
+  } catch (error) {
+    console.error('Error deleting library file:', error)
+    return { success: false, error: 'Failed to delete file' }
   }
 }
 

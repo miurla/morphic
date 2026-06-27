@@ -19,8 +19,14 @@ vi.mock('../action-buttons', () => ({
   ActionButtons: () => null
 }))
 
-vi.mock('../file-upload-button', () => ({
-  FileUploadButton: () => null
+vi.mock('../library/library-context', () => ({
+  useLibrary: () => ({
+    upsertCachedFile: vi.fn()
+  })
+}))
+
+vi.mock('../library/library-picker-dialog', () => ({
+  LibraryPickerDialog: () => null
 }))
 
 vi.mock('../message-navigation-dots', () => ({
@@ -71,6 +77,8 @@ describe('ChatPanel', () => {
         setUploadedFiles={vi.fn()}
         quotedContexts={[]}
         setQuotedContexts={vi.fn()}
+        noteContexts={[]}
+        setNoteContexts={vi.fn()}
         isGuest
         isCloudDeployment
         onAdaptiveModeAuthRequired={onAdaptiveModeAuthRequired}

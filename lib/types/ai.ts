@@ -30,6 +30,7 @@ export type UIDataTypes = {
   // User-authored attachments (composer): a pasted text blob and a pasted URL.
   pastedContent?: { text: string }
   quotedContext?: { text: string }
+  noteContext?: { title?: string; text: string }
   sourceUrl?: { url: string }
 }
 

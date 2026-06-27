@@ -3,6 +3,7 @@
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
 import type { Note } from '@/lib/db/schema'
+import { stripMarkdownText } from '@/lib/utils/markdown'
 
 const MAX_TITLE_LENGTH = 120
 const DEFAULT_NOTES_PAGE_SIZE = 25
@@ -13,11 +14,7 @@ export type NotesListCursor = {
 }
 
 function stripMarkdownTitle(value: string) {
-  return value
-    .replace(/^#{1,6}\s+/, '')
-    .replace(/[*_~`>#\[\]()]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
+  return stripMarkdownText(value)
 }
 
 function deriveTitle(content: string, title?: string) {
@@ -129,6 +126,31 @@ export async function listNotes({
       hasMore: false,
       error: 'Failed to load notes.'
     }
+  }
+}
+
+export async function searchNotes({
+  query,
+  limit = DEFAULT_NOTES_PAGE_SIZE
+}: {
+  query: string
+  limit?: number
+}): Promise<{ success: boolean; notes?: Note[]; error?: string }> {
+  const { userId, error } = await requireNoteUserId()
+  if (!userId) {
+    return {
+      success: false,
+      notes: [],
+      error: error ?? 'User not authenticated'
+    }
+  }
+
+  try {
+    const notes = await dbActions.searchNotes(userId, query, { limit })
+    return { success: true, notes }
+  } catch (error) {
+    console.error('Error searching notes:', error)
+    return { success: false, notes: [], error: 'Failed to search notes.' }
   }
 }
 
