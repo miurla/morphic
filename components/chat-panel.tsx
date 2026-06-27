@@ -863,12 +863,14 @@ export function ChatPanel({
                           <Plus className="size-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent className="text-xs">Add</TooltipContent>
+                      <TooltipContent side="bottom" className="text-xs">
+                        Add
+                      </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
 
                   {isAttachmentMenuOpen && (
-                    <div className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                    <div className="absolute left-0 top-full z-50 mt-2 w-52 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
                       <button
                         type="button"
                         className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
