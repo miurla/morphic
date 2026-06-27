@@ -164,6 +164,7 @@ export function LibraryPanel() {
     replaceNotesCache,
     replaceFilesCache,
     appendNotesCache,
+    appendFilesCache,
     removeCachedNote,
     removeCachedFile
   } = useLibrary()
@@ -297,45 +298,114 @@ export function LibraryPanel() {
   }, [filesCache, isOpen, refreshKey, replaceFilesCache])
 
   const handleLoadMore = useCallback(async () => {
-    if (!notesCache?.hasMore || !notesCache.nextCursor || isLoadingMore) return
+    if (isLoadingMore) return
+
+    const shouldLoadNotes =
+      (activeTab === 'all' || activeTab === 'notes') &&
+      notesCache?.hasMore &&
+      notesCache.nextCursor
+    const shouldLoadFiles =
+      (activeTab === 'all' || activeTab === 'files') &&
+      filesCache?.hasMore &&
+      filesCache.nextCursor
+
+    if (!shouldLoadNotes && !shouldLoadFiles) return
 
     setIsLoadingMore(true)
     try {
-      const result = await listNotes({
-        limit: LIBRARY_PAGE_SIZE,
-        cursor: notesCache.nextCursor
-      })
+      await Promise.all([
+        shouldLoadNotes
+          ? listNotes({
+              limit: LIBRARY_PAGE_SIZE,
+              cursor: notesCache.nextCursor
+            }).then(result => {
+              if (!result.success) {
+                captureClient('library_list_load_failed', {
+                  source: 'network',
+                  reason: 'load_more',
+                  error: result.error ?? 'unknown'
+                })
+                toast.error(result.error ?? 'Failed to load library')
+                return
+              }
 
-      if (!result.success) {
-        captureClient('library_list_load_failed', {
-          source: 'network',
-          reason: 'load_more',
-          error: result.error ?? 'unknown'
-        })
-        toast.error(result.error ?? 'Failed to load library')
-        return
-      }
+              const nextNotes = result.notes ?? []
+              appendNotesCache({
+                notes: nextNotes,
+                nextCursor: result.nextCursor ?? null,
+                hasMore: Boolean(result.hasMore)
+              })
+              captureClient('library_list_loaded', {
+                source: 'network',
+                reason: 'load_more',
+                noteCount: nextNotes.length,
+                hasMore: Boolean(result.hasMore),
+                isEmpty: nextNotes.length === 0
+              })
+            })
+          : Promise.resolve(),
+        shouldLoadFiles
+          ? listFiles({
+              limit: LIBRARY_PAGE_SIZE,
+              cursor: filesCache.nextCursor
+            }).then(result => {
+              if (!result.success) {
+                captureClient('library_files_load_failed', {
+                  source: 'network',
+                  reason: 'load_more',
+                  error: result.error ?? 'unknown'
+                })
+                toast.error(result.error ?? 'Failed to load files')
+                return
+              }
 
-      const nextNotes = result.notes ?? []
-      appendNotesCache({
-        notes: nextNotes,
-        nextCursor: result.nextCursor ?? null,
-        hasMore: Boolean(result.hasMore)
-      })
-      captureClient('library_list_loaded', {
-        source: 'network',
-        reason: 'load_more',
-        noteCount: nextNotes.length,
-        hasMore: Boolean(result.hasMore),
-        isEmpty: nextNotes.length === 0
-      })
+              const nextFiles = result.files ?? []
+              appendFilesCache({
+                files: nextFiles,
+                nextCursor: result.nextCursor ?? null,
+                hasMore: Boolean(result.hasMore)
+              })
+              captureClient('library_files_loaded', {
+                source: 'network',
+                reason: 'load_more',
+                fileCount: nextFiles.length,
+                hasMore: Boolean(result.hasMore),
+                isEmpty: nextFiles.length === 0
+              })
+            })
+          : Promise.resolve()
+      ])
     } finally {
       setIsLoadingMore(false)
     }
-  }, [appendNotesCache, isLoadingMore, notesCache])
+  }, [
+    activeTab,
+    appendFilesCache,
+    appendNotesCache,
+    filesCache,
+    isLoadingMore,
+    notesCache
+  ])
 
   useEffect(() => {
-    if (!isOpen || selectedNote || !notesCache?.hasMore || isLoadingMore) return
+    const canLoadMoreNotes =
+      (activeTab === 'all' || activeTab === 'notes') &&
+      notesCache?.hasMore &&
+      notesCache.nextCursor
+    const canLoadMoreFiles =
+      (activeTab === 'all' || activeTab === 'files') &&
+      filesCache?.hasMore &&
+      filesCache.nextCursor
+
+    if (
+      !isOpen ||
+      selectedNote ||
+      selectedFile ||
+      isLoadingMore ||
+      (!canLoadMoreNotes && !canLoadMoreFiles)
+    ) {
+      return
+    }
 
     const sentinel = loadMoreRef.current
     const scrollRoot = listScrollRef.current
@@ -355,7 +425,18 @@ export function LibraryPanel() {
     return () => {
       observer.disconnect()
     }
-  }, [handleLoadMore, isLoadingMore, isOpen, notesCache?.hasMore, selectedNote])
+  }, [
+    activeTab,
+    filesCache?.hasMore,
+    filesCache?.nextCursor,
+    handleLoadMore,
+    isLoadingMore,
+    isOpen,
+    notesCache?.hasMore,
+    notesCache?.nextCursor,
+    selectedFile,
+    selectedNote
+  ])
 
   const visibleNotes = useMemo(() => notesCache?.notes ?? [], [notesCache])
   const visibleFiles = useMemo(() => filesCache?.files ?? [], [filesCache])
@@ -381,6 +462,11 @@ export function LibraryPanel() {
     [selectedFile?.filename, selectedNote]
   )
   const hasSelectedItem = Boolean(selectedNote || selectedFile)
+  const hasMoreVisibleItems =
+    ((activeTab === 'all' || activeTab === 'notes') &&
+      Boolean(notesCache?.hasMore && notesCache.nextCursor)) ||
+    ((activeTab === 'all' || activeTab === 'files') &&
+      Boolean(filesCache?.hasMore && filesCache.nextCursor))
   const visibleLibraryItems = useMemo(() => {
     const noteItems = visibleNotes.map(note => ({
       kind: 'note' as const,
@@ -735,7 +821,7 @@ export function LibraryPanel() {
                       </div>
                     )
                   })}
-                  {notesCache?.hasMore && (
+                  {hasMoreVisibleItems && (
                     <div
                       ref={loadMoreRef}
                       className="flex h-10 items-center justify-center text-muted-foreground"

@@ -57,6 +57,11 @@ type LibraryContextValue = {
     nextCursor: NotesListCursor | null
     hasMore: boolean
   }) => void
+  appendFilesCache: (page: {
+    files: LibraryFileItem[]
+    nextCursor: NotesListCursor | null
+    hasMore: boolean
+  }) => void
   upsertCachedFile: (file: LibraryFileItem) => void
   removeCachedFile: (fileId: string) => void
   refreshLibrary: () => void
@@ -153,6 +158,33 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     },
     []
   )
+  const appendFilesCache = useCallback(
+    (page: {
+      files: LibraryFileItem[]
+      nextCursor: NotesListCursor | null
+      hasMore: boolean
+    }) => {
+      setFilesCache(cache => {
+        if (!cache) {
+          return { ...page, updatedAt: Date.now() }
+        }
+
+        const existingIds = new Set(cache.files.map(file => file.id))
+        const mergedFiles = [
+          ...cache.files,
+          ...page.files.filter(file => !existingIds.has(file.id))
+        ]
+
+        return {
+          files: mergedFiles,
+          nextCursor: page.nextCursor,
+          hasMore: page.hasMore,
+          updatedAt: Date.now()
+        }
+      })
+    },
+    []
+  )
   const upsertCachedFile = useCallback((file: LibraryFileItem) => {
     setFilesCache(cache => {
       if (!cache) return cache
@@ -195,6 +227,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
       upsertCachedNote,
       removeCachedNote,
       replaceFilesCache,
+      appendFilesCache,
       upsertCachedFile,
       removeCachedFile,
       refreshLibrary
@@ -202,6 +235,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     [
       closeLibrary,
       appendNotesCache,
+      appendFilesCache,
       isOpen,
       filesCache,
       notesCache,

@@ -9,13 +9,29 @@ BEGIN
       AND table_name = 'files'
       AND column_name = 'url'
   ) THEN
+    WITH normalized_file_urls AS (
+      SELECT
+        "id",
+        split_part(regexp_replace("url", '^https?://[^/]+/', ''), '?', 1) AS "url_path"
+      FROM "files"
+      WHERE "object_key" IS NULL
+        AND "url" IS NOT NULL
+    )
     UPDATE "files"
     SET "object_key" = NULLIF(
-      split_part(regexp_replace("url", '^https?://[^/]+/', ''), '?', 1),
+      CASE
+        WHEN normalized_file_urls."url_path" ~ '^[^/]+/[^/]+/chats/' THEN
+          regexp_replace(
+            normalized_file_urls."url_path",
+            '^[^/]+/([^/]+/chats/.*)$',
+            '\1'
+          )
+        ELSE normalized_file_urls."url_path"
+      END,
       ''
     )
-    WHERE "object_key" IS NULL
-      AND "url" IS NOT NULL;
+    FROM normalized_file_urls
+    WHERE "files"."id" = normalized_file_urls."id";
   END IF;
 END $$;
 
