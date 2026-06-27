@@ -139,6 +139,8 @@ export function ChatPanel({
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const attachmentMenuRef = useRef<HTMLDivElement>(null)
+  const noteContextsRef = useRef(noteContexts)
+  const uploadedFilesRef = useRef(uploadedFiles)
   const isFirstRender = useRef(true)
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
@@ -190,6 +192,14 @@ export function ChatPanel({
       setEnterDisabled(false)
     }, 50)
   }
+
+  useEffect(() => {
+    noteContextsRef.current = noteContexts
+  }, [noteContexts])
+
+  useEffect(() => {
+    uploadedFilesRef.current = uploadedFiles
+  }, [uploadedFiles])
 
   const handleNewChat = useCallback(() => {
     setMessages([])
@@ -339,26 +349,30 @@ export function ChatPanel({
 
   const handleAttachNote = useCallback(
     (note: NoteContext) => {
-      if (noteContexts.some(item => item.id === note.id)) {
+      if (noteContextsRef.current.some(item => item.id === note.id)) {
         return false
       }
+      noteContextsRef.current = [...noteContextsRef.current, note]
       setNoteContexts(prev =>
         prev.some(item => item.id === note.id) ? prev : [...prev, note]
       )
       toast.success('Note attached')
       return true
     },
-    [noteContexts, setNoteContexts]
+    [setNoteContexts]
   )
 
   const handleAttachLibraryFile = useCallback(
     (file: UploadedFile) => {
       if (
         file.libraryFileId &&
-        uploadedFiles.some(item => item.libraryFileId === file.libraryFileId)
+        uploadedFilesRef.current.some(
+          item => item.libraryFileId === file.libraryFileId
+        )
       ) {
         return false
       }
+      uploadedFilesRef.current = [...uploadedFilesRef.current, file]
       setUploadedFiles(prev =>
         file.libraryFileId &&
         prev.some(item => item.libraryFileId === file.libraryFileId)
@@ -368,7 +382,7 @@ export function ChatPanel({
       toast.success('File attached')
       return true
     },
-    [setUploadedFiles, uploadedFiles]
+    [setUploadedFiles]
   )
 
   const openLibraryPicker = useCallback(() => {
@@ -842,16 +856,14 @@ export function ChatPanel({
                           variant="outline"
                           size="icon"
                           className="size-8 rounded-full"
-                          aria-label="Add attachment"
+                          aria-label="Add"
                           aria-expanded={isAttachmentMenuOpen}
                           onClick={() => setIsAttachmentMenuOpen(open => !open)}
                         >
                           <Plus className="size-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent className="text-xs">
-                        Add attachment
-                      </TooltipContent>
+                      <TooltipContent className="text-xs">Add</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
 

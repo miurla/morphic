@@ -3,6 +3,7 @@
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
 import type { Note } from '@/lib/db/schema'
+import { stripMarkdownText } from '@/lib/utils/markdown'
 
 const MAX_TITLE_LENGTH = 120
 const DEFAULT_NOTES_PAGE_SIZE = 25
@@ -13,11 +14,7 @@ export type NotesListCursor = {
 }
 
 function stripMarkdownTitle(value: string) {
-  return value
-    .replace(/^#{1,6}\s+/, '')
-    .replace(/[*_~`>#\[\]()]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
+  return stripMarkdownText(value)
 }
 
 function deriveTitle(content: string, title?: string) {
