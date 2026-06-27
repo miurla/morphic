@@ -76,6 +76,10 @@ export function getChatFileObjectKeyPrefix(userId: string, chatId: string) {
   return `${normalizeObjectKey(userId)}/chats/${normalizeObjectKey(chatId)}/`
 }
 
+export function getUserFileObjectKeyPrefix(userId: string) {
+  return `${normalizeObjectKey(userId)}/`
+}
+
 function isObjectKeyWithinPrefix(key: string, prefix: string) {
   const normalizedKey = normalizeObjectKey(key)
   const normalizedPrefix = normalizeObjectKey(prefix).replace(/\/+$/, '')

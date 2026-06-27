@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 
+import { capture } from '@/lib/analytics/dispatch'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import * as dbActions from '@/lib/db/actions'
 import {
   getR2Client,
   getSignedFileUrl,
@@ -60,7 +62,47 @@ export async function POST(req: NextRequest) {
       )
     }
     const result = await uploadFileToR2(file, userId, chatId)
-    return NextResponse.json({ success: true, file: result }, { status: 200 })
+    if (process.env.ENABLE_AUTH === 'false') {
+      return NextResponse.json({ success: true, file: result }, { status: 200 })
+    }
+
+    let libraryFile = null
+    try {
+      const createdFile = await dbActions.createLibraryFile({
+        userId,
+        chatId: chatId || null,
+        filename: result.filename,
+        objectKey: result.key,
+        mediaType: result.mediaType,
+        size: file.size
+      })
+      libraryFile = {
+        ...createdFile,
+        key: createdFile.objectKey,
+        url: result.url
+      }
+      await capture({
+        event: 'file_saved_to_library',
+        distinctId: userId,
+        properties: {
+          mediaType: result.mediaType,
+          source: 'upload',
+          size: file.size
+        }
+      })
+    } catch (error) {
+      console.error('Library file metadata save failed:', error)
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        file: libraryFile
+          ? { ...result, id: libraryFile.id, size: file.size, libraryFile }
+          : { ...result, size: file.size }
+      },
+      { status: 200 }
+    )
   } catch (err: any) {
     console.error('Upload Error:', err)
     return NextResponse.json(

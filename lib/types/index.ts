@@ -103,3 +103,9 @@ export type UploadedFile = {
   mediaType?: string
   libraryFileId?: string
 }
+
+export type NoteContext = {
+  id: string
+  title: string
+  content: string
+}

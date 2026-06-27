@@ -132,6 +132,31 @@ export async function listNotes({
   }
 }
 
+export async function searchNotes({
+  query,
+  limit = DEFAULT_NOTES_PAGE_SIZE
+}: {
+  query: string
+  limit?: number
+}): Promise<{ success: boolean; notes?: Note[]; error?: string }> {
+  const { userId, error } = await requireNoteUserId()
+  if (!userId) {
+    return {
+      success: false,
+      notes: [],
+      error: error ?? 'User not authenticated'
+    }
+  }
+
+  try {
+    const notes = await dbActions.searchNotes(userId, query, { limit })
+    return { success: true, notes }
+  } catch (error) {
+    console.error('Error searching notes:', error)
+    return { success: false, notes: [], error: 'Failed to search notes.' }
+  }
+}
+
 export async function getNote(
   noteId: string
 ): Promise<{ success: boolean; note?: Note | null; error?: string }> {

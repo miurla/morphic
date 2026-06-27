@@ -16,7 +16,10 @@ import {
   IconArrowUp as ArrowUp,
   IconChevronDown as ChevronDown,
   IconFileText as FileText,
+  IconLibrary as LibraryIcon,
   IconMessageCirclePlus as MessageCirclePlus,
+  IconPaperclip as Paperclip,
+  IconPlus as Plus,
   IconSquare as Square,
   IconX as X
 } from '@tabler/icons-react'
@@ -28,7 +31,7 @@ import {
   isAdaptiveModeAuthBlocked,
   requiresAdaptiveModeAuth
 } from '@/lib/search-mode-availability'
-import { UploadedFile } from '@/lib/types'
+import { NoteContext, UploadedFile } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { ModelSelectorData } from '@/lib/types/model-selector'
 import type { SearchMode } from '@/lib/types/search'
@@ -38,8 +41,11 @@ import {
   setCookie,
   subscribeToCookieChange
 } from '@/lib/utils/cookies'
+import { stripMarkdownText } from '@/lib/utils/markdown'
 
 import { useArtifact } from './artifact/artifact-context'
+import { useLibrary } from './library/library-context'
+import { LibraryPickerDialog } from './library/library-picker-dialog'
 import { Button } from './ui/button'
 import { IconBlinkingLogo } from './ui/icons'
 import {
@@ -49,7 +55,6 @@ import {
   TooltipTrigger
 } from './ui/tooltip'
 import { ActionButtons } from './action-buttons'
-import { FileUploadButton } from './file-upload-button'
 import { MessageNavigationDots } from './message-navigation-dots'
 import { ModelSelectorClient } from './model-selector-client'
 import { SearchModeSelector } from './search-mode-selector'
@@ -65,6 +70,7 @@ const PASTE_CARD_MIN_CHARS = 400
 // L0 prototype: client-only, no fetch — the URL rides into the query at send
 // time so the existing fetch tool picks it up.
 const BARE_URL_RE = /^https?:\/\/\S+$/
+const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'application/pdf']
 
 function getSearchModeSnapshot(): SearchMode {
   return getCookie('searchMode') === 'adaptive' ? 'adaptive' : 'quick'
@@ -89,6 +95,8 @@ interface ChatPanelProps {
   setUploadedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>
   quotedContexts: string[]
   setQuotedContexts: React.Dispatch<React.SetStateAction<string[]>>
+  noteContexts: NoteContext[]
+  setNoteContexts: React.Dispatch<React.SetStateAction<NoteContext[]>>
   /** Callback to reset chatId when starting a new chat */
   onNewChat?: () => void
   /** Whether the current session is guest */
@@ -117,6 +125,8 @@ export function ChatPanel({
   setUploadedFiles,
   quotedContexts,
   setQuotedContexts,
+  noteContexts,
+  setNoteContexts,
   scrollContainerRef,
   onNewChat,
   isGuest = false,
@@ -127,6 +137,8 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const attachmentMenuRef = useRef<HTMLDivElement>(null)
   const isFirstRender = useRef(true)
   const [isComposing, setIsComposing] = useState(false) // Composition state
   const [enterDisabled, setEnterDisabled] = useState(false) // Disable Enter after composition ends
@@ -136,12 +148,16 @@ export function ChatPanel({
   const [contentCards, setContentCards] = useState<string[]>([])
   // A single pasted URL becomes a lightweight favicon chip (see BARE_URL_RE).
   const [urlCards, setUrlCards] = useState<string[]>([])
+  const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false)
+  const [isLibraryPickerOpen, setIsLibraryPickerOpen] = useState(false)
   const { close: closeArtifact } = useArtifact()
+  const { upsertCachedFile } = useLibrary()
   const isLoading = status === 'submitted' || status === 'streaming'
   const hasPendingInput =
     input.trim().length > 0 ||
     contentCards.length > 0 ||
     quotedContexts.length > 0 ||
+    noteContexts.length > 0 ||
     urlCards.length > 0 ||
     uploadedFiles.some(file => file.status === 'uploaded')
   const hasAvailableModels =
@@ -247,6 +263,146 @@ export function ChatPanel({
     },
     [setUploadedFiles]
   )
+
+  const uploadSelectedFiles = useCallback(
+    async (files: File[]) => {
+      const validFiles = files
+        .slice(0, 3)
+        .filter(file => ALLOWED_FILE_TYPES.includes(file.type))
+      const rejected = files.filter(
+        file => !ALLOWED_FILE_TYPES.includes(file.type)
+      )
+
+      if (rejected.length > 0) {
+        toast.error(
+          'Some files were not accepted: ' +
+            rejected.map(file => file.name).join(', ')
+        )
+      }
+
+      if (validFiles.length === 0) return
+
+      const newFiles: UploadedFile[] = validFiles.map(file => ({
+        file,
+        status: 'uploading',
+        mediaType: file.type
+      }))
+      setUploadedFiles(prev => [...prev, ...newFiles])
+      await Promise.all(
+        newFiles.map(async uf => {
+          if (!uf.file) return
+          const formData = new FormData()
+          formData.append('file', uf.file)
+          formData.append('chatId', chatId)
+          try {
+            const res = await fetch('/api/upload', {
+              method: 'POST',
+              body: formData
+            })
+
+            if (!res.ok) {
+              throw new Error('Upload failed')
+            }
+
+            const { file: uploaded } = await res.json()
+            if (uploaded.libraryFile) {
+              upsertCachedFile(uploaded.libraryFile)
+            }
+            setUploadedFiles(prev =>
+              prev.map(f =>
+                f.file === uf.file
+                  ? {
+                      ...f,
+                      status: 'uploaded',
+                      url: uploaded.url,
+                      name: uploaded.filename,
+                      key: uploaded.key,
+                      mediaType: uploaded.mediaType,
+                      libraryFileId: uploaded.id
+                    }
+                  : f
+              )
+            )
+          } catch (e) {
+            toast.error(`Failed to upload ${uf.file.name}`)
+            setUploadedFiles(prev =>
+              prev.map(f =>
+                f.file === uf.file ? { ...f, status: 'error' } : f
+              )
+            )
+          }
+        })
+      )
+    },
+    [chatId, setUploadedFiles, upsertCachedFile]
+  )
+
+  const handleAttachNote = useCallback(
+    (note: NoteContext) => {
+      if (noteContexts.some(item => item.id === note.id)) {
+        return false
+      }
+      setNoteContexts(prev =>
+        prev.some(item => item.id === note.id) ? prev : [...prev, note]
+      )
+      toast.success('Note attached')
+      return true
+    },
+    [noteContexts, setNoteContexts]
+  )
+
+  const handleAttachLibraryFile = useCallback(
+    (file: UploadedFile) => {
+      if (
+        file.libraryFileId &&
+        uploadedFiles.some(item => item.libraryFileId === file.libraryFileId)
+      ) {
+        return false
+      }
+      setUploadedFiles(prev =>
+        file.libraryFileId &&
+        prev.some(item => item.libraryFileId === file.libraryFileId)
+          ? prev
+          : [...prev, file]
+      )
+      toast.success('File attached')
+      return true
+    },
+    [setUploadedFiles, uploadedFiles]
+  )
+
+  const openLibraryPicker = useCallback(() => {
+    setIsAttachmentMenuOpen(false)
+    setIsLibraryPickerOpen(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isAttachmentMenuOpen) return
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        attachmentMenuRef.current &&
+        !attachmentMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsAttachmentMenuOpen(false)
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsAttachmentMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isAttachmentMenuOpen])
+
   // Scroll to the bottom of the container
   const handleScrollToBottom = () => {
     const scrollContainer = scrollContainerRef.current
@@ -286,7 +442,9 @@ export function ChatPanel({
           if (
             contentCards.length > 0 ||
             quotedContexts.length > 0 ||
-            urlCards.length > 0
+            noteContexts.length > 0 ||
+            urlCards.length > 0 ||
+            uploadedFiles.some(file => file.status === 'uploaded')
           ) {
             e.preventDefault()
             if (adaptiveModeSubmitBlocked) {
@@ -307,6 +465,10 @@ export function ChatPanel({
                 type: 'data-quotedContext',
                 data: { text }
               })),
+              ...noteContexts.map(note => ({
+                type: 'data-noteContext',
+                data: { title: note.title, text: note.content }
+              })),
               ...urlCards.map(url => ({
                 type: 'data-sourceUrl',
                 data: { url }
@@ -314,7 +476,7 @@ export function ChatPanel({
               ...uploaded.map(f => ({
                 type: 'file',
                 url: f.url!,
-                filename: f.name!,
+                filename: f.name ?? f.file?.name ?? 'Attached file',
                 mediaType:
                   f.mediaType ?? f.file?.type ?? 'application/octet-stream',
                 key: f.key
@@ -332,8 +494,24 @@ export function ChatPanel({
                 cardCount: urlCards.length
               })
             }
+            if (noteContexts.length > 0) {
+              captureClient('note_context_submitted', {
+                count: noteContexts.length,
+                chars: noteContexts.reduce(
+                  (sum, note) => sum + note.content.length,
+                  0
+                )
+              })
+            }
+            const libraryFiles = uploaded.filter(file => file.libraryFileId)
+            if (libraryFiles.length > 0) {
+              captureClient('library_file_submitted', {
+                count: libraryFiles.length
+              })
+            }
             setContentCards([])
             setQuotedContexts([])
+            setNoteContexts([])
             setUrlCards([])
             setUploadedFiles([])
             handleInputChange({
@@ -487,6 +665,38 @@ export function ChatPanel({
               ))}
             </div>
           )}
+          {noteContexts.length > 0 && (
+            <div className="flex flex-col gap-1.5 px-3 pt-3">
+              {noteContexts.map((note, i) => (
+                <div
+                  key={note.id}
+                  className="relative rounded-xl border border-input bg-background px-3 py-2"
+                >
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5 truncate text-xs font-medium text-muted-foreground">
+                      <FileText className="size-3.5 shrink-0" />
+                      <span className="truncate">
+                        Note: {stripMarkdownText(note.title) || 'Untitled note'}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Remove note"
+                      className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      onClick={() => {
+                        setNoteContexts(prev => prev.filter((_, j) => j !== i))
+                      }}
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                  <p className="line-clamp-2 whitespace-pre-wrap break-words text-xs text-muted-foreground/80">
+                    {stripMarkdownText(note.content)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
           {urlCards.length > 0 && (
             <div className="flex flex-wrap gap-1.5 px-3 pt-3">
               {urlCards.map((url, i) => {
@@ -610,57 +820,65 @@ export function ChatPanel({
           <div className="flex items-center justify-between p-2 md:p-3">
             <div className="flex items-center gap-2">
               {!isGuest && (
-                <FileUploadButton
-                  onFileSelect={async files => {
-                    const newFiles: UploadedFile[] = files.map(file => ({
-                      file,
-                      status: 'uploading'
-                    }))
-                    setUploadedFiles(prev => [...prev, ...newFiles])
-                    await Promise.all(
-                      newFiles.map(async uf => {
-                        const formData = new FormData()
-                        formData.append('file', uf.file!)
-                        formData.append('chatId', chatId)
-                        try {
-                          const res = await fetch('/api/upload', {
-                            method: 'POST',
-                            body: formData
-                          })
+                <div ref={attachmentMenuRef} className="relative">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept={ALLOWED_FILE_TYPES.join(',')}
+                    className="hidden"
+                    onChange={event => {
+                      const files = Array.from(event.target.files ?? [])
+                      event.target.value = ''
+                      setIsAttachmentMenuOpen(false)
+                      void uploadSelectedFiles(files)
+                    }}
+                  />
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="size-8 rounded-full"
+                          aria-label="Add attachment"
+                          aria-expanded={isAttachmentMenuOpen}
+                          onClick={() => setIsAttachmentMenuOpen(open => !open)}
+                        >
+                          <Plus className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="text-xs">
+                        Add attachment
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
 
-                          if (!res.ok) {
-                            throw new Error('Upload failed')
-                          }
-
-                          const { file: uploaded } = await res.json()
-                          setUploadedFiles(prev =>
-                            prev.map(f =>
-                              f.file === uf.file
-                                ? {
-                                    ...f,
-                                    status: 'uploaded',
-                                    url: uploaded.url,
-                                    name: uploaded.filename,
-                                    key: uploaded.key,
-                                    mediaType: uploaded.mediaType
-                                  }
-                                : f
-                            )
-                          )
-                        } catch (e) {
-                          toast.error(
-                            `Failed to upload ${uf.file?.name ?? 'file'}`
-                          )
-                          setUploadedFiles(prev =>
-                            prev.map(f =>
-                              f.file === uf.file ? { ...f, status: 'error' } : f
-                            )
-                          )
-                        }
-                      })
-                    )
-                  }}
-                />
+                  {isAttachmentMenuOpen && (
+                    <div className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
+                        onClick={() => {
+                          setIsAttachmentMenuOpen(false)
+                          fileInputRef.current?.click()
+                        }}
+                      >
+                        <Paperclip className="size-4" />
+                        Upload file
+                      </button>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
+                        onClick={openLibraryPicker}
+                      >
+                        <LibraryIcon className="size-4" />
+                        Add from library
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
               <SearchModeSelector
                 isAdaptiveAuthRequired={isAdaptiveAuthRequired}
@@ -739,6 +957,12 @@ export function ChatPanel({
           />
         )}
       </form>
+      <LibraryPickerDialog
+        open={isLibraryPickerOpen}
+        onOpenChange={setIsLibraryPickerOpen}
+        onAttachNote={handleAttachNote}
+        onAttachFile={handleAttachLibraryFile}
+      />
     </div>
   )
 }

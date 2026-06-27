@@ -261,8 +261,7 @@ export const files = pgTable(
     userId: varchar('user_id', { length: 255 }).notNull(),
     chatId: varchar('chat_id', { length: 191 }),
     filename: text().notNull(),
-    url: text().notNull(),
-    objectKey: text('object_key'),
+    objectKey: text('object_key').notNull(),
     mediaType: varchar('media_type', { length: 256 }).notNull(),
     size: integer(),
     createdAt: timestamp('created_at', { mode: 'string' })

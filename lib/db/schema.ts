@@ -314,8 +314,7 @@ export const libraryFiles = pgTable(
       { onDelete: 'set null' }
     ),
     filename: text('filename').notNull(),
-    url: text('url').notNull(),
-    objectKey: text('object_key'),
+    objectKey: text('object_key').notNull(),
     mediaType: varchar('media_type', { length: VARCHAR_LENGTH }).notNull(),
     size: integer('size'),
     createdAt: timestamp('created_at').notNull().defaultNow(),

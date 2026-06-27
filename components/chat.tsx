@@ -21,7 +21,7 @@ import {
   ADAPTIVE_MODE_AUTH_REQUIRED_MESSAGE,
   isAdaptiveModeAuthBlocked
 } from '@/lib/search-mode-availability'
-import { UploadedFile } from '@/lib/types'
+import { NoteContext, UploadedFile } from '@/lib/types'
 import type { UIMessage } from '@/lib/types/ai'
 import {
   isDynamicToolPart,
@@ -79,6 +79,7 @@ export function Chat({
     setInput('')
     setUploadedFiles([])
     setQuotedContexts([])
+    setNoteContexts([])
     setErrorModal({
       open: false,
       type: 'general',
@@ -90,6 +91,7 @@ export function Chat({
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [quotedContexts, setQuotedContexts] = useState<string[]>([])
+  const [noteContexts, setNoteContexts] = useState<NoteContext[]>([])
   const [input, setInput] = useState('')
   const [errorModal, setErrorModal] = useState<{
     open: boolean
@@ -607,6 +609,8 @@ export function Chat({
           setUploadedFiles={setUploadedFiles}
           quotedContexts={quotedContexts}
           setQuotedContexts={setQuotedContexts}
+          noteContexts={noteContexts}
+          setNoteContexts={setNoteContexts}
           scrollContainerRef={scrollContainerRef}
           onNewChat={handleNewChat}
           isGuest={isGuest}
