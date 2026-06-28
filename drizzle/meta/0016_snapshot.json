@@ -123,9 +123,7 @@
           "name": "users_manage_own_chats",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "user_id = current_setting('app.current_user_id', true)",
           "withCheck": "user_id = current_setting('app.current_user_id', true)"
         },
@@ -133,9 +131,7 @@
           "name": "public_chats_readable",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "visibility = 'public'"
         }
       },
@@ -230,27 +226,21 @@
           "name": "feedback_select_policy",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "true"
         },
         "anyone_can_insert_feedback": {
           "name": "anyone_can_insert_feedback",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "withCheck": "true"
         },
         "users_anonymize_own_feedback": {
           "name": "users_anonymize_own_feedback",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "user_id = current_setting('app.current_user_id', true)",
           "withCheck": "user_id IS NULL"
         }
@@ -342,13 +332,9 @@
         "messages_chat_id_chats_id_fk": {
           "name": "messages_chat_id_chats_id_fk",
           "tableFrom": "messages",
-          "columnsFrom": [
-            "chat_id"
-          ],
+          "columnsFrom": ["chat_id"],
           "tableTo": "chats",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -360,9 +346,7 @@
           "name": "users_manage_chat_messages",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "EXISTS (\n        SELECT 1 FROM \"chats\"\n        WHERE \"chats\".id = chat_id\n        AND \"chats\".user_id = current_setting('app.current_user_id', true)\n      )",
           "withCheck": "EXISTS (\n        SELECT 1 FROM \"chats\"\n        WHERE \"chats\".id = chat_id\n        AND \"chats\".user_id = current_setting('app.current_user_id', true)\n      )"
         },
@@ -370,9 +354,7 @@
           "name": "public_chat_messages_readable",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "EXISTS (\n        SELECT 1 FROM \"chats\"\n        WHERE \"chats\".id = chat_id\n        AND \"chats\".visibility = 'public'\n      )"
         }
       },
@@ -667,13 +649,9 @@
         "parts_message_id_messages_id_fk": {
           "name": "parts_message_id_messages_id_fk",
           "tableFrom": "parts",
-          "columnsFrom": [
-            "message_id"
-          ],
+          "columnsFrom": ["message_id"],
           "tableTo": "messages",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -685,9 +663,7 @@
           "name": "users_manage_message_parts",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "EXISTS (\n        SELECT 1 FROM \"messages\"\n        INNER JOIN \"chats\" ON \"chats\".id = \"messages\".chat_id\n        WHERE \"messages\".id = message_id\n        AND \"chats\".user_id = current_setting('app.current_user_id', true)\n      )",
           "withCheck": "EXISTS (\n        SELECT 1 FROM \"messages\"\n        INNER JOIN \"chats\" ON \"chats\".id = \"messages\".chat_id\n        WHERE \"messages\".id = message_id\n        AND \"chats\".user_id = current_setting('app.current_user_id', true)\n      )"
         },
@@ -695,9 +671,7 @@
           "name": "public_chat_parts_readable",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "EXISTS (\n        SELECT 1 FROM \"messages\"\n        INNER JOIN \"chats\" ON \"chats\".id = \"messages\".chat_id\n        WHERE \"messages\".id = message_id\n        AND \"chats\".visibility = 'public'\n      )"
         }
       },
