@@ -14,7 +14,7 @@ export class YouSearchProvider extends BaseSearchProvider {
       content_types?: Array<'web' | 'video' | 'image' | 'news'>
     }
   ): Promise<SearchResults> {
-    const apiKey = process.env.YOU_API_KEY
+    const apiKey = process.env.YDC_API_KEY
     this.validateApiKey(apiKey, 'YOU')
 
     const response = await fetch('https://api.you.com/v1/agents/search', {
