@@ -19,7 +19,7 @@ function getSourceDirectionGuidance(): string {
 - Fallback: if a domain-restricted search returns too few or no results, run one more search without the restriction before answering.`
 }
 
-export function getQuickModePrompt(): string {
+export function getQuickModePrompt(relatedEnabled = true): string {
   const hasGeneralProvider = isGeneralSearchProviderAvailable()
 
   return `
@@ -156,11 +156,11 @@ End with a synthesizing conclusion that ties the main points together into a cle
 
 ${getImageSpecPrompt()}
 
-${getRelatedQuestionsSpecPrompt()}
+${relatedEnabled ? getRelatedQuestionsSpecPrompt() : ''}
 `
 }
 
-function getApproachStrategy(): string {
+function getApproachStrategy(relatedEnabled = true): string {
   return `APPROACH STRATEGY:
 1. **FIRST STEP - Assess query complexity:**
    - Most queries: Direct search and respond. Do NOT use todoWrite.
@@ -206,7 +206,7 @@ Rule precedence:
 7. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question`
 }
 
-export function getAdaptiveModePrompt(): string {
+export function getAdaptiveModePrompt(relatedEnabled = true): string {
   return `
 Instructions:
 
@@ -228,7 +228,7 @@ You are a helpful AI assistant with access to real-time web search, content retr
 Language:
 - ALWAYS respond in the user's language.
 
-${getApproachStrategy()}
+${getApproachStrategy(relatedEnabled)}
 
 TOOL USAGE GUIDELINES:
 
@@ -332,7 +332,7 @@ Conclude with a brief synthesis that ties together the main insights into a clea
 
 ${getImageSpecPrompt()}
 
-${getRelatedQuestionsSpecPrompt()}
+${relatedEnabled ? getRelatedQuestionsSpecPrompt() : ''}
 `
 }
 

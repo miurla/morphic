@@ -5,6 +5,7 @@ import { loadChat } from '@/lib/actions/chat'
 import {
   calculateConversationTurn,
   deriveQueryShape,
+  getServerFeatureFlag,
   trackChatEvent
 } from '@/lib/analytics'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
@@ -161,6 +162,26 @@ export async function POST(req: Request) {
       }
     }
 
+    // Distinct id used for BOTH flag evaluation and analytics attribution, so
+    // the stamped relatedFlag matches the arm the user was actually bucketed to.
+    const analyticsDistinctId =
+      userId ?? (typeof analyticsId === 'string' ? analyticsId : undefined)
+
+    // related_questions_enabled flag. Prefer the client-evaluated value (no
+    // round-trip); fall back to server evaluation against the same distinct id
+    // when the client couldn't resolve flags in time (cold-start / auto-submit),
+    // so first-message sessions aren't misattributed to the on arm. On by default.
+    const clientRelated = body.relatedEnabled
+    const relatedEnabled =
+      typeof clientRelated === 'boolean'
+        ? clientRelated
+        : ((analyticsDistinctId
+            ? await getServerFeatureFlag(
+                'related_questions_enabled',
+                analyticsDistinctId
+              )
+            : undefined) ?? true)
+
     const streamStart = performance.now()
     perfLog(
       `createChatStreamResponse - Start: model=${selectedModel.providerId}:${selectedModel.id}, searchMode=${searchMode}`
@@ -172,7 +193,8 @@ export async function POST(req: Request) {
           model: selectedModel,
           abortSignal,
           searchMode,
-          chatId
+          chatId,
+          relatedEnabled
         })
       : await createChatStreamResponse({
           message,
@@ -183,7 +205,8 @@ export async function POST(req: Request) {
           messageId,
           abortSignal,
           isNewChat,
-          searchMode
+          searchMode,
+          relatedEnabled
         })
 
     perfTime('createChatStreamResponse resolved', streamStart)
@@ -194,8 +217,7 @@ export async function POST(req: Request) {
       try {
         // Attribute to the authenticated user id, or the client-provided
         // PostHog distinct id for guests (so it merges with their client events).
-        const distinctId =
-          userId ?? (typeof analyticsId === 'string' ? analyticsId : undefined)
+        const distinctId = analyticsDistinctId
         if (!distinctId) return
 
         let conversationTurn = 1 // Default for new chats
@@ -232,6 +254,7 @@ export async function POST(req: Request) {
           userId: userId ?? undefined,
           providerId: selectedModel.providerId,
           modelId: selectedModel.id,
+          relatedFlag: relatedEnabled,
           queryShape
         })
       } catch (error) {

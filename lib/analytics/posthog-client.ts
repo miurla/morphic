@@ -74,6 +74,25 @@ export function isFeatureEnabled(key: string): boolean {
   return posthog.isFeatureEnabled?.(key) === true
 }
 
+/**
+ * Whether related questions are enabled for the current distinct id.
+ *
+ * Returns:
+ * - `true`  — analytics disabled (keep current behavior), or flag resolved on.
+ * - `false` — flag explicitly resolved to false.
+ * - `undefined` — flags not loaded yet (cold start / immediate auto-submit).
+ *   Callers should treat this as "unknown" and let the server evaluate against
+ *   the same distinct id, instead of defaulting on and misattributing
+ *   first-message sessions to the on arm of the A/B.
+ */
+export function isRelatedQuestionsEnabled(): boolean | undefined {
+  if (!clientKey()) return true
+  initPostHog()
+  const value = posthog.getFeatureFlag?.('related_questions_enabled')
+  if (value === undefined) return undefined
+  return value !== false
+}
+
 /** Subscribe to feature-flag loads/changes. Returns an unsubscribe function. */
 export function subscribeFeatureFlags(callback: () => void): () => void {
   if (!clientKey()) return () => {}

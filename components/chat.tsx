@@ -8,7 +8,11 @@ import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 
 import { summarizeGenui } from '@/lib/analytics/genui-summary'
-import { captureClient, getDistinctId } from '@/lib/analytics/posthog-client'
+import {
+  captureClient,
+  getDistinctId,
+  isRelatedQuestionsEnabled
+} from '@/lib/analytics/posthog-client'
 import { ChatProvider } from '@/lib/contexts/chat-context'
 import { generateId } from '@/lib/db/schema'
 import {
@@ -150,12 +154,17 @@ export function Chat({
             ? messages.find(m => m.id === messageId)
             : undefined
 
+        // Omit when flags aren't loaded yet so the server resolves the flag
+        // against the same distinct id (avoids on-arm bias on cold-start sends).
+        const relatedEnabled = isRelatedQuestionsEnabled()
+
         return {
           body: {
             trigger, // Use AI SDK's default trigger value directly
             chatId: chatId,
             messageId,
             analyticsId: getDistinctId(),
+            ...(relatedEnabled === undefined ? {} : { relatedEnabled }),
             ...(isGuest ? { messages } : {}),
             message:
               trigger === 'regenerate-message' &&
