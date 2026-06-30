@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+#
+# Morphic on Render — Exa search variant
+# Dashboard → New → Blueprint → connect this repo → Apply.
+#
+# Builds from ./Dockerfile. Migrations run on container start (docker-entrypoint.sh).
+#
+# Set at Apply or in the Dashboard after deploy:
+#   EXA_API_KEY — https://dashboard.exa.ai/
+#   One LLM key: ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_GENERATIVE_AI_API_KEY
+#
+# NODE_TLS_REJECT_UNAUTHORIZED: required for Render Postgres with current lib/db TLS
+# settings. Render's internal Postgres URL uses a platform CA that Node rejects without this.
+
+previews:
+  generation: off
+
+envVarGroups:
+  - name: morphic-render
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ENABLE_AUTH
+        value: "false"
+      - key: ANONYMOUS_USER_ID
+        value: anonymous-user
+      - key: SEARCH_API
+        value: exa
+      - key: NODE_TLS_REJECT_UNAUTHORIZED
+        value: "0"
+
+projects:
+  - name: morphic
+    environments:
+      - name: production
+        services:
+          - type: web
+            name: morphic
+            runtime: docker
+            plan: standard
+            region: oregon
+            dockerfilePath: ./Dockerfile
+            dockerContext: .
+            healthCheckPath: /
+            maxShutdownDelaySeconds: 120
+            envVars:
+              - fromGroup: morphic-render
+              - key: DATABASE_URL
+                fromDatabase:
+                  name: morphic-db
+                  property: connectionString
+              - key: DATABASE_RESTRICTED_URL
+                fromDatabase:
+                  name: morphic-db
+                  property: connectionString
+              - key: EXA_API_KEY
+                sync: false
+
+        databases:
+          - name: morphic-db
+            plan: basic-256mb
+            region: oregon
+            databaseName: morphic
+            postgresMajorVersion: "17"
+            ipAllowList: []
