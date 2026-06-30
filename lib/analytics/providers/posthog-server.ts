@@ -36,6 +36,25 @@ export async function captureServerEvent({
 }
 
 /**
+ * Evaluate a boolean feature flag server-side for a distinct id.
+ * Returns undefined when analytics is unconfigured, the flag is unknown, or
+ * evaluation fails, so callers apply their own default. Does not emit a
+ * $feature_flag_called event (the flag value is stamped on the chat event).
+ */
+export async function getServerFeatureFlag(
+  key: string,
+  distinctId: string
+): Promise<boolean | undefined> {
+  const ph = getClient()
+  if (!ph) return undefined
+
+  const value = await ph.getFeatureFlag(key, distinctId, {
+    sendFeatureFlagEvents: false
+  })
+  return value === undefined ? undefined : value !== false
+}
+
+/**
  * Delete a person and their events via the management API.
  * Requires a dedicated personal API key scoped to person:write.
  * No-op when the key or project id is not configured.
