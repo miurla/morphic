@@ -43,6 +43,8 @@ export interface ChatEventData {
   providerId: string
   /** Model identifier used for the chat */
   modelId: string
+  /** related_questions_enabled flag value for this request (A/B variant) */
+  relatedFlag?: boolean
   /** Derived query shape (omitted for regenerate, where no new query exists) */
   queryShape?: QueryShape
 }

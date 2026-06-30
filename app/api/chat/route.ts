@@ -40,6 +40,9 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { message, messages, chatId, trigger, messageId, isNewChat } = body
     const analyticsId: unknown = body.analyticsId
+    // related_questions_enabled flag (evaluated client-side, on by default).
+    // Off only when the client explicitly sends false.
+    const relatedEnabled = body.relatedEnabled !== false
 
     // Normalize the message id up front so persistence and analytics agree on it.
     if (message && !message.id) {
@@ -172,7 +175,8 @@ export async function POST(req: Request) {
           model: selectedModel,
           abortSignal,
           searchMode,
-          chatId
+          chatId,
+          relatedEnabled
         })
       : await createChatStreamResponse({
           message,
@@ -183,7 +187,8 @@ export async function POST(req: Request) {
           messageId,
           abortSignal,
           isNewChat,
-          searchMode
+          searchMode,
+          relatedEnabled
         })
 
     perfTime('createChatStreamResponse resolved', streamStart)
@@ -232,6 +237,7 @@ export async function POST(req: Request) {
           userId: userId ?? undefined,
           providerId: selectedModel.providerId,
           modelId: selectedModel.id,
+          relatedFlag: relatedEnabled,
           queryShape
         })
       } catch (error) {

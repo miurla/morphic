@@ -74,6 +74,18 @@ export function isFeatureEnabled(key: string): boolean {
   return posthog.isFeatureEnabled?.(key) === true
 }
 
+/**
+ * Whether related questions are enabled for the current distinct id.
+ * On by default: returns false ONLY when the `related_questions_enabled`
+ * flag explicitly resolves to false, so unloaded flags / disabled analytics
+ * keep the existing behavior (related questions shown).
+ */
+export function isRelatedQuestionsEnabled(): boolean {
+  if (!clientKey()) return true
+  initPostHog()
+  return posthog.getFeatureFlag?.('related_questions_enabled') !== false
+}
+
 /** Subscribe to feature-flag loads/changes. Returns an unsubscribe function. */
 export function subscribeFeatureFlags(callback: () => void): () => void {
   if (!clientKey()) return () => {}

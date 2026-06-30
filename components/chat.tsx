@@ -8,7 +8,11 @@ import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 
 import { summarizeGenui } from '@/lib/analytics/genui-summary'
-import { captureClient, getDistinctId } from '@/lib/analytics/posthog-client'
+import {
+  captureClient,
+  getDistinctId,
+  isRelatedQuestionsEnabled
+} from '@/lib/analytics/posthog-client'
 import { ChatProvider } from '@/lib/contexts/chat-context'
 import { generateId } from '@/lib/db/schema'
 import {
@@ -156,6 +160,7 @@ export function Chat({
             chatId: chatId,
             messageId,
             analyticsId: getDistinctId(),
+            relatedEnabled: isRelatedQuestionsEnabled(),
             ...(isGuest ? { messages } : {}),
             message:
               trigger === 'regenerate-message' &&
