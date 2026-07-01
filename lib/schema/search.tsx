@@ -30,16 +30,22 @@ export const searchSchema = z.object({
       'The depth of the search. Allowed values are "basic" or "advanced"'
     ),
   include_domains: z
-    .array(z.string())
+    .union([z.string(), z.array(z.string())])
     .nullish()
-    .transform(val => val ?? [])
+    .transform(val => {
+      if (val == null) return []
+      return typeof val === 'string' ? [val] : val
+    })
     .describe(
       'A list of domains to specifically include in the search results. Default is None, which includes all domains.'
     ),
   exclude_domains: z
-    .array(z.string())
+    .union([z.string(), z.array(z.string())])
     .nullish()
-    .transform(val => val ?? [])
+    .transform(val => {
+      if (val == null) return []
+      return typeof val === 'string' ? [val] : val
+    })
     .describe(
       "A list of domains to specifically exclude from the search results. Default is None, which doesn't exclude any domains."
     )
@@ -59,16 +65,22 @@ export const strictSearchSchema = z.object({
     .enum(['basic', 'advanced'])
     .describe('The depth of the search'),
   include_domains: z
-    .array(z.string())
+    .union([z.string(), z.array(z.string())])
     .nullish()
-    .transform(val => val ?? [])
+    .transform(val => {
+      if (val == null) return []
+      return typeof val === 'string' ? [val] : val
+    })
     .describe(
       'A list of domains to specifically include in the search results. Default is None, which includes all domains.'
     ),
   exclude_domains: z
-    .array(z.string())
+    .union([z.string(), z.array(z.string())])
     .nullish()
-    .transform(val => val ?? [])
+    .transform(val => {
+      if (val == null) return []
+      return typeof val === 'string' ? [val] : val
+    })
     .describe(
       "A list of domains to specifically exclude from the search results. Default is None, which doesn't exclude any domains."
     )
