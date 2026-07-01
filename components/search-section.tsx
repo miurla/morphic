@@ -63,7 +63,7 @@ export function SearchSection({
   const query = tool.input?.query || output?.query || ''
   const includeDomains = tool.input?.include_domains
   const includeDomainsString =
-    includeDomains && includeDomains.length > 0
+    Array.isArray(includeDomains) && includeDomains.length > 0
       ? ` [${includeDomains.join(', ')}]`
       : ''
 
