@@ -48,8 +48,7 @@ export async function createChatStreamResponse(
     messageId,
     abortSignal,
     isNewChat,
-    searchMode,
-    relatedEnabled = true
+    searchMode
   } = config
 
   // Verify that chatId is provided
@@ -130,8 +129,7 @@ export async function createChatStreamResponse(
       model: context.modelId,
       modelConfig: model,
       parentTraceId,
-      searchMode,
-      relatedEnabled
+      searchMode
     })
 
     // For OpenAI models, strip reasoning parts from UIMessages before conversion

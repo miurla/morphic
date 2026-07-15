@@ -13,7 +13,7 @@ import { isTracingEnabled } from '../utils/telemetry'
 
 import {
   getAdaptiveModePrompt,
-  getQuickModePrompt
+  QUICK_MODE_PROMPT
 } from './prompts/search-mode-prompts'
 
 // Enhanced wrapper function with better type safety and streaming support
@@ -71,14 +71,12 @@ export function createResearcher({
   model,
   modelConfig,
   parentTraceId,
-  searchMode = 'adaptive',
-  relatedEnabled = true
+  searchMode = 'adaptive'
 }: {
   model: string
   modelConfig?: Model
   parentTraceId?: string
   searchMode?: SearchMode
-  relatedEnabled?: boolean
 }) {
   try {
     const currentDate = new Date().toLocaleString()
@@ -99,7 +97,7 @@ export function createResearcher({
         console.log(
           '[Researcher] Quick mode: maxSteps=20, tools=[search, fetch]'
         )
-        systemPrompt = getQuickModePrompt(relatedEnabled)
+        systemPrompt = QUICK_MODE_PROMPT
         activeToolsList = ['search', 'fetch']
         maxSteps = 20
         searchTool = wrapSearchToolForQuickMode(originalSearchTool)
@@ -107,7 +105,7 @@ export function createResearcher({
 
       case 'adaptive':
       default:
-        systemPrompt = getAdaptiveModePrompt(relatedEnabled)
+        systemPrompt = getAdaptiveModePrompt()
         activeToolsList = ['search', 'fetch', 'todoWrite']
         console.log(
           `[Researcher] Adaptive mode: maxSteps=50, tools=[${activeToolsList.join(', ')}]`

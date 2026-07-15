@@ -13,5 +13,4 @@ export interface BaseStreamConfig {
   abortSignal?: AbortSignal
   isNewChat?: boolean
   searchMode?: SearchMode
-  relatedEnabled?: boolean
 }

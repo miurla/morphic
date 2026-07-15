@@ -6,7 +6,6 @@
  * @module analytics
  */
 
-export { getServerFeatureFlag } from './dispatch'
 export { trackAccountDeleted } from './track-account-event'
 export {
   type AdaptiveLimitEventData,
