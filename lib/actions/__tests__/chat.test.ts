@@ -582,8 +582,7 @@ describe('Chat Actions', () => {
 
       expect(generateChatTitle).toHaveBeenCalledWith({
         userMessageContent: 'Hello, how are you?',
-        modelId,
-        parentTraceId: undefined
+        modelId
       })
       expect(dbActions.updateChatTitle).toHaveBeenCalledWith(
         chatId,
