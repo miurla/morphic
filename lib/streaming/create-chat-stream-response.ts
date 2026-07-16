@@ -1,11 +1,11 @@
+import type { LangfuseSpan } from '@langfuse/tracing'
+import { propagateAttributes, startActiveObservation } from '@langfuse/tracing'
 import {
   consumeStream,
   convertToModelMessages,
   pruneMessages,
   smoothStream
 } from 'ai'
-import { randomUUID } from 'crypto'
-import { Langfuse } from 'langfuse'
 
 import { researcher } from '@/lib/agents/researcher'
 import {
@@ -32,6 +32,8 @@ import { stripReasoningParts } from './helpers/strip-reasoning-parts'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import type { StreamContext } from './helpers/types'
 import { BaseStreamConfig } from './types'
+
+import { langfuseSpanProcessor } from '@/instrumentation'
 
 // Constants
 const DEFAULT_CHAT_TITLE = 'Untitled'
@@ -78,185 +80,195 @@ export async function createChatStreamResponse(
     perfLog('loadChat skipped for new chat')
   }
 
-  // Create parent trace ID for grouping all operations
-  let parentTraceId: string | undefined
-  let langfuse: Langfuse | undefined
+  const executeStream = async (rootSpan?: LangfuseSpan): Promise<Response> => {
+    // Real OTel trace ID, stored in message metadata so feedback scores can
+    // be attached to this trace later
+    const parentTraceId = rootSpan?.traceId
 
-  if (isTracingEnabled()) {
-    parentTraceId = randomUUID()
-    langfuse = new Langfuse()
+    const endTracing = async () => {
+      if (rootSpan) {
+        rootSpan.end()
+        await langfuseSpanProcessor.forceFlush()
+      }
+    }
 
-    // Create parent trace with name "research"
-    langfuse.trace({
-      id: parentTraceId,
-      name: 'research',
+    // Create stream context with trace ID
+    const context: StreamContext = {
+      chatId,
+      userId,
+      modelId: `${model.providerId}:${model.id}`,
+      messageId,
+      trigger,
+      initialChat,
+      abortSignal,
+      parentTraceId,
+      isNewChat
+    }
+
+    // Declare titlePromise in outer scope for onFinish access
+    let titlePromise: Promise<string> | undefined
+
+    try {
+      // Prepare messages for the model
+      const prepareStart = performance.now()
+      perfLog(
+        `prepareMessages - Invoked: trigger=${trigger}, isNewChat=${isNewChat}`
+      )
+      const messagesToModel = await prepareMessages(context, message)
+      perfTime('prepareMessages completed (stream)', prepareStart)
+
+      // Get the researcher agent with search mode
+      const researchAgent = researcher({
+        model: context.modelId,
+        modelConfig: model,
+        searchMode
+      })
+
+      // For OpenAI models, strip reasoning parts from UIMessages before conversion
+      // OpenAI's Responses API requires reasoning items and their following items to be kept together
+      // See: https://github.com/vercel/ai/issues/11036
+      const isOpenAI = context.modelId.startsWith('openai:')
+      const messagesWithoutSpec = stripSpecFromMessages(messagesToModel)
+      const messagesToConvert = isOpenAI
+        ? stripReasoningParts(messagesWithoutSpec)
+        : messagesWithoutSpec
+
+      // Convert to model messages and apply context window management
+      let modelMessages = await convertToModelMessages(messagesToConvert, {
+        convertDataPart
+      })
+
+      // Prune messages to reduce token usage while keeping recent context
+      modelMessages = pruneMessages({
+        messages: modelMessages,
+        reasoning: 'before-last-message',
+        toolCalls: 'before-last-2-messages',
+        emptyMessages: 'remove'
+      })
+
+      if (shouldTruncateMessages(modelMessages, model)) {
+        const maxTokens = getMaxAllowedTokens(model)
+        const originalCount = modelMessages.length
+        modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            `Context window limit reached. Truncating from ${originalCount} to ${modelMessages.length} messages`
+          )
+        }
+      }
+
+      // Start title generation in parallel if it's a new chat
+      if (!initialChat && message) {
+        const userContent = getTextFromParts(message.parts)
+        titlePromise = generateChatTitle({
+          userMessageContent: userContent,
+          modelId: context.modelId,
+          abortSignal
+        }).catch(error => {
+          console.error('Error generating title:', error)
+          return DEFAULT_CHAT_TITLE
+        })
+      }
+
+      const llmStart = performance.now()
+      perfLog(
+        `researchAgent.stream - Start: model=${context.modelId}, searchMode=${searchMode}`
+      )
+      const result = await researchAgent.stream({
+        messages: modelMessages,
+        abortSignal,
+        experimental_transform: smoothStream({ chunking: 'word' }),
+        ...(isUsageLogging() && {
+          onStepFinish: step => {
+            logUsage(
+              { scope: 'step', modelId: context.modelId },
+              step.usage,
+              step.providerMetadata
+            )
+          }
+        })
+      })
+      result.consumeStream()
+
+      // Log the session-total usage once the stream settles (does not block the
+      // response; consumeStream above already drives it to completion).
+      if (isUsageLogging()) {
+        Promise.resolve(result.totalUsage)
+          .then(usage =>
+            logUsage({ scope: 'total', modelId: context.modelId }, usage)
+          )
+          .catch(() => {})
+      }
+
+      return result.toUIMessageStreamResponse({
+        messageMetadata: ({ part }) => {
+          if (part.type === 'start') {
+            return {
+              traceId: parentTraceId,
+              searchMode,
+              modelId: context.modelId
+            }
+          }
+        },
+        onFinish: async ({ responseMessage, isAborted }) => {
+          try {
+            perfTime('researchAgent.stream completed', llmStart)
+            if (isAborted || !responseMessage) return
+
+            // Persist stream results to database
+            await persistStreamResults(
+              responseMessage,
+              chatId,
+              userId,
+              titlePromise,
+              parentTraceId,
+              searchMode,
+              context.modelId,
+              context.pendingInitialSave,
+              context.pendingInitialUserMessage
+            )
+          } finally {
+            await endTracing()
+          }
+        },
+        onError: (error: unknown) => {
+          console.error('Stream response error:', error)
+          return serializePublicError(error)
+        },
+        consumeSseStream: consumeStream
+      })
+    } catch (error) {
+      await endTracing()
+      console.error('Stream execution error:', error)
+      return createPublicErrorResponse(error, {
+        status: 500,
+        statusText: 'Internal Server Error'
+      })
+    }
+  }
+
+  if (!isTracingEnabled()) {
+    return executeStream()
+  }
+
+  // Wrap execution in a root Langfuse observation so the researcher and
+  // title-generation spans share a single trace
+  return propagateAttributes(
+    {
+      traceName: 'research',
+      userId,
+      sessionId: chatId,
       metadata: {
         chatId,
         userId,
         modelId: `${model.providerId}:${model.id}`,
-        trigger
+        ...(trigger && { trigger })
       }
-    })
-  }
-
-  // Create stream context with trace ID
-  const context: StreamContext = {
-    chatId,
-    userId,
-    modelId: `${model.providerId}:${model.id}`,
-    messageId,
-    trigger,
-    initialChat,
-    abortSignal,
-    parentTraceId,
-    isNewChat
-  }
-
-  // Declare titlePromise in outer scope for onFinish access
-  let titlePromise: Promise<string> | undefined
-
-  try {
-    // Prepare messages for the model
-    const prepareStart = performance.now()
-    perfLog(
-      `prepareMessages - Invoked: trigger=${trigger}, isNewChat=${isNewChat}`
-    )
-    const messagesToModel = await prepareMessages(context, message)
-    perfTime('prepareMessages completed (stream)', prepareStart)
-
-    // Get the researcher agent with parent trace ID and search mode.
-    const researchAgent = researcher({
-      model: context.modelId,
-      modelConfig: model,
-      parentTraceId,
-      searchMode
-    })
-
-    // For OpenAI models, strip reasoning parts from UIMessages before conversion
-    // OpenAI's Responses API requires reasoning items and their following items to be kept together
-    // See: https://github.com/vercel/ai/issues/11036
-    const isOpenAI = context.modelId.startsWith('openai:')
-    const messagesWithoutSpec = stripSpecFromMessages(messagesToModel)
-    const messagesToConvert = isOpenAI
-      ? stripReasoningParts(messagesWithoutSpec)
-      : messagesWithoutSpec
-
-    // Convert to model messages and apply context window management
-    let modelMessages = await convertToModelMessages(messagesToConvert, {
-      convertDataPart
-    })
-
-    // Prune messages to reduce token usage while keeping recent context
-    modelMessages = pruneMessages({
-      messages: modelMessages,
-      reasoning: 'before-last-message',
-      toolCalls: 'before-last-2-messages',
-      emptyMessages: 'remove'
-    })
-
-    if (shouldTruncateMessages(modelMessages, model)) {
-      const maxTokens = getMaxAllowedTokens(model)
-      const originalCount = modelMessages.length
-      modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          `Context window limit reached. Truncating from ${originalCount} to ${modelMessages.length} messages`
-        )
-      }
-    }
-
-    // Start title generation in parallel if it's a new chat
-    if (!initialChat && message) {
-      const userContent = getTextFromParts(message.parts)
-      titlePromise = generateChatTitle({
-        userMessageContent: userContent,
-        modelId: context.modelId,
-        abortSignal,
-        parentTraceId
-      }).catch(error => {
-        console.error('Error generating title:', error)
-        return DEFAULT_CHAT_TITLE
+    },
+    () =>
+      startActiveObservation('research', span => executeStream(span), {
+        endOnExit: false
       })
-    }
-
-    const llmStart = performance.now()
-    perfLog(
-      `researchAgent.stream - Start: model=${context.modelId}, searchMode=${searchMode}`
-    )
-    const result = await researchAgent.stream({
-      messages: modelMessages,
-      abortSignal,
-      experimental_transform: smoothStream({ chunking: 'word' }),
-      ...(isUsageLogging() && {
-        onStepFinish: step => {
-          logUsage(
-            { scope: 'step', modelId: context.modelId },
-            step.usage,
-            step.providerMetadata
-          )
-        }
-      })
-    })
-    result.consumeStream()
-
-    // Log the session-total usage once the stream settles (does not block the
-    // response; consumeStream above already drives it to completion).
-    if (isUsageLogging()) {
-      Promise.resolve(result.totalUsage)
-        .then(usage =>
-          logUsage({ scope: 'total', modelId: context.modelId }, usage)
-        )
-        .catch(() => {})
-    }
-
-    return result.toUIMessageStreamResponse({
-      messageMetadata: ({ part }) => {
-        if (part.type === 'start') {
-          return {
-            traceId: parentTraceId,
-            searchMode,
-            modelId: context.modelId
-          }
-        }
-      },
-      onFinish: async ({ responseMessage, isAborted }) => {
-        try {
-          perfTime('researchAgent.stream completed', llmStart)
-          if (isAborted || !responseMessage) return
-
-          // Persist stream results to database
-          await persistStreamResults(
-            responseMessage,
-            chatId,
-            userId,
-            titlePromise,
-            parentTraceId,
-            searchMode,
-            context.modelId,
-            context.pendingInitialSave,
-            context.pendingInitialUserMessage
-          )
-        } finally {
-          if (langfuse) {
-            await langfuse.flushAsync()
-          }
-        }
-      },
-      onError: (error: unknown) => {
-        console.error('Stream response error:', error)
-        return serializePublicError(error)
-      },
-      consumeSseStream: consumeStream
-    })
-  } catch (error) {
-    if (langfuse) {
-      await langfuse.flushAsync()
-    }
-    console.error('Stream execution error:', error)
-    return createPublicErrorResponse(error, {
-      status: 500,
-      statusText: 'Internal Server Error'
-    })
-  }
+  )
 }

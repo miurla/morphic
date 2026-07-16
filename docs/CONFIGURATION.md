@@ -263,7 +263,7 @@ Enable tracing and monitoring with Langfuse:
 ```bash
 LANGFUSE_SECRET_KEY=[YOUR_SECRET_KEY]
 LANGFUSE_PUBLIC_KEY=[YOUR_PUBLIC_KEY]
-LANGFUSE_HOST=https://cloud.langfuse.com
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
 ```
 
 ### File Upload

@@ -1,3 +1,5 @@
+import type { LangfuseSpan } from '@langfuse/tracing'
+import { propagateAttributes, startActiveObservation } from '@langfuse/tracing'
 import type { UIMessage } from 'ai'
 import {
   consumeStream,
@@ -5,8 +7,6 @@ import {
   pruneMessages,
   smoothStream
 } from 'ai'
-import { randomUUID } from 'crypto'
-import { Langfuse } from 'langfuse'
 
 import { researcher } from '@/lib/agents/researcher'
 import {
@@ -26,6 +26,8 @@ import { convertDataPart } from './helpers/convert-data-part'
 import { stripReasoningParts } from './helpers/strip-reasoning-parts'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import { BaseStreamConfig } from './types'
+
+import { langfuseSpanProcessor } from '@/instrumentation'
 
 type EphemeralStreamConfig = Pick<
   BaseStreamConfig,
@@ -47,108 +49,120 @@ export async function createEphemeralChatStreamResponse(
     })
   }
 
-  // Create parent trace ID for grouping all operations
-  let parentTraceId: string | undefined
-  let langfuse: Langfuse | undefined
+  const executeStream = async (rootSpan?: LangfuseSpan): Promise<Response> => {
+    // Real OTel trace ID, sent to the client in message metadata so feedback
+    // scores can be attached to this trace later
+    const parentTraceId = rootSpan?.traceId
 
-  if (isTracingEnabled()) {
-    parentTraceId = randomUUID()
-    langfuse = new Langfuse()
+    const endTracing = async () => {
+      if (rootSpan) {
+        rootSpan.end()
+        await langfuseSpanProcessor.forceFlush()
+      }
+    }
 
-    langfuse.trace({
-      id: parentTraceId,
-      name: 'research',
+    try {
+      const isOpenAI = `${model.providerId}:${model.id}`.startsWith('openai:')
+      const messagesWithoutSpec = stripSpecFromMessages(messages)
+      const messagesToConvert = isOpenAI
+        ? stripReasoningParts(messagesWithoutSpec)
+        : messagesWithoutSpec
+
+      let modelMessages = await convertToModelMessages(messagesToConvert, {
+        convertDataPart
+      })
+
+      modelMessages = pruneMessages({
+        messages: modelMessages,
+        reasoning: 'before-last-message',
+        toolCalls: 'before-last-2-messages',
+        emptyMessages: 'remove'
+      })
+
+      if (shouldTruncateMessages(modelMessages, model)) {
+        const maxTokens = getMaxAllowedTokens(model)
+        modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
+      }
+
+      const researchAgent = researcher({
+        model: `${model.providerId}:${model.id}`,
+        modelConfig: model,
+        searchMode
+      })
+
+      const modelId = `${model.providerId}:${model.id}`
+      const result = await researchAgent.stream({
+        messages: modelMessages,
+        abortSignal,
+        experimental_transform: smoothStream({ chunking: 'word' }),
+        ...(isUsageLogging() && {
+          onStepFinish: step => {
+            logUsage(
+              { scope: 'step', modelId },
+              step.usage,
+              step.providerMetadata
+            )
+          }
+        })
+      })
+      result.consumeStream()
+
+      if (isUsageLogging()) {
+        Promise.resolve(result.totalUsage)
+          .then(usage => logUsage({ scope: 'total', modelId }, usage))
+          .catch(() => {})
+      }
+
+      return result.toUIMessageStreamResponse({
+        messageMetadata: ({ part }) => {
+          if (part.type === 'start') {
+            return {
+              traceId: parentTraceId,
+              searchMode,
+              modelId: `${model.providerId}:${model.id}`
+            }
+          }
+        },
+        onFinish: async () => {
+          await endTracing()
+        },
+        onError: (error: unknown) => {
+          console.error('Ephemeral stream response error:', error)
+          return serializePublicError(error)
+        },
+        consumeSseStream: consumeStream
+      })
+    } catch (error) {
+      await endTracing()
+      console.error('Ephemeral stream execution error:', error)
+      return createPublicErrorResponse(error, {
+        status: 500,
+        statusText: 'Internal Server Error'
+      })
+    }
+  }
+
+  if (!isTracingEnabled()) {
+    return executeStream()
+  }
+
+  // Wrap execution in a root Langfuse observation so all spans share a
+  // single trace
+  return propagateAttributes(
+    {
+      traceName: 'research',
+      userId: 'guest',
+      ...(chatId && { sessionId: chatId }),
       metadata: {
-        chatId,
+        ...(chatId && { chatId }),
         userId: 'guest',
         modelId: `${model.providerId}:${model.id}`,
         trigger: 'submit-message'
       }
-    })
-  }
-
-  try {
-    const isOpenAI = `${model.providerId}:${model.id}`.startsWith('openai:')
-    const messagesWithoutSpec = stripSpecFromMessages(messages)
-    const messagesToConvert = isOpenAI
-      ? stripReasoningParts(messagesWithoutSpec)
-      : messagesWithoutSpec
-
-    let modelMessages = await convertToModelMessages(messagesToConvert, {
-      convertDataPart
-    })
-
-    modelMessages = pruneMessages({
-      messages: modelMessages,
-      reasoning: 'before-last-message',
-      toolCalls: 'before-last-2-messages',
-      emptyMessages: 'remove'
-    })
-
-    if (shouldTruncateMessages(modelMessages, model)) {
-      const maxTokens = getMaxAllowedTokens(model)
-      modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
-    }
-
-    const researchAgent = researcher({
-      model: `${model.providerId}:${model.id}`,
-      modelConfig: model,
-      parentTraceId,
-      searchMode
-    })
-
-    const modelId = `${model.providerId}:${model.id}`
-    const result = await researchAgent.stream({
-      messages: modelMessages,
-      abortSignal,
-      experimental_transform: smoothStream({ chunking: 'word' }),
-      ...(isUsageLogging() && {
-        onStepFinish: step => {
-          logUsage(
-            { scope: 'step', modelId },
-            step.usage,
-            step.providerMetadata
-          )
-        }
+    },
+    () =>
+      startActiveObservation('research', span => executeStream(span), {
+        endOnExit: false
       })
-    })
-    result.consumeStream()
-
-    if (isUsageLogging()) {
-      Promise.resolve(result.totalUsage)
-        .then(usage => logUsage({ scope: 'total', modelId }, usage))
-        .catch(() => {})
-    }
-
-    return result.toUIMessageStreamResponse({
-      messageMetadata: ({ part }) => {
-        if (part.type === 'start') {
-          return {
-            traceId: parentTraceId,
-            searchMode,
-            modelId: `${model.providerId}:${model.id}`
-          }
-        }
-      },
-      onFinish: async () => {
-        if (langfuse) {
-          await langfuse.flushAsync()
-        }
-      },
-      onError: (error: unknown) => {
-        console.error('Ephemeral stream response error:', error)
-        return serializePublicError(error)
-      },
-      consumeSseStream: consumeStream
-    })
-  } catch (error) {
-    if (langfuse) {
-      await langfuse.flushAsync()
-    }
-    console.error('Ephemeral stream execution error:', error)
-    return createPublicErrorResponse(error, {
-      status: 500,
-      statusText: 'Internal Server Error'
-    })
-  }
+  )
 }

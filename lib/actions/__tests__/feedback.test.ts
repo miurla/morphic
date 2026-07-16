@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock the modules before any imports
 vi.mock('@/lib/db')
-vi.mock('langfuse')
+vi.mock('@langfuse/client')
 vi.mock('@/lib/utils/telemetry')
 
 // Import after mocking
-import { Langfuse } from 'langfuse'
+import { LangfuseClient } from '@langfuse/client'
 
 import { db } from '@/lib/db'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
@@ -92,13 +92,15 @@ describe('Feedback Actions', () => {
       // Enable tracing
       vi.mocked(isTracingEnabled).mockReturnValue(true)
 
-      // Mock Langfuse
-      const mockScore = vi.fn()
+      // Mock LangfuseClient
+      const mockScoreCreate = vi.fn()
       const mockFlush = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(Langfuse).mockImplementation(function () {
+      vi.mocked(LangfuseClient).mockImplementation(function () {
         return {
-          score: mockScore,
-          flushAsync: mockFlush
+          score: {
+            create: mockScoreCreate,
+            flush: mockFlush
+          }
         } as any
       } as any)
 
@@ -121,8 +123,8 @@ describe('Feedback Actions', () => {
       const result = await updateMessageFeedback(messageId, score)
 
       expect(result).toEqual({ success: true })
-      expect(Langfuse).toHaveBeenCalled()
-      expect(mockScore).toHaveBeenCalledWith({
+      expect(LangfuseClient).toHaveBeenCalled()
+      expect(mockScoreCreate).toHaveBeenCalledWith({
         traceId: 'test-trace-id',
         name: 'user-feedback',
         value: score,

@@ -70,12 +70,10 @@ function wrapSearchToolForQuickMode<
 export function createResearcher({
   model,
   modelConfig,
-  parentTraceId,
   searchMode = 'adaptive'
 }: {
   model: string
   modelConfig?: Model
-  parentTraceId?: string
   searchMode?: SearchMode
 }) {
   try {
@@ -133,17 +131,14 @@ export function createResearcher({
       ...(modelConfig?.providerOptions && {
         providerOptions: modelConfig.providerOptions
       }),
+      // Spans join the parent Langfuse trace via OTel context propagation
       experimental_telemetry: {
         isEnabled: isTracingEnabled(),
         functionId: 'research-agent',
         metadata: {
           modelId: model,
           agentType: 'researcher',
-          searchMode,
-          ...(parentTraceId && {
-            langfuseTraceId: parentTraceId,
-            langfuseUpdateParent: false
-          })
+          searchMode
         }
       }
     })

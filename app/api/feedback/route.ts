@@ -1,4 +1,4 @@
-import { Langfuse } from 'langfuse'
+import { LangfuseClient } from '@langfuse/client'
 
 import { updateMessageFeedback } from '@/lib/actions/feedback'
 import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
@@ -32,10 +32,10 @@ export async function POST(req: Request) {
     }
 
     // Initialize Langfuse client
-    const langfuse = new Langfuse()
+    const langfuse = new LangfuseClient()
 
     // Send score to Langfuse
-    langfuse.score({
+    langfuse.score.create({
       traceId,
       name: 'user_feedback',
       value: score,
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     })
 
     // Flush to ensure the score is sent
-    await langfuse.flushAsync()
+    await langfuse.score.flush()
 
     // Get current user for RLS context
     let userId: string | null = null

@@ -1,10 +1,14 @@
+import { LangfuseSpanProcessor } from '@langfuse/otel'
 import { registerOTel } from '@vercel/otel'
-import { LangfuseExporter } from 'langfuse-vercel'
+
+// Exported so request handlers can force-flush pending spans before the
+// serverless function exits
+export const langfuseSpanProcessor = new LangfuseSpanProcessor()
 
 export async function register() {
   registerOTel({
     serviceName: 'morphic-ai-search',
-    traceExporter: new LangfuseExporter()
+    spanProcessors: [langfuseSpanProcessor]
   })
 
   // Initialize Ollama validation on server startup (only when configured)

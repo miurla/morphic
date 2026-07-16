@@ -1,7 +1,7 @@
 'use server'
 
+import { LangfuseClient } from '@langfuse/client'
 import { eq } from 'drizzle-orm'
-import { Langfuse } from 'langfuse'
 
 import { db } from '@/lib/db'
 import { messages } from '@/lib/db/schema'
@@ -53,14 +53,15 @@ export async function updateMessageFeedback(
     // Send feedback to Langfuse if trace ID exists and tracing is enabled
     const traceId = (result.metadata as UIMessageMetadata)?.traceId
     if (traceId && isTracingEnabled()) {
-      const langfuse = new Langfuse()
-      langfuse.score({
+      const langfuse = new LangfuseClient()
+      langfuse.score.create({
         traceId,
         name: 'user-feedback',
         value: score,
         comment: score === 1 ? 'Thumbs up' : 'Thumbs down'
       })
-      await langfuse.flushAsync()
+      // Flush before the server action returns so the score is not lost
+      await langfuse.score.flush()
     }
 
     return { success: true }

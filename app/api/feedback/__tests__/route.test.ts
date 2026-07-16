@@ -30,17 +30,19 @@ vi.mock('@/lib/utils/telemetry', () => ({
   isTracingEnabled: vi.fn(() => false)
 }))
 
-vi.mock('langfuse', () => ({
-  Langfuse: vi.fn(function () {
+vi.mock('@langfuse/client', () => ({
+  LangfuseClient: vi.fn(function () {
     return {
-      score: vi.fn(),
-      flushAsync: vi.fn(() => Promise.resolve())
+      score: {
+        create: vi.fn(),
+        flush: vi.fn(() => Promise.resolve())
+      }
     }
   })
 }))
 
 // Import after mocking
-import { Langfuse } from 'langfuse'
+import { LangfuseClient } from '@langfuse/client'
 
 import { updateMessageFeedback } from '@/lib/actions/feedback'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
@@ -59,12 +61,14 @@ describe('Feedback API Route', () => {
         success: true
       })
 
-      const mockScore = vi.fn()
+      const mockScoreCreate = vi.fn()
       const mockFlush = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(Langfuse).mockImplementation(function () {
+      vi.mocked(LangfuseClient).mockImplementation(function () {
         return {
-          score: mockScore,
-          flushAsync: mockFlush
+          score: {
+            create: mockScoreCreate,
+            flush: mockFlush
+          }
         } as any
       } as any)
 
@@ -86,7 +90,7 @@ describe('Feedback API Route', () => {
 
       expect(response.status).toBe(200)
       expect(text).toBe('Feedback recorded successfully')
-      expect(mockScore).toHaveBeenCalledWith({
+      expect(mockScoreCreate).toHaveBeenCalledWith({
         traceId: 'test-trace-id',
         name: 'user_feedback',
         value: 1,
@@ -106,12 +110,14 @@ describe('Feedback API Route', () => {
         success: true
       })
 
-      const mockScore = vi.fn()
+      const mockScoreCreate = vi.fn()
       const mockFlush = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(Langfuse).mockImplementation(function () {
+      vi.mocked(LangfuseClient).mockImplementation(function () {
         return {
-          score: mockScore,
-          flushAsync: mockFlush
+          score: {
+            create: mockScoreCreate,
+            flush: mockFlush
+          }
         } as any
       } as any)
 
@@ -130,7 +136,7 @@ describe('Feedback API Route', () => {
       const response = await POST(request)
 
       expect(response.status).toBe(200)
-      expect(mockScore).toHaveBeenCalledWith({
+      expect(mockScoreCreate).toHaveBeenCalledWith({
         traceId: 'test-trace-id',
         name: 'user_feedback',
         value: -1,
@@ -207,12 +213,14 @@ describe('Feedback API Route', () => {
         error: 'Database error'
       })
 
-      const mockScore = vi.fn()
+      const mockScoreCreate = vi.fn()
       const mockFlush = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(Langfuse).mockImplementation(function () {
+      vi.mocked(LangfuseClient).mockImplementation(function () {
         return {
-          score: mockScore,
-          flushAsync: mockFlush
+          score: {
+            create: mockScoreCreate,
+            flush: mockFlush
+          }
         } as any
       } as any)
 
@@ -246,12 +254,14 @@ describe('Feedback API Route', () => {
     it('should work without messageId', async () => {
       vi.mocked(isTracingEnabled).mockReturnValue(true)
 
-      const mockScore = vi.fn()
+      const mockScoreCreate = vi.fn()
       const mockFlush = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(Langfuse).mockImplementation(function () {
+      vi.mocked(LangfuseClient).mockImplementation(function () {
         return {
-          score: mockScore,
-          flushAsync: mockFlush
+          score: {
+            create: mockScoreCreate,
+            flush: mockFlush
+          }
         } as any
       } as any)
 

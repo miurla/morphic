@@ -7,7 +7,6 @@ interface GenerateChatTitleParams {
   userMessageContent: string
   modelId: string
   abortSignal?: AbortSignal
-  parentTraceId?: string
 }
 
 /**
@@ -19,8 +18,7 @@ interface GenerateChatTitleParams {
 export async function generateChatTitle({
   userMessageContent,
   modelId,
-  abortSignal,
-  parentTraceId
+  abortSignal
 }: GenerateChatTitleParams): Promise<string> {
   // Fallback title uses the first 75 characters of the message or a default string.
   const fallbackTitle = userMessageContent.substring(0, 75).trim() || 'New Chat'
@@ -33,17 +31,14 @@ export async function generateChatTitle({
       system: systemPrompt,
       prompt: userMessageContent,
       abortSignal,
+      // Spans join the parent Langfuse trace via OTel context propagation
       experimental_telemetry: {
         isEnabled: isTracingEnabled(),
         functionId: 'title-generation',
         metadata: {
           modelId: modelId,
           agentType: 'title-generator',
-          promptLength: userMessageContent.length,
-          ...(parentTraceId && {
-            langfuseTraceId: parentTraceId,
-            langfuseUpdateParent: false
-          })
+          promptLength: userMessageContent.length
         }
       }
     })
