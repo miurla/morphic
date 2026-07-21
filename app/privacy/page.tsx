@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
-      {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/80 backdrop-blur-md py-4 px-6">
+    <div className="min-h-screen w-full bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground flex flex-col">
+      {/* Header Navigation */}
+      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/90 backdrop-blur-md py-4 px-6">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <Link
             href="/"
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
       </header>
 
       {/* Main Container */}
-      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-12 sm:py-20">
+      <main className="flex-1 mx-auto w-full max-w-4xl px-4 sm:px-6 py-10 sm:py-16">
         <article className="prose dark:prose-invert max-w-none space-y-8">
           {/* Title Banner */}
           <div className="border-b border-border pb-8">
@@ -60,7 +60,7 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc pl-6 space-y-2 text-sm text-muted-foreground">
               <li>
-                <strong>Direct Interactions:</strong> If you contact us directly or provide feedback via our built-in feedback modules, we may receive additional information about you such as your name, email address, phone number, the contents of the message and/or attachments you may send us, and any other information you may choose to provide.
+                <strong>Direct Interactions:</strong> If you contact us directly or provide feedback via our built-in feedback modules, we may receive additional information about you such as your name, email address, the contents of the message and/or attachments you may send us, and any other information you may choose to provide.
               </li>
               <li>
                 <strong>Log Files:</strong> Morphic AI follows a standard procedure of using log files. These files log visitors when they visit websites. The information collected by log files includes internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp, referring/exit pages, and possibly the number of clicks. These are not linked to any information that is personally identifiable.
@@ -98,32 +98,8 @@ export default function PrivacyPage() {
               </a>
             </p>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Some advertisers on our site may use cookies and web beacons. Our advertising partners include Google AdSense. Each of our advertising partners has their own Privacy Policy for their policies on user data. For easier access, we hyperlinked to their Privacy Policies below:
+              Some advertisers on our site may use cookies and web beacons. Our advertising partners include Google AdSense. Each of our advertising partners has their own Privacy Policy for their policies on user data.
             </p>
-            <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground">
-              <li>
-                <strong>Google AdSense & Ad Policies:</strong>{' '}
-                <a
-                  href="https://policies.google.com/technologies/ads"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline"
-                >
-                  Google Privacy & Terms
-                </a>
-              </li>
-              <li>
-                <strong>Network Advertising Initiative Opt-Out:</strong>{' '}
-                <a
-                  href="https://www.aboutads.info/choices/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline"
-                >
-                  aboutads.info choices
-                </a>
-              </li>
-            </ul>
           </section>
 
           {/* Section 4 */}
@@ -140,7 +116,6 @@ export default function PrivacyPage() {
               <li>Understand and analyze how you interact with our real-time search synthesis engine.</li>
               <li>Develop new products, services, features, and capabilities.</li>
               <li>Process user feedback and provide technical support.</li>
-              <li>Send you updates and other information related to the application.</li>
               <li>Detect, prevent, and mitigate fraud or technical security vulnerabilities.</li>
             </ul>
           </section>
@@ -151,15 +126,7 @@ export default function PrivacyPage() {
               5. CCPA Privacy Rights (Do Not Sell My Personal Information)
             </h2>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Under the CCPA, among other rights, California consumers have the right to:
-            </p>
-            <ul className="list-disc pl-6 space-y-2 text-sm text-muted-foreground">
-              <li>Request that a business that collects a consumer&apos;s personal data disclose the categories and specific pieces of personal data that a business has collected about consumers.</li>
-              <li>Request that a business delete any personal data about the consumer that a business has collected.</li>
-              <li>Request that a business that sells a consumer&apos;s personal data, not sell the consumer&apos;s personal data.</li>
-            </ul>
-            <p className="text-sm text-muted-foreground">
-              If you make a request, we have one month to respond to you. If you would like to exercise any of these rights, please contact us.
+              Under the CCPA, among other rights, California consumers have the right to request disclosure, deletion, or non-sale of personal data. If you make a request, we have one month to respond to you.
             </p>
           </section>
 
@@ -169,14 +136,8 @@ export default function PrivacyPage() {
               6. GDPR Data Protection Rights
             </h2>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              We would like to make sure you are fully aware of all of your data protection rights. Every user is entitled to the following:
+              Every user is entitled to data access, rectification, erasure, and restriction rights under GDPR standards.
             </p>
-            <ul className="list-disc pl-6 space-y-2 text-sm text-muted-foreground">
-              <li><strong>The right to access:</strong> You have the right to request copies of your personal data.</li>
-              <li><strong>The right to rectification:</strong> You have the right to request that we correct any information you believe is inaccurate or incomplete.</li>
-              <li><strong>The right to erasure:</strong> You have the right to request that we erase your personal data, under certain conditions.</li>
-              <li><strong>The right to restrict processing:</strong> You have the right to request that we restrict the processing of your personal data, under certain conditions.</li>
-            </ul>
           </section>
 
           {/* Section 7 */}
@@ -185,10 +146,7 @@ export default function PrivacyPage() {
               7. Children&apos;s Information (COPPA Compliance)
             </h2>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Another part of our priority is adding protection for children while using the internet. We encourage parents and guardians to observe, participate in, and/or monitor and guide their online activity.
-            </p>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Morphic AI does not knowingly collect any Personal Identifiable Information from children under the age of 13. If you think that your child provided this kind of information on our website, we strongly encourage you to contact us immediately and we will do our best efforts to promptly remove such information from our records.
+              Morphic AI does not knowingly collect any Personal Identifiable Information from children under the age of 13.
             </p>
           </section>
 
@@ -196,7 +154,7 @@ export default function PrivacyPage() {
           <div className="border-t border-border pt-8 mt-12">
             <h2 className="text-lg font-semibold text-foreground">Contact & Enquiries</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              If you have any questions or suggestions regarding our Privacy Policy, please reach out via our GitHub repository or project feedback channel.
+              If you have any questions regarding our Privacy Policy, please reach out via our GitHub repository.
             </p>
           </div>
         </article>
