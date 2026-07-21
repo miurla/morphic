@@ -22,11 +22,7 @@ import {
 
 // ─────────────────────────────────────────────────────────────────────────
 // Morphic AI Enterprise Marketing Homepage
-// Features: Sticky Glass Nav, Interactive Settings & Feedback Modals,
-// Pointer-tracked 3D Glass Orb, Marquee Ticker, & Architecture Overview.
 // ─────────────────────────────────────────────────────────────────────────
-
-export const metadata_note = null
 
 const capabilities = [
   {
@@ -120,7 +116,7 @@ function Hero3D() {
       ref={ref}
       onMouseMove={handleMove}
       onMouseLeave={handleLeave}
-      className="relative mx-auto flex h-72 w-72 items-center justify-center sm:h-96 sm:w-96"
+      className="relative mx-auto flex h-60 w-60 sm:h-80 sm:w-80 lg:h-96 lg:w-96 items-center justify-center my-6 lg:my-0"
       style={{ perspective: '1000px' }}
     >
       {/* Ambient background glow */}
@@ -147,7 +143,7 @@ function Hero3D() {
         {/* Specular Highlight */}
         <div
           aria-hidden
-          className="absolute left-[18%] top-[14%] h-12 w-20 rounded-full bg-white/35 blur-md"
+          className="absolute left-[18%] top-[14%] h-10 w-16 sm:h-12 sm:w-20 rounded-full bg-white/35 blur-md"
         />
 
         {/* Morphic Logo Centerpiece */}
@@ -155,13 +151,13 @@ function Hero3D() {
           className="absolute inset-0 flex items-center justify-center"
           style={{ transform: 'translateZ(45px)' }}
         >
-          <MorphicLogo className="h-20 w-20 drop-shadow-2xl sm:h-24 sm:w-24" />
+          <MorphicLogo className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 drop-shadow-2xl" />
         </div>
 
         {/* Orbit Ring */}
         <div
           aria-hidden
-          className="absolute inset-[-16px] rounded-full border border-primary/30"
+          className="absolute inset-[-12px] sm:inset-[-16px] rounded-full border border-primary/30"
           style={{ transform: 'translateZ(-35px) rotateX(70deg)' }}
         />
       </div>
@@ -209,7 +205,7 @@ export default function HomePage() {
             : 'border-transparent bg-transparent py-5'
         }`}
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5 group">
             <MorphicLogo className="h-7 w-7 transition-transform group-hover:scale-105" />
             <span className="text-lg font-semibold tracking-tight">Morphic</span>
@@ -254,8 +250,8 @@ export default function HomePage() {
 
       {/* ── Settings Modal ────────────────────────────────────────────── */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-2 font-semibold text-foreground">
                 <Settings className="h-4 w-4 text-primary" />
@@ -331,8 +327,8 @@ export default function HomePage() {
 
       {/* ── Feedback Modal ────────────────────────────────────────────── */}
       {isFeedbackOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-2 font-semibold text-foreground">
                 <MessageSquare className="h-4 w-4 text-primary" />
@@ -389,13 +385,13 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* ── Hero Section ────────────────────────────────────────────── */}
-        <section className="relative px-6 pt-12 pb-20 lg:pt-20 lg:pb-28">
+        <section className="relative px-4 sm:px-6 pt-10 pb-16 sm:pt-16 sm:pb-24 lg:pt-20 lg:pb-28">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,hsl(var(--primary)/0.12),transparent)]"
           />
 
-          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-8">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-8">
             {/* Left Copy Column */}
             <div className="text-center lg:col-span-7 lg:text-left">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3.5 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
@@ -403,12 +399,12 @@ export default function HomePage() {
                 <span>Autonomous Web Intelligence</span>
               </div>
 
-              <h1 className="text-balance text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl lg:leading-[1.08]">
+              <h1 className="text-balance text-3xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl lg:leading-[1.1]">
                 Search Engineered for Absolute Clarity.
               </h1>
 
-              <p className="mx-auto mt-6 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0">
-                Morphic synthesizes live web data into grounded, verifiable answers. 
+              <p className="mx-auto mt-6 max-w-xl text-balance text-sm leading-relaxed text-muted-foreground sm:text-base lg:mx-0">
+                Morphic synthesizes live web data into grounded, verifiable answers.
                 Complete with inline primary source citations and dynamic generative UI components.
               </p>
 
@@ -424,11 +420,11 @@ export default function HomePage() {
                   type="text"
                   placeholder="Ask a question or enter a topic..."
                   autoComplete="off"
-                  className="h-10 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                  className="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
                 />
                 <button
                   type="submit"
-                  className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-primary px-5 text-xs font-semibold text-primary-foreground transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-primary px-4 sm:px-5 text-xs font-semibold text-primary-foreground transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span>Search</span>
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -436,18 +432,18 @@ export default function HomePage() {
               </form>
 
               {/* Quick Metrics */}
-              <div className="mt-10 grid grid-cols-3 gap-4 border-t border-border/60 pt-6 text-left">
+              <div className="mt-10 grid grid-cols-3 gap-2 sm:gap-4 border-t border-border/60 pt-6 text-left">
                 <div>
-                  <dt className="text-xs font-medium text-muted-foreground">Latency</dt>
-                  <dd className="mt-1 text-sm font-semibold text-foreground">&lt; 1.2s Realtime</dd>
+                  <dt className="text-[11px] sm:text-xs font-medium text-muted-foreground">Latency</dt>
+                  <dd className="mt-1 text-xs sm:text-sm font-semibold text-foreground">&lt; 1.2s Realtime</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium text-muted-foreground">License</dt>
-                  <dd className="mt-1 text-sm font-semibold text-foreground">100% Open Source</dd>
+                  <dt className="text-[11px] sm:text-xs font-medium text-muted-foreground">License</dt>
+                  <dd className="mt-1 text-xs sm:text-sm font-semibold text-foreground">100% Open Source</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium text-muted-foreground">Privacy</dt>
-                  <dd className="mt-1 text-sm font-semibold text-foreground">Zero Retention</dd>
+                  <dt className="text-[11px] sm:text-xs font-medium text-muted-foreground">Privacy</dt>
+                  <dd className="mt-1 text-xs sm:text-sm font-semibold text-foreground">Zero Retention</dd>
                 </div>
               </div>
             </div>
@@ -459,7 +455,7 @@ export default function HomePage() {
           </div>
 
           {/* Scroll Down Visual Prompt */}
-          <div className="mt-16 flex justify-center">
+          <div className="mt-12 sm:mt-16 flex justify-center">
             <a
               href="#ticker"
               aria-label="Scroll down to features"
@@ -471,8 +467,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Marquee Feature Strip ────────────────────────────────────── */}
-        <section id="ticker" className="border-y border-border bg-muted/30 py-4">
+        {/* ── Marquee Feature Strip (Overflow Fixed) ────────────────────────────── */}
+        <section id="ticker" className="w-full overflow-hidden border-y border-border bg-muted/30 py-4">
           <div className="flex w-max animate-[marquee_25s_linear_infinite] gap-12 text-xs font-mono uppercase tracking-wider text-muted-foreground">
             {[...tickerItems, ...tickerItems, ...tickerItems].map((item, index) => (
               <div key={index} className="flex items-center gap-3">
@@ -484,18 +480,18 @@ export default function HomePage() {
         </section>
 
         {/* ── Capabilities Grid Section ────────────────────────────────── */}
-        <section id="capabilities" className="px-6 py-24 sm:py-32">
+        <section id="capabilities" className="px-4 sm:px-6 py-16 sm:py-24 lg:py-32">
           <div className="mx-auto max-w-6xl">
             <div className="max-w-2xl">
               <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-primary">
                 System Core Features
               </h2>
-              <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
                 Built for clarity, speed, and absolute technical transparency.
               </p>
             </div>
 
-            <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 sm:mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {capabilities.map(({ icon: Icon, title, description }) => (
                 <div
                   key={title}
@@ -517,27 +513,27 @@ export default function HomePage() {
         </section>
 
         {/* ── Architecture Workflow Section ────────────────────────────── */}
-        <section id="architecture" className="border-t border-border bg-card/40 px-6 py-24 sm:py-32">
+        <section id="architecture" className="border-t border-border bg-card/40 px-4 sm:px-6 py-16 sm:py-24 lg:py-32">
           <div className="mx-auto max-w-6xl">
             <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
               <div>
                 <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-primary">
                   Execution Pipeline
                 </h2>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                <p className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
                   How Morphic processes intent.
                 </p>
               </div>
-              <p className="max-w-md text-sm text-muted-foreground">
+              <p className="max-w-md text-xs sm:text-sm text-muted-foreground">
                 An end-to-end multi-agent pipeline designed to extract real-time web insights without hallucination.
               </p>
             </div>
 
-            <div className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="mt-12 sm:mt-16 grid grid-cols-1 gap-6 lg:grid-cols-3">
               {architectureSteps.map(({ step, name, detail }) => (
                 <div
                   key={step}
-                  className="relative flex flex-col justify-between rounded-xl border border-border bg-background p-8"
+                  className="relative flex flex-col justify-between rounded-xl border border-border bg-background p-6 sm:p-8"
                 >
                   <div>
                     <span className="font-mono text-2xl font-bold text-primary/80">{step}</span>
@@ -551,13 +547,13 @@ export default function HomePage() {
         </section>
 
         {/* ── Formal CTA Section ───────────────────────────────────────── */}
-        <section className="border-t border-border px-6 py-24 text-center sm:py-32">
+        <section className="border-t border-border px-4 sm:px-6 py-16 sm:py-24 text-center">
           <div className="mx-auto max-w-3xl">
             <Cpu className="mx-auto h-10 w-10 text-primary" />
-            <h2 className="mt-6 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <h2 className="mt-6 text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
               Start querying the web directly.
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground">
+            <p className="mx-auto mt-4 max-w-xl text-xs sm:text-sm leading-relaxed text-muted-foreground">
               Experience transparent, cited search interfaces with zero authentication required.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -574,7 +570,7 @@ export default function HomePage() {
       </main>
 
       {/* ── Enterprise Footer ─────────────────────────────────────────── */}
-      <footer className="border-t border-border bg-card px-6 py-12">
+      <footer className="border-t border-border bg-card px-4 sm:px-6 py-12">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:grid-cols-5">
             {/* Column 1: Brand Info */}
@@ -637,7 +633,7 @@ export default function HomePage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="transition-colors hover:text-foreground">
+                  <Link href="/terms-of-service" className="transition-colors hover:text-foreground">
                     Terms of Service
                   </Link>
                 </li>
