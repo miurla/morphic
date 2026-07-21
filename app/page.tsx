@@ -13,13 +13,17 @@ import {
   Terminal,
   Layers,
   ChevronDown,
-  ExternalLink
+  ExternalLink,
+  Settings,
+  MessageSquare,
+  X,
+  Check
 } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────────────────────
 // Morphic AI Enterprise Marketing Homepage
-// Features: Sticky Glass Nav, Pointer-tracked 3D Glass Orb, Marquee Ticker,
-// Architecture Overview, and Production-Grade Enterprise Footer.
+// Features: Sticky Glass Nav, Interactive Settings & Feedback Modals,
+// Pointer-tracked 3D Glass Orb, Marquee Ticker, & Architecture Overview.
 // ─────────────────────────────────────────────────────────────────────────
 
 export const metadata_note = null
@@ -167,6 +171,14 @@ function Hero3D() {
 
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
+  const [feedbackSent, setFeedbackSent] = useState(false)
+  const [feedbackText, setFeedbackText] = useState('')
+
+  // Settings State
+  const [searchMode, setSearchMode] = useState<'speed' | 'depth'>('speed')
+  const [aiModel, setAiModel] = useState('groq')
 
   useEffect(() => {
     const handleScroll = () => {
@@ -176,11 +188,22 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  const handleFeedbackSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!feedbackText.trim()) return
+    setFeedbackSent(true)
+    setTimeout(() => {
+      setFeedbackSent(false)
+      setIsFeedbackOpen(false)
+      setFeedbackText('')
+    }, 1500)
+  }
+
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground scroll-smooth antialiased">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground antialiased">
       {/* ── Sticky Header Navigation ──────────────────────────────────── */}
       <header
-        className={`sticky top-0 z-50 w-full border-b transition-all duration-200 ${
+        className={`sticky top-0 z-40 w-full border-b transition-all duration-200 ${
           scrolled
             ? 'border-border/80 bg-background/80 backdrop-blur-md py-3 shadow-sm'
             : 'border-transparent bg-transparent py-5'
@@ -190,9 +213,6 @@ export default function HomePage() {
           <Link href="/" className="flex items-center gap-2.5 group">
             <MorphicLogo className="h-7 w-7 transition-transform group-hover:scale-105" />
             <span className="text-lg font-semibold tracking-tight">Morphic</span>
-            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono font-medium text-muted-foreground border border-border">
-              v1.0
-            </span>
           </Link>
 
           <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
@@ -212,20 +232,164 @@ export default function HomePage() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/search"
-              className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          {/* Header Action Icons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsFeedbackOpen(true)}
+              aria-label="Give Feedback"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-card/50 text-muted-foreground transition-colors hover:border-border hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              Launch App
-            </Link>
+              <MessageSquare className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              aria-label="Open Settings"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-card/50 text-muted-foreground transition-colors hover:border-border hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </header>
 
+      {/* ── Settings Modal ────────────────────────────────────────────── */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <div className="flex items-center gap-2 font-semibold text-foreground">
+                <Settings className="h-4 w-4 text-primary" />
+                <span>Search Engine Preferences</span>
+              </div>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-6 text-sm">
+              <div>
+                <label className="text-xs font-mono font-medium text-muted-foreground uppercase">
+                  Search Execution Mode
+                </label>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setSearchMode('speed')}
+                    className={`flex items-center justify-between rounded-lg border p-3 text-xs font-medium transition-all ${
+                      searchMode === 'speed'
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:border-border/80'
+                    }`}
+                  >
+                    <span>Speed Mode</span>
+                    {searchMode === 'speed' && <Check className="h-3.5 w-3.5" />}
+                  </button>
+                  <button
+                    onClick={() => setSearchMode('depth')}
+                    className={`flex items-center justify-between rounded-lg border p-3 text-xs font-medium transition-all ${
+                      searchMode === 'depth'
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:border-border/80'
+                    }`}
+                  >
+                    <span>In-Depth Synthesis</span>
+                    {searchMode === 'depth' && <Check className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-mono font-medium text-muted-foreground uppercase">
+                  Default AI Provider
+                </label>
+                <select
+                  value={aiModel}
+                  onChange={(e) => setAiModel(e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-border bg-background p-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="groq">Groq LLaMA 3.3 70B (Fastest)</option>
+                  <option value="openai">OpenAI GPT-4o</option>
+                  <option value="anthropic">Anthropic Claude 3.5 Sonnet</option>
+                  <option value="ollama">Local Ollama Instance</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="rounded-full bg-primary px-5 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Save Preferences
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Feedback Modal ────────────────────────────────────────────── */}
+      {isFeedbackOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <div className="flex items-center gap-2 font-semibold text-foreground">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                <span>Send Feedback</span>
+              </div>
+              <button
+                onClick={() => setIsFeedbackOpen(false)}
+                className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {feedbackSent ? (
+              <div className="my-8 flex flex-col items-center justify-center text-center">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary">
+                  <Check className="h-5 w-5" />
+                </div>
+                <p className="mt-3 text-sm font-medium text-foreground">Thank you for your feedback!</p>
+              </div>
+            ) : (
+              <form onSubmit={handleFeedbackSubmit} className="mt-4 space-y-4">
+                <p className="text-xs text-muted-foreground">
+                  Found an issue or have a feature request for Morphic? Let us know below.
+                </p>
+                <textarea
+                  rows={4}
+                  required
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  placeholder="Share your thoughts..."
+                  className="w-full rounded-lg border border-border bg-background p-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsFeedbackOpen(false)}
+                    className="rounded-full border border-border px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-full bg-primary px-5 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    Submit
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       <main className="flex-1">
         {/* ── Hero Section ────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden px-6 pt-12 pb-20 lg:pt-20 lg:pb-28">
+        <section className="relative px-6 pt-12 pb-20 lg:pt-20 lg:pb-28">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,hsl(var(--primary)/0.12),transparent)]"
@@ -308,7 +472,7 @@ export default function HomePage() {
         </section>
 
         {/* ── Marquee Feature Strip ────────────────────────────────────── */}
-        <section id="ticker" className="border-y border-border bg-muted/30 py-4 overflow-hidden">
+        <section id="ticker" className="border-y border-border bg-muted/30 py-4">
           <div className="flex w-max animate-[marquee_25s_linear_infinite] gap-12 text-xs font-mono uppercase tracking-wider text-muted-foreground">
             {[...tickerItems, ...tickerItems, ...tickerItems].map((item, index) => (
               <div key={index} className="flex items-center gap-3">
@@ -458,11 +622,6 @@ export default function HomePage() {
                     className="transition-colors hover:text-foreground"
                   >
                     GitHub Repository
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="transition-colors hover:text-foreground">
-                    Documentation
                   </a>
                 </li>
               </ul>
