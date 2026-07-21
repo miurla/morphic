@@ -1,7 +1,8 @@
 'use client'
 
-import { useRef, useState, useEffect, type MouseEvent } from 'react'
+import { useRef, useState, useEffect, type MouseEvent, type FormEvent } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Search,
   ArrowRight,
@@ -20,10 +21,7 @@ import {
   Check
 } from 'lucide-react'
 
-// ─────────────────────────────────────────────────────────────────────────
-// Morphic AI Enterprise Marketing Homepage
-// ─────────────────────────────────────────────────────────────────────────
-
+// Capabilities Marketing Cards
 const capabilities = [
   {
     icon: Globe,
@@ -78,7 +76,6 @@ const tickerItems = [
   'Zero Data Retention'
 ]
 
-// Custom Morphic Brand Logo
 function MorphicLogo({ className = 'h-6 w-6' }: { className?: string }) {
   return (
     <svg
@@ -119,13 +116,11 @@ function Hero3D() {
       className="relative mx-auto flex h-60 w-60 sm:h-80 sm:w-80 lg:h-96 lg:w-96 items-center justify-center my-6 lg:my-0"
       style={{ perspective: '1000px' }}
     >
-      {/* Ambient background glow */}
       <div
         aria-hidden
         className="absolute inset-0 -z-10 rounded-full bg-primary/20 blur-3xl opacity-70"
       />
 
-      {/* Glass Orb Shell */}
       <div
         className="relative h-full w-full rounded-full border border-border/80 shadow-2xl transition-transform duration-200 ease-out will-change-transform"
         style={{
@@ -140,13 +135,11 @@ function Hero3D() {
             'inset 0 1px 40px hsl(var(--foreground) / 0.08), inset 0 -20px 60px hsl(var(--background) / 0.5), 0 30px 60px -20px hsl(var(--foreground) / 0.3)'
         }}
       >
-        {/* Specular Highlight */}
         <div
           aria-hidden
           className="absolute left-[18%] top-[14%] h-10 w-16 sm:h-12 sm:w-20 rounded-full bg-white/35 blur-md"
         />
 
-        {/* Morphic Logo Centerpiece */}
         <div
           className="absolute inset-0 flex items-center justify-center"
           style={{ transform: 'translateZ(45px)' }}
@@ -154,7 +147,6 @@ function Hero3D() {
           <MorphicLogo className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 drop-shadow-2xl" />
         </div>
 
-        {/* Orbit Ring */}
         <div
           aria-hidden
           className="absolute inset-[-12px] sm:inset-[-16px] rounded-full border border-primary/30"
@@ -166,7 +158,9 @@ function Hero3D() {
 }
 
 export default function HomePage() {
+  const router = useRouter()
   const [scrolled, setScrolled] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const [feedbackSent, setFeedbackSent] = useState(false)
@@ -184,7 +178,17 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const handleFeedbackSubmit = (e: React.FormEvent) => {
+  // Handle Search Submission -> Link user to /chat route
+  const handleSearchSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/chat?q=${encodeURIComponent(searchQuery.trim())}`)
+    } else {
+      router.push('/chat')
+    }
+  }
+
+  const handleFeedbackSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!feedbackText.trim()) return
     setFeedbackSent(true)
@@ -196,8 +200,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background text-foreground antialiased">
-      {/* ── Sticky Header Navigation ──────────────────────────────────── */}
+    <div className="relative flex min-h-screen w-full flex-col bg-background text-foreground antialiased">
+      {/* Navigation Header */}
       <header
         className={`sticky top-0 z-40 w-full border-b transition-all duration-200 ${
           scrolled
@@ -228,7 +232,6 @@ export default function HomePage() {
             </a>
           </nav>
 
-          {/* Header Action Icons */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsFeedbackOpen(true)}
@@ -248,10 +251,10 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* ── Settings Modal ────────────────────────────────────────────── */}
+      {/* Settings Modal */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-2 font-semibold text-foreground">
                 <Settings className="h-4 w-4 text-primary" />
@@ -325,10 +328,10 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ── Feedback Modal ────────────────────────────────────────────── */}
+      {/* Feedback Modal */}
       {isFeedbackOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-2 font-semibold text-foreground">
                 <MessageSquare className="h-4 w-4 text-primary" />
@@ -384,7 +387,7 @@ export default function HomePage() {
       )}
 
       <main className="flex-1">
-        {/* ── Hero Section ────────────────────────────────────────────── */}
+        {/* Hero Section */}
         <section className="relative px-4 sm:px-6 pt-10 pb-16 sm:pt-16 sm:pb-24 lg:pt-20 lg:pb-28">
           <div
             aria-hidden
@@ -392,7 +395,6 @@ export default function HomePage() {
           />
 
           <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-8">
-            {/* Left Copy Column */}
             <div className="text-center lg:col-span-7 lg:text-left">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3.5 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
@@ -408,16 +410,16 @@ export default function HomePage() {
                 Complete with inline primary source citations and dynamic generative UI components.
               </p>
 
-              {/* Search Box Form */}
+              {/* Search Box Form -> Redirects to /chat route */}
               <form
-                action="/search"
-                method="get"
+                onSubmit={handleSearchSubmit}
                 className="mx-auto mt-8 flex w-full max-w-lg items-center gap-2 rounded-full border border-border bg-card/90 p-2 shadow-md backdrop-blur transition-all focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 lg:mx-0"
               >
                 <Search className="ml-3 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                 <input
-                  name="q"
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Ask a question or enter a topic..."
                   autoComplete="off"
                   className="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
@@ -431,7 +433,7 @@ export default function HomePage() {
                 </button>
               </form>
 
-              {/* Quick Metrics */}
+              {/* Metrics */}
               <div className="mt-10 grid grid-cols-3 gap-2 sm:gap-4 border-t border-border/60 pt-6 text-left">
                 <div>
                   <dt className="text-[11px] sm:text-xs font-medium text-muted-foreground">Latency</dt>
@@ -448,13 +450,11 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right 3D Orb Display */}
             <div className="flex justify-center lg:col-span-5">
               <Hero3D />
             </div>
           </div>
 
-          {/* Scroll Down Visual Prompt */}
           <div className="mt-12 sm:mt-16 flex justify-center">
             <a
               href="#ticker"
@@ -467,7 +467,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Marquee Feature Strip (Overflow Fixed) ────────────────────────────── */}
+        {/* Marquee Ticker */}
         <section id="ticker" className="w-full overflow-hidden border-y border-border bg-muted/30 py-4">
           <div className="flex w-max animate-[marquee_25s_linear_infinite] gap-12 text-xs font-mono uppercase tracking-wider text-muted-foreground">
             {[...tickerItems, ...tickerItems, ...tickerItems].map((item, index) => (
@@ -479,7 +479,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Capabilities Grid Section ────────────────────────────────── */}
+        {/* Capabilities */}
         <section id="capabilities" className="px-4 sm:px-6 py-16 sm:py-24 lg:py-32">
           <div className="mx-auto max-w-6xl">
             <div className="max-w-2xl">
@@ -512,7 +512,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Architecture Workflow Section ────────────────────────────── */}
+        {/* Architecture */}
         <section id="architecture" className="border-t border-border bg-card/40 px-4 sm:px-6 py-16 sm:py-24 lg:py-32">
           <div className="mx-auto max-w-6xl">
             <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
@@ -546,7 +546,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Formal CTA Section ───────────────────────────────────────── */}
+        {/* Action CTA */}
         <section className="border-t border-border px-4 sm:px-6 py-16 sm:py-24 text-center">
           <div className="mx-auto max-w-3xl">
             <Cpu className="mx-auto h-10 w-10 text-primary" />
@@ -558,10 +558,10 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
-                href="/search"
+                href="/chat"
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-8 text-xs font-semibold text-primary-foreground transition-all hover:bg-primary/90"
               >
-                <span>Launch Search Engine</span>
+                <span>Launch Chat Engine</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -569,11 +569,10 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* ── Enterprise Footer ─────────────────────────────────────────── */}
+      {/* Footer */}
       <footer className="border-t border-border bg-card px-4 sm:px-6 py-12">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:grid-cols-5">
-            {/* Column 1: Brand Info */}
             <div className="md:col-span-2">
               <Link href="/" className="flex items-center gap-2">
                 <MorphicLogo className="h-6 w-6" />
@@ -584,13 +583,12 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Column 2: Navigation */}
             <div>
               <h4 className="text-xs font-semibold text-foreground">Product</h4>
               <ul className="mt-4 space-y-2.5 text-xs text-muted-foreground">
                 <li>
-                  <Link href="/search" className="transition-colors hover:text-foreground">
-                    Search App
+                  <Link href="/chat" className="transition-colors hover:text-foreground">
+                    Chat Interface
                   </Link>
                 </li>
                 <li>
@@ -606,7 +604,6 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Column 3: Developer Resources */}
             <div>
               <h4 className="text-xs font-semibold text-foreground">Resources</h4>
               <ul className="mt-4 space-y-2.5 text-xs text-muted-foreground">
@@ -623,7 +620,6 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Column 4: Legal */}
             <div>
               <h4 className="text-xs font-semibold text-foreground">Legal & Privacy</h4>
               <ul className="mt-4 space-y-2.5 text-xs text-muted-foreground">
