@@ -1,20 +1,13 @@
-import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import { getModelSelectorData } from '@/lib/model-selector/get-model-selector-data'
+'use client'
 
-import { Chat } from '@/components/chat'
+import { DefaultSkeleton } from '../../components/default-skeleton'
 
-export default async function Page() {
-  const userId = await getCurrentUserId()
-  const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
-  const libraryAvailable = process.env.ENABLE_AUTH !== 'false'
-  const modelSelectorData = await getModelSelectorData()
-
+export default function Loading() {
   return (
-    <Chat
-      isGuest={!userId}
-      isCloudDeployment={isCloudDeployment}
-      libraryAvailable={libraryAvailable}
-      modelSelectorData={modelSelectorData}
-    />
+    <div className="flex min-w-0 flex-1 flex-col items-center">
+      <div className="w-full max-w-3xl px-4 pt-12">
+        <DefaultSkeleton />
+      </div>
+    </div>
   )
 }
