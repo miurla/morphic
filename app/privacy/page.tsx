@@ -1,82 +1,206 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
+import { ArrowLeft, ShieldCheck, Lock, Eye, FileText, Globe } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: 'How we collect, use, and protect your data on this site.'
+  title: 'Privacy Policy | Morphic AI',
+  description: 'Detailed Privacy Policy for Morphic AI explaining data collection, cookies, Google AdSense, GDPR, and CCPA compliance.'
 }
 
 export default function PrivacyPage() {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-16 prose dark:prose-invert">
-      <h1>Privacy Policy</h1>
-      <p>Last updated: {new Date().toLocaleDateString()}</p>
+    <div className="min-h-screen bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
+      {/* Header */}
+      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/80 backdrop-blur-md py-4 px-6">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Link>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <span className="text-sm font-semibold tracking-tight">Morphic AI Privacy Center</span>
+          </div>
+        </div>
+      </header>
 
-      <p>
-        This Privacy Policy describes how your information is collected, used,
-        and shared when you visit this website.
-      </p>
+      {/* Main Container */}
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-12 sm:py-20">
+        <article className="prose dark:prose-invert max-w-none space-y-8">
+          {/* Title Banner */}
+          <div className="border-b border-border pb-8">
+            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground">
+              Privacy Policy
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Effective Date: January 1, 2026 | Last Updated: July 2026
+            </p>
+          </div>
 
-      <h2>Information we collect</h2>
-      <p>
-        When you use the site, we may automatically collect certain information
-        about your device, including your browser type, IP address, and how you
-        interact with the site. We collect this using cookies and similar
-        technologies.
-      </p>
+          <p className="text-base leading-relaxed text-muted-foreground">
+            At <strong>Morphic AI</strong> (accessible from <code className="text-xs bg-muted px-1.5 py-0.5 rounded">ai-morphic.vercel.app</code>), one of our main priorities is the privacy of our visitors. This Privacy Policy document contains detailed information on the types of data that are collected and recorded by Morphic AI and how we use, process, and safeguard it.
+          </p>
 
-      <h2>Cookies and advertising</h2>
-      <p>
-        We use Google AdSense to display advertisements. Third-party vendors,
-        including Google, use cookies to serve ads based on your prior visits to
-        this and other websites. Google&apos;s use of advertising cookies
-        enables it and its partners to serve ads to you based on your visit to
-        this site and/or other sites on the Internet.
-      </p>
-      <p>
-        You may opt out of personalized advertising by visiting{' '}
-        <a
-          href="https://www.google.com/settings/ads"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Google Ads Settings
-        </a>
-        . You can also learn more about how vendors use cookies at{' '}
-        <a
-          href="https://www.aboutads.info/choices/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          aboutads.info
-        </a>
-        .
-      </p>
+          <p className="text-base leading-relaxed text-muted-foreground">
+            If you have additional questions or require more information about our Privacy Policy, do not hesitate to contact us. This Policy applies only to our online activities and is valid for visitors to our website with regards to the information that they shared and/or collected in Morphic AI.
+          </p>
 
-      <h2>How we use your information</h2>
-      <p>
-        We use the information collected to operate and improve the site,
-        understand how visitors use it, and serve relevant advertising.
-      </p>
+          <hr className="border-border my-8" />
 
-      <h2>Third-party services</h2>
-      <p>
-        This site may use third-party services such as analytics and AI
-        providers to deliver its features. These services may process data
-        according to their own privacy policies.
-      </p>
+          {/* Section 1 */}
+          <section className="space-y-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" /> 1. Information We Collect
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              The personal information that you are asked to provide, and the reasons why you are asked to provide it, will be made clear to you at the point we ask you to provide your personal information.
+            </p>
+            <ul className="list-disc pl-6 space-y-2 text-sm text-muted-foreground">
+              <li>
+                <strong>Direct Interactions:</strong> If you contact us directly or provide feedback via our built-in feedback modules, we may receive additional information about you such as your name, email address, phone number, the contents of the message and/or attachments you may send us, and any other information you may choose to provide.
+              </li>
+              <li>
+                <strong>Log Files:</strong> Morphic AI follows a standard procedure of using log files. These files log visitors when they visit websites. The information collected by log files includes internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp, referring/exit pages, and possibly the number of clicks. These are not linked to any information that is personally identifiable.
+              </li>
+            </ul>
+          </section>
 
-      <h2>Your rights</h2>
-      <p>
-        Depending on your location, you may have rights regarding your personal
-        data, including the right to access, correct, or delete it. To make a
-        request, contact us through our contact page.
-      </p>
+          {/* Section 2 */}
+          <section className="space-y-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
+              <Lock className="h-5 w-5 text-primary" /> 2. Cookies and Web Beacons
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Like any other website, Morphic AI uses &apos;cookies&apos;. These cookies are used to store information including visitors&apos; preferences, and the pages on the website that the visitor accessed or visited. The information is used to optimize the users&apos; experience by customizing our web page content based on visitors&apos; browser type and/or other information.
+            </p>
+          </section>
 
-      <h2>Contact</h2>
-      <p>
-        If you have questions about this Privacy Policy, please reach us via the{' '}
-        <a href="/contact">contact page</a>.
-      </p>
-    </main>
+          {/* Section 3 - AdSense Mandatory Compliance */}
+          <section className="space-y-4 rounded-2xl border border-primary/20 bg-primary/5 p-6">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" /> 3. Google DoubleClick DART Cookie & Third-Party Advertising
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Google is one of the third-party vendors on our site. It also uses cookies, known as DART cookies, to serve ads to our site visitors based upon their visit to <code className="text-xs bg-muted px-1.5 py-0.5 rounded">ai-morphic.vercel.app</code> and other sites on the internet.
+            </p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              However, visitors may choose to decline the use of DART cookies by visiting the Google Ad and Content Network Privacy Policy at the following URL:{' '}
+              <a
+                href="https://policies.google.com/technologies/ads"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline font-medium"
+              >
+                https://policies.google.com/technologies/ads
+              </a>
+            </p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Some advertisers on our site may use cookies and web beacons. Our advertising partners include Google AdSense. Each of our advertising partners has their own Privacy Policy for their policies on user data. For easier access, we hyperlinked to their Privacy Policies below:
+            </p>
+            <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground">
+              <li>
+                <strong>Google AdSense & Ad Policies:</strong>{' '}
+                <a
+                  href="https://policies.google.com/technologies/ads"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline"
+                >
+                  Google Privacy & Terms
+                </a>
+              </li>
+              <li>
+                <strong>Network Advertising Initiative Opt-Out:</strong>{' '}
+                <a
+                  href="https://www.aboutads.info/choices/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline"
+                >
+                  aboutads.info choices
+                </a>
+              </li>
+            </ul>
+          </section>
+
+          {/* Section 4 */}
+          <section className="space-y-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" /> 4. How We Use Your Information
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              We use the information we collect in various ways, including to:
+            </p>
+            <ul className="list-disc pl-6 space-y-2 text-sm text-muted-foreground">
+              <li>Provide, operate, and maintain our web application.</li>
+              <li>Improve, personalize, and expand our web services and user interfaces.</li>
+              <li>Understand and analyze how you interact with our real-time search synthesis engine.</li>
+              <li>Develop new products, services, features, and capabilities.</li>
+              <li>Process user feedback and provide technical support.</li>
+              <li>Send you updates and other information related to the application.</li>
+              <li>Detect, prevent, and mitigate fraud or technical security vulnerabilities.</li>
+            </ul>
+          </section>
+
+          {/* Section 5 */}
+          <section className="space-y-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
+              5. CCPA Privacy Rights (Do Not Sell My Personal Information)
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Under the CCPA, among other rights, California consumers have the right to:
+            </p>
+            <ul className="list-disc pl-6 space-y-2 text-sm text-muted-foreground">
+              <li>Request that a business that collects a consumer&apos;s personal data disclose the categories and specific pieces of personal data that a business has collected about consumers.</li>
+              <li>Request that a business delete any personal data about the consumer that a business has collected.</li>
+              <li>Request that a business that sells a consumer&apos;s personal data, not sell the consumer&apos;s personal data.</li>
+            </ul>
+            <p className="text-sm text-muted-foreground">
+              If you make a request, we have one month to respond to you. If you would like to exercise any of these rights, please contact us.
+            </p>
+          </section>
+
+          {/* Section 6 */}
+          <section className="space-y-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
+              6. GDPR Data Protection Rights
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              We would like to make sure you are fully aware of all of your data protection rights. Every user is entitled to the following:
+            </p>
+            <ul className="list-disc pl-6 space-y-2 text-sm text-muted-foreground">
+              <li><strong>The right to access:</strong> You have the right to request copies of your personal data.</li>
+              <li><strong>The right to rectification:</strong> You have the right to request that we correct any information you believe is inaccurate or incomplete.</li>
+              <li><strong>The right to erasure:</strong> You have the right to request that we erase your personal data, under certain conditions.</li>
+              <li><strong>The right to restrict processing:</strong> You have the right to request that we restrict the processing of your personal data, under certain conditions.</li>
+            </ul>
+          </section>
+
+          {/* Section 7 */}
+          <section className="space-y-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
+              7. Children&apos;s Information (COPPA Compliance)
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Another part of our priority is adding protection for children while using the internet. We encourage parents and guardians to observe, participate in, and/or monitor and guide their online activity.
+            </p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Morphic AI does not knowingly collect any Personal Identifiable Information from children under the age of 13. If you think that your child provided this kind of information on our website, we strongly encourage you to contact us immediately and we will do our best efforts to promptly remove such information from our records.
+            </p>
+          </section>
+
+          {/* Contact Us Footer */}
+          <div className="border-t border-border pt-8 mt-12">
+            <h2 className="text-lg font-semibold text-foreground">Contact & Enquiries</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              If you have any questions or suggestions regarding our Privacy Policy, please reach out via our GitHub repository or project feedback channel.
+            </p>
+          </div>
+        </article>
+      </main>
+    </div>
   )
 }
