@@ -1,5 +1,6 @@
 import { Redis } from '@upstash/redis'
 
+import { trackChatLimitEvent } from '@/lib/analytics'
 import { perfLog } from '@/lib/utils/perf-logging'
 
 const DEFAULT_DAILY_CHAT_LIMIT = 100
@@ -38,12 +39,23 @@ async function checkOverallChatLimit(userId: string): Promise<{
   remaining: number
   resetAt: number
   limit: number
+  /** Current daily usage count after the check (incl. this attempt) */
+  used: number
+  /** True when the check ran against Redis (i.e. enforced) */
+  enforced: boolean
 }> {
   const limit = getDailyChatLimit()
 
   // If not in cloud deployment mode, allow unlimited requests
   if (process.env.MORPHIC_CLOUD_DEPLOYMENT !== 'true') {
-    return { allowed: true, remaining: Infinity, resetAt: 0, limit }
+    return {
+      allowed: true,
+      remaining: Infinity,
+      resetAt: 0,
+      limit,
+      used: 0,
+      enforced: false
+    }
   }
 
   // If Upstash is not configured, allow unlimited requests
@@ -51,7 +63,14 @@ async function checkOverallChatLimit(userId: string): Promise<{
     !process.env.UPSTASH_REDIS_REST_URL ||
     !process.env.UPSTASH_REDIS_REST_TOKEN
   ) {
-    return { allowed: true, remaining: Infinity, resetAt: 0, limit }
+    return {
+      allowed: true,
+      remaining: Infinity,
+      resetAt: 0,
+      limit,
+      used: 0,
+      enforced: false
+    }
   }
 
   try {
@@ -82,11 +101,20 @@ async function checkOverallChatLimit(userId: string): Promise<{
       allowed: count <= limit,
       remaining,
       resetAt,
-      limit
+      limit,
+      used: count,
+      enforced: true
     }
   } catch (error) {
     console.error('Rate limit check failed:', error)
-    return { allowed: true, remaining: Infinity, resetAt: 0, limit }
+    return {
+      allowed: true,
+      remaining: Infinity,
+      resetAt: 0,
+      limit,
+      used: 0,
+      enforced: false
+    }
   }
 }
 
@@ -98,6 +126,18 @@ export async function checkAndEnforceOverallChatLimit(
   userId: string
 ): Promise<Response | null> {
   const result = await checkOverallChatLimit(userId)
+
+  // Only emit analytics for real (Redis-backed) checks. Local dev / cloud
+  // without Upstash returns enforced=false and we skip tracking to avoid
+  // polluting the dashboard with no-op events.
+  if (result.enforced) {
+    void trackChatLimitEvent({
+      outcome: result.allowed ? 'allowed' : 'blocked',
+      userId,
+      used: result.used,
+      limit: result.limit
+    })
+  }
 
   if (!result.allowed) {
     return new Response(
