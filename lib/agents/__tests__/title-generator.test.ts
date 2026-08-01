@@ -23,7 +23,7 @@ describe('generateChatTitle', () => {
     } as never)
   })
 
-  it('disables reasoning and limits output for GPT-5.6 Luna', async () => {
+  it('disables reasoning without limiting output for GPT-5.6 Luna', async () => {
     await expect(
       generateChatTitle({
         userMessageContent: 'Explain the latest model changes',
@@ -33,13 +33,15 @@ describe('generateChatTitle', () => {
 
     expect(generateText).toHaveBeenCalledWith(
       expect.objectContaining({
-        maxOutputTokens: 32,
         providerOptions: {
           openai: {
             reasoningEffort: 'none'
           }
         }
       })
+    )
+    expect(vi.mocked(generateText).mock.calls[0][0]).not.toHaveProperty(
+      'maxOutputTokens'
     )
   })
 
@@ -51,9 +53,11 @@ describe('generateChatTitle', () => {
 
     expect(generateText).toHaveBeenCalledWith(
       expect.objectContaining({
-        maxOutputTokens: 32,
         providerOptions: undefined
       })
+    )
+    expect(vi.mocked(generateText).mock.calls[0][0]).not.toHaveProperty(
+      'maxOutputTokens'
     )
   })
 })
