@@ -12,6 +12,10 @@ export {
   trackAdaptiveLimitEvent
 } from './track-adaptive-limit-event'
 export { trackChatEvent } from './track-chat-event'
+export {
+  type ChatLimitEventData,
+  trackChatLimitEvent
+} from './track-chat-limit-event'
 export type {
   ChatEventData,
   QueryLang,
