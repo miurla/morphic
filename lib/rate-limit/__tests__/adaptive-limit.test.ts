@@ -5,6 +5,14 @@ import { checkAndEnforceAdaptiveLimit } from '@/lib/rate-limit/adaptive-limit'
 const mockRedisIncr = vi.fn()
 const mockRedisExpire = vi.fn()
 const mockTrack = vi.fn()
+const mockAfter = vi.fn()
+
+// `after` throws outside a request scope, so stand in for the runtime and
+// run the task inline. Keeping it a spy also lets us assert that delivery
+// is handed to it rather than left floating.
+vi.mock('next/server', () => ({
+  after: (task: Promise<unknown>) => mockAfter(task)
+}))
 
 vi.mock('@upstash/redis', () => ({
   Redis: vi.fn().mockImplementation(function () {
@@ -25,6 +33,7 @@ describe('checkAndEnforceAdaptiveLimit', () => {
     mockRedisExpire.mockReset()
     mockTrack.mockReset()
     mockTrack.mockResolvedValue(undefined)
+    mockAfter.mockReset()
     process.env.MORPHIC_CLOUD_DEPLOYMENT = 'true'
     process.env.UPSTASH_REDIS_REST_URL = 'https://example.com'
     process.env.UPSTASH_REDIS_REST_TOKEN = 'token'
@@ -136,6 +145,17 @@ describe('checkAndEnforceAdaptiveLimit', () => {
         limit: 30
       }
     })
+  })
+
+  it('hands blocked-event delivery to after so the 429 cannot cut it short', async () => {
+    mockRedisIncr.mockResolvedValue(31)
+    mockRedisExpire.mockResolvedValue(1)
+
+    const response = await checkAndEnforceAdaptiveLimit('user-9')
+
+    expect(response?.status).toBe(429)
+    expect(mockAfter).toHaveBeenCalledTimes(1)
+    expect(mockAfter.mock.calls[0][0]).toBeInstanceOf(Promise)
   })
 
   it('does not emit analytics when redis is unavailable (no enforcement)', async () => {

@@ -1,3 +1,5 @@
+import { after } from 'next/server'
+
 import { Redis } from '@upstash/redis'
 
 import { trackChatLimitEvent } from '@/lib/analytics'
@@ -130,13 +132,21 @@ export async function checkAndEnforceOverallChatLimit(
   // Only emit analytics for real (Redis-backed) checks. Local dev / cloud
   // without Upstash returns enforced=false and we skip tracking to avoid
   // polluting the dashboard with no-op events.
+  //
+  // Hand the capture to `after` rather than letting it float: the blocked
+  // path returns a 429 immediately, so an un-awaited PostHog flush can be
+  // cut short when the serverless runtime freezes. Allowed requests go on
+  // to a long-lived stream and would survive, which would bias the block
+  // rate downward exactly where it matters.
   if (result.enforced) {
-    void trackChatLimitEvent({
-      outcome: result.allowed ? 'allowed' : 'blocked',
-      userId,
-      used: result.used,
-      limit: result.limit
-    })
+    after(
+      trackChatLimitEvent({
+        outcome: result.allowed ? 'allowed' : 'blocked',
+        userId,
+        used: result.used,
+        limit: result.limit
+      })
+    )
   }
 
   if (!result.allowed) {
