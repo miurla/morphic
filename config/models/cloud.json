@@ -19,8 +19,8 @@
       "providerId": "openai",
       "providerOptions": {
         "openai": {
-          "reasoningEffort": "low",
-          "reasoningSummary": "auto"
+          "reasoningEffort": "high",
+          "reasoningSummary": "low"
         }
       }
     }
