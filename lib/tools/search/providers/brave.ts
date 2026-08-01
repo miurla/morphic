@@ -132,7 +132,7 @@ export class BraveSearchProvider implements SearchProvider {
         .slice(0, maxResults)
         .map((result: BraveWebResult) => ({
           title: result.title || 'No title',
-          description: result.description || 'No description available',
+          content: result.description || 'No description available',
           url: result.url
         }))
     } catch (error) {

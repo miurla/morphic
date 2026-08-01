@@ -190,6 +190,44 @@ describe('compactHistoricalMessages', () => {
     expect(sourceContext.text).not.toContain('x'.repeat(401))
   })
 
+  it('uses description from persisted Brave results when content is absent', () => {
+    const messages = [
+      {
+        id: 'assistant-1',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-search',
+            toolCallId: 'call_1',
+            state: 'output-available',
+            input: { query: 'example' },
+            output: {
+              query: 'example',
+              images: [],
+              results: [
+                {
+                  title: 'Brave source',
+                  url: 'https://example.com/brave',
+                  description: 'Evidence stored by the legacy Brave provider.'
+                }
+              ]
+            }
+          },
+          { type: 'text', text: 'Answer [1](#call_1)' }
+        ]
+      }
+    ] as unknown as UIMessage[]
+
+    const sourceContext = compactHistoricalMessages(messages)[0].parts[1] as {
+      type: 'text'
+      text: string
+    }
+
+    expect(sourceContext.text).toContain(
+      'Evidence stored by the legacy Brave provider.'
+    )
+  })
+
   it('adds source context to only the two most recent assistant turns', () => {
     const createAssistantMessage = (id: number) => ({
       id: `assistant-${id}`,
@@ -261,6 +299,49 @@ describe('compactHistoricalMessages', () => {
       expect(sourceContext.text).toContain(`Source ${index}`)
       expect(sourceContext.text).toContain(`https://example.com/${index}`)
     }
+    expect(sourceContext.text.length).toBeLessThanOrEqual(4000)
+  })
+
+  it('strictly bounds source context when base URLs exceed the budget', () => {
+    const results = Array.from({ length: 20 }, (_, index) => ({
+      title: `Source ${index + 1} ${'t'.repeat(200)}`,
+      url: `https://example.com/${index + 1}?payload=${'u'.repeat(500)}`,
+      content: `Evidence ${index + 1} marker ${'x'.repeat(500)}`
+    }))
+    const citations = results
+      .map((_, index) => `[${index + 1}](#call_1)`)
+      .join(' ')
+    const messages = [
+      {
+        id: 'assistant-1',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-search',
+            toolCallId: 'call_1',
+            state: 'output-available',
+            input: { query: 'example' },
+            output: { query: 'example', images: [], results }
+          },
+          { type: 'text', text: citations }
+        ]
+      }
+    ] as unknown as UIMessage[]
+
+    const compacted = compactHistoricalMessages(messages)
+    const answer = compacted[0].parts[0] as { type: 'text'; text: string }
+    const sourceContext = compacted[0].parts[1] as {
+      type: 'text'
+      text: string
+    }
+
+    for (let index = 1; index <= 20; index++) {
+      expect(answer.text).toContain(`https://example.com/${index}?payload=`)
+      expect(sourceContext.text).toContain(`Evidence ${index} marker`)
+    }
+    expect(sourceContext.text).toContain(
+      'Their URLs remain in the preceding answer.'
+    )
     expect(sourceContext.text.length).toBeLessThanOrEqual(4000)
   })
 })
