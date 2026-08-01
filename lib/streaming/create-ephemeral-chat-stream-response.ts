@@ -1,12 +1,7 @@
 import type { LangfuseSpan } from '@langfuse/tracing'
 import { propagateAttributes, startActiveObservation } from '@langfuse/tracing'
 import type { UIMessage } from 'ai'
-import {
-  consumeStream,
-  convertToModelMessages,
-  pruneMessages,
-  smoothStream
-} from 'ai'
+import { consumeStream, convertToModelMessages, smoothStream } from 'ai'
 
 import { researcher } from '@/lib/agents/researcher'
 import {
@@ -22,8 +17,8 @@ import {
 } from '../utils/context-window'
 import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
+import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
-import { stripReasoningParts } from './helpers/strip-reasoning-parts'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import { BaseStreamConfig } from './types'
 
@@ -62,21 +57,11 @@ export async function createEphemeralChatStreamResponse(
     }
 
     try {
-      const isOpenAI = `${model.providerId}:${model.id}`.startsWith('openai:')
       const messagesWithoutSpec = stripSpecFromMessages(messages)
-      const messagesToConvert = isOpenAI
-        ? stripReasoningParts(messagesWithoutSpec)
-        : messagesWithoutSpec
+      const messagesToConvert = compactHistoricalMessages(messagesWithoutSpec)
 
       let modelMessages = await convertToModelMessages(messagesToConvert, {
         convertDataPart
-      })
-
-      modelMessages = pruneMessages({
-        messages: modelMessages,
-        reasoning: 'before-last-message',
-        toolCalls: 'before-last-2-messages',
-        emptyMessages: 'remove'
       })
 
       if (shouldTruncateMessages(modelMessages, model)) {
