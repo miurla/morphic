@@ -1,11 +1,6 @@
 import type { LangfuseSpan } from '@langfuse/tracing'
 import { propagateAttributes, startActiveObservation } from '@langfuse/tracing'
-import {
-  consumeStream,
-  convertToModelMessages,
-  pruneMessages,
-  smoothStream
-} from 'ai'
+import { consumeStream, convertToModelMessages, smoothStream } from 'ai'
 
 import { researcher } from '@/lib/agents/researcher'
 import {
@@ -25,10 +20,10 @@ import { getTextFromParts } from '../utils/message-utils'
 import { perfLog, perfTime } from '../utils/perf-logging'
 import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
+import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
-import { stripReasoningParts } from './helpers/strip-reasoning-parts'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import type { StreamContext } from './helpers/types'
 import { BaseStreamConfig } from './types'
@@ -124,26 +119,12 @@ export async function createChatStreamResponse(
         searchMode
       })
 
-      // For OpenAI models, strip reasoning parts from UIMessages before conversion
-      // OpenAI's Responses API requires reasoning items and their following items to be kept together
-      // See: https://github.com/vercel/ai/issues/11036
-      const isOpenAI = context.modelId.startsWith('openai:')
       const messagesWithoutSpec = stripSpecFromMessages(messagesToModel)
-      const messagesToConvert = isOpenAI
-        ? stripReasoningParts(messagesWithoutSpec)
-        : messagesWithoutSpec
+      const messagesToConvert = compactHistoricalMessages(messagesWithoutSpec)
 
       // Convert to model messages and apply context window management
       let modelMessages = await convertToModelMessages(messagesToConvert, {
         convertDataPart
-      })
-
-      // Prune messages to reduce token usage while keeping recent context
-      modelMessages = pruneMessages({
-        messages: modelMessages,
-        reasoning: 'before-last-message',
-        toolCalls: 'before-last-2-messages',
-        emptyMessages: 'remove'
       })
 
       if (shouldTruncateMessages(modelMessages, model)) {
