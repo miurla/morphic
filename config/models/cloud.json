@@ -8,8 +8,7 @@
       "providerId": "openai",
       "providerOptions": {
         "openai": {
-          "reasoningEffort": "none",
-          "forceReasoning": true
+          "reasoningEffort": "none"
         }
       }
     },
@@ -21,8 +20,7 @@
       "providerOptions": {
         "openai": {
           "reasoningEffort": "low",
-          "reasoningSummary": "auto",
-          "forceReasoning": true
+          "reasoningSummary": "auto"
         }
       }
     }
