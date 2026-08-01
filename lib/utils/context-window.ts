@@ -15,6 +15,7 @@ const MODEL_CONTEXT_WINDOWS: Record<string, ModelContextInfo> = {
   'gpt-4.1-mini': { contextWindow: 128000, outputTokens: 16384 },
   'gpt-4.1-nano': { contextWindow: 128000, outputTokens: 16384 },
   'gpt-4o-mini': { contextWindow: 128000, outputTokens: 16384 },
+  'gpt-5.6-luna': { contextWindow: 1050000, outputTokens: 128000 },
 
   // Anthropic Models
   'claude-opus-4': { contextWindow: 680000, outputTokens: 8192 },
@@ -52,6 +53,7 @@ const MODEL_TO_ENCODING: Record<string, TiktokenEncoding> = {
   'gpt-4.1-mini': 'cl100k_base',
   'gpt-4.1-nano': 'cl100k_base',
   'gpt-4o-mini': 'cl100k_base',
+  'gpt-5.6-luna': 'cl100k_base',
   'claude-opus-4': 'cl100k_base', // Use GPT-4 tokenizer as approximation for Claude
   'claude-sonnet-4': 'cl100k_base',
   'claude-3-7-sonnet': 'cl100k_base',

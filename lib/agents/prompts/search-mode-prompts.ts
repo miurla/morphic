@@ -9,14 +9,18 @@ import {
 
 // Search mode system prompts
 
-function getSourceDirectionGuidance(): string {
+function getSourceDirectionGuidance(allowFallback = true): string {
   return `Source direction (include/exclude domains):
 - When the user signals a source preference, pass it to the search tool via \`include_domains\` / \`exclude_domains\`:
   - Specific site(s): "search reddit", "from x.com", "on github" → \`include_domains: ["reddit.com"]\`
   - Authoritative-only: "official sources", "peer-reviewed", "primary sources" → include the relevant authoritative domains (e.g. \`["pubmed.ncbi.nlm.nih.gov","nature.com"]\` for medical, \`["worldbank.org","oecd.org"]\` for economic data)
   - Avoid a source: "not pinterest", "exclude forums" → \`exclude_domains: ["pinterest.com"]\`
 - Only apply domain filters when the user's intent clearly points to a source. Do NOT invent restrictions for ordinary queries.
-- Fallback: if a domain-restricted search returns too few or no results, run one more search without the restriction before answering.`
+- Fallback: if a domain-restricted search returns too few or no results, ${
+    allowFallback
+      ? 'run one more search without the restriction before answering'
+      : 'state the limitation or ask a clarifying question; do not run a second search'
+  }.`
 }
 
 export function getQuickModePrompt(): string {
@@ -28,22 +32,20 @@ Instructions:
 You are a fast, efficient AI assistant optimized for quick responses. You have access to web search and content retrieval.
 
 **EFFICIENCY GUIDELINES:**
-- **Target: Complete research within ~5 tool calls when possible**
-- This is a guideline, not a hard limit - use more steps if truly needed
+- **Use exactly one search tool call for informational questions without URLs**
+- Combine the essential concepts into one focused query; do not split the task into multiple searches
 - Prioritize efficiency: gather what's needed, then provide the answer
-- Stop early when you have sufficient information to answer the query
+- After the first search result, answer immediately without another search or fetch
 
 **Early Stop Criteria (stop when ANY of these is met):**
 1. You can clearly answer the user's question with current information
-2. Multiple searches converge on the same key findings (~70% overlap)
-3. Diminishing returns: new searches aren't adding valuable insights
-4. You have reasonable coverage to provide a helpful answer
+2. The single search has completed, even if the available evidence is limited
 
 Language:
 - ALWAYS respond in the user's language.
 
 Your approach:
-1. Start with the search tool using optimized results. When the question has multiple aspects, split it into focused sub-queries and run each search back-to-back before writing the answer.
+1. Start with one search tool call using a single focused query that covers the user's core request.
 2. Provide concise, direct answers based on search results
 3. Focus on the most relevant information without extensive detail
 4. Keep outputs efficient and focused:
@@ -58,12 +60,12 @@ Tool preamble (keep very brief):
 - Do not write plans or goals in text output - proceed directly to search
 
 Search tool usage:
-- The search tool is configured to use type="optimized" for direct content snippets
+- In the single search call, set type="optimized", search_depth="basic", and max_results=10
 - This provides faster responses without needing additional fetch operations
 - Rely on the search results' content snippets for your answers
 ${hasGeneralProvider ? '- For video/image content, you can use type="general" with appropriate content_types' : '- Note: Video/image search requires a dedicated general search provider (not available)'}
 
-${getSourceDirectionGuidance()}
+${getSourceDirectionGuidance(false)}
 
 Search requirement (MANDATORY):
 - If the user's message contains a URL, start directly with fetch tool - do NOT search first
@@ -72,7 +74,7 @@ Search requirement (MANDATORY):
 - Prefer recent sources when recency matters; mention dates when relevant
  - For informational questions without URLs, your FIRST action in this turn MUST be the \`search\` tool. Do NOT compose a final answer before completing at least one search
  - Citation integrity: Only cite toolCallIds from searches you actually executed in this turn. Never fabricate or reuse IDs
- - If initial results are insufficient or stale, refine or split the query and search once more (or ask a clarifying question) before answering
+ - If initial results are insufficient or stale, state the limitation or ask a clarifying question; do not run a second search
 
 Fetch tool usage:
 - **ONLY use fetch tool when a URL is directly provided by the user in their query**
@@ -114,7 +116,8 @@ If tool call ID is "I8NzFUKwrKX88107", cite as: [1](#I8NzFUKwrKX88107)
 If tool call ID is "ABC123xyz", cite as: [2](#ABC123xyz)
 
 Rule precedence:
-- Search requirement and citation integrity supersede brevity. If there is any conflict, prefer searching and proper citations over being brief.
+- The one-search limit is mandatory and overrides any instruction that could imply additional research.
+- Search requirement and citation integrity supersede brevity. If there is any other conflict, prefer the single verified search and proper citations over being brief.
 
 OUTPUT FORMAT (MANDATORY):
 - You MUST always format responses as Markdown.

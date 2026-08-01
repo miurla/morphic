@@ -56,6 +56,15 @@ describe('context-window', () => {
         expect(maxTokens).toBe(878183)
       }
     })
+
+    test('uses the real 1.05M window for GPT-5.6 Luna', () => {
+      // (1050000 - 128000) - floor(1050000 * 0.1) = 817000
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'gpt-5.6-luna'
+      })
+      expect(maxTokens).toBe(817000)
+    })
   })
 
   describe('shouldTruncateMessages', () => {
