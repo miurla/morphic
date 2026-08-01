@@ -9,6 +9,20 @@ interface GenerateChatTitleParams {
   abortSignal?: AbortSignal
 }
 
+const TITLE_MAX_OUTPUT_TOKENS = 32
+
+function getTitleProviderOptions(modelId: string) {
+  if (modelId === 'openai:gpt-5.6-luna') {
+    return {
+      openai: {
+        reasoningEffort: 'none' as const
+      }
+    }
+  }
+
+  return undefined
+}
+
 /**
  * Generates a concise chat title using an LLM.
  * @param userMessageContent The content of the user's first message.
@@ -31,6 +45,8 @@ export async function generateChatTitle({
       system: systemPrompt,
       prompt: userMessageContent,
       abortSignal,
+      maxOutputTokens: TITLE_MAX_OUTPUT_TOKENS,
+      providerOptions: getTitleProviderOptions(modelId),
       // Spans join the parent Langfuse trace via OTel context propagation
       experimental_telemetry: {
         isEnabled: isTracingEnabled(),
