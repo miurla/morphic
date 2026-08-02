@@ -2,25 +2,25 @@
   "version": 2,
   "models": {
     "quick": {
-      "id": "gpt-5.6-luna",
-      "name": "GPT-5.6 Luna",
-      "provider": "OpenAI",
-      "providerId": "openai",
+      "id": "gemini-3.5-flash-lite",
+      "name": "Gemini-3.5 Flash lite",
+      "provider": "Google",
+      "providerId": "google",
       "providerOptions": {
-        "openai": {
+        "google": {
           "reasoningEffort": "none"
         }
       }
     },
     "adaptive": {
-      "id": "gpt-5.6-luna",
-      "name": "GPT-5.6 Luna",
-      "provider": "OpenAI",
-      "providerId": "openai",
+      "id": "gemini-3.6-flash",
+      "name": "Gemini-3.6 Flash",
+      "provider": "Google",
+      "providerId": "google",
       "providerOptions": {
-        "openai": {
+        "google": {
           "reasoningEffort": "high",
-          "reasoningSummary": "low"
+          "reasoningSummary": "high"
         }
       }
     }
