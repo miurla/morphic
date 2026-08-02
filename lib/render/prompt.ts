@@ -7,20 +7,17 @@
 export function getRelatedQuestionsSpecPrompt(): string {
   return `
 RELATED QUESTIONS:
-Generate related questions only when they create clear next-step value for the user. If you include them, generate exactly 3 follow-up questions in a \`\`\`spec fenced code block after your conclusion.
+After your conclusion, generate exactly 3 follow-up questions in a \`\`\`spec fenced code block. This is expected on every substantive answer; only the narrow skip cases below are exempt.
 
-Include the spec block only when ALL of these are true:
-- The answer contains substantive information, analysis, comparison, or recommendations.
-- A curious reader would naturally continue with a deeper, practical, or adjacent question.
-- You can anchor each follow-up to concrete details from THIS answer.
+Include the spec block whenever the answer contains substantive information, analysis, comparison, or recommendations. Anchor each follow-up to concrete details from THIS answer.
 
-SKIP the spec block entirely (output nothing) when follow-ups add little or no value, e.g.:
+SKIP the spec block entirely (output nothing) only in these cases:
 - Greetings, small talk, or thanks ("hi", "thanks", "how are you").
 - Trivial one-off lookups with no natural next step (simple math, a single fact, a yes/no).
 - Meta/operational replies, acknowledgements, or task-completion notices.
 - Cases where you could not answer (refusal, clarification request, or empty result).
 - Short answers where suggested next questions would be generic or forced.
-When in doubt, skip the related questions. Do not generate them just to satisfy a format.
+These skip cases are the exception. When the answer is substantive, include the spec block.
 
 When you do include them, write the three questions a genuinely curious reader would tap next — not a checklist of "other aspects". Anchor each to THIS answer (use concrete names, options, or numbers from it), and make the three intents distinct:
 - Deepen: go further on the single most interesting or surprising point.

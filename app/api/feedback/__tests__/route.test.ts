@@ -90,6 +90,7 @@ describe('Feedback API Route', () => {
 
       expect(response.status).toBe(200)
       expect(text).toBe('Feedback recorded successfully')
+      expect(mockScoreCreate).toHaveBeenCalledTimes(1)
       expect(mockScoreCreate).toHaveBeenCalledWith({
         traceId: 'test-trace-id',
         name: 'user_feedback',

@@ -3,13 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // Mock the modules before any imports
 vi.mock('@/lib/db')
 vi.mock('@langfuse/client')
-vi.mock('@/lib/utils/telemetry')
 
 // Import after mocking
 import { LangfuseClient } from '@langfuse/client'
 
 import { db } from '@/lib/db'
-import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import { getMessageFeedback, updateMessageFeedback } from '../feedback'
 
@@ -39,9 +37,6 @@ describe('Feedback Actions', () => {
       const mockUpdateWhere = vi.fn().mockResolvedValue(undefined)
       const mockSet = vi.fn().mockReturnValue({ where: mockUpdateWhere })
       vi.mocked(db).update = vi.fn().mockReturnValue({ set: mockSet })
-
-      // Mock tracing disabled
-      vi.mocked(isTracingEnabled).mockReturnValue(false)
 
       const result = await updateMessageFeedback(messageId, score)
 
@@ -84,25 +79,10 @@ describe('Feedback Actions', () => {
       expect(result.error).toBe('Database error')
     })
 
-    it('should send feedback to Langfuse when tracing is enabled', async () => {
+    it('should not send a Langfuse score (the API route owns score submission)', async () => {
       const messageId = 'test-message-id'
       const chatId = 'test-chat-id'
       const score = 1
-
-      // Enable tracing
-      vi.mocked(isTracingEnabled).mockReturnValue(true)
-
-      // Mock LangfuseClient
-      const mockScoreCreate = vi.fn()
-      const mockFlush = vi.fn().mockResolvedValue(undefined)
-      vi.mocked(LangfuseClient).mockImplementation(function () {
-        return {
-          score: {
-            create: mockScoreCreate,
-            flush: mockFlush
-          }
-        } as any
-      } as any)
 
       // Mock db.select
       const mockLimit = vi.fn().mockResolvedValue([
@@ -123,14 +103,7 @@ describe('Feedback Actions', () => {
       const result = await updateMessageFeedback(messageId, score)
 
       expect(result).toEqual({ success: true })
-      expect(LangfuseClient).toHaveBeenCalled()
-      expect(mockScoreCreate).toHaveBeenCalledWith({
-        traceId: 'test-trace-id',
-        name: 'user-feedback',
-        value: score,
-        comment: 'Thumbs up'
-      })
-      expect(mockFlush).toHaveBeenCalled()
+      expect(LangfuseClient).not.toHaveBeenCalled()
     })
   })
 
