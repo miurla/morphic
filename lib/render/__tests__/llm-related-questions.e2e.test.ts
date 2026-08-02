@@ -34,8 +34,11 @@ const FIXTURE_RESULTS = [
   {
     title: 'Mount Fuji climbing routes',
     url: 'https://example.com/mount-fuji-routes',
+    // Carries the answer to both queries below. Without the height, the trivial
+    // test could pass because the model could not answer at all, which is a
+    // separate skip case.
     content:
-      'Mount Fuji has four main climbing routes. Yoshida is the most popular and has the most huts. Fujinomiya is the shortest but steepest. Subashiri starts below the tree line and joins Yoshida near the summit. Gotemba is the longest and least crowded. The official climbing season is generally July through early September.'
+      'Mount Fuji stands 3,776 metres (12,389 ft) tall, making it the highest mountain in Japan. It has four main climbing routes. Yoshida is the most popular and has the most huts. Fujinomiya is the shortest but steepest. Subashiri starts below the tree line and joins Yoshida near the summit. Gotemba is the longest and least crowded. The official climbing season is generally July through early September.'
   }
 ]
 
