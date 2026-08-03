@@ -22,6 +22,7 @@ import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
+import { describeStreamError } from './helpers/describe-stream-error'
 import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
@@ -80,9 +81,17 @@ export async function createChatStreamResponse(
     // Real OTel trace ID, stored in message metadata so feedback scores can
     // be attached to this trace later
     const parentTraceId = rootSpan?.traceId
+    let hasStreamError = false
+    let streamError: unknown
 
     const endTracing = async () => {
       if (rootSpan) {
+        if (hasStreamError) {
+          rootSpan.update({
+            level: 'ERROR',
+            statusMessage: describeStreamError(streamError)
+          })
+        }
         rootSpan.end()
         await langfuseSpanProcessor.forceFlush()
       }
@@ -215,6 +224,8 @@ export async function createChatStreamResponse(
           }
         },
         onError: (error: unknown) => {
+          hasStreamError = true
+          streamError = error
           logAPICallErrorDiagnostics(error)
           console.error('Stream response error:', error)
           return serializePublicError(error)
@@ -222,6 +233,8 @@ export async function createChatStreamResponse(
         consumeSseStream: consumeStream
       })
     } catch (error) {
+      hasStreamError = true
+      streamError = error
       await endTracing()
       logAPICallErrorDiagnostics(error)
       console.error('Stream execution error:', error)
