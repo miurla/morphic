@@ -22,6 +22,7 @@ import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
+import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
@@ -214,6 +215,7 @@ export async function createChatStreamResponse(
           }
         },
         onError: (error: unknown) => {
+          logAPICallErrorDiagnostics(error)
           console.error('Stream response error:', error)
           return serializePublicError(error)
         },
@@ -221,6 +223,7 @@ export async function createChatStreamResponse(
       })
     } catch (error) {
       await endTracing()
+      logAPICallErrorDiagnostics(error)
       console.error('Stream execution error:', error)
       return createPublicErrorResponse(error, {
         status: 500,
