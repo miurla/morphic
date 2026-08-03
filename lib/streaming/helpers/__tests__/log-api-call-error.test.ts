@@ -52,9 +52,9 @@ describe('logAPICallErrorDiagnostics', () => {
     const output = consoleError.mock.calls.flat().join(' ')
     expect(output).toContain('"statusCode":400')
     expect(output).toContain('https://provider.example/v1/messages')
-    expect(output).toContain('"responseBody":"Invalid body"')
     expect(output).toContain('"topLevelKeys":["model","messages"]')
     expect(output).toContain('"totalSerializedSize":')
+    expect(output).toContain('"turnsKey":"messages"')
     expect(output).toContain('"role":"user"')
     expect(output).toContain('"type":"text"')
     expect(output).toContain('"type":"file"')
@@ -76,6 +76,66 @@ describe('logAPICallErrorDiagnostics', () => {
     const output = consoleError.mock.calls.flat().join(' ')
     expect(output).toContain('"topLevelKeys":["model","messages"]')
     expect(output).toContain('"role":"user"')
+  })
+
+  it('summarizes the response body without echoing its content', () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined)
+    const error = createAPICallError(
+      { messages: [{ role: 'user', content: 'hi' }] },
+      JSON.stringify({
+        error: {
+          type: 'invalid_request_error',
+          code: 'invalid_body',
+          message: 'Invalid body near "leaked secret fragment"'
+        }
+      })
+    )
+
+    logAPICallErrorDiagnostics(error)
+
+    const output = consoleError.mock.calls.flat().join(' ')
+    expect(output).toContain('"type":"invalid_request_error"')
+    expect(output).toContain('"code":"invalid_body"')
+    expect(output).toContain('"length":')
+    expect(output).not.toContain('leaked secret fragment')
+  })
+
+  it('summarizes turns for providers that do not use a messages key', () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined)
+    const error = createAPICallError({
+      model: 'provider-model',
+      input: [
+        { role: 'user', content: [{ type: 'input_text', text: 'private' }] }
+      ]
+    })
+
+    logAPICallErrorDiagnostics(error)
+
+    const output = consoleError.mock.calls.flat().join(' ')
+    expect(output).toContain('"turnsKey":"input"')
+    expect(output).toContain('"turnCount":1')
+    expect(output).toContain('"type":"input_text"')
+    expect(output).not.toContain('private')
+  })
+
+  it('summarizes google style contents with parts', () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined)
+    const error = createAPICallError({
+      contents: [{ role: 'user', parts: [{ text: 'private' }] }]
+    })
+
+    logAPICallErrorDiagnostics(error)
+
+    const output = consoleError.mock.calls.flat().join(' ')
+    expect(output).toContain('"turnsKey":"contents"')
+    expect(output).toContain('"turnCount":1')
+    expect(output).not.toContain('private')
   })
 
   it('truncates oversized diagnostics', () => {
