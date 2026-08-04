@@ -4,6 +4,31 @@ import { describe, expect, it } from 'vitest'
 
 import { compactHistoricalMessages } from '../helpers/compact-historical-messages'
 
+const createCitedAssistantMessage = (id: number) => ({
+  id: `assistant-${id}`,
+  role: 'assistant' as const,
+  parts: [
+    {
+      type: 'tool-search',
+      toolCallId: `call_${id}`,
+      state: 'output-available',
+      input: { query: `query ${id}` },
+      output: {
+        query: `query ${id}`,
+        images: [],
+        results: [
+          {
+            title: `Source ${id}`,
+            url: `https://example.com/${id}`,
+            content: `Evidence ${id}`
+          }
+        ]
+      }
+    },
+    { type: 'text', text: `Answer ${id} [1](#call_${id})` }
+  ]
+})
+
 describe('compactHistoricalMessages', () => {
   it('keeps user messages unchanged', () => {
     const userMessage = {
@@ -228,39 +253,30 @@ describe('compactHistoricalMessages', () => {
     )
   })
 
-  it('adds source context to only the two most recent assistant turns', () => {
-    const createAssistantMessage = (id: number) => ({
-      id: `assistant-${id}`,
-      role: 'assistant' as const,
-      parts: [
-        {
-          type: 'tool-search',
-          toolCallId: `call_${id}`,
-          state: 'output-available',
-          input: { query: `query ${id}` },
-          output: {
-            query: `query ${id}`,
-            images: [],
-            results: [
-              {
-                title: `Source ${id}`,
-                url: `https://example.com/${id}`,
-                content: `Evidence ${id}`
-              }
-            ]
-          }
-        },
-        { type: 'text', text: `Answer ${id} [1](#call_${id})` }
-      ]
-    })
-
+  it('adds source context to every cited assistant turn', () => {
     const compacted = compactHistoricalMessages(
-      [1, 2, 3].map(createAssistantMessage) as unknown as UIMessage[]
+      [1, 2, 3].map(createCitedAssistantMessage) as unknown as UIMessage[]
     )
 
-    expect(compacted[0].parts).toHaveLength(1)
-    expect(compacted[1].parts).toHaveLength(2)
-    expect(compacted[2].parts).toHaveLength(2)
+    expect(compacted).toHaveLength(3)
+    for (const [index, message] of compacted.entries()) {
+      const sourceContext = message.parts[1] as { type: 'text'; text: string }
+      expect(message.parts).toHaveLength(2)
+      expect(sourceContext.text).toContain(`Evidence ${index + 1}`)
+    }
+  })
+
+  it('renders a turn identically however many turns follow it', () => {
+    // A message that is already in history must never change: the model saw
+    // it that way, and the prompt cache matches on the unchanged prefix.
+    const turns = [1, 2, 3, 4, 5].map(
+      createCitedAssistantMessage
+    ) as unknown as UIMessage[]
+
+    const afterTwoTurns = compactHistoricalMessages(turns.slice(0, 2))
+    const afterFiveTurns = compactHistoricalMessages(turns)
+
+    expect(afterFiveTurns.slice(0, 2)).toEqual(afterTwoTurns)
   })
 
   it('keeps all unique cited sources within the source context budget', () => {
@@ -295,11 +311,52 @@ describe('compactHistoricalMessages', () => {
       text: string
     }
 
+    // URLs are dropped ahead of evidence when the budget is tight, because
+    // processCitations already expanded them into the answer above.
+    const answer = compacted[0].parts[0] as { type: 'text'; text: string }
     for (let index = 1; index <= 6; index++) {
+      expect(sourceContext.text).toContain(`Evidence ${index}`)
+      expect(answer.text).toContain(`https://example.com/${index}`)
+    }
+    expect(sourceContext.text.length).toBeLessThanOrEqual(800)
+  })
+
+  it('keeps full excerpts and URLs while few sources are cited', () => {
+    const results = Array.from({ length: 2 }, (_, index) => ({
+      title: `Source ${index + 1}`,
+      url: `https://example.com/${index + 1}`,
+      content: `Evidence ${index + 1} ${'x'.repeat(120)}`
+    }))
+    const messages = [
+      {
+        id: 'assistant-1',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-search',
+            toolCallId: 'call_1',
+            state: 'output-available',
+            input: { query: 'example' },
+            output: { query: 'example', images: [], results }
+          },
+          { type: 'text', text: '[1](#call_1) [2](#call_1)' }
+        ]
+      }
+    ] as unknown as UIMessage[]
+
+    const sourceContext = compactHistoricalMessages(messages)[0].parts[1] as {
+      type: 'text'
+      text: string
+    }
+
+    for (let index = 1; index <= 2; index++) {
       expect(sourceContext.text).toContain(`Source ${index}`)
       expect(sourceContext.text).toContain(`https://example.com/${index}`)
+      expect(sourceContext.text).toContain(
+        `Evidence ${index} ${'x'.repeat(80)}`
+      )
     }
-    expect(sourceContext.text.length).toBeLessThanOrEqual(4000)
+    expect(sourceContext.text.length).toBeLessThanOrEqual(800)
   })
 
   it('strictly bounds source context when base URLs exceed the budget', () => {
@@ -342,6 +399,6 @@ describe('compactHistoricalMessages', () => {
     expect(sourceContext.text).toContain(
       'Their URLs remain in the preceding answer.'
     )
-    expect(sourceContext.text.length).toBeLessThanOrEqual(4000)
+    expect(sourceContext.text.length).toBeLessThanOrEqual(800)
   })
 })
