@@ -19,6 +19,7 @@ import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
+import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { describeStreamError } from './helpers/describe-stream-error'
 import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
@@ -67,7 +68,8 @@ export async function createEphemeralChatStreamResponse(
     }
 
     try {
-      const messagesWithoutSpec = stripSpecFromMessages(messages)
+      const messagesWithNonces = assignDataPartNonces(messages)
+      const messagesWithoutSpec = stripSpecFromMessages(messagesWithNonces)
       const messagesToConvert = compactHistoricalMessages(messagesWithoutSpec)
 
       let modelMessages = await convertToModelMessages(messagesToConvert, {

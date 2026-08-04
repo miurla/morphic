@@ -22,6 +22,7 @@ import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
+import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { describeStreamError } from './helpers/describe-stream-error'
 import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
 import { persistStreamResults } from './helpers/persist-stream-results'
@@ -129,7 +130,8 @@ export async function createChatStreamResponse(
         searchMode
       })
 
-      const messagesWithoutSpec = stripSpecFromMessages(messagesToModel)
+      const messagesWithNonces = assignDataPartNonces(messagesToModel)
+      const messagesWithoutSpec = stripSpecFromMessages(messagesWithNonces)
       const messagesToConvert = compactHistoricalMessages(messagesWithoutSpec)
 
       // Convert to model messages and apply context window management

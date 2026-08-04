@@ -28,9 +28,11 @@ export type UIMessage<
 export type UIDataTypes = {
   sources?: any[]
   // User-authored attachments (composer): a pasted text blob and a pasted URL.
-  pastedContent?: { text: string }
-  quotedContext?: { text: string }
-  noteContext?: { title?: string; text: string }
+  // `nonce` is the delimiter assigned server-side by `assignDataPartNonces`;
+  // the composer never sets it.
+  pastedContent?: { text: string; nonce?: string }
+  quotedContext?: { text: string; nonce?: string }
+  noteContext?: { title?: string; text: string; nonce?: string }
   sourceUrl?: { url: string }
 }
 

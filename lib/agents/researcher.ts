@@ -77,7 +77,9 @@ export function createResearcher({
   searchMode?: SearchMode
 }) {
   try {
-    const currentDate = new Date().toLocaleString()
+    // Date only: a second-precision timestamp sits at the head of the prompt
+    // prefix and changes on every request, which alone voids the prompt cache.
+    const currentDate = new Date().toLocaleDateString()
 
     // Create model-specific tools with proper typing
     const originalSearchTool = createSearchTool(model)
@@ -124,7 +126,7 @@ export function createResearcher({
     // Create ToolLoopAgent with all configuration
     const agent = new ToolLoopAgent({
       model: getModel(model),
-      instructions: `${systemPrompt}\nCurrent date and time: ${currentDate}`,
+      instructions: `${systemPrompt}\nCurrent date: ${currentDate}`,
       tools,
       activeTools: activeToolsList,
       stopWhen: stepCountIs(maxSteps),
