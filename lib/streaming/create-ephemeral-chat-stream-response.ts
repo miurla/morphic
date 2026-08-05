@@ -21,6 +21,10 @@ import { compactHistoricalMessages } from './helpers/compact-historical-messages
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { describeStreamError } from './helpers/describe-stream-error'
+import {
+  EMPTY_RESPONSE_STATUS_MESSAGE,
+  isEmptyResponse
+} from './helpers/is-empty-response'
 import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import { BaseStreamConfig } from './types'
@@ -52,6 +56,7 @@ export async function createEphemeralChatStreamResponse(
     // scores can be attached to this trace later
     const parentTraceId = rootSpan?.traceId
     let hasStreamError = false
+    let hasEmptyResponse = false
     let streamError: unknown
 
     const endTracing = async () => {
@@ -60,6 +65,11 @@ export async function createEphemeralChatStreamResponse(
           rootSpan.update({
             level: 'ERROR',
             statusMessage: describeStreamError(streamError)
+          })
+        } else if (hasEmptyResponse) {
+          rootSpan.update({
+            level: 'ERROR',
+            statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
           })
         }
         rootSpan.end()
@@ -128,7 +138,10 @@ export async function createEphemeralChatStreamResponse(
             }
           }
         },
-        onFinish: async () => {
+        onFinish: async ({ responseMessage, isAborted }) => {
+          if (!isAborted && responseMessage) {
+            hasEmptyResponse = isEmptyResponse(responseMessage)
+          }
           await endTracing()
         },
         onError: (error: unknown) => {

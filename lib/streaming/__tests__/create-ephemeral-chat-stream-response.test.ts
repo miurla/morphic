@@ -50,6 +50,7 @@ vi.mock('@/lib/utils/usage-logging', () => ({
 import { serializePublicError } from '@/lib/errors/public-error'
 import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-ephemeral-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
+import { EMPTY_RESPONSE_STATUS_MESSAGE } from '@/lib/streaming/helpers/is-empty-response'
 
 type StreamOptions = {
   onError: (event: { error: unknown }) => void
@@ -57,10 +58,25 @@ type StreamOptions = {
 
 type UIMessageStreamResponseOptions = {
   onError: (error: unknown) => string
-  onFinish: () => Promise<void>
+  onFinish: (event: {
+    responseMessage: {
+      id: string
+      role: 'assistant'
+      parts: Array<{ type: string; text?: string }>
+    }
+    isAborted: boolean
+  }) => Promise<void>
 }
 
-function createFakeResult(toolError?: unknown) {
+function createFakeResult({
+  toolError,
+  parts = [{ type: 'text', text: 'Answer' }],
+  isAborted = false
+}: {
+  toolError?: unknown
+  parts?: Array<{ type: string; text?: string }>
+  isAborted?: boolean
+} = {}) {
   return {
     consumeStream: vi.fn(),
     toUIMessageStreamResponse: vi.fn(
@@ -68,7 +84,14 @@ function createFakeResult(toolError?: unknown) {
         if (toolError) {
           mocks.serializedError = options.onError(toolError)
         }
-        mocks.finishPromise = options.onFinish()
+        mocks.finishPromise = options.onFinish({
+          responseMessage: {
+            id: 'response-id',
+            role: 'assistant',
+            parts
+          },
+          isAborted
+        })
         return new Response()
       }
     )
@@ -113,7 +136,7 @@ describe('createEphemeralChatStreamResponse', () => {
     const toolError = Object.assign(new Error('HTTP 403: Forbidden'), {
       statusCode: 403
     })
-    mocks.stream.mockResolvedValue(createFakeResult(toolError))
+    mocks.stream.mockResolvedValue(createFakeResult({ toolError }))
 
     await createEphemeralChatStreamResponse(createConfig())
     await mocks.finishPromise
@@ -140,5 +163,54 @@ describe('createEphemeralChatStreamResponse', () => {
     })
     expect(mocks.span.end).toHaveBeenCalledOnce()
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
+  })
+
+  it('marks the span as failed for an empty response', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult({ parts: [] }))
+
+    await createEphemeralChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      level: 'ERROR',
+      statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
+    })
+  })
+
+  it('does not update the span for a response with text', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(mocks.span.update).not.toHaveBeenCalled()
+  })
+
+  it('does not update the span for an aborted turn', async () => {
+    mocks.stream.mockResolvedValue(
+      createFakeResult({ parts: [], isAborted: true })
+    )
+
+    await createEphemeralChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(mocks.span.update).not.toHaveBeenCalled()
+  })
+
+  it('preserves the stream error when the response is empty', async () => {
+    const streamError = new Error('stream failed')
+    mocks.stream.mockImplementation(async (options: StreamOptions) => {
+      options.onError({ error: streamError })
+      return createFakeResult({ parts: [] })
+    })
+
+    await createEphemeralChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledOnce()
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      level: 'ERROR',
+      statusMessage: describeStreamError(streamError)
+    })
   })
 })
