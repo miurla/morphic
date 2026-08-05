@@ -1,6 +1,15 @@
 import { describe, expect, test } from 'vitest'
 
-import { getImageSpecPrompt, getRelatedQuestionsSpecPrompt } from '../prompt'
+import {
+  getAdaptiveModePrompt,
+  getQuickModePrompt
+} from '@/lib/agents/prompts/search-mode-prompts'
+
+import {
+  EXAMPLE_IMAGE_SPEC_BLOCK,
+  getImageSpecPrompt,
+  getRelatedQuestionsSpecPrompt
+} from '../prompt'
 
 describe('render prompts', () => {
   test('includes related questions by default for substantive answers', () => {
@@ -31,4 +40,52 @@ describe('render prompts', () => {
   test('describes the related block as optional alongside image specs', () => {
     expect(getImageSpecPrompt()).toContain('which is itself optional')
   })
+
+  test.each([getQuickModePrompt, getAdaptiveModePrompt])(
+    'never caps a tool call id at a single citation number',
+    getPrompt => {
+      expect(getPrompt()).not.toContain(
+        'Each unique toolCallId gets ONE number'
+      )
+    }
+  )
+
+  test('numbers citations by result position within a search', () => {
+    expect(getQuickModePrompt()).toContain('position of the cited result')
+    expect(getAdaptiveModePrompt()).toContain('result order within each search')
+  })
+
+  test.each([getQuickModePrompt, getAdaptiveModePrompt])(
+    'includes the canonical image block in the worked example',
+    getPrompt => {
+      const prompt = getPrompt()
+
+      expect(prompt).toContain(EXAMPLE_IMAGE_SPEC_BLOCK)
+      expect(prompt.split(EXAMPLE_IMAGE_SPEC_BLOCK)).toHaveLength(3)
+    }
+  )
+
+  test.each([getQuickModePrompt, getAdaptiveModePrompt])(
+    'uses placeholders for example tool calls and image sources',
+    getPrompt => {
+      const prompt = getPrompt()
+      const oldToolCallIds = [
+        'I8NzFUKwrKX88107',
+        'aHvy9Vt17r3VSmnG',
+        'abc123',
+        'def456'
+      ]
+      const imageSources = [...prompt.matchAll(/"src":"([^"]+)"/g)].map(
+        match => match[1]
+      )
+
+      for (const toolCallId of oldToolCallIds) {
+        expect(prompt).not.toContain(toolCallId)
+      }
+      expect(imageSources.length).toBeGreaterThan(0)
+      expect(imageSources).toEqual(
+        imageSources.filter(source => source.startsWith('EXAMPLE_IMAGE_'))
+      )
+    }
+  )
 })

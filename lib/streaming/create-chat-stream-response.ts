@@ -1,5 +1,6 @@
 import type { LangfuseSpan } from '@langfuse/tracing'
 import { propagateAttributes, startActiveObservation } from '@langfuse/tracing'
+import type { StreamTextOnErrorCallback } from 'ai'
 import { consumeStream, convertToModelMessages, smoothStream } from 'ai'
 
 import { researcher } from '@/lib/agents/researcher'
@@ -22,6 +23,12 @@ import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
+import { assignDataPartNonces } from './helpers/data-part-nonce'
+import { describeStreamError } from './helpers/describe-stream-error'
+import {
+  EMPTY_RESPONSE_STATUS_MESSAGE,
+  isEmptyResponse
+} from './helpers/is-empty-response'
 import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
@@ -80,9 +87,23 @@ export async function createChatStreamResponse(
     // Real OTel trace ID, stored in message metadata so feedback scores can
     // be attached to this trace later
     const parentTraceId = rootSpan?.traceId
+    let hasStreamError = false
+    let hasEmptyResponse = false
+    let streamError: unknown
 
     const endTracing = async () => {
       if (rootSpan) {
+        if (hasStreamError) {
+          rootSpan.update({
+            level: 'ERROR',
+            statusMessage: describeStreamError(streamError)
+          })
+        } else if (hasEmptyResponse) {
+          rootSpan.update({
+            level: 'ERROR',
+            statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
+          })
+        }
         rootSpan.end()
         await langfuseSpanProcessor.forceFlush()
       }
@@ -120,7 +141,8 @@ export async function createChatStreamResponse(
         searchMode
       })
 
-      const messagesWithoutSpec = stripSpecFromMessages(messagesToModel)
+      const messagesWithNonces = assignDataPartNonces(messagesToModel)
+      const messagesWithoutSpec = stripSpecFromMessages(messagesWithNonces)
       const messagesToConvert = compactHistoricalMessages(messagesWithoutSpec)
 
       // Convert to model messages and apply context window management
@@ -157,9 +179,15 @@ export async function createChatStreamResponse(
       perfLog(
         `researchAgent.stream - Start: model=${context.modelId}, searchMode=${searchMode}`
       )
+      // AgentStreamParameters omits onError, but it reaches streamText where only
+      // stream errors, not recoverable tool errors, invoke it.
       const result = await researchAgent.stream({
         messages: modelMessages,
         abortSignal,
+        onError: ({ error }) => {
+          hasStreamError = true
+          streamError = error
+        },
         experimental_transform: smoothStream({ chunking: 'word' }),
         ...(isUsageLogging() && {
           onStepFinish: step => {
@@ -170,6 +198,8 @@ export async function createChatStreamResponse(
             )
           }
         })
+      } as Parameters<typeof researchAgent.stream>[0] & {
+        onError: StreamTextOnErrorCallback
       })
       result.consumeStream()
 
@@ -198,6 +228,8 @@ export async function createChatStreamResponse(
             perfTime('researchAgent.stream completed', llmStart)
             if (isAborted || !responseMessage) return
 
+            hasEmptyResponse = isEmptyResponse(responseMessage)
+
             // Persist stream results to database
             await persistStreamResults(
               responseMessage,
@@ -222,6 +254,8 @@ export async function createChatStreamResponse(
         consumeSseStream: consumeStream
       })
     } catch (error) {
+      hasStreamError = true
+      streamError = error
       await endTracing()
       logAPICallErrorDiagnostics(error)
       console.error('Stream execution error:', error)
