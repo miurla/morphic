@@ -30,7 +30,9 @@ export const Image: ComponentFn<CatalogType, 'Image'> = ({ props }) => {
   const { src, sourceUrl, title, description, aspectRatio = '4:3' } = props
   const [errored, setErrored] = useState(false)
 
-  if (!src || errored) {
+  // Only real web images render. Anything else, including the prompt's
+  // EXAMPLE_ placeholders if a model ever copies them, is dropped.
+  if (!src || errored || !/^https?:\/\//i.test(src)) {
     return null
   }
 

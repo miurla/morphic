@@ -1,4 +1,5 @@
 import {
+  EXAMPLE_IMAGE_SPEC_BLOCK,
   getImageSpecPrompt,
   getRelatedQuestionsSpecPrompt
 } from '@/lib/render/prompt'
@@ -86,13 +87,13 @@ Fetch tool usage:
 Citation Format (MANDATORY):
 [number](#toolCallId) - Always use this EXACT format
 - **CRITICAL**: Use the EXACT tool call identifier from the search response
-  - Find the tool call ID in the search response (e.g., "I8NzFUKwrKX88107")
-  - Use it directly without adding any prefix: [1](#I8NzFUKwrKX88107)
+  - Find the tool call ID in the search response (e.g., "EXAMPLE_TOOL_CALL_ID_1")
+  - Use it directly without adding any prefix: [1](#EXAMPLE_TOOL_CALL_ID_1)
   - The format is: [number](#TOOLCALLID) where TOOLCALLID is the exact ID
 - **CRITICAL RULE**: Each unique toolCallId gets ONE number. Never use different numbers with the same toolCallId.
-  ✓ CORRECT: "Fact A [1](#abc123). Fact B from same search [1](#abc123)."
-  ✓ CORRECT: "Fact A [1](#abc123). Fact B from different search [2](#def456)."
-  ✗ WRONG: "Fact A [1](#abc123). Fact B [2](#abc123)." (Same toolCallId cannot have different numbers)
+  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from same search [1](#EXAMPLE_TOOL_CALL_ID_1)."
+  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from different search [2](#EXAMPLE_TOOL_CALL_ID_2)."
+  ✗ WRONG: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B [2](#EXAMPLE_TOOL_CALL_ID_1)." (Same toolCallId cannot have different numbers)
 - Assign numbers sequentially (1, 2, 3...) to each unique toolCallId as they appear in your response
 - **CRITICAL CITATION PLACEMENT RULES**:
   1. Write the COMPLETE sentence first
@@ -102,18 +103,18 @@ Citation Format (MANDATORY):
   5. If using multiple sources in one sentence, place ALL citations together after the period
 
   **CORRECT PATTERN**: sentence. [citation]
-  ✓ CORRECT: "Nvidia's GPUs power AI models. [1](#abc123)"
-  ✓ CORRECT: "Nvidia leads in hardware and software. [1](#abc123) [2](#def456)"
+  ✓ CORRECT: "Nvidia's GPUs power AI models. [1](#EXAMPLE_TOOL_CALL_ID_1)"
+  ✓ CORRECT: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1) [2](#EXAMPLE_TOOL_CALL_ID_2)"
 
   **WRONG PATTERNS** (Do NOT do this):
-  ✗ WRONG: "Nvidia's GPUs power AI models [1](#abc123)." (citation BEFORE period)
-  ✗ WRONG: "Nvidia's GPUs. [1](#abc123) power AI models." (citation breaks sentence)
-  ✗ WRONG: "Nvidia leads in hardware and software. [1](#abc123), [2](#def456)" (comma between citations)
+  ✗ WRONG: "Nvidia's GPUs power AI models [1](#EXAMPLE_TOOL_CALL_ID_1)." (citation BEFORE period)
+  ✗ WRONG: "Nvidia's GPUs. [1](#EXAMPLE_TOOL_CALL_ID_1) power AI models." (citation breaks sentence)
+  ✗ WRONG: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1), [2](#EXAMPLE_TOOL_CALL_ID_2)" (comma between citations)
 - Every sentence with information from search results MUST have citations at its end
 
-Citation Example with Real Tool Call:
-If tool call ID is "I8NzFUKwrKX88107", cite as: [1](#I8NzFUKwrKX88107)
-If tool call ID is "ABC123xyz", cite as: [2](#ABC123xyz)
+Citation Example with Placeholder Tool Call:
+If tool call ID is "EXAMPLE_TOOL_CALL_ID_1", cite as: [1](#EXAMPLE_TOOL_CALL_ID_1)
+If tool call ID is "EXAMPLE_TOOL_CALL_ID_2", cite as: [2](#EXAMPLE_TOOL_CALL_ID_2)
 
 Rule precedence:
 - The one-search limit is mandatory and overrides any instruction that could imply additional research.
@@ -144,13 +145,15 @@ Emoji usage:
 Example approach:
 ## **Topic Response**
 ### Core Information
-- **Key Point:** Direct answer with specific data/numbers when available [1](#I8NzFUKwrKX88107)
-- **Detail:** Supporting information with concrete examples [2](#I8NzFUKwrKX88107)
+- **Key Point:** Direct answer with specific data/numbers when available [1](#EXAMPLE_TOOL_CALL_ID_1)
+- **Detail:** Supporting information with concrete examples [2](#EXAMPLE_TOOL_CALL_ID_1)
+
+${EXAMPLE_IMAGE_SPEC_BLOCK}
 
 ### When Comparing (use table format)
 | Feature | Option A | Option B |
 |---------|----------|----------|
-| Price | $100 [1](#abc123) | $150 [2](#def456) |
+| Price | $100 [1](#EXAMPLE_TOOL_CALL_ID_1) | $150 [2](#EXAMPLE_TOOL_CALL_ID_2) |
 
 ### Additional Context (if relevant)
 - **Consideration:** Practical implications with real-world context
@@ -202,7 +205,7 @@ Rule precedence:
 
 4. **If the query is ambiguous, use ask_question tool for clarification**
 
-5. **CRITICAL: You MUST cite sources inline using the [number](#toolCallId) format**. **CITATION PLACEMENT**: Follow this pattern: sentence. [citation] - Write the complete sentence, add a period, then add citations after the period. Do NOT add period or punctuation after citations. If a sentence uses multiple sources, place ALL citations together after the period (e.g., "AI adoption has increased. [1](#I8NzFUKwrKX88107) [2](#aHvy9Vt17r3VSmnG)"). Use [1](#toolCallId), [2](#toolCallId), [3](#toolCallId), etc., where number matches the order within each search result and toolCallId is the ID of the search that provided the result. Every sentence with information from search results MUST have citations at its end.
+5. **CRITICAL: You MUST cite sources inline using the [number](#toolCallId) format**. **CITATION PLACEMENT**: Follow this pattern: sentence. [citation] - Write the complete sentence, add a period, then add citations after the period. Do NOT add period or punctuation after citations. If a sentence uses multiple sources, place ALL citations together after the period (e.g., "AI adoption has increased. [1](#EXAMPLE_TOOL_CALL_ID_1) [2](#EXAMPLE_TOOL_CALL_ID_2)"). Use [1](#toolCallId), [2](#toolCallId), [3](#toolCallId), etc., where number matches the order within each search result and toolCallId is the ID of the search that provided the result. Every sentence with information from search results MUST have citations at its end.
 
 6. If results are not relevant or helpful, you may rely on your general knowledge ONLY AFTER at least one search attempt (do not add citations for general knowledge)
 
@@ -261,10 +264,10 @@ When using the ask_question tool:
 - Match the language to the user's language (except option values which must be in English)
 
 Citation Format:
-[number](#toolCallId) - Always use this EXACT format, e.g., [1](#I8NzFUKwrKX88107), [2](#aHvy9Vt17r3VSmnG)
+[number](#toolCallId) - Always use this EXACT format, e.g., [1](#EXAMPLE_TOOL_CALL_ID_1), [2](#EXAMPLE_TOOL_CALL_ID_2)
 - The number corresponds to the result order within each search (1, 2, 3, etc.)
 - The toolCallId can be found in each search result's metadata or response structure
-- Look for the unique tool call identifier (e.g., mK3pQr7sT9uV2wX4) in the search response
+- Look for the unique tool call identifier (e.g., EXAMPLE_TOOL_CALL_ID_1) in the search response
 - The toolCallId is the EXACT unique identifier of the search tool call
 - Do NOT add ANY prefix (such as "toolu_", "call_", or "search-") to the toolCallId — use the exact ID exactly as it appears in the search response
 - Each search tool execution will have its own toolCallId
@@ -276,16 +279,16 @@ Citation Format:
   5. If using multiple sources in one sentence, place ALL citations together after the period
 
   **CORRECT PATTERN**: sentence. [citation]
-  ✓ CORRECT: "Nvidia's stock has risen 200%. [1](#I8NzFUKwrKX88107)"
-  ✓ CORRECT: "Nvidia leads in hardware and software. [1](#abc123) [2](#def456)"
+  ✓ CORRECT: "Nvidia's stock has risen 200%. [1](#EXAMPLE_TOOL_CALL_ID_1)"
+  ✓ CORRECT: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1) [2](#EXAMPLE_TOOL_CALL_ID_2)"
 
   **WRONG PATTERNS** (Do NOT do this):
-  ✗ WRONG: "Nvidia's stock has risen 200% [1](#I8NzFUKwrKX88107)." (citation BEFORE period)
-  ✗ WRONG: "Nvidia's stock. [1](#I8NzFUKwrKX88107) has risen 200%." (citation breaks sentence)
-  ✗ WRONG: "Nvidia leads in hardware and software. [1](#abc123], [2](#def456)" (comma between citations)
+  ✗ WRONG: "Nvidia's stock has risen 200% [1](#EXAMPLE_TOOL_CALL_ID_1)." (citation BEFORE period)
+  ✗ WRONG: "Nvidia's stock. [1](#EXAMPLE_TOOL_CALL_ID_1) has risen 200%." (citation breaks sentence)
+  ✗ WRONG: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1], [2](#EXAMPLE_TOOL_CALL_ID_2)" (comma between citations)
 IMPORTANT: Citations must appear INLINE within your response text, not separately.
-Example: "The company reported record revenue. [1](#I8NzFUKwrKX88107) Analysts predict continued growth. [2](#I8NzFUKwrKX88107)"
-Example with multiple searches: "Initial data shows positive trends. [1](#I8NzFUKwrKX88107) Recent updates indicate acceleration. [1](#aHvy9Vt17r3VSmnG)"
+Example: "The company reported record revenue. [1](#EXAMPLE_TOOL_CALL_ID_1) Analysts predict continued growth. [2](#EXAMPLE_TOOL_CALL_ID_1)"
+Example with multiple searches: "Initial data shows positive trends. [1](#EXAMPLE_TOOL_CALL_ID_1) Recent updates indicate acceleration. [1](#EXAMPLE_TOOL_CALL_ID_2)"
 
 TASK MANAGEMENT (todoWrite tool):
 **When to use todoWrite:**
@@ -328,8 +331,10 @@ Emoji usage:
 Flexible example:
 ## **Response Topic**
 ### Primary Information
-- **Core Answer:** Direct response with evidence [1](#I8NzFUKwrKX88107)
+- **Core Answer:** Direct response with evidence [1](#EXAMPLE_TOOL_CALL_ID_1)
 - **Context:** Relevant supporting details
+
+${EXAMPLE_IMAGE_SPEC_BLOCK}
 
 Conclude with a brief synthesis that ties together the main insights into a clear overall understanding.
 
