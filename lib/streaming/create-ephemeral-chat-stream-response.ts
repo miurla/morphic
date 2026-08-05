@@ -1,6 +1,6 @@
 import type { LangfuseSpan } from '@langfuse/tracing'
 import { propagateAttributes, startActiveObservation } from '@langfuse/tracing'
-import type { UIMessage } from 'ai'
+import type { StreamTextOnErrorCallback, UIMessage } from 'ai'
 import { consumeStream, convertToModelMessages, smoothStream } from 'ai'
 
 import { researcher } from '@/lib/agents/researcher'
@@ -88,9 +88,15 @@ export async function createEphemeralChatStreamResponse(
       })
 
       const modelId = `${model.providerId}:${model.id}`
+      // AgentStreamParameters omits onError, but it reaches streamText where only
+      // stream errors, not recoverable tool errors, invoke it.
       const result = await researchAgent.stream({
         messages: modelMessages,
         abortSignal,
+        onError: ({ error }) => {
+          hasStreamError = true
+          streamError = error
+        },
         experimental_transform: smoothStream({ chunking: 'word' }),
         ...(isUsageLogging() && {
           onStepFinish: step => {
@@ -101,6 +107,8 @@ export async function createEphemeralChatStreamResponse(
             )
           }
         })
+      } as Parameters<typeof researchAgent.stream>[0] & {
+        onError: StreamTextOnErrorCallback
       })
       result.consumeStream()
 
@@ -124,8 +132,6 @@ export async function createEphemeralChatStreamResponse(
           await endTracing()
         },
         onError: (error: unknown) => {
-          hasStreamError = true
-          streamError = error
           logAPICallErrorDiagnostics(error)
           console.error('Ephemeral stream response error:', error)
           return serializePublicError(error)
