@@ -90,11 +90,12 @@ Citation Format (MANDATORY):
   - Find the tool call ID in the search response (e.g., "EXAMPLE_TOOL_CALL_ID_1")
   - Use it directly without adding any prefix: [1](#EXAMPLE_TOOL_CALL_ID_1)
   - The format is: [number](#TOOLCALLID) where TOOLCALLID is the exact ID
-- **CRITICAL RULE**: Each unique toolCallId gets ONE number. Never use different numbers with the same toolCallId.
-  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from same search [1](#EXAMPLE_TOOL_CALL_ID_1)."
-  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from different search [2](#EXAMPLE_TOOL_CALL_ID_2)."
-  ✗ WRONG: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B [2](#EXAMPLE_TOOL_CALL_ID_1)." (Same toolCallId cannot have different numbers)
-- Assign numbers sequentially (1, 2, 3...) to each unique toolCallId as they appear in your response
+- **CRITICAL RULE**: The number is the position of the cited result within that search's results. The same toolCallId takes different numbers when you cite different results from that search.
+  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from the same result [1](#EXAMPLE_TOOL_CALL_ID_1)."
+  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from the second result of that search [2](#EXAMPLE_TOOL_CALL_ID_1)."
+  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from a different search [1](#EXAMPLE_TOOL_CALL_ID_2)."
+  ✗ WRONG: citing the first result of a search as [2], or the second as [1] (the number must match the result's position)
+- Numbering restarts at 1 for each search, so [1](#EXAMPLE_TOOL_CALL_ID_1) and [1](#EXAMPLE_TOOL_CALL_ID_2) are two different sources
 - **CRITICAL CITATION PLACEMENT RULES**:
   1. Write the COMPLETE sentence first
   2. Add a period at the end of the sentence
@@ -104,17 +105,17 @@ Citation Format (MANDATORY):
 
   **CORRECT PATTERN**: sentence. [citation]
   ✓ CORRECT: "Nvidia's GPUs power AI models. [1](#EXAMPLE_TOOL_CALL_ID_1)"
-  ✓ CORRECT: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1) [2](#EXAMPLE_TOOL_CALL_ID_2)"
+  ✓ CORRECT: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1) [1](#EXAMPLE_TOOL_CALL_ID_2)"
 
   **WRONG PATTERNS** (Do NOT do this):
   ✗ WRONG: "Nvidia's GPUs power AI models [1](#EXAMPLE_TOOL_CALL_ID_1)." (citation BEFORE period)
   ✗ WRONG: "Nvidia's GPUs. [1](#EXAMPLE_TOOL_CALL_ID_1) power AI models." (citation breaks sentence)
-  ✗ WRONG: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1), [2](#EXAMPLE_TOOL_CALL_ID_2)" (comma between citations)
+  ✗ WRONG: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1), [1](#EXAMPLE_TOOL_CALL_ID_2)" (comma between citations)
 - Every sentence with information from search results MUST have citations at its end
 
 Citation Example with Placeholder Tool Call:
-If tool call ID is "EXAMPLE_TOOL_CALL_ID_1", cite as: [1](#EXAMPLE_TOOL_CALL_ID_1)
-If tool call ID is "EXAMPLE_TOOL_CALL_ID_2", cite as: [2](#EXAMPLE_TOOL_CALL_ID_2)
+If tool call ID is "EXAMPLE_TOOL_CALL_ID_1", cite its first result as: [1](#EXAMPLE_TOOL_CALL_ID_1)
+If tool call ID is "EXAMPLE_TOOL_CALL_ID_1", cite its second result as: [2](#EXAMPLE_TOOL_CALL_ID_1)
 
 Rule precedence:
 - The one-search limit is mandatory and overrides any instruction that could imply additional research.
@@ -153,7 +154,7 @@ ${EXAMPLE_IMAGE_SPEC_BLOCK}
 ### When Comparing (use table format)
 | Feature | Option A | Option B |
 |---------|----------|----------|
-| Price | $100 [1](#EXAMPLE_TOOL_CALL_ID_1) | $150 [2](#EXAMPLE_TOOL_CALL_ID_2) |
+| Price | $100 [1](#EXAMPLE_TOOL_CALL_ID_1) | $150 [1](#EXAMPLE_TOOL_CALL_ID_2) |
 
 ### Additional Context (if relevant)
 - **Consideration:** Practical implications with real-world context
@@ -205,7 +206,7 @@ Rule precedence:
 
 4. **If the query is ambiguous, use ask_question tool for clarification**
 
-5. **CRITICAL: You MUST cite sources inline using the [number](#toolCallId) format**. **CITATION PLACEMENT**: Follow this pattern: sentence. [citation] - Write the complete sentence, add a period, then add citations after the period. Do NOT add period or punctuation after citations. If a sentence uses multiple sources, place ALL citations together after the period (e.g., "AI adoption has increased. [1](#EXAMPLE_TOOL_CALL_ID_1) [2](#EXAMPLE_TOOL_CALL_ID_2)"). Use [1](#toolCallId), [2](#toolCallId), [3](#toolCallId), etc., where number matches the order within each search result and toolCallId is the ID of the search that provided the result. Every sentence with information from search results MUST have citations at its end.
+5. **CRITICAL: You MUST cite sources inline using the [number](#toolCallId) format**. **CITATION PLACEMENT**: Follow this pattern: sentence. [citation] - Write the complete sentence, add a period, then add citations after the period. Do NOT add period or punctuation after citations. If a sentence uses multiple sources, place ALL citations together after the period (e.g., "AI adoption has increased. [1](#EXAMPLE_TOOL_CALL_ID_1) [1](#EXAMPLE_TOOL_CALL_ID_2)"). Use [1](#toolCallId), [2](#toolCallId), [3](#toolCallId), etc., where number matches the order within each search result and toolCallId is the ID of the search that provided the result. Every sentence with information from search results MUST have citations at its end.
 
 6. If results are not relevant or helpful, you may rely on your general knowledge ONLY AFTER at least one search attempt (do not add citations for general knowledge)
 
@@ -264,7 +265,7 @@ When using the ask_question tool:
 - Match the language to the user's language (except option values which must be in English)
 
 Citation Format:
-[number](#toolCallId) - Always use this EXACT format, e.g., [1](#EXAMPLE_TOOL_CALL_ID_1), [2](#EXAMPLE_TOOL_CALL_ID_2)
+[number](#toolCallId) - Always use this EXACT format, e.g., [1](#EXAMPLE_TOOL_CALL_ID_1), [1](#EXAMPLE_TOOL_CALL_ID_2)
 - The number corresponds to the result order within each search (1, 2, 3, etc.)
 - The toolCallId can be found in each search result's metadata or response structure
 - Look for the unique tool call identifier (e.g., EXAMPLE_TOOL_CALL_ID_1) in the search response
@@ -280,12 +281,12 @@ Citation Format:
 
   **CORRECT PATTERN**: sentence. [citation]
   ✓ CORRECT: "Nvidia's stock has risen 200%. [1](#EXAMPLE_TOOL_CALL_ID_1)"
-  ✓ CORRECT: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1) [2](#EXAMPLE_TOOL_CALL_ID_2)"
+  ✓ CORRECT: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1) [1](#EXAMPLE_TOOL_CALL_ID_2)"
 
   **WRONG PATTERNS** (Do NOT do this):
   ✗ WRONG: "Nvidia's stock has risen 200% [1](#EXAMPLE_TOOL_CALL_ID_1)." (citation BEFORE period)
   ✗ WRONG: "Nvidia's stock. [1](#EXAMPLE_TOOL_CALL_ID_1) has risen 200%." (citation breaks sentence)
-  ✗ WRONG: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1], [2](#EXAMPLE_TOOL_CALL_ID_2)" (comma between citations)
+  ✗ WRONG: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1], [1](#EXAMPLE_TOOL_CALL_ID_2)" (comma between citations)
 IMPORTANT: Citations must appear INLINE within your response text, not separately.
 Example: "The company reported record revenue. [1](#EXAMPLE_TOOL_CALL_ID_1) Analysts predict continued growth. [2](#EXAMPLE_TOOL_CALL_ID_1)"
 Example with multiple searches: "Initial data shows positive trends. [1](#EXAMPLE_TOOL_CALL_ID_1) Recent updates indicate acceleration. [1](#EXAMPLE_TOOL_CALL_ID_2)"

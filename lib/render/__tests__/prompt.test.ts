@@ -42,6 +42,20 @@ describe('render prompts', () => {
   })
 
   test.each([getQuickModePrompt, getAdaptiveModePrompt])(
+    'never caps a tool call id at a single citation number',
+    getPrompt => {
+      expect(getPrompt()).not.toContain(
+        'Each unique toolCallId gets ONE number'
+      )
+    }
+  )
+
+  test('numbers citations by result position within a search', () => {
+    expect(getQuickModePrompt()).toContain('position of the cited result')
+    expect(getAdaptiveModePrompt()).toContain('result order within each search')
+  })
+
+  test.each([getQuickModePrompt, getAdaptiveModePrompt])(
     'includes the canonical image block in the worked example',
     getPrompt => {
       const prompt = getPrompt()
