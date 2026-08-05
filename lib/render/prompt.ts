@@ -59,6 +59,13 @@ SPEC RULES:
 `
 }
 
+export const EXAMPLE_IMAGE_SPEC_BLOCK = `\`\`\`spec
+{"op":"add","path":"/root","value":"grid"}
+{"op":"add","path":"/elements/grid","value":{"type":"Grid","props":{"columns":2,"gap":"sm"},"children":["img1","img2"]}}
+{"op":"add","path":"/elements/img1","value":{"type":"Image","props":{"src":"https://example.com/EXAMPLE_IMAGE_1.jpg","sourceUrl":"https://example.com/EXAMPLE_SOURCE_1","title":"Mount Fuji at sunrise","description":"Snow-capped peak at sunrise","aspectRatio":"4:3"},"children":[]}}
+{"op":"add","path":"/elements/img2","value":{"type":"Image","props":{"src":"https://example.com/EXAMPLE_IMAGE_2.jpg","sourceUrl":"https://example.com/EXAMPLE_SOURCE_2","title":"Mount Fuji in spring","description":"Cherry blossoms framing Mount Fuji","aspectRatio":"4:3"},"children":[]}}
+\`\`\``
+
 /**
  * Returns the prompt section that instructs the LLM to optionally embed
  * inline image groups as ```spec fenced blocks within the response body.
@@ -98,16 +105,15 @@ Example (inline image group embedded in markdown body):
 
 ## Mount Fuji
 
-Mount Fuji is Japan's tallest peak.
+### Key facts
+- **Elevation:** Mount Fuji rises 3,776 meters above sea level.
+- **Setting:** Its snow-capped peak is a defining feature of the landscape.
 
-\`\`\`spec
-{"op":"add","path":"/root","value":"grid"}
-{"op":"add","path":"/elements/grid","value":{"type":"Grid","props":{"columns":3,"gap":"sm"},"children":["img1","img2","img3"]}}
-{"op":"add","path":"/elements/img1","value":{"type":"Image","props":{"src":"https://cdn.example.com/fuji-1.jpg","sourceUrl":"https://en.wikipedia.org/wiki/Mount_Fuji","title":"Mount Fuji - Wikipedia","description":"Snow-capped peak at sunrise","aspectRatio":"4:3"},"children":[]}}
-{"op":"add","path":"/elements/img2","value":{"type":"Image","props":{"src":"https://cdn.example.com/fuji-2.jpg","sourceUrl":"https://travel.example.com/mount-fuji","title":"Mount Fuji Travel Guide","aspectRatio":"4:3"},"children":[]}}
-{"op":"add","path":"/elements/img3","value":{"type":"Image","props":{"src":"https://cdn.example.com/fuji-3.jpg","title":"Cherry blossoms in spring","aspectRatio":"4:3"},"children":[]}}
-\`\`\`
+${EXAMPLE_IMAGE_SPEC_BLOCK}
 
-It rises 3,776 meters above sea level...
+### Why it matters
+- **Significance:** The mountain is both a natural landmark and a cultural symbol.
+
+Mount Fuji combines geographic prominence with enduring cultural importance.
 `
 }
