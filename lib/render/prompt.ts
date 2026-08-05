@@ -62,8 +62,8 @@ SPEC RULES:
 export const EXAMPLE_IMAGE_SPEC_BLOCK = `\`\`\`spec
 {"op":"add","path":"/root","value":"grid"}
 {"op":"add","path":"/elements/grid","value":{"type":"Grid","props":{"columns":2,"gap":"sm"},"children":["img1","img2"]}}
-{"op":"add","path":"/elements/img1","value":{"type":"Image","props":{"src":"https://example.com/EXAMPLE_IMAGE_1.jpg","sourceUrl":"https://example.com/EXAMPLE_SOURCE_1","title":"Mount Fuji at sunrise","description":"Snow-capped peak at sunrise","aspectRatio":"4:3"},"children":[]}}
-{"op":"add","path":"/elements/img2","value":{"type":"Image","props":{"src":"https://example.com/EXAMPLE_IMAGE_2.jpg","sourceUrl":"https://example.com/EXAMPLE_SOURCE_2","title":"Mount Fuji in spring","description":"Cherry blossoms framing Mount Fuji","aspectRatio":"4:3"},"children":[]}}
+{"op":"add","path":"/elements/img1","value":{"type":"Image","props":{"src":"EXAMPLE_IMAGE_1","sourceUrl":"EXAMPLE_SOURCE_1","title":"Mount Fuji at sunrise","description":"Snow-capped peak at sunrise","aspectRatio":"4:3"},"children":[]}}
+{"op":"add","path":"/elements/img2","value":{"type":"Image","props":{"src":"EXAMPLE_IMAGE_2","sourceUrl":"EXAMPLE_SOURCE_2","title":"Mount Fuji in spring","description":"Cherry blossoms framing Mount Fuji","aspectRatio":"4:3"},"children":[]}}
 \`\`\``
 
 /**

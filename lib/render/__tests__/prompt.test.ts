@@ -70,9 +70,7 @@ describe('render prompts', () => {
       }
       expect(imageSources.length).toBeGreaterThan(0)
       expect(imageSources).toEqual(
-        imageSources.filter(source =>
-          source.startsWith('https://example.com/EXAMPLE_IMAGE_')
-        )
+        imageSources.filter(source => source.startsWith('EXAMPLE_IMAGE_'))
       )
     }
   )

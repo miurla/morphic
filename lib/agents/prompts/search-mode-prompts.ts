@@ -146,7 +146,7 @@ Example approach:
 ## **Topic Response**
 ### Core Information
 - **Key Point:** Direct answer with specific data/numbers when available [1](#EXAMPLE_TOOL_CALL_ID_1)
-- **Detail:** Supporting information with concrete examples [1](#EXAMPLE_TOOL_CALL_ID_1)
+- **Detail:** Supporting information with concrete examples [2](#EXAMPLE_TOOL_CALL_ID_1)
 
 ${EXAMPLE_IMAGE_SPEC_BLOCK}
 
@@ -287,7 +287,7 @@ Citation Format:
   ✗ WRONG: "Nvidia's stock. [1](#EXAMPLE_TOOL_CALL_ID_1) has risen 200%." (citation breaks sentence)
   ✗ WRONG: "Nvidia leads in hardware and software. [1](#EXAMPLE_TOOL_CALL_ID_1], [2](#EXAMPLE_TOOL_CALL_ID_2)" (comma between citations)
 IMPORTANT: Citations must appear INLINE within your response text, not separately.
-Example: "The company reported record revenue. [1](#EXAMPLE_TOOL_CALL_ID_1) Analysts predict continued growth. [1](#EXAMPLE_TOOL_CALL_ID_1)"
+Example: "The company reported record revenue. [1](#EXAMPLE_TOOL_CALL_ID_1) Analysts predict continued growth. [2](#EXAMPLE_TOOL_CALL_ID_1)"
 Example with multiple searches: "Initial data shows positive trends. [1](#EXAMPLE_TOOL_CALL_ID_1) Recent updates indicate acceleration. [1](#EXAMPLE_TOOL_CALL_ID_2)"
 
 TASK MANAGEMENT (todoWrite tool):
