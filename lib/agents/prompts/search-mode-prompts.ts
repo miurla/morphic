@@ -90,11 +90,12 @@ Citation Format (MANDATORY):
   - Find the tool call ID in the search response (e.g., "EXAMPLE_TOOL_CALL_ID_1")
   - Use it directly without adding any prefix: [1](#EXAMPLE_TOOL_CALL_ID_1)
   - The format is: [number](#TOOLCALLID) where TOOLCALLID is the exact ID
-- **CRITICAL RULE**: Each unique toolCallId gets ONE number. Never use different numbers with the same toolCallId.
-  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from same search [1](#EXAMPLE_TOOL_CALL_ID_1)."
-  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from different search [2](#EXAMPLE_TOOL_CALL_ID_2)."
-  ✗ WRONG: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B [2](#EXAMPLE_TOOL_CALL_ID_1)." (Same toolCallId cannot have different numbers)
-- Assign numbers sequentially (1, 2, 3...) to each unique toolCallId as they appear in your response
+- **CRITICAL RULE**: The number is the position of the cited result within that search's results. The same toolCallId takes different numbers when you cite different results from that search.
+  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from the same result [1](#EXAMPLE_TOOL_CALL_ID_1)."
+  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from the second result of that search [2](#EXAMPLE_TOOL_CALL_ID_1)."
+  ✓ CORRECT: "Fact A [1](#EXAMPLE_TOOL_CALL_ID_1). Fact B from a different search [1](#EXAMPLE_TOOL_CALL_ID_2)."
+  ✗ WRONG: citing the first result of a search as [2], or the second as [1] (the number must match the result's position)
+- Numbering restarts at 1 for each search, so [1](#EXAMPLE_TOOL_CALL_ID_1) and [1](#EXAMPLE_TOOL_CALL_ID_2) are two different sources
 - **CRITICAL CITATION PLACEMENT RULES**:
   1. Write the COMPLETE sentence first
   2. Add a period at the end of the sentence
