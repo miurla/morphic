@@ -25,6 +25,10 @@ import { compactHistoricalMessages } from './helpers/compact-historical-messages
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { describeStreamError } from './helpers/describe-stream-error'
+import {
+  EMPTY_RESPONSE_STATUS_MESSAGE,
+  isEmptyResponse
+} from './helpers/is-empty-response'
 import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
@@ -84,6 +88,7 @@ export async function createChatStreamResponse(
     // be attached to this trace later
     const parentTraceId = rootSpan?.traceId
     let hasStreamError = false
+    let hasEmptyResponse = false
     let streamError: unknown
 
     const endTracing = async () => {
@@ -92,6 +97,11 @@ export async function createChatStreamResponse(
           rootSpan.update({
             level: 'ERROR',
             statusMessage: describeStreamError(streamError)
+          })
+        } else if (hasEmptyResponse) {
+          rootSpan.update({
+            level: 'ERROR',
+            statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
           })
         }
         rootSpan.end()
@@ -217,6 +227,8 @@ export async function createChatStreamResponse(
           try {
             perfTime('researchAgent.stream completed', llmStart)
             if (isAborted || !responseMessage) return
+
+            hasEmptyResponse = isEmptyResponse(responseMessage)
 
             // Persist stream results to database
             await persistStreamResults(
