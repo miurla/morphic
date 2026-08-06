@@ -57,6 +57,8 @@ const originalEnv = {
   R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
   R2_PUBLIC_URL: process.env.R2_PUBLIC_URL,
   R2_SIGNED_URL_EXPIRES_SECONDS: process.env.R2_SIGNED_URL_EXPIRES_SECONDS,
+  R2_SIGNED_URL_STABILITY_WINDOW_SECONDS:
+    process.env.R2_SIGNED_URL_STABILITY_WINDOW_SECONDS,
   R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
   S3_ENDPOINT: process.env.S3_ENDPOINT
 }
@@ -77,6 +79,7 @@ describe('R2 client', () => {
     process.env.R2_BUCKET_NAME = 'test-bucket'
     process.env.R2_PUBLIC_URL = 'https://uploads.example.com'
     process.env.R2_SIGNED_URL_EXPIRES_SECONDS = '3600'
+    delete process.env.R2_SIGNED_URL_STABILITY_WINDOW_SECONDS
     process.env.S3_ENDPOINT = 'https://r2.example.com'
     delete process.env.R2_ACCOUNT_ID
   })
@@ -157,11 +160,76 @@ describe('R2 client', () => {
     expect(s3Mocks.getSignedUrl).toHaveBeenCalledWith(
       expect.any(Object),
       expect.any(s3Mocks.GetObjectCommand),
-      { expiresIn: 3600 }
+      { expiresIn: 3600, signingDate: expect.any(Date) }
     )
     expect((s3Mocks.getSignedUrl.mock.calls[0][1] as any).input).toEqual({
       Bucket: 'test-bucket',
       Key: 'user-id/file.png'
+    })
+  })
+
+  describe('signing date stability', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+      s3Mocks.getSignedUrl.mockResolvedValue('https://signed.example.com/file')
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    const signingDateOf = (call: number) =>
+      (s3Mocks.getSignedUrl.mock.calls[call][2] as { signingDate?: Date })
+        .signingDate
+
+    it('reuses one signing date for every request inside the same window', async () => {
+      const { getSignedFileUrl } = await importR2Client()
+
+      vi.setSystemTime(new Date('2026-08-05T14:24:33.000Z'))
+      await getSignedFileUrl('user-id/file.png')
+      vi.setSystemTime(new Date('2026-08-05T14:29:09.000Z'))
+      await getSignedFileUrl('user-id/file.png')
+
+      // Same signing date + same key + same expiry is what makes the presigned
+      // URL byte-identical across turns, so the attachment stays cached.
+      expect(signingDateOf(0)).toEqual(new Date('2026-08-05T14:15:00.000Z'))
+      expect(signingDateOf(1)).toEqual(signingDateOf(0))
+    })
+
+    it('advances the signing date once the window rolls over', async () => {
+      const { getSignedFileUrl } = await importR2Client()
+
+      vi.setSystemTime(new Date('2026-08-05T14:29:59.000Z'))
+      await getSignedFileUrl('user-id/file.png')
+      vi.setSystemTime(new Date('2026-08-05T14:30:00.000Z'))
+      await getSignedFileUrl('user-id/file.png')
+
+      expect(signingDateOf(0)).toEqual(new Date('2026-08-05T14:15:00.000Z'))
+      expect(signingDateOf(1)).toEqual(new Date('2026-08-05T14:30:00.000Z'))
+    })
+
+    it('caps the window at half the expiry so a URL keeps a usable lifetime', async () => {
+      process.env.R2_SIGNED_URL_EXPIRES_SECONDS = '60'
+
+      const { getSignedFileUrl } = await importR2Client()
+
+      vi.setSystemTime(new Date('2026-08-05T14:24:59.000Z'))
+      await getSignedFileUrl('user-id/file.png')
+
+      // 30s window, not the configured 900s: the URL signed at :24:30 is still
+      // valid for 30 of its 60 seconds when handed out at :24:59.
+      expect(signingDateOf(0)).toEqual(new Date('2026-08-05T14:24:30.000Z'))
+    })
+
+    it('signs with the current time when the window is disabled', async () => {
+      process.env.R2_SIGNED_URL_STABILITY_WINDOW_SECONDS = '0'
+
+      const { getSignedFileUrl } = await importR2Client()
+
+      vi.setSystemTime(new Date('2026-08-05T14:24:33.000Z'))
+      await getSignedFileUrl('user-id/file.png')
+
+      expect(s3Mocks.getSignedUrl.mock.calls[0][2]).toEqual({ expiresIn: 3600 })
     })
   })
 

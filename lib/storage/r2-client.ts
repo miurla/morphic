@@ -18,6 +18,17 @@ export const R2_SIGNED_URL_EXPIRES_SECONDS =
     ? configuredSignedUrlExpiresSeconds
     : DEFAULT_SIGNED_URL_EXPIRES_SECONDS
 
+const DEFAULT_SIGNED_URL_STABILITY_WINDOW_SECONDS = 15 * 60
+const configuredSignedUrlStabilityWindowSeconds = Number(
+  process.env.R2_SIGNED_URL_STABILITY_WINDOW_SECONDS
+)
+// Set to 0 to go back to signing every request with the current time.
+export const R2_SIGNED_URL_STABILITY_WINDOW_SECONDS =
+  Number.isFinite(configuredSignedUrlStabilityWindowSeconds) &&
+  configuredSignedUrlStabilityWindowSeconds >= 0
+    ? configuredSignedUrlStabilityWindowSeconds
+    : DEFAULT_SIGNED_URL_STABILITY_WINDOW_SECONDS
+
 let _r2Client: S3Client | null = null
 
 type SignFilePartUrlsOptions = {
@@ -90,6 +101,31 @@ function isObjectKeyWithinPrefix(key: string, prefix: string) {
   )
 }
 
+/**
+ * Rounds the signing time down to a fixed window so the same object key signs
+ * to a byte-identical URL for the whole window.
+ *
+ * Attachments are replayed on every turn of a conversation, and a URL whose
+ * signature changes per request changes the prompt prefix with it, so the
+ * provider re-reads every replayed attachment instead of serving it from the
+ * prompt cache.
+ *
+ * The window is capped at half the expiry so a URL handed out at the end of a
+ * window still keeps at least half its configured lifetime.
+ */
+function getStableSigningDate(expiresIn: number): Date | undefined {
+  const windowSeconds = Math.min(
+    R2_SIGNED_URL_STABILITY_WINDOW_SECONDS,
+    Math.floor(expiresIn / 2)
+  )
+  if (windowSeconds < 1) {
+    return undefined
+  }
+
+  const windowMs = windowSeconds * 1000
+  return new Date(Math.floor(Date.now() / windowMs) * windowMs)
+}
+
 export async function getSignedFileUrl(
   key: string,
   expiresIn = R2_SIGNED_URL_EXPIRES_SECONDS
@@ -99,13 +135,15 @@ export async function getSignedFileUrl(
     throw new Error('Cannot sign an empty object key')
   }
 
+  const signingDate = getStableSigningDate(expiresIn)
+
   return getSignedUrl(
     getR2Client(),
     new GetObjectCommand({
       Bucket: R2_BUCKET_NAME,
       Key: normalizedKey
     }),
-    { expiresIn }
+    signingDate ? { expiresIn, signingDate } : { expiresIn }
   )
 }
 

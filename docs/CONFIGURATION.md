@@ -278,6 +278,10 @@ R2_ACCOUNT_ID=[YOUR_ACCOUNT_ID]  # For Cloudflare R2
 R2_BUCKET_NAME=[YOUR_BUCKET_NAME]
 # Optional: signed GET URL lifetime in seconds (default: 3600)
 R2_SIGNED_URL_EXPIRES_SECONDS=3600
+# Optional: reuse one signature per window so a file signs to the same URL
+# across requests, which keeps replayed attachments in the prompt cache.
+# Capped at half the lifetime above; set to 0 to sign every request (default: 900)
+R2_SIGNED_URL_STABILITY_WINDOW_SECONDS=900
 ```
 
 If storage variables are not configured, `/api/upload` returns `400` and uploads are disabled.
