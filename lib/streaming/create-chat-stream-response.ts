@@ -21,6 +21,7 @@ import { getTextFromParts } from '../utils/message-utils'
 import { perfLog, perfTime } from '../utils/perf-logging'
 import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
+import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
@@ -143,7 +144,9 @@ export async function createChatStreamResponse(
 
       const messagesWithNonces = assignDataPartNonces(messagesToModel)
       const messagesWithoutSpec = stripSpecFromMessages(messagesWithNonces)
-      const messagesToConvert = compactHistoricalMessages(messagesWithoutSpec)
+      const messagesToConvert = capHistoricalAttachments(
+        compactHistoricalMessages(messagesWithoutSpec)
+      )
 
       // Convert to model messages and apply context window management
       let modelMessages = await convertToModelMessages(messagesToConvert, {
