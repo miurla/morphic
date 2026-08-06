@@ -127,16 +127,30 @@ function summarizeResponseBody(responseBody: unknown) {
 }
 
 export function logAPICallErrorDiagnostics(error: unknown): void {
-  try {
-    if (!APICallError.isInstance(error)) return
+  const diagnostics = buildAPICallErrorDiagnostics(error)
+  if (!diagnostics) return
 
-    const diagnostics = JSON.stringify({
+  try {
+    console.error(
+      'Provider API call diagnostics:',
+      truncate(JSON.stringify(diagnostics))
+    )
+  } catch {}
+}
+
+export function buildAPICallErrorDiagnostics(
+  error: unknown
+): Record<string, unknown> | null {
+  try {
+    if (!APICallError.isInstance(error)) return null
+
+    return {
       statusCode: error.statusCode,
       url: error.url,
       requestBody: summarizeRequestBody(error.requestBodyValues),
       responseBody: summarizeResponseBody(error.responseBody)
-    })
-
-    console.error('Provider API call diagnostics:', truncate(diagnostics))
-  } catch {}
+    }
+  } catch {
+    return null
+  }
 }
