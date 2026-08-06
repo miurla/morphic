@@ -221,6 +221,19 @@ describe('R2 client', () => {
       expect(signingDateOf(0)).toEqual(new Date('2026-08-05T14:24:30.000Z'))
     })
 
+    it('keeps the default when the window is defined but blank', async () => {
+      // Number('') is 0, which would silently turn the window off while looking
+      // configured. Templated environments define variables as '' routinely.
+      process.env.R2_SIGNED_URL_STABILITY_WINDOW_SECONDS = '   '
+
+      const { getSignedFileUrl } = await importR2Client()
+
+      vi.setSystemTime(new Date('2026-08-05T14:24:33.000Z'))
+      await getSignedFileUrl('user-id/file.png')
+
+      expect(signingDateOf(0)).toEqual(new Date('2026-08-05T14:15:00.000Z'))
+    })
+
     it('signs with the current time when the window is disabled', async () => {
       process.env.R2_SIGNED_URL_STABILITY_WINDOW_SECONDS = '0'
 
@@ -303,5 +316,29 @@ describe('R2 client', () => {
         url: 'https://signed.example.com/file'
       }
     ])
+  })
+})
+
+describe('parseSignedUrlStabilityWindowSeconds', () => {
+  it('falls back to the default for anything unusable', async () => {
+    const { parseSignedUrlStabilityWindowSeconds } = await importR2Client()
+
+    for (const raw of [undefined, '', '   ', 'fifteen', '-1', 'NaN']) {
+      expect(parseSignedUrlStabilityWindowSeconds(raw)).toBe(900)
+    }
+  })
+
+  it('turns the window off only on an explicit zero', async () => {
+    const { parseSignedUrlStabilityWindowSeconds } = await importR2Client()
+
+    expect(parseSignedUrlStabilityWindowSeconds('0')).toBe(0)
+    expect(parseSignedUrlStabilityWindowSeconds(' 0 ')).toBe(0)
+  })
+
+  it('keeps a positive value from rounding down into the off switch', async () => {
+    const { parseSignedUrlStabilityWindowSeconds } = await importR2Client()
+
+    expect(parseSignedUrlStabilityWindowSeconds('0.5')).toBe(1)
+    expect(parseSignedUrlStabilityWindowSeconds('300.9')).toBe(300)
   })
 })

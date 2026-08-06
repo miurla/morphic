@@ -19,15 +19,32 @@ export const R2_SIGNED_URL_EXPIRES_SECONDS =
     : DEFAULT_SIGNED_URL_EXPIRES_SECONDS
 
 const DEFAULT_SIGNED_URL_STABILITY_WINDOW_SECONDS = 15 * 60
-const configuredSignedUrlStabilityWindowSeconds = Number(
-  process.env.R2_SIGNED_URL_STABILITY_WINDOW_SECONDS
-)
-// Set to 0 to go back to signing every request with the current time.
+
+/**
+ * Only an explicit `0` goes back to signing every request with the current time.
+ *
+ * Templated environments routinely define a variable as an empty string, and
+ * `Number('')` is `0` — which would silently turn the window off while looking
+ * configured. Anything unusable falls back to the default instead.
+ */
+export function parseSignedUrlStabilityWindowSeconds(
+  raw: string | undefined
+): number {
+  const value = raw?.trim()
+  if (!value) return DEFAULT_SIGNED_URL_STABILITY_WINDOW_SECONDS
+
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return DEFAULT_SIGNED_URL_STABILITY_WINDOW_SECONDS
+  }
+
+  return parsed === 0 ? 0 : Math.max(1, Math.floor(parsed))
+}
+
 export const R2_SIGNED_URL_STABILITY_WINDOW_SECONDS =
-  Number.isFinite(configuredSignedUrlStabilityWindowSeconds) &&
-  configuredSignedUrlStabilityWindowSeconds >= 0
-    ? configuredSignedUrlStabilityWindowSeconds
-    : DEFAULT_SIGNED_URL_STABILITY_WINDOW_SECONDS
+  parseSignedUrlStabilityWindowSeconds(
+    process.env.R2_SIGNED_URL_STABILITY_WINDOW_SECONDS
+  )
 
 let _r2Client: S3Client | null = null
 
