@@ -17,6 +17,7 @@ import {
 } from '../utils/context-window'
 import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
+import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
@@ -80,7 +81,9 @@ export async function createEphemeralChatStreamResponse(
     try {
       const messagesWithNonces = assignDataPartNonces(messages)
       const messagesWithoutSpec = stripSpecFromMessages(messagesWithNonces)
-      const messagesToConvert = compactHistoricalMessages(messagesWithoutSpec)
+      const messagesToConvert = capHistoricalAttachments(
+        compactHistoricalMessages(messagesWithoutSpec)
+      )
 
       let modelMessages = await convertToModelMessages(messagesToConvert, {
         convertDataPart

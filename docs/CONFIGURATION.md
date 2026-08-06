@@ -286,6 +286,21 @@ R2_SIGNED_URL_STABILITY_WINDOW_SECONDS=900
 
 If storage variables are not configured, `/api/upload` returns `400` and uploads are disabled.
 
+Attachments are re-sent to the model on every turn, and an image costs thousands of
+input tokens, so long conversations spend most of their context re-reading pictures
+they already answered about. Older attachments are replaced with a placeholder naming
+the file once a conversation collects more than the limit below. Uploads themselves are
+not restricted: files stay stored and stay visible in the conversation, and the model is
+told to ask for a re-attach if it needs one again.
+
+```bash
+# Optional: attachments replayed from earlier turns, excluding the newest message.
+# Dropped in whole blocks so the prompt prefix stays cacheable, so the effective
+# number replayed is between the limit and twice it. Set to 0 to replay every
+# attachment (default: 10)
+HISTORY_ATTACHMENT_REPLAY_LIMIT=10
+```
+
 ### Content Extraction
 
 Use Jina for enhanced content extraction:
