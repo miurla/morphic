@@ -1,14 +1,28 @@
 import type { UIMessage } from 'ai'
 
 const DEFAULT_REPLAY_LIMIT = 10
-const configuredReplayLimit = Number(
+
+/**
+ * Only an explicit `0` disables the cap.
+ *
+ * Templated environments routinely define a variable as an empty string, and
+ * `Number('')` is `0` — which would silently replay every attachment while
+ * looking configured. Anything unusable falls back to the default instead, and
+ * a positive value always keeps at least one attachment.
+ */
+export function parseReplayLimit(raw: string | undefined): number {
+  const value = raw?.trim()
+  if (!value) return DEFAULT_REPLAY_LIMIT
+
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 0) return DEFAULT_REPLAY_LIMIT
+
+  return parsed === 0 ? 0 : Math.max(1, Math.floor(parsed))
+}
+
+export const HISTORY_ATTACHMENT_REPLAY_LIMIT = parseReplayLimit(
   process.env.HISTORY_ATTACHMENT_REPLAY_LIMIT
 )
-// Set to 0 to replay every attachment, as before this helper existed.
-export const HISTORY_ATTACHMENT_REPLAY_LIMIT =
-  Number.isFinite(configuredReplayLimit) && configuredReplayLimit >= 0
-    ? Math.floor(configuredReplayLimit)
-    : DEFAULT_REPLAY_LIMIT
 
 const MAX_FILENAME_CHARS = 80
 

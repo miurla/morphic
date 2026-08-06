@@ -1,7 +1,10 @@
 import type { UIMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 
-import { capHistoricalAttachments } from '../cap-historical-attachments'
+import {
+  capHistoricalAttachments,
+  parseReplayLimit
+} from '../cap-historical-attachments'
 
 const LIMIT = 10
 
@@ -207,5 +210,27 @@ describe('capHistoricalAttachments', () => {
 
     expect(placeholders(capped)).toHaveLength(LIMIT)
     expect(filenamesReaching(capped)).toHaveLength(11)
+  })
+})
+
+describe('parseReplayLimit', () => {
+  it('falls back to the default for anything unusable', () => {
+    // An empty string is the one that matters: templated environments define
+    // variables as '' all the time, and Number('') is 0, which would look like
+    // a deliberate "replay everything".
+    for (const raw of [undefined, '', '   ', 'ten', '-1', 'NaN', 'Infinity']) {
+      expect(parseReplayLimit(raw)).toBe(10)
+    }
+  })
+
+  it('disables the cap only on an explicit zero', () => {
+    expect(parseReplayLimit('0')).toBe(0)
+    expect(parseReplayLimit(' 0 ')).toBe(0)
+  })
+
+  it('keeps at least one attachment for any positive value', () => {
+    expect(parseReplayLimit('0.5')).toBe(1)
+    expect(parseReplayLimit('4')).toBe(4)
+    expect(parseReplayLimit('12.9')).toBe(12)
   })
 })
