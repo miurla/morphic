@@ -8,6 +8,10 @@ import {
   createPublicErrorResponse,
   serializePublicError
 } from '@/lib/errors/public-error'
+import {
+  isToolFailureError,
+  serializeToolFailure
+} from '@/lib/errors/tool-error'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import {
@@ -154,6 +158,11 @@ export async function createEphemeralChatStreamResponse(
           await endTracing()
         },
         onError: (error: unknown) => {
+          if (isToolFailureError(error)) {
+            console.error('Ephemeral tool failure:', error)
+            return serializeToolFailure(error)
+          }
+
           logAPICallErrorDiagnostics(error)
           console.error('Ephemeral stream response error:', error)
           return serializePublicError(error)

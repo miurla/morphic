@@ -8,6 +8,10 @@ import {
   createPublicErrorResponse,
   serializePublicError
 } from '@/lib/errors/public-error'
+import {
+  isToolFailureError,
+  serializeToolFailure
+} from '@/lib/errors/tool-error'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import { loadChat } from '../actions/chat'
@@ -256,6 +260,11 @@ export async function createChatStreamResponse(
           }
         },
         onError: (error: unknown) => {
+          if (isToolFailureError(error)) {
+            console.error('Tool failure:', error)
+            return serializeToolFailure(error)
+          }
+
           logAPICallErrorDiagnostics(error)
           console.error('Stream response error:', error)
           return serializePublicError(error)

@@ -1,5 +1,6 @@
 import { tool, UIToolInvocation } from 'ai'
 
+import { ToolFailureError } from '@/lib/errors/tool-error'
 import { fetchSchema } from '@/lib/schema/fetch'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 import { logToolPayload } from '@/lib/utils/usage-logging'
@@ -171,17 +172,23 @@ export const fetchTool = tool({
 
     let results: SearchResultsType
 
-    if (type === 'regular') {
-      // Use regular fetch for direct HTML retrieval
-      results = await fetchRegularData(url)
-    } else {
-      // Use API-based extraction (Jina or Tavily)
-      const useJina = process.env.JINA_API_KEY
-      if (useJina) {
-        results = await fetchJinaReaderData(url)
+    // Only the retrieval is wrapped: a yield rejects when the consumer stops
+    // reading, and an aborted stream is not a failure of the page.
+    try {
+      if (type === 'regular') {
+        // Use regular fetch for direct HTML retrieval
+        results = await fetchRegularData(url)
       } else {
-        results = await fetchTavilyExtractData(url)
+        // Use API-based extraction (Jina or Tavily)
+        const useJina = process.env.JINA_API_KEY
+        if (useJina) {
+          results = await fetchJinaReaderData(url)
+        } else {
+          results = await fetchTavilyExtractData(url)
+        }
       }
+    } catch (error) {
+      throw new ToolFailureError('fetch', error)
     }
 
     logToolPayload('fetch', url, { results: results.results })

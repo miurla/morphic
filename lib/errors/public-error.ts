@@ -12,6 +12,7 @@ export type PublicErrorCode =
   | 'provider_rate_limit'
   | 'provider_unavailable'
   | 'rate_limit'
+  | 'tool_failed'
   | 'unknown'
 
 export type PublicErrorPayload = {
@@ -54,6 +55,7 @@ const PUBLIC_ERROR_CODES: ReadonlySet<string> = new Set([
   'provider_rate_limit',
   'provider_unavailable',
   'rate_limit',
+  'tool_failed',
   'unknown'
 ])
 
@@ -376,6 +378,7 @@ function isIntentionalPublicPayload(
   code: PublicErrorCode
 ): boolean {
   return (
+    code === 'tool_failed' ||
     Boolean(value.authRequired) ||
     getNumber(value.resetAt) !== undefined ||
     getNumber(value.remaining) !== undefined ||

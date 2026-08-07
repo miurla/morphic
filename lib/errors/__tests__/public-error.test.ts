@@ -6,6 +6,7 @@ import {
   serializePublicError,
   toPublicErrorPayload
 } from '@/lib/errors/public-error'
+import { serializeToolFailure, ToolFailureError } from '@/lib/errors/tool-error'
 
 describe('public error mapping', () => {
   it('hides provider billing errors', () => {
@@ -169,6 +170,29 @@ describe('public error mapping', () => {
       'We could not generate a response. Please try again.'
     )
     expect(serialized).not.toContain('Redis timeout')
+  })
+
+  it('preserves serialized tool failure copy when parsing it again', () => {
+    const serialized = serializeToolFailure(
+      new ToolFailureError('fetch', 'HTTP 403: Forbidden')
+    )
+    const payload = toPublicErrorPayload(serialized)
+
+    expect(payload.code).toBe('tool_failed')
+    expect(payload.type).toBe('general')
+    expect(payload.error).toBe('The page refused the request.')
+  })
+
+  it('keeps request-level 403 failures on the permission path', () => {
+    const error = Object.assign(new Error('Request failed'), {
+      statusCode: 403
+    })
+    const payload = toPublicErrorPayload(error)
+
+    expect(payload.code).toBe('forbidden')
+    expect(payload.error).toBe(
+      'You do not have permission to access this resource.'
+    )
   })
 
   it('creates JSON error responses without raw messages', async () => {
