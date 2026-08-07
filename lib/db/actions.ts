@@ -1,6 +1,17 @@
 'use server'
 
-import { and, asc, desc, eq, gt, ilike, inArray, lt, or } from 'drizzle-orm'
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  ilike,
+  inArray,
+  lt,
+  or,
+  sql
+} from 'drizzle-orm'
 
 import type { UIMessage } from '@/lib/types/ai'
 import type { PersistableUIMessage } from '@/lib/types/message-persistence'
@@ -518,45 +529,59 @@ export async function deleteUserNotes(
   }
 }
 
+const CHAT_FILE_CANDIDATE_LIMIT = 5
+
+function escapeLikePattern(value: string) {
+  return value.replace(/[\\%_]/g, char => `\\${char}`)
+}
+
 /**
- * The file already uploaded to this chat under the same name, type and byte
- * size, if there is one.
+ * Files already stored under this chat's object prefix that could be the one
+ * being uploaded, newest first.
  *
- * Scoped to a single chat on purpose: object keys live under a per-chat prefix
- * and a chat deletion wipes that prefix, so reusing a key across chats would
- * let one chat's deletion break another's attachment.
+ * Candidates only: name, media type and size are metadata, so the caller has to
+ * confirm the bytes. More than one can match, and returning just the newest
+ * would keep re-uploading two same-sized versions of a file against each other.
+ *
+ * Matched on the object key prefix rather than on `chat_id`, because the column
+ * is not reliable for this. A file attached to a brand-new chat is uploaded
+ * before the chat row exists, and `createLibraryFile` stores it with a null
+ * `chat_id`; deleting a chat nulls it too. The key always carries the chat it
+ * was uploaded under.
+ *
+ * Staying inside one chat's prefix is the point: a chat deletion wipes that
+ * prefix, so reusing a key across chats would let one chat's deletion break
+ * another's attachment.
  */
-export async function findChatFileByContent({
+export async function findChatFileCandidates({
   userId,
-  chatId,
+  chatKeyPrefix,
   filename,
   mediaType,
   size
 }: {
   userId: string
-  chatId: string
+  chatKeyPrefix: string
   filename: string
   mediaType: string
   size: number
-}): Promise<LibraryFile | null> {
-  return withRLS(userId, async tx => {
-    const [existing] = await tx
+}): Promise<LibraryFile[]> {
+  return withRLS(userId, async tx =>
+    tx
       .select()
       .from(libraryFiles)
       .where(
         and(
           eq(libraryFiles.userId, userId),
-          eq(libraryFiles.chatId, chatId),
           eq(libraryFiles.filename, filename),
           eq(libraryFiles.mediaType, mediaType),
-          eq(libraryFiles.size, size)
+          eq(libraryFiles.size, size),
+          sql`${libraryFiles.objectKey} LIKE ${`${escapeLikePattern(chatKeyPrefix)}%`} ESCAPE '\\'`
         )
       )
       .orderBy(desc(libraryFiles.createdAt))
-      .limit(1)
-
-    return existing ?? null
-  })
+      .limit(CHAT_FILE_CANDIDATE_LIMIT)
+  )
 }
 
 export async function createLibraryFile(

@@ -9,7 +9,7 @@ vi.mock('@/lib/analytics/dispatch', () => ({
 }))
 
 vi.mock('@/lib/db/actions', () => ({
-  findChatFileByContent: vi.fn(),
+  findChatFileCandidates: vi.fn(),
   createLibraryFile: vi.fn()
 }))
 
@@ -21,6 +21,8 @@ vi.mock('@/lib/storage/r2-client', () => ({
     Promise.resolve(`https://uploads.example.com/${key}?sig=abc`)
   ),
   isObjectStorageConfigured: vi.fn(() => true),
+  getChatFileObjectKeyPrefix: (userId: string, chatId: string) =>
+    `${userId}/chats/${chatId}/`,
   getObjectContentMd5: vi.fn(() => Promise.resolve<string | null>(null)),
   R2_BUCKET_NAME: 'test-bucket'
 }))
@@ -83,9 +85,9 @@ describe('POST /api/upload', () => {
   })
 
   it('reuses the stored copy when the same file is uploaded again', async () => {
-    vi.mocked(dbActions.findChatFileByContent).mockResolvedValue(
-      EXISTING as any
-    )
+    vi.mocked(dbActions.findChatFileCandidates).mockResolvedValue([
+      EXISTING
+    ] as any)
 
     const { file } = await (await POST(uploadRequest())).json()
 
@@ -97,13 +99,13 @@ describe('POST /api/upload', () => {
   })
 
   it('narrows the candidate by name, type and size', async () => {
-    vi.mocked(dbActions.findChatFileByContent).mockResolvedValue(null)
+    vi.mocked(dbActions.findChatFileCandidates).mockResolvedValue([])
 
     await POST(uploadRequest(9999))
 
-    expect(dbActions.findChatFileByContent).toHaveBeenCalledWith({
+    expect(dbActions.findChatFileCandidates).toHaveBeenCalledWith({
       userId: 'user-1',
-      chatId: 'chat-1',
+      chatKeyPrefix: 'user-1/chats/chat-1/',
       filename: 'report.pdf',
       mediaType: 'application/pdf',
       size: 9999
@@ -112,7 +114,7 @@ describe('POST /api/upload', () => {
   })
 
   it('uploads when nothing matches', async () => {
-    vi.mocked(dbActions.findChatFileByContent).mockResolvedValue(null)
+    vi.mocked(dbActions.findChatFileCandidates).mockResolvedValue([])
 
     const { file } = await (await POST(uploadRequest())).json()
 
@@ -123,9 +125,9 @@ describe('POST /api/upload', () => {
   it('uploads when the candidate holds different bytes', async () => {
     // Same name, same type, same size, different content: the digest is the
     // only thing standing between the user and a silently substituted file.
-    vi.mocked(dbActions.findChatFileByContent).mockResolvedValue(
-      EXISTING as any
-    )
+    vi.mocked(dbActions.findChatFileCandidates).mockResolvedValue([
+      EXISTING
+    ] as any)
     vi.mocked(getObjectContentMd5).mockResolvedValue(
       createHash('md5').update('something else').digest('hex')
     )
@@ -137,9 +139,9 @@ describe('POST /api/upload', () => {
   })
 
   it('uploads when the stored object is gone or has no usable digest', async () => {
-    vi.mocked(dbActions.findChatFileByContent).mockResolvedValue(
-      EXISTING as any
-    )
+    vi.mocked(dbActions.findChatFileCandidates).mockResolvedValue([
+      EXISTING
+    ] as any)
     vi.mocked(getObjectContentMd5).mockResolvedValue(null)
 
     const { file } = await (await POST(uploadRequest())).json()
@@ -148,8 +150,29 @@ describe('POST /api/upload', () => {
     expect(send).toHaveBeenCalledOnce()
   })
 
+  it('checks every candidate, not just the newest', async () => {
+    // Two same-sized versions of one file: matching only the newest would mint
+    // a new object every time the user alternates between them.
+    const older = { ...EXISTING, id: 'file-0', objectKey: 'older-key' }
+    const newer = { ...EXISTING, id: 'file-9', objectKey: 'newer-key' }
+    vi.mocked(dbActions.findChatFileCandidates).mockResolvedValue([
+      newer,
+      older
+    ] as any)
+    vi.mocked(getObjectContentMd5).mockImplementation(async key =>
+      key === older.objectKey
+        ? md5OfUpload()
+        : createHash('md5').update('another version').digest('hex')
+    )
+
+    const { file } = await (await POST(uploadRequest())).json()
+
+    expect(file.key).toBe(older.objectKey)
+    expect(send).not.toHaveBeenCalled()
+  })
+
   it('uploads when the lookup fails', async () => {
-    vi.mocked(dbActions.findChatFileByContent).mockRejectedValue(
+    vi.mocked(dbActions.findChatFileCandidates).mockRejectedValue(
       new Error('db down')
     )
 
@@ -164,7 +187,7 @@ describe('POST /api/upload', () => {
 
     await POST(uploadRequest())
 
-    expect(dbActions.findChatFileByContent).not.toHaveBeenCalled()
+    expect(dbActions.findChatFileCandidates).not.toHaveBeenCalled()
     expect(send).toHaveBeenCalledOnce()
   })
 })

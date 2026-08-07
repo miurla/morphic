@@ -7,6 +7,7 @@ import { capture } from '@/lib/analytics/dispatch'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
 import {
+  getChatFileObjectKeyPrefix,
   getObjectContentMd5,
   getR2Client,
   getSignedFileUrl,
@@ -136,12 +137,14 @@ export async function POST(req: NextRequest) {
  * everywhere downstream, so the model would be handed both copies on every
  * later turn.
  *
- * Name, media type and size only narrow the search to one stored candidate.
+ * Name, media type and size only narrow the search to a few stored candidates.
  * The decision itself is a digest comparison: handing back a different file
  * under the same name would be a silent substitution, which is a far worse
- * outcome than the duplicate this avoids.
+ * outcome than the duplicate this avoids. Every candidate is compared, or two
+ * same-sized versions of one file would push each other out of the search and
+ * mint a new object on every upload.
  *
- * Returns null whenever the match cannot be confirmed, and the caller uploads.
+ * Returns null whenever no match can be confirmed, and the caller uploads.
  */
 async function reuseExistingChatFile(
   file: File,
@@ -150,35 +153,36 @@ async function reuseExistingChatFile(
   chatId: string
 ) {
   try {
-    const existing = await dbActions.findChatFileByContent({
+    const candidates = await dbActions.findChatFileCandidates({
       userId,
-      chatId,
+      chatKeyPrefix: getChatFileObjectKeyPrefix(userId, chatId),
       filename: file.name,
       mediaType: file.type,
       size: file.size
     })
-    if (!existing) return null
+    if (candidates.length === 0) return null
 
-    const storedMd5 = await getObjectContentMd5(existing.objectKey)
-    if (
-      !storedMd5 ||
-      storedMd5 !== createHash('md5').update(buffer).digest('hex')
-    ) {
-      return null
+    const uploadedMd5 = createHash('md5').update(buffer).digest('hex')
+
+    for (const candidate of candidates) {
+      const storedMd5 = await getObjectContentMd5(candidate.objectKey)
+      if (!storedMd5 || storedMd5 !== uploadedMd5) continue
+
+      const url = await getSignedFileUrl(candidate.objectKey)
+
+      return {
+        type: 'file',
+        filename: candidate.filename,
+        key: candidate.objectKey,
+        url,
+        mediaType: candidate.mediaType,
+        id: candidate.id,
+        size: file.size,
+        libraryFile: { ...candidate, key: candidate.objectKey, url }
+      }
     }
 
-    const url = await getSignedFileUrl(existing.objectKey)
-
-    return {
-      type: 'file',
-      filename: existing.filename,
-      key: existing.objectKey,
-      url,
-      mediaType: existing.mediaType,
-      id: existing.id,
-      size: file.size,
-      libraryFile: { ...existing, key: existing.objectKey, url }
-    }
+    return null
   } catch (error) {
     console.error('Duplicate upload lookup failed:', error)
     return null
@@ -196,7 +200,7 @@ async function uploadFileToR2(
   chatId: string
 ) {
   const sanitizedFileName = sanitizeFilename(file.name)
-  const filePath = `${userId}/chats/${chatId}/${Date.now()}-${sanitizedFileName}`
+  const filePath = `${getChatFileObjectKeyPrefix(userId, chatId)}${Date.now()}-${sanitizedFileName}`
 
   try {
     const r2Client = getR2Client()
