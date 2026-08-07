@@ -1,5 +1,7 @@
 import type { UIMessage } from 'ai'
 
+import { describeAttachment, isFilePart } from './attachment-parts'
+
 const DEFAULT_REPLAY_LIMIT = 10
 
 /**
@@ -24,24 +26,6 @@ export const HISTORY_ATTACHMENT_REPLAY_LIMIT = parseReplayLimit(
   process.env.HISTORY_ATTACHMENT_REPLAY_LIMIT
 )
 
-const MAX_FILENAME_CHARS = 80
-
-function describeAttachment(part: { mediaType?: string; filename?: string }) {
-  // The filename is user-supplied, so neutralize it the way source excerpts are
-  // neutralized: no markup, no newlines, bounded length.
-  const filename = (part.filename ?? '')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, MAX_FILENAME_CHARS)
-  const mediaType = (part.mediaType ?? 'file').replace(/[^\w.+/-]/g, '')
-
-  return filename
-    ? `"${filename}" (${mediaType})`
-    : `an earlier ${mediaType} attachment`
-}
-
 /**
  * Number of leading attachments to drop, quantized to whole blocks of `limit`.
  *
@@ -58,10 +42,6 @@ function describeAttachment(part: { mediaType?: string; filename?: string }) {
 function getDroppedCount(total: number, limit: number): number {
   if (total <= limit) return 0
   return Math.floor((total - limit) / limit) * limit
-}
-
-function isFilePart(part: UIMessage['parts'][number]) {
-  return part.type === 'file'
 }
 
 /**

@@ -25,6 +25,7 @@ import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
+import { dedupeAttachments } from './helpers/dedupe-attachments'
 import { describeStreamError } from './helpers/describe-stream-error'
 import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
@@ -144,8 +145,8 @@ export async function createChatStreamResponse(
 
       const messagesWithNonces = assignDataPartNonces(messagesToModel)
       const messagesWithoutSpec = stripSpecFromMessages(messagesWithNonces)
-      const messagesToConvert = capHistoricalAttachments(
-        compactHistoricalMessages(messagesWithoutSpec)
+      const messagesToConvert = dedupeAttachments(
+        capHistoricalAttachments(compactHistoricalMessages(messagesWithoutSpec))
       )
 
       // Convert to model messages and apply context window management
