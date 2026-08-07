@@ -1,6 +1,7 @@
 import {
   DeleteObjectsCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
   S3Client
 } from '@aws-sdk/client-s3'
@@ -162,6 +163,34 @@ export async function getSignedFileUrl(
     }),
     signingDate ? { expiresIn, signingDate } : { expiresIn }
   )
+}
+
+/**
+ * MD5 of a stored object's bytes, or null when it cannot be established.
+ *
+ * S3 and R2 set the ETag of a single-part upload to the MD5 of the body, which
+ * is the only content digest available here without re-downloading the object.
+ * Everything this app stores is written by one `PutObject` under a 5MB cap, so
+ * the ETag is that digest; a multipart ETag carries a `-<parts>` suffix and a
+ * server-side-encrypted one is opaque, and both answer null.
+ *
+ * Null also covers a missing object and a failed request: stored metadata can
+ * outlive the object it points at, and callers treat null as "cannot reuse".
+ */
+export async function getObjectContentMd5(key: string): Promise<string | null> {
+  const normalizedKey = normalizeObjectKey(key)
+  if (!normalizedKey) return null
+
+  try {
+    const head = await getR2Client().send(
+      new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key: normalizedKey })
+    )
+    const etag = head.ETag?.replace(/"/g, '').toLowerCase() ?? ''
+
+    return /^[0-9a-f]{32}$/.test(etag) ? etag : null
+  } catch {
+    return null
+  }
 }
 
 export async function signFilePartUrls(

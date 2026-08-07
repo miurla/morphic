@@ -21,6 +21,7 @@ import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
+import { dedupeAttachments } from './helpers/dedupe-attachments'
 import { describeStreamError } from './helpers/describe-stream-error'
 import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
@@ -86,8 +87,8 @@ export async function createEphemeralChatStreamResponse(
     try {
       const messagesWithNonces = assignDataPartNonces(messages)
       const messagesWithoutSpec = stripSpecFromMessages(messagesWithNonces)
-      const messagesToConvert = capHistoricalAttachments(
-        compactHistoricalMessages(messagesWithoutSpec)
+      const messagesToConvert = dedupeAttachments(
+        capHistoricalAttachments(compactHistoricalMessages(messagesWithoutSpec))
       )
 
       let modelMessages = await convertToModelMessages(messagesToConvert, {

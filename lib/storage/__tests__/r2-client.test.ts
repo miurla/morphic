@@ -30,9 +30,18 @@ const s3Mocks = vi.hoisted(() => {
     }
   }
 
+  class HeadObjectCommand {
+    input: unknown
+
+    constructor(input: unknown) {
+      this.input = input
+    }
+  }
+
   return {
     DeleteObjectsCommand,
     GetObjectCommand,
+    HeadObjectCommand,
     ListObjectsV2Command,
     S3Client,
     getSignedUrl: vi.fn(),
@@ -43,6 +52,7 @@ const s3Mocks = vi.hoisted(() => {
 vi.mock('@aws-sdk/client-s3', () => ({
   DeleteObjectsCommand: s3Mocks.DeleteObjectsCommand,
   GetObjectCommand: s3Mocks.GetObjectCommand,
+  HeadObjectCommand: s3Mocks.HeadObjectCommand,
   ListObjectsV2Command: s3Mocks.ListObjectsV2Command,
   S3Client: s3Mocks.S3Client
 }))
@@ -165,6 +175,43 @@ describe('R2 client', () => {
     expect((s3Mocks.getSignedUrl.mock.calls[0][1] as any).input).toEqual({
       Bucket: 'test-bucket',
       Key: 'user-id/file.png'
+    })
+  })
+
+  describe('getObjectContentMd5', () => {
+    it('reads the digest off a single-part ETag', async () => {
+      const md5 = 'd41d8cd98f00b204e9800998ecf8427e'
+      s3Mocks.send.mockResolvedValueOnce({ ETag: `"${md5}"` })
+
+      const { getObjectContentMd5 } = await importR2Client()
+
+      await expect(getObjectContentMd5('user-id/file.pdf')).resolves.toBe(md5)
+    })
+
+    it('refuses an ETag that is not a content digest', async () => {
+      // A multipart or server-side-encrypted ETag is not the body's MD5, and
+      // treating it as one would compare two unrelated strings.
+      for (const etag of [
+        '"d41d8cd98f00b204e9800998ecf8427e-3"',
+        '"not-a-digest"',
+        undefined
+      ]) {
+        s3Mocks.send.mockResolvedValueOnce({ ETag: etag })
+
+        const { getObjectContentMd5 } = await importR2Client()
+
+        await expect(
+          getObjectContentMd5('user-id/file.pdf')
+        ).resolves.toBeNull()
+      }
+    })
+
+    it('answers null for a missing object', async () => {
+      s3Mocks.send.mockRejectedValueOnce(new Error('NotFound'))
+
+      const { getObjectContentMd5 } = await importR2Client()
+
+      await expect(getObjectContentMd5('user-id/gone.pdf')).resolves.toBeNull()
     })
   })
 
