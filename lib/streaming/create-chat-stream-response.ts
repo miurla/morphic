@@ -30,7 +30,10 @@ import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
   isEmptyResponse
 } from './helpers/is-empty-response'
-import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
+import {
+  buildAPICallErrorDiagnostics,
+  logAPICallErrorDiagnostics
+} from './helpers/log-api-call-error'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
@@ -95,9 +98,11 @@ export async function createChatStreamResponse(
     const endTracing = async () => {
       if (rootSpan) {
         if (hasStreamError) {
+          const apiCallDiagnostics = buildAPICallErrorDiagnostics(streamError)
           rootSpan.update({
             level: 'ERROR',
-            statusMessage: describeStreamError(streamError)
+            statusMessage: describeStreamError(streamError),
+            ...(apiCallDiagnostics && { metadata: { apiCallDiagnostics } })
           })
         } else if (hasEmptyResponse) {
           rootSpan.update({

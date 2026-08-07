@@ -26,7 +26,10 @@ import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
   isEmptyResponse
 } from './helpers/is-empty-response'
-import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
+import {
+  buildAPICallErrorDiagnostics,
+  logAPICallErrorDiagnostics
+} from './helpers/log-api-call-error'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import { BaseStreamConfig } from './types'
 
@@ -63,9 +66,11 @@ export async function createEphemeralChatStreamResponse(
     const endTracing = async () => {
       if (rootSpan) {
         if (hasStreamError) {
+          const apiCallDiagnostics = buildAPICallErrorDiagnostics(streamError)
           rootSpan.update({
             level: 'ERROR',
-            statusMessage: describeStreamError(streamError)
+            statusMessage: describeStreamError(streamError),
+            ...(apiCallDiagnostics && { metadata: { apiCallDiagnostics } })
           })
         } else if (hasEmptyResponse) {
           rootSpan.update({

@@ -1,7 +1,10 @@
 import { APICallError } from 'ai'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { logAPICallErrorDiagnostics } from '../log-api-call-error'
+import {
+  buildAPICallErrorDiagnostics,
+  logAPICallErrorDiagnostics
+} from '../log-api-call-error'
 
 function createAPICallError(
   requestBodyValues: unknown,
@@ -49,6 +52,10 @@ describe('logAPICallErrorDiagnostics', () => {
 
     logAPICallErrorDiagnostics(error)
 
+    expect(consoleError).toHaveBeenCalledWith(
+      'Provider API call diagnostics:',
+      '{"statusCode":400,"url":"https://provider.example/v1/messages","requestBody":{"topLevelKeys":["model","messages"],"totalSerializedSize":156,"turnsKey":"messages","turnCount":1,"turns":[{"role":"user","content":[{"type":"text","length":45},{"type":"file","length":42}]}]},"responseBody":{"length":12}}'
+    )
     const output = consoleError.mock.calls.flat().join(' ')
     expect(output).toContain('"statusCode":400')
     expect(output).toContain('https://provider.example/v1/messages')
@@ -154,5 +161,54 @@ describe('logAPICallErrorDiagnostics', () => {
     const diagnostics = consoleError.mock.calls[0][1]
     expect(diagnostics).toHaveLength(4000)
     expect(diagnostics.endsWith('...[truncated]')).toBe(true)
+  })
+})
+
+describe('buildAPICallErrorDiagnostics', () => {
+  it.each([new Error('failure'), null, undefined, 'failure'])(
+    'returns null for a non-API call error',
+    value => {
+      expect(buildAPICallErrorDiagnostics(value)).toBeNull()
+    }
+  )
+
+  it('returns structural API call diagnostics without private content', () => {
+    const sentinel = 'SENTINEL_PRIVATE_MESSAGE_20260807'
+    const error = createAPICallError({
+      model: 'provider-model',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: sentinel },
+            { type: 'file', data: 'private file data' }
+          ]
+        }
+      ]
+    })
+
+    const diagnostics = buildAPICallErrorDiagnostics(error)
+
+    expect(diagnostics).toEqual({
+      statusCode: 400,
+      url: 'https://provider.example/v1/messages',
+      requestBody: {
+        topLevelKeys: ['model', 'messages'],
+        totalSerializedSize: 169,
+        turnsKey: 'messages',
+        turnCount: 1,
+        turns: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', length: 58 },
+              { type: 'file', length: 42 }
+            ]
+          }
+        ]
+      },
+      responseBody: { length: 12 }
+    })
+    expect(JSON.stringify(diagnostics)).not.toContain(sentinel)
   })
 })
