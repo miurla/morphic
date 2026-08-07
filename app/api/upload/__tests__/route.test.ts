@@ -21,12 +21,14 @@ vi.mock('@/lib/storage/r2-client', () => ({
     Promise.resolve(`https://uploads.example.com/${key}?sig=abc`)
   ),
   isObjectStorageConfigured: vi.fn(() => true),
-  objectExists: vi.fn(() => Promise.resolve(true)),
+  getObjectContentMd5: vi.fn(() => Promise.resolve<string | null>(null)),
   R2_BUCKET_NAME: 'test-bucket'
 }))
 
+import { createHash } from 'node:crypto'
+
 import * as dbActions from '@/lib/db/actions'
-import { objectExists } from '@/lib/storage/r2-client'
+import { getObjectContentMd5 } from '@/lib/storage/r2-client'
 
 import { POST } from '../route'
 
@@ -64,11 +66,15 @@ function uploadRequest(bytes = 1234) {
   } as any
 }
 
+function md5OfUpload(bytes = 1234) {
+  return createHash('md5').update(Buffer.alloc(bytes)).digest('hex')
+}
+
 describe('POST /api/upload', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     delete process.env.ENABLE_AUTH
-    vi.mocked(objectExists).mockResolvedValue(true)
+    vi.mocked(getObjectContentMd5).mockResolvedValue(md5OfUpload())
     vi.mocked(dbActions.createLibraryFile).mockResolvedValue({
       ...EXISTING,
       id: 'file-2',
@@ -90,7 +96,7 @@ describe('POST /api/upload', () => {
     expect(dbActions.createLibraryFile).not.toHaveBeenCalled()
   })
 
-  it('matches on name, type and size together', async () => {
+  it('narrows the candidate by name, type and size', async () => {
     vi.mocked(dbActions.findChatFileByContent).mockResolvedValue(null)
 
     await POST(uploadRequest(9999))
@@ -114,11 +120,27 @@ describe('POST /api/upload', () => {
     expect(send).toHaveBeenCalledOnce()
   })
 
-  it('uploads when the stored object is gone', async () => {
+  it('uploads when the candidate holds different bytes', async () => {
+    // Same name, same type, same size, different content: the digest is the
+    // only thing standing between the user and a silently substituted file.
     vi.mocked(dbActions.findChatFileByContent).mockResolvedValue(
       EXISTING as any
     )
-    vi.mocked(objectExists).mockResolvedValue(false)
+    vi.mocked(getObjectContentMd5).mockResolvedValue(
+      createHash('md5').update('something else').digest('hex')
+    )
+
+    const { file } = await (await POST(uploadRequest())).json()
+
+    expect(file.key).not.toBe(EXISTING.objectKey)
+    expect(send).toHaveBeenCalledOnce()
+  })
+
+  it('uploads when the stored object is gone or has no usable digest', async () => {
+    vi.mocked(dbActions.findChatFileByContent).mockResolvedValue(
+      EXISTING as any
+    )
+    vi.mocked(getObjectContentMd5).mockResolvedValue(null)
 
     const { file } = await (await POST(uploadRequest())).json()
 
