@@ -1,6 +1,7 @@
 import {
   DeleteObjectsCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
   S3Client
 } from '@aws-sdk/client-s3'
@@ -17,6 +18,34 @@ export const R2_SIGNED_URL_EXPIRES_SECONDS =
   configuredSignedUrlExpiresSeconds > 0
     ? configuredSignedUrlExpiresSeconds
     : DEFAULT_SIGNED_URL_EXPIRES_SECONDS
+
+const DEFAULT_SIGNED_URL_STABILITY_WINDOW_SECONDS = 15 * 60
+
+/**
+ * Only an explicit `0` goes back to signing every request with the current time.
+ *
+ * Templated environments routinely define a variable as an empty string, and
+ * `Number('')` is `0` — which would silently turn the window off while looking
+ * configured. Anything unusable falls back to the default instead.
+ */
+export function parseSignedUrlStabilityWindowSeconds(
+  raw: string | undefined
+): number {
+  const value = raw?.trim()
+  if (!value) return DEFAULT_SIGNED_URL_STABILITY_WINDOW_SECONDS
+
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return DEFAULT_SIGNED_URL_STABILITY_WINDOW_SECONDS
+  }
+
+  return parsed === 0 ? 0 : Math.max(1, Math.floor(parsed))
+}
+
+export const R2_SIGNED_URL_STABILITY_WINDOW_SECONDS =
+  parseSignedUrlStabilityWindowSeconds(
+    process.env.R2_SIGNED_URL_STABILITY_WINDOW_SECONDS
+  )
 
 let _r2Client: S3Client | null = null
 
@@ -90,6 +119,31 @@ function isObjectKeyWithinPrefix(key: string, prefix: string) {
   )
 }
 
+/**
+ * Rounds the signing time down to a fixed window so the same object key signs
+ * to a byte-identical URL for the whole window.
+ *
+ * Attachments are replayed on every turn of a conversation, and a URL whose
+ * signature changes per request changes the prompt prefix with it, so the
+ * provider re-reads every replayed attachment instead of serving it from the
+ * prompt cache.
+ *
+ * The window is capped at half the expiry so a URL handed out at the end of a
+ * window still keeps at least half its configured lifetime.
+ */
+function getStableSigningDate(expiresIn: number): Date | undefined {
+  const windowSeconds = Math.min(
+    R2_SIGNED_URL_STABILITY_WINDOW_SECONDS,
+    Math.floor(expiresIn / 2)
+  )
+  if (windowSeconds < 1) {
+    return undefined
+  }
+
+  const windowMs = windowSeconds * 1000
+  return new Date(Math.floor(Date.now() / windowMs) * windowMs)
+}
+
 export async function getSignedFileUrl(
   key: string,
   expiresIn = R2_SIGNED_URL_EXPIRES_SECONDS
@@ -99,14 +153,44 @@ export async function getSignedFileUrl(
     throw new Error('Cannot sign an empty object key')
   }
 
+  const signingDate = getStableSigningDate(expiresIn)
+
   return getSignedUrl(
     getR2Client(),
     new GetObjectCommand({
       Bucket: R2_BUCKET_NAME,
       Key: normalizedKey
     }),
-    { expiresIn }
+    signingDate ? { expiresIn, signingDate } : { expiresIn }
   )
+}
+
+/**
+ * MD5 of a stored object's bytes, or null when it cannot be established.
+ *
+ * S3 and R2 set the ETag of a single-part upload to the MD5 of the body, which
+ * is the only content digest available here without re-downloading the object.
+ * Everything this app stores is written by one `PutObject` under a 5MB cap, so
+ * the ETag is that digest; a multipart ETag carries a `-<parts>` suffix and a
+ * server-side-encrypted one is opaque, and both answer null.
+ *
+ * Null also covers a missing object and a failed request: stored metadata can
+ * outlive the object it points at, and callers treat null as "cannot reuse".
+ */
+export async function getObjectContentMd5(key: string): Promise<string | null> {
+  const normalizedKey = normalizeObjectKey(key)
+  if (!normalizedKey) return null
+
+  try {
+    const head = await getR2Client().send(
+      new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key: normalizedKey })
+    )
+    const etag = head.ETag?.replace(/"/g, '').toLowerCase() ?? ''
+
+    return /^[0-9a-f]{32}$/.test(etag) ? etag : null
+  } catch {
+    return null
+  }
 }
 
 export async function signFilePartUrls(

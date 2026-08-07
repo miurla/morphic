@@ -55,13 +55,23 @@ describe('render prompts', () => {
     expect(getAdaptiveModePrompt()).toContain('result order within each search')
   })
 
-  test.each([getQuickModePrompt, getAdaptiveModePrompt])(
-    'includes the canonical image block in the worked example',
-    getPrompt => {
+  test.each([
+    [getQuickModePrompt, 'Example approach:'],
+    [getAdaptiveModePrompt, 'Flexible example:']
+  ])(
+    'keeps spec fences out of the worked answer example',
+    (getPrompt, marker) => {
       const prompt = getPrompt()
+      const workedExample = prompt.slice(
+        prompt.indexOf(marker),
+        prompt.indexOf('INLINE IMAGE EMBEDDING:')
+      )
 
-      expect(prompt).toContain(EXAMPLE_IMAGE_SPEC_BLOCK)
-      expect(prompt.split(EXAMPLE_IMAGE_SPEC_BLOCK)).toHaveLength(3)
+      // The worked example shows a complete answer body. A spec fence inside
+      // it makes it a finished answer that ends without the related-questions
+      // block, which suppresses that block instead of teaching it.
+      expect(workedExample).not.toContain('```spec')
+      expect(prompt.split(EXAMPLE_IMAGE_SPEC_BLOCK)).toHaveLength(2)
     }
   )
 

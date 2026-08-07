@@ -1,5 +1,4 @@
 import {
-  EXAMPLE_IMAGE_SPEC_BLOCK,
   getImageSpecPrompt,
   getRelatedQuestionsSpecPrompt
 } from '@/lib/render/prompt'
@@ -148,8 +147,6 @@ Example approach:
 ### Core Information
 - **Key Point:** Direct answer with specific data/numbers when available [1](#EXAMPLE_TOOL_CALL_ID_1)
 - **Detail:** Supporting information with concrete examples [2](#EXAMPLE_TOOL_CALL_ID_1)
-
-${EXAMPLE_IMAGE_SPEC_BLOCK}
 
 ### When Comparing (use table format)
 | Feature | Option A | Option B |
@@ -334,8 +331,6 @@ Flexible example:
 ### Primary Information
 - **Core Answer:** Direct response with evidence [1](#EXAMPLE_TOOL_CALL_ID_1)
 - **Context:** Relevant supporting details
-
-${EXAMPLE_IMAGE_SPEC_BLOCK}
 
 Conclude with a brief synthesis that ties together the main insights into a clear overall understanding.
 
