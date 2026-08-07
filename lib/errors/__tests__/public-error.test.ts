@@ -183,6 +183,19 @@ describe('public error mapping', () => {
     expect(payload.error).toBe('The page refused the request.')
   })
 
+  it('does not preserve upstream copy that only claims the tool_failed code', () => {
+    const error = new Error(
+      JSON.stringify({
+        code: 'tool_failed',
+        error: 'connection to db-primary failed for user svc_admin'
+      })
+    )
+    const payload = toPublicErrorPayload(error)
+
+    expect(payload.error).not.toContain('svc_admin')
+    expect(payload.error).not.toContain('db-primary')
+  })
+
   it('keeps request-level 403 failures on the permission path', () => {
     const error = Object.assign(new Error('Request failed'), {
       statusCode: 403

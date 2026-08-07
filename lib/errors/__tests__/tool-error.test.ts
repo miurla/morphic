@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getToolFailureMessage,
   isToolFailureError,
+  isToolFailureMessage,
   serializeToolFailure,
   ToolFailureError
 } from '@/lib/errors/tool-error'
@@ -96,4 +97,34 @@ describe('tool error mapping', () => {
       error: 'The search could not be completed.'
     })
   })
+})
+
+describe('tool failure copy', () => {
+  it('only recognizes sentences the mapper can produce', () => {
+    expect(isToolFailureMessage('The page refused the request.')).toBe(true)
+    expect(isToolFailureMessage('Something else entirely.')).toBe(false)
+  })
+
+  it.each([
+    ['fetch', 'HTTP 403: Forbidden'],
+    ['fetch', 'HTTP 404: Not Found'],
+    ['fetch', 'HTTP 429: Too Many Requests'],
+    ['fetch', 'HTTP 503: Service Temporarily Unavailable'],
+    ['fetch', 'Request timeout after 10 seconds'],
+    ['fetch', 'Unsupported content type: application/pdf'],
+    ['fetch', 'No results returned from content extraction service'],
+    ['fetch', 'Unexpected failure'],
+    ['search', 'HTTP 403: Forbidden'],
+    ['search', 'HTTP 429: Too Many Requests'],
+    ['search', 'Unexpected failure']
+  ] as const)(
+    'keeps %s copy for %s inside the known set',
+    (toolName, message) => {
+      expect(
+        isToolFailureMessage(
+          getToolFailureMessage(new ToolFailureError(toolName, message))
+        )
+      ).toBe(true)
+    }
+  )
 })

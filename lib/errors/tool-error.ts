@@ -55,6 +55,44 @@ export function isToolFailureError(error: unknown): error is ToolFailureError {
   )
 }
 
+const REFUSED = (subject: string) => `${subject} refused the request.`
+const NOT_FOUND = (subject: string) => `${subject} could not be found.`
+const RATE_LIMITED = (subject: string) =>
+  `${subject} is rate limiting requests. Please try again shortly.`
+const UNAVAILABLE = (subject: string) =>
+  `${subject} is temporarily unavailable. Please try again shortly.`
+const TOO_SLOW = (subject: string) => `${subject} took too long to respond.`
+const UNREADABLE_TYPE = 'The page is not in a readable text format.'
+const NO_CONTENT = 'The page did not return any readable content.'
+const FETCH_FALLBACK = 'The page could not be read.'
+const SEARCH_FALLBACK = 'The search could not be completed.'
+
+/**
+ * Every sentence this module can produce.
+ *
+ * `public-error` preserves a `tool_failed` message instead of reclassifying it,
+ * and an error whose own text happens to be JSON is parsed by that same code
+ * path. Checking membership here means an upstream payload claiming the code
+ * can still only carry copy we wrote ourselves.
+ */
+export const TOOL_FAILURE_MESSAGES: ReadonlySet<string> = new Set([
+  ...Object.values(SUBJECT).flatMap(subject => [
+    REFUSED(subject),
+    NOT_FOUND(subject),
+    RATE_LIMITED(subject),
+    UNAVAILABLE(subject),
+    TOO_SLOW(subject)
+  ]),
+  UNREADABLE_TYPE,
+  NO_CONTENT,
+  FETCH_FALLBACK,
+  SEARCH_FALLBACK
+])
+
+export function isToolFailureMessage(message: string): boolean {
+  return TOOL_FAILURE_MESSAGES.has(message)
+}
+
 function classifyToolFailure(error: ToolFailureError): {
   message: string
   retryable: boolean
@@ -64,59 +102,44 @@ function classifyToolFailure(error: ToolFailureError): {
   const subject = SUBJECT[error.toolName]
 
   if (status === 403 || /\b403\b|\bforbidden\b/i.test(message)) {
-    return { message: `${subject} refused the request.`, retryable: false }
+    return { message: REFUSED(subject), retryable: false }
   }
 
   if (status === 404 || /\b404\b|\bnot found\b/i.test(message)) {
-    return { message: `${subject} could not be found.`, retryable: false }
+    return { message: NOT_FOUND(subject), retryable: false }
   }
 
   if (
     status === 429 ||
     /\b429\b|too many requests|rate[_\s-]?limit/i.test(message)
   ) {
-    return {
-      message: `${subject} is rate limiting requests. Please try again shortly.`,
-      retryable: true
-    }
+    return { message: RATE_LIMITED(subject), retryable: true }
   }
 
   if (
     (status !== undefined && status >= 500 && status <= 599) ||
     /\b5\d{2}\b|service unavailable|bad gateway/i.test(message)
   ) {
-    return {
-      message: `${subject} is temporarily unavailable. Please try again shortly.`,
-      retryable: true
-    }
+    return { message: UNAVAILABLE(subject), retryable: true }
   }
 
   if (/timeout|timed out|abort/i.test(message)) {
-    return { message: `${subject} took too long to respond.`, retryable: true }
+    return { message: TOO_SLOW(subject), retryable: true }
   }
 
   if (/unsupported content type/i.test(message)) {
-    return {
-      message: 'The page is not in a readable text format.',
-      retryable: false
-    }
+    return { message: UNREADABLE_TYPE, retryable: false }
   }
 
   if (
     /no results returned from content extraction service/i.test(message) ||
     /no data returned from jina reader api/i.test(message)
   ) {
-    return {
-      message: 'The page did not return any readable content.',
-      retryable: true
-    }
+    return { message: NO_CONTENT, retryable: true }
   }
 
   return {
-    message:
-      error.toolName === 'fetch'
-        ? 'The page could not be read.'
-        : 'The search could not be completed.',
+    message: error.toolName === 'fetch' ? FETCH_FALLBACK : SEARCH_FALLBACK,
     retryable: true
   }
 }
