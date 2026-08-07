@@ -1,6 +1,7 @@
 import {
   DeleteObjectsCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
   S3Client
 } from '@aws-sdk/client-s3'
@@ -162,6 +163,27 @@ export async function getSignedFileUrl(
     }),
     signingDate ? { expiresIn, signingDate } : { expiresIn }
   )
+}
+
+/**
+ * Whether the object is still in the bucket.
+ *
+ * Stored metadata can outlive the object it points at, so anything that reuses
+ * a key it did not just write has to ask. A failed lookup answers `false`: the
+ * caller falls back to uploading, which is correct either way.
+ */
+export async function objectExists(key: string): Promise<boolean> {
+  const normalizedKey = normalizeObjectKey(key)
+  if (!normalizedKey) return false
+
+  try {
+    await getR2Client().send(
+      new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key: normalizedKey })
+    )
+    return true
+  } catch {
+    return false
+  }
 }
 
 export async function signFilePartUrls(

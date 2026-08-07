@@ -9,6 +9,7 @@ import {
   getR2Client,
   getSignedFileUrl,
   isObjectStorageConfigured,
+  objectExists,
   R2_BUCKET_NAME
 } from '@/lib/storage/r2-client'
 
@@ -61,8 +62,20 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
+    const isAnonymous = process.env.ENABLE_AUTH === 'false'
+
+    if (!isAnonymous && chatId) {
+      const reused = await reuseExistingChatFile(file, userId, chatId)
+      if (reused) {
+        return NextResponse.json(
+          { success: true, file: reused },
+          { status: 200 }
+        )
+      }
+    }
+
     const result = await uploadFileToR2(file, userId, chatId)
-    if (process.env.ENABLE_AUTH === 'false') {
+    if (isAnonymous) {
       return NextResponse.json({ success: true, file: result }, { status: 200 })
     }
 
@@ -109,6 +122,54 @@ export async function POST(req: NextRequest) {
       { error: 'Upload failed', message: err.message },
       { status: 500 }
     )
+  }
+}
+
+/**
+ * Points a repeated upload at the copy already stored for this chat.
+ *
+ * Re-uploading the same file is the common way a conversation ends up carrying
+ * two of it, usually because the first copy went unmentioned in the reply. A
+ * fresh upload would mint a new object key, which reads as a different file
+ * everywhere downstream, so the model would be handed both copies on every
+ * later turn. Name, media type and byte size together are as close to content
+ * identity as the upload path can get without storing a digest.
+ *
+ * Returns null whenever the match cannot be trusted, and the caller uploads.
+ */
+async function reuseExistingChatFile(
+  file: File,
+  userId: string,
+  chatId: string
+) {
+  try {
+    const existing = await dbActions.findChatFileByContent({
+      userId,
+      chatId,
+      filename: file.name,
+      mediaType: file.type,
+      size: file.size
+    })
+
+    if (!existing || !(await objectExists(existing.objectKey))) {
+      return null
+    }
+
+    const url = await getSignedFileUrl(existing.objectKey)
+
+    return {
+      type: 'file',
+      filename: existing.filename,
+      key: existing.objectKey,
+      url,
+      mediaType: existing.mediaType,
+      id: existing.id,
+      size: file.size,
+      libraryFile: { ...existing, key: existing.objectKey, url }
+    }
+  } catch (error) {
+    console.error('Duplicate upload lookup failed:', error)
+    return null
   }
 }
 

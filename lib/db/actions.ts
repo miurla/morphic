@@ -518,6 +518,47 @@ export async function deleteUserNotes(
   }
 }
 
+/**
+ * The file already uploaded to this chat under the same name, type and byte
+ * size, if there is one.
+ *
+ * Scoped to a single chat on purpose: object keys live under a per-chat prefix
+ * and a chat deletion wipes that prefix, so reusing a key across chats would
+ * let one chat's deletion break another's attachment.
+ */
+export async function findChatFileByContent({
+  userId,
+  chatId,
+  filename,
+  mediaType,
+  size
+}: {
+  userId: string
+  chatId: string
+  filename: string
+  mediaType: string
+  size: number
+}): Promise<LibraryFile | null> {
+  return withRLS(userId, async tx => {
+    const [existing] = await tx
+      .select()
+      .from(libraryFiles)
+      .where(
+        and(
+          eq(libraryFiles.userId, userId),
+          eq(libraryFiles.chatId, chatId),
+          eq(libraryFiles.filename, filename),
+          eq(libraryFiles.mediaType, mediaType),
+          eq(libraryFiles.size, size)
+        )
+      )
+      .orderBy(desc(libraryFiles.createdAt))
+      .limit(1)
+
+    return existing ?? null
+  })
+}
+
 export async function createLibraryFile(
   file: Omit<NewLibraryFile, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<LibraryFile> {
