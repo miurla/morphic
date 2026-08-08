@@ -1,3 +1,5 @@
+import { isToolFailureMessage } from './tool-error'
+
 export type PublicErrorType = 'rate-limit' | 'auth' | 'forbidden' | 'general'
 
 export type PublicErrorCode =
@@ -12,6 +14,7 @@ export type PublicErrorCode =
   | 'provider_rate_limit'
   | 'provider_unavailable'
   | 'rate_limit'
+  | 'tool_failed'
   | 'unknown'
 
 export type PublicErrorPayload = {
@@ -54,6 +57,7 @@ const PUBLIC_ERROR_CODES: ReadonlySet<string> = new Set([
   'provider_rate_limit',
   'provider_unavailable',
   'rate_limit',
+  'tool_failed',
   'unknown'
 ])
 
@@ -371,6 +375,16 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
   }
 }
 
+/**
+ * A `tool_failed` code alone is not proof of provenance: an upstream error
+ * whose own text happens to be JSON reaches this same parser, and honouring
+ * the code would hand that text straight to the client. Only copy this module
+ * knows it produced is preserved.
+ */
+function isToolFailurePayload(message: string, code: PublicErrorCode): boolean {
+  return code === 'tool_failed' && isToolFailureMessage(message)
+}
+
 function isIntentionalPublicPayload(
   value: Record<string, unknown>,
   code: PublicErrorCode
@@ -402,7 +416,9 @@ function fromParsedPayload(
   )
   const code = asPublicErrorCode(value.code) ?? classification.code
   const type = asPublicErrorType(value.type) ?? typeForCode(code)
-  const preserveMessage = isIntentionalPublicPayload(value, code)
+  const preserveMessage =
+    isIntentionalPublicPayload(value, code) ||
+    isToolFailurePayload(message, code)
 
   return {
     error: preserveMessage ? message : classification.error,
