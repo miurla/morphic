@@ -8,7 +8,8 @@ import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
 import {
   detectFileMediaType,
-  isSupportedFileType
+  isSupportedFileType,
+  type SupportedFileType
 } from '@/lib/storage/file-signature'
 import {
   getChatFileObjectKeyPrefix,
@@ -70,12 +71,12 @@ export async function POST(req: NextRequest) {
     const isAnonymous = process.env.ENABLE_AUTH === 'false'
     const buffer = Buffer.from(await file.arrayBuffer())
 
-    // The browser reports file.type from the name, so an unreadable file passes
-    // the check above and only fails later, once the provider rejects the whole
-    // turn. The bytes decide whether the file is readable at all; which of the
-    // supported formats they match is deliberately not used to overwrite the
-    // declared type, because file identity downstream keys off it.
-    if (!detectFileMediaType(buffer)) {
+    // The browser reports file.type from the name, so the check above says
+    // nothing about the contents. Only the bytes do, and from here on they are
+    // what the file is: sending a document to the provider as an image fails
+    // the whole turn just as surely as sending something unreadable.
+    const mediaType = detectFileMediaType(buffer)
+    if (!mediaType) {
       return NextResponse.json(
         {
           error: 'Unsupported file content',
@@ -87,7 +88,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isAnonymous && chatId) {
-      const reused = await reuseExistingChatFile(file, buffer, userId, chatId)
+      const reused = await reuseExistingChatFile(
+        file,
+        buffer,
+        mediaType,
+        userId,
+        chatId
+      )
       if (reused) {
         return NextResponse.json(
           { success: true, file: reused },
@@ -96,7 +103,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const result = await uploadFileToR2(file, buffer, userId, chatId)
+    const result = await uploadFileToR2(file, buffer, mediaType, userId, chatId)
     if (isAnonymous) {
       return NextResponse.json({ success: true, file: result }, { status: 200 })
     }
@@ -168,6 +175,7 @@ export async function POST(req: NextRequest) {
 async function reuseExistingChatFile(
   file: File,
   buffer: Buffer,
+  mediaType: SupportedFileType,
   userId: string,
   chatId: string
 ) {
@@ -176,7 +184,7 @@ async function reuseExistingChatFile(
       userId,
       chatKeyPrefix: getChatFileObjectKeyPrefix(userId, chatId),
       filename: file.name,
-      mediaType: file.type,
+      mediaType,
       size: file.size
     })
     if (candidates.length === 0) return null
@@ -215,6 +223,7 @@ function sanitizeFilename(filename: string) {
 async function uploadFileToR2(
   file: File,
   buffer: Buffer,
+  mediaType: SupportedFileType,
   userId: string,
   chatId: string
 ) {
@@ -229,7 +238,7 @@ async function uploadFileToR2(
         Bucket: R2_BUCKET_NAME,
         Key: filePath,
         Body: buffer,
-        ContentType: file.type,
+        ContentType: mediaType,
         CacheControl: 'max-age=3600'
       })
     )
@@ -240,7 +249,7 @@ async function uploadFileToR2(
       filename: file.name,
       key: filePath,
       url: signedUrl,
-      mediaType: file.type,
+      mediaType,
       type: 'file'
     }
   } catch (error: any) {
