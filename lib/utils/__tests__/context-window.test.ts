@@ -90,6 +90,24 @@ describe('context-window', () => {
       expect(shouldTruncateMessages(messages, mockModel)).toBe(true)
     })
 
+    test('counts file parts toward the context window', () => {
+      const unknownModel: Model = { ...mockModel, id: 'unknown-model' }
+      const messages: ModelMessage[] = [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'file',
+              mediaType: 'application/pdf',
+              data: 'https://example.com/report.pdf'
+            }
+          ]
+        }
+      ]
+
+      expect(shouldTruncateMessages(messages, unknownModel)).toBe(true)
+    })
+
     test('handles null/undefined messages gracefully', () => {
       expect(shouldTruncateMessages(null as any, mockModel)).toBe(false)
       expect(shouldTruncateMessages(undefined as any, mockModel)).toBe(false)
