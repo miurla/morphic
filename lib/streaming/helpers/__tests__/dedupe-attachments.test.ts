@@ -111,7 +111,7 @@ describe('dedupeAttachments', () => {
     expect(dedupeAttachments(messages)).toEqual(messages)
   })
 
-  it('collapses byte-identical copies stored under different keys', () => {
+  it('collapses historical copies stored under different keys', () => {
     const messages = [
       userTurn('u0', [
         {
@@ -127,7 +127,38 @@ describe('dedupeAttachments', () => {
           key: 'user/chats/c/2-report.pdf',
           size: 4096
         }
-      ])
+      ]),
+      assistantTurn('a1'),
+      userTurn('u2', [], 'And what about the second half?')
+    ]
+
+    expect(filenamesReaching(dedupeAttachments(messages))).toEqual([
+      'report.pdf'
+    ])
+  })
+
+  it('never collapses the current turn on metadata alone', () => {
+    const messages = [
+      userTurn('u0', [
+        { filename: 'report.pdf', key: 'files/one', size: 4096 }
+      ]),
+      assistantTurn('a0'),
+      userTurn('u1', [{ filename: 'report.pdf', key: 'files/two', size: 4096 }])
+    ]
+
+    expect(filenamesReaching(dedupeAttachments(messages))).toEqual([
+      'report.pdf',
+      'report.pdf'
+    ])
+  })
+
+  it('still collapses the current turn when the key is the same', () => {
+    const messages = [
+      userTurn('u0', [
+        { filename: 'report.pdf', key: 'files/one', size: 4096 }
+      ]),
+      assistantTurn('a0'),
+      userTurn('u1', [{ filename: 'report.pdf', key: 'files/one', size: 4096 }])
     ]
 
     expect(filenamesReaching(dedupeAttachments(messages))).toEqual([
@@ -140,7 +171,10 @@ describe('dedupeAttachments', () => {
       userTurn('u0', [
         { filename: 'report.pdf', key: 'files/one', size: 4096 }
       ]),
-      userTurn('u1', [{ filename: 'report.pdf', key: 'files/two', size: 4097 }])
+      userTurn('u1', [
+        { filename: 'report.pdf', key: 'files/two', size: 4097 }
+      ]),
+      userTurn('u2', [], 'And the appendix?')
     ]
 
     expect(dedupeAttachments(messages)).toEqual(messages)

@@ -4,11 +4,19 @@ import { getAttachmentSizesByObjectKey } from '@/lib/db/actions'
 
 import { isFilePart } from './attachment-parts'
 
+/**
+ * Keys are collected oldest first, but the cap drops the oldest attachments,
+ * so a thread with more keys than one lookup can carry is bounded from the
+ * newest end. Resolving the ones about to be dropped would leave every
+ * surviving file on the unknown estimate.
+ */
+const MAX_RESOLVED_KEYS = 100
+
 export async function resolveAttachmentSizes(
   messages: UIMessage[],
   userId: string
 ): Promise<UIMessage[]> {
-  const objectKeys = [
+  const allKeys = [
     ...new Set(
       messages.flatMap(message =>
         message.parts.flatMap(part => {
@@ -19,6 +27,7 @@ export async function resolveAttachmentSizes(
       )
     )
   ]
+  const objectKeys = allKeys.slice(-MAX_RESOLVED_KEYS)
 
   if (objectKeys.length === 0) return messages
 
