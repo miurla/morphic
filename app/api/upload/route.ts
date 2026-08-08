@@ -7,6 +7,10 @@ import { capture } from '@/lib/analytics/dispatch'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
 import {
+  detectFileMediaType,
+  isSupportedFileType
+} from '@/lib/storage/file-signature'
+import {
   getChatFileObjectKeyPrefix,
   getObjectContentMd5,
   getR2Client,
@@ -16,7 +20,6 @@ import {
 } from '@/lib/storage/r2-client'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf']
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,7 +61,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!isSupportedFileType(file.type)) {
       return NextResponse.json(
         { error: 'Unsupported file type' },
         { status: 400 }
@@ -66,6 +69,22 @@ export async function POST(req: NextRequest) {
     }
     const isAnonymous = process.env.ENABLE_AUTH === 'false'
     const buffer = Buffer.from(await file.arrayBuffer())
+
+    // The browser reports file.type from the name, so an unreadable file passes
+    // the check above and only fails later, once the provider rejects the whole
+    // turn. The bytes decide whether the file is readable at all; which of the
+    // supported formats they match is deliberately not used to overwrite the
+    // declared type, because file identity downstream keys off it.
+    if (!detectFileMediaType(buffer)) {
+      return NextResponse.json(
+        {
+          error: 'Unsupported file content',
+          message:
+            'The file contents are not a JPEG, PNG, or PDF even though the file name suggests otherwise.'
+        },
+        { status: 400 }
+      )
+    }
 
     if (!isAnonymous && chatId) {
       const reused = await reuseExistingChatFile(file, buffer, userId, chatId)
