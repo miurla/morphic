@@ -25,6 +25,7 @@ import { getTextFromParts } from '../utils/message-utils'
 import { perfLog, perfTime } from '../utils/perf-logging'
 import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
+import { resolveAttachmentSizes } from './helpers/attachment-sizes'
 import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
@@ -154,8 +155,14 @@ export async function createChatStreamResponse(
 
       const messagesWithNonces = assignDataPartNonces(messagesToModel)
       const messagesWithoutSpec = stripSpecFromMessages(messagesWithNonces)
+      const messagesWithAttachmentSizes = await resolveAttachmentSizes(
+        messagesWithoutSpec,
+        userId
+      )
       const messagesToConvert = dedupeAttachments(
-        capHistoricalAttachments(compactHistoricalMessages(messagesWithoutSpec))
+        capHistoricalAttachments(
+          compactHistoricalMessages(messagesWithAttachmentSizes)
+        )
       )
 
       // Convert to model messages and apply context window management

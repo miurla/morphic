@@ -530,6 +530,7 @@ export async function deleteUserNotes(
 }
 
 const CHAT_FILE_CANDIDATE_LIMIT = 5
+const ATTACHMENT_SIZE_LOOKUP_LIMIT = 100
 
 function escapeLikePattern(value: string) {
   return value.replace(/[\\%_]/g, char => `\\${char}`)
@@ -581,6 +582,38 @@ export async function findChatFileCandidates({
       )
       .orderBy(desc(libraryFiles.createdAt))
       .limit(CHAT_FILE_CANDIDATE_LIMIT)
+  )
+}
+
+export async function getAttachmentSizesByObjectKey({
+  userId,
+  objectKeys
+}: {
+  userId: string
+  objectKeys: string[]
+}): Promise<Map<string, number>> {
+  if (objectKeys.length === 0) return new Map()
+
+  const boundedKeys = objectKeys.slice(0, ATTACHMENT_SIZE_LOOKUP_LIMIT)
+  const rows = await withRLS(userId, async tx =>
+    tx
+      .select({
+        objectKey: libraryFiles.objectKey,
+        size: libraryFiles.size
+      })
+      .from(libraryFiles)
+      .where(
+        and(
+          eq(libraryFiles.userId, userId),
+          inArray(libraryFiles.objectKey, boundedKeys)
+        )
+      )
+  )
+
+  return new Map(
+    rows.flatMap(row =>
+      row.size === null ? [] : [[row.objectKey, row.size] as const]
+    )
   )
 }
 

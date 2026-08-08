@@ -10,15 +10,16 @@ import {
  * Identity of the stored bytes, or undefined when the part carries nothing that
  * identifies them.
  *
- * The R2 object key names one immutable object, so two parts sharing it are the
- * same file. The url is the fallback for parts stored without a key (data urls,
- * external links); signed urls are derived from the key and signed once per
- * request, so equal keys still produce equal urls within a single call.
- *
- * The filename is deliberately not part of the identity: two different files
- * are routinely both called screenshot.png.
+ * Name, media type and size together identify byte-identical uploads even when
+ * they were stored under different keys. This is safe where filename alone was
+ * not: equal keys already imply equal content identity, so this only merges
+ * more copies with the same name, type and byte length. The object key and url
+ * remain fallbacks when size metadata is unavailable.
  */
 function attachmentIdentity(part: FilePartLike): string | undefined {
+  if (part.filename && part.mediaType && part.size !== undefined) {
+    return `content:${part.filename}|${part.mediaType}|${part.size}`
+  }
   if (part.key) return `key:${part.key}`
   if (part.url) return `url:${part.url}`
   return undefined

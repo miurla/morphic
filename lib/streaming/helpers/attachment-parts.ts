@@ -7,6 +7,7 @@ export type FilePartLike = {
   filename?: string
   url?: string
   key?: string
+  size?: number
 }
 
 export function isFilePart(part: UIMessage['parts'][number]) {

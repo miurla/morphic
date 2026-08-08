@@ -8,6 +8,7 @@ type FileSpec = {
   key?: string
   url?: string
   mediaType?: string
+  size?: number
 }
 
 function userTurn(id: string, files: FileSpec[], text = 'Look at this') {
@@ -20,7 +21,8 @@ function userTurn(id: string, files: FileSpec[], text = 'Look at this') {
         mediaType: file.mediaType ?? 'application/pdf',
         filename: file.filename,
         url: file.url ?? `https://uploads.example.com/${file.key}?sig=abc`,
-        key: file.key
+        key: file.key,
+        size: file.size
       })),
       { type: 'text', text }
     ]
@@ -104,6 +106,50 @@ describe('dedupeAttachments', () => {
       userTurn('u1', [
         { filename: 'screenshot.png', key: 'user/chats/c/2-screenshot.png' }
       ])
+    ]
+
+    expect(dedupeAttachments(messages)).toEqual(messages)
+  })
+
+  it('collapses byte-identical copies stored under different keys', () => {
+    const messages = [
+      userTurn('u0', [
+        {
+          filename: 'report.pdf',
+          key: 'user/chats/c/1-report.pdf',
+          size: 4096
+        }
+      ]),
+      assistantTurn('a0'),
+      userTurn('u1', [
+        {
+          filename: 'report.pdf',
+          key: 'user/chats/c/2-report.pdf',
+          size: 4096
+        }
+      ])
+    ]
+
+    expect(filenamesReaching(dedupeAttachments(messages))).toEqual([
+      'report.pdf'
+    ])
+  })
+
+  it('keeps same-named files with different sizes separate', () => {
+    const messages = [
+      userTurn('u0', [
+        { filename: 'report.pdf', key: 'files/one', size: 4096 }
+      ]),
+      userTurn('u1', [{ filename: 'report.pdf', key: 'files/two', size: 4097 }])
+    ]
+
+    expect(dedupeAttachments(messages)).toEqual(messages)
+  })
+
+  it('keeps key-based behavior when size is unknown', () => {
+    const messages = [
+      userTurn('u0', [{ filename: 'report.pdf', key: 'files/one' }]),
+      userTurn('u1', [{ filename: 'report.pdf', key: 'files/two' }])
     ]
 
     expect(dedupeAttachments(messages)).toEqual(messages)
