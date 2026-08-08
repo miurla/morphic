@@ -50,12 +50,16 @@ const EXISTING = {
  * The route only reads headers and formData, so a stub avoids round-tripping a
  * File through multipart encoding in the test environment.
  */
-function uploadRequest(bytes = 1234) {
+function uploadRequest(
+  bytes = 1234,
+  contents = pdfUploadBytes(bytes),
+  declared = { name: 'report.pdf', type: 'application/pdf' }
+) {
   const file = {
-    name: 'report.pdf',
-    type: 'application/pdf',
+    name: declared.name,
+    type: declared.type,
     size: bytes,
-    arrayBuffer: async () => new Uint8Array(bytes).buffer
+    arrayBuffer: async () => contents.buffer
   }
   const formData = new Map<string, unknown>([
     ['file', file],
@@ -68,8 +72,14 @@ function uploadRequest(bytes = 1234) {
   } as any
 }
 
+function pdfUploadBytes(bytes = 1234) {
+  const contents = new Uint8Array(bytes)
+  contents.set(Buffer.from('%PDF-', 'ascii'))
+  return contents
+}
+
 function md5OfUpload(bytes = 1234) {
-  return createHash('md5').update(Buffer.alloc(bytes)).digest('hex')
+  return createHash('md5').update(pdfUploadBytes(bytes)).digest('hex')
 }
 
 describe('POST /api/upload', () => {
@@ -120,6 +130,52 @@ describe('POST /api/upload', () => {
 
     expect(file.key).not.toBe(EXISTING.objectKey)
     expect(send).toHaveBeenCalledOnce()
+  })
+
+  it('rejects allowed declared types with unsupported content', async () => {
+    const contents = new Uint8Array([
+      0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d
+    ])
+
+    const response = await POST(uploadRequest(contents.byteLength, contents))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toMatchObject({
+      error: 'Unsupported file content'
+    })
+    expect(dbActions.findChatFileCandidates).not.toHaveBeenCalled()
+    expect(send).not.toHaveBeenCalled()
+    expect(dbActions.createLibraryFile).not.toHaveBeenCalled()
+  })
+
+  it('stores a mislabelled file under the type its bytes say it is', async () => {
+    // A document renamed to .jpg is reported as an image by the browser, and
+    // handing it to the provider as one fails the turn just like unreadable
+    // content does.
+    vi.mocked(dbActions.findChatFileCandidates).mockResolvedValue([])
+    const contents = pdfUploadBytes(1234)
+
+    const { file } = await (
+      await POST(
+        uploadRequest(contents.byteLength, contents, {
+          name: 'report.jpg',
+          type: 'image/jpeg'
+        })
+      )
+    ).json()
+
+    expect(file.mediaType).toBe('application/pdf')
+    expect(dbActions.findChatFileCandidates).toHaveBeenCalledWith(
+      expect.objectContaining({ mediaType: 'application/pdf' })
+    )
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({ ContentType: 'application/pdf' })
+      })
+    )
+    expect(dbActions.createLibraryFile).toHaveBeenCalledWith(
+      expect.objectContaining({ mediaType: 'application/pdf' })
+    )
   })
 
   it('uploads when the candidate holds different bytes', async () => {
