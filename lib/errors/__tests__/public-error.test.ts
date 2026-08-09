@@ -159,6 +159,69 @@ describe('public error mapping', () => {
     expect(payload.error).not.toContain('144000')
   })
 
+  it('maps malformed 400 request messages to actionable copy', () => {
+    const error = Object.assign(
+      new Error(
+        'Invalid body: failed to parse JSON value. Please check the value to ensure it is valid JSON. (Common errors include trailing commas, missing closing brackets, missing quotation marks, etc.)'
+      ),
+      { statusCode: 400 }
+    )
+    const payload = toPublicErrorPayload(error)
+
+    expect(payload.code).toBe('malformed_request')
+    expect(payload.error).toBe(
+      'This conversation could not be sent to the model. Please start a new chat.'
+    )
+    expect(payload.details).toBe(
+      'Retrying this message will fail the same way.'
+    )
+    expect(payload.retryable).toBe(false)
+  })
+
+  it('maps malformed 400 provider codes to actionable copy', () => {
+    const error = Object.assign(new Error('Request failed'), {
+      statusCode: 400,
+      code: 'invalid_json'
+    })
+    const payload = toPublicErrorPayload(error)
+
+    expect(payload.code).toBe('malformed_request')
+    expect(payload.error).toBe(
+      'This conversation could not be sent to the model. Please start a new chat.'
+    )
+    expect(payload.details).toBe(
+      'Retrying this message will fail the same way.'
+    )
+    expect(payload.retryable).toBe(false)
+  })
+
+  it('keeps unrelated 400 errors on the bad request path', () => {
+    const error = Object.assign(new Error('Request failed validation'), {
+      statusCode: 400
+    })
+    const payload = toPublicErrorPayload(error)
+
+    expect(payload.code).toBe('bad_request')
+  })
+
+  it('keeps upstream "Invalid JSON response" fetch failures on the bad request path', () => {
+    const payload = toPublicErrorPayload({
+      error: 'Invalid JSON response',
+      status: 400
+    })
+
+    expect(payload.code).toBe('bad_request')
+  })
+
+  it('does not map malformed request messages for non-400 errors', () => {
+    const error = Object.assign(new Error('failed to parse JSON value'), {
+      statusCode: 500
+    })
+    const payload = toPublicErrorPayload(error)
+
+    expect(payload.code).not.toBe('malformed_request')
+  })
+
   it('serializes public payloads for stream error chunks', () => {
     const serialized = serializePublicError(
       new Error('Redis timeout while saving stream results')

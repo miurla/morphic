@@ -7,6 +7,7 @@ export type PublicErrorCode =
   | 'bad_request'
   | 'context_length'
   | 'forbidden'
+  | 'malformed_request'
   | 'model_unavailable'
   | 'provider_auth'
   | 'provider_billing'
@@ -50,6 +51,7 @@ const PUBLIC_ERROR_CODES: ReadonlySet<string> = new Set([
   'bad_request',
   'context_length',
   'forbidden',
+  'malformed_request',
   'model_unavailable',
   'provider_auth',
   'provider_billing',
@@ -112,6 +114,13 @@ const CONTEXT_LENGTH_PATTERNS = [
   /maximum context/i,
   /token limit/i,
   /too many tokens/i
+]
+
+// Matched against the provider's own signature only: the prose form
+// "Invalid JSON response" is an upstream-fetch message, not this failure.
+const MALFORMED_REQUEST_PATTERNS = [
+  /failed to parse JSON/i,
+  /\binvalid_json\b/i
 ]
 
 const MODEL_UNAVAILABLE_PATTERNS = [
@@ -340,6 +349,17 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
       code: 'model_unavailable' as const,
       type: 'general' as const,
       error: 'The selected model is unavailable. Please choose another model.',
+      retryable: false
+    }
+  }
+
+  if (status === 400 && matchesAny(combined, MALFORMED_REQUEST_PATTERNS)) {
+    return {
+      code: 'malformed_request' as const,
+      type: 'general' as const,
+      error:
+        'This conversation could not be sent to the model. Please start a new chat.',
+      details: 'Retrying this message will fail the same way.',
       retryable: false
     }
   }
