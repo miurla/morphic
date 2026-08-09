@@ -204,6 +204,35 @@ describe('public error mapping', () => {
     expect(payload.code).toBe('bad_request')
   })
 
+  it('survives the serialize and reparse round trip the client performs', () => {
+    const serialized = serializePublicError(
+      Object.assign(new Error('Invalid body: failed to parse JSON value.'), {
+        statusCode: 400
+      })
+    )
+    const payload = toPublicErrorPayload(new Error(serialized))
+
+    expect(payload.code).toBe('malformed_request')
+    expect(payload.error).toBe(
+      'This conversation could not be sent to the model. Please start a new chat.'
+    )
+    expect(payload.details).toBe(
+      'Retrying this message will fail the same way.'
+    )
+    expect(payload.retryable).toBe(false)
+  })
+
+  it('does not honour a malformed_request code carrying foreign copy', () => {
+    const payload = toPublicErrorPayload({
+      error: 'Upstream said something we should not show verbatim.',
+      code: 'malformed_request'
+    })
+
+    expect(payload.error).not.toBe(
+      'Upstream said something we should not show verbatim.'
+    )
+  })
+
   it('keeps upstream "Invalid JSON response" fetch failures on the bad request path', () => {
     const payload = toPublicErrorPayload({
       error: 'Invalid JSON response',

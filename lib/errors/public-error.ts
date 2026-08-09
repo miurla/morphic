@@ -46,6 +46,12 @@ type ErrorSnapshot = {
 const DEFAULT_PUBLIC_ERROR_MESSAGE =
   'We could not generate a response. Please try again.'
 
+const MALFORMED_REQUEST_MESSAGE =
+  'This conversation could not be sent to the model. Please start a new chat.'
+
+const MALFORMED_REQUEST_DETAILS =
+  'Retrying this message will fail the same way.'
+
 const PUBLIC_ERROR_CODES: ReadonlySet<string> = new Set([
   'auth_required',
   'bad_request',
@@ -357,9 +363,8 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
     return {
       code: 'malformed_request' as const,
       type: 'general' as const,
-      error:
-        'This conversation could not be sent to the model. Please start a new chat.',
-      details: 'Retrying this message will fail the same way.',
+      error: MALFORMED_REQUEST_MESSAGE,
+      details: MALFORMED_REQUEST_DETAILS,
       retryable: false
     }
   }
@@ -405,6 +410,20 @@ function isToolFailurePayload(message: string, code: PublicErrorCode): boolean {
   return code === 'tool_failed' && isToolFailureMessage(message)
 }
 
+/**
+ * The client re-parses the serialized payload, and that second pass carries
+ * neither the provider status nor its signature, so the copy would fall back to
+ * the generic retry message while the details still said retrying is futile.
+ * Only this module's own copy is honoured, for the same provenance reason as
+ * `isToolFailurePayload`.
+ */
+function isMalformedRequestPayload(
+  message: string,
+  code: PublicErrorCode
+): boolean {
+  return code === 'malformed_request' && message === MALFORMED_REQUEST_MESSAGE
+}
+
 function isIntentionalPublicPayload(
   value: Record<string, unknown>,
   code: PublicErrorCode
@@ -438,7 +457,8 @@ function fromParsedPayload(
   const type = asPublicErrorType(value.type) ?? typeForCode(code)
   const preserveMessage =
     isIntentionalPublicPayload(value, code) ||
-    isToolFailurePayload(message, code)
+    isToolFailurePayload(message, code) ||
+    isMalformedRequestPayload(message, code)
 
   return {
     error: preserveMessage ? message : classification.error,
