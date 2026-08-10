@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   capHistoricalAttachments,
+  parseAttachmentTokenBudget,
   parseReplayLimit
 } from '../cap-historical-attachments'
 
@@ -198,7 +199,7 @@ describe('capHistoricalAttachments', () => {
   it('replays everything when the limit is disabled', () => {
     const messages = thread(70, 1).concat(userTurn('current', 0))
 
-    expect(capHistoricalAttachments(messages, 0)).toEqual(messages)
+    expect(capHistoricalAttachments(messages, 0, 0)).toEqual(messages)
   })
 
   it('counts attachments across turns, not per message', () => {
@@ -210,6 +211,62 @@ describe('capHistoricalAttachments', () => {
 
     expect(placeholders(capped)).toHaveLength(LIMIT)
     expect(filenamesReaching(capped)).toHaveLength(11)
+  })
+
+  it('bounds heavy attachments below the count limit by weight', () => {
+    const heavy = [
+      userTurn('old', 0),
+      assistantTurn('a0'),
+      userTurn('recent', 0),
+      assistantTurn('a1'),
+      userTurn('current', 0)
+    ]
+    heavy[0].parts.unshift({
+      type: 'file',
+      mediaType: 'application/pdf',
+      filename: 'old.pdf',
+      url: 'https://example.com/old.pdf',
+      size: 500_000
+    } as never)
+    heavy[2].parts.unshift({
+      type: 'file',
+      mediaType: 'application/pdf',
+      filename: 'recent.pdf',
+      url: 'https://example.com/recent.pdf',
+      size: 500_000
+    } as never)
+
+    const capped = capHistoricalAttachments(heavy, LIMIT, 200_000)
+
+    expect(filenamesReaching(capped)).toEqual(['recent.pdf'])
+    expect(placeholders(capped)).toHaveLength(1)
+  })
+
+  it('leaves a thread within the weight budget untouched', () => {
+    const messages = thread(5, 1).concat(userTurn('current', 0))
+
+    expect(capHistoricalAttachments(messages, LIMIT, 200_000)).toBe(messages)
+  })
+
+  it('never applies the weight bound to the newest user message', () => {
+    const messages = thread(1, 0).concat(userTurn('current', 0))
+    messages.at(-1)?.parts.unshift({
+      type: 'file',
+      mediaType: 'application/pdf',
+      filename: 'current.pdf',
+      url: 'https://example.com/current.pdf',
+      size: 5_000_000
+    } as never)
+
+    expect(capHistoricalAttachments(messages, LIMIT, 1).at(-1)).toEqual(
+      messages.at(-1)
+    )
+  })
+
+  it('disables the weight bound with an explicit zero', () => {
+    const messages = thread(25, 1).concat(userTurn('current', 0))
+
+    expect(capHistoricalAttachments(messages, 100, 0)).toBe(messages)
   })
 })
 
@@ -232,5 +289,23 @@ describe('parseReplayLimit', () => {
     expect(parseReplayLimit('0.5')).toBe(1)
     expect(parseReplayLimit('4')).toBe(4)
     expect(parseReplayLimit('12.9')).toBe(12)
+  })
+})
+
+describe('parseAttachmentTokenBudget', () => {
+  it('falls back to the default for unusable values', () => {
+    for (const raw of [undefined, '', '   ', 'many', '-1', 'NaN', 'Infinity']) {
+      expect(parseAttachmentTokenBudget(raw)).toBe(200_000)
+    }
+  })
+
+  it('disables the budget only on an explicit zero', () => {
+    expect(parseAttachmentTokenBudget('0')).toBe(0)
+    expect(parseAttachmentTokenBudget(' 0 ')).toBe(0)
+  })
+
+  it('keeps at least one token for positive values', () => {
+    expect(parseAttachmentTokenBudget('0.5')).toBe(1)
+    expect(parseAttachmentTokenBudget('1200.9')).toBe(1200)
   })
 })

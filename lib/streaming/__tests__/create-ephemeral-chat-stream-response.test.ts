@@ -47,7 +47,7 @@ vi.mock('@/lib/utils/usage-logging', () => ({
   logUsage: vi.fn()
 }))
 
-import { serializePublicError } from '@/lib/errors/public-error'
+import { serializeToolFailure, ToolFailureError } from '@/lib/errors/tool-error'
 import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-ephemeral-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
 import { EMPTY_RESPONSE_STATUS_MESSAGE } from '@/lib/streaming/helpers/is-empty-response'
@@ -133,15 +133,16 @@ describe('createEphemeralChatStreamResponse', () => {
   })
 
   it('does not mark the span as failed for a tool error', async () => {
-    const toolError = Object.assign(new Error('HTTP 403: Forbidden'), {
-      statusCode: 403
-    })
+    const toolError = new ToolFailureError(
+      'fetch',
+      new Error('HTTP 403: Forbidden')
+    )
     mocks.stream.mockResolvedValue(createFakeResult({ toolError }))
 
     await createEphemeralChatStreamResponse(createConfig())
     await mocks.finishPromise
 
-    expect(mocks.serializedError).toBe(serializePublicError(toolError))
+    expect(mocks.serializedError).toBe(serializeToolFailure(toolError))
     expect(mocks.span.update).not.toHaveBeenCalled()
     expect(mocks.span.end).toHaveBeenCalledOnce()
     expect(mocks.forceFlush).toHaveBeenCalledOnce()

@@ -1,5 +1,6 @@
 import { type JSONValue, tool, UIToolInvocation } from 'ai'
 
+import { ToolFailureError } from '@/lib/errors/tool-error'
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { SearchResults } from '@/lib/types'
 import {
@@ -139,7 +140,7 @@ export function createSearchTool(fullModel: string) {
       } catch (error) {
         console.error('Search API error:', error)
         // Re-throw the error to let AI SDK handle it properly
-        throw error instanceof Error ? error : new Error('Unknown search error')
+        throw new ToolFailureError('search', error)
       }
 
       // No citationMap is attached: it fully duplicated `results`

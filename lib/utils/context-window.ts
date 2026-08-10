@@ -3,6 +3,8 @@ import { getEncoding, type TiktokenEncoding } from 'js-tiktoken'
 
 import { Model } from '../types/models'
 
+import { estimateAttachmentTokens } from './attachment-tokens'
+
 interface ModelContextInfo {
   contextWindow: number
   outputTokens: number
@@ -159,7 +161,22 @@ function estimateTokenCount(
   modelId?: string
 ): number {
   const text = extractTextContent(content)
-  if (!text) return 0
+  const attachmentTokens = Array.isArray(content)
+    ? content.reduce((total, part) => {
+        if (part.type !== 'file') return total
+
+        return (
+          total +
+          estimateAttachmentTokens({
+            mediaType: part.mediaType,
+            size:
+              part.data instanceof Uint8Array ? part.data.byteLength : undefined
+          })
+        )
+      }, 0)
+    : 0
+
+  if (!text) return attachmentTokens
 
   // Try to use tiktoken for accurate counting
   if (modelId) {
@@ -169,7 +186,7 @@ function estimateTokenCount(
         const tokens = encoder.encode(text)
         const tokenCount = tokens.length
         const overhead = 4 // Message formatting tokens
-        return tokenCount + overhead
+        return tokenCount + overhead + attachmentTokens
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
           console.warn(
@@ -186,7 +203,7 @@ function estimateTokenCount(
   const baseCount = Math.ceil(text.length / 4)
   const overhead = 4 // Message formatting tokens
 
-  return baseCount + overhead
+  return baseCount + overhead + attachmentTokens
 }
 
 /**
