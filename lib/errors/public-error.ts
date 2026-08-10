@@ -7,6 +7,7 @@ export type PublicErrorCode =
   | 'bad_request'
   | 'context_length'
   | 'forbidden'
+  | 'malformed_request'
   | 'model_unavailable'
   | 'provider_auth'
   | 'provider_billing'
@@ -45,11 +46,18 @@ type ErrorSnapshot = {
 const DEFAULT_PUBLIC_ERROR_MESSAGE =
   'We could not generate a response. Please try again.'
 
+const MALFORMED_REQUEST_MESSAGE =
+  'This conversation could not be sent to the model. Please start a new chat.'
+
+const MALFORMED_REQUEST_DETAILS =
+  'Retrying this message will fail the same way.'
+
 const PUBLIC_ERROR_CODES: ReadonlySet<string> = new Set([
   'auth_required',
   'bad_request',
   'context_length',
   'forbidden',
+  'malformed_request',
   'model_unavailable',
   'provider_auth',
   'provider_billing',
@@ -112,6 +120,13 @@ const CONTEXT_LENGTH_PATTERNS = [
   /maximum context/i,
   /token limit/i,
   /too many tokens/i
+]
+
+// Matched against the provider's own signature only: the prose form
+// "Invalid JSON response" is an upstream-fetch message, not this failure.
+const MALFORMED_REQUEST_PATTERNS = [
+  /failed to parse JSON/i,
+  /\binvalid_json\b/i
 ]
 
 const MODEL_UNAVAILABLE_PATTERNS = [
@@ -344,6 +359,16 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
     }
   }
 
+  if (status === 400 && matchesAny(combined, MALFORMED_REQUEST_PATTERNS)) {
+    return {
+      code: 'malformed_request' as const,
+      type: 'general' as const,
+      error: MALFORMED_REQUEST_MESSAGE,
+      details: MALFORMED_REQUEST_DETAILS,
+      retryable: false
+    }
+  }
+
   if (status === 400) {
     return {
       code: 'bad_request' as const,
@@ -385,6 +410,20 @@ function isToolFailurePayload(message: string, code: PublicErrorCode): boolean {
   return code === 'tool_failed' && isToolFailureMessage(message)
 }
 
+/**
+ * The client re-parses the serialized payload, and that second pass carries
+ * neither the provider status nor its signature, so the copy would fall back to
+ * the generic retry message while the details still said retrying is futile.
+ * Only this module's own copy is honoured, for the same provenance reason as
+ * `isToolFailurePayload`.
+ */
+function isMalformedRequestPayload(
+  message: string,
+  code: PublicErrorCode
+): boolean {
+  return code === 'malformed_request' && message === MALFORMED_REQUEST_MESSAGE
+}
+
 function isIntentionalPublicPayload(
   value: Record<string, unknown>,
   code: PublicErrorCode
@@ -418,7 +457,8 @@ function fromParsedPayload(
   const type = asPublicErrorType(value.type) ?? typeForCode(code)
   const preserveMessage =
     isIntentionalPublicPayload(value, code) ||
-    isToolFailurePayload(message, code)
+    isToolFailurePayload(message, code) ||
+    isMalformedRequestPayload(message, code)
 
   return {
     error: preserveMessage ? message : classification.error,
