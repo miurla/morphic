@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   getToolFailureMessage,
+  INVALID_URL_SENTINEL,
   isToolFailureError,
   isToolFailureMessage,
   serializeToolFailure,
@@ -9,6 +10,19 @@ import {
 } from '@/lib/errors/tool-error'
 
 describe('tool error mapping', () => {
+  it('maps an invalid fetch URL to non-retryable scoped copy', () => {
+    const expected = 'The link is not a valid web address.'
+    const error = new ToolFailureError('fetch', INVALID_URL_SENTINEL)
+
+    expect(getToolFailureMessage(error)).toBe(expected)
+    // Membership is what lets the copy survive the client's re-parse.
+    expect(isToolFailureMessage(expected)).toBe(true)
+    expect(JSON.parse(serializeToolFailure(error))).toMatchObject({
+      error: expected,
+      retryable: false
+    })
+  })
+
   it.each([
     ['HTTP 403: Forbidden', 'The page refused the request.'],
     ['Forbidden by upstream', 'The page refused the request.'],

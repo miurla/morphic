@@ -1,12 +1,27 @@
 import { tool, UIToolInvocation } from 'ai'
 
-import { ToolFailureError } from '@/lib/errors/tool-error'
+import { INVALID_URL_SENTINEL, ToolFailureError } from '@/lib/errors/tool-error'
 import { fetchSchema } from '@/lib/schema/fetch'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 import { logToolPayload } from '@/lib/utils/usage-logging'
 
 const CONTENT_CHARACTER_LIMIT = 50000
 const TITLE_CHARACTER_LIMIT = 100
+
+// The model sometimes fills this argument with a description of what it wants
+// rather than an address, so nothing downstream can assume it is one.
+function assertFetchableUrl(url: string): void {
+  let protocol: string | undefined
+  try {
+    protocol = new URL(url).protocol
+  } catch {
+    // Unparseable is rejected the same way a wrong protocol is.
+  }
+
+  if (protocol !== 'http:' && protocol !== 'https:') {
+    throw new ToolFailureError('fetch', INVALID_URL_SENTINEL)
+  }
+}
 
 async function fetchRegularData(url: string): Promise<SearchResultsType> {
   try {
@@ -164,6 +179,8 @@ export const fetchTool = tool({
     'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. IMPORTANT: "regular" type does NOT support PDFs and will fail on PDF URLs. Use "api" type when you need: 1) PDF content extraction (required for .pdf URLs), 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina or Tavily API keys and uses Jina Reader if available, otherwise falls back to Tavily Extract.',
   inputSchema: fetchSchema,
   async *execute({ url, type = 'regular' }) {
+    assertFetchableUrl(url)
+
     // Yield initial fetching state
     yield {
       state: 'fetching' as const,
