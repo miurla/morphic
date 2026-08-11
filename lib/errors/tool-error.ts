@@ -2,6 +2,14 @@ import type { PublicErrorPayload } from './public-error'
 
 export type ToolName = 'fetch' | 'search'
 
+/**
+ * Raised by the fetch tool when its argument is not an address at all, so the
+ * classifier can tell that case apart from a page that really did fail. The
+ * platform's own text embeds the rejected value, which would otherwise put a
+ * model-authored string into the trace and into the copy shown to the user.
+ */
+export const INVALID_URL_SENTINEL = 'Invalid fetch URL.'
+
 // What the failure happened to. The whole point of this module is that it is
 // never the user and never the AI service.
 const SUBJECT: Record<ToolName, string> = {
@@ -62,6 +70,7 @@ const RATE_LIMITED = (subject: string) =>
 const UNAVAILABLE = (subject: string) =>
   `${subject} is temporarily unavailable. Please try again shortly.`
 const TOO_SLOW = (subject: string) => `${subject} took too long to respond.`
+const INVALID_URL = 'The link is not a valid web address.'
 const UNREADABLE_TYPE = 'The page is not in a readable text format.'
 const NO_CONTENT = 'The page did not return any readable content.'
 const FETCH_FALLBACK = 'The page could not be read.'
@@ -83,6 +92,7 @@ export const TOOL_FAILURE_MESSAGES: ReadonlySet<string> = new Set([
     UNAVAILABLE(subject),
     TOO_SLOW(subject)
   ]),
+  INVALID_URL,
   UNREADABLE_TYPE,
   NO_CONTENT,
   FETCH_FALLBACK,
@@ -100,6 +110,10 @@ function classifyToolFailure(error: ToolFailureError): {
   const message = error.originalMessage
   const status = error.status
   const subject = SUBJECT[error.toolName]
+
+  if (error.toolName === 'fetch' && message === INVALID_URL_SENTINEL) {
+    return { message: INVALID_URL, retryable: false }
+  }
 
   if (status === 403 || /\b403\b|\bforbidden\b/i.test(message)) {
     return { message: REFUSED(subject), retryable: false }
