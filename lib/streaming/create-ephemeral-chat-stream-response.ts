@@ -64,11 +64,18 @@ export async function createEphemeralChatStreamResponse(
     let hasStreamError = false
     let hasEmptyResponse = false
     let streamError: unknown
+    // Sampled where the failure happens: the client can disconnect before the
+    // span is closed, and by then the signal no longer says whether the user
+    // cancelled this turn or the failure was the model's own.
+    let streamErrorWasCancelled = false
 
     const endTracing = async () => {
       if (rootSpan) {
         if (hasStreamError) {
-          const update = buildStreamErrorSpanUpdate(streamError, abortSignal)
+          const update = buildStreamErrorSpanUpdate(
+            streamError,
+            streamErrorWasCancelled
+          )
           if (update) rootSpan.update(update)
         } else if (hasEmptyResponse) {
           rootSpan.update({
@@ -112,6 +119,7 @@ export async function createEphemeralChatStreamResponse(
         onError: ({ error }) => {
           hasStreamError = true
           streamError = error
+          streamErrorWasCancelled = abortSignal?.aborted ?? false
         },
         experimental_transform: smoothStream({ chunking: 'word' }),
         ...(isUsageLogging() && {
@@ -165,6 +173,7 @@ export async function createEphemeralChatStreamResponse(
     } catch (error) {
       hasStreamError = true
       streamError = error
+      streamErrorWasCancelled = abortSignal?.aborted ?? false
       await endTracing()
       logAPICallErrorDiagnostics(error)
       console.error('Ephemeral stream execution error:', error)

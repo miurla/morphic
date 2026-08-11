@@ -83,33 +83,26 @@ describe('buildStreamErrorShape', () => {
   })
 })
 
-function createAbortedSignal(): AbortSignal {
-  const controller = new AbortController()
-  controller.abort()
-
-  return controller.signal
-}
-
 describe('buildStreamErrorSpanUpdate', () => {
   it('returns null for an aborted turn', () => {
     const error = new Error('request stopped')
     error.name = 'AbortError'
 
-    expect(buildStreamErrorSpanUpdate(error, createAbortedSignal())).toBeNull()
+    expect(buildStreamErrorSpanUpdate(error, true)).toBeNull()
   })
 
-  it('keeps an abort-named failure on the error surface while the request signal is live', () => {
+  it('keeps an abort-named failure on the error surface when the request was not cancelled', () => {
     const error = new Error('upstream timed out')
     error.name = 'AbortError'
 
-    expect(
-      buildStreamErrorSpanUpdate(error, new AbortController().signal)?.level
-    ).toBe('ERROR')
-    expect(buildStreamErrorSpanUpdate(error)?.level).toBe('ERROR')
+    expect(buildStreamErrorSpanUpdate(error, false)?.level).toBe('ERROR')
   })
 
   it('carries no metadata for a classified failure', () => {
-    const update = buildStreamErrorSpanUpdate(new Error('rate limit exceeded'))
+    const update = buildStreamErrorSpanUpdate(
+      new Error('rate limit exceeded'),
+      false
+    )
 
     expect(update?.level).toBe('ERROR')
     expect(update?.statusMessage).toContain('provider_rate_limit')

@@ -149,6 +149,26 @@ describe('createChatStreamResponse', () => {
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
   })
 
+  it('marks the span as failed when the client disconnects after the failure', async () => {
+    const streamError = new Error('upstream stopped')
+    streamError.name = 'AbortError'
+    const controller = new AbortController()
+    mocks.stream.mockImplementation(async (options: StreamOptions) => {
+      options.onError({ error: streamError })
+      controller.abort()
+      return createFakeResult()
+    })
+
+    await createChatStreamResponse(createConfig(controller.signal))
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      level: 'ERROR',
+      statusMessage: describeStreamError(streamError),
+      metadata: { streamErrorShape: { name: 'AbortError' } }
+    })
+  })
+
   it('attaches shape metadata for an unclassified stream error', async () => {
     const streamError = Object.assign(new Error('private failure detail'), {
       name: 'StreamFailure',
