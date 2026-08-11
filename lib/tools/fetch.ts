@@ -9,16 +9,11 @@ const CONTENT_CHARACTER_LIMIT = 50000
 const TITLE_CHARACTER_LIMIT = 100
 
 // The model sometimes fills this argument with a description of what it wants
-// rather than an address, so nothing downstream can assume it is one.
+// rather than an address, so nothing downstream can assume it is one. Parsing
+// alone is too weak a test: `new URL` reads `https:some-description` as a host
+// named after the description, which would still be looked up.
 function assertFetchableUrl(url: string): void {
-  let protocol: string | undefined
-  try {
-    protocol = new URL(url).protocol
-  } catch {
-    // Unparseable is rejected the same way a wrong protocol is.
-  }
-
-  if (protocol !== 'http:' && protocol !== 'https:') {
+  if (!/^https?:\/\//i.test(url) || !URL.canParse(url)) {
     throw new ToolFailureError('fetch', INVALID_URL_SENTINEL)
   }
 }

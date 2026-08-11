@@ -42,7 +42,10 @@ describe('fetch tool errors', () => {
   it.each([
     'URL To Web design Template Features',
     'example.com/page',
-    'file:///etc/passwd'
+    'file:///etc/passwd',
+    // `new URL` reads this as the host `url-to-web-design-template-features`.
+    'https:URL-To-Web-design-Template-Features',
+    'https://'
   ])('rejects invalid URL %s without a network call', async url => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
