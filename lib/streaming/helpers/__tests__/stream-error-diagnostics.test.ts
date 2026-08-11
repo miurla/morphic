@@ -83,12 +83,29 @@ describe('buildStreamErrorShape', () => {
   })
 })
 
+function createAbortedSignal(): AbortSignal {
+  const controller = new AbortController()
+  controller.abort()
+
+  return controller.signal
+}
+
 describe('buildStreamErrorSpanUpdate', () => {
   it('returns null for an aborted turn', () => {
     const error = new Error('request stopped')
     error.name = 'AbortError'
 
-    expect(buildStreamErrorSpanUpdate(error)).toBeNull()
+    expect(buildStreamErrorSpanUpdate(error, createAbortedSignal())).toBeNull()
+  })
+
+  it('keeps an abort-named failure on the error surface while the request signal is live', () => {
+    const error = new Error('upstream timed out')
+    error.name = 'AbortError'
+
+    expect(
+      buildStreamErrorSpanUpdate(error, new AbortController().signal)?.level
+    ).toBe('ERROR')
+    expect(buildStreamErrorSpanUpdate(error)?.level).toBe('ERROR')
   })
 
   it('carries no metadata for a classified failure', () => {

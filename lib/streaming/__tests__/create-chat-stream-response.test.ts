@@ -103,7 +103,14 @@ function createFakeResult(isAborted = false) {
   }
 }
 
-function createConfig() {
+function createAbortedSignal(): AbortSignal {
+  const controller = new AbortController()
+  controller.abort()
+
+  return controller.signal
+}
+
+function createConfig(abortSignal: AbortSignal = new AbortController().signal) {
   return {
     message: {
       id: 'message-id',
@@ -113,7 +120,7 @@ function createConfig() {
     model: { providerId: 'openai', id: 'gpt-4o-mini' } as any,
     chatId: 'chat-id',
     userId: 'user-id',
-    abortSignal: new AbortController().signal,
+    abortSignal,
     isNewChat: true,
     searchMode: 'quick' as const
   }
@@ -134,7 +141,7 @@ describe('createChatStreamResponse', () => {
       return createFakeResult(true)
     })
 
-    await createChatStreamResponse(createConfig())
+    await createChatStreamResponse(createConfig(createAbortedSignal()))
     await mocks.finishPromise
 
     expect(mocks.span.update).not.toHaveBeenCalled()

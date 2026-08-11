@@ -101,7 +101,7 @@ export async function createChatStreamResponse(
     const endTracing = async () => {
       if (rootSpan) {
         if (hasStreamError) {
-          const update = buildStreamErrorSpanUpdate(streamError)
+          const update = buildStreamErrorSpanUpdate(streamError, abortSignal)
           if (update) rootSpan.update(update)
         } else if (hasEmptyResponse) {
           rootSpan.update({

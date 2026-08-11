@@ -91,10 +91,15 @@ export function buildStreamErrorShape(
   }
 }
 
-export function buildStreamErrorSpanUpdate(error: unknown) {
-  // A cancelled turn is the user walking away, not a failure. Recording it as
-  // an error would make ordinary behaviour indistinguishable from a real one.
-  if (isStreamAbortError(error)) return null
+export function buildStreamErrorSpanUpdate(
+  error: unknown,
+  abortSignal?: AbortSignal
+) {
+  // A cancelled turn is the user walking away, not a failure. The name alone
+  // does not prove that: an internal timeout aborts its own signal and raises
+  // the same one, so the request's signal has to agree before the failure is
+  // dropped from the error surface.
+  if (abortSignal?.aborted && isStreamAbortError(error)) return null
 
   const apiCallDiagnostics = buildAPICallErrorDiagnostics(error)
   const streamErrorShape = buildStreamErrorShape(error)

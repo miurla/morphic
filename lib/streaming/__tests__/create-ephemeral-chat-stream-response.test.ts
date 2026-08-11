@@ -98,7 +98,14 @@ function createFakeResult({
   }
 }
 
-function createConfig() {
+function createAbortedSignal(): AbortSignal {
+  const controller = new AbortController()
+  controller.abort()
+
+  return controller.signal
+}
+
+function createConfig(abortSignal: AbortSignal = new AbortController().signal) {
   return {
     messages: [
       {
@@ -108,7 +115,7 @@ function createConfig() {
       }
     ],
     model: { providerId: 'openai', id: 'gpt-4o-mini' } as any,
-    abortSignal: new AbortController().signal,
+    abortSignal,
     searchMode: 'quick' as const
   }
 }
@@ -183,7 +190,7 @@ describe('createEphemeralChatStreamResponse', () => {
       return createFakeResult({ isAborted: true })
     })
 
-    await createEphemeralChatStreamResponse(createConfig())
+    await createEphemeralChatStreamResponse(createConfig(createAbortedSignal()))
     await mocks.finishPromise
 
     expect(mocks.span.update).not.toHaveBeenCalled()
@@ -206,7 +213,7 @@ describe('createEphemeralChatStreamResponse', () => {
   it('does not update the span for a response with text', async () => {
     mocks.stream.mockResolvedValue(createFakeResult())
 
-    await createEphemeralChatStreamResponse(createConfig())
+    await createEphemeralChatStreamResponse(createConfig(createAbortedSignal()))
     await mocks.finishPromise
 
     expect(mocks.span.update).not.toHaveBeenCalled()
@@ -217,7 +224,7 @@ describe('createEphemeralChatStreamResponse', () => {
       createFakeResult({ parts: [], isAborted: true })
     )
 
-    await createEphemeralChatStreamResponse(createConfig())
+    await createEphemeralChatStreamResponse(createConfig(createAbortedSignal()))
     await mocks.finishPromise
 
     expect(mocks.span.update).not.toHaveBeenCalled()
