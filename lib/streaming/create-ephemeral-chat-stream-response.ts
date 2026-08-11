@@ -26,15 +26,12 @@ import { compactHistoricalMessages } from './helpers/compact-historical-messages
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { dedupeAttachments } from './helpers/dedupe-attachments'
-import { describeStreamError } from './helpers/describe-stream-error'
 import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
   isEmptyResponse
 } from './helpers/is-empty-response'
-import {
-  buildAPICallErrorDiagnostics,
-  logAPICallErrorDiagnostics
-} from './helpers/log-api-call-error'
+import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
+import { buildStreamErrorSpanUpdate } from './helpers/stream-error-diagnostics'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import { BaseStreamConfig } from './types'
 
@@ -71,12 +68,8 @@ export async function createEphemeralChatStreamResponse(
     const endTracing = async () => {
       if (rootSpan) {
         if (hasStreamError) {
-          const apiCallDiagnostics = buildAPICallErrorDiagnostics(streamError)
-          rootSpan.update({
-            level: 'ERROR',
-            statusMessage: describeStreamError(streamError),
-            ...(apiCallDiagnostics && { metadata: { apiCallDiagnostics } })
-          })
+          const update = buildStreamErrorSpanUpdate(streamError)
+          if (update) rootSpan.update(update)
         } else if (hasEmptyResponse) {
           rootSpan.update({
             level: 'ERROR',

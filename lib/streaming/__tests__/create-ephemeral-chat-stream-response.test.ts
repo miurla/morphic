@@ -148,8 +148,11 @@ describe('createEphemeralChatStreamResponse', () => {
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
   })
 
-  it('marks the span as failed for a stream-level error', async () => {
-    const streamError = new Error('stream failed')
+  it('attaches shape metadata for an unclassified stream error', async () => {
+    const streamError = Object.assign(new Error('stream failed'), {
+      name: 'StreamFailure',
+      code: 'STREAM_CODE'
+    })
     mocks.stream.mockImplementation(async (options: StreamOptions) => {
       options.onError({ error: streamError })
       return createFakeResult()
@@ -160,8 +163,30 @@ describe('createEphemeralChatStreamResponse', () => {
 
     expect(mocks.span.update).toHaveBeenCalledWith({
       level: 'ERROR',
-      statusMessage: describeStreamError(streamError)
+      statusMessage: describeStreamError(streamError),
+      metadata: {
+        streamErrorShape: {
+          name: 'StreamFailure',
+          code: 'STREAM_CODE'
+        }
+      }
     })
+    expect(mocks.span.end).toHaveBeenCalledOnce()
+    expect(mocks.forceFlush).toHaveBeenCalledOnce()
+  })
+
+  it('does not mark the span as failed for an aborted stream error', async () => {
+    const streamError = new Error('request stopped')
+    streamError.name = 'AbortError'
+    mocks.stream.mockImplementation(async (options: StreamOptions) => {
+      options.onError({ error: streamError })
+      return createFakeResult({ isAborted: true })
+    })
+
+    await createEphemeralChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(mocks.span.update).not.toHaveBeenCalled()
     expect(mocks.span.end).toHaveBeenCalledOnce()
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
   })
@@ -211,7 +236,10 @@ describe('createEphemeralChatStreamResponse', () => {
     expect(mocks.span.update).toHaveBeenCalledOnce()
     expect(mocks.span.update).toHaveBeenCalledWith({
       level: 'ERROR',
-      statusMessage: describeStreamError(streamError)
+      statusMessage: describeStreamError(streamError),
+      metadata: {
+        streamErrorShape: { name: 'Error' }
+      }
     })
   })
 })
