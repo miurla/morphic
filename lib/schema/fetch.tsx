@@ -2,7 +2,9 @@ import { DeepPartial } from 'ai'
 import { z } from 'zod'
 
 export const fetchSchema = z.object({
-  url: z.string().describe('The URL to retrieve content from'),
+  url: z
+    .string()
+    .describe('An absolute http:// or https:// URL to retrieve content from'),
   type: z
     .enum(['regular', 'api'])
     .default('regular')
