@@ -47,6 +47,7 @@ vi.mock('@/lib/utils/usage-logging', () => ({
   logUsage: vi.fn()
 }))
 
+import { researcher } from '@/lib/agents/researcher'
 import { serializeToolFailure, ToolFailureError } from '@/lib/errors/tool-error'
 import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-ephemeral-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
@@ -115,6 +116,7 @@ function createConfig(abortSignal: AbortSignal = new AbortController().signal) {
       }
     ],
     model: { providerId: 'openai', id: 'gpt-4o-mini' } as any,
+    chatId: 'chat-id',
     abortSignal,
     searchMode: 'quick' as const
   }
@@ -126,6 +128,17 @@ describe('createEphemeralChatStreamResponse', () => {
     mocks.finishPromise = Promise.resolve()
     mocks.serializedError = undefined
     vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  it('passes the chat ID to the researcher', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(researcher).toHaveBeenCalledWith(
+      expect.objectContaining({ chatId: 'chat-id' })
+    )
   })
 
   it('returns 400 when messages are missing', async () => {

@@ -70,10 +70,12 @@ function wrapSearchToolForQuickMode<
 export function createResearcher({
   model,
   modelConfig,
+  chatId,
   searchMode = 'adaptive'
 }: {
   model: string
   modelConfig?: Model
+  chatId?: string
   searchMode?: SearchMode
 }) {
   try {
@@ -123,6 +125,17 @@ export function createResearcher({
       ...todoTools
     } as ResearcherTools
 
+    const providerOptions =
+      modelConfig?.providerId === 'openai' && chatId
+        ? {
+            ...modelConfig.providerOptions,
+            openai: {
+              ...modelConfig.providerOptions?.openai,
+              promptCacheKey: chatId
+            }
+          }
+        : modelConfig?.providerOptions
+
     // Create ToolLoopAgent with all configuration
     const agent = new ToolLoopAgent({
       model: getModel(model),
@@ -130,9 +143,7 @@ export function createResearcher({
       tools,
       activeTools: activeToolsList,
       stopWhen: stepCountIs(maxSteps),
-      ...(modelConfig?.providerOptions && {
-        providerOptions: modelConfig.providerOptions
-      }),
+      ...(providerOptions && { providerOptions }),
       // Spans join the parent Langfuse trace via OTel context propagation
       experimental_telemetry: {
         isEnabled: isTracingEnabled(),

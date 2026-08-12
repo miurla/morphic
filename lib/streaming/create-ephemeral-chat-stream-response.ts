@@ -107,6 +107,7 @@ export async function createEphemeralChatStreamResponse(
       const researchAgent = researcher({
         model: `${model.providerId}:${model.id}`,
         modelConfig: model,
+        chatId,
         searchMode
       })
 
