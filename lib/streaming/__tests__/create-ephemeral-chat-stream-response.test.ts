@@ -47,6 +47,7 @@ vi.mock('@/lib/utils/usage-logging', () => ({
   logUsage: vi.fn()
 }))
 
+import { researcher } from '@/lib/agents/researcher'
 import { serializeToolFailure, ToolFailureError } from '@/lib/errors/tool-error'
 import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-ephemeral-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
@@ -98,7 +99,14 @@ function createFakeResult({
   }
 }
 
-function createConfig() {
+function createAbortedSignal(): AbortSignal {
+  const controller = new AbortController()
+  controller.abort()
+
+  return controller.signal
+}
+
+function createConfig(abortSignal: AbortSignal = new AbortController().signal) {
   return {
     messages: [
       {
@@ -108,7 +116,8 @@ function createConfig() {
       }
     ],
     model: { providerId: 'openai', id: 'gpt-4o-mini' } as any,
-    abortSignal: new AbortController().signal,
+    chatId: 'chat-id',
+    abortSignal,
     searchMode: 'quick' as const
   }
 }
@@ -119,6 +128,17 @@ describe('createEphemeralChatStreamResponse', () => {
     mocks.finishPromise = Promise.resolve()
     mocks.serializedError = undefined
     vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  it('passes the chat ID to the researcher', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(researcher).toHaveBeenCalledWith(
+      expect.objectContaining({ chatId: 'chat-id' })
+    )
   })
 
   it('returns 400 when messages are missing', async () => {
@@ -148,8 +168,11 @@ describe('createEphemeralChatStreamResponse', () => {
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
   })
 
-  it('marks the span as failed for a stream-level error', async () => {
-    const streamError = new Error('stream failed')
+  it('attaches shape metadata for an unclassified stream error', async () => {
+    const streamError = Object.assign(new Error('stream failed'), {
+      name: 'StreamFailure',
+      code: 'STREAM_CODE'
+    })
     mocks.stream.mockImplementation(async (options: StreamOptions) => {
       options.onError({ error: streamError })
       return createFakeResult()
@@ -160,8 +183,30 @@ describe('createEphemeralChatStreamResponse', () => {
 
     expect(mocks.span.update).toHaveBeenCalledWith({
       level: 'ERROR',
-      statusMessage: describeStreamError(streamError)
+      statusMessage: describeStreamError(streamError),
+      metadata: {
+        streamErrorShape: {
+          name: 'StreamFailure',
+          code: 'STREAM_CODE'
+        }
+      }
     })
+    expect(mocks.span.end).toHaveBeenCalledOnce()
+    expect(mocks.forceFlush).toHaveBeenCalledOnce()
+  })
+
+  it('does not mark the span as failed for an aborted stream error', async () => {
+    const streamError = new Error('request stopped')
+    streamError.name = 'AbortError'
+    mocks.stream.mockImplementation(async (options: StreamOptions) => {
+      options.onError({ error: streamError })
+      return createFakeResult({ isAborted: true })
+    })
+
+    await createEphemeralChatStreamResponse(createConfig(createAbortedSignal()))
+    await mocks.finishPromise
+
+    expect(mocks.span.update).not.toHaveBeenCalled()
     expect(mocks.span.end).toHaveBeenCalledOnce()
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
   })
@@ -181,7 +226,7 @@ describe('createEphemeralChatStreamResponse', () => {
   it('does not update the span for a response with text', async () => {
     mocks.stream.mockResolvedValue(createFakeResult())
 
-    await createEphemeralChatStreamResponse(createConfig())
+    await createEphemeralChatStreamResponse(createConfig(createAbortedSignal()))
     await mocks.finishPromise
 
     expect(mocks.span.update).not.toHaveBeenCalled()
@@ -192,7 +237,7 @@ describe('createEphemeralChatStreamResponse', () => {
       createFakeResult({ parts: [], isAborted: true })
     )
 
-    await createEphemeralChatStreamResponse(createConfig())
+    await createEphemeralChatStreamResponse(createConfig(createAbortedSignal()))
     await mocks.finishPromise
 
     expect(mocks.span.update).not.toHaveBeenCalled()
@@ -211,7 +256,10 @@ describe('createEphemeralChatStreamResponse', () => {
     expect(mocks.span.update).toHaveBeenCalledOnce()
     expect(mocks.span.update).toHaveBeenCalledWith({
       level: 'ERROR',
-      statusMessage: describeStreamError(streamError)
+      statusMessage: describeStreamError(streamError),
+      metadata: {
+        streamErrorShape: { name: 'Error' }
+      }
     })
   })
 })

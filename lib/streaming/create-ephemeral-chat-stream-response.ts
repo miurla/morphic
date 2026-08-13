@@ -26,15 +26,12 @@ import { compactHistoricalMessages } from './helpers/compact-historical-messages
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { dedupeAttachments } from './helpers/dedupe-attachments'
-import { describeStreamError } from './helpers/describe-stream-error'
 import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
   isEmptyResponse
 } from './helpers/is-empty-response'
-import {
-  buildAPICallErrorDiagnostics,
-  logAPICallErrorDiagnostics
-} from './helpers/log-api-call-error'
+import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
+import { buildStreamErrorSpanUpdate } from './helpers/stream-error-diagnostics'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import { BaseStreamConfig } from './types'
 
@@ -67,16 +64,19 @@ export async function createEphemeralChatStreamResponse(
     let hasStreamError = false
     let hasEmptyResponse = false
     let streamError: unknown
+    // Sampled where the failure happens: the client can disconnect before the
+    // span is closed, and by then the signal no longer says whether the user
+    // cancelled this turn or the failure was the model's own.
+    let streamErrorWasCancelled = false
 
     const endTracing = async () => {
       if (rootSpan) {
         if (hasStreamError) {
-          const apiCallDiagnostics = buildAPICallErrorDiagnostics(streamError)
-          rootSpan.update({
-            level: 'ERROR',
-            statusMessage: describeStreamError(streamError),
-            ...(apiCallDiagnostics && { metadata: { apiCallDiagnostics } })
-          })
+          const update = buildStreamErrorSpanUpdate(
+            streamError,
+            streamErrorWasCancelled
+          )
+          if (update) rootSpan.update(update)
         } else if (hasEmptyResponse) {
           rootSpan.update({
             level: 'ERROR',
@@ -107,6 +107,7 @@ export async function createEphemeralChatStreamResponse(
       const researchAgent = researcher({
         model: `${model.providerId}:${model.id}`,
         modelConfig: model,
+        chatId,
         searchMode
       })
 
@@ -119,6 +120,7 @@ export async function createEphemeralChatStreamResponse(
         onError: ({ error }) => {
           hasStreamError = true
           streamError = error
+          streamErrorWasCancelled = abortSignal?.aborted ?? false
         },
         experimental_transform: smoothStream({ chunking: 'word' }),
         ...(isUsageLogging() && {
@@ -172,6 +174,7 @@ export async function createEphemeralChatStreamResponse(
     } catch (error) {
       hasStreamError = true
       streamError = error
+      streamErrorWasCancelled = abortSignal?.aborted ?? false
       await endTracing()
       logAPICallErrorDiagnostics(error)
       console.error('Ephemeral stream execution error:', error)
