@@ -25,10 +25,24 @@ function normalizeInlineText(value: string): string {
     .trim()
 }
 
+function sliceWithoutSplittingSurrogatePair(
+  value: string,
+  maxChars: number
+): string {
+  if (value.length <= maxChars) return value
+
+  const sliced = value.slice(0, maxChars)
+  const lastCodeUnit = sliced.charCodeAt(sliced.length - 1)
+
+  return lastCodeUnit >= 0xd800 && lastCodeUnit <= 0xdbff
+    ? sliced.slice(0, -1)
+    : sliced
+}
+
 function truncateInlineText(value: string, maxChars: number): string {
   if (value.length <= maxChars) return value
-  if (maxChars <= 1) return value.slice(0, maxChars)
-  return `${value.slice(0, maxChars - 1)}…`
+  if (maxChars <= 1) return sliceWithoutSplittingSurrogatePair(value, maxChars)
+  return `${sliceWithoutSplittingSurrogatePair(value, maxChars - 1)}…`
 }
 
 function isSafeWebUrl(value: string): boolean {
@@ -87,7 +101,11 @@ function createSourceContext(sources: SearchResultItem[]): string | undefined {
   if (sources.length === 0) return undefined
 
   const normalizedSources = sources.map(source => ({
-    title: normalizeInlineText(source.title).slice(0, 200) || 'Untitled source',
+    title:
+      sliceWithoutSplittingSurrogatePair(
+        normalizeInlineText(source.title),
+        200
+      ) || 'Untitled source',
     url: source.url,
     // Older Brave results used `description`; keep the fallback for persisted
     // conversations while all new providers normalize excerpts to `content`.
@@ -100,7 +118,10 @@ function createSourceContext(sources: SearchResultItem[]): string | undefined {
 
   const render = (excerptChars: number) => {
     const entries = normalizedSources.map((source, index) => {
-      const excerpt = source.excerpt.slice(0, excerptChars)
+      const excerpt = sliceWithoutSplittingSurrogatePair(
+        source.excerpt,
+        excerptChars
+      )
 
       return [
         `${index + 1}. ${source.title}`,
