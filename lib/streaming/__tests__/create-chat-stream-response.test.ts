@@ -66,6 +66,7 @@ vi.mock('@/lib/utils/usage-logging', () => ({
   logUsage: vi.fn()
 }))
 
+import { researcher } from '@/lib/agents/researcher'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
 
@@ -131,6 +132,17 @@ describe('createChatStreamResponse', () => {
     vi.clearAllMocks()
     mocks.finishPromise = Promise.resolve()
     vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  it('passes the chat ID to the researcher', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(researcher).toHaveBeenCalledWith(
+      expect.objectContaining({ chatId: 'chat-id' })
+    )
   })
 
   it('does not mark the span as failed for an aborted stream error', async () => {
