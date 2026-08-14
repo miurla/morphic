@@ -51,7 +51,7 @@ export class TavilySearchProvider extends BaseSearchProvider {
       console.error(
         `Tavily API error: ${response.status} ${response.statusText}`
       )
-      throw new Error('Search failed')
+      throw this.createHttpError(response, 'Tavily')
     }
 
     const data = await response.json()

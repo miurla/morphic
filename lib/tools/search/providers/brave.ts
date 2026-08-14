@@ -4,7 +4,7 @@ import {
   SerperSearchResultItem
 } from '@/lib/types'
 
-import { SearchProvider } from './base'
+import { BaseSearchProvider } from './base'
 
 interface BraveWebResult {
   title?: string
@@ -43,10 +43,11 @@ interface BraveImageResult {
   height?: number
 }
 
-export class BraveSearchProvider implements SearchProvider {
+export class BraveSearchProvider extends BaseSearchProvider {
   private apiKey: string | undefined
 
   constructor() {
+    super()
     this.apiKey = process.env.BRAVE_SEARCH_API_KEY
   }
 
@@ -124,7 +125,7 @@ export class BraveSearchProvider implements SearchProvider {
 
       if (!response.ok) {
         console.error(`Brave web search failed: ${response.statusText}`)
-        throw new Error('Search failed')
+        throw this.createHttpError(response, 'Brave web')
       }
 
       const data = await response.json()
@@ -161,7 +162,7 @@ export class BraveSearchProvider implements SearchProvider {
 
       if (!response.ok) {
         console.error(`Brave video search failed: ${response.statusText}`)
-        throw new Error('Search failed')
+        throw this.createHttpError(response, 'Brave video')
       }
 
       const data = await response.json()
@@ -208,7 +209,7 @@ export class BraveSearchProvider implements SearchProvider {
 
       if (!response.ok) {
         console.error(`Brave image search failed: ${response.statusText}`)
-        throw new Error('Search failed')
+        throw this.createHttpError(response, 'Brave image')
       }
 
       const data = await response.json()
