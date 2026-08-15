@@ -48,4 +48,17 @@ export abstract class BaseSearchProvider implements SearchProvider {
       )
     }
   }
+
+  protected createHttpError(
+    response: Response,
+    providerName: string
+  ): Error & { status: number } {
+    const statusText = response.statusText || 'Unknown Status'
+    return Object.assign(
+      new Error(
+        `${providerName} search failed: HTTP ${response.status}: ${statusText}`
+      ),
+      { status: response.status }
+    )
+  }
 }
