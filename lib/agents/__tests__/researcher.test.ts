@@ -134,10 +134,11 @@ describe('createResearcher', () => {
 
     expect(result.messages.at(-1)).toEqual({
       role: 'user',
-      content: [
-        { type: 'text', text: 'Deep follow-up' },
-        { type: 'text', text: RELATED_QUESTIONS_REMINDER }
-      ]
+      content: [{ type: 'text', text: RELATED_QUESTIONS_REMINDER }]
+    })
+    expect(result.messages.at(-2)).toEqual({
+      role: 'user',
+      content: 'Deep follow-up'
     })
   })
 })

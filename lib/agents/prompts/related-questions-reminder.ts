@@ -4,31 +4,21 @@ export const RELATED_QUESTIONS_REMINDER = `Response format reminder: When this t
 
 /**
  * Keeps the related-questions requirement next to the current request instead
- * of leaving it only at the start of an increasingly long conversation.
+ * of leaving it only at the start of an increasingly long conversation. It goes
+ * in a message of its own: folding it into an existing message would rewrite
+ * history that the next turn replays without it, so the prompt prefix would
+ * differ every turn and stop being cacheable.
  */
 export function appendRelatedQuestionsReminder(
   messages: ModelMessage[]
 ): ModelMessage[] {
-  const lastUserIndex = messages.findLastIndex(
-    message => message.role === 'user'
-  )
+  if (!messages.some(message => message.role === 'user')) return messages
 
-  if (lastUserIndex === -1) return messages
-
-  const userMessage = messages[lastUserIndex]
-  if (userMessage.role !== 'user') return messages
-
-  const reminderPart = {
-    type: 'text' as const,
-    text: RELATED_QUESTIONS_REMINDER
-  }
-  const content =
-    typeof userMessage.content === 'string'
-      ? [{ type: 'text' as const, text: userMessage.content }, reminderPart]
-      : [...userMessage.content, reminderPart]
-
-  const updatedMessages = [...messages]
-  updatedMessages[lastUserIndex] = { ...userMessage, content }
-
-  return updatedMessages
+  return [
+    ...messages,
+    {
+      role: 'user',
+      content: [{ type: 'text', text: RELATED_QUESTIONS_REMINDER }]
+    }
+  ]
 }
