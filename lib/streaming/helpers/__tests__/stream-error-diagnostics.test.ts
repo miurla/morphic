@@ -84,28 +84,47 @@ describe('buildStreamErrorShape', () => {
 })
 
 describe('buildStreamErrorSpanUpdate', () => {
-  it('returns null for an aborted turn', () => {
-    const error = new Error('request stopped')
-    error.name = 'AbortError'
+  it.each(['preparation', 'generation'] as const)(
+    'returns null for an aborted turn in the %s phase',
+    phase => {
+      const error = new Error('request stopped')
+      error.name = 'AbortError'
 
-    expect(buildStreamErrorSpanUpdate(error, true)).toBeNull()
-  })
+      expect(buildStreamErrorSpanUpdate(error, true, phase)).toBeNull()
+    }
+  )
+
+  it.each(['preparation', 'generation'] as const)(
+    'records the %s phase',
+    phase => {
+      const update = buildStreamErrorSpanUpdate(
+        new Error('unclassified failure'),
+        false,
+        phase
+      )
+
+      expect(update?.metadata.streamErrorPhase).toBe(phase)
+    }
+  )
 
   it('keeps an abort-named failure on the error surface when the request was not cancelled', () => {
     const error = new Error('upstream timed out')
     error.name = 'AbortError'
 
-    expect(buildStreamErrorSpanUpdate(error, false)?.level).toBe('ERROR')
+    expect(buildStreamErrorSpanUpdate(error, false, 'generation')?.level).toBe(
+      'ERROR'
+    )
   })
 
-  it('carries no metadata for a classified failure', () => {
+  it('records the phase when other diagnostics are absent', () => {
     const update = buildStreamErrorSpanUpdate(
       new Error('rate limit exceeded'),
-      false
+      false,
+      'preparation'
     )
 
     expect(update?.level).toBe('ERROR')
     expect(update?.statusMessage).toContain('provider_rate_limit')
-    expect(update).not.toHaveProperty('metadata')
+    expect(update?.metadata).toEqual({ streamErrorPhase: 'preparation' })
   })
 })

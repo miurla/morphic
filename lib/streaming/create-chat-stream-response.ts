@@ -38,7 +38,10 @@ import {
 import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
-import { buildStreamErrorSpanUpdate } from './helpers/stream-error-diagnostics'
+import {
+  buildStreamErrorSpanUpdate,
+  type StreamErrorPhase
+} from './helpers/stream-error-diagnostics'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import type { StreamContext } from './helpers/types'
 import { BaseStreamConfig } from './types'
@@ -97,6 +100,8 @@ export async function createChatStreamResponse(
     let hasStreamError = false
     let hasEmptyResponse = false
     let streamError: unknown
+    // The agent stream call is preparation until its first generation starts.
+    let streamErrorPhase: StreamErrorPhase = 'preparation'
     // Sampled where the failure happens: the client can disconnect before the
     // span is closed, and by then the signal no longer says whether the user
     // cancelled this turn or the failure was the model's own.
@@ -107,7 +112,8 @@ export async function createChatStreamResponse(
         if (hasStreamError) {
           const update = buildStreamErrorSpanUpdate(
             streamError,
-            streamErrorWasCancelled
+            streamErrorWasCancelled,
+            streamErrorPhase
           )
           if (update) rootSpan.update(update)
         } else if (hasEmptyResponse) {
@@ -209,6 +215,7 @@ export async function createChatStreamResponse(
           hasStreamError = true
           streamError = error
           streamErrorWasCancelled = abortSignal?.aborted ?? false
+          streamErrorPhase = 'generation'
         },
         experimental_transform: smoothStream({ chunking: 'word' }),
         ...(isUsageLogging() && {
