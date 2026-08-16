@@ -98,4 +98,45 @@ describe('appendRelatedQuestionsReminder', () => {
       content: 'Second answer'
     })
   })
+
+  it('never leaves two consecutive user turns for a provider that requires alternating roles', () => {
+    const messages: ModelMessage[] = [
+      { role: 'user', content: 'First question' },
+      { role: 'assistant', content: 'First answer' },
+      { role: 'user', content: 'Follow-up question' }
+    ]
+
+    const result = appendRelatedQuestionsReminder(messages, 'google')
+
+    expect(result.map(message => message.role)).toEqual([
+      'user',
+      'assistant',
+      'user'
+    ])
+    expect(result.at(-1)).toEqual({
+      role: 'user',
+      content: [
+        { type: 'text', text: 'Follow-up question' },
+        { type: 'text', text: RELATED_QUESTIONS_REMINDER }
+      ]
+    })
+    expect(messages.at(-1)).toEqual({
+      role: 'user',
+      content: 'Follow-up question'
+    })
+  })
+
+  it('uses its own message for a provider that accepts consecutive user turns', () => {
+    const messages: ModelMessage[] = [
+      { role: 'user', content: 'Follow-up question' }
+    ]
+
+    const result = appendRelatedQuestionsReminder(messages, 'openai')
+
+    expect(result.at(-1)).toEqual({
+      role: 'user',
+      content: [{ type: 'text', text: RELATED_QUESTIONS_REMINDER }]
+    })
+    expect(result.at(-2)).toBe(messages.at(-1))
+  })
 })
