@@ -96,7 +96,17 @@ export class BraveSearchProvider extends BaseSearchProvider {
       promises.push(this.searchImages(query, maxResults, results))
     }
 
-    await Promise.all(promises)
+    const settledSearches = await Promise.allSettled(promises)
+    const failedSearches = settledSearches.filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected'
+    )
+
+    if (
+      failedSearches.length > 0 &&
+      failedSearches.length === settledSearches.length
+    ) {
+      throw failedSearches[0].reason
+    }
 
     // Update total count
     results.number_of_results = results.results.length
@@ -138,6 +148,7 @@ export class BraveSearchProvider extends BaseSearchProvider {
         }))
     } catch (error) {
       console.error('Brave web search error:', error)
+      throw error
     }
   }
 
@@ -184,7 +195,7 @@ export class BraveSearchProvider extends BaseSearchProvider {
       )
     } catch (error) {
       console.error('Brave video search error:', error)
-      results.videos = []
+      throw error
     }
   }
 
@@ -223,7 +234,7 @@ export class BraveSearchProvider extends BaseSearchProvider {
       )
     } catch (error) {
       console.error('Brave image search error:', error)
-      results.images = []
+      throw error
     }
   }
 }
