@@ -69,6 +69,7 @@ vi.mock('@/lib/utils/usage-logging', () => ({
 import { researcher } from '@/lib/agents/researcher'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
+import { prepareMessages } from '@/lib/streaming/helpers/prepare-messages'
 
 type StreamOptions = {
   onError: (event: { error: unknown }) => void
@@ -177,8 +178,28 @@ describe('createChatStreamResponse', () => {
     expect(mocks.span.update).toHaveBeenCalledWith({
       level: 'ERROR',
       statusMessage: describeStreamError(streamError),
-      metadata: { streamErrorShape: { name: 'AbortError' } }
+      metadata: {
+        streamErrorPhase: 'generation',
+        streamErrorShape: { name: 'AbortError' }
+      }
     })
+  })
+
+  it('marks a failure raised before the stream as the preparation phase', async () => {
+    const prepareError = new TypeError('private failure detail')
+    vi.mocked(prepareMessages).mockRejectedValueOnce(prepareError)
+
+    await createChatStreamResponse(createConfig())
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      level: 'ERROR',
+      statusMessage: describeStreamError(prepareError),
+      metadata: {
+        streamErrorPhase: 'preparation',
+        streamErrorShape: { name: 'TypeError' }
+      }
+    })
+    expect(mocks.stream).not.toHaveBeenCalled()
   })
 
   it('attaches shape metadata for an unclassified stream error', async () => {
@@ -198,6 +219,7 @@ describe('createChatStreamResponse', () => {
       level: 'ERROR',
       statusMessage: describeStreamError(streamError),
       metadata: {
+        streamErrorPhase: 'generation',
         streamErrorShape: {
           name: 'StreamFailure',
           errno: 91

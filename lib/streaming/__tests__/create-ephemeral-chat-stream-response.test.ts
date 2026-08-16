@@ -185,6 +185,7 @@ describe('createEphemeralChatStreamResponse', () => {
       level: 'ERROR',
       statusMessage: describeStreamError(streamError),
       metadata: {
+        streamErrorPhase: 'generation',
         streamErrorShape: {
           name: 'StreamFailure',
           code: 'STREAM_CODE'
@@ -258,6 +259,7 @@ describe('createEphemeralChatStreamResponse', () => {
       level: 'ERROR',
       statusMessage: describeStreamError(streamError),
       metadata: {
+        streamErrorPhase: 'generation',
         streamErrorShape: { name: 'Error' }
       }
     })
