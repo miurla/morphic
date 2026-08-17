@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
 import { UseChatHelpers } from '@ai-sdk/react'
@@ -32,6 +32,9 @@ import {
 } from './ui/dialog'
 import { ChatShare } from './chat-share'
 import { RetryButton } from './retry-button'
+
+// Module scope so the impression survives remounts of the same message.
+const reportedFeedbackControls = new Set<string>()
 
 interface MessageActionsProps {
   message: string
@@ -71,7 +74,6 @@ export function MessageActions({
   )
   const [isSavingNote, setIsSavingNote] = useState(false)
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
-  const reportedFeedbackControlMessageId = useRef<string | null>(null)
   const { openLibrary, upsertCachedNote } = useLibrary()
   const mappedMessage = useMemo(() => {
     if (!message) return ''
@@ -83,22 +85,23 @@ export function MessageActions({
   const showSaveButton = libraryAvailable && (!isGuest || isCloudDeployment)
 
   useEffect(() => {
-    if (
-      !visible ||
-      isLoading ||
-      reportedFeedbackControlMessageId.current === messageId
-    ) {
+    if (!visible || isLoading || reportedFeedbackControls.has(messageId)) {
       return
     }
 
-    // Record the impression because a missing control otherwise looks unused.
-    reportedFeedbackControlMessageId.current = messageId
+    // A control that was never offered is otherwise indistinguishable from one
+    // that was offered and ignored, so the impression is what makes the click
+    // counts readable. It has to be one per message rather than one per mount:
+    // reopening a conversation remounts every past answer, and an answer that
+    // already carries a score cannot produce another one.
+    reportedFeedbackControls.add(messageId)
     captureClient('feedback_control_shown', {
       hasTraceId: Boolean(traceId),
+      hasFeedback: feedbackScore !== null,
       chatId,
       isGuest
     })
-  }, [chatId, isGuest, isLoading, messageId, traceId, visible])
+  }, [chatId, feedbackScore, isGuest, isLoading, messageId, traceId, visible])
 
   // Keep the element mounted during loading to preserve layout; otherwise skip rendering.
   if (!visible && !isLoading) {

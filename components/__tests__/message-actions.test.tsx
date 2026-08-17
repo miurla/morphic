@@ -28,7 +28,7 @@ describe('MessageActions', () => {
       <React.StrictMode>
         <MessageActions
           message="Answer"
-          messageId="message-1"
+          messageId="visible-1"
           traceId="trace-1"
           chatId="chat-1"
           isGuest
@@ -44,7 +44,7 @@ describe('MessageActions', () => {
       <React.StrictMode>
         <MessageActions
           message="Answer"
-          messageId="message-1"
+          messageId="visible-1"
           traceId="trace-1"
           chatId="chat-1"
           isGuest
@@ -57,6 +57,7 @@ describe('MessageActions', () => {
     expect(captureClient).toHaveBeenCalledTimes(1)
     expect(captureClient).toHaveBeenCalledWith('feedback_control_shown', {
       hasTraceId: true,
+      hasFeedback: false,
       chatId: 'chat-1',
       isGuest: true
     })
@@ -66,7 +67,7 @@ describe('MessageActions', () => {
         <MessageActions
           className="parent-state-changed"
           message="Answer"
-          messageId="message-1"
+          messageId="visible-1"
           traceId="trace-1"
           chatId="chat-1"
           isGuest
@@ -79,30 +80,62 @@ describe('MessageActions', () => {
     expect(captureClient).toHaveBeenCalledTimes(1)
   })
 
+  test('does not record a second impression when the same message remounts', () => {
+    const props = {
+      message: 'Answer',
+      messageId: 'remount-1',
+      traceId: 'trace-1',
+      chatId: 'chat-1',
+      status: 'ready' as const,
+      visible: true
+    }
+
+    const first = render(<MessageActions {...props} />)
+    expect(captureClient).toHaveBeenCalledTimes(1)
+
+    // Reopening a conversation remounts every past answer.
+    first.unmount()
+    render(<MessageActions {...props} />)
+
+    expect(captureClient).toHaveBeenCalledTimes(1)
+  })
+
+  test('reports a message that already carries a score as such', () => {
+    render(
+      <MessageActions
+        message="Answer"
+        messageId="scored-1"
+        traceId="trace-1"
+        feedbackScore={-1}
+        chatId="chat-1"
+        status="ready"
+        visible
+      />
+    )
+
+    expect(captureClient).toHaveBeenCalledWith('feedback_control_shown', {
+      hasTraceId: true,
+      hasFeedback: true,
+      chatId: 'chat-1',
+      isGuest: false
+    })
+  })
+
   test('records a missing trace id for a newly presented message', () => {
-    const { rerender } = render(
+    render(
       <MessageActions
         message="First answer"
-        messageId="message-1"
+        messageId="no-trace-1"
         chatId="chat-1"
         status="ready"
         visible
       />
     )
 
-    rerender(
-      <MessageActions
-        message="Second answer"
-        messageId="message-2"
-        chatId="chat-1"
-        status="ready"
-        visible
-      />
-    )
-
-    expect(captureClient).toHaveBeenCalledTimes(2)
+    expect(captureClient).toHaveBeenCalledTimes(1)
     expect(captureClient).toHaveBeenLastCalledWith('feedback_control_shown', {
       hasTraceId: false,
+      hasFeedback: false,
       chatId: 'chat-1',
       isGuest: false
     })
