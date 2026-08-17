@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 
 import { UseChatHelpers } from '@ai-sdk/react'
@@ -71,6 +71,7 @@ export function MessageActions({
   )
   const [isSavingNote, setIsSavingNote] = useState(false)
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
+  const reportedFeedbackControlMessageId = useRef<string | null>(null)
   const { openLibrary, upsertCachedNote } = useLibrary()
   const mappedMessage = useMemo(() => {
     if (!message) return ''
@@ -80,6 +81,24 @@ export function MessageActions({
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const isLoading = status === 'submitted' || status === 'streaming'
   const showSaveButton = libraryAvailable && (!isGuest || isCloudDeployment)
+
+  useEffect(() => {
+    if (
+      !visible ||
+      isLoading ||
+      reportedFeedbackControlMessageId.current === messageId
+    ) {
+      return
+    }
+
+    // Record the impression because a missing control otherwise looks unused.
+    reportedFeedbackControlMessageId.current = messageId
+    captureClient('feedback_control_shown', {
+      hasTraceId: Boolean(traceId),
+      chatId,
+      isGuest
+    })
+  }, [chatId, isGuest, isLoading, messageId, traceId, visible])
 
   // Keep the element mounted during loading to preserve layout; otherwise skip rendering.
   if (!visible && !isLoading) {
