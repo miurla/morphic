@@ -147,7 +147,10 @@ export function createResearcher({
       prepareCall: options => ({
         ...options,
         ...(options.messages && {
-          messages: appendRelatedQuestionsReminder(options.messages)
+          messages: appendRelatedQuestionsReminder(
+            options.messages,
+            modelConfig?.providerId
+          )
         })
       }),
       ...(providerOptions && { providerOptions }),
