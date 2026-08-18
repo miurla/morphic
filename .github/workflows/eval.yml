@@ -1,0 +1,64 @@
+name: Eval
+
+on:
+  schedule:
+    # 03:00 JST
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'provider:model to evaluate (default: the deployed adaptive model)'
+        required: false
+        type: string
+      trials:
+        description: 'Generations per dataset item'
+        required: false
+        default: '3'
+        type: string
+  pull_request:
+    branches: [main]
+    paths:
+      - 'config/models/cloud.json'
+      - 'lib/agents/prompts/**'
+      - 'lib/render/prompt.ts'
+      - 'evals/**'
+
+concurrency:
+  group: eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  related-questions:
+    name: Related questions
+    runs-on: ubuntu-latest
+    # Secrets are not available to pull requests from forks, so the job would
+    # fail for reasons unrelated to the change. Keep it off the required checks.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.12
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run eval
+        run: |
+          bun run eval:related-questions -- \
+            --trials "${TRIALS}" \
+            ${MODEL:+--model "$MODEL"}
+        env:
+          TRIALS: ${{ inputs.trials || '3' }}
+          MODEL: ${{ inputs.model }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          LANGFUSE_BASE_URL: ${{ secrets.LANGFUSE_BASE_URL }}

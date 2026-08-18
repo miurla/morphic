@@ -1,0 +1,9 @@
+{
+  "note": "Thresholds gate CI. A null value means the metric is measured and reported but not enforced. Run the eval to get a baseline, then commit the numbers here so any later change to them shows up in a diff.",
+  "related-questions": {
+    "completionRate": { "direction": "min", "value": 0.9 },
+    "emissionRate": { "direction": "min", "value": 0.85 },
+    "falsePositiveRate": { "direction": "max", "value": null },
+    "wellFormedRate": { "direction": "min", "value": 0.9 }
+  }
+}
