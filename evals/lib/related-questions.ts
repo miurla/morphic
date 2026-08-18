@@ -29,13 +29,19 @@ const SPEC_BLOCK_PATTERN = /```spec\n([\s\S]*?)```/g
 
 const EXPECTED_QUESTION_COUNT = 3
 
-function extractSpecBlocks(markdown: string): string[] {
-  const blocks: string[] = []
+type SpecBlock = {
+  source: string
+  /** Offset just past the closing fence, used to check the end-of-answer rule. */
+  end: number
+}
+
+function extractSpecBlocks(markdown: string): SpecBlock[] {
+  const blocks: SpecBlock[] = []
   // The global regex is stateful, so it is constructed fresh per call.
   const pattern = new RegExp(SPEC_BLOCK_PATTERN.source, 'g')
   let match: RegExpExecArray | null
   while ((match = pattern.exec(markdown)) !== null) {
-    blocks.push(match[1])
+    blocks.push({ source: match[1], end: match.index + match[0].length })
   }
   return blocks
 }
@@ -77,16 +83,17 @@ function looksLikeRelatedSource(source: string): boolean {
 export function analyzeRelatedQuestions(
   markdown: string
 ): RelatedQuestionsAnalysis {
-  const parsedBlocks = extractSpecBlocks(markdown).map(source => ({
-    source,
-    elements: compileElements(source)
+  const parsedBlocks = extractSpecBlocks(markdown).map(block => ({
+    ...block,
+    elements: compileElements(block.source)
   }))
-  const relatedBlocks = parsedBlocks
-    .map(block => block.elements)
-    .filter(
-      (elements): elements is SpecElement[] =>
-        elements !== null && isRelatedBlock(elements)
-    )
+  const relatedBlocks = parsedBlocks.filter(
+    (
+      block
+    ): block is (typeof parsedBlocks)[number] & {
+      elements: SpecElement[]
+    } => block.elements !== null && isRelatedBlock(block.elements)
+  )
 
   // A related block that fails to compile is an emission the user never sees.
   // Counting it as "not emitted" would hide the failure, so it is reported as a
@@ -114,7 +121,18 @@ export function analyzeRelatedQuestions(
     issues.push(`${brokenRelatedCount} related block(s) failed to compile`)
   }
 
-  const buttons = relatedBlocks[0].filter(element => element.type === 'Button')
+  // Rule 1 of the spec prompt: the related fence must close the response.
+  // Anything after it is content the user sees below their follow-up buttons.
+  const trailing = markdown.slice(relatedBlocks[0].end).trim()
+  if (trailing !== '') {
+    issues.push(
+      `${trailing.length} char(s) of content follow the related block`
+    )
+  }
+
+  const buttons = relatedBlocks[0].elements.filter(
+    element => element.type === 'Button'
+  )
   if (buttons.length !== EXPECTED_QUESTION_COUNT) {
     issues.push(
       `${buttons.length} buttons (expected ${EXPECTED_QUESTION_COUNT})`

@@ -4,7 +4,9 @@ import { z } from 'zod'
 import cloudConfig from '@/config/models/cloud.json'
 
 import { getAdaptiveModePrompt } from '@/lib/agents/prompts/search-mode-prompts'
+import { fetchTool } from '@/lib/tools/fetch'
 import { createSearchTool } from '@/lib/tools/search'
+import { createTodoTools } from '@/lib/tools/todo'
 import { getModel } from '@/lib/utils/registry'
 
 import { type RelatedQuestionsInput, type SearchFixture } from '../lib/dataset'
@@ -18,9 +20,11 @@ const ADAPTIVE = cloudConfig.models.adaptive
 export const DEFAULT_MODEL = `${ADAPTIVE.providerId}:${ADAPTIVE.id}`
 export const DEFAULT_PROVIDER_OPTIONS = ADAPTIVE.providerOptions
 
-// The answer only needs to reach a conclusion, not to research exhaustively.
-// A low cap keeps a runaway loop from dominating the run's cost.
-const MAX_STEPS = 6
+// Production allows 50 steps in adaptive mode. The fixture search returns the
+// same results every time, so a healthy run converges in a handful of steps;
+// this cap only bounds a loop that is going nowhere. A run that hits it is
+// rejected rather than measured, see the finish reason check below.
+const MAX_STEPS = 20
 
 // The provider intermittently returns a response the SDK cannot parse, at a few
 // percent of calls. The experiment runner drops an item whose task throws, so
@@ -91,12 +95,19 @@ export function createAdaptiveAnswerTask({
     const result = await generateText({
       model: getModel(model),
       instructions: getAdaptiveModePrompt(),
+      // The adaptive agent activates search, fetch and todoWrite, and the
+      // prompt tells the model those tools exist. Handing it only search would
+      // force a different trajectory and so a different answer shape, which is
+      // the thing being measured. todoWrite is the production tool as-is: its
+      // state is per-instance and never leaves the process.
       tools: {
         search: createFixtureSearchTool({
           results: input.results,
           toModelOutput,
           onQuery: query => searchQueries.push(query)
-        })
+        }),
+        fetch: createFixtureFetchTool(input.results),
+        ...createTodoTools()
       },
       stopWhen: isStepCount(MAX_STEPS),
       providerOptions,
@@ -107,12 +118,43 @@ export function createAdaptiveAnswerTask({
       }
     })
 
+    // A loop cut off at the step cap leaves an answer the model never finished,
+    // and an unfinished answer carries no related block for reasons that have
+    // nothing to do with the prompt. Reject it so the retry runs and, if it
+    // keeps happening, completionRate reports it.
+    if (result.finishReason === 'tool-calls') {
+      throw new Error(`Step cap of ${MAX_STEPS} reached before an answer`)
+    }
+    if (result.text.trim() === '') {
+      throw new Error('Model produced no answer text')
+    }
+
     return {
       text: result.text,
       searchQueries,
       steps: result.steps.length
     }
   }
+}
+
+// Mirrors the production fetch tool's contract while serving the item's own
+// fixture, so the model can follow a URL out of the search results without the
+// answer depending on what that page says today.
+function createFixtureFetchTool(results: SearchFixture[]) {
+  return tool({
+    description: fetchTool.description,
+    inputSchema: fetchTool.inputSchema,
+    async execute({ url }: { url: string }) {
+      const match = results.find(result => result.url === url)
+      return {
+        state: 'complete' as const,
+        query: url,
+        results: match ? [match] : results,
+        images: [],
+        number_of_results: match ? 1 : results.length
+      }
+    }
+  })
 }
 
 function createFixtureSearchTool({

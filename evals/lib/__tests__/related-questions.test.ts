@@ -143,6 +143,26 @@ describe('analyzeRelatedQuestions', () => {
     expect(result.issues).toContain('1 related block(s) failed to compile')
   })
 
+  test('flags content that follows the related block', () => {
+    const result = analyzeRelatedQuestions(
+      `${ANSWER}${relatedBlock(THREE_QUESTIONS)}\n\nOne more thought.`
+    )
+
+    expect(result.emitted).toBe(true)
+    expect(result.wellFormed).toBe(false)
+    expect(
+      result.issues.some(issue => issue.includes('follow the related block'))
+    ).toBe(true)
+  })
+
+  test('allows trailing whitespace after the related block', () => {
+    const result = analyzeRelatedQuestions(
+      `${ANSWER}${relatedBlock(THREE_QUESTIONS)}\n\n  \n`
+    )
+
+    expect(result.wellFormed).toBe(true)
+  })
+
   test('ignores an image spec block', () => {
     const imageBlock = [
       '```spec',

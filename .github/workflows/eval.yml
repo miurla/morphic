@@ -54,8 +54,8 @@ jobs:
           # Secrets are absent on a fork and on any repo that has not
           # configured them. Failing there would put a red mark on every PR
           # touching evals for a reason the author cannot fix.
-          if [ -z "$LANGFUSE_PUBLIC_KEY" ] || [ -z "$OPENAI_API_KEY" ]; then
-            echo "::warning::Eval skipped: LANGFUSE_PUBLIC_KEY / OPENAI_API_KEY are not configured for this repository."
+          if [ -z "$LANGFUSE_PUBLIC_KEY" ] || [ -z "$LANGFUSE_SECRET_KEY" ] || [ -z "$OPENAI_API_KEY" ]; then
+            echo "::warning::Eval skipped: OPENAI_API_KEY / LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY are not all configured for this repository."
             exit 0
           fi
           bun run eval:related-questions -- \
