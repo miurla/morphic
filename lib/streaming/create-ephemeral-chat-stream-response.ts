@@ -19,6 +19,7 @@ import {
   shouldTruncateMessages,
   truncateMessages
 } from '../utils/context-window'
+import { getTextFromParts } from '../utils/message-utils'
 import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
@@ -73,22 +74,33 @@ export async function createEphemeralChatStreamResponse(
     // span is closed, and by then the signal no longer says whether the user
     // cancelled this turn or the failure was the model's own.
     let streamErrorWasCancelled = false
+    // Overall IO of the trace lives on the root observation. The turn is driven
+    // by the last user message of the submitted history.
+    const rootInput =
+      getTextFromParts(messages.findLast(m => m.role === 'user')?.parts) ||
+      undefined
+    let rootOutput: string | undefined
 
     const endTracing = async () => {
       if (rootSpan) {
-        if (hasStreamError) {
-          const update = buildStreamErrorSpanUpdate(
-            streamError,
-            streamErrorWasCancelled,
-            streamErrorPhase
-          )
-          if (update) rootSpan.update(update)
-        } else if (hasEmptyResponse) {
-          rootSpan.update({
-            level: 'ERROR',
-            statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
-          })
+        const failureUpdate = hasStreamError
+          ? buildStreamErrorSpanUpdate(
+              streamError,
+              streamErrorWasCancelled,
+              streamErrorPhase
+            )
+          : hasEmptyResponse
+            ? {
+                level: 'ERROR' as const,
+                statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
+              }
+            : null
+        const update = {
+          ...(rootInput !== undefined && { input: rootInput }),
+          ...(rootOutput !== undefined && { output: rootOutput }),
+          ...failureUpdate
         }
+        if (Object.keys(update).length > 0) rootSpan.update(update)
         rootSpan.end()
         await langfuseSpanProcessor.forceFlush()
       }
@@ -162,6 +174,7 @@ export async function createEphemeralChatStreamResponse(
         },
         onEnd: async ({ responseMessage, isAborted }) => {
           if (!isAborted && responseMessage) {
+            rootOutput = getTextFromParts(responseMessage.parts) || undefined
             hasEmptyResponse = isEmptyResponse(responseMessage)
           }
           await endTracing()

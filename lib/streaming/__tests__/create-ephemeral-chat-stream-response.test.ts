@@ -163,7 +163,10 @@ describe('createEphemeralChatStreamResponse', () => {
     await mocks.finishPromise
 
     expect(mocks.serializedError).toBe(serializeToolFailure(toolError))
-    expect(mocks.span.update).not.toHaveBeenCalled()
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'hello',
+      output: 'Answer'
+    })
     expect(mocks.span.end).toHaveBeenCalledOnce()
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
   })
@@ -181,17 +184,19 @@ describe('createEphemeralChatStreamResponse', () => {
     await createEphemeralChatStreamResponse(createConfig())
     await mocks.finishPromise
 
-    expect(mocks.span.update).toHaveBeenCalledWith({
-      level: 'ERROR',
-      statusMessage: describeStreamError(streamError),
-      metadata: {
-        streamErrorPhase: 'generation',
-        streamErrorShape: {
-          name: 'StreamFailure',
-          code: 'STREAM_CODE'
+    expect(mocks.span.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'ERROR',
+        statusMessage: describeStreamError(streamError),
+        metadata: {
+          streamErrorPhase: 'generation',
+          streamErrorShape: {
+            name: 'StreamFailure',
+            code: 'STREAM_CODE'
+          }
         }
-      }
-    })
+      })
+    )
     expect(mocks.span.end).toHaveBeenCalledOnce()
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
   })
@@ -207,7 +212,7 @@ describe('createEphemeralChatStreamResponse', () => {
     await createEphemeralChatStreamResponse(createConfig(createAbortedSignal()))
     await mocks.finishPromise
 
-    expect(mocks.span.update).not.toHaveBeenCalled()
+    expect(mocks.span.update).toHaveBeenCalledWith({ input: 'hello' })
     expect(mocks.span.end).toHaveBeenCalledOnce()
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
   })
@@ -219,21 +224,25 @@ describe('createEphemeralChatStreamResponse', () => {
     await mocks.finishPromise
 
     expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'hello',
       level: 'ERROR',
       statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
     })
   })
 
-  it('does not update the span for a response with text', async () => {
+  it('does not mark the span as failed for a response with text', async () => {
     mocks.stream.mockResolvedValue(createFakeResult())
 
     await createEphemeralChatStreamResponse(createConfig(createAbortedSignal()))
     await mocks.finishPromise
 
-    expect(mocks.span.update).not.toHaveBeenCalled()
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'hello',
+      output: 'Answer'
+    })
   })
 
-  it('does not update the span for an aborted turn', async () => {
+  it('keeps the input and omits the output for an aborted turn', async () => {
     mocks.stream.mockResolvedValue(
       createFakeResult({ parts: [], isAborted: true })
     )
@@ -241,7 +250,38 @@ describe('createEphemeralChatStreamResponse', () => {
     await createEphemeralChatStreamResponse(createConfig(createAbortedSignal()))
     await mocks.finishPromise
 
-    expect(mocks.span.update).not.toHaveBeenCalled()
+    expect(mocks.span.update).toHaveBeenCalledWith({ input: 'hello' })
+  })
+
+  it('takes the input from the last user message of the history', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse({
+      ...createConfig(),
+      messages: [
+        {
+          id: 'first-user',
+          role: 'user' as const,
+          parts: [{ type: 'text' as const, text: 'first question' }]
+        },
+        {
+          id: 'first-assistant',
+          role: 'assistant' as const,
+          parts: [{ type: 'text' as const, text: 'first answer' }]
+        },
+        {
+          id: 'second-user',
+          role: 'user' as const,
+          parts: [{ type: 'text' as const, text: 'second question' }]
+        }
+      ]
+    })
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'second question',
+      output: 'Answer'
+    })
   })
 
   it('preserves the stream error when the response is empty', async () => {
@@ -256,6 +296,7 @@ describe('createEphemeralChatStreamResponse', () => {
 
     expect(mocks.span.update).toHaveBeenCalledOnce()
     expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'hello',
       level: 'ERROR',
       statusMessage: describeStreamError(streamError),
       metadata: {

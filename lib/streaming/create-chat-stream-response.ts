@@ -106,22 +106,31 @@ export async function createChatStreamResponse(
     // span is closed, and by then the signal no longer says whether the user
     // cancelled this turn or the failure was the model's own.
     let streamErrorWasCancelled = false
+    // Overall IO of the trace lives on the root observation. A regenerate turn
+    // carries no incoming message, so its input comes from the prepared history.
+    let rootInput = getTextFromParts(message?.parts) || undefined
+    let rootOutput: string | undefined
 
     const endTracing = async () => {
       if (rootSpan) {
-        if (hasStreamError) {
-          const update = buildStreamErrorSpanUpdate(
-            streamError,
-            streamErrorWasCancelled,
-            streamErrorPhase
-          )
-          if (update) rootSpan.update(update)
-        } else if (hasEmptyResponse) {
-          rootSpan.update({
-            level: 'ERROR',
-            statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
-          })
+        const failureUpdate = hasStreamError
+          ? buildStreamErrorSpanUpdate(
+              streamError,
+              streamErrorWasCancelled,
+              streamErrorPhase
+            )
+          : hasEmptyResponse
+            ? {
+                level: 'ERROR' as const,
+                statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
+              }
+            : null
+        const update = {
+          ...(rootInput !== undefined && { input: rootInput }),
+          ...(rootOutput !== undefined && { output: rootOutput }),
+          ...failureUpdate
         }
+        if (Object.keys(update).length > 0) rootSpan.update(update)
         rootSpan.end()
         await langfuseSpanProcessor.forceFlush()
       }
@@ -151,6 +160,13 @@ export async function createChatStreamResponse(
       )
       const messagesToModel = await prepareMessages(context, message)
       perfTime('prepareMessages completed (stream)', prepareStart)
+
+      if (rootInput === undefined) {
+        rootInput =
+          getTextFromParts(
+            messagesToModel.findLast(m => m.role === 'user')?.parts
+          ) || undefined
+      }
 
       // Get the researcher agent with search mode
       const researchAgent = researcher({
@@ -257,6 +273,7 @@ export async function createChatStreamResponse(
             perfTime('researchAgent.stream completed', llmStart)
             if (isAborted || !responseMessage) return
 
+            rootOutput = getTextFromParts(responseMessage.parts) || undefined
             hasEmptyResponse = isEmptyResponse(responseMessage)
 
             // Persist stream results to database
