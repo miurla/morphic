@@ -11,7 +11,6 @@ import { SearchMode } from '../types/search'
 import { getModel } from '../utils/registry'
 import { isTracingEnabled } from '../utils/telemetry'
 
-import { appendRelatedQuestionsReminder } from './prompts/related-questions-reminder'
 import {
   getAdaptiveModePrompt,
   QUICK_MODE_PROMPT
@@ -144,15 +143,6 @@ export function createResearcher({
       tools,
       activeTools: activeToolsList,
       stopWhen: stepCountIs(maxSteps),
-      prepareCall: options => ({
-        ...options,
-        ...(options.messages && {
-          messages: appendRelatedQuestionsReminder(
-            options.messages,
-            modelConfig?.providerId
-          )
-        })
-      }),
       ...(providerOptions && { providerOptions }),
       // Spans join the parent Langfuse trace via OTel context propagation
       experimental_telemetry: {
