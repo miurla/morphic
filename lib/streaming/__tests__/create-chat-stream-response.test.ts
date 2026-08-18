@@ -76,7 +76,7 @@ type StreamOptions = {
 }
 
 type UIMessageStreamResponseOptions = {
-  onFinish: (event: {
+  onEnd: (event: {
     responseMessage: {
       id: string
       role: 'assistant'
@@ -91,7 +91,7 @@ function createFakeResult(isAborted = false) {
     consumeStream: vi.fn(),
     toUIMessageStreamResponse: vi.fn(
       (options: UIMessageStreamResponseOptions) => {
-        mocks.finishPromise = options.onFinish({
+        mocks.finishPromise = options.onEnd({
           responseMessage: {
             id: 'response-id',
             role: 'assistant',

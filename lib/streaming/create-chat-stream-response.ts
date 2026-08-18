@@ -219,7 +219,7 @@ export async function createChatStreamResponse(
         },
         experimental_transform: smoothStream({ chunking: 'word' }),
         ...(isUsageLogging() && {
-          onStepFinish: step => {
+          onStepEnd: step => {
             logUsage(
               { scope: 'step', modelId: context.modelId },
               step.usage,
@@ -235,7 +235,7 @@ export async function createChatStreamResponse(
       // Log the session-total usage once the stream settles (does not block the
       // response; consumeStream above already drives it to completion).
       if (isUsageLogging()) {
-        Promise.resolve(result.totalUsage)
+        Promise.resolve(result.usage)
           .then(usage =>
             logUsage({ scope: 'total', modelId: context.modelId }, usage)
           )
@@ -252,7 +252,7 @@ export async function createChatStreamResponse(
             }
           }
         },
-        onFinish: async ({ responseMessage, isAborted }) => {
+        onEnd: async ({ responseMessage, isAborted }) => {
           try {
             perfTime('researchAgent.stream completed', llmStart)
             if (isAborted || !responseMessage) return

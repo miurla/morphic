@@ -209,7 +209,7 @@ export function Chat({
         toast.error(publicError.error)
       }
     },
-    experimental_throttle: 100,
+    throttle: 100,
     generateId
   })
 

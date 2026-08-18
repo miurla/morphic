@@ -20,7 +20,7 @@ describe('fetch tool errors', () => {
 
     const result = fetchTool.execute?.(
       { url: 'https://example.com/private', type: 'regular' },
-      { toolCallId: 'fetch', messages: [] }
+      { toolCallId: 'fetch', messages: [], context: {} }
     )
     expect(result).toBeDefined()
 
@@ -52,7 +52,7 @@ describe('fetch tool errors', () => {
 
     const result = fetchTool.execute?.(
       { url, type: 'regular' },
-      { toolCallId: 'fetch', messages: [] }
+      { toolCallId: 'fetch', messages: [], context: {} }
     )
     expect(result).toBeDefined()
 
@@ -88,7 +88,7 @@ describe('fetch tool errors', () => {
 
     const result = fetchTool.execute?.(
       { url, type: 'regular' },
-      { toolCallId: 'fetch', messages: [] }
+      { toolCallId: 'fetch', messages: [], context: {} }
     )
     expect(result).toBeDefined()
 

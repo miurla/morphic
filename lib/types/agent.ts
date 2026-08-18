@@ -11,6 +11,8 @@ import type { createQuestionTool } from '../tools/question'
 import type { createSearchTool } from '../tools/search'
 import type { createTodoTools } from '../tools/todo'
 
+import type { SearchMode } from './search'
+
 // Define the tools type for researcher agent
 export type ResearcherTools = {
   search: ReturnType<typeof createSearchTool>
@@ -18,9 +20,22 @@ export type ResearcherTools = {
   askQuestion: ReturnType<typeof createQuestionTool>
 } & ReturnType<typeof createTodoTools>
 
+// Runtime context carried through the generation lifecycle. Included in
+// telemetry so each observation keeps the metadata v6 attached via
+// telemetry.metadata.
+export type ResearcherRuntimeContext = {
+  modelId: string
+  agentType: string
+  searchMode: SearchMode
+}
+
 // Type alias for the researcher agent using ToolLoopAgent
-// ToolLoopAgent generic signature is <CALL_OPTIONS, TOOLS, OUTPUT>
-export type ResearcherAgent = ToolLoopAgent<never, ResearcherTools, never>
+// ToolLoopAgent generic signature is <CALL_OPTIONS, TOOLS, RUNTIME_CONTEXT, OUTPUT>
+export type ResearcherAgent = ToolLoopAgent<
+  never,
+  ResearcherTools,
+  ResearcherRuntimeContext
+>
 
 // Infer UI message type for researcher agent
 export type ResearcherUIMessage = InferAgentUIMessage<ResearcherAgent>

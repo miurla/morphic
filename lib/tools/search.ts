@@ -211,7 +211,8 @@ export async function search(
     },
     {
       toolCallId: 'search',
-      messages: []
+      messages: [],
+      context: {}
     }
   )
 
