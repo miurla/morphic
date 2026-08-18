@@ -201,6 +201,24 @@ describe('createEphemeralChatStreamResponse', () => {
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
   })
 
+  it('omits the output when the stream failed after partial text', async () => {
+    const streamError = new Error('upstream stopped')
+    streamError.name = 'AbortError'
+    mocks.stream.mockImplementation(async (options: StreamOptions) => {
+      options.onError({ error: streamError })
+      return createFakeResult({
+        parts: [{ type: 'text', text: 'Partial ans' }]
+      })
+    })
+
+    await createEphemeralChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    const update = mocks.span.update.mock.calls.at(-1)?.[0]
+    expect(update).toMatchObject({ input: 'hello', level: 'ERROR' })
+    expect(update).not.toHaveProperty('output')
+  })
+
   it('does not mark the span as failed for an aborted stream error', async () => {
     const streamError = new Error('request stopped')
     streamError.name = 'AbortError'

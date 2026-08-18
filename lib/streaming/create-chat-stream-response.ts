@@ -125,9 +125,12 @@ export async function createChatStreamResponse(
                 statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
               }
             : null
+        // A stream that failed mid-answer leaves partial text behind. That is
+        // not the turn's answer, so it is not recorded as one.
         const update = {
           ...(rootInput !== undefined && { input: rootInput }),
-          ...(rootOutput !== undefined && { output: rootOutput }),
+          ...(!hasStreamError &&
+            rootOutput !== undefined && { output: rootOutput }),
           ...failureUpdate
         }
         if (Object.keys(update).length > 0) rootSpan.update(update)

@@ -255,6 +255,22 @@ describe('createChatStreamResponse', () => {
     })
   })
 
+  it('omits the output when the stream failed after partial text', async () => {
+    const streamError = new Error('upstream stopped')
+    streamError.name = 'AbortError'
+    mocks.stream.mockImplementation(async (options: StreamOptions) => {
+      options.onError({ error: streamError })
+      return createFakeResult(false, [{ type: 'text', text: 'Partial ans' }])
+    })
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    const update = mocks.span.update.mock.calls.at(-1)?.[0]
+    expect(update).toMatchObject({ input: 'hello', level: 'ERROR' })
+    expect(update).not.toHaveProperty('output')
+  })
+
   it('keeps the input and omits the output for an aborted turn', async () => {
     mocks.stream.mockResolvedValue(createFakeResult(true))
 
