@@ -20,6 +20,8 @@ type Category = RelatedQuestionsMetadata['category']
 export type RelatedQuestionsSummary = {
   substantiveCount: number
   trivialCount: number
+  /** Answers that carried a related block, the denominator of wellFormedRate. */
+  emittedCount: number
   /** Share of substantive answers that carried a related block. */
   emissionRate: number
   /** Share of trivial answers that carried one anyway. */
@@ -127,6 +129,7 @@ export function summarizeRelatedQuestions(
   return {
     substantiveCount,
     trivialCount,
+    emittedCount: emittedTotal,
     emissionRate: substantiveCount === 0 ? 0 : emitted / substantiveCount,
     falsePositiveRate: trivialCount === 0 ? 0 : falsePositives / trivialCount,
     wellFormedRate: emittedTotal === 0 ? 0 : wellFormed / emittedTotal

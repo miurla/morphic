@@ -72,6 +72,12 @@ than defects. Questions whose answers expand belong in the substantive set.
 `thresholds.json` gates CI. A `null` value means the metric is reported but not
 enforced, which is the state a new metric starts in.
 
+`minSamples` is the smallest denominator a threshold may be enforced on. At the
+default of one trial the trivial set is only twelve generations, where two
+stochastic emissions already cross a tight ceiling; such a run reports its rates
+and does not fail. `completionRate` declares no minimum because it counts items
+that actually failed rather than sampling a probability.
+
 `completionRate` guards the measurement itself: the experiment runner drops an
 item whose task threw, which shrinks the denominator of every other rate. A run
 that lost more than a tenth of its items is not a valid measurement.

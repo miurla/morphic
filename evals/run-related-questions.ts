@@ -160,15 +160,27 @@ async function main() {
         {
           metric: 'completionRate',
           value: completionRate,
+          samples: data.length,
           threshold: config.completionRate
         },
-        ...(
-          ['emissionRate', 'falsePositiveRate', 'wellFormedRate'] as const
-        ).map(metric => ({
-          metric,
-          value: summary[metric],
-          threshold: config[metric]
-        }))
+        {
+          metric: 'emissionRate',
+          value: summary.emissionRate,
+          samples: summary.substantiveCount,
+          threshold: config.emissionRate
+        },
+        {
+          metric: 'falsePositiveRate',
+          value: summary.falsePositiveRate,
+          samples: summary.trivialCount,
+          threshold: config.falsePositiveRate
+        },
+        {
+          metric: 'wellFormedRate',
+          value: summary.wellFormedRate,
+          samples: summary.emittedCount,
+          threshold: config.wellFormedRate
+        }
       ])
     }
   } finally {
