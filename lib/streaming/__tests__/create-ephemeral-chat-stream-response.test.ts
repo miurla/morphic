@@ -122,6 +122,20 @@ function createConfig(abortSignal: AbortSignal = new AbortController().signal) {
   }
 }
 
+function createConfigWithParts(parts: unknown[]) {
+  const config = createConfig()
+
+  return {
+    ...config,
+    messages: [
+      {
+        ...config.messages[0],
+        parts: parts as (typeof config.messages)[0]['parts']
+      }
+    ]
+  }
+}
+
 describe('createEphemeralChatStreamResponse', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -313,6 +327,91 @@ describe('createEphemeralChatStreamResponse', () => {
       input: 'second question',
       output: 'Answer'
     })
+  })
+
+  it('describes a file-only turn on the root span input', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse(
+      createConfigWithParts([
+        {
+          type: 'file',
+          filename: 'report.pdf',
+          mediaType: 'application/pdf',
+          url: 'https://example.com/report.pdf'
+        }
+      ])
+    )
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: '"report.pdf" (application/pdf)',
+      output: 'Answer'
+    })
+  })
+
+  it('describes a pasted-content-only turn without its content', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse(
+      createConfigWithParts([
+        { type: 'data-pastedContent', data: { text: 'secret'.repeat(100) } }
+      ])
+    )
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'pasted content (600 characters)',
+      output: 'Answer'
+    })
+    expect(JSON.stringify(mocks.span.update.mock.calls)).not.toContain('secret')
+  })
+
+  it('keeps the URL of a URL-card-only turn', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse(
+      createConfigWithParts([
+        { type: 'data-sourceUrl', data: { url: 'https://example.com/a' } }
+      ])
+    )
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'URL card: https://example.com/a',
+      output: 'Answer'
+    })
+  })
+
+  it('describes both a file and pasted content on the same turn', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse(
+      createConfigWithParts([
+        {
+          type: 'file',
+          filename: 'notes.txt',
+          mediaType: 'text/plain',
+          url: 'https://example.com/notes.txt'
+        },
+        { type: 'data-pastedContent', data: { text: 'ab' } }
+      ])
+    )
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: '"notes.txt" (text/plain), pasted content (2 characters)',
+      output: 'Answer'
+    })
+  })
+
+  it('leaves the input unset for a turn with no parts', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse(createConfigWithParts([]))
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({ output: 'Answer' })
   })
 
   it('preserves the stream error when the response is empty', async () => {

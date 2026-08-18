@@ -27,6 +27,7 @@ import { compactHistoricalMessages } from './helpers/compact-historical-messages
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { dedupeAttachments } from './helpers/dedupe-attachments'
+import { describeTurnInput } from './helpers/describe-turn-input'
 import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
   isEmptyResponse
@@ -76,9 +77,9 @@ export async function createEphemeralChatStreamResponse(
     let streamErrorWasCancelled = false
     // Overall IO of the trace lives on the root observation. The turn is driven
     // by the last user message of the submitted history.
-    const rootInput =
-      getTextFromParts(messages.findLast(m => m.role === 'user')?.parts) ||
-      undefined
+    const rootInput = describeTurnInput(
+      messages.findLast(m => m.role === 'user')?.parts
+    )
     let rootOutput: string | undefined
 
     const endTracing = async () => {

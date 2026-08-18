@@ -31,6 +31,7 @@ import { compactHistoricalMessages } from './helpers/compact-historical-messages
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { dedupeAttachments } from './helpers/dedupe-attachments'
+import { describeTurnInput } from './helpers/describe-turn-input'
 import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
   isEmptyResponse
@@ -108,7 +109,7 @@ export async function createChatStreamResponse(
     let streamErrorWasCancelled = false
     // Overall IO of the trace lives on the root observation. A regenerate turn
     // carries no incoming message, so its input comes from the prepared history.
-    let rootInput = getTextFromParts(message?.parts) || undefined
+    let rootInput = describeTurnInput(message?.parts)
     let rootOutput: string | undefined
 
     const endTracing = async () => {
@@ -166,10 +167,9 @@ export async function createChatStreamResponse(
       perfTime('prepareMessages completed (stream)', prepareStart)
 
       if (rootInput === undefined) {
-        rootInput =
-          getTextFromParts(
-            messagesToModel.findLast(m => m.role === 'user')?.parts
-          ) || undefined
+        rootInput = describeTurnInput(
+          messagesToModel.findLast(m => m.role === 'user')?.parts
+        )
       }
 
       // Get the researcher agent with search mode
