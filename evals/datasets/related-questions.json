@@ -1,0 +1,182 @@
+{
+  "name": "related-questions",
+  "description": "Does the adaptive answer emit a well-formed related questions spec block on substantive answers, and skip it on trivial lookups? Search results are fixed so the measurement isolates the prompt and the model. An item is trivial only when the fixture holds exactly one unambiguous value answering it and no comparison or procedure is implied; a question whose answer naturally expands belongs in the substantive set, not the trivial one.",
+  "fixtures": {
+    "mount-fuji": [
+      {
+        "title": "Mount Fuji climbing routes",
+        "url": "https://example.com/mount-fuji-routes",
+        "content": "Mount Fuji stands 3,776 metres (12,389 ft) tall, making it the highest mountain in Japan. It has four main climbing routes. Yoshida is the most popular and has the most huts and first-aid stations. Fujinomiya is the shortest but steepest, and starts from the highest trailhead. Subashiri begins below the tree line and joins Yoshida near the summit. Gotemba is the longest and least crowded, with no huts until high on the mountain. The official climbing season runs from early July to early September. Outside the season the huts close, weather on the upper slopes is severe, and mountain rescue coverage is limited."
+      }
+    ],
+    "ev-batteries": [
+      {
+        "title": "LFP and NMC battery chemistries compared",
+        "url": "https://example.com/lfp-vs-nmc",
+        "content": "Lithium iron phosphate (LFP) cells reach roughly 160 Wh/kg at the pack level, while nickel manganese cobalt (NMC) cells reach roughly 250 Wh/kg. LFP uses no cobalt or nickel, which makes it cheaper and less exposed to supply shocks. LFP cycle life is typically 3,000 to 5,000 cycles against 1,000 to 2,000 for NMC, and LFP tolerates repeated charging to 100 percent. LFP has a higher thermal runaway threshold and is considered the safer chemistry. Its weaknesses are cold-weather performance, where usable capacity can drop sharply below freezing, and a flat voltage curve that makes state-of-charge estimation harder. Automakers have moved standard-range trims to LFP while keeping NMC for long-range and performance trims."
+      }
+    ],
+    "postgres-indexes": [
+      {
+        "title": "Choosing a Postgres index type",
+        "url": "https://example.com/postgres-index-types",
+        "content": "B-tree is the default index type in Postgres and handles equality and range queries on ordered data. GIN indexes are designed for composite values where a single row contains many keys, such as jsonb documents, arrays, and full-text search vectors; the jsonb_path_ops operator class produces a smaller GIN index that supports containment queries only. GiST supports geometric and nearest-neighbour queries. BRIN stores per-block-range summaries rather than per-row entries, so it is tiny and fast to build, but it only helps when the physical row order correlates with the indexed column, which is typical for append-only time-series tables. Every index adds write amplification on insert and update, and partial indexes with a WHERE clause reduce that cost when queries only touch a subset of rows."
+      }
+    ],
+    "sleep": [
+      {
+        "title": "Evidence on sleep quality and evening routines",
+        "url": "https://example.com/sleep-evidence",
+        "content": "Adults need 7 to 9 hours of sleep per night. Sleep proceeds in cycles of roughly 90 minutes alternating between NREM and REM stages, with deep NREM concentrated in the first half of the night and REM in the second. Caffeine has a half-life of about 5 to 6 hours, so an afternoon dose still has meaningful blood levels at bedtime. Evening light exposure, particularly in the blue part of the spectrum, suppresses melatonin release and delays sleep onset. The most consistently supported intervention is a fixed wake time, because it anchors the circadian phase more reliably than a fixed bedtime. Alcohol shortens sleep onset but fragments the second half of the night and suppresses REM."
+      }
+    ],
+    "coffee": [
+      {
+        "title": "Brewing methods and extraction",
+        "url": "https://example.com/coffee-brewing",
+        "content": "Pour-over uses a medium-fine grind and a 1:15 to 1:17 coffee-to-water ratio, producing a clean cup that highlights acidity, and takes about three minutes of active attention. Espresso uses a fine grind and roughly 9 bars of pressure to pull a 25 to 30 second shot, requiring a grinder that holds its setting and regular dialling in. French press uses a coarse grind and a four-minute steep, needs no filter papers, and produces a heavier body because oils and fines pass into the cup. Recommended brew water temperature is 92 to 96 degrees Celsius across methods. Under-extraction tastes sour and thin; over-extraction tastes bitter and drying."
+      }
+    ],
+    "hybrid-work": [
+      {
+        "title": "Research on hybrid work and productivity",
+        "url": "https://example.com/hybrid-work-research",
+        "content": "A randomised trial at a large travel agency found hybrid workers matched or slightly exceeded office productivity while attrition fell by about a third. Most published hybrid policies require two to three days per week in the office. Studies consistently find that coordination costs rise when in-office days are not aligned across a team, which is why anchor days outperform per-person choice. The clearest negative finding concerns junior employees: onboarding and skill transfer depend on incidental observation and unplanned feedback, and remote-first onboarding measurably slows time to competence. Fully remote arrangements show the widest variance in outcomes, with results depending heavily on written communication norms."
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "fuji-routes",
+      "category": "substantive",
+      "fixture": "mount-fuji",
+      "query": "Compare the main Mount Fuji climbing routes and recommend who each route suits."
+    },
+    {
+      "id": "fuji-offseason",
+      "category": "substantive",
+      "fixture": "mount-fuji",
+      "query": "What are the risks of climbing Mount Fuji outside the official season?"
+    },
+    {
+      "id": "ev-chemistry-compare",
+      "category": "substantive",
+      "fixture": "ev-batteries",
+      "query": "Compare LFP and NMC battery chemistries and explain which suits which kind of car."
+    },
+    {
+      "id": "ev-lfp-shift",
+      "category": "substantive",
+      "fixture": "ev-batteries",
+      "query": "Why are automakers shifting to LFP despite its lower energy density?"
+    },
+    {
+      "id": "pg-jsonb-index",
+      "category": "substantive",
+      "fixture": "postgres-indexes",
+      "query": "Which Postgres index should I use for a jsonb column I filter on, and what are the tradeoffs?"
+    },
+    {
+      "id": "pg-brin",
+      "category": "substantive",
+      "fixture": "postgres-indexes",
+      "query": "When does a BRIN index beat a B-tree index in Postgres?"
+    },
+    {
+      "id": "sleep-routine",
+      "category": "substantive",
+      "fixture": "sleep",
+      "query": "How should I restructure my evening routine to sleep better, and what does the evidence support?"
+    },
+    {
+      "id": "coffee-method",
+      "category": "substantive",
+      "fixture": "coffee",
+      "query": "Compare pour-over, espresso and French press, and recommend one for low-effort weekday coffee."
+    },
+    {
+      "id": "hybrid-policy",
+      "category": "substantive",
+      "fixture": "hybrid-work",
+      "query": "What does the research say about hybrid work productivity, and what should a 50-person company do?"
+    },
+    {
+      "id": "hybrid-juniors",
+      "category": "substantive",
+      "fixture": "hybrid-work",
+      "query": "How does remote work affect onboarding for junior employees?"
+    },
+    {
+      "id": "fuji-height",
+      "category": "trivial",
+      "fixture": "mount-fuji",
+      "query": "How tall is Mount Fuji?"
+    },
+    {
+      "id": "pg-default-index",
+      "category": "trivial",
+      "fixture": "postgres-indexes",
+      "query": "What is the default index type in Postgres?"
+    },
+    {
+      "id": "sleep-hours",
+      "category": "trivial",
+      "fixture": "sleep",
+      "query": "How many hours of sleep do adults need?"
+    },
+    {
+      "id": "caffeine-half-life",
+      "category": "trivial",
+      "fixture": "sleep",
+      "query": "What is the half-life of caffeine?"
+    },
+    {
+      "id": "coffee-temperature",
+      "category": "trivial",
+      "fixture": "coffee",
+      "query": "What water temperature is recommended for brewing coffee?"
+    },
+    {
+      "id": "fuji-route-count",
+      "category": "trivial",
+      "fixture": "mount-fuji",
+      "query": "How many main climbing routes does Mount Fuji have?"
+    },
+    {
+      "id": "fuji-season-start",
+      "category": "trivial",
+      "fixture": "mount-fuji",
+      "query": "When does the official Mount Fuji climbing season start?"
+    },
+    {
+      "id": "ev-cobalt",
+      "category": "trivial",
+      "fixture": "ev-batteries",
+      "query": "Does LFP use cobalt?"
+    },
+    {
+      "id": "pg-fulltext-index",
+      "category": "trivial",
+      "fixture": "postgres-indexes",
+      "query": "Which Postgres index type is used for full-text search vectors?"
+    },
+    {
+      "id": "sleep-cycle-length",
+      "category": "trivial",
+      "fixture": "sleep",
+      "query": "How long is a typical sleep cycle?"
+    },
+    {
+      "id": "coffee-press-steep",
+      "category": "trivial",
+      "fixture": "coffee",
+      "query": "How long does a French press steep?"
+    },
+    {
+      "id": "hybrid-attrition",
+      "category": "trivial",
+      "fixture": "hybrid-work",
+      "query": "By how much did attrition fall in the travel agency trial?"
+    }
+  ]
+}

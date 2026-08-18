@@ -15,7 +15,8 @@
     "backfill:file-keys": "bun run scripts/backfill-file-object-keys.ts",
     "test": "NODE_ENV=test vitest run",
     "test:watch": "vitest --watch",
-    "chat": "bun run scripts/chat-cli.ts"
+    "chat": "bun run scripts/chat-cli.ts",
+    "eval:related-questions": "bun run evals/run-related-questions.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.39",
