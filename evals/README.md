@@ -5,10 +5,10 @@ call real models, cost money, and produce rates rather than pass/fail.
 
 ## Layers
 
-| Layer                | Where                 | Runs                                         | Needs keys |
-| -------------------- | --------------------- | -------------------------------------------- | ---------- |
-| Evaluator unit tests | `evals/lib/__tests__` | every PR, via `bun run test`                 | no         |
-| Experiments          | `evals/run-*.ts`      | nightly, manual, and on prompt/model changes | yes        |
+| Layer                | Where                 | Runs                                       | Needs keys |
+| -------------------- | --------------------- | ------------------------------------------ | ---------- |
+| Evaluator unit tests | `evals/lib/__tests__` | every PR, via `bun run test`               | no         |
+| Experiments          | `evals/run-*.ts`      | on prompt and model changes, and on demand | yes        |
 
 The first layer exists because an evaluator is code too. `analyzeRelatedQuestions`
 is tested against recorded spec blocks so a broken evaluator cannot quietly
@@ -73,7 +73,7 @@ than defects. Questions whose answers expand belong in the substantive set.
 enforced, which is the state a new metric starts in.
 
 `minSamples` is the smallest denominator a threshold may be enforced on, and the
-sampled rates set it at 50, which the nightly five trials reach and a local run
+sampled rates set it at 50, which the five trials CI runs reach and a local run
 does not. That is not caution for its own sake: identical code measured 1.000
 and 0.833 on `emissionRate` across two runs of thirty substantive samples, so a
 three-trial run cannot carry a ceiling or a floor. `completionRate` declares no minimum because it counts items
@@ -97,6 +97,14 @@ loosened should appear in a diff with an author and a reason.
 
 A violation throws `RegressionError`, which the Langfuse experiment GitHub
 Action reads to fail the job.
+
+Be honest about what a single gated run proves. `emissionRate` separates
+cleanly: the failure it exists to catch is a model swap that empties the block
+entirely, and fifty samples settle that. `falsePositiveRate` does not. Sampled
+three times before the trivial-skip fix it read 0.200, 0.278 and 0.361, and
+twice after it read 0.083 and 0.111, so the distributions overlap at the tails
+and no ceiling separates them on one run. That gate catches a blowup. Deciding
+that a change moved the metric still takes several runs on each side.
 
 ## Datasets
 

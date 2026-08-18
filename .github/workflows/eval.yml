@@ -1,9 +1,6 @@
 name: Eval
 
 on:
-  schedule:
-    # 03:00 JST
-    - cron: '0 18 * * *'
   workflow_dispatch:
     inputs:
       model:
@@ -15,13 +12,15 @@ on:
         required: false
         default: '5'
         type: string
+  # Only what changes model behaviour. A change to the harness itself moves no
+  # rate, and its own correctness is covered by the evaluator unit tests in the
+  # ordinary test job.
   pull_request:
     branches: [main]
     paths:
       - 'config/models/cloud.json'
       - 'lib/agents/prompts/**'
       - 'lib/render/prompt.ts'
-      - 'evals/**'
 
 concurrency:
   group: eval-${{ github.ref }}
