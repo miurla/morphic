@@ -40,18 +40,23 @@ export async function generateChatTitle({
 
     const { text: generatedTitle } = await generateText({
       model: getModel(modelId),
-      system: systemPrompt,
+      instructions: systemPrompt,
       prompt: userMessageContent,
       abortSignal,
       providerOptions: getTitleProviderOptions(modelId),
+      runtimeContext: {
+        modelId,
+        agentType: 'title-generator',
+        promptLength: userMessageContent.length
+      },
       // Spans join the parent Langfuse trace via OTel context propagation
-      experimental_telemetry: {
+      telemetry: {
         isEnabled: isTracingEnabled(),
         functionId: 'title-generation',
-        metadata: {
-          modelId: modelId,
-          agentType: 'title-generator',
-          promptLength: userMessageContent.length
+        includeRuntimeContext: {
+          modelId: true,
+          agentType: true,
+          promptLength: true
         }
       }
     })

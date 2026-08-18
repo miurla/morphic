@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('ai', () => ({
-  stepCountIs: vi.fn(),
+  isStepCount: vi.fn(),
   tool: vi.fn(options => options),
   ToolLoopAgent: vi.fn(function (
     this: { tools: unknown },

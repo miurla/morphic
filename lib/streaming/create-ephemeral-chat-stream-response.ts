@@ -131,7 +131,7 @@ export async function createEphemeralChatStreamResponse(
         },
         experimental_transform: smoothStream({ chunking: 'word' }),
         ...(isUsageLogging() && {
-          onStepFinish: step => {
+          onStepEnd: step => {
             logUsage(
               { scope: 'step', modelId },
               step.usage,
@@ -145,7 +145,7 @@ export async function createEphemeralChatStreamResponse(
       result.consumeStream()
 
       if (isUsageLogging()) {
-        Promise.resolve(result.totalUsage)
+        Promise.resolve(result.usage)
           .then(usage => logUsage({ scope: 'total', modelId }, usage))
           .catch(() => {})
       }
@@ -160,7 +160,7 @@ export async function createEphemeralChatStreamResponse(
             }
           }
         },
-        onFinish: async ({ responseMessage, isAborted }) => {
+        onEnd: async ({ responseMessage, isAborted }) => {
           if (!isAborted && responseMessage) {
             hasEmptyResponse = isEmptyResponse(responseMessage)
           }

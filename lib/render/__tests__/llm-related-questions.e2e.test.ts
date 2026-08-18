@@ -8,7 +8,7 @@
  *
  *   RUN_LLM_E2E=1 OPENAI_API_KEY=sk-... bun run test llm-related-questions.e2e
  */
-import { generateText, stepCountIs, tool } from 'ai'
+import { generateText, isStepCount, tool } from 'ai'
 import { describe, expect, test } from 'vitest'
 import { z } from 'zod'
 
@@ -100,11 +100,11 @@ function findRelatedBlocks(markdown: string): SpecElement[][] {
 async function generateAnswer(prompt: string): Promise<string> {
   const { text } = await generateText({
     model: getModel(MODEL),
-    system: getAdaptiveModePrompt(),
+    instructions: getAdaptiveModePrompt(),
     tools: {
       search: createMockSearchTool()
     },
-    stopWhen: stepCountIs(6),
+    stopWhen: isStepCount(6),
     providerOptions: PROVIDER_OPTIONS,
     prompt
   })

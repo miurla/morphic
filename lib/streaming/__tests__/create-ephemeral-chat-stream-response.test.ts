@@ -59,7 +59,7 @@ type StreamOptions = {
 
 type UIMessageStreamResponseOptions = {
   onError: (error: unknown) => string
-  onFinish: (event: {
+  onEnd: (event: {
     responseMessage: {
       id: string
       role: 'assistant'
@@ -85,7 +85,7 @@ function createFakeResult({
         if (toolError) {
           mocks.serializedError = options.onError(toolError)
         }
-        mocks.finishPromise = options.onFinish({
+        mocks.finishPromise = options.onEnd({
           responseMessage: {
             id: 'response-id',
             role: 'assistant',
