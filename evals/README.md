@@ -111,7 +111,9 @@ key for the provider under test. The runner loads `.env.local`.
 
 Keys are required: the experiment runner uploads item scores through the
 Langfuse client whether or not spans are exported, so a keyless run fails
-partway rather than degrading to a local-only run.
+partway rather than degrading to a local-only run. The CI job skips itself with
+a warning when they are absent, so a repository without them does not collect a
+red mark on every PR that touches `evals/`.
 
 Experiment traces are tagged by the SDK with the `sdk-experiment` environment,
 so they can be excluded from production metrics without a separate project.

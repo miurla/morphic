@@ -55,6 +55,17 @@ function isRelatedBlock(elements: SpecElement[]): boolean {
   )
 }
 
+// A block that fails to compile has no elements to inspect, so its raw source is
+// the only evidence of what it was meant to be. Image blocks are a separate and
+// legitimate feature, so a broken one must not be counted as a related-question
+// emission.
+function looksLikeRelatedSource(source: string): boolean {
+  return (
+    /"title"\s*:\s*"Related"/.test(source) ||
+    /"action"\s*:\s*"submitQuery"/.test(source)
+  )
+}
+
 /**
  * Inspect a model answer for the related questions spec block.
  *
@@ -66,26 +77,31 @@ function isRelatedBlock(elements: SpecElement[]): boolean {
 export function analyzeRelatedQuestions(
   markdown: string
 ): RelatedQuestionsAnalysis {
-  const parsedBlocks = extractSpecBlocks(markdown).map(compileElements)
-  const relatedBlocks = parsedBlocks.filter(
-    (elements): elements is SpecElement[] =>
-      elements !== null && isRelatedBlock(elements)
-  )
+  const parsedBlocks = extractSpecBlocks(markdown).map(source => ({
+    source,
+    elements: compileElements(source)
+  }))
+  const relatedBlocks = parsedBlocks
+    .map(block => block.elements)
+    .filter(
+      (elements): elements is SpecElement[] =>
+        elements !== null && isRelatedBlock(elements)
+    )
 
-  // A block that carries a "Related" heading but fails to compile is an
-  // emission the user never sees. Counting it as "not emitted" would hide the
-  // failure, so it is reported as a malformed emission instead.
-  const unparseableCount = parsedBlocks.filter(
-    elements => elements === null
+  // A related block that fails to compile is an emission the user never sees.
+  // Counting it as "not emitted" would hide the failure, so it is reported as a
+  // malformed emission instead.
+  const brokenRelatedCount = parsedBlocks.filter(
+    block => block.elements === null && looksLikeRelatedSource(block.source)
   ).length
 
   if (relatedBlocks.length === 0) {
-    return unparseableCount > 0
+    return brokenRelatedCount > 0
       ? {
           emitted: true,
           questions: [],
           wellFormed: false,
-          issues: [`${unparseableCount} spec block(s) failed to compile`]
+          issues: [`${brokenRelatedCount} related block(s) failed to compile`]
         }
       : { emitted: false, questions: [], wellFormed: false, issues: [] }
   }
@@ -94,8 +110,8 @@ export function analyzeRelatedQuestions(
   if (relatedBlocks.length > 1) {
     issues.push(`${relatedBlocks.length} related blocks (expected 1)`)
   }
-  if (unparseableCount > 0) {
-    issues.push(`${unparseableCount} spec block(s) failed to compile`)
+  if (brokenRelatedCount > 0) {
+    issues.push(`${brokenRelatedCount} related block(s) failed to compile`)
   }
 
   const buttons = relatedBlocks[0].filter(element => element.type === 'Button')

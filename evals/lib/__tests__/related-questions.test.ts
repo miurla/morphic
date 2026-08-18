@@ -114,6 +114,35 @@ describe('analyzeRelatedQuestions', () => {
     expect(result.issues).toContain('duplicate questions')
   })
 
+  test('does not count a malformed image block as an emission', () => {
+    const brokenImage = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"grid"}',
+      '{"op":"add","path":"/elements/grid","value":{"type":"Grid","props":{"columns":2',
+      '```'
+    ].join('\n')
+
+    const result = analyzeRelatedQuestions(ANSWER + brokenImage)
+
+    expect(result.emitted).toBe(false)
+    expect(result.issues).toEqual([])
+  })
+
+  test('counts a malformed related block as a broken emission', () => {
+    const brokenRelated = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"main"}',
+      '{"op":"add","path":"/elements/header","value":{"type":"Heading","props":{"title":"Related"',
+      '```'
+    ].join('\n')
+
+    const result = analyzeRelatedQuestions(ANSWER + brokenRelated)
+
+    expect(result.emitted).toBe(true)
+    expect(result.wellFormed).toBe(false)
+    expect(result.issues).toContain('1 related block(s) failed to compile')
+  })
+
   test('ignores an image spec block', () => {
     const imageBlock = [
       '```spec',
