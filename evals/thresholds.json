@@ -12,7 +12,7 @@
     },
     "falsePositiveRate": {
       "direction": "max",
-      "value": null,
+      "value": 0.2,
       "minSamples": 50
     },
     "wellFormedRate": {

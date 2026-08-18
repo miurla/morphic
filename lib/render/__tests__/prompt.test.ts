@@ -16,15 +16,16 @@ describe('render prompts', () => {
     const prompt = getRelatedQuestionsSpecPrompt()
 
     expect(prompt).toContain('expected on every substantive answer')
+    expect(prompt).toContain('Decide from the answer you just wrote')
     expect(prompt).toContain(
-      'Include the spec block whenever the answer contains substantive information'
+      'Include the spec block whenever that answer compares options'
     )
     expect(prompt).toContain(
       'SKIP the spec block entirely (output nothing) only in these cases'
     )
     expect(prompt).toContain('Greetings, small talk, or thanks')
     expect(prompt).toContain(
-      'Trivial one-off lookups with no natural next step'
+      'The answer delivers a single fact, value, date, quantity, or yes/no'
     )
     expect(prompt).toContain('Meta/operational replies')
     expect(prompt).toContain('Cases where you could not answer')
