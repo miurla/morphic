@@ -1,7 +1,7 @@
 /**
  * Returns the prompt section that instructs the LLM to output
  * related questions as a ```spec fenced block at the end of its response,
- * but only when follow-ups add value (skipped for greetings, trivial
+ * but only when follow-ups add value (skipped for greetings, single-fact
  * lookups, and non-answers).
  */
 export function getRelatedQuestionsSpecPrompt(): string {
@@ -9,11 +9,11 @@ export function getRelatedQuestionsSpecPrompt(): string {
 RELATED QUESTIONS:
 After your conclusion, generate exactly 3 follow-up questions in a \`\`\`spec fenced code block. This is expected on every substantive answer; only the narrow skip cases below are exempt.
 
-Include the spec block whenever the answer contains substantive information, analysis, comparison, or recommendations. Anchor each follow-up to concrete details from THIS answer.
+Decide from the answer you just wrote, not from what the reader might go on to wonder. Include the spec block whenever that answer compares options, recommends or advises, explains a cause or a mechanism, lays out several distinct points, or walks through steps. Anchor each follow-up to concrete details from THIS answer.
 
 SKIP the spec block entirely (output nothing) only in these cases:
 - Greetings, small talk, or thanks ("hi", "thanks", "how are you").
-- Trivial one-off lookups with no natural next step (simple math, a single fact, a yes/no).
+- The answer delivers a single fact, value, date, quantity, or yes/no, even when interesting follow-ups do exist. A lookup does not stop being a lookup because the topic is rich.
 - Meta/operational replies, acknowledgements, or task-completion notices.
 - Cases where you could not answer (refusal, clarification request, or empty result).
 - Short answers where suggested next questions would be generic or forced.
