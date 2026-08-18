@@ -201,6 +201,19 @@ describe('createEphemeralChatStreamResponse', () => {
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
   })
 
+  it('omits the output when the answer is only whitespace', async () => {
+    mocks.stream.mockResolvedValue(
+      createFakeResult({ parts: [{ type: 'text', text: '   \n' }] })
+    )
+
+    await createEphemeralChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    const update = mocks.span.update.mock.calls.at(-1)?.[0]
+    expect(update).toMatchObject({ input: 'hello', level: 'ERROR' })
+    expect(update).not.toHaveProperty('output')
+  })
+
   it('omits the output when the stream failed after partial text', async () => {
     const streamError = new Error('upstream stopped')
     streamError.name = 'AbortError'

@@ -255,6 +255,21 @@ describe('createChatStreamResponse', () => {
     })
   })
 
+  it('omits the output when the answer is only whitespace', async () => {
+    mocks.stream.mockResolvedValue(
+      createFakeResult(false, [{ type: 'text', text: '   \n' }])
+    )
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'hello',
+      level: 'ERROR',
+      statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
+    })
+  })
+
   it('omits the output when the stream failed after partial text', async () => {
     const streamError = new Error('upstream stopped')
     streamError.name = 'AbortError'
