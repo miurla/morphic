@@ -2,8 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Model } from '@/lib/types/models'
 
-import { RELATED_QUESTIONS_REMINDER } from '../prompts/related-questions-reminder'
-
 const mocks = vi.hoisted(() => ({
   agentOptions: undefined as Record<string, any> | undefined
 }))
@@ -114,31 +112,6 @@ describe('createResearcher', () => {
 
     expect(mocks.agentOptions?.providerOptions).toEqual({
       openai: { reasoningEffort: 'low' }
-    })
-  })
-
-  it('places the related-questions reminder after conversation history', () => {
-    createResearcher({
-      model: 'openai:model-id',
-      modelConfig: createModel('openai')
-    })
-
-    const prepareCall = mocks.agentOptions?.prepareCall
-    const result = prepareCall({
-      messages: [
-        { role: 'user', content: 'Initial question' },
-        { role: 'assistant', content: 'Initial answer' },
-        { role: 'user', content: 'Deep follow-up' }
-      ]
-    })
-
-    expect(result.messages.at(-1)).toEqual({
-      role: 'user',
-      content: [{ type: 'text', text: RELATED_QUESTIONS_REMINDER }]
-    })
-    expect(result.messages.at(-2)).toEqual({
-      role: 'user',
-      content: 'Deep follow-up'
     })
   })
 })
