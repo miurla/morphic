@@ -90,7 +90,13 @@ describe('buildStreamErrorSpanUpdate', () => {
       const error = new Error('request stopped')
       error.name = 'AbortError'
 
-      expect(buildStreamErrorSpanUpdate(error, true, phase)).toBeNull()
+      expect(
+        buildStreamErrorSpanUpdate(error, {
+          requestWasCancelled: true,
+          phase,
+          stage: 'start-stream'
+        })
+      ).toBeNull()
     }
   )
 
@@ -99,11 +105,21 @@ describe('buildStreamErrorSpanUpdate', () => {
     phase => {
       const update = buildStreamErrorSpanUpdate(
         new Error('unclassified failure'),
-        false,
-        phase
+        {
+          requestWasCancelled: false,
+          phase,
+          stage: 'convert-messages'
+        }
       )
 
       expect(update?.metadata.streamErrorPhase).toBe(phase)
+      expect(update?.metadata).toEqual({
+        streamErrorPhase: phase,
+        ...(phase === 'preparation' && {
+          streamErrorStage: 'convert-messages'
+        }),
+        streamErrorShape: { name: 'Error' }
+      })
     }
   )
 
@@ -111,20 +127,30 @@ describe('buildStreamErrorSpanUpdate', () => {
     const error = new Error('upstream timed out')
     error.name = 'AbortError'
 
-    expect(buildStreamErrorSpanUpdate(error, false, 'generation')?.level).toBe(
-      'ERROR'
-    )
+    expect(
+      buildStreamErrorSpanUpdate(error, {
+        requestWasCancelled: false,
+        phase: 'generation',
+        stage: 'start-stream'
+      })?.level
+    ).toBe('ERROR')
   })
 
   it('records the phase when other diagnostics are absent', () => {
     const update = buildStreamErrorSpanUpdate(
       new Error('rate limit exceeded'),
-      false,
-      'preparation'
+      {
+        requestWasCancelled: false,
+        phase: 'preparation',
+        stage: 'prepare-messages'
+      }
     )
 
     expect(update?.level).toBe('ERROR')
     expect(update?.statusMessage).toContain('provider_rate_limit')
-    expect(update?.metadata).toEqual({ streamErrorPhase: 'preparation' })
+    expect(update?.metadata).toEqual({
+      streamErrorPhase: 'preparation',
+      streamErrorStage: 'prepare-messages'
+    })
   })
 })

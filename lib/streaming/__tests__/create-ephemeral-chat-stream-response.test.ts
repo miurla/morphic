@@ -1,3 +1,4 @@
+import { convertToModelMessages } from 'ai'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
@@ -213,6 +214,26 @@ describe('createEphemeralChatStreamResponse', () => {
     )
     expect(mocks.span.end).toHaveBeenCalledOnce()
     expect(mocks.forceFlush).toHaveBeenCalledOnce()
+  })
+
+  it('records the preparation stage when message conversion fails', async () => {
+    const convertError = new TypeError('private failure detail')
+    vi.mocked(convertToModelMessages).mockRejectedValueOnce(convertError)
+
+    await createEphemeralChatStreamResponse(createConfig())
+
+    expect(mocks.span.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'ERROR',
+        statusMessage: describeStreamError(convertError),
+        metadata: {
+          streamErrorPhase: 'preparation',
+          streamErrorStage: 'convert-messages',
+          streamErrorShape: { name: 'TypeError' }
+        }
+      })
+    )
+    expect(mocks.stream).not.toHaveBeenCalled()
   })
 
   it('omits the output when the answer is only whitespace', async () => {

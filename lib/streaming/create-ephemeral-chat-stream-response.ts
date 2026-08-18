@@ -35,7 +35,8 @@ import {
 import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
 import {
   buildStreamErrorSpanUpdate,
-  type StreamErrorPhase
+  type StreamErrorPhase,
+  type StreamErrorStage
 } from './helpers/stream-error-diagnostics'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import { BaseStreamConfig } from './types'
@@ -71,6 +72,7 @@ export async function createEphemeralChatStreamResponse(
     let streamError: unknown
     // The agent stream call is preparation until its first generation starts.
     let streamErrorPhase: StreamErrorPhase = 'preparation'
+    let streamErrorStage: StreamErrorStage = 'transform-messages'
     // Sampled where the failure happens: the client can disconnect before the
     // span is closed, and by then the signal no longer says whether the user
     // cancelled this turn or the failure was the model's own.
@@ -85,11 +87,11 @@ export async function createEphemeralChatStreamResponse(
     const endTracing = async () => {
       if (rootSpan) {
         const failureUpdate = hasStreamError
-          ? buildStreamErrorSpanUpdate(
-              streamError,
-              streamErrorWasCancelled,
-              streamErrorPhase
-            )
+          ? buildStreamErrorSpanUpdate(streamError, {
+              requestWasCancelled: streamErrorWasCancelled,
+              phase: streamErrorPhase,
+              stage: streamErrorStage
+            })
           : hasEmptyResponse
             ? {
                 level: 'ERROR' as const,
@@ -118,15 +120,18 @@ export async function createEphemeralChatStreamResponse(
         capHistoricalAttachments(compactHistoricalMessages(messagesWithoutSpec))
       )
 
+      streamErrorStage = 'convert-messages'
       let modelMessages = await convertToModelMessages(messagesToConvert, {
         convertDataPart
       })
 
+      streamErrorStage = 'truncate-messages'
       if (shouldTruncateMessages(modelMessages, model)) {
         const maxTokens = getMaxAllowedTokens(model)
         modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
       }
 
+      streamErrorStage = 'build-agent'
       const researchAgent = researcher({
         model: `${model.providerId}:${model.id}`,
         modelConfig: model,
@@ -135,6 +140,7 @@ export async function createEphemeralChatStreamResponse(
       })
 
       const modelId = `${model.providerId}:${model.id}`
+      streamErrorStage = 'start-stream'
       // AgentStreamParameters omits onError, but it reaches streamText where only
       // stream errors, not recoverable tool errors, invoke it.
       const result = await researchAgent.stream({
