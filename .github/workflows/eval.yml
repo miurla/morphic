@@ -13,7 +13,7 @@ on:
       trials:
         description: 'Generations per dataset item'
         required: false
-        default: '3'
+        default: '5'
         type: string
   pull_request:
     branches: [main]
@@ -62,7 +62,7 @@ jobs:
             --trials "${TRIALS}" \
             ${MODEL:+--model "$MODEL"}
         env:
-          TRIALS: ${{ inputs.trials || '3' }}
+          TRIALS: ${{ inputs.trials || '5' }}
           MODEL: ${{ inputs.model }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}

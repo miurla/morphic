@@ -6,12 +6,20 @@ import { parseSpecBlock } from '@/lib/render/parse-spec-block'
 type SpecElement = {
   type: string
   props?: Record<string, unknown>
+  children?: string[]
   on?: {
     press?: {
       action?: string
       params?: Record<string, unknown>
     }
   }
+}
+
+type CompiledSpec = {
+  /** Elements reachable from the root, in the order they render. */
+  rendered: SpecElement[]
+  /** Children of the root element, in order. Rule: the heading comes first. */
+  topLevel: SpecElement[]
 }
 
 export type RelatedQuestionsAnalysis = {
@@ -46,19 +54,49 @@ function extractSpecBlocks(markdown: string): SpecBlock[] {
   return blocks
 }
 
-function compileElements(source: string): SpecElement[] | null {
+// Only elements reachable from the root render. Reading the element map
+// directly would credit a block for buttons the user never sees, and would miss
+// the required ordering entirely, since a map has no order to inspect.
+function compileElements(source: string): CompiledSpec | null {
+  let spec: ReturnType<typeof parseSpecBlock>
   try {
-    const spec = parseSpecBlock(source)
-    return Object.values(spec.elements ?? {}) as SpecElement[]
+    spec = parseSpecBlock(source)
   } catch {
     return null
   }
+
+  const elements = (spec.elements ?? {}) as Record<string, SpecElement>
+  const root = elements[spec.root as string]
+  if (!root) return { rendered: [], topLevel: [] }
+
+  const rendered: SpecElement[] = []
+  const seen = new Set<string>()
+
+  const walk = (key: string) => {
+    if (seen.has(key)) return
+    seen.add(key)
+    const element = elements[key]
+    if (!element) return
+    rendered.push(element)
+    for (const child of element.children ?? []) walk(child)
+  }
+  walk(spec.root as string)
+
+  const topLevel = (root.children ?? [])
+    .map(key => elements[key])
+    .filter((element): element is SpecElement => element !== undefined)
+
+  return { rendered, topLevel }
 }
 
-function isRelatedBlock(elements: SpecElement[]): boolean {
-  return elements.some(
+function isRelatedBlock(spec: CompiledSpec): boolean {
+  return spec.rendered.some(
     element => element.type === 'Heading' && element.props?.title === 'Related'
   )
+}
+
+function isRelatedHeading(element: SpecElement | undefined): boolean {
+  return element?.type === 'Heading' && element.props?.title === 'Related'
 }
 
 // A block that fails to compile has no elements to inspect, so its raw source is
@@ -85,21 +123,18 @@ export function analyzeRelatedQuestions(
 ): RelatedQuestionsAnalysis {
   const parsedBlocks = extractSpecBlocks(markdown).map(block => ({
     ...block,
-    elements: compileElements(block.source)
+    spec: compileElements(block.source)
   }))
   const relatedBlocks = parsedBlocks.filter(
-    (
-      block
-    ): block is (typeof parsedBlocks)[number] & {
-      elements: SpecElement[]
-    } => block.elements !== null && isRelatedBlock(block.elements)
+    (block): block is (typeof parsedBlocks)[number] & { spec: CompiledSpec } =>
+      block.spec !== null && isRelatedBlock(block.spec)
   )
 
   // A related block that fails to compile is an emission the user never sees.
   // Counting it as "not emitted" would hide the failure, so it is reported as a
   // malformed emission instead.
   const brokenRelatedCount = parsedBlocks.filter(
-    block => block.elements === null && looksLikeRelatedSource(block.source)
+    block => block.spec === null && looksLikeRelatedSource(block.source)
   ).length
 
   if (relatedBlocks.length === 0) {
@@ -130,9 +165,13 @@ export function analyzeRelatedQuestions(
     )
   }
 
-  const buttons = relatedBlocks[0].elements.filter(
-    element => element.type === 'Button'
-  )
+  // "Always include a Heading with title Related as the first child element."
+  const block = relatedBlocks[0].spec
+  if (!isRelatedHeading(block.topLevel[0])) {
+    issues.push('the Related heading is not the first child of the root')
+  }
+
+  const buttons = block.rendered.filter(element => element.type === 'Button')
   if (buttons.length !== EXPECTED_QUESTION_COUNT) {
     issues.push(
       `${buttons.length} buttons (expected ${EXPECTED_QUESTION_COUNT})`

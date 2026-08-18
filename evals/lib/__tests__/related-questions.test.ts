@@ -163,6 +163,49 @@ describe('analyzeRelatedQuestions', () => {
     expect(result.wellFormed).toBe(true)
   })
 
+  test('flags a Related heading that is not the first child', () => {
+    const reordered = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"main"}',
+      '{"op":"add","path":"/elements/main","value":{"type":"Stack","props":{"direction":"vertical","gap":"sm"},"children":["questions","header"]}}',
+      '{"op":"add","path":"/elements/header","value":{"type":"Heading","props":{"title":"Related","icon":"related"},"children":[]}}',
+      '{"op":"add","path":"/elements/questions","value":{"type":"Stack","props":{"direction":"vertical","gap":"xs"},"children":["q1","q2","q3"]}}',
+      ...THREE_QUESTIONS.map(
+        (question, index) =>
+          `{"op":"add","path":"/elements/q${index + 1}","value":{"type":"Button","props":{"text":${JSON.stringify(question.text)},"variant":"link"},"on":{"press":{"action":"submitQuery","params":{"query":${JSON.stringify(question.text)}}}},"children":[]}}`
+      ),
+      '```'
+    ].join('\n')
+
+    const result = analyzeRelatedQuestions(ANSWER + reordered)
+
+    expect(result.emitted).toBe(true)
+    expect(result.wellFormed).toBe(false)
+    expect(result.issues).toContain(
+      'the Related heading is not the first child of the root'
+    )
+  })
+
+  test('ignores a button that nothing renders', () => {
+    const orphaned = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"main"}',
+      '{"op":"add","path":"/elements/main","value":{"type":"Stack","props":{"direction":"vertical","gap":"sm"},"children":["header","questions"]}}',
+      '{"op":"add","path":"/elements/header","value":{"type":"Heading","props":{"title":"Related","icon":"related"},"children":[]}}',
+      '{"op":"add","path":"/elements/questions","value":{"type":"Stack","props":{"direction":"vertical","gap":"xs"},"children":["q1","q2"]}}',
+      ...THREE_QUESTIONS.map(
+        (question, index) =>
+          `{"op":"add","path":"/elements/q${index + 1}","value":{"type":"Button","props":{"text":${JSON.stringify(question.text)},"variant":"link"},"on":{"press":{"action":"submitQuery","params":{"query":${JSON.stringify(question.text)}}}},"children":[]}}`
+      ),
+      '```'
+    ].join('\n')
+
+    const result = analyzeRelatedQuestions(ANSWER + orphaned)
+
+    expect(result.wellFormed).toBe(false)
+    expect(result.issues).toContain('2 buttons (expected 3)')
+  })
+
   test('ignores an image spec block', () => {
     const imageBlock = [
       '```spec',

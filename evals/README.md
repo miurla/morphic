@@ -85,7 +85,10 @@ that lost more than a tenth of its items is not a valid measurement.
 
 Rates are read at the run level, never per item. At three trials an individual
 query swings by a third from one run to the next, so a single query moving is
-noise; raise `--trials` before drawing a conclusion about one of them.
+noise; raise `--trials` before drawing a conclusion about one of them. Whole
+runs move too: the same code measured 0.28 and 0.36 on `falsePositiveRate` in
+consecutive runs, which is why CI runs five trials and why a before/after
+comparison needs more than one run on each side.
 
 **Set a baseline before enforcing anything.** Run the eval a few times on the
 current production model, then commit the numbers. Committing them rather than
