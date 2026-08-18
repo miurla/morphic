@@ -29,11 +29,48 @@ describe('detectFileMediaType', () => {
     ).toBe('application/pdf')
   })
 
-  it('rejects the MP4 content from the production upload', () => {
+  it('detects MP4 content', () => {
+    expect(
+      detectFileMediaType(
+        Buffer.from([
+          0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x6d, 0x70, 0x34, 0x32
+        ])
+      )
+    ).toBe('video/mp4')
+  })
+
+  it('detects the ISO container from the production upload as MP4', () => {
+    // A clip named image.jpg is reported as an image by the browser. Reading
+    // the bytes is what keeps it from being sent to the model as a broken
+    // image, which used to fail the whole turn.
     expect(
       detectFileMediaType(
         Buffer.from([
           0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d
+        ])
+      )
+    ).toBe('video/mp4')
+  })
+
+  it('rejects an ISO container that is not an MP4 brand', () => {
+    // QuickTime shares the container. Passing it off as MP4 would move the
+    // failure from the upload to the provider.
+    expect(
+      detectFileMediaType(
+        Buffer.concat([
+          Buffer.from([0x00, 0x00, 0x00, 0x20]),
+          Buffer.from('ftypqt  ', 'ascii')
+        ])
+      )
+    ).toBeNull()
+  })
+
+  it('rejects an ISO container whose brand is cut off', () => {
+    expect(
+      detectFileMediaType(
+        Buffer.concat([
+          Buffer.from([0x00, 0x00, 0x00, 0x20]),
+          Buffer.from('ftypiso', 'ascii')
         ])
       )
     ).toBeNull()

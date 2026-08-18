@@ -10,10 +10,13 @@ import { cn } from '@/lib/utils'
 import { Button } from './ui/button'
 
 const allowedImageTypes = ['image/png', 'image/jpeg']
+const allowedVideoTypes = ['video/mp4']
 const allowedOtherTypes = ['application/pdf']
 
 const isAllowedFileType = (file: File) =>
-  allowedImageTypes.includes(file.type) || allowedOtherTypes.includes(file.type)
+  allowedImageTypes.includes(file.type) ||
+  allowedVideoTypes.includes(file.type) ||
+  allowedOtherTypes.includes(file.type)
 
 export function FileUploadButton({
   onFileSelect
@@ -66,7 +69,7 @@ export function FileUploadButton({
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/jpeg,application/pdf"
+        accept="image/png,image/jpeg,video/mp4,application/pdf"
         hidden
         multiple
         onChange={e => {

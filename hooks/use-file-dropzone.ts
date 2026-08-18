@@ -17,7 +17,7 @@ export function useFileDropzone({
   setUploadedFiles,
   chatId,
   maxFiles = 3,
-  allowedTypes = ['image/png', 'image/jpeg', 'application/pdf']
+  allowedTypes = ['image/png', 'image/jpeg', 'video/mp4', 'application/pdf']
 }: UseFileDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false)
 

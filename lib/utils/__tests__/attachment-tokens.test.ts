@@ -4,7 +4,8 @@ import {
   BYTES_PER_TOKEN,
   estimateAttachmentTokens,
   IMAGE_ATTACHMENT_TOKENS,
-  UNKNOWN_ATTACHMENT_TOKENS
+  UNKNOWN_ATTACHMENT_TOKENS,
+  VIDEO_ATTACHMENT_TOKENS
 } from '../attachment-tokens'
 
 describe('estimateAttachmentTokens', () => {
@@ -12,6 +13,18 @@ describe('estimateAttachmentTokens', () => {
     expect(
       estimateAttachmentTokens({ mediaType: 'image/png', size: 20_000_000 })
     ).toBe(IMAGE_ATTACHMENT_TOKENS)
+  })
+
+  it('uses a fixed estimate for video, not its byte length', () => {
+    // Byte expansion would price one clip above the whole attachment budget and
+    // drop every other file replayed to the model.
+    expect(
+      estimateAttachmentTokens({ mediaType: 'video/mp4', size: 5_000_000 })
+    ).toBe(VIDEO_ATTACHMENT_TOKENS)
+  })
+
+  it('costs a clip above a single image', () => {
+    expect(VIDEO_ATTACHMENT_TOKENS).toBeGreaterThan(IMAGE_ATTACHMENT_TOKENS)
   })
 
   it('estimates known PDF sizes from their byte length', () => {

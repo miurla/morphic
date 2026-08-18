@@ -70,7 +70,12 @@ const PASTE_CARD_MIN_CHARS = 400
 // L0 prototype: client-only, no fetch — the URL rides into the query at send
 // time so the existing fetch tool picks it up.
 const BARE_URL_RE = /^https?:\/\/\S+$/
-const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'application/pdf']
+const ALLOWED_FILE_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'video/mp4',
+  'application/pdf'
+]
 
 function getSearchModeSnapshot(): SearchMode {
   return getCookie('searchMode') === 'adaptive' ? 'adaptive' : 'quick'

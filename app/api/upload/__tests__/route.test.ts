@@ -78,6 +78,13 @@ function pdfUploadBytes(bytes = 1234) {
   return contents
 }
 
+function mp4UploadBytes(bytes = 1234) {
+  const contents = new Uint8Array(bytes)
+  contents.set([0x00, 0x00, 0x00, 0x20])
+  contents.set(Buffer.from('ftypisom', 'ascii'), 4)
+  return contents
+}
+
 function md5OfUpload(bytes = 1234) {
   return createHash('md5').update(pdfUploadBytes(bytes)).digest('hex')
 }
@@ -133,9 +140,9 @@ describe('POST /api/upload', () => {
   })
 
   it('rejects allowed declared types with unsupported content', async () => {
-    const contents = new Uint8Array([
-      0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d
-    ])
+    // Bytes that open no supported format: not a JPEG, PNG, MP4 container or
+    // PDF header.
+    const contents = new Uint8Array(32)
 
     const response = await POST(uploadRequest(contents.byteLength, contents))
 
@@ -146,6 +153,30 @@ describe('POST /api/upload', () => {
     expect(dbActions.findChatFileCandidates).not.toHaveBeenCalled()
     expect(send).not.toHaveBeenCalled()
     expect(dbActions.createLibraryFile).not.toHaveBeenCalled()
+  })
+
+  it('stores a clip under its detected video type', async () => {
+    vi.mocked(dbActions.findChatFileCandidates).mockResolvedValue([])
+    const contents = mp4UploadBytes()
+
+    const { file } = await (
+      await POST(
+        uploadRequest(contents.byteLength, contents, {
+          name: 'clip.mp4',
+          type: 'video/mp4'
+        })
+      )
+    ).json()
+
+    expect(file.mediaType).toBe('video/mp4')
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({ ContentType: 'video/mp4' })
+      })
+    )
+    expect(dbActions.createLibraryFile).toHaveBeenCalledWith(
+      expect.objectContaining({ mediaType: 'video/mp4' })
+    )
   })
 
   it('stores a mislabelled file under the type its bytes say it is', async () => {

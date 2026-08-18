@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         {
           error: 'Unsupported file content',
           message:
-            'The file contents are not a JPEG, PNG, or PDF even though the file name suggests otherwise.'
+            'The file contents are not a JPEG, PNG, MP4, or PDF even though the file name suggests otherwise.'
         },
         { status: 400 }
       )
