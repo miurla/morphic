@@ -8,12 +8,12 @@
     "emissionRate": {
       "direction": "min",
       "value": 0.85,
-      "minSamples": 30
+      "minSamples": 50
     },
     "falsePositiveRate": {
       "direction": "max",
       "value": null,
-      "minSamples": 30
+      "minSamples": 50
     },
     "wellFormedRate": {
       "direction": "min",
