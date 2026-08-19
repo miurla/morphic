@@ -185,6 +185,7 @@ export function MessageActions({
   async function handleFeedback(score: number) {
     if (isSubmittingFeedback || !traceId) return
 
+    captureClient('feedback_control_clicked', { score, chatId, isGuest })
     setIsSubmittingFeedback(true)
     try {
       const response = await fetch('/api/feedback', {
@@ -198,6 +199,9 @@ export function MessageActions({
       })
 
       if (response.ok) {
+        // The route answers 200 without writing a score when tracing is off, so
+        // this records that the request succeeded, not that a score exists.
+        captureClient('feedback_recorded', { score, chatId, isGuest })
         setFeedbackScore(score)
         toast.success(
           score === 1
@@ -205,10 +209,23 @@ export function MessageActions({
             : 'Thanks for letting us know!'
         )
       } else {
+        captureClient('feedback_failed', {
+          score,
+          chatId,
+          isGuest,
+          status: response.status,
+          reason: 'response'
+        })
         console.error('Failed to submit feedback')
         toast.error('Failed to submit feedback')
       }
     } catch (error) {
+      captureClient('feedback_failed', {
+        score,
+        chatId,
+        isGuest,
+        reason: 'exception'
+      })
       console.error('Error submitting feedback:', error)
       toast.error('Failed to submit feedback')
     } finally {
@@ -246,6 +263,7 @@ export function MessageActions({
                   onClick={() => handleFeedback(1)}
                   disabled={isSubmittingFeedback || feedbackScore === 1}
                   className="rounded-full"
+                  aria-label="Good response"
                 >
                   <ThumbsUp
                     size={14}
@@ -260,6 +278,7 @@ export function MessageActions({
                   onClick={() => handleFeedback(-1)}
                   disabled={isSubmittingFeedback || feedbackScore === -1}
                   className="rounded-full"
+                  aria-label="Bad response"
                 >
                   <ThumbsDown
                     size={14}
