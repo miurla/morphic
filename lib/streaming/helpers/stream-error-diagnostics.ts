@@ -6,6 +6,20 @@ import { buildAPICallErrorDiagnostics } from './log-api-call-error'
 const MAX_IDENTIFIER_LENGTH = 128
 
 export type StreamErrorPhase = 'preparation' | 'generation'
+export type StreamErrorStage =
+  | 'prepare-messages'
+  | 'build-agent'
+  | 'transform-messages'
+  | 'convert-messages'
+  | 'truncate-messages'
+  | 'start-title-generation'
+  | 'start-stream'
+
+type StreamErrorContext = {
+  requestWasCancelled: boolean
+  phase: StreamErrorPhase
+  stage: StreamErrorStage
+}
 
 function isObject(value: unknown): value is object {
   return typeof value === 'object' && value !== null
@@ -95,8 +109,7 @@ export function buildStreamErrorShape(
 
 export function buildStreamErrorSpanUpdate(
   error: unknown,
-  requestWasCancelled: boolean,
-  streamErrorPhase: StreamErrorPhase
+  { requestWasCancelled, phase, stage }: StreamErrorContext
 ) {
   // A cancelled turn is the user walking away, not a failure. The name alone
   // does not prove that: an internal timeout aborts its own signal and raises
@@ -111,7 +124,8 @@ export function buildStreamErrorSpanUpdate(
     level: 'ERROR' as const,
     statusMessage: describeStreamError(error),
     metadata: {
-      streamErrorPhase,
+      streamErrorPhase: phase,
+      ...(phase === 'preparation' && { streamErrorStage: stage }),
       ...(apiCallDiagnostics && { apiCallDiagnostics }),
       ...(streamErrorShape && { streamErrorShape })
     }

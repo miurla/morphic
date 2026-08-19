@@ -214,6 +214,7 @@ describe('createChatStreamResponse', () => {
         statusMessage: describeStreamError(prepareError),
         metadata: {
           streamErrorPhase: 'preparation',
+          streamErrorStage: 'prepare-messages',
           streamErrorShape: { name: 'TypeError' }
         }
       })
