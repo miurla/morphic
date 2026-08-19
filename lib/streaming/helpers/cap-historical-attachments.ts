@@ -6,6 +6,7 @@ import { describeAttachment, isFilePart } from './attachment-parts'
 
 const DEFAULT_REPLAY_LIMIT = 10
 const DEFAULT_ATTACHMENT_TOKEN_BUDGET = 200_000
+const MIN_WEIGHT_BLOCK_ATTACHMENTS = 2
 
 /**
  * Only an explicit `0` disables the count cap. The weight budget below is a
@@ -65,6 +66,46 @@ function getDroppedCount(total: number, limit: number): number {
 }
 
 /**
+ * Number of leading attachments to drop, quantized by cumulative token weight.
+ *
+ * Blocks are anchored to the start of the surviving history and complete once
+ * they reach `tokenBudget`, with at least two attachments per block. The
+ * minimum is the stability bound: even an attachment heavier than the entire
+ * budget cannot make the boundary advance on consecutive turns. We retain the
+ * newest complete block plus any incomplete tail, so appending an attachment
+ * cannot move the boundary until it completes another block.
+ *
+ * This deliberately permits nearly two blocks of replayed weight. A block can
+ * exceed the budget by its final attachment, or more when an attachment alone
+ * exceeds the budget. That overshoot is the cost of prefix stability while
+ * guaranteeing that at least one historical attachment always survives.
+ */
+function getWeightDroppedCount(weights: number[], tokenBudget: number): number {
+  let blockTokens = 0
+  let blockAttachmentCount = 0
+  let latestBlockEnd = 0
+  let droppedCount = 0
+
+  for (let i = 0; i < weights.length; i++) {
+    blockTokens += weights[i]
+    blockAttachmentCount += 1
+    if (
+      blockTokens < tokenBudget ||
+      blockAttachmentCount < MIN_WEIGHT_BLOCK_ATTACHMENTS
+    ) {
+      continue
+    }
+
+    droppedCount = latestBlockEnd
+    latestBlockEnd = i + 1
+    blockTokens = 0
+    blockAttachmentCount = 0
+  }
+
+  return droppedCount
+}
+
+/**
  * Caps how many of a conversation's attachments are replayed to the model.
  *
  * Attachments are re-sent on every turn, and an image costs thousands of input
@@ -96,8 +137,7 @@ export function capHistoricalAttachments(
   }
 
   const countDropCount = limit > 0 ? getDroppedCount(total, limit) : 0
-  let survivingTokens = 0
-  let survivingCount = 0
+  const survivingWeights: number[] = []
   let seenForBudget = 0
 
   for (let i = 0; i < historyEnd; i++) {
@@ -111,38 +151,12 @@ export function capHistoricalAttachments(
         mediaType?: string
         size?: number
       }
-      survivingTokens += estimateAttachmentTokens(file)
-      survivingCount += 1
+      survivingWeights.push(estimateAttachmentTokens(file))
     }
   }
 
-  // The weight pass drops just enough of the oldest survivors to fit, without
-  // the block quantization the count cap uses. It does not need it: history
-  // only grows, so this boundary only ever moves forward, and each crossing
-  // rewrites the prefix once instead of on every turn.
-  let weightDropCount = 0
-  if (tokenBudget > 0 && survivingTokens > tokenBudget) {
-    seenForBudget = 0
-    for (let i = 0; i < historyEnd; i++) {
-      for (const part of messages[i].parts) {
-        if (!isFilePart(part)) continue
-
-        seenForBudget += 1
-        if (seenForBudget <= countDropCount) continue
-        if (survivingTokens <= tokenBudget || survivingCount <= 1) break
-
-        const file = part as {
-          mediaType?: string
-          size?: number
-        }
-        survivingTokens -= estimateAttachmentTokens(file)
-        survivingCount -= 1
-        weightDropCount += 1
-      }
-
-      if (survivingTokens <= tokenBudget || survivingCount <= 1) break
-    }
-  }
+  const weightDropCount =
+    tokenBudget > 0 ? getWeightDroppedCount(survivingWeights, tokenBudget) : 0
 
   const dropCount = countDropCount + weightDropCount
   if (dropCount === 0) return messages

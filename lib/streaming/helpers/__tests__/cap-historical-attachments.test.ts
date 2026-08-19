@@ -44,6 +44,26 @@ function thread(turns: number, perTurn: number): UIMessage[] {
   ]).flat()
 }
 
+function pdfThread(turns: number, size = 500_000): UIMessage[] {
+  return thread(turns, 0).map(message => {
+    if (message.role !== 'user') return message
+
+    return {
+      ...message,
+      parts: [
+        {
+          type: 'file',
+          mediaType: 'application/pdf',
+          filename: `${message.id}.pdf`,
+          url: `https://example.com/${message.id}.pdf`,
+          size
+        },
+        ...message.parts
+      ]
+    } as unknown as UIMessage
+  })
+}
+
 function filenamesReaching(messages: UIMessage[]): string[] {
   return messages.flatMap(message =>
     message.parts
@@ -213,33 +233,50 @@ describe('capHistoricalAttachments', () => {
     expect(filenamesReaching(capped)).toHaveLength(11)
   })
 
-  it('bounds heavy attachments below the count limit by weight', () => {
-    const heavy = [
-      userTurn('old', 0),
-      assistantTurn('a0'),
-      userTurn('recent', 0),
-      assistantTurn('a1'),
-      userTurn('current', 0)
-    ]
-    heavy[0].parts.unshift({
-      type: 'file',
-      mediaType: 'application/pdf',
-      filename: 'old.pdf',
-      url: 'https://example.com/old.pdf',
-      size: 500_000
-    } as never)
-    heavy[2].parts.unshift({
-      type: 'file',
-      mediaType: 'application/pdf',
-      filename: 'recent.pdf',
-      url: 'https://example.com/recent.pdf',
-      size: 500_000
-    } as never)
+  it('bounds heavy attachments below the count limit by weight blocks', () => {
+    const messages = pdfThread(4).concat(userTurn('current', 0))
+    const capped = capHistoricalAttachments(messages, LIMIT, 200_000)
 
-    const capped = capHistoricalAttachments(heavy, LIMIT, 200_000)
+    expect(filenamesReaching(capped)).toEqual(['u2.pdf', 'u3.pdf'])
+    expect(placeholders(capped)).toHaveLength(2)
+  })
 
-    expect(filenamesReaching(capped)).toEqual(['recent.pdf'])
-    expect(placeholders(capped)).toHaveLength(1)
+  it('keeps the weighted replay prefix stable between block crossings', () => {
+    const atFour = capHistoricalAttachments(
+      pdfThread(4, 1_000_000).concat(userTurn('current', 0)),
+      0,
+      200_000
+    )
+    const atFive = capHistoricalAttachments(
+      pdfThread(5, 1_000_000).concat(userTurn('current', 0)),
+      0,
+      200_000
+    )
+
+    const replayedPrefixLength = atFour.length - 1
+    expect(atFive.slice(0, replayedPrefixLength)).toEqual(
+      atFour.slice(0, replayedPrefixLength)
+    )
+    expect(placeholders(atFour)).toHaveLength(2)
+    expect(placeholders(atFive)).toHaveLength(2)
+  })
+
+  it('still applies the weight bound when the count cap is disabled', () => {
+    const capped = capHistoricalAttachments(
+      pdfThread(4).concat(userTurn('current', 0)),
+      0,
+      200_000
+    )
+
+    expect(filenamesReaching(capped)).toEqual(['u2.pdf', 'u3.pdf'])
+  })
+
+  it('keeps a historical attachment when one file exceeds the budget', () => {
+    const messages = pdfThread(1, 1_000_000).concat(userTurn('current', 0))
+
+    expect(filenamesReaching(capHistoricalAttachments(messages, 0, 1))).toEqual(
+      ['u0.pdf']
+    )
   })
 
   it('leaves a thread within the weight budget untouched', () => {
