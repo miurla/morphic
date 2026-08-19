@@ -1,5 +1,7 @@
 import type { Evaluation, Evaluator, RunEvaluator } from '@langfuse/client'
 
+import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
+
 import type {
   RelatedQuestionsExpected,
   RelatedQuestionsInput,
@@ -61,7 +63,8 @@ export const relatedQuestionsEvaluator: Evaluator<
   RelatedQuestionsExpected,
   RelatedQuestionsMetadata
 > = async ({ output, expectedOutput }) => {
-  const analysis = analyzeRelatedQuestions(answerText(output))
+  const answer = answerText(output)
+  const analysis = analyzeRelatedQuestions(answer)
   const expected = expectedOutput?.emitsRelated ?? true
 
   const evaluations: Evaluation[] = [
@@ -82,6 +85,16 @@ export const relatedQuestionsEvaluator: Evaluator<
       }`
     }
   ]
+
+  // The item label describes the question, while this records the answer.
+  // They are only comparable when both values live on the same item. The spec
+  // block is stripped first, otherwise emitting one lengthens the answer and
+  // the value moves with the outcome it exists to be compared against.
+  evaluations.push({
+    name: 'related_questions_answer_chars',
+    value: stripSpecBlocks(answer).length,
+    dataType: 'NUMERIC'
+  })
 
   // Well-formedness is undefined when nothing was emitted. Scoring it 0 there
   // would double-count the emission failure and drag the rate down for a
