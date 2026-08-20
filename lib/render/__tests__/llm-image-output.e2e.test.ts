@@ -9,7 +9,7 @@
  *
  *   RUN_LLM_E2E=1 OPENAI_API_KEY=sk-... bun run test llm-image-output.e2e
  */
-import { generateText, stepCountIs, tool } from 'ai'
+import { generateText, isStepCount, tool } from 'ai'
 import { describe, expect, test } from 'vitest'
 import { z } from 'zod'
 
@@ -86,11 +86,11 @@ describe.skipIf(!RUN)('LLM inline image output (E2E)', () => {
   test('LLM emits inline image spec block using search tool images', async () => {
     const { text } = await generateText({
       model: getModel(MODEL),
-      system: getAdaptiveModePrompt(),
+      instructions: getAdaptiveModePrompt(),
       tools: {
         search: createMockSearchTool()
       },
-      stopWhen: stepCountIs(6),
+      stopWhen: isStepCount(6),
       prompt:
         'Show me photos of Mount Fuji and a brief description. Please include relevant images inline.'
     })

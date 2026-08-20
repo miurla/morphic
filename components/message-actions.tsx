@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
 import { UseChatHelpers } from '@ai-sdk/react'
@@ -32,6 +32,9 @@ import {
 } from './ui/dialog'
 import { ChatShare } from './chat-share'
 import { RetryButton } from './retry-button'
+
+// Module scope so the impression survives remounts of the same message.
+const reportedFeedbackControls = new Set<string>()
 
 interface MessageActionsProps {
   message: string
@@ -80,6 +83,25 @@ export function MessageActions({
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const isLoading = status === 'submitted' || status === 'streaming'
   const showSaveButton = libraryAvailable && (!isGuest || isCloudDeployment)
+
+  useEffect(() => {
+    if (!visible || isLoading || reportedFeedbackControls.has(messageId)) {
+      return
+    }
+
+    // A control that was never offered is otherwise indistinguishable from one
+    // that was offered and ignored, so the impression is what makes the click
+    // counts readable. It has to be one per message rather than one per mount:
+    // reopening a conversation remounts every past answer, and an answer that
+    // already carries a score cannot produce another one.
+    reportedFeedbackControls.add(messageId)
+    captureClient('feedback_control_shown', {
+      hasTraceId: Boolean(traceId),
+      hasFeedback: feedbackScore !== null,
+      chatId,
+      isGuest
+    })
+  }, [chatId, feedbackScore, isGuest, isLoading, messageId, traceId, visible])
 
   // Keep the element mounted during loading to preserve layout; otherwise skip rendering.
   if (!visible && !isLoading) {
@@ -163,6 +185,7 @@ export function MessageActions({
   async function handleFeedback(score: number) {
     if (isSubmittingFeedback || !traceId) return
 
+    captureClient('feedback_control_clicked', { score, chatId, isGuest })
     setIsSubmittingFeedback(true)
     try {
       const response = await fetch('/api/feedback', {
@@ -176,6 +199,9 @@ export function MessageActions({
       })
 
       if (response.ok) {
+        // The route answers 200 without writing a score when tracing is off, so
+        // this records that the request succeeded, not that a score exists.
+        captureClient('feedback_recorded', { score, chatId, isGuest })
         setFeedbackScore(score)
         toast.success(
           score === 1
@@ -183,10 +209,23 @@ export function MessageActions({
             : 'Thanks for letting us know!'
         )
       } else {
+        captureClient('feedback_failed', {
+          score,
+          chatId,
+          isGuest,
+          status: response.status,
+          reason: 'response'
+        })
         console.error('Failed to submit feedback')
         toast.error('Failed to submit feedback')
       }
     } catch (error) {
+      captureClient('feedback_failed', {
+        score,
+        chatId,
+        isGuest,
+        reason: 'exception'
+      })
       console.error('Error submitting feedback:', error)
       toast.error('Failed to submit feedback')
     } finally {
@@ -224,6 +263,7 @@ export function MessageActions({
                   onClick={() => handleFeedback(1)}
                   disabled={isSubmittingFeedback || feedbackScore === 1}
                   className="rounded-full"
+                  aria-label="Good response"
                 >
                   <ThumbsUp
                     size={14}
@@ -238,6 +278,7 @@ export function MessageActions({
                   onClick={() => handleFeedback(-1)}
                   disabled={isSubmittingFeedback || feedbackScore === -1}
                   className="rounded-full"
+                  aria-label="Bad response"
                 >
                   <ThumbsDown
                     size={14}

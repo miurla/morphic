@@ -1,6 +1,9 @@
-import { stepCountIs, tool, ToolLoopAgent } from 'ai'
+import { isStepCount, tool, ToolLoopAgent } from 'ai'
 
-import type { ResearcherTools } from '@/lib/types/agent'
+import type {
+  ResearcherRuntimeContext,
+  ResearcherTools
+} from '@/lib/types/agent'
 import { type Model } from '@/lib/types/models'
 
 import { fetchTool } from '../tools/fetch'
@@ -11,7 +14,6 @@ import { SearchMode } from '../types/search'
 import { getModel } from '../utils/registry'
 import { isTracingEnabled } from '../utils/telemetry'
 
-import { appendRelatedQuestionsReminder } from './prompts/related-questions-reminder'
 import {
   getAdaptiveModePrompt,
   QUICK_MODE_PROMPT
@@ -143,22 +145,21 @@ export function createResearcher({
       instructions: `${systemPrompt}\nCurrent date: ${currentDate}`,
       tools,
       activeTools: activeToolsList,
-      stopWhen: stepCountIs(maxSteps),
-      prepareCall: options => ({
-        ...options,
-        ...(options.messages && {
-          messages: appendRelatedQuestionsReminder(options.messages)
-        })
-      }),
+      stopWhen: isStepCount(maxSteps),
       ...(providerOptions && { providerOptions }),
+      runtimeContext: {
+        modelId: model,
+        agentType: 'researcher',
+        searchMode
+      } satisfies ResearcherRuntimeContext,
       // Spans join the parent Langfuse trace via OTel context propagation
-      experimental_telemetry: {
+      telemetry: {
         isEnabled: isTracingEnabled(),
         functionId: 'research-agent',
-        metadata: {
-          modelId: model,
-          agentType: 'researcher',
-          searchMode
+        includeRuntimeContext: {
+          modelId: true,
+          agentType: true,
+          searchMode: true
         }
       }
     })
@@ -172,7 +173,7 @@ export function createResearcher({
 
 // Helper function to access agent tools
 export function getResearcherTools(
-  agent: ToolLoopAgent<never, ResearcherTools, never>
+  agent: ToolLoopAgent<never, ResearcherTools, ResearcherRuntimeContext>
 ): ResearcherTools {
   return agent.tools
 }

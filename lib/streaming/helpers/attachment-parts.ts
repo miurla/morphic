@@ -14,15 +14,21 @@ export function isFilePart(part: UIMessage['parts'][number]) {
   return part.type === 'file'
 }
 
-export function describeAttachment(part: FilePartLike) {
-  // The filename is user-supplied, so neutralize it the way source excerpts are
-  // neutralized: no markup, no newlines, bounded length.
-  const filename = (part.filename ?? '')
+/**
+ * Renders a user-supplied label the way source excerpts are neutralized: no
+ * markup, no newlines, bounded length.
+ */
+export function neutralizeLabel(value: string | undefined, maxChars: number) {
+  return (value ?? '')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, MAX_FILENAME_CHARS)
+    .slice(0, maxChars)
+}
+
+export function describeAttachment(part: FilePartLike) {
+  const filename = neutralizeLabel(part.filename, MAX_FILENAME_CHARS)
   const mediaType = (part.mediaType ?? 'file').replace(/[^\w.+/-]/g, '')
 
   return filename
