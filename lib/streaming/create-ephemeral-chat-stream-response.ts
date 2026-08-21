@@ -39,6 +39,7 @@ import {
   type StreamErrorStage
 } from './helpers/stream-error-diagnostics'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
+import { summarizeCarriedContext } from './helpers/summarize-carried-context'
 import { BaseStreamConfig } from './types'
 
 import { langfuseSpanProcessor } from '@/instrumentation'
@@ -83,6 +84,7 @@ export async function createEphemeralChatStreamResponse(
       messages.findLast(m => m.role === 'user')?.parts
     )
     let rootOutput: string | undefined
+    let carriedContext: Record<string, number> | undefined
 
     const endTracing = async () => {
       if (rootSpan) {
@@ -102,10 +104,22 @@ export async function createEphemeralChatStreamResponse(
         // whatever was streamed before it. That is not the turn's answer, so
         // it is not recorded as one.
         const hasAnswer = !hasStreamError && !hasEmptyResponse
+        // A failure update carries its own metadata (#945), so the two are
+        // merged rather than spread as siblings: whichever came last would
+        // otherwise drop the other one entirely.
+        const failureMetadata =
+          failureUpdate && 'metadata' in failureUpdate
+            ? failureUpdate.metadata
+            : undefined
+        const metadata = {
+          ...(carriedContext !== undefined && { carriedContext }),
+          ...failureMetadata
+        }
         const update = {
           ...(rootInput !== undefined && { input: rootInput }),
           ...(hasAnswer && rootOutput !== undefined && { output: rootOutput }),
-          ...failureUpdate
+          ...failureUpdate,
+          ...(Object.keys(metadata).length > 0 && { metadata })
         }
         if (Object.keys(update).length > 0) rootSpan.update(update)
         rootSpan.end()
@@ -119,6 +133,7 @@ export async function createEphemeralChatStreamResponse(
       const messagesToConvert = dedupeAttachments(
         capHistoricalAttachments(compactHistoricalMessages(messagesWithoutSpec))
       )
+      carriedContext = summarizeCarriedContext(messagesToConvert)
 
       streamErrorStage = 'convert-messages'
       let modelMessages = await convertToModelMessages(messagesToConvert, {
