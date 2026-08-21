@@ -39,39 +39,47 @@ async function fetchRegularData(url: string): Promise<SearchResultsType> {
     }
 
     const contentType = response.headers.get('content-type') || ''
-    if (
-      !contentType.includes('text/html') &&
-      !contentType.includes('text/plain')
-    ) {
+    // The request above accepts anything, so refusing everything that is not
+    // markup turns readable text into a dead end: a JSON endpoint is the usual
+    // case. Structured bodies take the passthrough below instead of the markup
+    // pipeline, whose tag stripping deletes any run between angle brackets.
+    const mediaType = contentType.split(';', 1)[0].trim().toLowerCase()
+    const isHtmlContent =
+      mediaType === 'text/html' || mediaType === 'application/xhtml+xml'
+    const isTextContent =
+      mediaType === 'text/plain' ||
+      mediaType === 'application/json' ||
+      mediaType.endsWith('+json')
+
+    if (!isHtmlContent && !isTextContent) {
       throw new Error(`Unsupported content type: ${contentType}`)
     }
 
-    const html = await response.text()
+    const body = await response.text()
 
-    // Extract title
-    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
+    const titleMatch = isHtmlContent
+      ? body.match(/<title[^>]*>([^<]*)<\/title>/i)
+      : null
     const rawTitle = titleMatch ? titleMatch[1].trim() : new URL(url).hostname
     const title =
       rawTitle.length > TITLE_CHARACTER_LIMIT
         ? rawTitle.substring(0, TITLE_CHARACTER_LIMIT) + '...'
         : rawTitle
 
-    // Process HTML content
-    let processedHtml = html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
-
-    // Replace img tags with alt text or [IMAGE] markers
-    processedHtml = processedHtml
-      .replace(/<img[^>]+alt\s*=\s*["']([^"']+)["'][^>]*>/gi, ' [IMAGE: $1] ')
-      .replace(/<img[^>]+src\s*=\s*["']([^"']+)["'][^>]*>/gi, ' [IMAGE] ')
-      .replace(/<img[^>]*>/gi, ' [IMAGE] ')
-
-    // Extract text content
-    const textContent = processedHtml
-      .replace(/<[^>]*>/g, ' ') // Remove remaining HTML tags
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .trim()
+    const textContent = isHtmlContent
+      ? body
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
+          .replace(
+            /<img[^>]+alt\s*=\s*["']([^"']+)["'][^>]*>/gi,
+            ' [IMAGE: $1] '
+          )
+          .replace(/<img[^>]+src\s*=\s*["']([^"']+)["'][^>]*>/gi, ' [IMAGE] ')
+          .replace(/<img[^>]*>/gi, ' [IMAGE] ')
+          .replace(/<[^>]*>/g, ' ') // Remove remaining HTML tags
+          .replace(/\s+/g, ' ') // Normalize whitespace
+          .trim()
+      : body
 
     // Limit content length
     const truncatedContent =
