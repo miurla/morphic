@@ -18,8 +18,14 @@ import { isFilePart } from './attachment-parts'
  *
  * Run this on the messages that are about to be converted, after the history
  * guards. An attachment they turned into a placeholder is a text part by then
- * and is correctly not counted, so this reports what reached the model rather
- * than what the conversation holds.
+ * and is correctly not counted, so this reports the weight the guards left
+ * rather than what the conversation holds.
+ *
+ * It cannot be taken any later than that: `truncateMessages` runs on converted
+ * messages, where a pasted block is already indistinguishable from any other
+ * text, so the kinds this reports no longer exist there. A turn that reached
+ * that last resort therefore carries less than this says, and is flagged with
+ * `contextWindowTruncated` so the two cases are never confused.
  */
 export function summarizeCarriedContext(
   messages: UIMessage[]

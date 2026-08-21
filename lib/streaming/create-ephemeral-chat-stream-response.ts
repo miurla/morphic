@@ -85,6 +85,7 @@ export async function createEphemeralChatStreamResponse(
     )
     let rootOutput: string | undefined
     let carriedContext: Record<string, number> | undefined
+    let contextWindowTruncated = false
 
     const endTracing = async () => {
       if (rootSpan) {
@@ -113,6 +114,7 @@ export async function createEphemeralChatStreamResponse(
             : undefined
         const metadata = {
           ...(carriedContext !== undefined && { carriedContext }),
+          ...(contextWindowTruncated && { contextWindowTruncated }),
           ...failureMetadata
         }
         const update = {
@@ -144,6 +146,7 @@ export async function createEphemeralChatStreamResponse(
       if (shouldTruncateMessages(modelMessages, model)) {
         const maxTokens = getMaxAllowedTokens(model)
         modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
+        contextWindowTruncated = true
       }
 
       streamErrorStage = 'build-agent'

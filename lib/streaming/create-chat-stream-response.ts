@@ -115,6 +115,7 @@ export async function createChatStreamResponse(
     let rootInput = describeTurnInput(message?.parts)
     let rootOutput: string | undefined
     let carriedContext: Record<string, number> | undefined
+    let contextWindowTruncated = false
 
     const endTracing = async () => {
       if (rootSpan) {
@@ -143,6 +144,7 @@ export async function createChatStreamResponse(
             : undefined
         const metadata = {
           ...(carriedContext !== undefined && { carriedContext }),
+          ...(contextWindowTruncated && { contextWindowTruncated }),
           ...failureMetadata
         }
         const update = {
@@ -222,6 +224,7 @@ export async function createChatStreamResponse(
         const maxTokens = getMaxAllowedTokens(model)
         const originalCount = modelMessages.length
         modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
+        contextWindowTruncated = true
 
         if (process.env.NODE_ENV === 'development') {
           console.log(

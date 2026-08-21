@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => ({
   },
   forceFlush: vi.fn(),
   finishPromise: Promise.resolve(),
-  serializedError: undefined as string | undefined
+  serializedError: undefined as string | undefined,
+  shouldTruncateMessages: vi.fn(() => false)
 }))
 
 vi.mock('ai', () => ({
@@ -37,6 +38,11 @@ vi.mock('@/instrumentation', () => ({
 
 vi.mock('@/lib/agents/researcher', () => ({
   researcher: vi.fn(() => ({ stream: mocks.stream }))
+}))
+
+vi.mock('@/lib/utils/context-window', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/lib/utils/context-window')>()),
+  shouldTruncateMessages: mocks.shouldTruncateMessages
 }))
 
 vi.mock('@/lib/utils/telemetry', () => ({
@@ -256,6 +262,26 @@ describe('createEphemeralChatStreamResponse', () => {
       metadata: {
         carriedContext: { pastedChars: 2 },
         streamErrorPhase: 'generation'
+      }
+    })
+  })
+
+  it('flags a turn whose converted history hit the context window', async () => {
+    mocks.shouldTruncateMessages.mockReturnValueOnce(true)
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse(
+      createConfigWithParts([
+        { type: 'data-pastedContent', data: { text: 'ab' } }
+      ])
+    )
+    await mocks.finishPromise
+
+    const update = mocks.span.update.mock.calls.at(-1)?.[0]
+    expect(update).toMatchObject({
+      metadata: {
+        carriedContext: { pastedChars: 2 },
+        contextWindowTruncated: true
       }
     })
   })
