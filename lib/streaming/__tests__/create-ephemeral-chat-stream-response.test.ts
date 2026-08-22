@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => ({
   },
   forceFlush: vi.fn(),
   finishPromise: Promise.resolve(),
-  serializedError: undefined as string | undefined
+  serializedError: undefined as string | undefined,
+  shouldTruncateMessages: vi.fn(() => false)
 }))
 
 vi.mock('ai', () => ({
@@ -37,6 +38,11 @@ vi.mock('@/instrumentation', () => ({
 
 vi.mock('@/lib/agents/researcher', () => ({
   researcher: vi.fn(() => ({ stream: mocks.stream }))
+}))
+
+vi.mock('@/lib/utils/context-window', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/lib/utils/context-window')>()),
+  shouldTruncateMessages: mocks.shouldTruncateMessages
 }))
 
 vi.mock('@/lib/utils/telemetry', () => ({
@@ -236,6 +242,50 @@ describe('createEphemeralChatStreamResponse', () => {
     expect(mocks.stream).not.toHaveBeenCalled()
   })
 
+  it('keeps the carried context and the failure metadata on one update', async () => {
+    const streamError = new Error('stream failed')
+    mocks.stream.mockImplementation(async (options: StreamOptions) => {
+      options.onError({ error: streamError })
+      return createFakeResult()
+    })
+
+    await createEphemeralChatStreamResponse(
+      createConfigWithParts([
+        { type: 'data-pastedContent', data: { text: 'ab' } }
+      ])
+    )
+    await mocks.finishPromise
+
+    const update = mocks.span.update.mock.calls.at(-1)?.[0]
+    expect(update).toMatchObject({
+      level: 'ERROR',
+      metadata: {
+        carriedContext: { pastedChars: 2 },
+        streamErrorPhase: 'generation'
+      }
+    })
+  })
+
+  it('flags a turn whose converted history hit the context window', async () => {
+    mocks.shouldTruncateMessages.mockReturnValueOnce(true)
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse(
+      createConfigWithParts([
+        { type: 'data-pastedContent', data: { text: 'ab' } }
+      ])
+    )
+    await mocks.finishPromise
+
+    const update = mocks.span.update.mock.calls.at(-1)?.[0]
+    expect(update).toMatchObject({
+      metadata: {
+        carriedContext: { pastedChars: 2 },
+        contextWindowTruncated: true
+      }
+    })
+  })
+
   it('omits the output when the answer is only whitespace', async () => {
     mocks.stream.mockResolvedValue(
       createFakeResult({ parts: [{ type: 'text', text: '   \n' }] })
@@ -367,7 +417,10 @@ describe('createEphemeralChatStreamResponse', () => {
 
     expect(mocks.span.update).toHaveBeenCalledWith({
       input: '"report.pdf" (application/pdf)',
-      output: 'Answer'
+      output: 'Answer',
+      metadata: {
+        carriedContext: { attachments: 1, attachmentTokens: 50_000 }
+      }
     })
   })
 
@@ -383,7 +436,8 @@ describe('createEphemeralChatStreamResponse', () => {
 
     expect(mocks.span.update).toHaveBeenCalledWith({
       input: 'pasted content (600 characters)',
-      output: 'Answer'
+      output: 'Answer',
+      metadata: { carriedContext: { pastedChars: 600 } }
     })
     expect(JSON.stringify(mocks.span.update.mock.calls)).not.toContain('secret')
   })
@@ -422,7 +476,14 @@ describe('createEphemeralChatStreamResponse', () => {
 
     expect(mocks.span.update).toHaveBeenCalledWith({
       input: '"notes.txt" (text/plain), pasted content (2 characters)',
-      output: 'Answer'
+      output: 'Answer',
+      metadata: {
+        carriedContext: {
+          attachments: 1,
+          attachmentTokens: 50_000,
+          pastedChars: 2
+        }
+      }
     })
   })
 
