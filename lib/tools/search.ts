@@ -15,6 +15,30 @@ import {
   DEFAULT_PROVIDER,
   SearchProviderType
 } from './search/providers'
+import { isRecoverableSearchError } from './search/providers/recoverable-error'
+
+function getOptimizedSearchProviderType(): SearchProviderType {
+  return (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
+}
+
+function getEffectiveSearchDepth(
+  provider: SearchProviderType,
+  requestedDepth: 'basic' | 'advanced'
+): 'basic' | 'advanced' {
+  return provider === 'searxng' &&
+    process.env.SEARXNG_DEFAULT_DEPTH === 'advanced'
+    ? 'advanced'
+    : requestedDepth
+}
+
+function describeRecoverableSearchError(error: unknown): string {
+  if (typeof error === 'object' && error !== null) {
+    const status = (error as { status?: unknown }).status
+    if (typeof status === 'number') return `HTTP ${status}`
+  }
+
+  return 'transport error'
+}
 
 /**
  * Creates a search tool with the appropriate schema for the given model.
@@ -52,40 +76,43 @@ export function createSearchTool(fullModel: string) {
       const filledQuery = query
       let searchResult: SearchResults
 
+      const optimizedSearchAPI = getOptimizedSearchProviderType()
+
       // Determine which provider to use based on type
+      let generalSearchAPI: SearchProviderType | null = null
       let searchAPI: SearchProviderType
       if (type === 'general') {
         // Try to use dedicated general search provider
         const generalProvider = getGeneralSearchProviderType()
         if (generalProvider) {
+          generalSearchAPI = generalProvider
           searchAPI = generalProvider
         } else {
           // Fallback to primary provider (optimized search provider)
-          searchAPI =
-            (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
+          searchAPI = optimizedSearchAPI
           console.log(
             `[Search] type="general" requested but no dedicated provider available, using optimized search provider: ${searchAPI}`
           )
         }
       } else {
         // For 'optimized', use the configured provider
-        searchAPI =
-          (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
+        searchAPI = optimizedSearchAPI
       }
 
-      const effectiveSearchDepthForAPI =
-        searchAPI === 'searxng' &&
-        process.env.SEARXNG_DEFAULT_DEPTH === 'advanced'
-          ? 'advanced'
-          : effectiveSearchDepth || 'basic'
+      const searchWithProvider = async (
+        provider: SearchProviderType
+      ): Promise<SearchResults> => {
+        const effectiveSearchDepthForAPI = getEffectiveSearchDepth(
+          provider,
+          effectiveSearchDepth
+        )
 
-      console.log(
-        `Using search API: ${searchAPI}, Type: ${type}, Search Depth: ${effectiveSearchDepthForAPI}`
-      )
+        console.log(
+          `Using search API: ${provider}, Type: ${type}, Search Depth: ${effectiveSearchDepthForAPI}`
+        )
 
-      try {
         if (
-          searchAPI === 'searxng' &&
+          provider === 'searxng' &&
           effectiveSearchDepthForAPI === 'advanced'
         ) {
           // Get the base URL using the centralized utility function
@@ -107,40 +134,62 @@ export function createSearchTool(fullModel: string) {
               `Advanced search API error: ${response.status} ${response.statusText}`
             )
           }
-          searchResult = await response.json()
-        } else {
-          // Use the provider factory to get the appropriate search provider
-          const searchProvider = createSearchProvider(searchAPI)
-
-          // Pass content_types only for Brave provider
-          if (searchAPI === 'brave') {
-            searchResult = await searchProvider.search(
-              filledQuery,
-              effectiveMaxResults,
-              effectiveSearchDepthForAPI,
-              include_domains,
-              exclude_domains,
-              {
-                type: type as 'general' | 'optimized',
-                content_types: content_types as Array<
-                  'web' | 'video' | 'image' | 'news'
-                >
-              }
-            )
-          } else {
-            searchResult = await searchProvider.search(
-              filledQuery,
-              effectiveMaxResults,
-              effectiveSearchDepthForAPI,
-              include_domains,
-              exclude_domains
-            )
-          }
+          return response.json()
         }
+
+        // Use the provider factory to get the appropriate search provider
+        const searchProvider = createSearchProvider(provider)
+
+        // Pass content_types only for Brave provider
+        if (provider === 'brave') {
+          return searchProvider.search(
+            filledQuery,
+            effectiveMaxResults,
+            effectiveSearchDepthForAPI,
+            include_domains,
+            exclude_domains,
+            {
+              type: type as 'general' | 'optimized',
+              content_types: content_types as Array<
+                'web' | 'video' | 'image' | 'news'
+              >
+            }
+          )
+        }
+
+        return searchProvider.search(
+          filledQuery,
+          effectiveMaxResults,
+          effectiveSearchDepthForAPI,
+          include_domains,
+          exclude_domains
+        )
+      }
+
+      try {
+        searchResult = await searchWithProvider(searchAPI)
       } catch (error) {
-        console.error('Search API error:', error)
-        // Re-throw the error to let AI SDK handle it properly
-        throw new ToolFailureError('search', error)
+        const canUseOptimizedFallback =
+          generalSearchAPI !== null &&
+          generalSearchAPI !== optimizedSearchAPI &&
+          isRecoverableSearchError(error)
+
+        if (canUseOptimizedFallback) {
+          console.warn(
+            `[Search] dedicated general search provider ${generalSearchAPI} failed with ${describeRecoverableSearchError(error)}; using optimized search provider: ${optimizedSearchAPI}`
+          )
+
+          try {
+            searchResult = await searchWithProvider(optimizedSearchAPI)
+          } catch (fallbackError) {
+            console.error('Search fallback API error:', fallbackError)
+            throw new ToolFailureError('search', fallbackError)
+          }
+        } else {
+          console.error('Search API error:', error)
+          // Re-throw the error to let AI SDK handle it properly
+          throw new ToolFailureError('search', error)
+        }
       }
 
       // No citationMap is attached: it fully duplicated `results`
