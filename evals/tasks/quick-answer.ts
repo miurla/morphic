@@ -1,6 +1,6 @@
 import cloudConfig from '@/config/models/cloud.json'
 
-import { getAdaptiveModePrompt } from '@/lib/agents/prompts/search-mode-prompts'
+import { getQuickModePrompt } from '@/lib/agents/prompts/search-mode-prompts'
 
 import {
   type AnswerOutput,
@@ -8,12 +8,12 @@ import {
   runAnswerTask
 } from './run-answer-task'
 
-const ADAPTIVE = cloudConfig.models.adaptive
+const QUICK = cloudConfig.models.quick
 
-export const DEFAULT_MODEL = `${ADAPTIVE.providerId}:${ADAPTIVE.id}`
-export const DEFAULT_PROVIDER_OPTIONS = ADAPTIVE.providerOptions
+export const DEFAULT_MODEL = `${QUICK.providerId}:${QUICK.id}`
+export const DEFAULT_PROVIDER_OPTIONS = QUICK.providerOptions
 
-// Production allows 50 steps in adaptive mode. The fixture search returns the
+// Production allows 20 steps in quick mode. The fixture search returns the
 // same results every time, so a healthy run converges in a handful of steps;
 // this cap only bounds a loop that is going nowhere. A run that hits it is
 // rejected rather than measured, see the finish reason check in the runner.
@@ -25,10 +25,10 @@ const MAX_STEPS = 20
 // retry does not cover this error class.
 const DEFAULT_RETRIES = 2
 
-export type AdaptiveAnswerOutput = AnswerOutput
+export type QuickAnswerOutput = AnswerOutput
 
 /**
- * Replay one query against the deployed adaptive configuration with the search
+ * Replay one query against the deployed quick configuration with the search
  * results pinned.
  *
  * Production faithfulness is the point: the same prompt builder, the same
@@ -36,7 +36,7 @@ export type AdaptiveAnswerOutput = AnswerOutput
  * applies. Reasoning effort in particular has moved emission rates before, so a
  * run without providerOptions would measure something the product does not do.
  */
-export function createAdaptiveAnswerTask({
+export function createQuickAnswerTask({
   model = DEFAULT_MODEL,
   providerOptions = DEFAULT_PROVIDER_OPTIONS,
   tracingEnabled = true,
@@ -53,8 +53,8 @@ export function createAdaptiveAnswerTask({
     tracingEnabled,
     retries,
     maxSteps: MAX_STEPS,
-    getPrompt: getAdaptiveModePrompt,
-    includeTodoWrite: true,
-    telemetryFunctionId: 'eval-adaptive-answer'
+    getPrompt: getQuickModePrompt,
+    includeTodoWrite: false,
+    telemetryFunctionId: 'eval-quick-answer'
   })
 }
