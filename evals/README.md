@@ -43,8 +43,10 @@ different fixes.
 `--mode` selects which deployed configuration is replayed. The two differ in more
 than wording: quick mode runs a different system prompt, a smaller tool set, and
 its own `providerOptions`, so a result measured on one mode says nothing about
-the other. The default stays `adaptive` so CI keeps measuring what it has been
-measuring.
+the other. The flag defaults to `adaptive`, which is only a default for a bare
+local run; CI runs both modes as a matrix, because a prompt or model change can
+move one and leave the other alone. That is the whole reason the modes are
+separable here.
 
 Both modes are gated against the same `thresholds.json` entry. There is no
 per-mode threshold because nothing yet needs one; add one when a mode's healthy
