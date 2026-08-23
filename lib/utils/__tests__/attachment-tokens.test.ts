@@ -4,6 +4,7 @@ import {
   BYTES_PER_TOKEN,
   estimateAttachmentTokens,
   IMAGE_ATTACHMENT_TOKENS,
+  PDF_ATTACHMENT_TOKENS,
   UNKNOWN_ATTACHMENT_TOKENS
 } from '../attachment-tokens'
 
@@ -14,19 +15,25 @@ describe('estimateAttachmentTokens', () => {
     ).toBe(IMAGE_ATTACHMENT_TOKENS)
   })
 
-  it('estimates known PDF sizes from their byte length', () => {
+  it('uses a fixed estimate for PDFs regardless of compressed size', () => {
     expect(
       estimateAttachmentTokens({ mediaType: 'application/pdf', size: 3_901 })
-    ).toBe(Math.ceil(3_901 / BYTES_PER_TOKEN))
+    ).toBe(PDF_ATTACHMENT_TOKENS)
+    expect(
+      estimateAttachmentTokens({
+        mediaType: 'application/pdf',
+        size: 20_000_000
+      })
+    ).toBe(PDF_ATTACHMENT_TOKENS)
   })
 
-  it('uses the unknown estimate when size is unavailable', () => {
+  it('uses the same PDF estimate when size is unavailable', () => {
     expect(estimateAttachmentTokens({ mediaType: 'application/pdf' })).toBe(
-      UNKNOWN_ATTACHMENT_TOKENS
+      PDF_ATTACHMENT_TOKENS
     )
     expect(
       estimateAttachmentTokens({ mediaType: 'application/pdf', size: null })
-    ).toBe(UNKNOWN_ATTACHMENT_TOKENS)
+    ).toBe(PDF_ATTACHMENT_TOKENS)
   })
 
   it('estimates an unrecognized media type from its byte length', () => {

@@ -419,7 +419,7 @@ describe('createEphemeralChatStreamResponse', () => {
       input: '"report.pdf" (application/pdf)',
       output: 'Answer',
       metadata: {
-        carriedContext: { attachments: 1, attachmentTokens: 50_000 }
+        carriedContext: { attachments: 1, attachmentTokens: 10_000 }
       }
     })
   })

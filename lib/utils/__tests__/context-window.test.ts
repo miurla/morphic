@@ -100,12 +100,35 @@ describe('context-window', () => {
               type: 'file',
               mediaType: 'application/pdf',
               data: 'https://example.com/report.pdf'
+            },
+            {
+              type: 'file',
+              mediaType: 'application/pdf',
+              data: 'https://example.com/appendix.pdf'
             }
           ]
         }
       ]
 
       expect(shouldTruncateMessages(messages, unknownModel)).toBe(true)
+    })
+
+    test('does not treat a URL-backed PDF as an unknown-size attachment', () => {
+      const unknownModel: Model = { ...mockModel, id: 'unknown-model' }
+      const messages: ModelMessage[] = [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'file',
+              mediaType: 'application/pdf',
+              data: 'https://example.com/report.pdf'
+            }
+          ]
+        }
+      ]
+
+      expect(shouldTruncateMessages(messages, unknownModel)).toBe(false)
     })
 
     test('handles null/undefined messages gracefully', () => {
