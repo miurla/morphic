@@ -26,14 +26,14 @@ const fallbackResult = {
   number_of_results: 1
 }
 
-function executeGeneralSearch() {
+function executeGeneralSearch(searchDepth = 'basic') {
   const result = createSearchTool('openai:gpt-4o-mini').execute?.(
     {
       query: 'current events',
       type: 'general',
       content_types: ['web'],
       max_results: 10,
-      search_depth: 'basic',
+      search_depth: searchDepth,
       include_domains: [],
       exclude_domains: []
     },
@@ -74,7 +74,13 @@ describe('general search provider fallback', () => {
     expect(complete.value).toMatchObject({
       state: 'complete',
       results: fallbackResult.results,
-      toolCallId: 'search-call'
+      toolCallId: 'search-call',
+      provider: 'tavily',
+      fallback: {
+        from: 'brave',
+        to: 'tavily',
+        reason: { type: 'http', status: 429 }
+      }
     })
     expect(mocks.braveSearch).toHaveBeenCalledOnce()
     expect(mocks.tavilySearch).toHaveBeenCalledOnce()
@@ -89,9 +95,50 @@ describe('general search provider fallback', () => {
     const iterator = executeGeneralSearch()
 
     await iterator.next()
-    await iterator.next()
+    const complete = await iterator.next()
 
     expect(mocks.tavilySearch).toHaveBeenCalledOnce()
+    expect(complete.value).toMatchObject({
+      provider: 'tavily',
+      fallback: {
+        from: 'brave',
+        to: 'tavily',
+        reason: { type: 'transport' }
+      }
+    })
+  })
+
+  it('logs a recoverable HTTP status found on a nested cause', async () => {
+    const cause = Object.assign(new Error('upstream unavailable'), {
+      status: 503
+    })
+    mocks.braveSearch.mockRejectedValue(new Error('search failed', { cause }))
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const iterator = executeGeneralSearch()
+
+    await iterator.next()
+    await iterator.next()
+
+    expect(warn).toHaveBeenCalledWith(
+      '[Search] dedicated general search provider brave failed with HTTP 503; using optimized search provider: tavily'
+    )
+  })
+
+  it('normalizes an empty search depth to basic', async () => {
+    mocks.braveSearch.mockResolvedValue(fallbackResult)
+    const iterator = executeGeneralSearch('')
+
+    await iterator.next()
+    await iterator.next()
+
+    expect(mocks.braveSearch).toHaveBeenCalledWith(
+      'current events',
+      10,
+      'basic',
+      [],
+      [],
+      expect.any(Object)
+    )
   })
 
   it('does not fall back for a client error', async () => {

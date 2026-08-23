@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
-import { isRecoverableSearchError } from '../recoverable-error'
+import { classifyRecoverableSearchError } from '../recoverable-error'
 
-describe('isRecoverableSearchError', () => {
+describe('classifyRecoverableSearchError', () => {
   it.each([408, 429, 500, 503])(
     'accepts recoverable HTTP status %i',
     status => {
       expect(
-        isRecoverableSearchError(Object.assign(new Error('failed'), { status }))
-      ).toBe(true)
+        classifyRecoverableSearchError(
+          Object.assign(new Error('failed'), { status })
+        )
+      ).toEqual({ type: 'http', status })
     }
   )
 
@@ -16,24 +18,36 @@ describe('isRecoverableSearchError', () => {
     'rejects client HTTP status %i',
     status => {
       expect(
-        isRecoverableSearchError(Object.assign(new Error('failed'), { status }))
-      ).toBe(false)
+        classifyRecoverableSearchError(
+          Object.assign(new Error('failed'), { status })
+        )
+      ).toBeNull()
     }
   )
 
-  it('recognizes a network failure through its cause', () => {
+  it('classifies a network failure through its cause', () => {
     const cause = Object.assign(new Error('connection reset'), {
       code: 'ECONNRESET'
     })
 
     expect(
-      isRecoverableSearchError(new TypeError('fetch failed', { cause }))
-    ).toBe(true)
+      classifyRecoverableSearchError(new TypeError('fetch failed', { cause }))
+    ).toEqual({ type: 'transport' })
+  })
+
+  it('preserves an HTTP status found on a nested cause', () => {
+    const cause = Object.assign(new Error('upstream unavailable'), {
+      status: 503
+    })
+
+    expect(
+      classifyRecoverableSearchError(new Error('failed', { cause }))
+    ).toEqual({ type: 'http', status: 503 })
   })
 
   it('does not treat an arbitrary provider exception as recoverable', () => {
-    expect(isRecoverableSearchError(new Error('Invalid query options'))).toBe(
-      false
-    )
+    expect(
+      classifyRecoverableSearchError(new Error('Invalid query options'))
+    ).toBeNull()
   })
 })

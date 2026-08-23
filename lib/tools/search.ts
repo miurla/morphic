@@ -15,7 +15,10 @@ import {
   DEFAULT_PROVIDER,
   SearchProviderType
 } from './search/providers'
-import { isRecoverableSearchError } from './search/providers/recoverable-error'
+import {
+  classifyRecoverableSearchError,
+  RecoverableSearchFailure
+} from './search/providers/recoverable-error'
 
 function getOptimizedSearchProviderType(): SearchProviderType {
   return (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
@@ -28,16 +31,13 @@ function getEffectiveSearchDepth(
   return provider === 'searxng' &&
     process.env.SEARXNG_DEFAULT_DEPTH === 'advanced'
     ? 'advanced'
-    : requestedDepth
+    : requestedDepth || 'basic'
 }
 
-function describeRecoverableSearchError(error: unknown): string {
-  if (typeof error === 'object' && error !== null) {
-    const status = (error as { status?: unknown }).status
-    if (typeof status === 'number') return `HTTP ${status}`
-  }
-
-  return 'transport error'
+function describeRecoverableSearchFailure(
+  failure: RecoverableSearchFailure
+): string {
+  return failure.type === 'http' ? `HTTP ${failure.status}` : 'transport error'
 }
 
 /**
@@ -75,6 +75,14 @@ export function createSearchTool(fullModel: string) {
       // Use the original query as is - any provider-specific handling will be done in the provider
       const filledQuery = query
       let searchResult: SearchResults
+      let servedBySearchAPI: SearchProviderType
+      let fallback:
+        | {
+            from: SearchProviderType
+            to: SearchProviderType
+            reason: RecoverableSearchFailure
+          }
+        | undefined
 
       const optimizedSearchAPI = getOptimizedSearchProviderType()
 
@@ -168,19 +176,26 @@ export function createSearchTool(fullModel: string) {
 
       try {
         searchResult = await searchWithProvider(searchAPI)
+        servedBySearchAPI = searchAPI
       } catch (error) {
-        const canUseOptimizedFallback =
+        const recoverableFailure = classifyRecoverableSearchError(error)
+        if (
           generalSearchAPI !== null &&
           generalSearchAPI !== optimizedSearchAPI &&
-          isRecoverableSearchError(error)
-
-        if (canUseOptimizedFallback) {
+          recoverableFailure !== null
+        ) {
           console.warn(
-            `[Search] dedicated general search provider ${generalSearchAPI} failed with ${describeRecoverableSearchError(error)}; using optimized search provider: ${optimizedSearchAPI}`
+            `[Search] dedicated general search provider ${generalSearchAPI} failed with ${describeRecoverableSearchFailure(recoverableFailure)}; using optimized search provider: ${optimizedSearchAPI}`
           )
 
           try {
             searchResult = await searchWithProvider(optimizedSearchAPI)
+            servedBySearchAPI = optimizedSearchAPI
+            fallback = {
+              from: generalSearchAPI,
+              to: optimizedSearchAPI,
+              reason: recoverableFailure
+            }
           } catch (fallbackError) {
             console.error('Search fallback API error:', fallbackError)
             throw new ToolFailureError('search', fallbackError)
@@ -212,15 +227,17 @@ export function createSearchTool(fullModel: string) {
       // Yield final results with complete state
       yield {
         state: 'complete' as const,
-        ...searchResult
+        ...searchResult,
+        provider: servedBySearchAPI,
+        ...(fallback ? { fallback } : {})
       }
     },
     // Trim the model-facing tool result: citationMap fully duplicates
-    // `results` (dropped defensively for older persisted output) and state is
-    // a streaming marker. images MUST stay — getImageSpecPrompt instructs the
-    // model to embed URLs verbatim from this array. toolCallId MUST stay: the
-    // prompt cites as [number](#toolCallId), so the model reads the id from
-    // here.
+    // `results` (dropped defensively for older persisted output), state is a
+    // streaming marker, and provider/fallback are trace diagnostics. images
+    // MUST stay — getImageSpecPrompt instructs the model to embed URLs verbatim
+    // from this array. toolCallId MUST stay: the prompt cites as
+    // [number](#toolCallId), so the model reads the id from here.
     toModelOutput: ({ output }) => {
       if (!output || typeof output !== 'object') {
         return { type: 'json', value: (output ?? null) as JSONValue }
@@ -230,6 +247,8 @@ export function createSearchTool(fullModel: string) {
       }
       delete modelView.citationMap
       delete modelView.state
+      delete modelView.provider
+      delete modelView.fallback
       return { type: 'json', value: modelView as JSONValue }
     }
   })

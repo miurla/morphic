@@ -36,30 +36,55 @@ function getCause(error: unknown): unknown {
   return (error as { cause?: unknown }).cause
 }
 
-/**
- * General search can safely retry another provider only when the failure is
- * upstream and temporary. Client errors remain terminal because another
- * provider should not be used to reinterpret a malformed request.
- */
-export function isRecoverableSearchError(error: unknown): boolean {
+export type RecoverableSearchFailure =
+  | { type: 'http'; status: number }
+  | { type: 'transport' }
+
+function getErrorChain(error: unknown): unknown[] {
+  const chain: unknown[] = []
   const visited = new Set<unknown>()
   let current = error
 
   while (current !== undefined && !visited.has(current)) {
     visited.add(current)
+    chain.push(current)
+    current = getCause(current)
+  }
 
+  return chain
+}
+
+/**
+ * General search can safely retry another provider only when the failure is
+ * upstream and temporary. Client errors remain terminal because another
+ * provider should not be used to reinterpret a malformed request.
+ */
+export function classifyRecoverableSearchError(
+  error: unknown
+): RecoverableSearchFailure | null {
+  const errorChain = getErrorChain(error)
+
+  // Prefer a numeric HTTP status anywhere in the cause chain. This keeps the
+  // fallback decision and its trace metadata based on the same signal.
+  for (const current of errorChain) {
     const status =
       getNumericProperty(current, 'status') ??
       getNumericProperty(current, 'statusCode')
     if (status !== undefined) {
       return status === 408 || status === 429 || (status >= 500 && status < 600)
+        ? { type: 'http', status }
+        : null
+    }
+  }
+
+  for (const current of errorChain) {
+    const code = getStringProperty(current, 'code')
+    if (code && RECOVERABLE_NETWORK_CODES.has(code)) {
+      return { type: 'transport' }
     }
 
-    const code = getStringProperty(current, 'code')
-    if (code && RECOVERABLE_NETWORK_CODES.has(code)) return true
-
     const name = getStringProperty(current, 'name')
-    if (name === 'TimeoutError') return true
+    if (name === 'TimeoutError') return { type: 'transport' }
 
     const message = getStringProperty(current, 'message')
     if (
@@ -68,11 +93,9 @@ export function isRecoverableSearchError(error: unknown): boolean {
         message
       )
     ) {
-      return true
+      return { type: 'transport' }
     }
-
-    current = getCause(current)
   }
 
-  return false
+  return null
 }
