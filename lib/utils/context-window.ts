@@ -5,6 +5,8 @@ import { Model } from '../types/models'
 
 import { estimateAttachmentTokens } from './attachment-tokens'
 
+type AttachmentTokenEstimates = ReadonlyMap<string, number>
+
 interface ModelContextInfo {
   contextWindow: number
   outputTokens: number
@@ -158,20 +160,26 @@ function getEncoder(modelId: string) {
  */
 function estimateTokenCount(
   content: ModelMessage['content'],
-  modelId?: string
+  modelId?: string,
+  attachmentTokenEstimates?: AttachmentTokenEstimates
 ): number {
   const text = extractTextContent(content)
   const attachmentTokens = Array.isArray(content)
     ? content.reduce((total, part) => {
         if (part.type !== 'file') return total
 
+        const url = getFileDataUrl(part.data)
+        const resolvedEstimate = url
+          ? attachmentTokenEstimates?.get(url)
+          : undefined
+
         return (
           total +
-          estimateAttachmentTokens({
-            mediaType: part.mediaType,
-            size:
-              part.data instanceof Uint8Array ? part.data.byteLength : undefined
-          })
+          (resolvedEstimate ??
+            estimateAttachmentTokens({
+              mediaType: part.mediaType,
+              size: getInlineFileByteLength(part.data)
+            }))
         )
       }, 0)
     : 0
@@ -206,13 +214,45 @@ function estimateTokenCount(
   return baseCount + overhead + attachmentTokens
 }
 
+function getFileDataUrl(data: unknown): string | undefined {
+  if (typeof data === 'string') return data
+  if (data instanceof URL) return data.href
+  if (!data || typeof data !== 'object') return undefined
+
+  const fileData = data as { type?: unknown; url?: unknown }
+  if (fileData.type !== 'url') return undefined
+
+  if (fileData.url instanceof URL) return fileData.url.href
+  return typeof fileData.url === 'string' ? fileData.url : undefined
+}
+
+function getInlineFileByteLength(data: unknown): number | undefined {
+  if (data instanceof Uint8Array || data instanceof ArrayBuffer) {
+    return data.byteLength
+  }
+  if (!data || typeof data !== 'object') return undefined
+
+  const fileData = data as { type?: unknown; data?: unknown }
+  if (fileData.type !== 'data') return undefined
+
+  if (
+    fileData.data instanceof Uint8Array ||
+    fileData.data instanceof ArrayBuffer
+  ) {
+    return fileData.data.byteLength
+  }
+
+  return undefined
+}
+
 /**
  * Smart message truncation with priority for context preservation
  */
 export function truncateMessages(
   messages: ModelMessage[],
   maxTokens: number,
-  modelId?: string
+  modelId?: string,
+  attachmentTokenEstimates?: AttachmentTokenEstimates
 ): ModelMessage[] {
   // Input validation
   if (!messages || messages.length === 0) return []
@@ -228,7 +268,7 @@ export function truncateMessages(
   // Calculate token counts for all messages
   const messageTokenCounts = messages.map(msg => ({
     message: msg,
-    tokens: estimateTokenCount(msg.content, modelId)
+    tokens: estimateTokenCount(msg.content, modelId, attachmentTokenEstimates)
   }))
 
   // Calculate total tokens
@@ -250,7 +290,8 @@ export function truncateMessages(
   if (firstUserMessage) {
     const firstUserTokens = estimateTokenCount(
       firstUserMessage.content,
-      modelId
+      modelId,
+      attachmentTokenEstimates
     )
     if (firstUserTokens < maxTokens * 0.3) {
       // Don't let first message take more than 30%
@@ -278,7 +319,11 @@ export function truncateMessages(
         while (recentMessages.length > 0 && usedTokens + tokens > maxTokens) {
           const removed = recentMessages.shift()
           if (removed) {
-            usedTokens -= estimateTokenCount(removed.content, modelId)
+            usedTokens -= estimateTokenCount(
+              removed.content,
+              modelId,
+              attachmentTokenEstimates
+            )
           }
         }
         if (usedTokens + tokens <= maxTokens) {
@@ -312,13 +357,15 @@ export function truncateMessages(
  */
 export function shouldTruncateMessages(
   messages: ModelMessage[],
-  model: Model
+  model: Model,
+  attachmentTokenEstimates?: AttachmentTokenEstimates
 ): boolean {
   if (!messages || messages.length === 0) return false
 
   const maxTokens = getMaxAllowedTokens(model)
   const totalTokens = messages.reduce(
-    (sum, msg) => sum + estimateTokenCount(msg.content, model.id),
+    (sum, msg) =>
+      sum + estimateTokenCount(msg.content, model.id, attachmentTokenEstimates),
     0
   )
   return totalTokens > maxTokens

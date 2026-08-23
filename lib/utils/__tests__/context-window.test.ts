@@ -115,6 +115,7 @@ describe('context-window', () => {
 
     test('does not treat a URL-backed PDF as an unknown-size attachment', () => {
       const unknownModel: Model = { ...mockModel, id: 'unknown-model' }
+      const url = 'https://example.com/report.pdf'
       const messages: ModelMessage[] = [
         {
           role: 'user',
@@ -122,13 +123,35 @@ describe('context-window', () => {
             {
               type: 'file',
               mediaType: 'application/pdf',
-              data: 'https://example.com/report.pdf'
+              data: { type: 'url', url: new URL(url) }
             }
           ]
         }
       ]
 
-      expect(shouldTruncateMessages(messages, unknownModel)).toBe(false)
+      expect(
+        shouldTruncateMessages(messages, unknownModel, new Map([[url, 10_000]]))
+      ).toBe(false)
+    })
+
+    test('uses a resolved large-PDF estimate in the context guard', () => {
+      const url = 'https://example.com/large-report.pdf'
+      const messages: ModelMessage[] = [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'file',
+              mediaType: 'application/pdf',
+              data: { type: 'url', url: new URL(url) }
+            }
+          ]
+        }
+      ]
+
+      expect(
+        shouldTruncateMessages(messages, mockModel, new Map([[url, 400_000]]))
+      ).toBe(true)
     })
 
     test('handles null/undefined messages gracefully', () => {
@@ -230,6 +253,31 @@ describe('context-window', () => {
 
       const result = truncateMessages(messages, 1000)
       expect(result.length).toBeGreaterThan(0)
+    })
+
+    test('uses resolved attachment estimates while truncating', () => {
+      const url = 'https://example.com/large-report.pdf'
+      const messages: ModelMessage[] = [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'file',
+              mediaType: 'application/pdf',
+              data: { type: 'url', url: new URL(url) }
+            }
+          ]
+        }
+      ]
+
+      expect(
+        truncateMessages(
+          messages,
+          100_000,
+          mockModel.id,
+          new Map([[url, 400_000]])
+        )
+      ).toEqual([])
     })
 
     test('handles undefined content gracefully', () => {

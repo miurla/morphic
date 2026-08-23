@@ -280,9 +280,17 @@ describe('capHistoricalAttachments', () => {
   })
 
   it('leaves a thread within the weight budget untouched', () => {
-    const messages = pdfThread(5, 10_000_000).concat(userTurn('current', 0))
+    const messages = pdfThread(5, 100_000).concat(userTurn('current', 0))
 
     expect(capHistoricalAttachments(messages, LIMIT, 200_000)).toBe(messages)
+  })
+
+  it('bounds multiple large PDFs with the default weight budget', () => {
+    const messages = pdfThread(4, 10_000_000).concat(userTurn('current', 0))
+    const capped = capHistoricalAttachments(messages, LIMIT, 200_000)
+
+    expect(filenamesReaching(capped)).toEqual(['u2.pdf', 'u3.pdf'])
+    expect(placeholders(capped)).toHaveLength(2)
   })
 
   it('never applies the weight bound to the newest user message', () => {

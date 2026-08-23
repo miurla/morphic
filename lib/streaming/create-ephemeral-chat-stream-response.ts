@@ -22,6 +22,7 @@ import {
 import { getTextFromParts } from '../utils/message-utils'
 import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
+import { buildAttachmentTokenEstimates } from './helpers/attachment-token-estimates'
 import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
@@ -136,6 +137,8 @@ export async function createEphemeralChatStreamResponse(
         capHistoricalAttachments(compactHistoricalMessages(messagesWithoutSpec))
       )
       carriedContext = summarizeCarriedContext(messagesToConvert)
+      const attachmentTokenEstimates =
+        buildAttachmentTokenEstimates(messagesToConvert)
 
       streamErrorStage = 'convert-messages'
       let modelMessages = await convertToModelMessages(messagesToConvert, {
@@ -143,9 +146,16 @@ export async function createEphemeralChatStreamResponse(
       })
 
       streamErrorStage = 'truncate-messages'
-      if (shouldTruncateMessages(modelMessages, model)) {
+      if (
+        shouldTruncateMessages(modelMessages, model, attachmentTokenEstimates)
+      ) {
         const maxTokens = getMaxAllowedTokens(model)
-        modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
+        modelMessages = truncateMessages(
+          modelMessages,
+          maxTokens,
+          model.id,
+          attachmentTokenEstimates
+        )
         contextWindowTruncated = true
       }
 

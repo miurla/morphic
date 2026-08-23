@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { summarizeCarriedContext } from '@/lib/streaming/helpers/summarize-carried-context'
 import {
   IMAGE_ATTACHMENT_TOKENS,
-  PDF_ATTACHMENT_TOKENS
+  MIN_PDF_ATTACHMENT_TOKENS
 } from '@/lib/utils/attachment-tokens'
 
 function createMessages(parts: unknown[]): UIMessage[] {
@@ -37,7 +37,7 @@ describe('summarizeCarriedContext', () => {
       )
     ).toEqual({
       attachments: 2,
-      attachmentTokens: IMAGE_ATTACHMENT_TOKENS + PDF_ATTACHMENT_TOKENS
+      attachmentTokens: IMAGE_ATTACHMENT_TOKENS + MIN_PDF_ATTACHMENT_TOKENS
     })
   })
 
@@ -70,7 +70,7 @@ describe('summarizeCarriedContext', () => {
       )
     ).toEqual({
       attachments: 1,
-      attachmentTokens: PDF_ATTACHMENT_TOKENS
+      attachmentTokens: MIN_PDF_ATTACHMENT_TOKENS
     })
   })
 })
