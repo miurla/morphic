@@ -3,8 +3,14 @@ name: Eval
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: 'Search mode to evaluate'
+        required: false
+        default: both
+        type: choice
+        options: [both, adaptive, quick]
       model:
-        description: 'provider:model to evaluate (default: the deployed adaptive model)'
+        description: 'provider:model to evaluate (default: the selected mode model)'
         required: false
         type: string
       trials:
@@ -28,8 +34,15 @@ concurrency:
 
 jobs:
   related-questions:
-    name: Related questions
+    name: Related questions (${{ matrix.mode }})
     runs-on: ubuntu-latest
+    # Both modes, because the point of splitting them is that a prompt or model
+    # change can move one and leave the other alone. They are independent
+    # measurements, so one failing should not cancel the other.
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [adaptive, quick]
     # Secrets are not available to pull requests from forks, so the job would
     # fail for reasons unrelated to the change. Keep it off the required checks.
     if: >-
@@ -57,10 +70,20 @@ jobs:
             echo "::warning::Eval skipped: OPENAI_API_KEY / LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY are not all configured for this repository."
             exit 0
           fi
+          # A dispatch may ask for one mode. The matrix still expands to both,
+          # so the other leg reports itself as skipped rather than measuring
+          # something nobody asked for.
+          if [ -n "$SELECTED_MODE" ] && [ "$SELECTED_MODE" != both ] && [ "$SELECTED_MODE" != "$MODE" ]; then
+            echo "::notice::Eval skipped: this dispatch selected mode '$SELECTED_MODE'."
+            exit 0
+          fi
           bun run eval:related-questions -- \
+            --mode "${MODE}" \
             --trials "${TRIALS}" \
             ${MODEL:+--model "$MODEL"}
         env:
+          MODE: ${{ matrix.mode }}
+          SELECTED_MODE: ${{ inputs.mode }}
           TRIALS: ${{ inputs.trials || '5' }}
           MODEL: ${{ inputs.model }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

@@ -1,6 +1,6 @@
 {
   "name": "related-questions",
-  "description": "Does the adaptive answer emit a well-formed related questions spec block on substantive answers, and skip it on trivial lookups? Search results are fixed so the measurement isolates the prompt and the model. An item is trivial only when the fixture holds exactly one unambiguous value answering it and no comparison or procedure is implied; a question whose answer naturally expands belongs in the substantive set, not the trivial one.",
+  "description": "Does the answer emit a well-formed related questions spec block on substantive answers, and skip it on trivial lookups? Search results are fixed so the measurement isolates the prompt and the model. An item is trivial only when the fixture holds exactly one unambiguous value answering it and no comparison or procedure is implied; a question whose answer naturally expands belongs in the substantive set, not the trivial one.",
   "fixtures": {
     "mount-fuji": [
       {

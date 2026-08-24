@@ -19,6 +19,7 @@ PRs, where secrets are unavailable.
 
 ```bash
 bun run eval:related-questions                              # deployed adaptive model, 1 trial per item
+bun run eval:related-questions -- --mode quick              # the quick search mode instead
 bun run eval:related-questions -- --trials 3                # 3 generations per item
 bun run eval:related-questions -- --model openai:some-model # candidate model
 bun run eval:related-questions -- --items fuji-routes       # one item, for debugging
@@ -36,6 +37,20 @@ results and reports:
 Emission and well-formedness are separate metrics on purpose. A model that stops
 emitting and a model that emits a broken block are different failures with
 different fixes.
+
+### Search modes
+
+`--mode` selects which deployed configuration is replayed. The two differ in more
+than wording: quick mode runs a different system prompt, a smaller tool set, and
+its own `providerOptions`, so a result measured on one mode says nothing about
+the other. The flag defaults to `adaptive`, which is only a default for a bare
+local run; CI runs both modes as a matrix, because a prompt or model change can
+move one and leave the other alone. That is the whole reason the modes are
+separable here.
+
+Both modes are gated against the same `thresholds.json` entry. There is no
+per-mode threshold because nothing yet needs one; add one when a mode's healthy
+range is genuinely different rather than to make a run go green.
 
 ### Why it is built this way
 

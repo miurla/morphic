@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Measure the related questions emission rate of the deployed adaptive
+ * Measure the related questions emission rate of a deployed search mode
  * configuration against a fixed dataset.
  *
  *   bun run eval:related-questions
@@ -12,14 +12,17 @@ import { config as dotenvConfig } from 'dotenv'
 
 dotenvConfig({ path: '.env.local' })
 
-// The adaptive prompt branches on whether a general search provider is
+// The search mode prompts branch on whether a general search provider is
 // configured, so an unset key would silently measure a different prompt than
 // the deployed one. Pinned before anything reads it. The fixture search tool
 // means no request ever reaches Brave.
 process.env.BRAVE_SEARCH_API_KEY ||= 'eval-pinned-general-provider'
 
+type Mode = 'quick' | 'adaptive'
+
 type Args = {
   model?: string
+  mode: Mode
   trials: number
   concurrency: number
   runName?: string
@@ -28,7 +31,12 @@ type Args = {
 }
 
 function parseArgs(argv: string[]): Args {
-  const args: Args = { trials: 1, concurrency: 5, gate: true }
+  const args: Args = {
+    trials: 1,
+    concurrency: 5,
+    gate: true,
+    mode: 'adaptive'
+  }
 
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i]
@@ -42,6 +50,14 @@ function parseArgs(argv: string[]): Args {
       case '--model':
         args.model = next()
         break
+      case '--mode': {
+        const mode = next()
+        if (mode !== 'quick' && mode !== 'adaptive') {
+          throw new Error('--mode must be quick or adaptive')
+        }
+        args.mode = mode
+        break
+      }
       case '--trials':
         args.trials = Number(next())
         break
@@ -65,12 +81,13 @@ function parseArgs(argv: string[]): Args {
           [
             'Usage: bun run eval:related-questions [options]',
             '',
-            '  --model <id>        provider:model to evaluate (default: the deployed adaptive model)',
-            '  --trials <n>        generations per dataset item (default: 1)',
-            '  --concurrency <n>   parallel generations (default: 5)',
-            '  --run-name <name>   exact Langfuse run name (default: name + timestamp)',
-            '  --items <a,b>       run only these dataset item ids',
-            '  --no-gate           report metrics without failing on threshold violations'
+            '  --mode <quick|adaptive>  search mode to evaluate (default: adaptive)',
+            '  --model <id>             provider:model to evaluate (default: the selected mode model)',
+            '  --trials <n>             generations per dataset item (default: 1)',
+            '  --concurrency <n>        parallel generations (default: 5)',
+            '  --run-name <name>        exact Langfuse run name (default: name + timestamp)',
+            '  --items <a,b>            run only these dataset item ids',
+            '  --no-gate                report metrics without failing on threshold violations'
           ].join('\n')
         )
         process.exit(0)
@@ -106,18 +123,28 @@ async function main() {
     relatedQuestionsRunEvaluator,
     summarizeRelatedQuestions
   } = await import('./evaluators/related-questions')
-  const { createAdaptiveAnswerTask, DEFAULT_MODEL } = await import(
-    './tasks/adaptive-answer'
-  )
+  const adaptiveTask = await import('./tasks/adaptive-answer')
+  const quickTask = await import('./tasks/quick-answer')
   const thresholds = (await import('./thresholds.json')).default
 
-  const model = args.model ?? DEFAULT_MODEL
+  const taskConfig =
+    args.mode === 'quick'
+      ? {
+          createTask: quickTask.createQuickAnswerTask,
+          defaultModel: quickTask.DEFAULT_MODEL
+        }
+      : {
+          createTask: adaptiveTask.createAdaptiveAnswerTask,
+          defaultModel: adaptiveTask.DEFAULT_MODEL
+        }
+  const model = args.model ?? taskConfig.defaultModel
   const data = loadRelatedQuestionsDataset({
     trials: args.trials,
     ids: args.ids
   })
   const tracing = setupTracing()
 
+  console.log(`mode:        ${args.mode}`)
   console.log(`model:       ${model}`)
   console.log(`items:       ${data.length} (${args.trials} trial(s) per query)`)
   console.log(`concurrency: ${args.concurrency}\n`)
@@ -128,9 +155,9 @@ async function main() {
     name: 'related-questions',
     runName: args.runName,
     description: datasetDescription,
-    metadata: { model, trials: args.trials },
+    metadata: { mode: args.mode, model, trials: args.trials },
     data,
-    task: createAdaptiveAnswerTask({ model, tracingEnabled: true }),
+    task: taskConfig.createTask({ model, tracingEnabled: true }),
     evaluators: [relatedQuestionsEvaluator],
     runEvaluators: [relatedQuestionsRunEvaluator],
     maxConcurrency: args.concurrency
