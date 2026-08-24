@@ -15,6 +15,30 @@ import {
   DEFAULT_PROVIDER,
   SearchProviderType
 } from './search/providers'
+import {
+  classifyRecoverableSearchError,
+  RecoverableSearchFailure
+} from './search/providers/recoverable-error'
+
+function getOptimizedSearchProviderType(): SearchProviderType {
+  return (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
+}
+
+function getEffectiveSearchDepth(
+  provider: SearchProviderType,
+  requestedDepth: 'basic' | 'advanced'
+): 'basic' | 'advanced' {
+  return provider === 'searxng' &&
+    process.env.SEARXNG_DEFAULT_DEPTH === 'advanced'
+    ? 'advanced'
+    : requestedDepth || 'basic'
+}
+
+function describeRecoverableSearchFailure(
+  failure: RecoverableSearchFailure
+): string {
+  return failure.type === 'http' ? `HTTP ${failure.status}` : 'transport error'
+}
 
 /**
  * Creates a search tool with the appropriate schema for the given model.
@@ -51,41 +75,52 @@ export function createSearchTool(fullModel: string) {
       // Use the original query as is - any provider-specific handling will be done in the provider
       const filledQuery = query
       let searchResult: SearchResults
+      let servedBySearchAPI: SearchProviderType
+      let fallback:
+        | {
+            from: SearchProviderType
+            to: SearchProviderType
+            reason: RecoverableSearchFailure
+          }
+        | undefined
+
+      const optimizedSearchAPI = getOptimizedSearchProviderType()
 
       // Determine which provider to use based on type
+      let generalSearchAPI: SearchProviderType | null = null
       let searchAPI: SearchProviderType
       if (type === 'general') {
         // Try to use dedicated general search provider
         const generalProvider = getGeneralSearchProviderType()
         if (generalProvider) {
+          generalSearchAPI = generalProvider
           searchAPI = generalProvider
         } else {
           // Fallback to primary provider (optimized search provider)
-          searchAPI =
-            (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
+          searchAPI = optimizedSearchAPI
           console.log(
             `[Search] type="general" requested but no dedicated provider available, using optimized search provider: ${searchAPI}`
           )
         }
       } else {
         // For 'optimized', use the configured provider
-        searchAPI =
-          (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
+        searchAPI = optimizedSearchAPI
       }
 
-      const effectiveSearchDepthForAPI =
-        searchAPI === 'searxng' &&
-        process.env.SEARXNG_DEFAULT_DEPTH === 'advanced'
-          ? 'advanced'
-          : effectiveSearchDepth || 'basic'
+      const searchWithProvider = async (
+        provider: SearchProviderType
+      ): Promise<SearchResults> => {
+        const effectiveSearchDepthForAPI = getEffectiveSearchDepth(
+          provider,
+          effectiveSearchDepth
+        )
 
-      console.log(
-        `Using search API: ${searchAPI}, Type: ${type}, Search Depth: ${effectiveSearchDepthForAPI}`
-      )
+        console.log(
+          `Using search API: ${provider}, Type: ${type}, Search Depth: ${effectiveSearchDepthForAPI}`
+        )
 
-      try {
         if (
-          searchAPI === 'searxng' &&
+          provider === 'searxng' &&
           effectiveSearchDepthForAPI === 'advanced'
         ) {
           // Get the base URL using the centralized utility function
@@ -107,40 +142,69 @@ export function createSearchTool(fullModel: string) {
               `Advanced search API error: ${response.status} ${response.statusText}`
             )
           }
-          searchResult = await response.json()
-        } else {
-          // Use the provider factory to get the appropriate search provider
-          const searchProvider = createSearchProvider(searchAPI)
-
-          // Pass content_types only for Brave provider
-          if (searchAPI === 'brave') {
-            searchResult = await searchProvider.search(
-              filledQuery,
-              effectiveMaxResults,
-              effectiveSearchDepthForAPI,
-              include_domains,
-              exclude_domains,
-              {
-                type: type as 'general' | 'optimized',
-                content_types: content_types as Array<
-                  'web' | 'video' | 'image' | 'news'
-                >
-              }
-            )
-          } else {
-            searchResult = await searchProvider.search(
-              filledQuery,
-              effectiveMaxResults,
-              effectiveSearchDepthForAPI,
-              include_domains,
-              exclude_domains
-            )
-          }
+          return response.json()
         }
+
+        // Use the provider factory to get the appropriate search provider
+        const searchProvider = createSearchProvider(provider)
+
+        // Pass content_types only for Brave provider
+        if (provider === 'brave') {
+          return searchProvider.search(
+            filledQuery,
+            effectiveMaxResults,
+            effectiveSearchDepthForAPI,
+            include_domains,
+            exclude_domains,
+            {
+              type: type as 'general' | 'optimized',
+              content_types: content_types as Array<
+                'web' | 'video' | 'image' | 'news'
+              >
+            }
+          )
+        }
+
+        return searchProvider.search(
+          filledQuery,
+          effectiveMaxResults,
+          effectiveSearchDepthForAPI,
+          include_domains,
+          exclude_domains
+        )
+      }
+
+      try {
+        searchResult = await searchWithProvider(searchAPI)
+        servedBySearchAPI = searchAPI
       } catch (error) {
-        console.error('Search API error:', error)
-        // Re-throw the error to let AI SDK handle it properly
-        throw new ToolFailureError('search', error)
+        const recoverableFailure = classifyRecoverableSearchError(error)
+        if (
+          generalSearchAPI !== null &&
+          generalSearchAPI !== optimizedSearchAPI &&
+          recoverableFailure !== null
+        ) {
+          console.warn(
+            `[Search] dedicated general search provider ${generalSearchAPI} failed with ${describeRecoverableSearchFailure(recoverableFailure)}; using optimized search provider: ${optimizedSearchAPI}`
+          )
+
+          try {
+            searchResult = await searchWithProvider(optimizedSearchAPI)
+            servedBySearchAPI = optimizedSearchAPI
+            fallback = {
+              from: generalSearchAPI,
+              to: optimizedSearchAPI,
+              reason: recoverableFailure
+            }
+          } catch (fallbackError) {
+            console.error('Search fallback API error:', fallbackError)
+            throw new ToolFailureError('search', fallbackError)
+          }
+        } else {
+          console.error('Search API error:', error)
+          // Re-throw the error to let AI SDK handle it properly
+          throw new ToolFailureError('search', error)
+        }
       }
 
       // No citationMap is attached: it fully duplicated `results`
@@ -163,15 +227,17 @@ export function createSearchTool(fullModel: string) {
       // Yield final results with complete state
       yield {
         state: 'complete' as const,
-        ...searchResult
+        ...searchResult,
+        provider: servedBySearchAPI,
+        ...(fallback ? { fallback } : {})
       }
     },
     // Trim the model-facing tool result: citationMap fully duplicates
-    // `results` (dropped defensively for older persisted output) and state is
-    // a streaming marker. images MUST stay — getImageSpecPrompt instructs the
-    // model to embed URLs verbatim from this array. toolCallId MUST stay: the
-    // prompt cites as [number](#toolCallId), so the model reads the id from
-    // here.
+    // `results` (dropped defensively for older persisted output), state is a
+    // streaming marker, and provider/fallback are trace diagnostics. images
+    // MUST stay — getImageSpecPrompt instructs the model to embed URLs verbatim
+    // from this array. toolCallId MUST stay: the prompt cites as
+    // [number](#toolCallId), so the model reads the id from here.
     toModelOutput: ({ output }) => {
       if (!output || typeof output !== 'object') {
         return { type: 'json', value: (output ?? null) as JSONValue }
@@ -181,6 +247,8 @@ export function createSearchTool(fullModel: string) {
       }
       delete modelView.citationMap
       delete modelView.state
+      delete modelView.provider
+      delete modelView.fallback
       return { type: 'json', value: modelView as JSONValue }
     }
   })

@@ -23,7 +23,13 @@ describe('search tool toModelOutput', () => {
       1: { title: 'A', url: 'https://a.test', content: 'alpha' },
       2: { title: 'B', url: 'https://b.test', content: 'beta' }
     },
-    toolCallId: 'call_123'
+    toolCallId: 'call_123',
+    provider: 'tavily',
+    fallback: {
+      from: 'brave',
+      to: 'tavily',
+      reason: { type: 'http', status: 429 }
+    }
   }
 
   const getModelValue = async (output: unknown) => {
@@ -42,6 +48,13 @@ describe('search tool toModelOutput', () => {
 
     expect(value).not.toHaveProperty('citationMap')
     expect(value).not.toHaveProperty('state')
+  })
+
+  it('keeps trace metadata out of the model output', async () => {
+    const value = await getModelValue(fullOutput)
+
+    expect(value).not.toHaveProperty('provider')
+    expect(value).not.toHaveProperty('fallback')
   })
 
   it('preserves the fields the model needs to answer and to cite', async () => {
@@ -69,6 +82,8 @@ describe('search tool toModelOutput', () => {
 
     expect(fullOutput).toHaveProperty('citationMap')
     expect(fullOutput).toHaveProperty('state')
+    expect(fullOutput).toHaveProperty('provider')
+    expect(fullOutput).toHaveProperty('fallback')
   })
 
   it('handles non-object output defensively', async () => {
