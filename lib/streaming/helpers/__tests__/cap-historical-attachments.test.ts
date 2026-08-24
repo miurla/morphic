@@ -235,7 +235,7 @@ describe('capHistoricalAttachments', () => {
 
   it('bounds heavy attachments below the count limit by weight blocks', () => {
     const messages = pdfThread(4).concat(userTurn('current', 0))
-    const capped = capHistoricalAttachments(messages, LIMIT, 200_000)
+    const capped = capHistoricalAttachments(messages, LIMIT, 20_000)
 
     expect(filenamesReaching(capped)).toEqual(['u2.pdf', 'u3.pdf'])
     expect(placeholders(capped)).toHaveLength(2)
@@ -245,12 +245,12 @@ describe('capHistoricalAttachments', () => {
     const atFour = capHistoricalAttachments(
       pdfThread(4, 1_000_000).concat(userTurn('current', 0)),
       0,
-      200_000
+      20_000
     )
     const atFive = capHistoricalAttachments(
       pdfThread(5, 1_000_000).concat(userTurn('current', 0)),
       0,
-      200_000
+      20_000
     )
 
     const replayedPrefixLength = atFour.length - 1
@@ -265,7 +265,7 @@ describe('capHistoricalAttachments', () => {
     const capped = capHistoricalAttachments(
       pdfThread(4).concat(userTurn('current', 0)),
       0,
-      200_000
+      20_000
     )
 
     expect(filenamesReaching(capped)).toEqual(['u2.pdf', 'u3.pdf'])
@@ -280,9 +280,17 @@ describe('capHistoricalAttachments', () => {
   })
 
   it('leaves a thread within the weight budget untouched', () => {
-    const messages = thread(5, 1).concat(userTurn('current', 0))
+    const messages = pdfThread(5, 100_000).concat(userTurn('current', 0))
 
     expect(capHistoricalAttachments(messages, LIMIT, 200_000)).toBe(messages)
+  })
+
+  it('bounds multiple large PDFs with the default weight budget', () => {
+    const messages = pdfThread(4, 10_000_000).concat(userTurn('current', 0))
+    const capped = capHistoricalAttachments(messages, LIMIT, 200_000)
+
+    expect(filenamesReaching(capped)).toEqual(['u2.pdf', 'u3.pdf'])
+    expect(placeholders(capped)).toHaveLength(2)
   })
 
   it('never applies the weight bound to the newest user message', () => {

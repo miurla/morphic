@@ -2,7 +2,10 @@ import type { UIMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 
 import { summarizeCarriedContext } from '@/lib/streaming/helpers/summarize-carried-context'
-import { IMAGE_ATTACHMENT_TOKENS } from '@/lib/utils/attachment-tokens'
+import {
+  IMAGE_ATTACHMENT_TOKENS,
+  MIN_PDF_ATTACHMENT_TOKENS
+} from '@/lib/utils/attachment-tokens'
 
 function createMessages(parts: unknown[]): UIMessage[] {
   return [{ id: 'message-1', role: 'user', parts: parts as UIMessage['parts'] }]
@@ -34,7 +37,7 @@ describe('summarizeCarriedContext', () => {
       )
     ).toEqual({
       attachments: 2,
-      attachmentTokens: IMAGE_ATTACHMENT_TOKENS + 10
+      attachmentTokens: IMAGE_ATTACHMENT_TOKENS + MIN_PDF_ATTACHMENT_TOKENS
     })
   })
 
@@ -65,6 +68,9 @@ describe('summarizeCarriedContext', () => {
           { type: 'data-noteContext', data: { text: null } }
         ])
       )
-    ).toEqual({ attachments: 1 })
+    ).toEqual({
+      attachments: 1,
+      attachmentTokens: MIN_PDF_ATTACHMENT_TOKENS
+    })
   })
 })

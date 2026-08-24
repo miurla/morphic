@@ -26,6 +26,7 @@ import { perfLog, perfTime } from '../utils/perf-logging'
 import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { resolveAttachmentSizes } from './helpers/attachment-sizes'
+import { buildAttachmentTokenEstimates } from './helpers/attachment-token-estimates'
 import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
@@ -212,6 +213,8 @@ export async function createChatStreamResponse(
         )
       )
       carriedContext = summarizeCarriedContext(messagesToConvert)
+      const attachmentTokenEstimates =
+        buildAttachmentTokenEstimates(messagesToConvert)
 
       // Convert to model messages and apply context window management
       streamErrorStage = 'convert-messages'
@@ -220,10 +223,17 @@ export async function createChatStreamResponse(
       })
 
       streamErrorStage = 'truncate-messages'
-      if (shouldTruncateMessages(modelMessages, model)) {
+      if (
+        shouldTruncateMessages(modelMessages, model, attachmentTokenEstimates)
+      ) {
         const maxTokens = getMaxAllowedTokens(model)
         const originalCount = modelMessages.length
-        modelMessages = truncateMessages(modelMessages, maxTokens, model.id)
+        modelMessages = truncateMessages(
+          modelMessages,
+          maxTokens,
+          model.id,
+          attachmentTokenEstimates
+        )
         contextWindowTruncated = true
 
         if (process.env.NODE_ENV === 'development') {
