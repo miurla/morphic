@@ -27,6 +27,7 @@ import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { resolveAttachmentSizes } from './helpers/attachment-sizes'
 import { buildAttachmentTokenEstimates } from './helpers/attachment-token-estimates'
+import { capHistoricalAnswerText } from './helpers/cap-historical-answer-text'
 import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
@@ -209,7 +210,9 @@ export async function createChatStreamResponse(
       )
       const messagesToConvert = dedupeAttachments(
         capHistoricalAttachments(
-          compactHistoricalMessages(messagesWithAttachmentSizes)
+          compactHistoricalMessages(
+            capHistoricalAnswerText(messagesWithAttachmentSizes)
+          )
         )
       )
       carriedContext = summarizeCarriedContext(messagesToConvert)

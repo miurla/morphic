@@ -3,6 +3,8 @@ import type { UIMessage } from 'ai'
 import type { SearchResultItem } from '@/lib/types'
 import { extractCitationMaps, processCitations } from '@/lib/utils/citation'
 
+import { sliceWithoutSplittingSurrogatePair } from './slice-without-splitting-surrogate-pair'
+
 // Applies per assistant turn. Source context is attached to every cited turn
 // and never removed later, so this bound is what keeps a long conversation's
 // accumulated evidence from crowding out the context window.
@@ -23,20 +25,6 @@ function normalizeInlineText(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/\s+/g, ' ')
     .trim()
-}
-
-function sliceWithoutSplittingSurrogatePair(
-  value: string,
-  maxChars: number
-): string {
-  if (value.length <= maxChars) return value
-
-  const sliced = value.slice(0, maxChars)
-  const lastCodeUnit = sliced.charCodeAt(sliced.length - 1)
-
-  return lastCodeUnit >= 0xd800 && lastCodeUnit <= 0xdbff
-    ? sliced.slice(0, -1)
-    : sliced
 }
 
 function truncateInlineText(value: string, maxChars: number): string {
