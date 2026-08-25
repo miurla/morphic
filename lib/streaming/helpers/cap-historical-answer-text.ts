@@ -11,6 +11,13 @@ const OMITTED_ANSWER_PLACEHOLDER =
 
 type AnswerTextPart = { type: 'text'; text: string }
 
+export function hasReplayableAnswerText(message: UIMessage): boolean {
+  return (
+    message.role === 'assistant' &&
+    message.parts.some(part => part.type === 'text' && part.text.trim())
+  )
+}
+
 export function parseAnswerTextLimit(raw: string | undefined): number {
   const value = raw?.trim()
   if (!value) return DEFAULT_ANSWER_TEXT_LIMIT
@@ -65,7 +72,7 @@ export function selectHistoricalAssistantMessagesToCap(
     currentTurnIndex === -1 ? messages.length : currentTurnIndex
   const assistantCount = messages
     .slice(0, historyEnd)
-    .filter(message => message.role === 'assistant').length
+    .filter(hasReplayableAnswerText).length
   const cappedAssistantCount = Math.max(
     0,
     assistantCount - Math.max(0, Math.floor(exemptCount))
@@ -75,7 +82,7 @@ export function selectHistoricalAssistantMessagesToCap(
   const selected = new Set<UIMessage>()
   for (const [index, message] of messages.entries()) {
     if (index >= historyEnd) break
-    if (message.role !== 'assistant') continue
+    if (!hasReplayableAnswerText(message)) continue
 
     seenAssistants += 1
     if (seenAssistants > cappedAssistantCount) break

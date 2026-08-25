@@ -5,6 +5,7 @@ import { extractCitationMaps, processCitations } from '@/lib/utils/citation'
 
 import {
   capAnswerTextParts,
+  hasReplayableAnswerText,
   HISTORY_ANSWER_TEXT_EXEMPT_TURNS,
   HISTORY_ANSWER_TEXT_LIMIT,
   selectHistoricalAssistantMessagesToCap
@@ -230,6 +231,10 @@ export function compactHistoricalMessages(
       return [message]
     }
 
+    if (!hasReplayableAnswerText(message)) {
+      return []
+    }
+
     const citationMaps = extractCitationMaps(message)
     let textParts = message.parts.flatMap(part => {
       if (part.type !== 'text' || !part.text.trim()) {
@@ -245,10 +250,6 @@ export function compactHistoricalMessages(
         }
       ]
     })
-
-    if (textParts.length === 0) {
-      return []
-    }
 
     if (messagesToCap.has(message)) {
       textParts = capAnswerTextParts(textParts, maxChars)

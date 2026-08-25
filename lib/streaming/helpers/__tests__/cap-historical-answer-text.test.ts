@@ -26,6 +26,26 @@ function assistantTurn(id: string, text: string): UIMessage {
   } as UIMessage
 }
 
+function emptyAssistantTurn(id: string): UIMessage {
+  return assistantTurn(id, '   ')
+}
+
+function toolOnlyAssistantTurn(id: string): UIMessage {
+  return {
+    id,
+    role: 'assistant',
+    parts: [
+      {
+        type: 'tool-search',
+        toolCallId: `call_${id}`,
+        state: 'output-available',
+        input: { query: 'example' },
+        output: { query: 'example', images: [], results: [] }
+      }
+    ]
+  } as unknown as UIMessage
+}
+
 function citedAssistantTurn(id: string, text: string): UIMessage {
   return {
     id,
@@ -108,6 +128,50 @@ describe('historical answer text cap', () => {
     expect(placeholders(capped[7])).toEqual([])
   })
 
+  it('does not count an empty assistant between answers as exempt', () => {
+    const messages = [
+      assistantTurn('a0', 'x'.repeat(100)),
+      emptyAssistantTurn('empty'),
+      assistantTurn('a1', 'x'.repeat(100)),
+      assistantTurn('a2', 'x'.repeat(100)),
+      userTurn('current')
+    ]
+    const capped = compact(messages, LIMIT, 2)
+
+    expect(capped.map(message => message.id)).toEqual([
+      'a0',
+      'a1',
+      'a2',
+      'current'
+    ])
+    expect(placeholders(capped[0])).toHaveLength(1)
+    expect(placeholders(capped[1])).toEqual([])
+    expect(placeholders(capped[2])).toEqual([])
+  })
+
+  it('ignores trailing empty and tool-only assistants for exemptions', () => {
+    const messages = [
+      assistantTurn('a0', 'x'.repeat(100)),
+      assistantTurn('a1', 'x'.repeat(100)),
+      assistantTurn('a2', 'x'.repeat(100)),
+      emptyAssistantTurn('empty-1'),
+      toolOnlyAssistantTurn('tool-only'),
+      emptyAssistantTurn('empty-2'),
+      userTurn('current')
+    ]
+    const capped = compact(messages, LIMIT, 2)
+
+    expect(capped.map(message => message.id)).toEqual([
+      'a0',
+      'a1',
+      'a2',
+      'current'
+    ])
+    expect(placeholders(capped[0])).toHaveLength(1)
+    expect(placeholders(capped[1])).toEqual([])
+    expect(placeholders(capped[2])).toEqual([])
+  })
+
   it('leaves messages at or after the history boundary uncapped', () => {
     const messages = [
       ...thread([100]),
@@ -156,6 +220,32 @@ describe('historical answer text cap', () => {
     expect(placeholders(longer[5])).toHaveLength(1)
 
     for (const messageIndex of [0, 1, 2, 3, 4]) {
+      expect(textParts(longer[messageIndex])).toEqual(
+        textParts(shorter[messageIndex])
+      )
+    }
+  })
+
+  it('keeps prefix stability with empty assistant records', () => {
+    const replayableTurns = Array.from({ length: 6 }, (_, index) => [
+      assistantTurn(`a${index}`, 'x'.repeat(100)),
+      emptyAssistantTurn(`empty-${index}`)
+    ]).flat()
+    const render = (replayableCount: number) =>
+      compact(
+        replayableTurns
+          .slice(0, replayableCount * 2)
+          .concat(userTurn('current')),
+        LIMIT,
+        2
+      )
+    const shorter = render(4)
+    const longer = render(6)
+
+    expect(placeholders(shorter[2])).toEqual([])
+    expect(placeholders(longer[2])).toHaveLength(1)
+
+    for (const messageIndex of [0, 1]) {
       expect(textParts(longer[messageIndex])).toEqual(
         textParts(shorter[messageIndex])
       )
