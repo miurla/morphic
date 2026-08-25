@@ -3,6 +3,15 @@ import type { UIMessage } from 'ai'
 import type { SearchResultItem } from '@/lib/types'
 import { extractCitationMaps, processCitations } from '@/lib/utils/citation'
 
+import {
+  capAnswerTextParts,
+  hasReplayableAnswerText,
+  HISTORY_ANSWER_TEXT_EXEMPT_TURNS,
+  HISTORY_ANSWER_TEXT_LIMIT,
+  selectHistoricalAssistantMessagesToCap
+} from './cap-historical-answer-text'
+import { sliceWithoutSplittingSurrogatePair } from './slice-without-splitting-surrogate-pair'
+
 // Applies per assistant turn. Source context is attached to every cited turn
 // and never removed later, so this bound is what keeps a long conversation's
 // accumulated evidence from crowding out the context window.
@@ -23,20 +32,6 @@ function normalizeInlineText(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/\s+/g, ' ')
     .trim()
-}
-
-function sliceWithoutSplittingSurrogatePair(
-  value: string,
-  maxChars: number
-): string {
-  if (value.length <= maxChars) return value
-
-  const sliced = value.slice(0, maxChars)
-  const lastCodeUnit = sliced.charCodeAt(sliced.length - 1)
-
-  return lastCodeUnit >= 0xd800 && lastCodeUnit <= 0xdbff
-    ? sliced.slice(0, -1)
-    : sliced
 }
 
 function truncateInlineText(value: string, maxChars: number): string {
@@ -214,19 +209,34 @@ Entries correspond to cited sources in order. Their URLs remain in the preceding
  * context. The current request's ToolLoopAgent messages do not pass through
  * this function, so its active reasoning/tool sequence remains intact.
  *
- * A message's output depends only on that message. Selecting by position in
- * the conversation instead would rewrite already-sent history as turns are
- * appended, which both changes what the model saw earlier and invalidates the
- * provider's prompt cache from that point on.
+ * A message's output depends only on that message and, within the newest
+ * exempt assistant messages, its bounded distance from the end. Appending
+ * turns can move the divergence point only within that tail, so the stable
+ * prompt prefix remains independent of total thread length.
  */
-export function compactHistoricalMessages(messages: UIMessage[]): UIMessage[] {
+export function compactHistoricalMessages(
+  messages: UIMessage[],
+  answerTextCap: { maxChars?: number; exemptCount?: number } = {}
+): UIMessage[] {
+  const maxChars = answerTextCap.maxChars ?? HISTORY_ANSWER_TEXT_LIMIT
+  const exemptCount =
+    answerTextCap.exemptCount ?? HISTORY_ANSWER_TEXT_EXEMPT_TURNS
+  const messagesToCap =
+    maxChars > 0
+      ? selectHistoricalAssistantMessagesToCap(messages, exemptCount)
+      : new Set<UIMessage>()
+
   return messages.flatMap(message => {
     if (message.role !== 'assistant') {
       return [message]
     }
 
+    if (!hasReplayableAnswerText(message)) {
+      return []
+    }
+
     const citationMaps = extractCitationMaps(message)
-    const textParts = message.parts.flatMap(part => {
+    let textParts = message.parts.flatMap(part => {
       if (part.type !== 'text' || !part.text.trim()) {
         return []
       }
@@ -241,8 +251,8 @@ export function compactHistoricalMessages(messages: UIMessage[]): UIMessage[] {
       ]
     })
 
-    if (textParts.length === 0) {
-      return []
+    if (messagesToCap.has(message)) {
+      textParts = capAnswerTextParts(textParts, maxChars)
     }
 
     const sourceContext = createSourceContext(
