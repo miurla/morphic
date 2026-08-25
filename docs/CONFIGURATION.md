@@ -173,6 +173,15 @@ SEARXNG_LIMITER=false
 
 Modify `searxng-settings.yml` to enable/disable specific search engines, change UI settings, or adjust server options. See the [SearXNG documentation](https://docs.searxng.org/admin/settings/settings.html#settings-yml) for details.
 
+### Serping API
+
+Serping API provides real-time Google search results. The free tier includes 250 searches per month.
+
+```bash
+SEARCH_API=serpingapi
+SERPINGAPI_API_KEY=[YOUR_SERPINGAPI_API_KEY]
+```
+
 ### Brave Search (Optional)
 
 Brave Search provides enhanced support for video and image searches:
