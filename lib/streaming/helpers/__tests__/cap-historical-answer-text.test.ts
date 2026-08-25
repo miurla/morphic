@@ -2,10 +2,10 @@ import type { UIMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 
 import {
-  capHistoricalAnswerText,
   parseAnswerTextExemptTurns,
   parseAnswerTextLimit
 } from '../cap-historical-answer-text'
+import { compactHistoricalMessages } from '../compact-historical-messages'
 
 const LIMIT = 20
 const PLACEHOLDER_PREFIX = '[Earlier answer text omitted'
@@ -26,11 +26,47 @@ function assistantTurn(id: string, text: string): UIMessage {
   } as UIMessage
 }
 
+function citedAssistantTurn(id: string, text: string): UIMessage {
+  return {
+    id,
+    role: 'assistant',
+    parts: [
+      {
+        type: 'tool-search',
+        toolCallId: 'call_1',
+        state: 'output-available',
+        input: { query: 'example' },
+        output: {
+          query: 'example',
+          images: [],
+          results: [
+            {
+              title: 'Example source',
+              url: 'https://example.com/a-long-source-path',
+              content:
+                'Evidence that must remain available after answer capping.'
+            }
+          ]
+        }
+      },
+      { type: 'text', text }
+    ]
+  } as unknown as UIMessage
+}
+
 function thread(answerLengths: number[]): UIMessage[] {
   return answerLengths.flatMap((length, index) => [
     userTurn(`u${index}`),
     assistantTurn(`a${index}`, `${index}:${'x'.repeat(length)}`)
   ])
+}
+
+function compact(
+  messages: UIMessage[],
+  maxChars = LIMIT,
+  exemptCount = 0
+): UIMessage[] {
+  return compactHistoricalMessages(messages, { maxChars, exemptCount })
 }
 
 function textParts(message: UIMessage): string[] {
@@ -43,19 +79,19 @@ function placeholders(message: UIMessage): string[] {
   return textParts(message).filter(text => text.startsWith(PLACEHOLDER_PREFIX))
 }
 
-describe('capHistoricalAnswerText', () => {
-  it('returns answers under the limit unchanged', () => {
+describe('historical answer text cap', () => {
+  it('returns answers under the limit without a placeholder', () => {
     const messages = thread([5, 5]).concat(userTurn('current'))
+    const capped = compact(messages)
 
-    const capped = capHistoricalAnswerText(messages, LIMIT, 0)
-
-    expect(capped).toBe(messages)
     expect(capped.flatMap(placeholders)).toEqual([])
+    expect(textParts(capped[1])).toEqual(textParts(messages[1]))
+    expect(textParts(capped[3])).toEqual(textParts(messages[3]))
   })
 
   it('truncates an older long answer and adds one placeholder', () => {
     const messages = thread([100, 5]).concat(userTurn('current'))
-    const capped = capHistoricalAnswerText(messages, LIMIT, 1)
+    const capped = compact(messages, LIMIT, 1)
     const oldAnswer = capped[1]
 
     expect(textParts(oldAnswer)[0]).toHaveLength(LIMIT)
@@ -64,30 +100,31 @@ describe('capHistoricalAnswerText', () => {
 
   it('exempts the newest historical assistant answers', () => {
     const messages = thread([100, 100, 100, 100]).concat(userTurn('current'))
-    const capped = capHistoricalAnswerText(messages, LIMIT, 2)
+    const capped = compact(messages, LIMIT, 2)
 
     expect(placeholders(capped[1])).toHaveLength(1)
     expect(placeholders(capped[3])).toHaveLength(1)
-    expect(capped[5]).toBe(messages[5])
-    expect(capped[7]).toBe(messages[7])
+    expect(placeholders(capped[5])).toEqual([])
+    expect(placeholders(capped[7])).toEqual([])
   })
 
-  it('leaves messages at or after the history boundary untouched', () => {
+  it('leaves messages at or after the history boundary uncapped', () => {
     const messages = [
       ...thread([100]),
       userTurn('current'),
       assistantTurn('current-assistant', 'x'.repeat(100))
     ]
-    const capped = capHistoricalAnswerText(messages, LIMIT, 0)
+    const capped = compact(messages)
 
     expect(capped.at(-2)).toBe(messages.at(-2))
-    expect(capped.at(-1)).toBe(messages.at(-1))
+    expect(textParts(capped.at(-1)!)).toEqual(['x'.repeat(100)])
+    expect(placeholders(capped.at(-1)!)).toEqual([])
   })
 
   it('keeps capped prefix text stable as the thread grows', () => {
     const fullThread = thread(Array.from({ length: 8 }, () => 100))
     const rendered = [4, 6, 8].map(turnCount =>
-      capHistoricalAnswerText(
+      compact(
         fullThread.slice(0, turnCount * 2).concat(userTurn('current')),
         LIMIT,
         2
@@ -107,7 +144,7 @@ describe('capHistoricalAnswerText', () => {
   it('moves the divergence point only within the exempt tail', () => {
     const fullThread = thread(Array.from({ length: 8 }, () => 100))
     const render = (turnCount: number) =>
-      capHistoricalAnswerText(
+      compact(
         fullThread.slice(0, turnCount * 2).concat(userTurn('current')),
         LIMIT,
         2
@@ -115,13 +152,9 @@ describe('capHistoricalAnswerText', () => {
     const shorter = render(4)
     const longer = render(6)
 
-    // The answer that was exempt at the shorter length is the first one to
-    // change, and it sits within the exempt tail of the shorter render.
     expect(placeholders(shorter[5])).toEqual([])
     expect(placeholders(longer[5])).toHaveLength(1)
 
-    // Everything before it is byte-identical, which is what the prompt cache
-    // matches on.
     for (const messageIndex of [0, 1, 2, 3, 4]) {
       expect(textParts(longer[messageIndex])).toEqual(
         textParts(shorter[messageIndex])
@@ -140,27 +173,21 @@ describe('capHistoricalAnswerText', () => {
         { type: 'text', text: 'dropped' }
       ]
     } as unknown as UIMessage
-    const capped = capHistoricalAnswerText(
-      [assistant, userTurn('current')],
-      LIMIT,
-      0
-    )[0]
+    const originalParts = structuredClone(assistant.parts)
+    const capped = compact([assistant, userTurn('current')])[0]
 
     expect(textParts(capped)).toEqual([
       '1234567890',
       'abcdefghij',
       expect.stringContaining(PLACEHOLDER_PREFIX)
     ])
-    expect(capped.parts).toContain(assistant.parts[1])
+    expect(capped.parts).not.toContain(assistant.parts[1])
+    expect(assistant.parts).toEqual(originalParts)
   })
 
   it('does not split a surrogate pair at the boundary', () => {
     const answer = assistantTurn('a0', `${'x'.repeat(19)}😀after`)
-    const capped = capHistoricalAnswerText(
-      [answer, userTurn('current')],
-      LIMIT,
-      0
-    )[0]
+    const capped = compact([answer, userTurn('current')])[0]
 
     expect(textParts(capped)[0]).toBe('x'.repeat(19))
     expect(textParts(capped).join('')).not.toMatch(
@@ -168,29 +195,79 @@ describe('capHistoricalAnswerText', () => {
     )
   })
 
-  it('cuts at whitespace and removes an incomplete citation', () => {
+  it('cuts at whitespace and strips incomplete compact and expanded citations', () => {
     const whitespaceAnswer = assistantTurn(
       'whitespace',
       'complete words unfinishedword'
     )
-    const citationAnswer = assistantTurn(
-      'citation',
+    const compactCitationAnswer = assistantTurn(
+      'compact-citation',
       'answer[12](#toolu_01abcdef) trailing'
     )
-    const capped = capHistoricalAnswerText(
-      [whitespaceAnswer, citationAnswer, userTurn('current')],
-      24,
-      0
+    const expandedCitationAnswer = citedAssistantTurn(
+      'expanded-citation',
+      'answer[1](#call_1) trailing'
+    )
+    const capped = compact(
+      [
+        whitespaceAnswer,
+        compactCitationAnswer,
+        expandedCitationAnswer,
+        userTurn('current')
+      ],
+      24
     )
 
     expect(textParts(capped[0])[0]).toBe('complete words')
     expect(textParts(capped[1])[0]).toBe('answer')
+    expect(textParts(capped[2])[0]).toBe('answer')
+  })
+
+  it('measures the cap after compact citations are expanded', () => {
+    const answer = citedAssistantTurn('cited', 'Answer[1](#call_1)')
+    const compactText = textParts(answer).at(-1)!
+    const maxChars = compactText.length
+    const expandedText = textParts(
+      compact([answer, userTurn('current')], 0)[0]
+    )[0]
+    const capped = compact([answer, userTurn('current')], maxChars)[0]
+    const [answerText] = textParts(capped)
+
+    expect(compactText).toHaveLength(maxChars)
+    expect(expandedText).toBe(
+      'Answer[example](https://example.com/a-long-source-path)'
+    )
+    expect(expandedText.length).toBeGreaterThan(maxChars)
+    expect(answerText).toBe('Answer')
+    expect(answerText.length).toBeLessThanOrEqual(maxChars)
+    expect(placeholders(capped)).toHaveLength(1)
+  })
+
+  it('adds unchanged source context after the capped answer budget', () => {
+    const answer = citedAssistantTurn(
+      'cited',
+      `Long answer text ${'x'.repeat(50)} [1](#call_1)`
+    )
+    const messages = [answer, userTurn('current')]
+    const capped = compact(messages, 10)[0]
+    const uncapped = compact(messages, 0)[0]
+    const cappedTexts = textParts(capped)
+    const sourceContext = cappedTexts.at(-1)!
+
+    expect(cappedTexts[0].length).toBeLessThanOrEqual(10)
+    expect(placeholders(capped)).toHaveLength(1)
+    expect(sourceContext).toBe(textParts(uncapped).at(-1))
+    expect(sourceContext.length).toBeGreaterThan(10)
+    expect(sourceContext).toContain('Evidence that must remain available')
+    expect(sourceContext).toContain('https://example.com/a-long-source-path')
   })
 
   it('disables the cap with an explicit zero limit', () => {
     const messages = thread([100]).concat(userTurn('current'))
+    const capped = compact(messages, 0)
 
-    expect(capHistoricalAnswerText(messages, 0, 0)).toBe(messages)
+    expect(textParts(capped[1])).toEqual(textParts(messages[1]))
+    expect(placeholders(capped[1])).toEqual([])
   })
 })
 

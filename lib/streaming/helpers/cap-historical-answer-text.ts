@@ -5,9 +5,11 @@ import { sliceWithoutSplittingSurrogatePair } from './slice-without-splitting-su
 const DEFAULT_ANSWER_TEXT_LIMIT = 12_000
 const DEFAULT_ANSWER_TEXT_EXEMPT_TURNS = 2
 const INCOMPLETE_CITATION_PATTERN =
-  /\[\s*\d+(?:\s*\]?(?:\s*\(\s*(?:#[^)]*)?)?)?$/
+  /(?:\[\s*\d+(?:\s*\]?(?:\s*\(\s*(?:#[^)]*)?)?)?|\[[^\]\r\n]+\]\(\s*[^)\r\n]*)$/
 const OMITTED_ANSWER_PLACEHOLDER =
   '[Earlier answer text omitted from replay. The full answer remains visible in the conversation.]'
+
+type AnswerTextPart = { type: 'text'; text: string }
 
 export function parseAnswerTextLimit(raw: string | undefined): number {
   const value = raw?.trim()
@@ -52,21 +54,10 @@ function truncateAnswerText(value: string, maxChars: number): string {
   return truncated.replace(INCOMPLETE_CITATION_PATTERN, '').trimEnd()
 }
 
-/**
- * Caps older assistant answer text while leaving the newest replies intact.
- *
- * A message's rendered text depends only on that message and, within the newest
- * `exemptCount` assistant messages, its bounded distance from the end. Appending
- * turns can therefore move the divergence point only within that tail, keeping
- * the stable prompt prefix independent of total thread length.
- */
-export function capHistoricalAnswerText(
+export function selectHistoricalAssistantMessagesToCap(
   messages: UIMessage[],
-  maxChars: number = HISTORY_ANSWER_TEXT_LIMIT,
-  exemptCount: number = HISTORY_ANSWER_TEXT_EXEMPT_TURNS
-): UIMessage[] {
-  if (maxChars <= 0) return messages
-
+  exemptCount: number
+): Set<UIMessage> {
   const currentTurnIndex = messages.findLastIndex(
     message => message.role === 'user'
   )
@@ -81,43 +72,46 @@ export function capHistoricalAnswerText(
   )
 
   let seenAssistants = 0
-  let changed = false
-  const cappedMessages = messages.map((message, index) => {
-    if (index >= historyEnd || message.role !== 'assistant') return message
+  const selected = new Set<UIMessage>()
+  for (const [index, message] of messages.entries()) {
+    if (index >= historyEnd) break
+    if (message.role !== 'assistant') continue
 
     seenAssistants += 1
-    if (seenAssistants > cappedAssistantCount) return message
+    if (seenAssistants > cappedAssistantCount) break
+    selected.add(message)
+  }
 
-    const totalTextChars = message.parts.reduce(
-      (total, part) => total + (part.type === 'text' ? part.text.length : 0),
-      0
-    )
-    if (totalTextChars <= maxChars) return message
+  return selected
+}
 
-    let remaining = maxChars
-    const parts: UIMessage['parts'] = []
-    for (const part of message.parts) {
-      if (part.type !== 'text') {
-        parts.push(part)
-        continue
-      }
-      if (remaining <= 0) continue
+export function capAnswerTextParts(
+  textParts: AnswerTextPart[],
+  maxChars: number
+): AnswerTextPart[] {
+  if (
+    maxChars <= 0 ||
+    textParts.reduce((total, part) => total + part.text.length, 0) <= maxChars
+  ) {
+    return textParts
+  }
 
-      if (part.text.length <= remaining) {
-        remaining -= part.text.length
-        parts.push(part)
-        continue
-      }
+  let remaining = maxChars
+  const cappedParts: AnswerTextPart[] = []
+  for (const part of textParts) {
+    if (remaining <= 0) continue
 
-      const text = truncateAnswerText(part.text, remaining)
-      remaining = 0
-      if (text) parts.push({ ...part, text })
+    if (part.text.length <= remaining) {
+      remaining -= part.text.length
+      cappedParts.push(part)
+      continue
     }
 
-    parts.push({ type: 'text', text: OMITTED_ANSWER_PLACEHOLDER })
-    changed = true
-    return { ...message, parts }
-  })
+    const text = truncateAnswerText(part.text, remaining)
+    remaining = 0
+    if (text) cappedParts.push({ ...part, text })
+  }
 
-  return changed ? cappedMessages : messages
+  cappedParts.push({ type: 'text', text: OMITTED_ANSWER_PLACEHOLDER })
+  return cappedParts
 }

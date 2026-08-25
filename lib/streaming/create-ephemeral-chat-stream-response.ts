@@ -23,7 +23,6 @@ import { getTextFromParts } from '../utils/message-utils'
 import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { buildAttachmentTokenEstimates } from './helpers/attachment-token-estimates'
-import { capHistoricalAnswerText } from './helpers/cap-historical-answer-text'
 import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
@@ -135,11 +134,7 @@ export async function createEphemeralChatStreamResponse(
       const messagesWithNonces = assignDataPartNonces(messages)
       const messagesWithoutSpec = stripSpecFromMessages(messagesWithNonces)
       const messagesToConvert = dedupeAttachments(
-        capHistoricalAttachments(
-          compactHistoricalMessages(
-            capHistoricalAnswerText(messagesWithoutSpec)
-          )
-        )
+        capHistoricalAttachments(compactHistoricalMessages(messagesWithoutSpec))
       )
       carriedContext = summarizeCarriedContext(messagesToConvert)
       const attachmentTokenEstimates =
