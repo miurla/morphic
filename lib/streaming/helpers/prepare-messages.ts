@@ -8,6 +8,7 @@ import {
   upsertMessage
 } from '@/lib/actions/chat'
 import { generateId } from '@/lib/db/schema'
+import { DeterministicPreparationError } from '@/lib/errors/deterministic-preparation-error'
 import {
   getUserFileObjectKeyPrefix,
   signFilePartUrls
@@ -33,7 +34,7 @@ export async function prepareMessages(
       currentChat = await loadChat(chatId, userId)
     }
     if (!currentChat || !currentChat.messages.length) {
-      throw new Error('No messages found')
+      throw new DeterministicPreparationError('No messages found')
     }
 
     let messageIndex = currentChat.messages.findIndex(
@@ -52,7 +53,7 @@ export async function prepareMessages(
       if (lastAssistantIndex >= 0 || lastUserIndex >= 0) {
         messageIndex = Math.max(lastAssistantIndex, lastUserIndex)
       } else {
-        throw new Error(
+        throw new DeterministicPreparationError(
           `Message ${messageId} not found and no fallback available`
         )
       }

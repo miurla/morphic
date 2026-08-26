@@ -1,4 +1,5 @@
 import { generateId } from '@/lib/db/schema'
+import { DeterministicPreparationError } from '@/lib/errors/deterministic-preparation-error'
 import type {
   UIDataTypes,
   UIMessage,
@@ -413,7 +414,9 @@ export function mapDBPartToUIMessagePart(
         // Special handling for tool parts that maintain their type
         if (toolName === 'search') {
           if (!part.tool_state) {
-            throw new Error(`tool_state is undefined for ${toolName}`)
+            throw new DeterministicPreparationError(
+              `tool_state is undefined for ${toolName}`
+            )
           }
 
           switch (part.tool_state) {
@@ -448,13 +451,17 @@ export function mapDBPartToUIMessagePart(
                 errorText: part.tool_errorText!
               }
             default:
-              throw new Error(`Unknown tool state: ${part.tool_state}`)
+              throw new DeterministicPreparationError(
+                `Unknown tool state: ${part.tool_state}`
+              )
           }
         }
 
         if (toolName === 'fetch') {
           if (!part.tool_state) {
-            throw new Error(`tool_state is undefined for ${toolName}`)
+            throw new DeterministicPreparationError(
+              `tool_state is undefined for ${toolName}`
+            )
           }
 
           switch (part.tool_state) {
@@ -489,13 +496,17 @@ export function mapDBPartToUIMessagePart(
                 errorText: part.tool_errorText!
               }
             default:
-              throw new Error(`Unknown tool state: ${part.tool_state}`)
+              throw new DeterministicPreparationError(
+                `Unknown tool state: ${part.tool_state}`
+              )
           }
         }
 
         if (toolName === 'question') {
           if (!part.tool_state) {
-            throw new Error(`tool_state is undefined for ${toolName}`)
+            throw new DeterministicPreparationError(
+              `tool_state is undefined for ${toolName}`
+            )
           }
 
           switch (part.tool_state) {
@@ -530,13 +541,17 @@ export function mapDBPartToUIMessagePart(
                 errorText: part.tool_errorText!
               }
             default:
-              throw new Error(`Unknown tool state: ${part.tool_state}`)
+              throw new DeterministicPreparationError(
+                `Unknown tool state: ${part.tool_state}`
+              )
           }
         }
 
         if (toolName === 'todoWrite') {
           if (!part.tool_state) {
-            throw new Error(`tool_state is undefined for ${toolName}`)
+            throw new DeterministicPreparationError(
+              `tool_state is undefined for ${toolName}`
+            )
           }
 
           switch (part.tool_state) {
@@ -571,13 +586,17 @@ export function mapDBPartToUIMessagePart(
                 errorText: part.tool_errorText!
               }
             default:
-              throw new Error(`Unknown tool state: ${part.tool_state}`)
+              throw new DeterministicPreparationError(
+                `Unknown tool state: ${part.tool_state}`
+              )
           }
         }
 
         if (toolName === 'todoRead') {
           if (!part.tool_state) {
-            throw new Error(`tool_state is undefined for ${toolName}`)
+            throw new DeterministicPreparationError(
+              `tool_state is undefined for ${toolName}`
+            )
           }
 
           switch (part.tool_state) {
@@ -612,7 +631,9 @@ export function mapDBPartToUIMessagePart(
                 errorText: part.tool_errorText!
               }
             default:
-              throw new Error(`Unknown tool state: ${part.tool_state}`)
+              throw new DeterministicPreparationError(
+                `Unknown tool state: ${part.tool_state}`
+              )
           }
         }
 
@@ -664,7 +685,7 @@ export function mapDBPartToUIMessagePart(
       }
 
       // Fallback - should not happen
-      throw new Error(`Unknown part type: ${part.type}`)
+      throw new DeterministicPreparationError(`Unknown part type: ${part.type}`)
   }
 }
 

@@ -1,3 +1,4 @@
+import { DeterministicPreparationError } from './deterministic-preparation-error'
 import { isToolFailureMessage } from './tool-error'
 
 export type PublicErrorType = 'rate-limit' | 'auth' | 'forbidden' | 'general'
@@ -484,6 +485,16 @@ export function toPublicErrorPayload(
   error: unknown,
   options: PublicErrorOptions = {}
 ): PublicErrorPayload {
+  if (error instanceof DeterministicPreparationError) {
+    return {
+      error: MALFORMED_REQUEST_MESSAGE,
+      code: 'malformed_request',
+      type: 'general',
+      details: MALFORMED_REQUEST_DETAILS,
+      retryable: false
+    }
+  }
+
   if (typeof error === 'string') {
     const parsed = extractJsonCandidate(error)
     if (isRecord(parsed)) {
