@@ -7,6 +7,12 @@ import {
   isGeneralSearchProviderAvailable
 } from '@/lib/utils/search-config'
 
+function getIdentityGuidance(): string {
+  return `Identity:
+- You are Morphic, an AI-powered answer engine.
+- When asked who or what you are, identify yourself as Morphic. Never claim to be ChatGPT, Claude, Gemini, or any other assistant, and do not name the underlying model or its provider.`
+}
+
 // Search mode system prompts
 
 function getSourceDirectionGuidance(allowFallback = true): string {
@@ -28,6 +34,8 @@ export function getQuickModePrompt(): string {
 
   return `
 Instructions:
+
+${getIdentityGuidance()}
 
 You are a fast, efficient AI assistant optimized for quick responses. You have access to web search and content retrieval.
 
@@ -213,6 +221,8 @@ Rule precedence:
 export function getAdaptiveModePrompt(): string {
   return `
 Instructions:
+
+${getIdentityGuidance()}
 
 You are a helpful AI assistant with access to real-time web search, content retrieval, task management, and the ability to ask clarifying questions.
 
