@@ -1,10 +1,7 @@
 import type { UIMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 
-import {
-  parseAnswerTextExemptTurns,
-  parseAnswerTextLimit
-} from '../cap-historical-answer-text'
+import { parseAnswerTextLimit } from '../cap-historical-answer-text'
 import { compactHistoricalMessages } from '../compact-historical-messages'
 
 const LIMIT = 20
@@ -81,12 +78,8 @@ function thread(answerLengths: number[]): UIMessage[] {
   ])
 }
 
-function compact(
-  messages: UIMessage[],
-  maxChars = LIMIT,
-  exemptCount = 0
-): UIMessage[] {
-  return compactHistoricalMessages(messages, { maxChars, exemptCount })
+function compact(messages: UIMessage[], maxChars = LIMIT): UIMessage[] {
+  return compactHistoricalMessages(messages, { maxChars })
 }
 
 function textParts(message: UIMessage): string[] {
@@ -109,47 +102,26 @@ describe('historical answer text cap', () => {
     expect(textParts(capped[3])).toEqual(textParts(messages[3]))
   })
 
-  it('truncates an older long answer and adds one placeholder', () => {
+  it('truncates a historical long answer and adds one placeholder', () => {
     const messages = thread([100, 5]).concat(userTurn('current'))
-    const capped = compact(messages, LIMIT, 1)
+    const capped = compact(messages)
     const oldAnswer = capped[1]
 
     expect(textParts(oldAnswer)[0]).toHaveLength(LIMIT)
     expect(placeholders(oldAnswer)).toHaveLength(1)
   })
 
-  it('exempts the newest historical assistant answers', () => {
+  it('caps every historical assistant answer over the limit', () => {
     const messages = thread([100, 100, 100, 100]).concat(userTurn('current'))
-    const capped = compact(messages, LIMIT, 2)
+    const capped = compact(messages)
 
     expect(placeholders(capped[1])).toHaveLength(1)
     expect(placeholders(capped[3])).toHaveLength(1)
-    expect(placeholders(capped[5])).toEqual([])
-    expect(placeholders(capped[7])).toEqual([])
+    expect(placeholders(capped[5])).toHaveLength(1)
+    expect(placeholders(capped[7])).toHaveLength(1)
   })
 
-  it('does not count an empty assistant between answers as exempt', () => {
-    const messages = [
-      assistantTurn('a0', 'x'.repeat(100)),
-      emptyAssistantTurn('empty'),
-      assistantTurn('a1', 'x'.repeat(100)),
-      assistantTurn('a2', 'x'.repeat(100)),
-      userTurn('current')
-    ]
-    const capped = compact(messages, LIMIT, 2)
-
-    expect(capped.map(message => message.id)).toEqual([
-      'a0',
-      'a1',
-      'a2',
-      'current'
-    ])
-    expect(placeholders(capped[0])).toHaveLength(1)
-    expect(placeholders(capped[1])).toEqual([])
-    expect(placeholders(capped[2])).toEqual([])
-  })
-
-  it('ignores trailing empty and tool-only assistants for exemptions', () => {
+  it('removes empty and tool-only assistant records while capping answers', () => {
     const messages = [
       assistantTurn('a0', 'x'.repeat(100)),
       assistantTurn('a1', 'x'.repeat(100)),
@@ -159,7 +131,7 @@ describe('historical answer text cap', () => {
       emptyAssistantTurn('empty-2'),
       userTurn('current')
     ]
-    const capped = compact(messages, LIMIT, 2)
+    const capped = compact(messages)
 
     expect(capped.map(message => message.id)).toEqual([
       'a0',
@@ -168,8 +140,8 @@ describe('historical answer text cap', () => {
       'current'
     ])
     expect(placeholders(capped[0])).toHaveLength(1)
-    expect(placeholders(capped[1])).toEqual([])
-    expect(placeholders(capped[2])).toEqual([])
+    expect(placeholders(capped[1])).toHaveLength(1)
+    expect(placeholders(capped[2])).toHaveLength(1)
   })
 
   it('leaves messages at or after the history boundary uncapped', () => {
@@ -185,70 +157,25 @@ describe('historical answer text cap', () => {
     expect(placeholders(capped.at(-1)!)).toEqual([])
   })
 
-  it('keeps capped prefix text stable as the thread grows', () => {
-    const fullThread = thread(Array.from({ length: 8 }, () => 100))
-    const rendered = [4, 6, 8].map(turnCount =>
-      compact(
-        fullThread.slice(0, turnCount * 2).concat(userTurn('current')),
-        LIMIT,
-        2
+  it('preserves the exact replayed prefix as turns are appended', () => {
+    const messages = thread([100, 5, 100, 5])
+    let previous = compact(messages)
+
+    expect(previous.flatMap(placeholders)).not.toEqual([])
+
+    for (let index = 0; index < 4; index++) {
+      messages.push(
+        userTurn(`appended-user-${index}`),
+        assistantTurn(`appended-assistant-${index}`, 'short answer')
       )
-    )
+      const next = compact(messages)
 
-    for (let assistantIndex = 0; assistantIndex < 2; assistantIndex++) {
-      const messageIndex = assistantIndex * 2 + 1
-      const baseline = JSON.stringify(textParts(rendered[0][messageIndex]))
-
-      for (const messages of rendered.slice(1)) {
-        expect(JSON.stringify(textParts(messages[messageIndex]))).toBe(baseline)
+      expect(next.slice(0, previous.length)).toHaveLength(previous.length)
+      for (const [messageIndex, message] of previous.entries()) {
+        expect(next[messageIndex]).toEqual(message)
       }
-    }
-  })
 
-  it('moves the divergence point only within the exempt tail', () => {
-    const fullThread = thread(Array.from({ length: 8 }, () => 100))
-    const render = (turnCount: number) =>
-      compact(
-        fullThread.slice(0, turnCount * 2).concat(userTurn('current')),
-        LIMIT,
-        2
-      )
-    const shorter = render(4)
-    const longer = render(6)
-
-    expect(placeholders(shorter[5])).toEqual([])
-    expect(placeholders(longer[5])).toHaveLength(1)
-
-    for (const messageIndex of [0, 1, 2, 3, 4]) {
-      expect(textParts(longer[messageIndex])).toEqual(
-        textParts(shorter[messageIndex])
-      )
-    }
-  })
-
-  it('keeps prefix stability with empty assistant records', () => {
-    const replayableTurns = Array.from({ length: 6 }, (_, index) => [
-      assistantTurn(`a${index}`, 'x'.repeat(100)),
-      emptyAssistantTurn(`empty-${index}`)
-    ]).flat()
-    const render = (replayableCount: number) =>
-      compact(
-        replayableTurns
-          .slice(0, replayableCount * 2)
-          .concat(userTurn('current')),
-        LIMIT,
-        2
-      )
-    const shorter = render(4)
-    const longer = render(6)
-
-    expect(placeholders(shorter[2])).toEqual([])
-    expect(placeholders(longer[2])).toHaveLength(1)
-
-    for (const messageIndex of [0, 1]) {
-      expect(textParts(longer[messageIndex])).toEqual(
-        textParts(shorter[messageIndex])
-      )
+      previous = next
     }
   })
 
@@ -365,14 +292,11 @@ describe('answer text configuration parsing', () => {
   it('falls back to defaults for empty and malformed values', () => {
     for (const raw of [undefined, '', '   ', 'nope', '-1', 'Infinity']) {
       expect(parseAnswerTextLimit(raw)).toBe(12_000)
-      expect(parseAnswerTextExemptTurns(raw)).toBe(2)
     }
   })
 
   it('accepts explicit zero and floors positive values', () => {
     expect(parseAnswerTextLimit('0')).toBe(0)
     expect(parseAnswerTextLimit('12.9')).toBe(12)
-    expect(parseAnswerTextExemptTurns('0')).toBe(0)
-    expect(parseAnswerTextExemptTurns('3.9')).toBe(3)
   })
 })

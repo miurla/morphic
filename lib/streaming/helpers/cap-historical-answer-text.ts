@@ -3,7 +3,6 @@ import type { UIMessage } from 'ai'
 import { sliceWithoutSplittingSurrogatePair } from './slice-without-splitting-surrogate-pair'
 
 const DEFAULT_ANSWER_TEXT_LIMIT = 12_000
-const DEFAULT_ANSWER_TEXT_EXEMPT_TURNS = 2
 const INCOMPLETE_CITATION_PATTERN =
   /(?:\[\s*\d+(?:\s*\]?(?:\s*\(\s*(?:#[^)]*)?)?)?|\[[^\]\r\n]+\]\(\s*[^)\r\n]*)$/
 const OMITTED_ANSWER_PLACEHOLDER =
@@ -34,22 +33,6 @@ export const HISTORY_ANSWER_TEXT_LIMIT = parseAnswerTextLimit(
   process.env.HISTORY_ANSWER_TEXT_LIMIT
 )
 
-export function parseAnswerTextExemptTurns(raw: string | undefined): number {
-  const value = raw?.trim()
-  if (!value) return DEFAULT_ANSWER_TEXT_EXEMPT_TURNS
-
-  const parsed = Number(value)
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    return DEFAULT_ANSWER_TEXT_EXEMPT_TURNS
-  }
-
-  return parsed === 0 ? 0 : Math.max(1, Math.floor(parsed))
-}
-
-export const HISTORY_ANSWER_TEXT_EXEMPT_TURNS = parseAnswerTextExemptTurns(
-  process.env.HISTORY_ANSWER_TEXT_EXEMPT_TURNS
-)
-
 function truncateAnswerText(value: string, maxChars: number): string {
   let truncated = sliceWithoutSplittingSurrogatePair(value, maxChars)
   const whitespaceIndex = truncated.search(/\s+\S*$/)
@@ -59,37 +42,6 @@ function truncateAnswerText(value: string, maxChars: number): string {
   }
 
   return truncated.replace(INCOMPLETE_CITATION_PATTERN, '').trimEnd()
-}
-
-export function selectHistoricalAssistantMessagesToCap(
-  messages: UIMessage[],
-  exemptCount: number
-): Set<UIMessage> {
-  const currentTurnIndex = messages.findLastIndex(
-    message => message.role === 'user'
-  )
-  const historyEnd =
-    currentTurnIndex === -1 ? messages.length : currentTurnIndex
-  const assistantCount = messages
-    .slice(0, historyEnd)
-    .filter(hasReplayableAnswerText).length
-  const cappedAssistantCount = Math.max(
-    0,
-    assistantCount - Math.max(0, Math.floor(exemptCount))
-  )
-
-  let seenAssistants = 0
-  const selected = new Set<UIMessage>()
-  for (const [index, message] of messages.entries()) {
-    if (index >= historyEnd) break
-    if (!hasReplayableAnswerText(message)) continue
-
-    seenAssistants += 1
-    if (seenAssistants > cappedAssistantCount) break
-    selected.add(message)
-  }
-
-  return selected
 }
 
 export function capAnswerTextParts(

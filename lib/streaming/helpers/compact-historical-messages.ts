@@ -6,9 +6,7 @@ import { extractCitationMaps, processCitations } from '@/lib/utils/citation'
 import {
   capAnswerTextParts,
   hasReplayableAnswerText,
-  HISTORY_ANSWER_TEXT_EXEMPT_TURNS,
-  HISTORY_ANSWER_TEXT_LIMIT,
-  selectHistoricalAssistantMessagesToCap
+  HISTORY_ANSWER_TEXT_LIMIT
 } from './cap-historical-answer-text'
 import { sliceWithoutSplittingSurrogatePair } from './slice-without-splitting-surrogate-pair'
 
@@ -209,24 +207,22 @@ Entries correspond to cited sources in order. Their URLs remain in the preceding
  * context. The current request's ToolLoopAgent messages do not pass through
  * this function, so its active reasoning/tool sequence remains intact.
  *
- * A message's output depends only on that message and, within the newest
- * exempt assistant messages, its bounded distance from the end. Appending
- * turns can move the divergence point only within that tail, so the stable
- * prompt prefix remains independent of total thread length.
+ * Each historical message's replayed output depends only on that message.
+ * Appending turns can only append to the replayed prompt, preserving its
+ * stable prefix.
  */
 export function compactHistoricalMessages(
   messages: UIMessage[],
-  answerTextCap: { maxChars?: number; exemptCount?: number } = {}
+  answerTextCap: { maxChars?: number } = {}
 ): UIMessage[] {
   const maxChars = answerTextCap.maxChars ?? HISTORY_ANSWER_TEXT_LIMIT
-  const exemptCount =
-    answerTextCap.exemptCount ?? HISTORY_ANSWER_TEXT_EXEMPT_TURNS
-  const messagesToCap =
-    maxChars > 0
-      ? selectHistoricalAssistantMessagesToCap(messages, exemptCount)
-      : new Set<UIMessage>()
+  const currentTurnIndex = messages.findLastIndex(
+    message => message.role === 'user'
+  )
+  const historyEnd =
+    currentTurnIndex === -1 ? messages.length : currentTurnIndex
 
-  return messages.flatMap(message => {
+  return messages.flatMap((message, index) => {
     if (message.role !== 'assistant') {
       return [message]
     }
@@ -251,7 +247,7 @@ export function compactHistoricalMessages(
       ]
     })
 
-    if (messagesToCap.has(message)) {
+    if (maxChars > 0 && index < historyEnd) {
       textParts = capAnswerTextParts(textParts, maxChars)
     }
 
