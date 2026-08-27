@@ -34,7 +34,8 @@ vi.mock('@/instrumentation', () => ({
 }))
 
 vi.mock('@/lib/actions/chat', () => ({
-  loadChat: vi.fn()
+  loadChat: vi.fn(),
+  loadChatUncached: vi.fn()
 }))
 
 vi.mock('@/lib/agents/researcher', () => ({
@@ -66,6 +67,7 @@ vi.mock('@/lib/utils/usage-logging', () => ({
   logUsage: vi.fn()
 }))
 
+import { loadChat, loadChatUncached } from '@/lib/actions/chat'
 import { researcher } from '@/lib/agents/researcher'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
@@ -159,6 +161,16 @@ describe('createChatStreamResponse', () => {
     expect(researcher).toHaveBeenCalledWith(
       expect.objectContaining({ chatId: 'chat-id' })
     )
+  })
+
+  it('loads an existing chat without the cache', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createChatStreamResponse({ ...createConfig(), isNewChat: false })
+    await mocks.finishPromise
+
+    expect(loadChatUncached).toHaveBeenCalledWith('chat-id', 'user-id')
+    expect(loadChat).not.toHaveBeenCalled()
   })
 
   it('does not mark the span as failed for an aborted stream error', async () => {
