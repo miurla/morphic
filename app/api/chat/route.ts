@@ -1,7 +1,7 @@
 import { revalidateTag } from 'next/cache'
 import { cookies } from 'next/headers'
 
-import { loadChat } from '@/lib/actions/chat'
+import { loadChatUncached } from '@/lib/actions/chat'
 import {
   calculateConversationTurn,
   deriveQueryShape,
@@ -201,7 +201,7 @@ export async function POST(req: Request) {
         let conversationTurn = 1 // Default for new chats
         if (!isNewChat) {
           if (!isGuest && userId) {
-            const chat = await loadChat(chatId, userId)
+            const chat = await loadChatUncached(chatId, userId)
             if (chat?.messages) {
               conversationTurn = calculateConversationTurn(
                 chat.messages,
