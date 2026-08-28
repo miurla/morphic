@@ -45,9 +45,17 @@ export function calculateConversationTurn(
   messages: UIMessage[],
   currentMessageId?: string
 ): number {
-  const userIds = new Set(
-    messages.filter(msg => msg.role === 'user').map(msg => msg.id)
+  return calculateConversationTurnFromIds(
+    messages.filter(msg => msg.role === 'user').map(msg => msg.id),
+    currentMessageId
   )
+}
+
+export function calculateConversationTurnFromIds(
+  userMessageIds: string[],
+  currentMessageId?: string
+): number {
+  const userIds = new Set(userMessageIds)
   if (currentMessageId) userIds.add(currentMessageId)
   return Math.max(1, userIds.size)
 }
