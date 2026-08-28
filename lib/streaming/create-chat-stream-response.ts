@@ -14,7 +14,7 @@ import {
 } from '@/lib/errors/tool-error'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
-import { loadChat } from '../actions/chat'
+import { loadChatUncached } from '../actions/chat'
 import { generateChatTitle } from '../agents/title-generator'
 import {
   getMaxAllowedTokens,
@@ -82,8 +82,9 @@ export async function createChatStreamResponse(
   let initialChat = null
   if (!isNewChat) {
     const loadChatStart = performance.now()
-    // Fetch chat data for authorization check and cache it
-    initialChat = await loadChat(chatId, userId)
+    // Read uncached: the prompt must not be built from a snapshot that
+    // predates the previous turn's answer
+    initialChat = await loadChatUncached(chatId, userId)
     perfTime('loadChat completed', loadChatStart)
 
     // Authorization check: if chat exists, it must belong to the user

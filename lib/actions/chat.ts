@@ -34,6 +34,17 @@ const getCachedChatWithMessages = (
   return cachedFunction()
 }
 
+async function signChatFilePartUrls(
+  chat: (Chat & { messages: UIMessage[] }) | null
+): Promise<(Chat & { messages: UIMessage[] }) | null> {
+  if (!chat) return null
+
+  return {
+    ...chat,
+    messages: await signFilePartUrlsInMessages(chat.messages)
+  }
+}
+
 /**
  * Get all chats for the current user
  */
@@ -67,12 +78,23 @@ export async function loadChat(
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
   // Use cached version for individual chat loading
   const chat = await getCachedChatWithMessages(chatId, requestingUserId)
-  if (!chat) return null
 
-  return {
-    ...chat,
-    messages: await signFilePartUrlsInMessages(chat.messages)
-  }
+  return signChatFilePartUrls(chat)
+}
+
+/**
+ * Load a chat bypassing the request cache.
+ * The assistant answer is persisted after the streaming response has been
+ * returned, so its revalidateTag never reaches the cache and a cached read
+ * can miss the previous turn's answer.
+ */
+export async function loadChatUncached(
+  chatId: string,
+  requestingUserId?: string
+): Promise<(Chat & { messages: UIMessage[] }) | null> {
+  const chat = await dbActions.loadChatWithMessages(chatId, requestingUserId)
+
+  return signChatFilePartUrls(chat)
 }
 
 /**
