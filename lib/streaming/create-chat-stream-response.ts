@@ -81,11 +81,20 @@ export async function createChatStreamResponse(
   // Skip loading chat for new chats optimization
   let initialChat = null
   if (!isNewChat) {
-    const loadChatStart = performance.now()
-    // Read uncached: the prompt must not be built from a snapshot that
-    // predates the previous turn's answer
-    initialChat = await loadChatUncached(chatId, userId)
-    perfTime('loadChat completed', loadChatStart)
+    try {
+      const loadChatStart = performance.now()
+      // Read uncached: the prompt must not be built from a snapshot that
+      // predates the previous turn's answer
+      initialChat = await loadChatUncached(chatId, userId)
+      perfTime('loadChat completed', loadChatStart)
+    } catch (error) {
+      logAPICallErrorDiagnostics(error)
+      console.error('Initial chat load error:', error)
+      return createPublicErrorResponse(error, {
+        status: 500,
+        statusText: 'Internal Server Error'
+      })
+    }
 
     // Authorization check: if chat exists, it must belong to the user
     if (initialChat && initialChat.userId !== userId) {

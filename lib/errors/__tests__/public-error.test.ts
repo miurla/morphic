@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { DeterministicPreparationError } from '@/lib/errors/deterministic-preparation-error'
 import {
   createPublicErrorResponse,
   getPublicRateLimitDetails,
@@ -220,6 +221,45 @@ describe('public error mapping', () => {
       'Retrying this message will fail the same way.'
     )
     expect(payload.retryable).toBe(false)
+  })
+
+  it('maps deterministic preparation failures to non-retryable copy', () => {
+    const payload = toPublicErrorPayload(
+      new DeterministicPreparationError(
+        'Unknown part type: private-user-content'
+      )
+    )
+
+    expect(payload.code).toBe('malformed_request')
+    expect(payload.error).toBe(
+      'This conversation could not be sent to the model. Please start a new chat.'
+    )
+    expect(payload.details).toBe(
+      'Retrying this message will fail the same way.'
+    )
+    expect(payload.retryable).toBe(false)
+    expect(JSON.stringify(payload)).not.toContain('private-user-content')
+  })
+
+  it('preserves deterministic preparation copy through serialization', () => {
+    const serialized = serializePublicError(
+      new DeterministicPreparationError('No messages found')
+    )
+    const payload = toPublicErrorPayload(new Error(serialized))
+
+    expect(payload.code).toBe('malformed_request')
+    expect(payload.retryable).toBe(false)
+  })
+
+  it('does not trust a foreign deterministic preparation error name', () => {
+    const payload = toPublicErrorPayload({
+      name: 'DeterministicPreparationError',
+      message: 'Unknown part type: private-user-content'
+    })
+
+    expect(payload.code).toBe('unknown')
+    expect(payload.retryable).toBe(true)
+    expect(payload.error).not.toContain('private-user-content')
   })
 
   it('does not honour a malformed_request code carrying foreign copy', () => {

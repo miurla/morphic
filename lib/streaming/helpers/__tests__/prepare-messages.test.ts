@@ -7,6 +7,7 @@ import {
   upsertMessage
 } from '@/lib/actions/chat'
 import type { Chat } from '@/lib/db/schema'
+import { DeterministicPreparationError } from '@/lib/errors/deterministic-preparation-error'
 import { signFilePartUrls } from '@/lib/storage/r2-client'
 import type { UIMessage } from '@/lib/types/ai'
 
@@ -280,9 +281,58 @@ describe('prepareMessages', () => {
         isNewChat: false
       }
 
-      await expect(prepareMessages(context, null)).rejects.toThrow(
-        'No messages found'
+      await expect(prepareMessages(context, null)).rejects.toMatchObject({
+        name: DeterministicPreparationError.name,
+        message: 'No messages found'
+      })
+    })
+
+    it('should identify a missing message with no fallback as deterministic', async () => {
+      const initialChat: Chat & { messages: UIMessage[] } = {
+        id: chatId,
+        title: 'Test Chat',
+        userId,
+        visibility: 'private',
+        createdAt: new Date(),
+        messages: [
+          {
+            id: 'msg-1',
+            role: 'system',
+            parts: [{ type: 'text', text: 'System context' }]
+          }
+        ]
+      }
+
+      const context: StreamContext = {
+        chatId,
+        userId,
+        modelId: 'gpt-4',
+        trigger: 'regenerate-message',
+        messageId: 'missing-message',
+        initialChat,
+        isNewChat: false
+      }
+
+      await expect(prepareMessages(context, null)).rejects.toBeInstanceOf(
+        DeterministicPreparationError
       )
+    })
+
+    it('should preserve transient chat loading failures', async () => {
+      const loadError = new Error('Database timeout')
+      vi.mocked(loadChat).mockRejectedValue(loadError)
+
+      const context: StreamContext = {
+        chatId,
+        userId,
+        modelId: 'gpt-4',
+        trigger: 'regenerate-message',
+        messageId: 'msg-1',
+        initialChat: null,
+        isNewChat: false
+      }
+
+      await expect(prepareMessages(context, null)).rejects.toBe(loadError)
     })
 
     it('should use fallback when message not found by ID', async () => {

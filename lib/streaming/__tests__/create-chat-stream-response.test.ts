@@ -69,6 +69,7 @@ vi.mock('@/lib/utils/usage-logging', () => ({
 
 import { loadChat, loadChatUncached } from '@/lib/actions/chat'
 import { researcher } from '@/lib/agents/researcher'
+import { DeterministicPreparationError } from '@/lib/errors/deterministic-preparation-error'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
 import { EMPTY_RESPONSE_STATUS_MESSAGE } from '@/lib/streaming/helpers/is-empty-response'
@@ -231,6 +232,31 @@ describe('createChatStreamResponse', () => {
         }
       })
     )
+    expect(mocks.stream).not.toHaveBeenCalled()
+  })
+
+  it('maps deterministic initial chat load failures to public errors', async () => {
+    vi.mocked(loadChatUncached).mockRejectedValueOnce(
+      new DeterministicPreparationError(
+        'Unknown part type: private-user-content'
+      )
+    )
+
+    const response = await createChatStreamResponse({
+      ...createConfig(),
+      isNewChat: false
+    })
+    const payload = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(payload).toMatchObject({
+      code: 'malformed_request',
+      retryable: false,
+      error:
+        'This conversation could not be sent to the model. Please start a new chat.'
+    })
+    expect(JSON.stringify(payload)).not.toContain('private-user-content')
+    expect(prepareMessages).not.toHaveBeenCalled()
     expect(mocks.stream).not.toHaveBeenCalled()
   })
 
