@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   calculateConversationTurn,
+  calculateConversationTurnFromIds,
   deriveQueryShape
 } from '@/lib/analytics/utils'
 
@@ -54,5 +55,27 @@ describe('calculateConversationTurn', () => {
   it('counts existing user messages without a current id (regenerate)', () => {
     const fresh = [...history, userMsg('u2')]
     expect(calculateConversationTurn(fresh)).toBe(2)
+  })
+})
+
+describe('calculateConversationTurnFromIds', () => {
+  it('counts a current message when ids are empty', () => {
+    expect(calculateConversationTurnFromIds([], 'u1')).toBe(1)
+  })
+
+  it('counts ids without a current message id', () => {
+    expect(calculateConversationTurnFromIds(['u1', 'u2'])).toBe(2)
+  })
+
+  it('does not double count a current message already present', () => {
+    expect(calculateConversationTurnFromIds(['u1', 'u2'], 'u2')).toBe(2)
+  })
+
+  it('adds a current message not already present', () => {
+    expect(calculateConversationTurnFromIds(['u1', 'u2'], 'u3')).toBe(3)
+  })
+
+  it('returns at least 1', () => {
+    expect(calculateConversationTurnFromIds([])).toBe(1)
   })
 })

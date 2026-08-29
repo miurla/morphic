@@ -1,13 +1,14 @@
 import { revalidateTag } from 'next/cache'
 import { cookies } from 'next/headers'
 
-import { loadChat } from '@/lib/actions/chat'
 import {
   calculateConversationTurn,
+  calculateConversationTurnFromIds,
   deriveQueryShape,
   trackChatEvent
 } from '@/lib/analytics'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getUserMessageIds } from '@/lib/db/actions'
 import { generateId } from '@/lib/db/schema'
 import { checkAndEnforceAdaptiveLimit } from '@/lib/rate-limit/adaptive-limit'
 import { checkAndEnforceOverallChatLimit } from '@/lib/rate-limit/chat-limits'
@@ -189,7 +190,7 @@ export async function POST(req: Request) {
     perfTime('createChatStreamResponse resolved', streamStart)
 
     // Track analytics event (non-blocking)
-    // Calculate conversation turn by loading chat history
+    // Calculate conversation turn
     ;(async () => {
       try {
         // Attribute to the authenticated user id, or the client-provided
@@ -201,13 +202,11 @@ export async function POST(req: Request) {
         let conversationTurn = 1 // Default for new chats
         if (!isNewChat) {
           if (!isGuest && userId) {
-            const chat = await loadChat(chatId, userId)
-            if (chat?.messages) {
-              conversationTurn = calculateConversationTurn(
-                chat.messages,
-                message?.id
-              )
-            }
+            const userMessageIds = await getUserMessageIds(chatId, userId)
+            conversationTurn = calculateConversationTurnFromIds(
+              userMessageIds,
+              message?.id
+            )
           } else if (isGuest && Array.isArray(messages)) {
             conversationTurn = calculateConversationTurn(messages, message?.id)
           }

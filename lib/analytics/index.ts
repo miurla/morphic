@@ -22,4 +22,8 @@ export type {
   QueryLenBucket,
   QueryShape
 } from './types'
-export { calculateConversationTurn, deriveQueryShape } from './utils'
+export {
+  calculateConversationTurn,
+  calculateConversationTurnFromIds,
+  deriveQueryShape
+} from './utils'

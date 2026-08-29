@@ -218,6 +218,37 @@ export async function loadChatWithMessages(
   })
 }
 
+export async function getUserMessageIds(
+  chatId: string,
+  userId?: string
+): Promise<string[]> {
+  const count = incrementDbOperationCount()
+  perfLog(`DB - getUserMessageIds called - count: ${count}`)
+
+  return withOptionalRLS(userId || null, async tx => {
+    const [chat] = await tx
+      .select()
+      .from(chats)
+      .where(eq(chats.id, chatId))
+      .limit(1)
+
+    if (!chat) {
+      return []
+    }
+
+    if (chat.visibility === 'private' && (!userId || chat.userId !== userId)) {
+      return []
+    }
+
+    const userMessages = await tx
+      .select({ id: messages.id })
+      .from(messages)
+      .where(and(eq(messages.chatId, chatId), eq(messages.role, 'user')))
+
+    return userMessages.map(message => message.id)
+  })
+}
+
 /**
  * Delete messages after a specific message
  */
