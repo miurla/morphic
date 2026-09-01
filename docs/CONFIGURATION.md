@@ -13,7 +13,9 @@ This guide covers the optional features and their configuration in Morphic.
 
 ## Database
 
-Morphic uses PostgreSQL for chat history storage. A database is **optional** for basic usage — without it, Morphic runs in a stateless mode where chat history is not persisted.
+Morphic uses PostgreSQL for persistent application data. A database is **optional** for stateless guest chat. To run without a database, set `ENABLE_GUEST_CHAT=true` and do not configure Supabase. Setting `ENABLE_AUTH=false` creates an anonymous user ID that uses the persistent chat path and will fail without a database.
+
+Without a database, chat history, permalinks (`/search/[id]`), file upload, and feedback are unavailable.
 
 ### Setting Up PostgreSQL
 
@@ -35,7 +37,7 @@ After configuring your database, run migrations to create the necessary tables:
 bun run migrate
 ```
 
-This command applies all migrations from the `drizzle/` directory. Docker runs migrations automatically on startup.
+This command applies all migrations from the `drizzle/` directory. Docker runs migrations automatically on startup when a database connection string is configured. Otherwise, it skips migrations and starts in stateless mode.
 
 ## AI Providers
 
