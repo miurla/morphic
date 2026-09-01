@@ -1,0 +1,51 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build output
+.next
+out
+build
+*.tsbuildinfo
+next-env.d.ts
+
+# Version control
+.git
+.gitignore
+.github
+
+# Environment / secrets
+.env
+.env.*
+# Kept: Next.js inlines NEXT_PUBLIC_* at build time, and building from source
+# is the documented way to enable authentication (docs/DOCKER.md).
+!.env.local
+
+# Test and coverage output
+coverage
+**/*.test.ts
+**/*.test.tsx
+vitest.config.mts
+vitest.setup.ts
+evals
+
+# Local scratch and tooling
+.claude
+.vscode
+.idea
+.vercel
+.tmp
+_local
+.mcp.json
+.DS_Store
+*.pem
+*.log
+
+# Docs and container definitions (not needed by the build)
+docs
+*.md
+Dockerfile
+.dockerignore
+docker-compose.yaml
+searxng-limiter.toml
+searxng-settings.yml
