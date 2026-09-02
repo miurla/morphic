@@ -39,3 +39,6 @@ next-env.d.ts
 .tmp/
 # Local-only scratch / docs (not committed)
 _local/
+
+# claude code local state (settings, launch config, worktrees)
+.claude/
