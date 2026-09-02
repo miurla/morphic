@@ -4,10 +4,26 @@ import type { SearchResultItem } from '@/lib/types'
 import type { UIMessage } from '@/lib/types/ai'
 
 import {
+  deriveCitationId,
   extractCitationMaps,
   isCitationLabel,
   processCitations
 } from '../citation'
+
+describe('deriveCitationId', () => {
+  it('is deterministic and uses the documented short shape', () => {
+    const toolCallId = 'call_1234567890abcdefghijklmnop'
+
+    expect(deriveCitationId(toolCallId)).toBe(deriveCitationId(toolCallId))
+    expect(deriveCitationId(toolCallId)).toMatch(/^s[a-z0-9]{3}$/)
+  })
+
+  it('differs for different tool call ids', () => {
+    expect(deriveCitationId('call_alpha')).not.toBe(
+      deriveCitationId('call_beta')
+    )
+  })
+})
 
 describe('processCitations', () => {
   const mockCitationMaps = {
@@ -261,6 +277,53 @@ describe('processCitations', () => {
       const result = processCitations('See [1](#toolCall1)', maps)
 
       expect(result).toBe('See [google](https://www.google.com)')
+    })
+
+    it('resolves an explicit short citeId from search output', () => {
+      const maps = extractCitationMaps(
+        messageWithSearchPart({
+          results,
+          images: [],
+          query: 'q',
+          citeId: 's4kq'
+        })
+      )
+
+      expect(processCitations('See [1](#s4kq)', maps)).toBe(
+        'See [google](https://www.google.com)'
+      )
+      expect(maps.toolCall1).toBe(maps.s4kq)
+    })
+
+    it('resolves a legacy output by its long toolCallId', () => {
+      const maps = extractCitationMaps(
+        messageWithSearchPart({ results, images: [], query: 'q' })
+      )
+
+      expect(processCitations('See [2](#toolCall1)', maps)).toBe(
+        'See [github](https://docs.github.com)'
+      )
+    })
+
+    it('resolves a legacy output by its derived short citeId', () => {
+      const maps = extractCitationMaps(
+        messageWithSearchPart({ results, images: [], query: 'q' })
+      )
+      const citeId = deriveCitationId('toolCall1')
+
+      expect(processCitations(`See [1](#${citeId})`, maps)).toBe(
+        'See [google](https://www.google.com)'
+      )
+    })
+
+    it('removes citations with an unknown short id', () => {
+      const maps = extractCitationMaps(
+        messageWithSearchPart({ results, images: [], query: 'q' })
+      )
+
+      expect(processCitations('Unknown [1](#szzz) citation', maps)).toBe(
+        'Unknown  citation'
+      )
     })
   })
 

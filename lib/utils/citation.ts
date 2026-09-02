@@ -14,6 +14,30 @@ function isValidUrl(url: string): boolean {
   }
 }
 
+const CITATION_ID_MARKER = 's'
+// Short enough that the model reproduces it verbatim instead of inventing an
+// id shaped like one. Collisions inside a single turn are the only risk, and a
+// turn issues a handful of searches.
+const CITATION_ID_LENGTH = 3
+
+/**
+ * Derive the short citation id the model is asked to cite with.
+ * Provider tool call ids are long and get mangled or fabricated when a model
+ * reproduces them, so citations are keyed by a short id instead. The
+ * derivation is deterministic so the id can be recomputed from persisted
+ * output that predates this field.
+ */
+export function deriveCitationId(toolCallId: string): string {
+  let hash = 0x811c9dc5
+
+  for (let index = 0; index < toolCallId.length; index++) {
+    hash ^= toolCallId.charCodeAt(index)
+    hash = Math.imul(hash, 0x01000193)
+  }
+
+  return `${CITATION_ID_MARKER}${(hash >>> 0).toString(36).slice(-CITATION_ID_LENGTH).padStart(CITATION_ID_LENGTH, '0')}`
+}
+
 export function isCitationLabel(label: string): boolean {
   return /^[\w-]+(?:\.[\w-]+)*$/.test(label)
 }
@@ -29,8 +53,20 @@ function stripToolCallPrefix(toolCallId: string): string {
 }
 
 /**
+ * Normalize an id for fallback matching. On top of the provider prefixes, the
+ * leading marker of a citeId is dropped, because a model told not to add a
+ * prefix sometimes removes that character when it cites.
+ */
+function normalizeCitationId(id: string): string {
+  return stripToolCallPrefix(id).replace(
+    new RegExp(`^${CITATION_ID_MARKER}(?=[a-z0-9]{${CITATION_ID_LENGTH}}$)`),
+    ''
+  )
+}
+
+/**
  * Extract citation maps from a message's tool parts
- * Returns a map of toolCallId to citation map
+ * Returns a map of citation ids to citation maps
  */
 export function extractCitationMaps(
   message: UIMessage
@@ -61,13 +97,46 @@ export function extractCitationMaps(
       }
 
       if (citationMap && Object.keys(citationMap).length > 0) {
-        // Store citation map with toolCallId as key
+        // Keyed by both id forms so answers written before citeId existed,
+        // and answers that cite the short id, both resolve.
         citationMaps[part.toolCallId] = citationMap
+        const shortId =
+          searchResults.citeId ?? deriveCitationId(part.toolCallId)
+        // A short id is small enough to collide over a long thread. The first
+        // claim wins so a citation is dropped rather than resolved to the
+        // wrong source.
+        if (!(shortId in citationMaps)) {
+          citationMaps[shortId] = citationMap
+        }
       }
     }
   })
 
   return citationMaps
+}
+
+/**
+ * Look up a citation map by any id form a cited answer may carry: the short
+ * citeId, the original toolCallId, or a toolCallId the model prefixed. Exact
+ * matches are preferred so normalization cannot shadow a real id.
+ */
+export function resolveCitationMap(
+  citationMaps: Record<string, Record<number, SearchResultItem>>,
+  id: string
+): Record<number, SearchResultItem> | undefined {
+  if (citationMaps[id]) {
+    return citationMaps[id]
+  }
+
+  const normalizedId = normalizeCitationId(id)
+  return (
+    citationMaps[normalizedId] ??
+    citationMaps[
+      Object.keys(citationMaps).find(
+        key => normalizeCitationId(key) === normalizedId
+      ) ?? ''
+    ]
+  )
 }
 
 /**
@@ -84,8 +153,13 @@ export function extractCitationMapsFromMessages(
 
   messages.forEach(message => {
     const messageCitationMaps = extractCitationMaps(message)
-    // Merge citation maps from this message
-    Object.assign(combinedCitationMaps, messageCitationMaps)
+    // Merge citation maps from this message without overwriting: short ids can
+    // collide across a long thread, and the first claim wins there too.
+    for (const [id, citationMap] of Object.entries(messageCitationMaps)) {
+      if (!(id in combinedCitationMaps)) {
+        combinedCitationMaps[id] = citationMap
+      }
+    }
   })
 
   return combinedCitationMaps
@@ -115,20 +189,7 @@ export function processCitations(
         return '' // Return empty string for invalid citation numbers
       }
 
-      // Get the citation map for this toolCallId. Prefer an exact match to
-      // avoid side effects, then fall back to prefix-normalized matching so
-      // ids the model prepended a prefix to (e.g. `toolu_<id>`) still resolve.
-      let citationMap = citationMaps[toolCallId]
-      if (!citationMap) {
-        const normalizedId = stripToolCallPrefix(toolCallId)
-        citationMap =
-          citationMaps[normalizedId] ??
-          citationMaps[
-            Object.keys(citationMaps).find(
-              key => stripToolCallPrefix(key) === normalizedId
-            ) ?? ''
-          ]
-      }
+      const citationMap = resolveCitationMap(citationMaps, toolCallId)
       if (!citationMap) {
         return '' // Return empty string if no citation map found
       }

@@ -3,6 +3,7 @@ import { type JSONValue, tool, UIToolInvocation } from 'ai'
 import { ToolFailureError } from '@/lib/errors/tool-error'
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { SearchResults } from '@/lib/types'
+import { deriveCitationId } from '@/lib/utils/citation'
 import {
   getGeneralSearchProviderType,
   getSearchToolDescription
@@ -212,9 +213,10 @@ export function createSearchTool(fullModel: string) {
       // `results` by index instead (see extractCitationMaps), with a fallback
       // for older persisted messages that still carry citationMap.
 
-      // Add toolCallId from context
+      // Add citation identifiers from context
       if (context?.toolCallId) {
         searchResult.toolCallId = context.toolCallId
+        searchResult.citeId = deriveCitationId(context.toolCallId)
       }
 
       console.log('completed search')
@@ -235,20 +237,32 @@ export function createSearchTool(fullModel: string) {
     // Trim the model-facing tool result: citationMap fully duplicates
     // `results` (dropped defensively for older persisted output), state is a
     // streaming marker, and provider/fallback are trace diagnostics. images
-    // MUST stay — getImageSpecPrompt instructs the model to embed URLs verbatim
-    // from this array. toolCallId MUST stay: the prompt cites as
-    // [number](#toolCallId), so the model reads the id from here.
+    // MUST stay: getImageSpecPrompt instructs the model to embed URLs verbatim
+    // from this array. citeId MUST stay: the prompt cites as [number](#citeId),
+    // so the model reads the id from here. toolCallId is removed once citeId is
+    // present, because two ids on one result invite the model to cite the wrong
+    // one; it is kept for older output that has no citeId.
     toModelOutput: ({ output }) => {
       if (!output || typeof output !== 'object') {
         return { type: 'json', value: (output ?? null) as JSONValue }
       }
-      const modelView: Record<string, unknown> = {
+      const rest: Record<string, unknown> = {
         ...(output as Record<string, unknown>)
       }
-      delete modelView.citationMap
-      delete modelView.state
-      delete modelView.provider
-      delete modelView.fallback
+      delete rest.citationMap
+      delete rest.state
+      delete rest.provider
+      delete rest.fallback
+      const citeId = rest.citeId
+      if (citeId) {
+        delete rest.citeId
+        delete rest.toolCallId
+      }
+      // citeId leads the object so it is not buried behind the results the
+      // model has to read before it can cite them.
+      const modelView: Record<string, unknown> = citeId
+        ? { citeId, ...rest }
+        : rest
       return { type: 'json', value: modelView as JSONValue }
     }
   })

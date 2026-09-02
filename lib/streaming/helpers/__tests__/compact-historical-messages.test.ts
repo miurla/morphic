@@ -127,3 +127,43 @@ Excerpt: ${excerpt}
 </source_context>`)
   })
 })
+
+describe('compactHistoricalMessages citation ids', () => {
+  const source = {
+    title: 'Example source',
+    url: 'https://example.com/source',
+    content: 'Supporting evidence'
+  }
+
+  function compactCitation(citationId: string): UIMessage {
+    const message = citedAssistantMessage([source]) as UIMessage & {
+      parts: Array<Record<string, unknown>>
+    }
+    const searchPart = message.parts[0]
+    const textPart = message.parts[1]
+
+    searchPart.output = {
+      ...(searchPart.output as Record<string, unknown>),
+      citeId: 's4kq'
+    }
+    textPart.text = `Evidence. [1](#${citationId})`
+
+    return compactHistoricalMessages([message])[0]
+  }
+
+  it.each([
+    ['short citeId', 's4kq'],
+    ['legacy toolCallId', 'call_1']
+  ])('extracts cited source context for the %s form', (_label, citationId) => {
+    const compacted = compactCitation(citationId)
+
+    expect(compacted.parts[0]).toMatchObject({
+      type: 'text',
+      text: 'Evidence. [example](https://example.com/source)'
+    })
+    expect(compacted.parts[1]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('Excerpt: Supporting evidence')
+    })
+  })
+})

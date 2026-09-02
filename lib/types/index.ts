@@ -8,6 +8,7 @@ export type SearchResults = {
   number_of_results?: number
   query: string
   toolCallId?: string // ID of the search tool call
+  citeId?: string // Short stable ID used in model citations
   citationMap?: Record<number, SearchResultItem> // Maps citation number to search result
 }
 

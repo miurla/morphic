@@ -4,7 +4,7 @@ import { createSearchTool } from '@/lib/tools/search'
 
 // The search tool's toModelOutput strips UI-only fields (citationMap
 // duplicates results; state is a streaming marker) from what the model sees.
-// images MUST reach the model — getImageSpecPrompt instructs it to embed URLs
+// images MUST reach the model: getImageSpecPrompt instructs it to embed URLs
 // verbatim from that array. All fields must survive in the streamed/persisted
 // output for the UI.
 describe('search tool toModelOutput', () => {
@@ -24,6 +24,7 @@ describe('search tool toModelOutput', () => {
       2: { title: 'B', url: 'https://b.test', content: 'beta' }
     },
     toolCallId: 'call_123',
+    citeId: 's4kq',
     provider: 'tavily',
     fallback: {
       from: 'brave',
@@ -63,8 +64,22 @@ describe('search tool toModelOutput', () => {
     expect(value.results).toEqual(fullOutput.results)
     expect(value.query).toBe('test query')
     expect(value.number_of_results).toBe(2)
-    // toolCallId is required: the prompt cites as [number](#toolCallId).
-    expect(value.toolCallId).toBe('call_123')
+    // citeId replaces toolCallId in the model view: one id per result keeps
+    // the model from citing the other one.
+    expect(value.citeId).toBe('s4kq')
+    expect(value.toolCallId).toBeUndefined()
+  })
+
+  it('keeps toolCallId for older output that carries no citeId', () => {
+    const { citeId: _citeId, ...legacyOutput } = fullOutput
+    const modelOutput = tool.toModelOutput?.({
+      output: legacyOutput,
+      toolCallId: 'call_123',
+      messages: []
+    } as never) as { type: 'json'; value: Record<string, unknown> }
+
+    expect(modelOutput.value.toolCallId).toBe('call_123')
+    expect(modelOutput.value.citeId).toBeUndefined()
   })
 
   it('keeps images so the model can embed inline image specs', async () => {
