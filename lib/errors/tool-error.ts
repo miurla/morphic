@@ -10,6 +10,14 @@ export type ToolName = 'fetch' | 'search'
  */
 export const INVALID_URL_SENTINEL = 'Invalid fetch URL.'
 
+/**
+ * Raised when a URL resolves into private address space. Kept apart from the
+ * invalid-URL case because the address was well formed: the refusal is about
+ * where it points, and the copy below must not repeat that back to the caller,
+ * which would turn a refusal into a probe of the internal network.
+ */
+export const BLOCKED_URL_SENTINEL = 'Blocked fetch URL.'
+
 // What the failure happened to. The whole point of this module is that it is
 // never the user and never the AI service.
 const SUBJECT: Record<ToolName, string> = {
@@ -71,6 +79,7 @@ const UNAVAILABLE = (subject: string) =>
   `${subject} is temporarily unavailable. Please try again shortly.`
 const TOO_SLOW = (subject: string) => `${subject} took too long to respond.`
 const INVALID_URL = 'The link is not a valid web address.'
+const BLOCKED_URL = 'The link points to an address that cannot be read.'
 const UNREADABLE_TYPE = 'The page is not in a readable text format.'
 const NO_CONTENT = 'The page did not return any readable content.'
 const FETCH_FALLBACK = 'The page could not be read.'
@@ -93,6 +102,7 @@ export const TOOL_FAILURE_MESSAGES: ReadonlySet<string> = new Set([
     TOO_SLOW(subject)
   ]),
   INVALID_URL,
+  BLOCKED_URL,
   UNREADABLE_TYPE,
   NO_CONTENT,
   FETCH_FALLBACK,
@@ -113,6 +123,10 @@ function classifyToolFailure(error: ToolFailureError): {
 
   if (error.toolName === 'fetch' && message === INVALID_URL_SENTINEL) {
     return { message: INVALID_URL, retryable: false }
+  }
+
+  if (message === BLOCKED_URL_SENTINEL) {
+    return { message: BLOCKED_URL, retryable: false }
   }
 
   if (status === 403 || /\b403\b|\bforbidden\b/i.test(message)) {

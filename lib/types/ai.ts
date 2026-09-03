@@ -1,9 +1,9 @@
 import type { ReasoningPart, TextPart } from '@ai-sdk/provider-utils'
 import type { InferUITool, UIMessage as AIMessage } from 'ai'
 
-import { fetchTool } from '@/lib/tools/fetch'
-import { askQuestionTool } from '@/lib/tools/question'
-import { searchTool } from '@/lib/tools/search'
+import type { fetchTool } from '@/lib/tools/fetch'
+import type { askQuestionTool } from '@/lib/tools/question'
+import type { searchTool } from '@/lib/tools/search'
 import { createTodoTools, type TodoItem } from '@/lib/tools/todo'
 import type { SearchMode } from '@/lib/types/search'
 

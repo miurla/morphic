@@ -13,6 +13,7 @@ import {
   SearXNGResult,
   SearXNGSearchResults
 } from '@/lib/types'
+import { safeFetch } from '@/lib/utils/safe-fetch'
 
 /**
  * Maximum number of results to fetch from SearXNG.
@@ -322,9 +323,10 @@ async function crawlPage(
     virtualConsole.on('error', () => {})
     virtualConsole.on('warn', () => {})
 
+    // No `resources` option: a crawled page decides its own subresource URLs,
+    // so loading them would let it aim the server wherever it likes.
     const dom = new JSDOM(html, {
       runScripts: 'outside-only',
-      resources: 'usable',
       virtualConsole
     })
     const document = dom.window.document
@@ -599,40 +601,16 @@ async function fetchHtmlWithTimeout(
   }
 }
 
-function fetchHtml(url: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const protocol = url.startsWith('https:') ? https : http
-    const agent = url.startsWith('https:') ? httpsAgent : httpAgent
-    const request = protocol.get(url, { agent }, res => {
-      if (
-        res.statusCode &&
-        res.statusCode >= 300 &&
-        res.statusCode < 400 &&
-        res.headers.location
-      ) {
-        // Handle redirects
-        fetchHtml(new URL(res.headers.location, url).toString())
-          .then(resolve)
-          .catch(reject)
-        return
-      }
-      let data = ''
-      res.on('data', chunk => {
-        data += chunk
-      })
-      res.on('end', () => resolve(data))
-    })
-    request.on('error', error => {
-      //console.error(`Error fetching ${url}:`, error)
-      reject(error)
-    })
-    request.on('timeout', () => {
-      request.destroy()
-      //reject(new Error(`Request timed out for ${url}`))
-      resolve('')
-    })
-    request.setTimeout(10000) // 10 second timeout
-  })
+async function fetchHtml(url: string): Promise<string> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+  try {
+    const response = await safeFetch(url, { signal: controller.signal })
+    return await response.text()
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
 
 function timeout(ms: number, message: string): Promise<never> {
