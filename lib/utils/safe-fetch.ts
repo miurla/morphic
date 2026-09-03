@@ -111,6 +111,18 @@ function isBlockedIpv6(value: string): boolean {
     // Covers :: and ::1 as well, both of which fall inside 0.0.0.0/8.
     return embeddedV4 <= 1 || isBlockedIpv4(embeddedV4)
   }
+  // ::ffff:0:0:0/96, which SIIT translates to the address in the last 32 bits.
+  // One group over from the mapped form above, and a different prefix.
+  if (
+    g0 === 0 &&
+    g1 === 0 &&
+    g2 === 0 &&
+    g3 === 0 &&
+    g4 === 0xffff &&
+    g5 === 0
+  ) {
+    return isBlockedIpv4(embeddedV4)
+  }
   // The whole NAT64 space rather than the well-known prefix alone: RFC 6052
   // embeds the IPv4 address at an offset that depends on the prefix length, so
   // reading it back is only right for the lengths we thought to handle. A

@@ -31,6 +31,10 @@ describe('isBlockedAddress', () => {
     // The metadata address wearing each of its IPv6 disguises.
     '::ffff:169.254.169.254',
     '::ffff:a9fe:a9fe',
+    // ::ffff:0:0:0/96, the translatable prefix, one group over from the mapped
+    // form above.
+    '::ffff:0:a9fe:a9fe',
+    '::ffff:0:127.0.0.1',
     '64:ff9b::169.254.169.254',
     // RFC 8215 local-use NAT64, which embeds IPv4 at a different offset.
     '64:ff9b:1::169.254.169.254',
