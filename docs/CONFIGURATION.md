@@ -198,6 +198,8 @@ ANONYMOUS_USER_ID=anonymous-user
 
 All users share a single anonymous user ID. No additional configuration needed.
 
+Anyone who can reach the instance can send prompts, and a prompt is what decides which addresses the server requests on the sender's behalf.
+
 ### Enabling Supabase Authentication
 
 For multi-user deployments:
@@ -267,6 +269,16 @@ LANGFUSE_SECRET_KEY=[YOUR_SECRET_KEY]
 LANGFUSE_PUBLIC_KEY=[YOUR_PUBLIC_KEY]
 LANGFUSE_BASE_URL=https://cloud.langfuse.com
 ```
+
+### Outbound Fetch
+
+The `fetch` tool and the advanced-search crawler refuse private address space: loopback, RFC1918, link-local (which carries the cloud metadata endpoint), and the other non-global ranges. To let them read a service on the host's own network:
+
+```bash
+FETCH_ALLOW_PRIVATE_NETWORK=true
+```
+
+Leave this off on any instance others can reach. With it on, whoever can send a prompt can read whatever the host can reach.
 
 ### File Upload
 

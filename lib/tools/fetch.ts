@@ -3,6 +3,11 @@ import { tool, UIToolInvocation } from 'ai'
 import { INVALID_URL_SENTINEL, ToolFailureError } from '@/lib/errors/tool-error'
 import { fetchSchema } from '@/lib/schema/fetch'
 import { SearchResults as SearchResultsType } from '@/lib/types'
+import {
+  assertPublicUrl,
+  assertResolvedPublicUrl,
+  safeFetch
+} from '@/lib/utils/safe-fetch'
 import { logToolPayload } from '@/lib/utils/usage-logging'
 
 const CONTENT_CHARACTER_LIMIT = 50000
@@ -23,7 +28,7 @@ async function fetchRegularData(url: string): Promise<SearchResultsType> {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
-    const response = await fetch(url, {
+    const response = await safeFetch(url, {
       signal: controller.signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Morphic/1.0)',
@@ -183,6 +188,13 @@ export const fetchTool = tool({
   inputSchema: fetchSchema,
   async *execute({ url, type = 'regular' }) {
     assertFetchableUrl(url)
+    // Ahead of the branch below, so an address the server must not reach is
+    // refused whether it would be read here or handed to an extraction service.
+    try {
+      assertPublicUrl(url)
+    } catch (error) {
+      throw new ToolFailureError('fetch', error)
+    }
 
     // Yield initial fetching state
     yield {
@@ -199,6 +211,10 @@ export const fetchTool = tool({
         // Use regular fetch for direct HTML retrieval
         results = await fetchRegularData(url)
       } else {
+        // The extraction service does the requesting here, so the name has to
+        // be settled before it is handed over rather than at connect time.
+        await assertResolvedPublicUrl(url)
+
         // Use API-based extraction (Jina or Tavily)
         const useJina = process.env.JINA_API_KEY
         if (useJina) {
