@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { fetchTool } from '@/lib/tools/fetch'
 import { createSearchTool } from '@/lib/tools/search'
+import { assignCitationLabels } from '@/lib/utils/citation'
 
 import { type SearchFixture } from '../lib/dataset'
 
@@ -47,7 +48,9 @@ export function createFixtureSearchTool({
       return {
         state: 'complete' as const,
         query,
-        results,
+        // Labelled the way the production executor labels a real search, so the
+        // model has the citation target its prompt requires.
+        results: assignCitationLabels(results, 1),
         images: [],
         number_of_results: results.length,
         toolCallId: 'fixture-search'

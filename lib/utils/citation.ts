@@ -34,6 +34,22 @@ function stripToolCallPrefix(toolCallId: string): string {
   return toolCallId.replace(/^(toolu_|call_|search-)/, '')
 }
 
+/**
+ * Stamp a contiguous block of citation labels onto search results.
+ * Fixtures that stand in for a real search go through this too: the prompt
+ * tells the model to cite a result's label, so an unlabelled fixture would
+ * leave it with no citation target and stop mirroring production.
+ */
+export function assignCitationLabels<T extends SearchResultItem>(
+  results: T[],
+  startNumber: number
+): T[] {
+  return results.map((result, index) => ({
+    ...result,
+    label: `S${startNumber + index}`
+  }))
+}
+
 export function nextCitationLabelNumber(messages: UIMessage[]): number {
   let maxLabelNumber = 0
 

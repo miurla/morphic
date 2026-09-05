@@ -15,6 +15,7 @@ import { z } from 'zod'
 
 import { getAdaptiveModePrompt } from '@/lib/agents/prompts/search-mode-prompts'
 import { createSearchTool } from '@/lib/tools/search'
+import { assignCitationLabels } from '@/lib/utils/citation'
 import { getModel } from '@/lib/utils/registry'
 
 import { parseSpecBlock } from '../parse-spec-block'
@@ -59,7 +60,9 @@ function createMockSearchTool() {
       return {
         state: 'complete' as const,
         query,
-        results: FIXTURE_RESULTS,
+        // Labelled the way the production executor labels a real search, so
+        // the model has the citation target its prompt requires.
+        results: assignCitationLabels(FIXTURE_RESULTS, 1),
         images: FIXTURE_IMAGES,
         number_of_results: FIXTURE_RESULTS.length,
         toolCallId: 'mock-search-1'

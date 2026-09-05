@@ -3,6 +3,7 @@ import { type JSONValue, tool, UIToolInvocation } from 'ai'
 import { ToolFailureError } from '@/lib/errors/tool-error'
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { SearchResults } from '@/lib/types'
+import { assignCitationLabels } from '@/lib/utils/citation'
 import {
   getGeneralSearchProviderType,
   getSearchToolDescription
@@ -217,10 +218,10 @@ export function createSearchTool(
       if (Array.isArray(searchResult.results)) {
         const labelBlockStart = nextLabelNumber
         nextLabelNumber += searchResult.results.length
-        searchResult.results = searchResult.results.map((result, index) => ({
-          ...result,
-          label: `S${labelBlockStart + index}`
-        }))
+        searchResult.results = assignCitationLabels(
+          searchResult.results,
+          labelBlockStart
+        )
       }
 
       // No citationMap is attached: it fully duplicated `results`
