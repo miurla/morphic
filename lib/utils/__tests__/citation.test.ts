@@ -404,6 +404,29 @@ describe('processCitations', () => {
       expect(nextCitationLabelNumber([message])).toBe(13)
     })
 
+    it('refuses to resolve a label two turns both claim', () => {
+      const first = labelledAssistantMessage({
+        id: 'concurrent-one',
+        toolCallId: 'call_one',
+        labels: ['S1', 'S2'],
+        urls: ['https://one.test/a', 'https://one.test/b']
+      })
+      const second = labelledAssistantMessage({
+        id: 'concurrent-two',
+        toolCallId: 'call_two',
+        labels: ['S2'],
+        urls: ['https://two.test/a']
+      })
+      const maps = extractCitationMapsFromMessages([first, second])
+
+      expect(maps).not.toHaveProperty('S2')
+      expect(processCitations('[1](#S2)', maps)).toBe('')
+      // The unambiguous label in the same conversation still resolves.
+      expect(processCitations('[1](#S1)', maps)).toBe(
+        '[one](https://one.test/a)'
+      )
+    })
+
     it('resolves legacy and labelled turns together', () => {
       const legacy = {
         id: 'legacy',

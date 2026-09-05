@@ -50,6 +50,13 @@ export function assignCitationLabels<T extends SearchResultItem>(
   }))
 }
 
+/**
+ * The label number a turn should start from, so labels stay unique across the
+ * conversation rather than restarting every turn.
+ * This is a snapshot, not an allocation: two requests that start from the same
+ * history get the same seed. `extractCitationMapsFromMessages` contains that
+ * case by refusing to resolve a label two turns both claim.
+ */
 export function nextCitationLabelNumber(messages: UIMessage[]): number {
   let maxLabelNumber = 0
 
@@ -164,11 +171,34 @@ export function extractCitationMapsFromMessages(
     string,
     Record<number, SearchResultItem>
   > = {}
+  const labelOwners = new Map<string, string>()
+  const ambiguousLabels = new Set<string>()
 
-  messages.forEach(message => {
+  messages.forEach((message, index) => {
     const messageCitationMaps = extractCitationMaps(message)
-    // Merge citation maps from this message
-    Object.assign(combinedCitationMaps, messageCitationMaps)
+    const owner = message.id ?? `index-${index}`
+
+    for (const [key, citationMap] of Object.entries(messageCitationMaps)) {
+      if (isDerivedLabel(key)) {
+        // Labels are seeded from the persisted history, so two turns share one
+        // only when they were prepared from the same snapshot (concurrent
+        // requests on one chat). Merging would let the later turn's source
+        // answer the earlier turn's citation, which is worse than not
+        // resolving, so an ambiguous label resolves to nothing at all.
+        if (ambiguousLabels.has(key)) continue
+
+        const previousOwner = labelOwners.get(key)
+        if (previousOwner === undefined) {
+          labelOwners.set(key, owner)
+        } else if (previousOwner !== owner) {
+          ambiguousLabels.add(key)
+          delete combinedCitationMaps[key]
+          continue
+        }
+      }
+
+      combinedCitationMaps[key] = citationMap
+    }
   })
 
   return combinedCitationMaps
