@@ -7,6 +7,28 @@ import { BaseSearchProvider } from './base'
 // started surfacing low-value aggregator/social pages (notably Instagram)
 // that rarely help answer informational queries.
 const CLOUD_EXCLUDED_DOMAINS = ['instagram.com']
+// Tavily rejects the whole request when every entry of a domain list lacks a
+// valid suffix, so bare labels are dropped before the call. Entries are first
+// resolved to an ASCII hostname so internationalized domains survive.
+const VALID_DOMAIN_PATTERN = /^(\*\.)?[a-z0-9-]+(\.[a-z0-9-]+)+$/
+
+const toAsciiHostname = (domain: string): string => {
+  try {
+    return new URL(`https://${domain.trim()}`).hostname
+  } catch {
+    return ''
+  }
+}
+
+const normalizeDomains = (domains: string[]) =>
+  domains.map(toAsciiHostname).filter(domain => {
+    const suffix = domain.split('.').at(-1) ?? ''
+    return (
+      VALID_DOMAIN_PATTERN.test(domain) &&
+      suffix.length >= 2 &&
+      !/^\d+$/.test(suffix)
+    )
+  })
 
 export class TavilySearchProvider extends BaseSearchProvider {
   async search(
@@ -23,10 +45,13 @@ export class TavilySearchProvider extends BaseSearchProvider {
     const filledQuery =
       query.length < 5 ? query + ' '.repeat(5 - query.length) : query
 
+    const validIncludeDomains = normalizeDomains(includeDomains)
+
     const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
     const effectiveExcludeDomains = isCloudDeployment
       ? Array.from(new Set([...excludeDomains, ...CLOUD_EXCLUDED_DOMAINS]))
       : excludeDomains
+    const validExcludeDomains = normalizeDomains(effectiveExcludeDomains)
 
     const includeImageDescriptions = true
     const response = await fetch('https://api.tavily.com/search', {
@@ -42,8 +67,8 @@ export class TavilySearchProvider extends BaseSearchProvider {
         include_images: true,
         include_image_descriptions: includeImageDescriptions,
         include_answers: true,
-        include_domains: includeDomains,
-        exclude_domains: effectiveExcludeDomains
+        include_domains: validIncludeDomains,
+        exclude_domains: validExcludeDomains
       })
     })
 
