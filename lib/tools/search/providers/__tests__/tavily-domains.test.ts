@@ -54,6 +54,13 @@ describe('TavilySearchProvider domains', () => {
     expect(body.exclude_domains).toEqual(['example.net', 'instagram.com'])
   })
 
+  it('converts internationalized domains to their ascii form', async () => {
+    const body = await searchAndReadBody(['münchen.de'], ['*.MÜNCHEN.de'])
+
+    expect(body.include_domains).toEqual(['xn--mnchen-3ya.de'])
+    expect(body.exclude_domains).toEqual(['*.xn--mnchen-3ya.de'])
+  })
+
   it('passes valid domains through untouched', async () => {
     const body = await searchAndReadBody(
       ['example.com', '*.example.org'],

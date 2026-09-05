@@ -8,20 +8,27 @@ import { BaseSearchProvider } from './base'
 // that rarely help answer informational queries.
 const CLOUD_EXCLUDED_DOMAINS = ['instagram.com']
 // Tavily rejects the whole request when every entry of a domain list lacks a
-// valid suffix, so bare labels are dropped before the call.
+// valid suffix, so bare labels are dropped before the call. Entries are first
+// resolved to an ASCII hostname so internationalized domains survive.
 const VALID_DOMAIN_PATTERN = /^(\*\.)?[a-z0-9-]+(\.[a-z0-9-]+)+$/
 
+const toAsciiHostname = (domain: string): string => {
+  try {
+    return new URL(`https://${domain.trim()}`).hostname
+  } catch {
+    return ''
+  }
+}
+
 const normalizeDomains = (domains: string[]) =>
-  domains
-    .map(domain => domain.trim().toLowerCase())
-    .filter(domain => {
-      const suffix = domain.split('.').at(-1) ?? ''
-      return (
-        VALID_DOMAIN_PATTERN.test(domain) &&
-        suffix.length >= 2 &&
-        !/^\d+$/.test(suffix)
-      )
-    })
+  domains.map(toAsciiHostname).filter(domain => {
+    const suffix = domain.split('.').at(-1) ?? ''
+    return (
+      VALID_DOMAIN_PATTERN.test(domain) &&
+      suffix.length >= 2 &&
+      !/^\d+$/.test(suffix)
+    )
+  })
 
 export class TavilySearchProvider extends BaseSearchProvider {
   async search(
