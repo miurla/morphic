@@ -5,9 +5,48 @@ import type { UIMessage } from '@/lib/types/ai'
 
 import {
   extractCitationMaps,
+  extractCitationMapsFromMessages,
   isCitationLabel,
+  isDerivedLabel,
+  nextCitationLabelNumber,
   processCitations
 } from '../citation'
+
+function labelledAssistantMessage({
+  id,
+  toolCallId,
+  labels,
+  urls
+}: {
+  id: string
+  toolCallId: string
+  labels: string[]
+  urls: string[]
+}): UIMessage {
+  return {
+    id,
+    role: 'assistant',
+    parts: [
+      {
+        type: 'tool-search',
+        state: 'output-available',
+        toolCallId,
+        input: { query: id },
+        output: {
+          query: id,
+          images: [],
+          results: labels.map((label, index) => ({
+            label,
+            title: `${id} source ${index + 1}`,
+            url: urls[index],
+            content: `${id} evidence ${index + 1}`
+          }))
+        }
+      },
+      { type: 'text', text: labels.map(label => `[1](#${label})`).join(' ') }
+    ]
+  } as unknown as UIMessage
+}
 
 describe('processCitations', () => {
   const mockCitationMaps = {
@@ -136,6 +175,18 @@ describe('processCitations', () => {
     )
   })
 
+  it.each(['toolu_', 'call_', 'search-'])(
+    'normalizes the %s prefix for legacy citations',
+    prefix => {
+      const result = processCitations(
+        `[1](#${prefix}toolCall1)`,
+        mockCitationMaps
+      )
+
+      expect(result).toBe('[google](https://www.google.com)')
+    }
+  )
+
   it('still prefers an exact toolCallId match over a normalized one', () => {
     const content = 'See [1](#toolCall1)'
     const result = processCitations(content, mockCitationMaps)
@@ -261,6 +312,140 @@ describe('processCitations', () => {
       const result = processCitations('See [1](#toolCall1)', maps)
 
       expect(result).toBe('See [google](https://www.google.com)')
+    })
+
+    it('adds one-result maps for valid persisted labels', () => {
+      const labelledResults = [
+        { ...results[0], label: 'S3' },
+        { ...results[1], label: 'invalid' }
+      ]
+      const maps = extractCitationMaps(
+        messageWithSearchPart({ results: labelledResults })
+      )
+
+      expect(maps.S3).toEqual({ 1: labelledResults[0] })
+      expect(maps).not.toHaveProperty('invalid')
+      expect(maps.toolCall1[2]).toEqual(labelledResults[1])
+    })
+  })
+
+  describe('derived citation labels', () => {
+    it('resolves each labelled turn through the combined conversation map', () => {
+      const turnOne = labelledAssistantMessage({
+        id: 'turn-one',
+        toolCallId: 'call_one',
+        labels: ['S1', 'S2'],
+        urls: ['https://turn-one.test/1', 'https://turn-one.test/2']
+      })
+      const turnTwo = labelledAssistantMessage({
+        id: 'turn-two',
+        toolCallId: 'call_two',
+        labels: ['S3', 'S4'],
+        urls: ['https://turn-two.test/1', 'https://turn-two.test/2']
+      })
+      const maps = extractCitationMapsFromMessages([turnOne, turnTwo])
+
+      expect(processCitations('[1](#S1) [1](#S2)', maps)).toBe(
+        '[turn-one](https://turn-one.test/1) [turn-one](https://turn-one.test/2)'
+      )
+      expect(processCitations('[1](#S3) [1](#S4)', maps)).toBe(
+        '[turn-two](https://turn-two.test/1) [turn-two](https://turn-two.test/2)'
+      )
+      expect(processCitations('[2](#S1)', maps)).toBe(
+        '[turn-one](https://turn-one.test/1)'
+      )
+    })
+
+    it('keeps the first turn addressable when the next seed follows history', () => {
+      const turnOne = labelledAssistantMessage({
+        id: 'turn-one',
+        toolCallId: 'call_one',
+        labels: ['S1', 'S2'],
+        urls: ['https://first.test/source', 'https://first.test/other']
+      })
+      const secondSeed = nextCitationLabelNumber([turnOne])
+      const turnTwo = labelledAssistantMessage({
+        id: 'turn-two',
+        toolCallId: 'call_two',
+        labels: [`S${secondSeed}`],
+        urls: ['https://second.test/source']
+      })
+      const maps = extractCitationMapsFromMessages([turnOne, turnTwo])
+
+      expect(secondSeed).toBe(3)
+      expect(processCitations('[1](#S1)', maps)).toBe(
+        '[first](https://first.test/source)'
+      )
+    })
+
+    it('starts at one without labels and advances past the largest valid label', () => {
+      expect(nextCitationLabelNumber([])).toBe(1)
+
+      const legacyMessage = labelledAssistantMessage({
+        id: 'legacy-shaped',
+        toolCallId: 'call_legacy',
+        labels: ['not-a-derived-label'],
+        urls: ['https://example.test/legacy']
+      })
+      expect(nextCitationLabelNumber([legacyMessage])).toBe(1)
+
+      const message = labelledAssistantMessage({
+        id: 'history',
+        toolCallId: 'call_history',
+        labels: ['S2', 'bad', 'S12', 'S3x'],
+        urls: [
+          'https://example.test/2',
+          'https://example.test/bad',
+          'https://example.test/12',
+          'https://example.test/3x'
+        ]
+      })
+
+      expect(nextCitationLabelNumber([message])).toBe(13)
+    })
+
+    it('resolves legacy and labelled turns together', () => {
+      const legacy = {
+        id: 'legacy',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-search',
+            state: 'output-available',
+            toolCallId: 'call_legacy',
+            input: { query: 'legacy' },
+            output: {
+              results: [
+                {
+                  title: 'Legacy',
+                  url: 'https://legacy.test/source',
+                  content: 'Legacy evidence'
+                }
+              ]
+            }
+          },
+          { type: 'text', text: '[1](#toolu_legacy)' }
+        ]
+      } as unknown as UIMessage
+      const labelled = labelledAssistantMessage({
+        id: 'labelled',
+        toolCallId: 'search-new',
+        labels: ['S1'],
+        urls: ['https://labelled.test/source']
+      })
+      const maps = extractCitationMapsFromMessages([legacy, labelled])
+
+      expect(processCitations('[1](#toolu_legacy) [1](#S1)', maps)).toBe(
+        '[legacy](https://legacy.test/source) [labelled](https://labelled.test/source)'
+      )
+    })
+
+    it('recognizes only derived source labels', () => {
+      expect(isDerivedLabel('S1')).toBe(true)
+      expect(isDerivedLabel('S12')).toBe(true)
+      expect(isDerivedLabel('s1')).toBe(false)
+      expect(isDerivedLabel('S')).toBe(false)
+      expect(isDerivedLabel('S1x')).toBe(false)
     })
   })
 

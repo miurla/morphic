@@ -43,18 +43,20 @@ describe('render prompts', () => {
   })
 
   test.each([getQuickModePrompt, getAdaptiveModePrompt])(
-    'never caps a tool call id at a single citation number',
+    'uses persisted result labels for citations',
     getPrompt => {
-      expect(getPrompt()).not.toContain(
-        'Each unique toolCallId gets ONE number'
-      )
+      const prompt = getPrompt()
+
+      expect(prompt).toContain('[number](#label)')
+      expect(prompt).toContain('Each search result carries a `label` field')
+      expect(prompt).toContain('number in brackets carries no meaning')
+      expect(prompt).toContain('[1](#S3)')
+      expect(prompt).toContain('[1](#S7)')
+      expect(prompt).toContain('[1](#S12)')
+      expect(prompt).not.toContain('toolCallId')
+      expect(prompt).not.toContain('EXAMPLE_TOOL_CALL_ID')
     }
   )
-
-  test('numbers citations by result position within a search', () => {
-    expect(getQuickModePrompt()).toContain('position of the cited result')
-    expect(getAdaptiveModePrompt()).toContain('result order within each search')
-  })
 
   test.each([
     [getQuickModePrompt, 'Example approach:'],

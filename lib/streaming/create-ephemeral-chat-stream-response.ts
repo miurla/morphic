@@ -12,6 +12,7 @@ import {
   isToolFailureError,
   serializeToolFailure
 } from '@/lib/errors/tool-error'
+import { nextCitationLabelNumber } from '@/lib/utils/citation'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import {
@@ -164,7 +165,8 @@ export async function createEphemeralChatStreamResponse(
         model: `${model.providerId}:${model.id}`,
         modelConfig: model,
         chatId,
-        searchMode
+        searchMode,
+        citationLabelSeed: nextCitationLabelNumber(messages)
       })
 
       const modelId = `${model.providerId}:${model.id}`

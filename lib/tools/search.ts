@@ -43,7 +43,12 @@ function describeRecoverableSearchFailure(
 /**
  * Creates a search tool with the appropriate schema for the given model.
  */
-export function createSearchTool(fullModel: string) {
+export function createSearchTool(
+  fullModel: string,
+  options?: { labelSeed?: number }
+) {
+  let nextLabelNumber = options?.labelSeed ?? 1
+
   return tool({
     description: getSearchToolDescription(),
     inputSchema: getSearchSchemaForModel(fullModel),
@@ -207,6 +212,17 @@ export function createSearchTool(fullModel: string) {
         }
       }
 
+      // Reserve the block synchronously so searches running in parallel within
+      // the same step cannot be handed overlapping labels.
+      if (Array.isArray(searchResult.results)) {
+        const labelBlockStart = nextLabelNumber
+        nextLabelNumber += searchResult.results.length
+        searchResult.results = searchResult.results.map((result, index) => ({
+          ...result,
+          label: `S${labelBlockStart + index}`
+        }))
+      }
+
       // No citationMap is attached: it fully duplicated `results`
       // (citationMap[N] === results[N-1]). The UI derives citations from
       // `results` by index instead (see extractCitationMaps), with a fallback
@@ -234,10 +250,11 @@ export function createSearchTool(fullModel: string) {
     },
     // Trim the model-facing tool result: citationMap fully duplicates
     // `results` (dropped defensively for older persisted output), state is a
-    // streaming marker, and provider/fallback are trace diagnostics. images
-    // MUST stay — getImageSpecPrompt instructs the model to embed URLs verbatim
-    // from this array. toolCallId MUST stay: the prompt cites as
-    // [number](#toolCallId), so the model reads the id from here.
+    // streaming marker, and provider/fallback are trace diagnostics.
+    // toolCallId is dropped too: citations address a result's own `label`, so
+    // the opaque id no longer belongs in the model's view. images MUST stay -
+    // getImageSpecPrompt instructs the model to embed URLs verbatim from that
+    // array. Labels are assigned in `execute` and only passed through here.
     toModelOutput: ({ output }) => {
       if (!output || typeof output !== 'object') {
         return { type: 'json', value: (output ?? null) as JSONValue }
@@ -249,6 +266,7 @@ export function createSearchTool(fullModel: string) {
       delete modelView.state
       delete modelView.provider
       delete modelView.fallback
+      delete modelView.toolCallId
       return { type: 'json', value: modelView as JSONValue }
     }
   })

@@ -15,8 +15,8 @@ describe('search tool toModelOutput', () => {
     query: 'test query',
     number_of_results: 2,
     results: [
-      { title: 'A', url: 'https://a.test', content: 'alpha' },
-      { title: 'B', url: 'https://b.test', content: 'beta' }
+      { title: 'A', url: 'https://a.test', content: 'alpha', label: 'S1' },
+      { title: 'B', url: 'https://b.test', content: 'beta', label: 'S2' }
     ],
     images: [{ url: 'https://a.test/1.png', description: 'one' }],
     citationMap: {
@@ -57,14 +57,13 @@ describe('search tool toModelOutput', () => {
     expect(value).not.toHaveProperty('fallback')
   })
 
-  it('preserves the fields the model needs to answer and to cite', async () => {
+  it('preserves labelled results and omits the opaque tool call id', async () => {
     const value = await getModelValue(fullOutput)
 
     expect(value.results).toEqual(fullOutput.results)
     expect(value.query).toBe('test query')
     expect(value.number_of_results).toBe(2)
-    // toolCallId is required: the prompt cites as [number](#toolCallId).
-    expect(value.toolCallId).toBe('call_123')
+    expect(value).not.toHaveProperty('toolCallId')
   })
 
   it('keeps images so the model can embed inline image specs', async () => {
@@ -84,6 +83,15 @@ describe('search tool toModelOutput', () => {
     expect(fullOutput).toHaveProperty('state')
     expect(fullOutput).toHaveProperty('provider')
     expect(fullOutput).toHaveProperty('fallback')
+    expect(fullOutput.results.map(result => result.label)).toEqual(['S1', 'S2'])
+  })
+
+  it('returns identical persisted labels across repeated conversion', async () => {
+    const first = await getModelValue(fullOutput)
+    const second = await getModelValue(fullOutput)
+
+    expect(JSON.stringify(second)).toBe(JSON.stringify(first))
+    expect(second.results).toEqual(fullOutput.results)
   })
 
   it('handles non-object output defensively', async () => {

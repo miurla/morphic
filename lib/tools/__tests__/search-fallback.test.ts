@@ -12,6 +12,7 @@ vi.mock('@/lib/tools/search/providers', () => ({
 }))
 
 import { createSearchTool } from '@/lib/tools/search'
+import type { SearchResultItem } from '@/lib/types'
 
 const fallbackResult = {
   results: [
@@ -26,8 +27,11 @@ const fallbackResult = {
   number_of_results: 1
 }
 
-function executeGeneralSearch(searchDepth = 'basic') {
-  const result = createSearchTool('openai:gpt-4o-mini').execute?.(
+function executeGeneralSearch(
+  searchDepth = 'basic',
+  searchTool = createSearchTool('openai:gpt-4o-mini')
+) {
+  const result = searchTool.execute?.(
     {
       query: 'current events',
       type: 'general',
@@ -87,6 +91,38 @@ describe('general search provider fallback', () => {
     expect(warn).toHaveBeenCalledWith(
       '[Search] dedicated general search provider brave failed with HTTP 429; using optimized search provider: tavily'
     )
+  })
+
+  it('allocates disjoint label blocks to parallel searches', async () => {
+    const searchTool = createSearchTool('openai:gpt-4o-mini', { labelSeed: 5 })
+    mocks.braveSearch.mockImplementation(async () => ({
+      ...fallbackResult,
+      results: [
+        ...fallbackResult.results,
+        {
+          title: 'Second result',
+          content: 'More content',
+          url: 'https://example.com/second'
+        }
+      ]
+    }))
+    const first = executeGeneralSearch('basic', searchTool)
+    const second = executeGeneralSearch('basic', searchTool)
+
+    await Promise.all([first.next(), second.next()])
+    const [firstComplete, secondComplete] = await Promise.all([
+      first.next(),
+      second.next()
+    ])
+    const firstLabels = (
+      firstComplete.value as { results: SearchResultItem[] }
+    ).results.map(result => result.label)
+    const secondLabels = (
+      secondComplete.value as { results: SearchResultItem[] }
+    ).results.map(result => result.label)
+
+    expect(firstLabels).toEqual(['S5', 'S6'])
+    expect(secondLabels).toEqual(['S7', 'S8'])
   })
 
   it('uses the optimized provider after a transport failure', async () => {

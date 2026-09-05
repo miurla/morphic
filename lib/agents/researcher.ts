@@ -74,12 +74,14 @@ export function createResearcher({
   model,
   modelConfig,
   chatId,
-  searchMode = 'adaptive'
+  searchMode = 'adaptive',
+  citationLabelSeed
 }: {
   model: string
   modelConfig?: Model
   chatId?: string
   searchMode?: SearchMode
+  citationLabelSeed?: number
 }) {
   try {
     // Date only: a second-precision timestamp sits at the head of the prompt
@@ -87,7 +89,9 @@ export function createResearcher({
     const currentDate = new Date().toLocaleDateString()
 
     // Create model-specific tools with proper typing
-    const originalSearchTool = createSearchTool(model)
+    const originalSearchTool = createSearchTool(model, {
+      labelSeed: citationLabelSeed
+    })
     const askQuestionTool = createQuestionTool(model)
     const todoTools = createTodoTools()
 

@@ -279,6 +279,49 @@ describe('compactHistoricalMessages', () => {
     expect(afterFiveTurns.slice(0, 2)).toEqual(afterTwoTurns)
   })
 
+  it('keeps labelled source context independent of earlier messages', () => {
+    const labelledTurn = {
+      id: 'assistant-labelled',
+      role: 'assistant' as const,
+      parts: [
+        {
+          type: 'tool-search',
+          toolCallId: 'opaque-call',
+          state: 'output-available',
+          input: { query: 'labelled' },
+          output: {
+            query: 'labelled',
+            images: [],
+            results: [
+              {
+                label: 'S7',
+                title: 'Labelled source',
+                url: 'https://labelled.example/source',
+                content: 'Persisted labelled evidence'
+              }
+            ]
+          }
+        },
+        { type: 'text', text: 'Labelled answer. [2](#S7)' }
+      ]
+    } as unknown as UIMessage
+    const earlierTurns = [1, 2, 3].map(
+      createCitedAssistantMessage
+    ) as unknown as UIMessage[]
+
+    const byItself = compactHistoricalMessages([labelledTurn])[0]
+    const afterEarlierTurns = compactHistoricalMessages([
+      ...earlierTurns,
+      labelledTurn
+    ]).at(-1)
+    const answer = byItself.parts[0] as { type: 'text'; text: string }
+    const sourceContext = byItself.parts[1] as { type: 'text'; text: string }
+
+    expect(afterEarlierTurns).toEqual(byItself)
+    expect(answer.text).toContain('https://labelled.example/source')
+    expect(sourceContext.text).toContain('Persisted labelled evidence')
+  })
+
   it('keeps all unique cited sources within the source context budget', () => {
     const results = Array.from({ length: 6 }, (_, index) => ({
       title: `Source ${index + 1}`,

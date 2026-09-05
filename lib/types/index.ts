@@ -41,6 +41,7 @@ export type SearchResultItem = {
   title: string
   url: string
   content: string
+  label?: string
 }
 
 export type ExaSearchResultItem = {

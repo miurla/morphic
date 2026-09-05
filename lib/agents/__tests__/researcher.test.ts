@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { createSearchTool } from '@/lib/tools/search'
 import type { Model } from '@/lib/types/models'
 
 const mocks = vi.hoisted(() => ({
@@ -112,6 +113,17 @@ describe('createResearcher', () => {
 
     expect(mocks.agentOptions?.providerOptions).toEqual({
       openai: { reasoningEffort: 'low' }
+    })
+  })
+
+  it('passes the citation label seed to the search tool', () => {
+    createResearcher({
+      model: 'openai:model-id',
+      citationLabelSeed: 9
+    })
+
+    expect(createSearchTool).toHaveBeenCalledWith('openai:model-id', {
+      labelSeed: 9
     })
   })
 })

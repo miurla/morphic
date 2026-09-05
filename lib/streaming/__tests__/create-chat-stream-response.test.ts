@@ -160,7 +160,45 @@ describe('createChatStreamResponse', () => {
     await mocks.finishPromise
 
     expect(researcher).toHaveBeenCalledWith(
-      expect.objectContaining({ chatId: 'chat-id' })
+      expect.objectContaining({
+        chatId: 'chat-id',
+        citationLabelSeed: 1
+      })
+    )
+  })
+
+  it('seeds citation labels from the prepared persisted history', async () => {
+    vi.mocked(prepareMessages).mockResolvedValueOnce([
+      {
+        id: 'assistant-history',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-search',
+            toolCallId: 'call_history',
+            state: 'output-available',
+            output: {
+              results: [
+                {
+                  label: 'S6',
+                  title: 'History',
+                  url: 'https://example.com/history',
+                  content: 'Evidence'
+                }
+              ]
+            }
+          },
+          { type: 'text', text: 'Earlier answer. [1](#S6)' }
+        ]
+      }
+    ] as any)
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(researcher).toHaveBeenCalledWith(
+      expect.objectContaining({ citationLabelSeed: 7 })
     )
   })
 

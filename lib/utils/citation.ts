@@ -18,6 +18,12 @@ export function isCitationLabel(label: string): boolean {
   return /^[\w-]+(?:\.[\w-]+)*$/.test(label)
 }
 
+const DERIVED_LABEL_PATTERN = /^S\d+$/
+
+export function isDerivedLabel(label: string): boolean {
+  return DERIVED_LABEL_PATTERN.test(label)
+}
+
 /**
  * Strip a known provider/router prefix from a toolCallId.
  * Some models prepend their own prefix (e.g. `toolu_`) to the search tool's
@@ -26,6 +32,34 @@ export function isCitationLabel(label: string): boolean {
  */
 function stripToolCallPrefix(toolCallId: string): string {
   return toolCallId.replace(/^(toolu_|call_|search-)/, '')
+}
+
+export function nextCitationLabelNumber(messages: UIMessage[]): number {
+  let maxLabelNumber = 0
+
+  for (const message of messages) {
+    for (const part of message.parts ?? []) {
+      if (
+        part.type !== 'tool-search' ||
+        part.state !== 'output-available' ||
+        !part.output
+      ) {
+        continue
+      }
+
+      const searchResults = part.output as SearchResults
+      for (const result of searchResults.results ?? []) {
+        if (result.label && isDerivedLabel(result.label)) {
+          maxLabelNumber = Math.max(
+            maxLabelNumber,
+            Number(result.label.slice(1))
+          )
+        }
+      }
+    }
+  }
+
+  return maxLabelNumber + 1
 }
 
 /**
@@ -64,10 +98,43 @@ export function extractCitationMaps(
         // Store citation map with toolCallId as key
         citationMaps[part.toolCallId] = citationMap
       }
+
+      for (const result of searchResults.results ?? []) {
+        if (
+          result.label &&
+          isDerivedLabel(result.label) &&
+          !citationMaps[result.label]
+        ) {
+          citationMaps[result.label] = { 1: result }
+        }
+      }
     }
   })
 
   return citationMaps
+}
+
+export function resolveCitation(
+  citationMaps: Record<string, Record<number, SearchResultItem>>,
+  id: string,
+  citationNumber: number
+): SearchResultItem | undefined {
+  let citationMap = citationMaps[id]
+  if (!citationMap) {
+    const normalizedId = stripToolCallPrefix(id)
+    citationMap =
+      citationMaps[normalizedId] ??
+      citationMaps[
+        Object.keys(citationMaps).find(
+          key => stripToolCallPrefix(key) === normalizedId
+        ) ?? ''
+      ]
+  }
+
+  return (
+    citationMap?.[citationNumber] ??
+    (citationMap && isDerivedLabel(id) ? citationMap[1] : undefined)
+  )
 }
 
 /**
@@ -115,25 +182,7 @@ export function processCitations(
         return '' // Return empty string for invalid citation numbers
       }
 
-      // Get the citation map for this toolCallId. Prefer an exact match to
-      // avoid side effects, then fall back to prefix-normalized matching so
-      // ids the model prepended a prefix to (e.g. `toolu_<id>`) still resolve.
-      let citationMap = citationMaps[toolCallId]
-      if (!citationMap) {
-        const normalizedId = stripToolCallPrefix(toolCallId)
-        citationMap =
-          citationMaps[normalizedId] ??
-          citationMaps[
-            Object.keys(citationMaps).find(
-              key => stripToolCallPrefix(key) === normalizedId
-            ) ?? ''
-          ]
-      }
-      if (!citationMap) {
-        return '' // Return empty string if no citation map found
-      }
-
-      const citation = citationMap[citationNum]
+      const citation = resolveCitation(citationMaps, toolCallId, citationNum)
       if (!citation || !isValidUrl(citation.url)) {
         return '' // Return empty string for invalid citations
       }

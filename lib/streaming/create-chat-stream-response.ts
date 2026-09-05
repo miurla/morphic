@@ -12,6 +12,7 @@ import {
   isToolFailureError,
   serializeToolFailure
 } from '@/lib/errors/tool-error'
+import { nextCitationLabelNumber } from '@/lib/utils/citation'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import { loadChatUncached } from '../actions/chat'
@@ -207,7 +208,8 @@ export async function createChatStreamResponse(
         model: context.modelId,
         modelConfig: model,
         chatId,
-        searchMode
+        searchMode,
+        citationLabelSeed: nextCitationLabelNumber(messagesToModel)
       })
 
       streamErrorStage = 'transform-messages'

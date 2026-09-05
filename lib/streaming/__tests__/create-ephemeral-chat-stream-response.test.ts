@@ -158,7 +158,47 @@ describe('createEphemeralChatStreamResponse', () => {
     await mocks.finishPromise
 
     expect(researcher).toHaveBeenCalledWith(
-      expect.objectContaining({ chatId: 'chat-id' })
+      expect.objectContaining({
+        chatId: 'chat-id',
+        citationLabelSeed: 1
+      })
+    )
+  })
+
+  it('seeds citation labels from the submitted persisted history', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+    const config = createConfig()
+    const labelledHistory = {
+      id: 'assistant-history',
+      role: 'assistant' as const,
+      parts: [
+        {
+          type: 'tool-search',
+          toolCallId: 'call_history',
+          state: 'output-available',
+          output: {
+            results: [
+              {
+                label: 'S11',
+                title: 'History',
+                url: 'https://example.com/history',
+                content: 'Evidence'
+              }
+            ]
+          }
+        },
+        { type: 'text', text: 'Earlier answer. [1](#S11)' }
+      ]
+    }
+
+    await createEphemeralChatStreamResponse({
+      ...config,
+      messages: [labelledHistory as any, ...config.messages]
+    })
+    await mocks.finishPromise
+
+    expect(researcher).toHaveBeenCalledWith(
+      expect.objectContaining({ citationLabelSeed: 12 })
     )
   })
 
