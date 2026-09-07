@@ -73,7 +73,9 @@ describe('LibraryProvider sidebar behavior', () => {
 
     expect(screen.getByText('open')).toBeInTheDocument()
     expect(sidebarState.setOpen).toHaveBeenCalledWith(false)
-    expect(sidebarState.setOpenMobile).not.toHaveBeenCalled()
+    // The mobile value is cleared too, so a sheet left open on a narrow
+    // viewport cannot reappear over Library after the viewport changes back.
+    expect(sidebarState.setOpenMobile).toHaveBeenCalledWith(false)
   })
 
   test('toggling the library open closes the mobile sidebar surface', () => {

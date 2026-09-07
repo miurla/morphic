@@ -74,21 +74,16 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const [notesCache, setNotesCache] = useState<NotesCache | null>(null)
   const [filesCache, setFilesCache] = useState<FilesCache | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
-  const {
-    isMobile,
-    setOpen: setSidebarOpen,
-    setOpenMobile: setSidebarOpenMobile
-  } = useSidebar()
+  const { setOpen: setSidebarOpen, setOpenMobile: setSidebarOpenMobile } =
+    useSidebar()
 
-  // Both surfaces are cleared, not just the active one: ArtifactProvider closes
-  // Library whenever the desktop `open` is true, so leaving a stale desktop
-  // value behind on a narrow viewport would close Library the moment it opens.
+  // Both surfaces are cleared unconditionally. Either one can hold a stale
+  // value from a viewport the user has since left, and whichever surface
+  // becomes visible again would then sit on top of the open Library panel.
   const closeSidebarSurfaces = useCallback(() => {
     setSidebarOpen(false)
-    if (isMobile) {
-      setSidebarOpenMobile(false)
-    }
-  }, [isMobile, setSidebarOpen, setSidebarOpenMobile])
+    setSidebarOpenMobile(false)
+  }, [setSidebarOpen, setSidebarOpenMobile])
 
   const openLibrary = useCallback(() => {
     closeSidebarSurfaces()
