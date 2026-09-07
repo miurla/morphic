@@ -16,9 +16,14 @@ vi.mock('@/hooks/use-mobile', () => ({
 }))
 
 function ToggleHarness() {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, setOpenMobile } = useSidebar()
 
-  return <button onClick={toggleSidebar}>Toggle sidebar</button>
+  return (
+    <>
+      <button onClick={toggleSidebar}>Toggle sidebar</button>
+      <button onClick={() => setOpenMobile(false)}>Dismiss sheet</button>
+    </>
+  )
 }
 
 describe('SidebarProvider analytics', () => {
@@ -50,5 +55,36 @@ describe('SidebarProvider analytics', () => {
       open: false,
       isMobile
     })
+  })
+
+  test('records a mobile dismissal that bypasses the toggle', () => {
+    viewport.isMobile = true
+    render(
+      <SidebarProvider defaultOpen={false}>
+        <ToggleHarness />
+      </SidebarProvider>
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle sidebar' }))
+    // The Sheet closes itself through onOpenChange, not through toggleSidebar.
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss sheet' }))
+
+    expect(captureClient).toHaveBeenNthCalledWith(2, 'sidebar_toggled', {
+      open: false,
+      isMobile: true
+    })
+  })
+
+  test('does not record a transition that changes nothing', () => {
+    viewport.isMobile = true
+    render(
+      <SidebarProvider defaultOpen={false}>
+        <ToggleHarness />
+      </SidebarProvider>
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss sheet' }))
+
+    expect(captureClient).not.toHaveBeenCalled()
   })
 })

@@ -80,25 +80,27 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
     setOpenMobile: setSidebarOpenMobile
   } = useSidebar()
 
-  const openLibrary = useCallback(() => {
+  // Both surfaces are cleared, not just the active one: ArtifactProvider closes
+  // Library whenever the desktop `open` is true, so leaving a stale desktop
+  // value behind on a narrow viewport would close Library the moment it opens.
+  const closeSidebarSurfaces = useCallback(() => {
+    setSidebarOpen(false)
     if (isMobile) {
       setSidebarOpenMobile(false)
-    } else {
-      setSidebarOpen(false)
     }
-    setIsOpen(true)
   }, [isMobile, setSidebarOpen, setSidebarOpenMobile])
+
+  const openLibrary = useCallback(() => {
+    closeSidebarSurfaces()
+    setIsOpen(true)
+  }, [closeSidebarSurfaces])
   const closeLibrary = useCallback(() => setIsOpen(false), [])
   const toggleLibrary = useCallback(() => {
     if (!isOpen) {
-      if (isMobile) {
-        setSidebarOpenMobile(false)
-      } else {
-        setSidebarOpen(false)
-      }
+      closeSidebarSurfaces()
     }
     setIsOpen(open => !open)
-  }, [isMobile, isOpen, setSidebarOpen, setSidebarOpenMobile])
+  }, [closeSidebarSurfaces, isOpen])
   const replaceNotesCache = useCallback(
     (page: {
       notes: Note[]

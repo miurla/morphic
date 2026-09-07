@@ -92,7 +92,7 @@ const SidebarProvider = React.forwardRef<
     ref
   ) => {
     const isMobile = useIsMobile()
-    const [openMobile, setOpenMobile] = React.useState(false)
+    const [openMobile, _setOpenMobile] = React.useState(false)
 
     // Initialize state - for SSR we use defaultOpen, for client we read from cookie
     const [_open, _setOpen] = React.useState(defaultOpen)
@@ -122,22 +122,34 @@ const SidebarProvider = React.forwardRef<
         if (typeof document !== 'undefined') {
           document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
         }
+
+        if (openState !== open) {
+          captureClient('sidebar_toggled', { open: openState, isMobile: false })
+        }
       },
       [setOpenProp, open]
     )
 
+    // Instrumentation lives on the state transition rather than on
+    // `toggleSidebar`, because the mobile Sheet dismisses itself through
+    // `onOpenChange` and never goes through the toggle.
+    const setOpenMobile = React.useCallback(
+      (value: boolean | ((value: boolean) => boolean)) => {
+        const openState =
+          typeof value === 'function' ? value(openMobile) : value
+        _setOpenMobile(openState)
+
+        if (openState !== openMobile) {
+          captureClient('sidebar_toggled', { open: openState, isMobile: true })
+        }
+      },
+      [openMobile]
+    )
+
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
-      const nextOpen = isMobile ? !openMobile : !open
-
-      if (isMobile) {
-        setOpenMobile(nextOpen)
-      } else {
-        setOpen(nextOpen)
-      }
-
-      captureClient('sidebar_toggled', { open: nextOpen, isMobile })
-    }, [isMobile, open, openMobile, setOpen, setOpenMobile])
+      return isMobile ? setOpenMobile(open => !open) : setOpen(open => !open)
+    }, [isMobile, setOpen, setOpenMobile])
 
     // We add a state so that we can do data-state="expanded" or "collapsed".
     // This makes it easier to style the sidebar with Tailwind classes.

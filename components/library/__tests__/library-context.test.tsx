@@ -61,7 +61,9 @@ describe('LibraryProvider sidebar behavior', () => {
 
     expect(screen.getByText('open')).toBeInTheDocument()
     expect(sidebarState.setOpenMobile).toHaveBeenCalledWith(false)
-    expect(sidebarState.setOpen).not.toHaveBeenCalled()
+    // The desktop value is cleared too, so a stale `open` carried over from a
+    // wider viewport cannot make ArtifactProvider close Library immediately.
+    expect(sidebarState.setOpen).toHaveBeenCalledWith(false)
   })
 
   test('opening the library still closes the desktop sidebar surface', () => {
@@ -82,7 +84,7 @@ describe('LibraryProvider sidebar behavior', () => {
 
     expect(screen.getByText('open')).toBeInTheDocument()
     expect(sidebarState.setOpenMobile).toHaveBeenCalledWith(false)
-    expect(sidebarState.setOpen).not.toHaveBeenCalled()
+    expect(sidebarState.setOpen).toHaveBeenCalledWith(false)
   })
 
   test('toggling the library closed leaves the sidebar surfaces alone', () => {
