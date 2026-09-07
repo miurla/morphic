@@ -74,19 +74,31 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const [notesCache, setNotesCache] = useState<NotesCache | null>(null)
   const [filesCache, setFilesCache] = useState<FilesCache | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
-  const { setOpen: setSidebarOpen } = useSidebar()
+  const {
+    isMobile,
+    setOpen: setSidebarOpen,
+    setOpenMobile: setSidebarOpenMobile
+  } = useSidebar()
 
   const openLibrary = useCallback(() => {
-    setSidebarOpen(false)
+    if (isMobile) {
+      setSidebarOpenMobile(false)
+    } else {
+      setSidebarOpen(false)
+    }
     setIsOpen(true)
-  }, [setSidebarOpen])
+  }, [isMobile, setSidebarOpen, setSidebarOpenMobile])
   const closeLibrary = useCallback(() => setIsOpen(false), [])
   const toggleLibrary = useCallback(() => {
     if (!isOpen) {
-      setSidebarOpen(false)
+      if (isMobile) {
+        setSidebarOpenMobile(false)
+      } else {
+        setSidebarOpen(false)
+      }
     }
     setIsOpen(open => !open)
-  }, [isOpen, setSidebarOpen])
+  }, [isMobile, isOpen, setSidebarOpen, setSidebarOpenMobile])
   const replaceNotesCache = useCallback(
     (page: {
       notes: Note[]

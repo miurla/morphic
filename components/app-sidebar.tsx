@@ -14,6 +14,7 @@ import {
 
 import { ChatHistorySection } from './sidebar/chat-history-section'
 import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
+import { LibraryMenuItem } from './sidebar/library-menu-item'
 import { NewChatMenuItem } from './sidebar/new-chat-menu-item'
 import { IconLogo } from './ui/icons'
 
@@ -30,6 +31,7 @@ export default function AppSidebar() {
       <SidebarContent className="flex flex-col px-2 py-4 h-full">
         <SidebarMenu>
           <NewChatMenuItem />
+          <LibraryMenuItem />
         </SidebarMenu>
         <div className="flex-1 overflow-y-auto">
           <Suspense fallback={<ChatHistorySkeleton />}>

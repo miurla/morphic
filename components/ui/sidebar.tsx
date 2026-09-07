@@ -9,6 +9,7 @@ import {
 } from '@tabler/icons-react'
 import { cva, VariantProps } from 'class-variance-authority'
 
+import { captureClient } from '@/lib/analytics/posthog-client'
 import { cn } from '@/lib/utils/index'
 
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -127,8 +128,16 @@ const SidebarProvider = React.forwardRef<
 
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
-      return isMobile ? setOpenMobile(open => !open) : setOpen(open => !open)
-    }, [isMobile, setOpen, setOpenMobile])
+      const nextOpen = isMobile ? !openMobile : !open
+
+      if (isMobile) {
+        setOpenMobile(nextOpen)
+      } else {
+        setOpen(nextOpen)
+      }
+
+      captureClient('sidebar_toggled', { open: nextOpen, isMobile })
+    }, [isMobile, open, openMobile, setOpen, setOpenMobile])
 
     // We add a state so that we can do data-state="expanded" or "collapsed".
     // This makes it easier to style the sidebar with Tailwind classes.
