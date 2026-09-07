@@ -22,8 +22,10 @@ const DERIVED_LABEL_PATTERN = /^S\d+$/
 
 export function createCitationPattern(): RegExp {
   // A global RegExp carries lastIndex state, so each consumer needs a fresh one.
-  // Citation ids cannot cross delimiters or whitespace into neighbouring text.
-  return /\[\s*(\d+)\s*\]\(#([^)\]\s]+)[)\]]/g
+  // The id excludes brackets, parens and whitespace so a citation the model
+  // closed with the wrong delimiter cannot reach into the text after it and
+  // swallow an adjacent citation.
+  return /\[\s*(\d+)\s*\]\(#([^\s()[\]]+)[)\]]/g
 }
 
 export function isDerivedLabel(label: string): boolean {

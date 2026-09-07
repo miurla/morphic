@@ -104,6 +104,14 @@ describe('processCitations', () => {
     )
   })
 
+  it('does not let a malformed close swallow the next citation opener', () => {
+    const content = 'Alpha. [1](#missing[1](#S5) tail.'
+
+    expect(processCitations(content, labelledCitationMaps)).toBe(
+      'Alpha. [1](#missing[example](https://example.com/later) tail.'
+    )
+  })
+
   it('resolves a malformed close to the same source as a normal close', () => {
     expect(processCitations('[1](#S37]', labelledCitationMaps)).toBe(
       processCitations('[1](#S37)', labelledCitationMaps)
