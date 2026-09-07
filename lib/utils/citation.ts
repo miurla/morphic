@@ -20,6 +20,12 @@ export function isCitationLabel(label: string): boolean {
 
 const DERIVED_LABEL_PATTERN = /^S\d+$/
 
+export function createCitationPattern(): RegExp {
+  // A global RegExp carries lastIndex state, so each consumer needs a fresh one.
+  // Citation ids cannot cross delimiters or whitespace into neighbouring text.
+  return /\[\s*(\d+)\s*\]\(#([^)\]\s]+)[)\]]/g
+}
+
 export function isDerivedLabel(label: string): boolean {
   return DERIVED_LABEL_PATTERN.test(label)
 }
@@ -218,26 +224,23 @@ export function processCitations(
 
   // Replace [number](#toolCallId) with [domain](actual-url)
   // Also handle cases with spaces: [ number ]
-  return content.replace(
-    /\[\s*(\d+)\s*\]\(#([^)]+)\)/g,
-    (_match, num, toolCallId) => {
-      const citationNum = parseInt(num, 10)
+  return content.replace(createCitationPattern(), (_match, num, toolCallId) => {
+    const citationNum = parseInt(num, 10)
 
-      // Validate citation number bounds
-      if (isNaN(citationNum) || citationNum < 1 || citationNum > 100) {
-        return '' // Return empty string for invalid citation numbers
-      }
-
-      const citation = resolveCitation(citationMaps, toolCallId, citationNum)
-      if (!citation || !isValidUrl(citation.url)) {
-        return '' // Return empty string for invalid citations
-      }
-
-      // Extract domain name from URL (removes TLD and subdomain)
-      const domainName = displayUrlName(citation.url)
-
-      // Encode URI to prevent injection attacks
-      return `[${domainName}](${encodeURI(citation.url)})`
+    // Validate citation number bounds
+    if (isNaN(citationNum) || citationNum < 1 || citationNum > 100) {
+      return '' // Return empty string for invalid citation numbers
     }
-  )
+
+    const citation = resolveCitation(citationMaps, toolCallId, citationNum)
+    if (!citation || !isValidUrl(citation.url)) {
+      return '' // Return empty string for invalid citations
+    }
+
+    // Extract domain name from URL (removes TLD and subdomain)
+    const domainName = displayUrlName(citation.url)
+
+    // Encode URI to prevent injection attacks
+    return `[${domainName}](${encodeURI(citation.url)})`
+  })
 }
