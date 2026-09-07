@@ -123,11 +123,14 @@ const SidebarProvider = React.forwardRef<
           document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
         }
 
-        if (openState !== open) {
+        // Only the surface the viewport is actually showing is reported. On
+        // mobile the desktop value is hidden bookkeeping that Library clears,
+        // and recording it would invent a toggle the user never made.
+        if (!isMobile && openState !== open) {
           captureClient('sidebar_toggled', { open: openState, isMobile: false })
         }
       },
-      [setOpenProp, open]
+      [setOpenProp, open, isMobile]
     )
 
     // Instrumentation lives on the state transition rather than on
@@ -139,11 +142,11 @@ const SidebarProvider = React.forwardRef<
           typeof value === 'function' ? value(openMobile) : value
         _setOpenMobile(openState)
 
-        if (openState !== openMobile) {
+        if (isMobile && openState !== openMobile) {
           captureClient('sidebar_toggled', { open: openState, isMobile: true })
         }
       },
-      [openMobile]
+      [openMobile, isMobile]
     )
 
     // Helper to toggle the sidebar.

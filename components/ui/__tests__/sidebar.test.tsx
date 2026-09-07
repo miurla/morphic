@@ -16,12 +16,13 @@ vi.mock('@/hooks/use-mobile', () => ({
 }))
 
 function ToggleHarness() {
-  const { toggleSidebar, setOpenMobile } = useSidebar()
+  const { toggleSidebar, setOpen, setOpenMobile } = useSidebar()
 
   return (
     <>
       <button onClick={toggleSidebar}>Toggle sidebar</button>
       <button onClick={() => setOpenMobile(false)}>Dismiss sheet</button>
+      <button onClick={() => setOpen(false)}>Clear desktop</button>
     </>
   )
 }
@@ -73,6 +74,20 @@ describe('SidebarProvider analytics', () => {
       open: false,
       isMobile: true
     })
+  })
+
+  test('does not record clearing the hidden desktop value on mobile', () => {
+    viewport.isMobile = true
+    render(
+      <SidebarProvider defaultOpen={true}>
+        <ToggleHarness />
+      </SidebarProvider>
+    )
+
+    // Library clears both surfaces when it opens. Only the visible one counts.
+    fireEvent.click(screen.getByRole('button', { name: 'Clear desktop' }))
+
+    expect(captureClient).not.toHaveBeenCalled()
   })
 
   test('does not record a transition that changes nothing', () => {
