@@ -215,6 +215,50 @@ describe('compactHistoricalMessages', () => {
     expect(sourceContext.text).not.toContain('x'.repeat(401))
   })
 
+  it('keeps a source cited after a malformed-close citation', () => {
+    const messages = [
+      {
+        id: 'assistant-1',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-search',
+            toolCallId: 'call_1',
+            state: 'output-available',
+            input: { query: 'example' },
+            output: {
+              query: 'example',
+              images: [],
+              results: [
+                {
+                  title: 'First source',
+                  url: 'https://example.com/first',
+                  content: 'First evidence'
+                },
+                {
+                  title: 'Later source',
+                  url: 'https://example.com/later',
+                  content: 'Later evidence'
+                }
+              ]
+            }
+          },
+          {
+            type: 'text',
+            text: 'First [1](#call_1] middle survives. Later [2](#call_1)'
+          }
+        ]
+      }
+    ] as unknown as UIMessage[]
+
+    const [, sourceContext] = compactHistoricalMessages(messages)[0]
+      .parts as Array<{ type: 'text'; text: string }>
+
+    expect(sourceContext.text).toContain('First source')
+    expect(sourceContext.text).toContain('Later source')
+    expect(sourceContext.text).toContain('https://example.com/later')
+  })
+
   it('uses description from persisted Brave results when content is absent', () => {
     const messages = [
       {

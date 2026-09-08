@@ -69,12 +69,67 @@ describe('processCitations', () => {
     } as Record<number, SearchResultItem>
   }
 
+  const labelledCitationMaps = {
+    S37: {
+      1: {
+        title: 'Malformed close source',
+        url: 'https://example.com/malformed',
+        content: 'Malformed close evidence'
+      }
+    } as Record<number, SearchResultItem>,
+    S5: {
+      1: {
+        title: 'Later source',
+        url: 'https://example.com/later',
+        content: 'Later evidence'
+      }
+    } as Record<number, SearchResultItem>
+  }
+
   it('converts numbered citations to domain names', () => {
     const content = 'Check out [1](#toolCall1) and [2](#toolCall1)'
     const result = processCitations(content, mockCitationMaps)
 
     expect(result).toBe(
       'Check out [google](https://www.google.com) and [github](https://docs.github.com)'
+    )
+  })
+
+  it('does not consume text or a later citation after a malformed close', () => {
+    const content =
+      'Alpha is true. [1](#S37] Beta is a whole sentence that should survive. Gamma cites correctly. [1](#S5)'
+
+    expect(processCitations(content, labelledCitationMaps)).toBe(
+      'Alpha is true. [example](https://example.com/malformed) Beta is a whole sentence that should survive. Gamma cites correctly. [example](https://example.com/later)'
+    )
+  })
+
+  it('does not let a malformed close swallow the next citation opener', () => {
+    const content = 'Alpha. [1](#missing[1](#S5) tail.'
+
+    expect(processCitations(content, labelledCitationMaps)).toBe(
+      'Alpha. [1](#missing[example](https://example.com/later) tail.'
+    )
+  })
+
+  it('resolves a malformed close to the same source as a normal close', () => {
+    expect(processCitations('[1](#S37]', labelledCitationMaps)).toBe(
+      processCitations('[1](#S37)', labelledCitationMaps)
+    )
+  })
+
+  it('keeps well-formed citation resolution unchanged', () => {
+    expect(processCitations('[1](#toolCall1)', mockCitationMaps)).toBe(
+      '[google](https://www.google.com)'
+    )
+  })
+
+  it('drops an unresolvable id without consuming neighbouring text', () => {
+    const content =
+      'Before [1](#missing] middle survives. After [1](#toolCall1)'
+
+    expect(processCitations(content, mockCitationMaps)).toBe(
+      'Before  middle survives. After [google](https://www.google.com)'
     )
   })
 
