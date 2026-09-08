@@ -21,6 +21,12 @@ import {
   RecoverableSearchFailure
 } from './search/providers/recoverable-error'
 
+// Bounds each result's content in the model-facing projection only.
+export const SEARCH_MODEL_CONTENT_MAX_CHARACTERS = 600
+
+// Bounds the number of results in the model-facing projection only.
+export const SEARCH_MODEL_MAX_RESULTS = 8
+
 function getOptimizedSearchProviderType(): SearchProviderType {
   return (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
 }
@@ -253,7 +259,10 @@ export function createSearchTool(
     // `results` (dropped defensively for older persisted output), state is a
     // streaming marker, and provider/fallback are trace diagnostics.
     // toolCallId is dropped too: citations address a result's own `label`, so
-    // the opaque id no longer belongs in the model's view. images MUST stay -
+    // the opaque id no longer belongs in the model's view. Result content is
+    // capped and the result list is cut to a prefix so labels stay contiguous;
+    // `execute` still yields every result in full, so the UI and the persisted
+    // citation targets are unaffected. images MUST stay -
     // getImageSpecPrompt instructs the model to embed URLs verbatim from that
     // array. Labels are assigned in `execute` and only passed through here.
     toModelOutput: ({ output }) => {
@@ -268,6 +277,34 @@ export function createSearchTool(
       delete modelView.provider
       delete modelView.fallback
       delete modelView.toolCallId
+      if (Array.isArray(modelView.results)) {
+        modelView.results = modelView.results
+          .slice(0, SEARCH_MODEL_MAX_RESULTS)
+          .map(result => {
+            if (
+              !result ||
+              typeof result !== 'object' ||
+              Array.isArray(result)
+            ) {
+              return result
+            }
+
+            const projectedResult = {
+              ...(result as Record<string, unknown>)
+            }
+            if (
+              typeof projectedResult.content === 'string' &&
+              projectedResult.content.length >
+                SEARCH_MODEL_CONTENT_MAX_CHARACTERS
+            ) {
+              projectedResult.content = `${projectedResult.content.slice(
+                0,
+                SEARCH_MODEL_CONTENT_MAX_CHARACTERS
+              )}…`
+            }
+            return projectedResult
+          })
+      }
       return { type: 'json', value: modelView as JSONValue }
     }
   })
