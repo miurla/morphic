@@ -9,6 +9,7 @@ import {
 } from '@tabler/icons-react'
 import { cva, VariantProps } from 'class-variance-authority'
 
+import { captureClient } from '@/lib/analytics/posthog-client'
 import { cn } from '@/lib/utils/index'
 
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -91,7 +92,7 @@ const SidebarProvider = React.forwardRef<
     ref
   ) => {
     const isMobile = useIsMobile()
-    const [openMobile, setOpenMobile] = React.useState(false)
+    const [openMobile, _setOpenMobile] = React.useState(false)
 
     // Initialize state - for SSR we use defaultOpen, for client we read from cookie
     const [_open, _setOpen] = React.useState(defaultOpen)
@@ -121,8 +122,31 @@ const SidebarProvider = React.forwardRef<
         if (typeof document !== 'undefined') {
           document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
         }
+
+        // Only the surface the viewport is actually showing is reported. On
+        // mobile the desktop value is hidden bookkeeping that Library clears,
+        // and recording it would invent a toggle the user never made.
+        if (!isMobile && openState !== open) {
+          captureClient('sidebar_toggled', { open: openState, isMobile: false })
+        }
       },
-      [setOpenProp, open]
+      [setOpenProp, open, isMobile]
+    )
+
+    // Instrumentation lives on the state transition rather than on
+    // `toggleSidebar`, because the mobile Sheet dismisses itself through
+    // `onOpenChange` and never goes through the toggle.
+    const setOpenMobile = React.useCallback(
+      (value: boolean | ((value: boolean) => boolean)) => {
+        const openState =
+          typeof value === 'function' ? value(openMobile) : value
+        _setOpenMobile(openState)
+
+        if (isMobile && openState !== openMobile) {
+          captureClient('sidebar_toggled', { open: openState, isMobile: true })
+        }
+      },
+      [openMobile, isMobile]
     )
 
     // Helper to toggle the sidebar.

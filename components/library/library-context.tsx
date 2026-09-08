@@ -74,19 +74,28 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const [notesCache, setNotesCache] = useState<NotesCache | null>(null)
   const [filesCache, setFilesCache] = useState<FilesCache | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
-  const { setOpen: setSidebarOpen } = useSidebar()
+  const { setOpen: setSidebarOpen, setOpenMobile: setSidebarOpenMobile } =
+    useSidebar()
+
+  // Both surfaces are cleared unconditionally. Either one can hold a stale
+  // value from a viewport the user has since left, and whichever surface
+  // becomes visible again would then sit on top of the open Library panel.
+  const closeSidebarSurfaces = useCallback(() => {
+    setSidebarOpen(false)
+    setSidebarOpenMobile(false)
+  }, [setSidebarOpen, setSidebarOpenMobile])
 
   const openLibrary = useCallback(() => {
-    setSidebarOpen(false)
+    closeSidebarSurfaces()
     setIsOpen(true)
-  }, [setSidebarOpen])
+  }, [closeSidebarSurfaces])
   const closeLibrary = useCallback(() => setIsOpen(false), [])
   const toggleLibrary = useCallback(() => {
     if (!isOpen) {
-      setSidebarOpen(false)
+      closeSidebarSurfaces()
     }
     setIsOpen(open => !open)
-  }, [isOpen, setSidebarOpen])
+  }, [closeSidebarSurfaces, isOpen])
   const replaceNotesCache = useCallback(
     (page: {
       notes: Note[]
