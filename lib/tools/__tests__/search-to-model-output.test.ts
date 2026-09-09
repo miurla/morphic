@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   createSearchTool,
-  SEARCH_MODEL_CONTENT_MAX_CHARACTERS,
-  SEARCH_MODEL_MAX_RESULTS
+  SEARCH_MODEL_CONTENT_MAX_CHARACTERS
 } from '@/lib/tools/search'
 
 // The search tool's toModelOutput strips UI-only fields (citationMap
@@ -107,33 +106,30 @@ describe('search tool toModelOutput', () => {
     ).toEqual(contents)
   })
 
-  it('keeps only the first results in their original order', async () => {
-    const results = Array.from(
-      { length: SEARCH_MODEL_MAX_RESULTS + 3 },
-      (_, index) => ({
-        title: `Result ${index + 1}`,
-        url: `https://${index + 1}.test`,
-        content: `content ${index + 1}`,
-        label: `S${index + 1}`
-      })
-    )
+  // Providers do not all order by relevance: the firecrawl adapter appends news
+  // results after web results, so dropping a tail would silently remove a whole
+  // category from the model's view.
+  it('keeps every result, in order, however many the provider returned', async () => {
+    const results = Array.from({ length: 24 }, (_, index) => ({
+      title: `Result ${index + 1}`,
+      url: `https://${index + 1}.test`,
+      content: `content ${index + 1}`,
+      label: `S${index + 1}`
+    }))
     const value = await getModelValue({ ...fullOutput, results })
     const projectedResults = value.results as typeof results
 
-    expect(projectedResults).toHaveLength(SEARCH_MODEL_MAX_RESULTS)
+    expect(projectedResults).toHaveLength(results.length)
     expect(projectedResults.map(result => result.label)).toEqual(
-      results.slice(0, SEARCH_MODEL_MAX_RESULTS).map(result => result.label)
+      results.map(result => result.label)
     )
   })
 
   it('keeps the complete images array so the model can embed inline image specs', async () => {
-    const images = Array.from(
-      { length: SEARCH_MODEL_MAX_RESULTS + 3 },
-      (_, index) => ({
-        url: `https://images.test/${index}.png`,
-        description: `image ${index}`
-      })
-    )
+    const images = Array.from({ length: 11 }, (_, index) => ({
+      url: `https://images.test/${index}.png`,
+      description: `image ${index}`
+    }))
     const value = await getModelValue({ ...fullOutput, images })
 
     expect(value.images).toBe(images)
