@@ -180,6 +180,8 @@ function getApproachStrategy(): string {
    - Use type="general" for current events/news (then fetch for content)
    - Pattern: Search → Identify top sources → Fetch if needed → Synthesize
    - Multiple searches with different angles for comprehensive coverage
+   - Issue independent searches for several angles in the same step, with at most 3 searches in parallel
+   - Use sequential searches only when the next query depends on a previous result
 
 Mandatory search for questions:
 - If the user's message contains a URL, fetch the provided URL - do NOT search first
