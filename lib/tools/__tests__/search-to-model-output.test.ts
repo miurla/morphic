@@ -69,7 +69,7 @@ describe('search tool toModelOutput', () => {
     expect(value).not.toHaveProperty('toolCallId')
   })
 
-  it('truncates long result content and appends a marker', async () => {
+  it('truncates long result content and appends a marker inside the bound', async () => {
     const content = 'a'.repeat(SEARCH_MODEL_CONTENT_MAX_CHARACTERS + 10)
     const value = await getModelValue({
       ...fullOutput,
@@ -79,11 +79,27 @@ describe('search tool toModelOutput', () => {
       .content
 
     expect(projectedContent).toBe(
-      `${content.slice(0, SEARCH_MODEL_CONTENT_MAX_CHARACTERS)}…`
+      `${content.slice(0, SEARCH_MODEL_CONTENT_MAX_CHARACTERS - 1)}…`
     )
-    expect(projectedContent).toHaveLength(
-      SEARCH_MODEL_CONTENT_MAX_CHARACTERS + 1
+    expect(projectedContent).toHaveLength(SEARCH_MODEL_CONTENT_MAX_CHARACTERS)
+  })
+
+  it('does not split a surrogate pair at the boundary', async () => {
+    // The astral character straddles the cut, so a naive slice would leave a
+    // lone high surrogate for the model to read.
+    const content = `${'a'.repeat(SEARCH_MODEL_CONTENT_MAX_CHARACTERS - 2)}😀tail`
+    const value = await getModelValue({
+      ...fullOutput,
+      results: [{ ...fullOutput.results[0], content }]
+    })
+    const projectedContent = (value.results as Array<{ content: string }>)[0]
+      .content
+
+    expect(projectedContent).toBe(
+      `${'a'.repeat(SEARCH_MODEL_CONTENT_MAX_CHARACTERS - 2)}…`
     )
+    expect(projectedContent).not.toMatch(/[\uD800-\uDBFF]$/)
+    expect(projectedContent).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/)
   })
 
   it('preserves result content at or under the limit exactly', async () => {

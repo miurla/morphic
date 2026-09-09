@@ -2,6 +2,7 @@ import { type JSONValue, tool, UIToolInvocation } from 'ai'
 
 import { ToolFailureError } from '@/lib/errors/tool-error'
 import { getSearchSchemaForModel } from '@/lib/schema/search'
+import { sliceWithoutSplittingSurrogatePair } from '@/lib/streaming/helpers/slice-without-splitting-surrogate-pair'
 import { SearchResults } from '@/lib/types'
 import { assignCitationLabels } from '@/lib/utils/citation'
 import {
@@ -21,7 +22,8 @@ import {
   RecoverableSearchFailure
 } from './search/providers/recoverable-error'
 
-// Bounds each result's content in the model-facing projection only.
+// Bounds each result's content in the model-facing projection only. The
+// ellipsis is counted inside the bound, as it is for historical messages.
 export const SEARCH_MODEL_CONTENT_MAX_CHARACTERS = 600
 
 function getOptimizedSearchProviderType(): SearchProviderType {
@@ -289,9 +291,9 @@ export function createSearchTool(
             typeof projectedResult.content === 'string' &&
             projectedResult.content.length > SEARCH_MODEL_CONTENT_MAX_CHARACTERS
           ) {
-            projectedResult.content = `${projectedResult.content.slice(
-              0,
-              SEARCH_MODEL_CONTENT_MAX_CHARACTERS
+            projectedResult.content = `${sliceWithoutSplittingSurrogatePair(
+              projectedResult.content,
+              SEARCH_MODEL_CONTENT_MAX_CHARACTERS - 1
             )}…`
           }
           return projectedResult
