@@ -2,6 +2,7 @@ import { type JSONValue, tool, UIToolInvocation } from 'ai'
 
 import { ToolFailureError } from '@/lib/errors/tool-error'
 import { getSearchSchemaForModel } from '@/lib/schema/search'
+import { sliceWithoutSplittingSurrogatePair } from '@/lib/streaming/helpers/slice-without-splitting-surrogate-pair'
 import { SearchResults } from '@/lib/types'
 import { assignCitationLabels } from '@/lib/utils/citation'
 import {
@@ -20,6 +21,10 @@ import {
   classifyRecoverableSearchError,
   RecoverableSearchFailure
 } from './search/providers/recoverable-error'
+
+// Bounds each result's content in the model-facing projection only. The
+// ellipsis is counted inside the bound, as it is for historical messages.
+export const SEARCH_MODEL_CONTENT_MAX_CHARACTERS = 600
 
 function getOptimizedSearchProviderType(): SearchProviderType {
   return (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
@@ -253,7 +258,12 @@ export function createSearchTool(
     // `results` (dropped defensively for older persisted output), state is a
     // streaming marker, and provider/fallback are trace diagnostics.
     // toolCallId is dropped too: citations address a result's own `label`, so
-    // the opaque id no longer belongs in the model's view. images MUST stay -
+    // the opaque id no longer belongs in the model's view. Result content is
+    // capped, but every result is kept: dropping results would decide relevance
+    // from provider order, and providers do not all order by relevance (the
+    // firecrawl adapter appends news after web). `execute` still yields the
+    // untruncated content, so the UI and the persisted citation targets are
+    // unaffected. images MUST stay -
     // getImageSpecPrompt instructs the model to embed URLs verbatim from that
     // array. Labels are assigned in `execute` and only passed through here.
     toModelOutput: ({ output }) => {
@@ -268,6 +278,27 @@ export function createSearchTool(
       delete modelView.provider
       delete modelView.fallback
       delete modelView.toolCallId
+      if (Array.isArray(modelView.results)) {
+        modelView.results = modelView.results.map(result => {
+          if (!result || typeof result !== 'object' || Array.isArray(result)) {
+            return result
+          }
+
+          const projectedResult = {
+            ...(result as Record<string, unknown>)
+          }
+          if (
+            typeof projectedResult.content === 'string' &&
+            projectedResult.content.length > SEARCH_MODEL_CONTENT_MAX_CHARACTERS
+          ) {
+            projectedResult.content = `${sliceWithoutSplittingSurrogatePair(
+              projectedResult.content,
+              SEARCH_MODEL_CONTENT_MAX_CHARACTERS - 1
+            )}…`
+          }
+          return projectedResult
+        })
+      }
       return { type: 'json', value: modelView as JSONValue }
     }
   })
