@@ -177,6 +177,42 @@ describe('trimColdStartHistory', () => {
     expect(result.messages.at(-1)?.parts).toEqual(toolParts)
   })
 
+  it('budgets history by what is replayed, not by execution details', () => {
+    const executionHeavyParts = [
+      { type: 'reasoning', text: 'r'.repeat(100_000) },
+      {
+        type: 'tool-search',
+        toolCallId: 'call-heavy',
+        state: 'output-available',
+        input: { query: 'heavy' },
+        output: {
+          results: [
+            {
+              title: 'Source',
+              url: 'https://example.com',
+              content: 'x'.repeat(100_000)
+            }
+          ]
+        }
+      },
+      { type: 'text', text: 'Short answer.' }
+    ] as unknown as UIMessage['parts']
+    const messages = [
+      ...turn(0, timestamp(0)),
+      ...turn(1, timestamp(WARM_GAP_MS), executionHeavyParts),
+      ...turn(2, timestamp(2 * WARM_GAP_MS), executionHeavyParts),
+      ...turn(3, timestamp(3 * WARM_GAP_MS), executionHeavyParts),
+      ...turn(4, timestamp(3 * WARM_GAP_MS + COLD_GAP_MS))
+    ]
+    const result = trimColdStartHistory(messages, {
+      now: timestamp(3 * WARM_GAP_MS + COLD_GAP_MS),
+      limit: 1_000
+    })
+
+    expect(result.messages).toBe(messages)
+    expect(result.trimmedAtCurrentTurn).toBe(false)
+  })
+
   it('disables trimming when the limit is zero', () => {
     const messages = Array.from({ length: 6 }, (_, i) =>
       turn(i, timestamp(i * COLD_GAP_MS))

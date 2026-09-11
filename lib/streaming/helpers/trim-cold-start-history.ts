@@ -2,6 +2,8 @@ import type { UIMessage } from 'ai'
 
 import { estimateAttachmentTokens } from '@/lib/utils/attachment-tokens'
 
+import { compactHistoricalMessages } from './compact-historical-messages'
+
 const DEFAULT_COLD_START_HISTORY_TOKEN_LIMIT = 200_000
 const CACHE_IDLE_MS = 30 * 60 * 1000
 const MIN_TURNS = 5
@@ -41,7 +43,7 @@ function serializedLength(value: unknown): number {
   }
 }
 
-function estimateMessageTokens(message: UIMessage): number {
+function estimateReplayedMessageTokens(message: UIMessage): number {
   let chars = 0
   let attachmentTokens = 0
 
@@ -61,6 +63,15 @@ function estimateMessageTokens(message: UIMessage): number {
   }
 
   return Math.ceil(chars / 4) + MESSAGE_TOKEN_OVERHEAD + attachmentTokens
+}
+
+// Estimated on the message's historical replay form, which depends only on
+// the message itself, so the estimate does not change as the thread grows.
+function estimateMessageTokens(message: UIMessage): number {
+  return compactHistoricalMessages([message]).reduce(
+    (total, replayed) => total + estimateReplayedMessageTokens(replayed),
+    0
+  )
 }
 
 function parseTimestamp(value: unknown): number | undefined {
