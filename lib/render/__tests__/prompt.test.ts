@@ -58,7 +58,7 @@ describe('render prompts', () => {
     }
   )
 
-  test('anchors quick-mode early stops to the required tool call', () => {
+  test('defines disjoint quick-mode early-stop paths', () => {
     const prompt = getQuickModePrompt()
     const earlyStopSection = prompt.slice(
       prompt.indexOf('**Early Stop Criteria'),
@@ -66,19 +66,28 @@ describe('render prompts', () => {
     )
 
     expect(earlyStopSection).toContain(
-      'For informational questions without URLs, the required search has completed'
+      'The informational request contains no URLs: the single required search has completed'
     )
     expect(earlyStopSection).toContain(
-      'For informational questions without URLs, the single search has completed'
+      'The request asks only about content in the provided URLs: a fetch attempt has completed for every provided URL'
     )
     expect(earlyStopSection).toContain(
-      'The message contains no URLs, is limited to casual chit-chat'
+      'The request asks about the provided URLs and requires broader information: fetch attempts have completed for every provided URL AND the single required search has completed'
     )
     expect(earlyStopSection).toContain(
-      'a fetch attempt has completed for every provided URL'
+      'The request contains no URLs and needs no external information'
     )
     expect(earlyStopSection).not.toContain(
       "answer the user's question with current information"
+    )
+    expect(prompt).toContain(
+      'On an allowed no-search turn, do not emit citation syntax'
+    )
+    expect(prompt).toContain(
+      'If the request asks only about content in the provided URLs, do NOT search'
+    )
+    expect(prompt).toContain(
+      'run exactly one search after every fetch attempt has completed'
     )
   })
 
