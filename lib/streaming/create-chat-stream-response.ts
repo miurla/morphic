@@ -48,6 +48,7 @@ import {
 } from './helpers/stream-error-diagnostics'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import { summarizeCarriedContext } from './helpers/summarize-carried-context'
+import { trimColdStartHistory } from './helpers/trim-cold-start-history'
 import type { StreamContext } from './helpers/types'
 import { BaseStreamConfig } from './types'
 
@@ -128,6 +129,7 @@ export async function createChatStreamResponse(
     let rootOutput: string | undefined
     let carriedContext: Record<string, number> | undefined
     let contextWindowTruncated = false
+    let coldStartHistoryTrimmed = false
 
     const endTracing = async () => {
       if (rootSpan) {
@@ -157,6 +159,7 @@ export async function createChatStreamResponse(
         const metadata = {
           ...(carriedContext !== undefined && { carriedContext }),
           ...(contextWindowTruncated && { contextWindowTruncated }),
+          ...(coldStartHistoryTrimmed && { coldStartHistoryTrimmed }),
           ...failureMetadata
         }
         const update = {
@@ -219,9 +222,11 @@ export async function createChatStreamResponse(
         messagesWithoutSpec,
         userId
       )
+      const coldStartHistory = trimColdStartHistory(messagesWithAttachmentSizes)
+      coldStartHistoryTrimmed = coldStartHistory.trimmedAtCurrentTurn
       const messagesToConvert = dedupeAttachments(
         capHistoricalAttachments(
-          compactHistoricalMessages(messagesWithAttachmentSizes)
+          compactHistoricalMessages(coldStartHistory.messages)
         )
       )
       carriedContext = summarizeCarriedContext(messagesToConvert)

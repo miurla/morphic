@@ -8,7 +8,8 @@ const mocks = vi.hoisted(() => ({
     end: vi.fn()
   },
   forceFlush: vi.fn(),
-  finishPromise: Promise.resolve()
+  finishPromise: Promise.resolve(),
+  trimColdStartHistory: vi.fn()
 }))
 
 vi.mock('ai', () => ({
@@ -48,6 +49,10 @@ vi.mock('@/lib/agents/title-generator', () => ({
 
 vi.mock('@/lib/streaming/helpers/attachment-sizes', () => ({
   resolveAttachmentSizes: vi.fn(async (messages: unknown) => messages)
+}))
+
+vi.mock('@/lib/streaming/helpers/trim-cold-start-history', () => ({
+  trimColdStartHistory: mocks.trimColdStartHistory
 }))
 
 vi.mock('@/lib/streaming/helpers/persist-stream-results', () => ({
@@ -150,6 +155,10 @@ describe('createChatStreamResponse', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.finishPromise = Promise.resolve()
+    mocks.trimColdStartHistory.mockImplementation((messages: unknown[]) => ({
+      messages,
+      trimmedAtCurrentTurn: false
+    }))
     vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
@@ -338,6 +347,25 @@ describe('createChatStreamResponse', () => {
     expect(mocks.span.update).toHaveBeenCalledWith({
       input: 'hello',
       output: 'Answer'
+    })
+  })
+
+  it('records a cold-start history trim on the root span', async () => {
+    mocks.trimColdStartHistory.mockImplementationOnce(
+      (messages: unknown[]) => ({
+        messages,
+        trimmedAtCurrentTurn: true
+      })
+    )
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'hello',
+      output: 'Answer',
+      metadata: { coldStartHistoryTrimmed: true }
     })
   })
 
