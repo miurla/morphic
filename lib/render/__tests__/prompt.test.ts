@@ -58,6 +58,19 @@ describe('render prompts', () => {
     }
   )
 
+  test('requires quick mode to search before early stopping', () => {
+    const prompt = getQuickModePrompt()
+    const earlyStopSection = prompt.slice(
+      prompt.indexOf('**Early Stop Criteria'),
+      prompt.indexOf('\n\nLanguage:')
+    )
+
+    expect(earlyStopSection).toContain('The required search has completed')
+    expect(earlyStopSection).not.toContain(
+      "answer the user's question with current information"
+    )
+  })
+
   test.each([
     [getQuickModePrompt, 'Example approach:'],
     [getAdaptiveModePrompt, 'Flexible example:']
