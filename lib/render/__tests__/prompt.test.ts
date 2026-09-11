@@ -66,16 +66,16 @@ describe('render prompts', () => {
     )
 
     expect(earlyStopSection).toContain(
-      'The informational request contains no URLs: the single required search has completed'
+      'The informational request has no actionable URLs: the single required search has completed'
     )
     expect(earlyStopSection).toContain(
-      'The request asks only about content in the provided URLs: a fetch attempt has completed for every provided URL'
+      'The request asks only about content in actionable URLs: a fetch attempt has completed for every actionable URL'
     )
     expect(earlyStopSection).toContain(
-      'The request asks about the provided URLs and requires broader information: fetch attempts have completed for every provided URL AND the single required search has completed'
+      'The request asks about actionable URLs and requires broader information: fetch attempts have completed for every actionable URL AND the single required search has completed'
     )
     expect(earlyStopSection).toContain(
-      'The request contains no URLs and needs no external information'
+      'The request has no actionable URLs and needs no external information'
     )
     expect(earlyStopSection).not.toContain(
       "answer the user's question with current information"
@@ -84,7 +84,10 @@ describe('render prompts', () => {
       'On an allowed no-search turn, do not emit citation syntax'
     )
     expect(prompt).toContain(
-      'If the request asks only about content in the provided URLs, do NOT search'
+      'A URL included only as literal text to translate, rewrite, reformat, or reproduce in creative output is not actionable and MUST NOT be fetched'
+    )
+    expect(prompt).toContain(
+      'If the request asks only about content in the actionable URLs, do NOT search'
     )
     expect(prompt).toContain(
       'run exactly one search after every fetch attempt has completed'
