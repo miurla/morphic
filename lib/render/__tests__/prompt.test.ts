@@ -69,10 +69,13 @@ describe('render prompts', () => {
       'For informational questions without URLs, the required search has completed'
     )
     expect(earlyStopSection).toContain(
-      'The message is limited to casual chit-chat'
+      'For informational questions without URLs, the single search has completed'
     )
     expect(earlyStopSection).toContain(
-      'The user provided one or more URLs and every provided URL has been fetched'
+      'The message contains no URLs, is limited to casual chit-chat'
+    )
+    expect(earlyStopSection).toContain(
+      'a fetch attempt has completed for every provided URL'
     )
     expect(earlyStopSection).not.toContain(
       "answer the user's question with current information"
