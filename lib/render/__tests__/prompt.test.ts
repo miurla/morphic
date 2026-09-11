@@ -58,14 +58,22 @@ describe('render prompts', () => {
     }
   )
 
-  test('requires quick mode to search before early stopping', () => {
+  test('anchors quick-mode early stops to the required tool call', () => {
     const prompt = getQuickModePrompt()
     const earlyStopSection = prompt.slice(
       prompt.indexOf('**Early Stop Criteria'),
       prompt.indexOf('\n\nLanguage:')
     )
 
-    expect(earlyStopSection).toContain('The required search has completed')
+    expect(earlyStopSection).toContain(
+      'For informational questions without URLs, the required search has completed'
+    )
+    expect(earlyStopSection).toContain(
+      'The message is limited to casual chit-chat'
+    )
+    expect(earlyStopSection).toContain(
+      'The user provided a URL and the fetch has completed'
+    )
     expect(earlyStopSection).not.toContain(
       "answer the user's question with current information"
     )
