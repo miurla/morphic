@@ -87,10 +87,16 @@ describe('render prompts', () => {
       'A URL included only as literal text to translate, rewrite, reformat, or reproduce in creative output is not actionable and MUST NOT be fetched'
     )
     expect(prompt).toContain(
+      "When one or more URLs are the turn's only substantive content, every URL is actionable"
+    )
+    expect(prompt).toContain(
       'If the request asks only about content in the actionable URLs, do NOT search'
     )
     expect(prompt).toContain(
       'run exactly one search after every fetch attempt has completed'
+    )
+    expect(earlyStopSection).toContain(
+      'it can be answered entirely from material already present in the conversation or attached by the user'
     )
   })
 
