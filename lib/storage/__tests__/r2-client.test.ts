@@ -178,6 +178,48 @@ describe('R2 client', () => {
     })
   })
 
+  describe('getObjectKeyFromSignedUrl', () => {
+    it('extracts decoded keys from the configured R2 bucket', async () => {
+      delete process.env.S3_ENDPOINT
+      process.env.R2_ACCOUNT_ID = 'account-id'
+
+      const { getObjectKeyFromSignedUrl } = await importR2Client()
+
+      expect(
+        getObjectKeyFromSignedUrl(
+          'https://TEST-BUCKET.ACCOUNT-ID.r2.cloudflarestorage.com/user-id/chats/chat-id/my%20file.pdf?X-Amz-Signature=value'
+        )
+      ).toBe('user-id/chats/chat-id/my file.pdf')
+    })
+
+    it('extracts decoded keys from a path-style endpoint with a base path', async () => {
+      process.env.S3_ENDPOINT = 'https://storage.example.com/s3/'
+
+      const { getObjectKeyFromSignedUrl } = await importR2Client()
+
+      expect(
+        getObjectKeyFromSignedUrl(
+          'https://storage.example.com/s3/test-bucket/user-id/my%20file.pdf?signature=value'
+        )
+      ).toBe('user-id/my file.pdf')
+    })
+
+    it('rejects URLs that do not identify an object in the configured bucket', async () => {
+      const { getObjectKeyFromSignedUrl } = await importR2Client()
+
+      for (const url of [
+        'https://other.example.com/test-bucket/user-id/file.pdf',
+        'https://r2.example.com/other-bucket/user-id/file.pdf',
+        'https://r2.example.com/test-bucket/',
+        'https://r2.example.com/test-bucket/bad%ZZname.pdf',
+        'not a URL',
+        'data:text/plain,hello'
+      ]) {
+        expect(getObjectKeyFromSignedUrl(url)).toBeUndefined()
+      }
+    })
+  })
+
   describe('getObjectContentMd5', () => {
     it('reads the digest off a single-part ETag', async () => {
       const md5 = 'd41d8cd98f00b204e9800998ecf8427e'
@@ -315,6 +357,62 @@ describe('R2 client', () => {
     ])
   })
 
+  it('derives and signs a keyless object inside the allowed prefix', async () => {
+    s3Mocks.getSignedUrl.mockResolvedValue('https://signed.example.com/fresh')
+
+    const { signFilePartUrls } = await importR2Client()
+
+    await expect(
+      signFilePartUrls(
+        [
+          {
+            type: 'file',
+            mediaType: 'application/pdf',
+            filename: 'my file.pdf',
+            url: 'https://r2.example.com/test-bucket/user-123/chats/chat-123/my%20file.pdf?signature=expired'
+          }
+        ],
+        { allowedKeyPrefix: 'user-123/' }
+      )
+    ).resolves.toEqual([
+      {
+        type: 'file',
+        key: 'user-123/chats/chat-123/my file.pdf',
+        mediaType: 'application/pdf',
+        filename: 'my file.pdf',
+        url: 'https://signed.example.com/fresh'
+      }
+    ])
+  })
+
+  it('preserves a keyless object outside the allowed prefix', async () => {
+    const part = {
+      type: 'file',
+      mediaType: 'image/png',
+      filename: 'file.png',
+      url: 'https://r2.example.com/test-bucket/other-user/file.png?signature=expired'
+    }
+    const { signFilePartUrls } = await importR2Client()
+
+    await expect(
+      signFilePartUrls([part], { allowedKeyPrefix: 'user-123/' })
+    ).resolves.toEqual([part])
+    expect(s3Mocks.getSignedUrl).not.toHaveBeenCalled()
+  })
+
+  it('does not derive a keyless object without a prefix option', async () => {
+    const part = {
+      type: 'file',
+      mediaType: 'image/png',
+      filename: 'file.png',
+      url: 'https://r2.example.com/test-bucket/user-123/file.png?signature=expired'
+    }
+    const { signFilePartUrls } = await importR2Client()
+
+    await expect(signFilePartUrls([part])).resolves.toEqual([part])
+    expect(s3Mocks.getSignedUrl).not.toHaveBeenCalled()
+  })
+
   it('rejects object keys outside the allowed prefix', async () => {
     const { signFilePartUrls } = await importR2Client()
 
@@ -361,6 +459,50 @@ describe('R2 client', () => {
         mediaType: 'image/png',
         filename: 'file.png',
         url: 'https://signed.example.com/file'
+      }
+    ])
+  })
+
+  it('derives only keyless owner objects when signing stored messages', async () => {
+    s3Mocks.getSignedUrl
+      .mockResolvedValueOnce('https://signed.example.com/derived')
+      .mockResolvedValueOnce('https://signed.example.com/existing')
+
+    const { signFilePartUrlsInMessages } = await importR2Client()
+
+    await expect(
+      signFilePartUrlsInMessages(
+        [
+          {
+            parts: [
+              {
+                type: 'file',
+                url: 'https://r2.example.com/test-bucket/user-123/file.png?signature=expired'
+              },
+              {
+                type: 'file',
+                key: 'other-user/file.png',
+                url: ''
+              }
+            ]
+          }
+        ],
+        { keylessKeyPrefix: 'user-123/' }
+      )
+    ).resolves.toEqual([
+      {
+        parts: [
+          {
+            type: 'file',
+            key: 'user-123/file.png',
+            url: 'https://signed.example.com/derived'
+          },
+          {
+            type: 'file',
+            key: 'other-user/file.png',
+            url: 'https://signed.example.com/existing'
+          }
+        ]
       }
     ])
   })

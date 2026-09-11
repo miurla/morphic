@@ -51,6 +51,7 @@ let _r2Client: S3Client | null = null
 
 type SignFilePartUrlsOptions = {
   allowedKeyPrefix?: string
+  keylessKeyPrefix?: string
 }
 
 export function getR2Client(): S3Client {
@@ -99,6 +100,61 @@ export function isObjectStorageConfigured() {
 
 function normalizeObjectKey(key: string) {
   return key.replace(/^\/+/, '')
+}
+
+function decodeObjectKey(pathname: string): string | undefined {
+  const encodedKey = pathname.replace(/^\/+/, '')
+  if (!encodedKey) return undefined
+
+  try {
+    return encodedKey
+      .split('/')
+      .map(segment => decodeURIComponent(segment))
+      .join('/')
+  } catch {
+    return undefined
+  }
+}
+
+export function getObjectKeyFromSignedUrl(url: string): string | undefined {
+  let parsedUrl: URL
+
+  try {
+    parsedUrl = new URL(url)
+  } catch {
+    return undefined
+  }
+
+  const bucketName = process.env.R2_BUCKET_NAME || 'user-uploads'
+  const s3Endpoint = process.env.S3_ENDPOINT?.replace(/\/+$/, '')
+
+  if (s3Endpoint) {
+    let parsedEndpoint: URL
+
+    try {
+      parsedEndpoint = new URL(s3Endpoint)
+    } catch {
+      return undefined
+    }
+
+    if (parsedUrl.origin !== parsedEndpoint.origin) return undefined
+
+    const endpointPath = parsedEndpoint.pathname.replace(/\/+$/, '')
+    const bucketPath = `${endpointPath}/${bucketName}/`
+    if (!parsedUrl.pathname.startsWith(bucketPath)) return undefined
+
+    return decodeObjectKey(parsedUrl.pathname.slice(bucketPath.length))
+  }
+
+  const accountId = process.env.R2_ACCOUNT_ID
+  if (!accountId || parsedUrl.protocol !== 'https:') return undefined
+
+  const expectedHost = `${bucketName}.${accountId}.r2.cloudflarestorage.com`
+  if (parsedUrl.host.toLowerCase() !== expectedHost.toLowerCase()) {
+    return undefined
+  }
+
+  return decodeObjectKey(parsedUrl.pathname)
 }
 
 export function getChatFileObjectKeyPrefix(userId: string, chatId: string) {
@@ -204,7 +260,25 @@ export async function signFilePartUrls(
       }
 
       if (!part.key) {
-        return part
+        const keylessKeyPrefix =
+          options.allowedKeyPrefix ?? options.keylessKeyPrefix
+        if (!keylessKeyPrefix) return part
+
+        const key = getObjectKeyFromSignedUrl(part.url)
+        if (!key || !isObjectKeyWithinPrefix(key, keylessKeyPrefix)) {
+          return part
+        }
+
+        try {
+          return {
+            ...part,
+            key,
+            url: await getSignedFileUrl(key)
+          }
+        } catch (error) {
+          console.error('Failed to sign file URL:', error)
+          return { ...part, key, url: '' }
+        }
       }
 
       if (
@@ -228,12 +302,13 @@ export async function signFilePartUrls(
 }
 
 export async function signFilePartUrlsInMessages<T extends { parts?: any[] }>(
-  messages: T[]
+  messages: T[],
+  options: SignFilePartUrlsOptions = {}
 ): Promise<T[]> {
   return Promise.all(
     messages.map(async message => ({
       ...message,
-      parts: await signFilePartUrls(message.parts)
+      parts: await signFilePartUrls(message.parts, options)
     }))
   )
 }
