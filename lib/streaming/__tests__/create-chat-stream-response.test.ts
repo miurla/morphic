@@ -52,6 +52,7 @@ vi.mock('@/lib/streaming/helpers/attachment-sizes', () => ({
 }))
 
 vi.mock('@/lib/streaming/helpers/trim-cold-start-history', () => ({
+  COLD_START_HISTORY_TOKEN_LIMIT: 200_000,
   trimColdStartHistory: mocks.trimColdStartHistory
 }))
 
@@ -79,6 +80,7 @@ import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-res
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
 import { EMPTY_RESPONSE_STATUS_MESSAGE } from '@/lib/streaming/helpers/is-empty-response'
 import { prepareMessages } from '@/lib/streaming/helpers/prepare-messages'
+import { getMaxAllowedTokens } from '@/lib/utils/context-window'
 
 type StreamOptions = {
   onError: (event: { error: unknown }) => void
@@ -366,6 +368,18 @@ describe('createChatStreamResponse', () => {
       input: 'hello',
       output: 'Answer',
       metadata: { coldStartHistoryTrimmed: true }
+    })
+  })
+
+  it('bounds the cold-start history limit by the model input window', async () => {
+    const config = createConfig()
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createChatStreamResponse(config)
+    await mocks.finishPromise
+
+    expect(mocks.trimColdStartHistory).toHaveBeenCalledWith(expect.any(Array), {
+      limit: Math.min(200_000, getMaxAllowedTokens(config.model))
     })
   })
 

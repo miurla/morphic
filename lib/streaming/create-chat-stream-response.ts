@@ -48,7 +48,10 @@ import {
 } from './helpers/stream-error-diagnostics'
 import { stripSpecFromMessages } from './helpers/strip-spec-from-messages'
 import { summarizeCarriedContext } from './helpers/summarize-carried-context'
-import { trimColdStartHistory } from './helpers/trim-cold-start-history'
+import {
+  COLD_START_HISTORY_TOKEN_LIMIT,
+  trimColdStartHistory
+} from './helpers/trim-cold-start-history'
 import type { StreamContext } from './helpers/types'
 import { BaseStreamConfig } from './types'
 
@@ -222,7 +225,18 @@ export async function createChatStreamResponse(
         messagesWithoutSpec,
         userId
       )
-      const coldStartHistory = trimColdStartHistory(messagesWithAttachmentSizes)
+      const coldStartHistory = trimColdStartHistory(
+        messagesWithAttachmentSizes,
+        {
+          limit:
+            COLD_START_HISTORY_TOKEN_LIMIT > 0
+              ? Math.min(
+                  COLD_START_HISTORY_TOKEN_LIMIT,
+                  getMaxAllowedTokens(model)
+                )
+              : 0
+        }
+      )
       coldStartHistoryTrimmed = coldStartHistory.trimmedAtCurrentTurn
       const messagesToConvert = dedupeAttachments(
         capHistoricalAttachments(
