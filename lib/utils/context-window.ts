@@ -155,6 +155,24 @@ function getEncoder(modelId: string) {
 }
 
 /**
+ * Token count for plain text, using the model's tokenizer when available
+ */
+export function countTextTokens(text: string, modelId?: string): number {
+  if (!text) return 0
+
+  const encoder = modelId ? getEncoder(modelId) : null
+  if (encoder) {
+    try {
+      return encoder.encode(text).length
+    } catch {
+      // Fall through to the character approximation
+    }
+  }
+
+  return Math.ceil(text.length / 4)
+}
+
+/**
  * Estimate token count for a message
  * Uses tiktoken for accurate counting when available
  */

@@ -379,7 +379,8 @@ describe('createChatStreamResponse', () => {
     await mocks.finishPromise
 
     expect(mocks.trimColdStartHistory).toHaveBeenCalledWith(expect.any(Array), {
-      limit: Math.min(200_000, getMaxAllowedTokens(config.model))
+      limit: Math.min(200_000, getMaxAllowedTokens(config.model)),
+      modelId: 'gpt-4o-mini'
     })
   })
 

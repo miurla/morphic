@@ -1,6 +1,7 @@
 import type { UIMessage } from 'ai'
 
 import { estimateAttachmentTokens } from '@/lib/utils/attachment-tokens'
+import { countTextTokens } from '@/lib/utils/context-window'
 
 import { compactHistoricalMessages } from './compact-historical-messages'
 
@@ -27,49 +28,73 @@ export const COLD_START_HISTORY_TOKEN_LIMIT = parseColdStartHistoryTokenLimit(
   process.env.COLD_START_HISTORY_TOKEN_LIMIT
 )
 
+type ReplayedText = {
+  text: string
+  fixedTokens: number
+}
+
 type Turn = {
   messages: UIMessage[]
   timestamp?: number
-  tokens: number
+  replayed: ReplayedText[]
 }
 
-function serializedLength(value: unknown): number {
-  if (value === undefined) return 0
+const textEncoder = new TextEncoder()
+
+function serialize(value: unknown): string {
+  if (value === undefined) return ''
 
   try {
-    return JSON.stringify(value)?.length ?? 0
+    return JSON.stringify(value) ?? ''
   } catch {
-    return 0
+    return ''
   }
 }
 
-function estimateReplayedMessageTokens(message: UIMessage): number {
-  let chars = 0
+function describeReplayedMessage(message: UIMessage): ReplayedText {
+  const texts: string[] = []
   let attachmentTokens = 0
 
   for (const part of message.parts) {
     if (part.type === 'text' || part.type === 'reasoning') {
-      chars += part.text.length
+      texts.push(part.text)
     } else if (part.type === 'dynamic-tool' || part.type.startsWith('tool-')) {
       const toolPart = part as { input?: unknown; output?: unknown }
-      chars += serializedLength(toolPart.input)
-      chars += serializedLength(toolPart.output)
+      texts.push(serialize(toolPart.input), serialize(toolPart.output))
     } else if (part.type.startsWith('data-')) {
-      chars += serializedLength((part as { data?: unknown }).data)
+      texts.push(serialize((part as { data?: unknown }).data))
     } else if (part.type === 'file') {
       const filePart = part as { mediaType?: string; size?: number }
       attachmentTokens += estimateAttachmentTokens(filePart)
     }
   }
 
-  return Math.ceil(chars / 4) + MESSAGE_TOKEN_OVERHEAD + attachmentTokens
+  return {
+    text: texts.join(''),
+    fixedTokens: MESSAGE_TOKEN_OVERHEAD + attachmentTokens
+  }
 }
 
-// Estimated on the message's historical replay form, which depends only on
+// Described on the message's historical replay form, which depends only on
 // the message itself, so the estimate does not change as the thread grows.
-function estimateMessageTokens(message: UIMessage): number {
-  return compactHistoricalMessages([message]).reduce(
-    (total, replayed) => total + estimateReplayedMessageTokens(replayed),
+function describeMessage(message: UIMessage): ReplayedText[] {
+  return compactHistoricalMessages([message]).map(describeReplayedMessage)
+}
+
+// A token always spans at least one UTF-8 byte, so this bounds any tokenizer
+// without running one.
+function tokenUpperBound(turn: Turn): number {
+  return turn.replayed.reduce(
+    (total, { text, fixedTokens }) =>
+      total + textEncoder.encode(text).length + fixedTokens,
+    0
+  )
+}
+
+function countTurnTokens(turn: Turn, modelId?: string): number {
+  return turn.replayed.reduce(
+    (total, { text, fixedTokens }) =>
+      total + countTextTokens(text, modelId) + fixedTokens,
     0
   )
 }
@@ -105,17 +130,14 @@ function buildTurns(messages: UIMessage[], now: Date): Turn[] {
     return {
       messages: turnMessages,
       timestamp,
-      tokens: turnMessages.reduce(
-        (total, message) => total + estimateMessageTokens(message),
-        0
-      )
+      replayed: turnMessages.flatMap(describeMessage)
     }
   })
 }
 
 export function trimColdStartHistory(
   messages: UIMessage[],
-  options: { now?: Date; limit?: number } = {}
+  options: { now?: Date; limit?: number; modelId?: string } = {}
 ): { messages: UIMessage[]; trimmedAtCurrentTurn: boolean } {
   const limit = options.limit ?? COLD_START_HISTORY_TOKEN_LIMIT
   if (limit <= 0) return { messages, trimmedAtCurrentTurn: false }
@@ -125,6 +147,13 @@ export function trimColdStartHistory(
     return { messages, trimmedAtCurrentTurn: false }
   }
 
+  const upperBound = turns.reduce(
+    (total, turn) => total + tokenUpperBound(turn),
+    0
+  )
+  if (upperBound <= limit) return { messages, trimmedAtCurrentTurn: false }
+
+  const tokens = turns.map(turn => countTurnTokens(turn, options.modelId))
   let cut = 1
   let trimmedAtCurrentTurn = false
 
@@ -138,12 +167,12 @@ export function trimColdStartHistory(
 
     if (!cold || i + 1 < MIN_TURNS) continue
 
-    let total = turns[0].tokens
-    for (let j = cut; j <= i; j++) total += turns[j].tokens
+    let total = tokens[0]
+    for (let j = cut; j <= i; j++) total += tokens[j]
 
     const cutBefore = cut
     while (total > limit && cut < i) {
-      total -= turns[cut].tokens
+      total -= tokens[cut]
       cut += 1
     }
 

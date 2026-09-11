@@ -234,7 +234,8 @@ export async function createChatStreamResponse(
                   COLD_START_HISTORY_TOKEN_LIMIT,
                   getMaxAllowedTokens(model)
                 )
-              : 0
+              : 0,
+          modelId: model.id
         }
       )
       coldStartHistoryTrimmed = coldStartHistory.trimmedAtCurrentTurn
