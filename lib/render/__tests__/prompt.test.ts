@@ -72,7 +72,7 @@ describe('render prompts', () => {
       'The message is limited to casual chit-chat'
     )
     expect(earlyStopSection).toContain(
-      'The user provided a URL and the fetch has completed'
+      'The user provided one or more URLs and every provided URL has been fetched'
     )
     expect(earlyStopSection).not.toContain(
       "answer the user's question with current information"
