@@ -6,6 +6,10 @@ import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
 import type { Chat, Message } from '@/lib/db/schema'
+import {
+  getUserFileObjectKeyPrefix,
+  signFilePartUrlsInMessages
+} from '@/lib/storage/r2-client'
 import type { UIMessage } from '@/lib/types/ai'
 
 import {
@@ -28,6 +32,10 @@ import {
 vi.mock('@/lib/auth/get-current-user')
 vi.mock('@/lib/db/actions')
 vi.mock('@/lib/agents/title-generator')
+vi.mock('@/lib/storage/r2-client', () => ({
+  getUserFileObjectKeyPrefix: vi.fn((userId: string) => `${userId}/`),
+  signFilePartUrlsInMessages: vi.fn(async messages => messages)
+}))
 
 describe('Chat Actions', () => {
   beforeEach(() => {
@@ -129,6 +137,11 @@ describe('Chat Actions', () => {
       expect(dbActions.loadChatWithMessages).toHaveBeenCalledWith(
         chatId,
         userId
+      )
+      expect(getUserFileObjectKeyPrefix).toHaveBeenCalledWith(userId)
+      expect(signFilePartUrlsInMessages).toHaveBeenCalledWith(
+        mockChat.messages,
+        { keylessKeyPrefix: `${userId}/` }
       )
     })
 

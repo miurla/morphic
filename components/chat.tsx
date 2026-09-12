@@ -155,6 +155,7 @@ export function Chat({
             trigger, // Use AI SDK's default trigger value directly
             chatId: chatId,
             messageId,
+            clientSource: 'web',
             analyticsId: getDistinctId(),
             ...(isGuest ? { messages } : {}),
             message:
