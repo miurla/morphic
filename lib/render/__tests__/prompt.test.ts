@@ -66,13 +66,13 @@ describe('render prompts', () => {
     )
 
     expect(earlyStopSection).toContain(
-      'The informational request has no actionable URLs: the single required search has completed'
+      'The informational request requires external information and has no actionable URLs: the single required search has completed'
     )
     expect(earlyStopSection).toContain(
-      'The request asks only about content in actionable URLs: retrieval is complete for every actionable URL'
+      'The request has actionable URLs but requires no external information beyond their contents and material explicitly supplied by the user in the conversation or attachments: retrieval is complete for every actionable URL'
     )
     expect(earlyStopSection).toContain(
-      'The request asks about actionable URLs and requires broader information: retrieval is complete for every actionable URL AND the single required search has completed'
+      'The request has actionable URLs and requires external information beyond their contents and material explicitly supplied by the user in the conversation or attachments: retrieval is complete for every actionable URL AND the single required search has completed'
     )
     expect(earlyStopSection).toContain(
       'The request has no actionable URLs and needs no external information'
@@ -90,13 +90,19 @@ describe('render prompts', () => {
       "When one or more URLs are the turn's only substantive content, every URL is actionable"
     )
     expect(prompt).toContain(
-      'If the request asks only about content in the actionable URLs, do NOT search'
+      'If the request has actionable URLs but requires no external information beyond their contents and supplied material, do NOT search'
     )
     expect(prompt).toContain(
       'run exactly one search after retrieval is complete for every actionable URL'
     )
     expect(earlyStopSection).toContain(
-      'it can be answered entirely from material already present in the conversation or attached by the user'
+      'it can be answered entirely from material explicitly supplied by the user in the conversation or attachments'
+    )
+    expect(prompt).toContain(
+      'For informational requests that require external information and have no actionable URLs, start with one search tool call'
+    )
+    expect(prompt).toContain(
+      'If the request requires external information, has no actionable URLs, and asks for information/advice/comparison/explanation'
     )
     expect(prompt).toContain(
       'If regular retrieval fails for a valid public URL, retry that URL exactly once with `type: "api"`'
