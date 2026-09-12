@@ -112,25 +112,6 @@ export async function POST(req: Request) {
       if (guestLimitResponse) return guestLimitResponse
     }
 
-    if (keylessFilePartCount > 0) {
-      console.warn(
-        'Keyless file parts received',
-        JSON.stringify({
-          chatId,
-          messageId: message?.id ?? messageId ?? null,
-          trigger,
-          keylessFilePartCount,
-          clientSource:
-            typeof body.clientSource === 'string' ? body.clientSource : null,
-          userAgent: req.headers.get('user-agent'),
-          referer,
-          origin: req.headers.get('origin'),
-          secFetchSite: req.headers.get('sec-fetch-site'),
-          vercelId: req.headers.get('x-vercel-id')
-        })
-      )
-    }
-
     const cookieStore = await cookies()
 
     // Get search mode from cookie
@@ -190,6 +171,25 @@ export async function POST(req: Request) {
         const adaptiveLimitResponse = await checkAndEnforceAdaptiveLimit(userId)
         if (adaptiveLimitResponse) return adaptiveLimitResponse
       }
+    }
+
+    if (keylessFilePartCount > 0) {
+      console.warn(
+        'Keyless file parts received',
+        JSON.stringify({
+          chatId,
+          messageId: message?.id ?? messageId ?? null,
+          trigger,
+          keylessFilePartCount,
+          clientSource:
+            typeof body.clientSource === 'string' ? body.clientSource : null,
+          userAgent: req.headers.get('user-agent'),
+          referer,
+          origin: req.headers.get('origin'),
+          secFetchSite: req.headers.get('sec-fetch-site'),
+          vercelId: req.headers.get('x-vercel-id')
+        })
+      )
     }
 
     const streamStart = performance.now()
