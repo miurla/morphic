@@ -10,7 +10,8 @@ describe('TavilySearchProvider domains', () => {
 
   const searchAndReadBody = async (
     includeDomains: string[] = [],
-    excludeDomains: string[] = []
+    excludeDomains: string[] = [],
+    query: string = 'query'
   ) => {
     vi.stubEnv('TAVILY_API_KEY', 'test-key')
     const fetchMock = vi.fn(
@@ -20,7 +21,7 @@ describe('TavilySearchProvider domains', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     await new TavilySearchProvider().search(
-      'query',
+      query,
       5,
       'basic',
       includeDomains,
@@ -69,5 +70,50 @@ describe('TavilySearchProvider domains', () => {
 
     expect(body.include_domains).toEqual(['example.com', '*.example.org'])
     expect(body.exclude_domains).toEqual(['example.net'])
+  })
+
+  it('converts a site-only query into a domain term and include_domains entry', async () => {
+    const body = await searchAndReadBody([], [], 'site:example.com')
+
+    expect(body.query).toBe('example.com')
+    expect(body.include_domains).toEqual(['example.com'])
+  })
+
+  it('converts multiple site-only operators into domain terms', async () => {
+    const body = await searchAndReadBody(
+      ['existing.net'],
+      [],
+      'site:example.com SITE:example.org'
+    )
+
+    expect(body.query).toBe('example.com example.org')
+    expect(body.include_domains).toEqual([
+      'existing.net',
+      'example.com',
+      'example.org'
+    ])
+  })
+
+  it('leaves a site operator combined with search terms unchanged', async () => {
+    const query = 'site:example.com remodeling services'
+    const body = await searchAndReadBody([], [], query)
+
+    expect(body.query).toBe(query)
+    expect(body.include_domains).toEqual([])
+  })
+
+  it('leaves a query without site operators unchanged', async () => {
+    const query = 'remodeling services'
+    const body = await searchAndReadBody([], [], query)
+
+    expect(body.query).toBe(query)
+    expect(body.include_domains).toEqual([])
+  })
+
+  it('drops an invalid site-only domain from include_domains', async () => {
+    const body = await searchAndReadBody([], [], 'site:edu')
+
+    expect(body.query).toBe('edu  ')
+    expect(body.include_domains).toEqual([])
   })
 })
