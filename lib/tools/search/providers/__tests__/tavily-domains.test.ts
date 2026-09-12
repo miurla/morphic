@@ -117,6 +117,14 @@ describe('TavilySearchProvider domains', () => {
     expect(body.include_domains).toEqual([])
   })
 
+  it('leaves a site operand carrying a path unchanged', async () => {
+    const query = 'site:example.com/docs'
+    const body = await searchAndReadBody([], [], query)
+
+    expect(body.query).toBe(query)
+    expect(body.include_domains).toEqual([])
+  })
+
   it('keeps only the valid domains of a mixed site-only query', async () => {
     const body = await searchAndReadBody([], [], 'site:example.com site:edu')
 

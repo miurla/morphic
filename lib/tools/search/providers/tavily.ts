@@ -13,11 +13,15 @@ const CLOUD_EXCLUDED_DOMAINS = ['instagram.com']
 const VALID_DOMAIN_PATTERN = /^(\*\.)?[a-z0-9-]+(\.[a-z0-9-]+)+$/
 
 // Tavily rejects a query whose only content is `site:` operators, so those
-// queries are rewritten into domain terms plus an include_domains entry.
+// queries are rewritten into domain terms plus an include_domains entry. Only a
+// bare hostname operand qualifies: a path, port or scheme carries a restriction
+// include_domains cannot express, and dropping it would widen the search.
+const SITE_OPERATOR_PATTERN = /^site:(\*\.)?[a-z0-9.-]+$/i
+
 const extractSiteOnlyDomains = (query: string): string[] | null => {
   const tokens = query.trim().split(/\s+/)
 
-  if (tokens.some(token => !/^site:\S+$/i.test(token))) {
+  if (tokens.some(token => !SITE_OPERATOR_PATTERN.test(token))) {
     return null
   }
 
