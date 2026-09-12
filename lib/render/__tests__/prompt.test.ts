@@ -69,10 +69,10 @@ describe('render prompts', () => {
       'The informational request has no actionable URLs: the single required search has completed'
     )
     expect(earlyStopSection).toContain(
-      'The request asks only about content in actionable URLs: a fetch attempt has completed for every actionable URL'
+      'The request asks only about content in actionable URLs: retrieval is complete for every actionable URL'
     )
     expect(earlyStopSection).toContain(
-      'The request asks about actionable URLs and requires broader information: fetch attempts have completed for every actionable URL AND the single required search has completed'
+      'The request asks about actionable URLs and requires broader information: retrieval is complete for every actionable URL AND the single required search has completed'
     )
     expect(earlyStopSection).toContain(
       'The request has no actionable URLs and needs no external information'
@@ -93,10 +93,16 @@ describe('render prompts', () => {
       'If the request asks only about content in the actionable URLs, do NOT search'
     )
     expect(prompt).toContain(
-      'run exactly one search after every fetch attempt has completed'
+      'run exactly one search after retrieval is complete for every actionable URL'
     )
     expect(earlyStopSection).toContain(
       'it can be answered entirely from material already present in the conversation or attached by the user'
+    )
+    expect(prompt).toContain(
+      'If regular retrieval fails for a valid public URL, retry that URL exactly once with `type: "api"`'
+    )
+    expect(prompt).toContain(
+      'Do NOT retry a URL rejected as invalid, blocked, forbidden, or not found'
     )
   })
 
