@@ -8,7 +8,8 @@ const mocks = vi.hoisted(() => ({
     end: vi.fn()
   },
   forceFlush: vi.fn(),
-  finishPromise: Promise.resolve()
+  finishPromise: Promise.resolve(),
+  trimColdStartHistory: vi.fn()
 }))
 
 vi.mock('ai', () => ({
@@ -50,6 +51,11 @@ vi.mock('@/lib/streaming/helpers/attachment-sizes', () => ({
   resolveAttachmentSizes: vi.fn(async (messages: unknown) => messages)
 }))
 
+vi.mock('@/lib/streaming/helpers/trim-cold-start-history', () => ({
+  COLD_START_HISTORY_TOKEN_LIMIT: 200_000,
+  trimColdStartHistory: mocks.trimColdStartHistory
+}))
+
 vi.mock('@/lib/streaming/helpers/persist-stream-results', () => ({
   persistStreamResults: vi.fn(async () => undefined)
 }))
@@ -74,6 +80,7 @@ import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-res
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
 import { EMPTY_RESPONSE_STATUS_MESSAGE } from '@/lib/streaming/helpers/is-empty-response'
 import { prepareMessages } from '@/lib/streaming/helpers/prepare-messages'
+import { getMaxAllowedTokens } from '@/lib/utils/context-window'
 
 type StreamOptions = {
   onError: (event: { error: unknown }) => void
@@ -150,6 +157,10 @@ describe('createChatStreamResponse', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.finishPromise = Promise.resolve()
+    mocks.trimColdStartHistory.mockImplementation((messages: unknown[]) => ({
+      messages,
+      trimmedAtCurrentTurn: false
+    }))
     vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
@@ -338,6 +349,38 @@ describe('createChatStreamResponse', () => {
     expect(mocks.span.update).toHaveBeenCalledWith({
       input: 'hello',
       output: 'Answer'
+    })
+  })
+
+  it('records a cold-start history trim on the root span', async () => {
+    mocks.trimColdStartHistory.mockImplementationOnce(
+      (messages: unknown[]) => ({
+        messages,
+        trimmedAtCurrentTurn: true
+      })
+    )
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'hello',
+      output: 'Answer',
+      metadata: { coldStartHistoryTrimmed: true }
+    })
+  })
+
+  it('bounds the cold-start history limit by the model input window', async () => {
+    const config = createConfig()
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createChatStreamResponse(config)
+    await mocks.finishPromise
+
+    expect(mocks.trimColdStartHistory).toHaveBeenCalledWith(expect.any(Array), {
+      limit: Math.min(200_000, getMaxAllowedTokens(config.model)),
+      modelId: 'gpt-4o-mini'
     })
   })
 
