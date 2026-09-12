@@ -58,6 +58,61 @@ describe('render prompts', () => {
     }
   )
 
+  test('defines exhaustive quick-mode tool plans and terminal outcomes', () => {
+    const prompt = getQuickModePrompt()
+    const toolPlanSection = prompt.slice(
+      prompt.indexOf('**Tool plan (classify once before acting):**'),
+      prompt.indexOf('**Completion rule (the only early-stop rule):**')
+    )
+
+    const expectedPlans = [
+      '| None | No | Use no tools; answer directly |',
+      '| None | Yes | Search exactly once; then answer |',
+      '| One or more | No | Retrieve every distinct actionable URL; then answer without search |',
+      '| One or more | Yes | Retrieve every distinct actionable URL; then search exactly once; then answer |'
+    ]
+    const actualPlans = toolPlanSection
+      .split('\n')
+      .filter(line => /^\| (?:None|One or more) \|/.test(line))
+
+    expect(toolPlanSection).toContain(
+      'These four rows are exhaustive and mutually exclusive'
+    )
+    expect(actualPlans).toEqual(expectedPlans)
+    expect(prompt).toContain('Model memory does not count as supplied material')
+    expect(prompt).toContain(
+      'A URL included only as literal text to translate, rewrite, reformat, or reproduce in creative output is not actionable and MUST NOT be fetched'
+    )
+    expect(prompt).toContain(
+      "When one or more URLs are the turn's only substantive content, every URL is actionable"
+    )
+    expect(prompt).toContain('self-contained calculations')
+    expect(prompt).toContain(
+      'The single search reaches a terminal outcome when that invocation returns results, returns no results, or fails'
+    )
+    expect(prompt).toContain(
+      'Never run a second search or substitute fetch for a failed or weak search'
+    )
+    expect(prompt).toContain(
+      'Attempt every distinct actionable URL even when an earlier URL fails or is refused'
+    )
+    expect(prompt).toContain(
+      'including a `.pdf` pathname with query parameters or a fragment'
+    )
+    expect(prompt).toContain(
+      'empty, irrelevant, truncated-before-the-requested-material, app-shell, "enable JavaScript", or similar unusable content'
+    )
+    expect(prompt).toContain(
+      'Any API attempt is terminal when it returns or fails, including empty or unusable output'
+    )
+    expect(prompt).toContain(
+      'malformed, non-HTTP(S), unsafe, blocked, forbidden, or not found is terminal after the first refusal'
+    )
+    expect(prompt).not.toContain(
+      "You can clearly answer the user's question with current information"
+    )
+  })
+
   test.each([
     [getQuickModePrompt, 'Example approach:'],
     [getAdaptiveModePrompt, 'Flexible example:']
