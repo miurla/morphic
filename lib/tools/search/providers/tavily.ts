@@ -54,7 +54,14 @@ export class TavilySearchProvider extends BaseSearchProvider {
     this.validateApiKey(apiKey, 'TAVILY')
 
     const siteOnlyDomains = extractSiteOnlyDomains(query)
-    const effectiveQuery = siteOnlyDomains?.join(' ') ?? query
+    const validSiteDomains = siteOnlyDomains
+      ? normalizeDomains(siteOnlyDomains)
+      : []
+    // Rewriting only when an operand survives validation keeps an unusable
+    // restriction failing instead of turning it into an unrestricted search.
+    const effectiveQuery = validSiteDomains.length
+      ? validSiteDomains.join(' ')
+      : query
 
     // Tavily API requires a minimum of 5 characters in the query
     const filledQuery =
@@ -62,10 +69,10 @@ export class TavilySearchProvider extends BaseSearchProvider {
         ? effectiveQuery + ' '.repeat(5 - effectiveQuery.length)
         : effectiveQuery
 
-    const validIncludeDomains = normalizeDomains([
-      ...includeDomains,
-      ...(siteOnlyDomains ?? [])
-    ])
+    const validIncludeDomains = [
+      ...normalizeDomains(includeDomains),
+      ...validSiteDomains
+    ]
 
     const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
     const effectiveExcludeDomains = isCloudDeployment

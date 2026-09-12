@@ -110,10 +110,17 @@ describe('TavilySearchProvider domains', () => {
     expect(body.include_domains).toEqual([])
   })
 
-  it('drops an invalid site-only domain from include_domains', async () => {
+  it('leaves a site-only query whose domains are all invalid unchanged', async () => {
     const body = await searchAndReadBody([], [], 'site:edu')
 
-    expect(body.query).toBe('edu  ')
+    expect(body.query).toBe('site:edu')
     expect(body.include_domains).toEqual([])
+  })
+
+  it('keeps only the valid domains of a mixed site-only query', async () => {
+    const body = await searchAndReadBody([], [], 'site:example.com site:edu')
+
+    expect(body.query).toBe('example.com')
+    expect(body.include_domains).toEqual(['example.com'])
   })
 })
