@@ -117,6 +117,21 @@ describe('TavilySearchProvider domains', () => {
     expect(body.include_domains).toEqual([])
   })
 
+  it('punycodes an internationalized site-only operand', async () => {
+    const body = await searchAndReadBody([], [], 'site:münchen.de')
+
+    expect(body.query).toBe('xn--mnchen-3ya.de')
+    expect(body.include_domains).toEqual(['xn--mnchen-3ya.de'])
+  })
+
+  it('leaves a site operand carrying a port unchanged', async () => {
+    const query = 'site:example.com:8080'
+    const body = await searchAndReadBody([], [], query)
+
+    expect(body.query).toBe(query)
+    expect(body.include_domains).toEqual([])
+  })
+
   it('leaves a site operand carrying a path unchanged', async () => {
     const query = 'site:example.com/docs'
     const body = await searchAndReadBody([], [], query)

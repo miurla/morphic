@@ -14,9 +14,11 @@ const VALID_DOMAIN_PATTERN = /^(\*\.)?[a-z0-9-]+(\.[a-z0-9-]+)+$/
 
 // Tavily rejects a query whose only content is `site:` operators, so those
 // queries are rewritten into domain terms plus an include_domains entry. Only a
-// bare hostname operand qualifies: a path, port or scheme carries a restriction
-// include_domains cannot express, and dropping it would widen the search.
-const SITE_OPERATOR_PATTERN = /^site:(\*\.)?[a-z0-9.-]+$/i
+// bare host operand qualifies: a path, port, scheme or userinfo carries a
+// restriction include_domains cannot express, and dropping it would widen the
+// search. Everything else is left to normalizeDomains, which punycodes an
+// internationalized host and rejects what is not a domain.
+const SITE_OPERATOR_PATTERN = /^site:[^\s/:?#@\\]+$/i
 
 const extractSiteOnlyDomains = (query: string): string[] | null => {
   const tokens = query.trim().split(/\s+/)
