@@ -102,6 +102,16 @@ export async function POST(req: Request) {
       })
     }
 
+    if (isGuest) {
+      const forwardedFor = req.headers.get('x-forwarded-for') || ''
+      const ip =
+        forwardedFor.split(',')[0]?.trim() ||
+        req.headers.get('x-real-ip') ||
+        null
+      const guestLimitResponse = await checkAndEnforceGuestLimit(ip)
+      if (guestLimitResponse) return guestLimitResponse
+    }
+
     if (keylessFilePartCount > 0) {
       console.warn(
         'Keyless file parts received',
@@ -119,16 +129,6 @@ export async function POST(req: Request) {
           vercelId: req.headers.get('x-vercel-id')
         })
       )
-    }
-
-    if (isGuest) {
-      const forwardedFor = req.headers.get('x-forwarded-for') || ''
-      const ip =
-        forwardedFor.split(',')[0]?.trim() ||
-        req.headers.get('x-real-ip') ||
-        null
-      const guestLimitResponse = await checkAndEnforceGuestLimit(ip)
-      if (guestLimitResponse) return guestLimitResponse
     }
 
     const cookieStore = await cookies()
