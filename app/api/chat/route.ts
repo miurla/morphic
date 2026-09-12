@@ -84,11 +84,41 @@ export async function POST(req: Request) {
 
     const guestChatEnabled = process.env.ENABLE_GUEST_CHAT === 'true'
     const isGuest = !userId
+
+    const keylessFilePartCount = Array.isArray(message?.parts)
+      ? message.parts.filter(
+          (part: unknown) =>
+            typeof part === 'object' &&
+            part !== null &&
+            (part as { type?: unknown }).type === 'file' &&
+            !(part as { key?: unknown }).key
+        ).length
+      : 0
+
     if (isGuest && !guestChatEnabled) {
       return new Response('Authentication required', {
         status: 401,
         statusText: 'Unauthorized'
       })
+    }
+
+    if (keylessFilePartCount > 0) {
+      console.warn(
+        'Keyless file parts received',
+        JSON.stringify({
+          chatId,
+          messageId: message?.id ?? messageId ?? null,
+          trigger,
+          keylessFilePartCount,
+          clientSource:
+            typeof body.clientSource === 'string' ? body.clientSource : null,
+          userAgent: req.headers.get('user-agent'),
+          referer,
+          origin: req.headers.get('origin'),
+          secFetchSite: req.headers.get('sec-fetch-site'),
+          vercelId: req.headers.get('x-vercel-id')
+        })
+      )
     }
 
     if (isGuest) {
