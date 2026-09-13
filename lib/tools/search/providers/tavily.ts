@@ -12,12 +12,8 @@ const CLOUD_EXCLUDED_DOMAINS = ['instagram.com']
 // resolved to an ASCII hostname so internationalized domains survive.
 const VALID_DOMAIN_PATTERN = /^(\*\.)?[a-z0-9-]+(\.[a-z0-9-]+)+$/
 
-// Tavily rejects a query whose only content is `site:` operators, so those
-// queries are rewritten into domain terms plus an include_domains entry. Only a
-// bare host operand qualifies: a path, port, scheme or userinfo carries a
-// restriction include_domains cannot express, and dropping it would widen the
-// search. Everything else is left to normalizeDomains, which punycodes an
-// internationalized host and rejects what is not a domain.
+// Tavily rejects a query made only of `site:` operators. Operands with a path
+// or port are left alone since include_domains cannot express them.
 const SITE_OPERATOR_PATTERN = /^site:[^\s/:?#@\\]+$/i
 
 const extractSiteOnlyDomains = (query: string): string[] | null => {
@@ -63,8 +59,6 @@ export class TavilySearchProvider extends BaseSearchProvider {
     const validSiteDomains = siteOnlyDomains
       ? normalizeDomains(siteOnlyDomains)
       : []
-    // Rewriting only when an operand survives validation keeps an unusable
-    // restriction failing instead of turning it into an unrestricted search.
     const effectiveQuery = validSiteDomains.length
       ? validSiteDomains.join(' ')
       : query
