@@ -51,13 +51,13 @@ const SAFETY_BUFFER_RATIO = 0.1
 const encoderCache = new Map<string, any>()
 
 // Mapping of our model IDs to tiktoken encoding names
-// js-tiktoken supports 'cl100k_base' (for GPT-4), 'p50k_base', 'r50k_base'
+// js-tiktoken supports 'o200k_base', 'cl100k_base', 'p50k_base', 'r50k_base'
 const MODEL_TO_ENCODING: Record<string, TiktokenEncoding> = {
   'gpt-4.1': 'cl100k_base',
   'gpt-4.1-mini': 'cl100k_base',
   'gpt-4.1-nano': 'cl100k_base',
   'gpt-4o-mini': 'cl100k_base',
-  'gpt-5.6-luna': 'cl100k_base',
+  'gpt-5.6-luna': 'o200k_base',
   'claude-opus-4': 'cl100k_base', // Use GPT-4 tokenizer as approximation for Claude
   'claude-sonnet-4': 'cl100k_base',
   'claude-3-7-sonnet': 'cl100k_base',

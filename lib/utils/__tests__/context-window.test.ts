@@ -1,15 +1,29 @@
 import { ModelMessage } from 'ai'
+import { getEncoding } from 'js-tiktoken'
 import { describe, expect, test } from 'vitest'
 
 import { Model } from '@/lib/types/models'
 
 import {
+  countTextTokens,
   getMaxAllowedTokens,
   shouldTruncateMessages,
   truncateMessages
 } from '../context-window'
 
 describe('context-window', () => {
+  describe('countTextTokens', () => {
+    test('counts gpt-5.6-luna text with the o200k tokenizer', () => {
+      const text = 'مرحبا بك في هذا البحث عن الطاقة المتجددة. '.repeat(50)
+      const tokens = countTextTokens(text, 'gpt-5.6-luna')
+
+      expect(tokens).toBe(getEncoding('o200k_base').encode(text).length)
+      expect(tokens).toBeLessThan(
+        getEncoding('cl100k_base').encode(text).length
+      )
+    })
+  })
+
   const mockModel: Model = {
     id: 'gpt-4o-mini',
     name: 'GPT-4o mini',

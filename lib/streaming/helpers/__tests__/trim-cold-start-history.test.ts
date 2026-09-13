@@ -234,6 +234,30 @@ describe('trimColdStartHistory', () => {
     ).toBe(true)
   })
 
+  it('counts gpt-5.6-luna history with its own tokenizer', () => {
+    const arabicText = 'مرحبا بك في هذا البحث'.repeat(20)
+    const coldAt = timestamp(3 * WARM_GAP_MS + COLD_GAP_MS)
+    const messages = Array.from({ length: 5 }, (_, i) => {
+      const createdAt = i === 4 ? coldAt : timestamp(i * WARM_GAP_MS)
+      return [
+        message(`u${i}`, 'user', createdAt, [
+          { type: 'text', text: arabicText }
+        ]),
+        message(`a${i}`, 'assistant', createdAt)
+      ]
+    }).flat()
+    const options = { now: coldAt, limit: 1_200 }
+
+    expect(
+      trimColdStartHistory(messages, { ...options, modelId: 'gpt-4o-mini' })
+        .trimmedAtCurrentTurn
+    ).toBe(true)
+    expect(
+      trimColdStartHistory(messages, { ...options, modelId: 'gpt-5.6-luna' })
+        .messages
+    ).toBe(messages)
+  })
+
   it('disables trimming when the limit is zero', () => {
     const messages = Array.from({ length: 6 }, (_, i) =>
       turn(i, timestamp(i * COLD_GAP_MS))
