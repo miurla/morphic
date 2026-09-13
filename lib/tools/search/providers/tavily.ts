@@ -12,6 +12,20 @@ const CLOUD_EXCLUDED_DOMAINS = ['instagram.com']
 // resolved to an ASCII hostname so internationalized domains survive.
 const VALID_DOMAIN_PATTERN = /^(\*\.)?[a-z0-9-]+(\.[a-z0-9-]+)+$/
 
+// Tavily rejects a query made only of `site:` operators. Operands with a path
+// or port are left alone since include_domains cannot express them.
+const SITE_OPERATOR_PATTERN = /^site:[^\s/:?#@\\]+$/i
+
+const extractSiteOnlyDomains = (query: string): string[] | null => {
+  const tokens = query.trim().split(/\s+/)
+
+  if (tokens.some(token => !SITE_OPERATOR_PATTERN.test(token))) {
+    return null
+  }
+
+  return tokens.map(token => token.slice(5))
+}
+
 const toAsciiHostname = (domain: string): string => {
   try {
     return new URL(`https://${domain.trim()}`).hostname
@@ -41,11 +55,24 @@ export class TavilySearchProvider extends BaseSearchProvider {
     const apiKey = process.env.TAVILY_API_KEY
     this.validateApiKey(apiKey, 'TAVILY')
 
+    const siteOnlyDomains = extractSiteOnlyDomains(query)
+    const validSiteDomains = siteOnlyDomains
+      ? normalizeDomains(siteOnlyDomains)
+      : []
+    const effectiveQuery = validSiteDomains.length
+      ? validSiteDomains.join(' ')
+      : query
+
     // Tavily API requires a minimum of 5 characters in the query
     const filledQuery =
-      query.length < 5 ? query + ' '.repeat(5 - query.length) : query
+      effectiveQuery.length < 5
+        ? effectiveQuery + ' '.repeat(5 - effectiveQuery.length)
+        : effectiveQuery
 
-    const validIncludeDomains = normalizeDomains(includeDomains)
+    const validIncludeDomains = [
+      ...normalizeDomains(includeDomains),
+      ...validSiteDomains
+    ]
 
     const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
     const effectiveExcludeDomains = isCloudDeployment
