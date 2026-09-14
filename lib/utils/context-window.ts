@@ -67,7 +67,9 @@ function getSnapshotModel(
     string,
     SnapshotModelInfo
   >
-  return provider[modelId]
+  return Object.prototype.hasOwnProperty.call(provider, modelId)
+    ? provider[modelId]
+    : undefined
 }
 
 function findSnapshotModel(model: Model): SnapshotModelInfo | undefined {
@@ -89,7 +91,10 @@ function findSnapshotModel(model: Model): SnapshotModelInfo | undefined {
 
   const providerId = PROVIDER_METADATA_BY_ID[model.providerId]
   if (providerId) {
-    return getSnapshotModel(providerId, model.id)
+    return (
+      getSnapshotModel(providerId, model.id) ??
+      getSnapshotModel('vercel', `${providerId}/${model.id}`)
+    )
   }
 
   for (const snapshotProviderId of Object.keys(

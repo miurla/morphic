@@ -107,6 +107,24 @@ describe('context-window', () => {
       expect(maxTokens).toBe(88000)
     })
 
+    test('falls back to Vercel metadata for a direct provider miss', () => {
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'claude-sonnet-4',
+        providerId: 'anthropic'
+      })
+      expect(maxTokens).toBe(891808)
+    })
+
+    test('does not resolve object prototype keys as models', () => {
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'constructor',
+        providerId: 'openai'
+      })
+      expect(maxTokens).toBe(10650)
+    })
+
     test('resolves gateway model ids from Vercel metadata', () => {
       const maxTokens = getMaxAllowedTokens({
         ...mockModel,
