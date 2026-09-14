@@ -46,6 +46,11 @@ describe('context-window', () => {
       expect(maxTokens).toBe(98816)
     })
 
+    test('uses the snapshot context window for GPT-4.1', () => {
+      const maxTokens = getMaxAllowedTokens({ ...mockModel, id: 'gpt-4.1' })
+      expect(maxTokens).toBe(910051)
+    })
+
     test('uses default values for unknown model', () => {
       const unknownModel: Model = {
         ...mockModel,
@@ -66,7 +71,11 @@ describe('context-window', () => {
     test('uses the real ~1M window for production Gemini models', () => {
       // (1048576 - 65536) - floor(1048576 * 0.1) = 983040 - 104857 = 878183
       for (const id of ['gemini-3-flash-preview', 'gemini-3.1-flash-lite']) {
-        const maxTokens = getMaxAllowedTokens({ ...mockModel, id })
+        const maxTokens = getMaxAllowedTokens({
+          ...mockModel,
+          id,
+          providerId: 'google'
+        })
         expect(maxTokens).toBe(878183)
       }
     })
@@ -78,6 +87,33 @@ describe('context-window', () => {
         id: 'gpt-5.6-luna'
       })
       expect(maxTokens).toBe(817000)
+    })
+
+    test('resolves a model absent from the old hand-maintained table', () => {
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'claude-sonnet-4-6',
+        providerId: 'anthropic'
+      })
+      expect(maxTokens).toBe(772000)
+    })
+
+    test('resolves gateway model ids from Vercel metadata', () => {
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'openai/gpt-5.6-luna',
+        providerId: 'gateway'
+      })
+      expect(maxTokens).toBe(817000)
+    })
+
+    test('searches the snapshot for providers without a direct mapping', () => {
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'gpt-4.1',
+        providerId: 'openai-compatible'
+      })
+      expect(maxTokens).toBe(910051)
     })
   })
 

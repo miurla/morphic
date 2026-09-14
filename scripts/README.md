@@ -2,6 +2,8 @@
 
 This directory contains utility scripts for testing and development.
 
+Regenerate the models.dev (MIT) snapshot with `bun scripts/generate-model-metadata.ts [--source <api.json>]`.
+
 ## chat-cli.ts
 
 A command-line interface for testing the chat API without a browser client. This script allows you to interact with the chat API directly, making it easier to debug server-side issues and test API functionality.

@@ -1,6 +1,8 @@
 import { ModelMessage } from 'ai'
 import { getEncoding, type TiktokenEncoding } from 'js-tiktoken'
 
+import modelMetadata from '@/lib/config/model-metadata.json'
+
 import { Model } from '../types/models'
 
 import { estimateAttachmentTokens } from './attachment-tokens'
@@ -9,35 +11,17 @@ type AttachmentTokenEstimates = ReadonlyMap<string, number>
 
 interface ModelContextInfo {
   contextWindow: number
+  inputTokens?: number
   outputTokens: number
 }
 
-// Model-specific context window configurations
-const MODEL_CONTEXT_WINDOWS: Record<string, ModelContextInfo> = {
-  // OpenAI Models
-  'gpt-4.1': { contextWindow: 128000, outputTokens: 16384 },
-  'gpt-4.1-mini': { contextWindow: 128000, outputTokens: 16384 },
-  'gpt-4.1-nano': { contextWindow: 128000, outputTokens: 16384 },
-  'gpt-4o-mini': { contextWindow: 128000, outputTokens: 16384 },
-  'gpt-5.6-luna': { contextWindow: 1050000, outputTokens: 128000 },
+type SnapshotProviderId = keyof typeof modelMetadata
+type SnapshotModelInfo = { context: number; input?: number; output: number }
 
-  // Anthropic Models
-  'claude-opus-4': { contextWindow: 680000, outputTokens: 8192 },
-  'claude-sonnet-4': { contextWindow: 680000, outputTokens: 8192 },
-  'claude-3-7-sonnet': { contextWindow: 200000, outputTokens: 8192 },
-  'claude-3-7-sonnet-20250219': { contextWindow: 200000, outputTokens: 8192 },
-  'claude-3-5-haiku-20241022': { contextWindow: 200000, outputTokens: 8192 },
-
-  // Google Models
-  'gemini-3-flash-preview': { contextWindow: 1048576, outputTokens: 65536 },
-  'gemini-3.1-flash-lite': { contextWindow: 1048576, outputTokens: 65536 },
-  'gemini-2.5-flash': { contextWindow: 1048576, outputTokens: 65536 },
-  'gemini-2.5-pro': { contextWindow: 1048576, outputTokens: 65536 },
-
-  // xAI Models
-  'grok-4-0709': { contextWindow: 256000, outputTokens: 8192 },
-  'grok-3': { contextWindow: 131072, outputTokens: 8192 },
-  'grok-3-mini': { contextWindow: 131072, outputTokens: 8192 }
+const PROVIDER_METADATA_BY_ID: Record<string, SnapshotProviderId> = {
+  anthropic: 'anthropic',
+  google: 'google',
+  openai: 'openai'
 }
 
 // Default values for unknown models
@@ -75,24 +59,74 @@ const MODEL_TO_ENCODING: Record<string, TiktokenEncoding> = {
 /**
  * Get model-specific context window information
  */
-function getModelContextInfo(modelId: string): ModelContextInfo {
-  // Direct lookup only
-  return (
-    MODEL_CONTEXT_WINDOWS[modelId] || {
+function getSnapshotModel(
+  providerId: SnapshotProviderId,
+  modelId: string
+): SnapshotModelInfo | undefined {
+  const provider = modelMetadata[providerId] as Record<
+    string,
+    SnapshotModelInfo
+  >
+  return provider[modelId]
+}
+
+function findSnapshotModel(model: Model): SnapshotModelInfo | undefined {
+  if (model.providerId === 'gateway') {
+    const gatewayModel = getSnapshotModel('vercel', model.id)
+    if (gatewayModel) return gatewayModel
+
+    const separatorIndex = model.id.indexOf('/')
+    if (separatorIndex !== -1) {
+      const providerId = model.id.slice(0, separatorIndex)
+      const modelId = model.id.slice(separatorIndex + 1)
+      if (Object.prototype.hasOwnProperty.call(modelMetadata, providerId)) {
+        return getSnapshotModel(providerId as SnapshotProviderId, modelId)
+      }
+    }
+
+    return undefined
+  }
+
+  const providerId = PROVIDER_METADATA_BY_ID[model.providerId]
+  if (providerId) {
+    return getSnapshotModel(providerId, model.id)
+  }
+
+  for (const snapshotProviderId of Object.keys(
+    modelMetadata
+  ) as SnapshotProviderId[]) {
+    const metadata = getSnapshotModel(snapshotProviderId, model.id)
+    if (metadata) return metadata
+  }
+
+  return undefined
+}
+
+function getModelContextInfo(model: Model): ModelContextInfo {
+  const metadata = findSnapshotModel(model)
+  if (!metadata) {
+    return {
       contextWindow: DEFAULT_CONTEXT_WINDOW,
       outputTokens: DEFAULT_OUTPUT_TOKENS
     }
-  )
+  }
+
+  return {
+    contextWindow: metadata.context,
+    inputTokens: metadata.input,
+    outputTokens: metadata.output
+  }
 }
 
 /**
  * Calculate the maximum allowed tokens for input
  */
 export function getMaxAllowedTokens(model: Model): number {
-  const { contextWindow, outputTokens } = getModelContextInfo(model.id)
+  const { contextWindow, inputTokens, outputTokens } =
+    getModelContextInfo(model)
 
   // Calculate available tokens for input
-  let availableTokens = contextWindow - outputTokens
+  let availableTokens = inputTokens ?? contextWindow - outputTokens
 
   // Apply safety buffer
   const safetyBuffer = Math.floor(contextWindow * SAFETY_BUFFER_RATIO)
