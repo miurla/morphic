@@ -99,12 +99,22 @@ describe('context-window', () => {
     })
 
     test('reserves output tokens when input metadata exceeds the remainder', () => {
-      // min(272000, 400000 - 272000) - floor(400000 * 0.1) = 128000 - 40000
+      // min(272000, 400000 - 200000) - floor(400000 * 0.1) = 200000 - 40000
       const maxTokens = getMaxAllowedTokens({
         ...mockModel,
         id: 'gpt-5-pro'
       })
-      expect(maxTokens).toBe(88000)
+      expect(maxTokens).toBe(160000)
+    })
+
+    test('caps the output reservation for models whose output equals context', () => {
+      // (256000 - 128000) - floor(256000 * 0.1) = 128000 - 25600
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'mistral/mistral-large-3',
+        providerId: 'gateway'
+      })
+      expect(maxTokens).toBe(102400)
     })
 
     test('falls back to Vercel metadata for a direct provider miss', () => {

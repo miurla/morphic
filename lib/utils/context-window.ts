@@ -31,6 +31,8 @@ const DEFAULT_OUTPUT_TOKENS = 4096
 // Safety buffer percentage (reserved for system prompts and formatting)
 const SAFETY_BUFFER_RATIO = 0.1
 
+const MAX_OUTPUT_RESERVE_RATIO = 0.5
+
 // Cache for tiktoken encoders
 const encoderCache = new Map<string, any>()
 
@@ -131,9 +133,13 @@ export function getMaxAllowedTokens(model: Model): number {
     getModelContextInfo(model)
 
   // Calculate available tokens for input
+  const reservedOutputTokens = Math.min(
+    outputTokens,
+    Math.floor(contextWindow * MAX_OUTPUT_RESERVE_RATIO)
+  )
   let availableTokens = Math.min(
     inputTokens ?? Infinity,
-    contextWindow - outputTokens
+    contextWindow - reservedOutputTokens
   )
 
   // Apply safety buffer
