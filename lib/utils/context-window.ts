@@ -126,7 +126,10 @@ export function getMaxAllowedTokens(model: Model): number {
     getModelContextInfo(model)
 
   // Calculate available tokens for input
-  let availableTokens = inputTokens ?? contextWindow - outputTokens
+  let availableTokens = Math.min(
+    inputTokens ?? Infinity,
+    contextWindow - outputTokens
+  )
 
   // Apply safety buffer
   const safetyBuffer = Math.floor(contextWindow * SAFETY_BUFFER_RATIO)

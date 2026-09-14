@@ -98,6 +98,15 @@ describe('context-window', () => {
       expect(maxTokens).toBe(772000)
     })
 
+    test('reserves output tokens when input metadata exceeds the remainder', () => {
+      // min(272000, 400000 - 272000) - floor(400000 * 0.1) = 128000 - 40000
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'gpt-5-pro'
+      })
+      expect(maxTokens).toBe(88000)
+    })
+
     test('resolves gateway model ids from Vercel metadata', () => {
       const maxTokens = getMaxAllowedTokens({
         ...mockModel,
