@@ -37,6 +37,7 @@ type Turn = {
   messages: UIMessage[]
   timestamp?: number
   replayed: ReplayedText[]
+  leadingUserReplayed: ReplayedText[]
 }
 
 const textEncoder = new TextEncoder()
@@ -91,8 +92,11 @@ function tokenUpperBound(turn: Turn): number {
   )
 }
 
-function countTurnTokens(turn: Turn, modelId?: string): number {
-  return turn.replayed.reduce(
+function countReplayedTokens(
+  replayed: ReplayedText[],
+  modelId?: string
+): number {
+  return replayed.reduce(
     (total, { text, fixedTokens }) =>
       total + countTextTokens(text, modelId) + fixedTokens,
     0
@@ -130,7 +134,8 @@ function buildTurns(messages: UIMessage[], now: Date): Turn[] {
     return {
       messages: turnMessages,
       timestamp,
-      replayed: turnMessages.flatMap(describeMessage)
+      replayed: turnMessages.flatMap(describeMessage),
+      leadingUserReplayed: describeMessage(messages[userIndex])
     }
   })
 }
@@ -153,7 +158,12 @@ export function trimColdStartHistory(
   )
   if (upperBound <= limit) return { messages, trimmedAtCurrentTurn: false }
 
-  const tokens = turns.map(turn => countTurnTokens(turn, options.modelId))
+  const tokens = turns.map(turn =>
+    countReplayedTokens(turn.replayed, options.modelId)
+  )
+  const leadingUserTokens = turns.map(turn =>
+    countReplayedTokens(turn.leadingUserReplayed, options.modelId)
+  )
   let cut = 1
   let trimmedAtCurrentTurn = false
 
@@ -167,8 +177,8 @@ export function trimColdStartHistory(
 
     if (!cold || i + 1 < MIN_TURNS) continue
 
-    let total = tokens[0]
-    for (let j = cut; j <= i; j++) total += tokens[j]
+    let total = tokens[0] + leadingUserTokens[i]
+    for (let j = cut; j < i; j++) total += tokens[j]
 
     const cutBefore = cut
     while (total > limit && cut < i) {

@@ -87,6 +87,37 @@ describe('trimColdStartHistory', () => {
     expect(second.slice(0, first.length)).toEqual(first)
   })
 
+  it('preserves the cold-request prefix after its answer and a warm request', () => {
+    const coldAt = timestamp(4 * WARM_GAP_MS + COLD_GAP_MS)
+    const warmAt = timestamp(5 * WARM_GAP_MS + COLD_GAP_MS)
+    const atColdRequest = [
+      ...Array.from({ length: 5 }, (_, i) =>
+        turn(i, timestamp(i * WARM_GAP_MS))
+      ).flat(),
+      message('u5', 'user', coldAt)
+    ]
+    const options = { limit: 100 }
+    const coldResult = trimColdStartHistory(atColdRequest, {
+      ...options,
+      now: coldAt
+    })
+    const appended = [
+      message('a5', 'assistant', coldAt, [
+        { type: 'text', text: 'large answer '.repeat(1_000) }
+      ]),
+      message('u6', 'user', warmAt)
+    ]
+    const warmResult = trimColdStartHistory(atColdRequest.concat(appended), {
+      ...options,
+      now: warmAt
+    })
+
+    expect(coldResult.trimmedAtCurrentTurn).toBe(true)
+    expect(userIds(coldResult.messages)).toEqual(['u0', 'u4', 'u5'])
+    expect(warmResult.messages).toEqual(coldResult.messages.concat(appended))
+    expect(warmResult.trimmedAtCurrentTurn).toBe(false)
+  })
+
   it('leaves fewer than five turns untouched', () => {
     const messages = Array.from({ length: 4 }, (_, i) =>
       turn(i, timestamp(i * COLD_GAP_MS))
