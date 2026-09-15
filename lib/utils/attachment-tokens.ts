@@ -1,4 +1,4 @@
-export const IMAGE_ATTACHMENT_TOKENS = 10_000
+export const IMAGE_ATTACHMENT_TOKENS = 4_000
 export const MIN_PDF_ATTACHMENT_TOKENS = 10_000
 // A 300 KB PDF reaches the small-document floor; larger containers scale so
 // multi-page files cannot all hide behind a flat estimate.
