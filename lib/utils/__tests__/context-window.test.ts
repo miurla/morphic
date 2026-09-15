@@ -46,6 +46,11 @@ describe('context-window', () => {
       expect(maxTokens).toBe(98816)
     })
 
+    test('uses the snapshot context window for GPT-4.1', () => {
+      const maxTokens = getMaxAllowedTokens({ ...mockModel, id: 'gpt-4.1' })
+      expect(maxTokens).toBe(910051)
+    })
+
     test('uses default values for unknown model', () => {
       const unknownModel: Model = {
         ...mockModel,
@@ -66,7 +71,11 @@ describe('context-window', () => {
     test('uses the real ~1M window for production Gemini models', () => {
       // (1048576 - 65536) - floor(1048576 * 0.1) = 983040 - 104857 = 878183
       for (const id of ['gemini-3-flash-preview', 'gemini-3.1-flash-lite']) {
-        const maxTokens = getMaxAllowedTokens({ ...mockModel, id })
+        const maxTokens = getMaxAllowedTokens({
+          ...mockModel,
+          id,
+          providerId: 'google'
+        })
         expect(maxTokens).toBe(878183)
       }
     })
@@ -78,6 +87,70 @@ describe('context-window', () => {
         id: 'gpt-5.6-luna'
       })
       expect(maxTokens).toBe(817000)
+    })
+
+    test('resolves a model absent from the old hand-maintained table', () => {
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'claude-sonnet-4-6',
+        providerId: 'anthropic'
+      })
+      expect(maxTokens).toBe(772000)
+    })
+
+    test('reserves output tokens when input metadata exceeds the remainder', () => {
+      // min(272000, 400000 - 200000) - floor(400000 * 0.1) = 200000 - 40000
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'gpt-5-pro'
+      })
+      expect(maxTokens).toBe(160000)
+    })
+
+    test('caps the output reservation for models whose output equals context', () => {
+      // (256000 - 128000) - floor(256000 * 0.1) = 128000 - 25600
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'mistral/mistral-large-3',
+        providerId: 'gateway'
+      })
+      expect(maxTokens).toBe(102400)
+    })
+
+    test('falls back to Vercel metadata for a direct provider miss', () => {
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'claude-sonnet-4',
+        providerId: 'anthropic'
+      })
+      expect(maxTokens).toBe(891808)
+    })
+
+    test('does not resolve object prototype keys as models', () => {
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'constructor',
+        providerId: 'openai'
+      })
+      expect(maxTokens).toBe(10650)
+    })
+
+    test('resolves gateway model ids from Vercel metadata', () => {
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'openai/gpt-5.6-luna',
+        providerId: 'gateway'
+      })
+      expect(maxTokens).toBe(817000)
+    })
+
+    test('searches the snapshot for providers without a direct mapping', () => {
+      const maxTokens = getMaxAllowedTokens({
+        ...mockModel,
+        id: 'gpt-4.1',
+        providerId: 'openai-compatible'
+      })
+      expect(maxTokens).toBe(910051)
     })
   })
 

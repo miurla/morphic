@@ -1,0 +1,2046 @@
+{
+  "anthropic": {
+    "claude-fable-5": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "claude-fable-5-1": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "claude-haiku-4-5": {
+      "context": 200000,
+      "output": 64000
+    },
+    "claude-haiku-4-5-20251001": {
+      "context": 200000,
+      "output": 64000
+    },
+    "claude-opus-4-5": {
+      "context": 200000,
+      "output": 64000
+    },
+    "claude-opus-4-5-20251101": {
+      "context": 200000,
+      "output": 64000
+    },
+    "claude-opus-4-6": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "claude-opus-4-7": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "claude-opus-4-8": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "claude-opus-5": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "claude-sonnet-4-5": {
+      "context": 1000000,
+      "output": 64000
+    },
+    "claude-sonnet-4-5-20250929": {
+      "context": 1000000,
+      "output": 64000
+    },
+    "claude-sonnet-4-6": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "claude-sonnet-5": {
+      "context": 1000000,
+      "output": 128000
+    }
+  },
+  "google": {
+    "deep-research-max-preview-04-2026": {
+      "context": 131072,
+      "output": 65536
+    },
+    "deep-research-preview-04-2026": {
+      "context": 131072,
+      "output": 65536
+    },
+    "gemini-2.5-computer-use-preview-10-2025": {
+      "context": 131072,
+      "output": 65536
+    },
+    "gemini-2.5-flash": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-2.5-flash-image": {
+      "context": 32768,
+      "output": 32768
+    },
+    "gemini-2.5-flash-lite": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-2.5-flash-preview-tts": {
+      "context": 8192,
+      "output": 16384
+    },
+    "gemini-2.5-pro": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-2.5-pro-preview-tts": {
+      "context": 8192,
+      "output": 16384
+    },
+    "gemini-3-flash-preview": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-3-pro-image": {
+      "context": 131072,
+      "output": 32768
+    },
+    "gemini-3-pro-image-preview": {
+      "context": 131072,
+      "output": 32768
+    },
+    "gemini-3.1-flash-image": {
+      "context": 65536,
+      "output": 65536
+    },
+    "gemini-3.1-flash-image-preview": {
+      "context": 65536,
+      "output": 65536
+    },
+    "gemini-3.1-flash-lite": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-3.1-flash-lite-image": {
+      "context": 65536,
+      "output": 65536
+    },
+    "gemini-3.1-flash-lite-preview": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-3.1-flash-live-preview": {
+      "context": 131072,
+      "output": 65536
+    },
+    "gemini-3.1-flash-tts-preview": {
+      "context": 8192,
+      "output": 16384
+    },
+    "gemini-3.1-pro-preview": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-3.1-pro-preview-customtools": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-3.5-flash": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-3.5-flash-lite": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-3.5-live-translate-preview": {
+      "context": 16384,
+      "output": 32768
+    },
+    "gemini-3.6-flash": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-3.7-flash": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-3.8-flash": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-embedding-001": {
+      "context": 2048,
+      "output": 1
+    },
+    "gemini-embedding-2": {
+      "context": 8192,
+      "output": 1
+    },
+    "gemini-flash-latest": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-flash-lite-latest": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "gemini-omni-flash-preview": {
+      "context": 131072,
+      "output": 65536
+    },
+    "gemma-4-26b-a4b-it": {
+      "context": 262144,
+      "output": 32768
+    },
+    "gemma-4-31b-it": {
+      "context": 262144,
+      "output": 32768
+    },
+    "lyria-3-clip-preview": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "lyria-3-pro-preview": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "veo-3.1-fast-generate-preview": {
+      "context": 480,
+      "output": 8192
+    },
+    "veo-3.1-generate-preview": {
+      "context": 480,
+      "output": 8192
+    },
+    "veo-3.1-lite-generate-preview": {
+      "context": 480,
+      "output": 8192
+    }
+  },
+  "openai": {
+    "chatgpt-image-latest": {
+      "context": 0,
+      "input": 0,
+      "output": 0
+    },
+    "gpt-3.5-turbo": {
+      "context": 16385,
+      "output": 4096
+    },
+    "gpt-4": {
+      "context": 8192,
+      "output": 8192
+    },
+    "gpt-4-turbo": {
+      "context": 128000,
+      "output": 4096
+    },
+    "gpt-4.1": {
+      "context": 1047576,
+      "output": 32768
+    },
+    "gpt-4.1-mini": {
+      "context": 1047576,
+      "output": 32768
+    },
+    "gpt-4.1-nano": {
+      "context": 1047576,
+      "output": 32768
+    },
+    "gpt-4o": {
+      "context": 128000,
+      "output": 16384
+    },
+    "gpt-4o-2024-05-13": {
+      "context": 128000,
+      "output": 4096
+    },
+    "gpt-4o-2024-08-06": {
+      "context": 128000,
+      "output": 16384
+    },
+    "gpt-4o-2024-11-20": {
+      "context": 128000,
+      "output": 16384
+    },
+    "gpt-4o-mini": {
+      "context": 128000,
+      "output": 16384
+    },
+    "gpt-5": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "gpt-5-mini": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "gpt-5-nano": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "gpt-5-pro": {
+      "context": 400000,
+      "input": 272000,
+      "output": 272000
+    },
+    "gpt-5.1": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "gpt-5.2": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "gpt-5.2-chat-latest": {
+      "context": 128000,
+      "output": 16384
+    },
+    "gpt-5.2-pro": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "gpt-5.3-chat-latest": {
+      "context": 128000,
+      "output": 16384
+    },
+    "gpt-5.3-codex": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "gpt-5.3-codex-spark": {
+      "context": 128000,
+      "input": 100000,
+      "output": 32000
+    },
+    "gpt-5.4": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "gpt-5.4-mini": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "gpt-5.4-nano": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "gpt-5.4-pro": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "gpt-5.5": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "gpt-5.5-pro": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "gpt-5.6": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "gpt-5.6-luna": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "gpt-5.6-sol": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "gpt-5.6-terra": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "gpt-6-astra": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "gpt-image-1": {
+      "context": 0,
+      "input": 0,
+      "output": 0
+    },
+    "gpt-image-1-mini": {
+      "context": 0,
+      "input": 0,
+      "output": 0
+    },
+    "gpt-image-1.5": {
+      "context": 0,
+      "input": 0,
+      "output": 0
+    },
+    "gpt-image-2": {
+      "context": 0,
+      "input": 0,
+      "output": 0
+    },
+    "gpt-realtime-2.1": {
+      "context": 128000,
+      "input": 96000,
+      "output": 32000
+    },
+    "o1": {
+      "context": 200000,
+      "output": 100000
+    },
+    "o1-pro": {
+      "context": 200000,
+      "output": 100000
+    },
+    "o3": {
+      "context": 200000,
+      "output": 100000
+    },
+    "o3-mini": {
+      "context": 200000,
+      "output": 100000
+    },
+    "o3-pro": {
+      "context": 200000,
+      "output": 100000
+    },
+    "o4-mini": {
+      "context": 200000,
+      "output": 100000
+    },
+    "text-embedding-3-large": {
+      "context": 8191,
+      "output": 3072
+    },
+    "text-embedding-3-small": {
+      "context": 8191,
+      "output": 1536
+    },
+    "text-embedding-ada-002": {
+      "context": 8192,
+      "output": 1536
+    }
+  },
+  "vercel": {
+    "alibaba/qwen-3-14b": {
+      "context": 40960,
+      "output": 16384
+    },
+    "alibaba/qwen-3-235b": {
+      "context": 262144,
+      "output": 16384
+    },
+    "alibaba/qwen-3-30b": {
+      "context": 40960,
+      "output": 16384
+    },
+    "alibaba/qwen-3-32b": {
+      "context": 128000,
+      "output": 8192
+    },
+    "alibaba/qwen-3.6-max-preview": {
+      "context": 240000,
+      "output": 64000
+    },
+    "alibaba/qwen3-235b-a22b-thinking": {
+      "context": 131072,
+      "output": 32768
+    },
+    "alibaba/qwen3-coder": {
+      "context": 262144,
+      "output": 65536
+    },
+    "alibaba/qwen3-coder-30b-a3b": {
+      "context": 262144,
+      "output": 8192
+    },
+    "alibaba/qwen3-coder-next": {
+      "context": 256000,
+      "output": 256000
+    },
+    "alibaba/qwen3-coder-plus": {
+      "context": 1000000,
+      "output": 65536
+    },
+    "alibaba/qwen3-embedding-0.6b": {
+      "context": 32768,
+      "output": 32768
+    },
+    "alibaba/qwen3-embedding-4b": {
+      "context": 32768,
+      "output": 32768
+    },
+    "alibaba/qwen3-embedding-8b": {
+      "context": 32768,
+      "output": 32768
+    },
+    "alibaba/qwen3-max": {
+      "context": 262144,
+      "output": 32768
+    },
+    "alibaba/qwen3-max-preview": {
+      "context": 262144,
+      "output": 32768
+    },
+    "alibaba/qwen3-max-thinking": {
+      "context": 256000,
+      "output": 65536
+    },
+    "alibaba/qwen3-next-80b-a3b-instruct": {
+      "context": 131072,
+      "output": 32768
+    },
+    "alibaba/qwen3-next-80b-a3b-thinking": {
+      "context": 131072,
+      "output": 32768
+    },
+    "alibaba/qwen3-vl-235b-a22b-instruct": {
+      "context": 131072,
+      "output": 129024
+    },
+    "alibaba/qwen3-vl-instruct": {
+      "context": 131072,
+      "output": 129024
+    },
+    "alibaba/qwen3-vl-thinking": {
+      "context": 131072,
+      "output": 32768
+    },
+    "alibaba/qwen3.5-flash": {
+      "context": 1000000,
+      "output": 64000
+    },
+    "alibaba/qwen3.5-plus": {
+      "context": 1000000,
+      "output": 64000
+    },
+    "alibaba/qwen3.6-27b": {
+      "context": 256000,
+      "output": 256000
+    },
+    "alibaba/qwen3.6-plus": {
+      "context": 1000000,
+      "output": 64000
+    },
+    "alibaba/qwen3.7-flash": {
+      "context": 991000,
+      "output": 64000
+    },
+    "alibaba/qwen3.7-max": {
+      "context": 991000,
+      "output": 64000
+    },
+    "alibaba/qwen3.7-plus": {
+      "context": 1000000,
+      "output": 64000
+    },
+    "alibaba/qwen3.8-2.4t-a95b": {
+      "context": 262144,
+      "output": 128000
+    },
+    "alibaba/qwen3.8-27b": {
+      "context": 1000000,
+      "output": 131072
+    },
+    "alibaba/qwen3.8-flash": {
+      "context": 991000,
+      "output": 128000
+    },
+    "alibaba/qwen3.8-max": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "alibaba/qwen3.8-max-0902": {
+      "context": 991000,
+      "output": 128000
+    },
+    "alibaba/wan-v2.5-t2v-preview": {
+      "context": 0,
+      "output": 0
+    },
+    "alibaba/wan-v2.6-i2v": {
+      "context": 0,
+      "output": 0
+    },
+    "alibaba/wan-v2.6-i2v-flash": {
+      "context": 0,
+      "output": 0
+    },
+    "alibaba/wan-v2.6-r2v": {
+      "context": 0,
+      "output": 0
+    },
+    "alibaba/wan-v2.6-r2v-flash": {
+      "context": 0,
+      "output": 0
+    },
+    "alibaba/wan-v2.6-t2v": {
+      "context": 0,
+      "output": 0
+    },
+    "alibaba/wan-v2.7-r2v": {
+      "context": 0,
+      "output": 0
+    },
+    "alibaba/wan-v2.7-t2v": {
+      "context": 0,
+      "output": 0
+    },
+    "alibaba/wan-v3.0-video": {
+      "context": 0,
+      "output": 0
+    },
+    "alibaba/wan-v3.0-video-prime": {
+      "context": 0,
+      "output": 0
+    },
+    "amazon/nova-2-lite": {
+      "context": 1000000,
+      "output": 1000000
+    },
+    "amazon/nova-lite": {
+      "context": 300000,
+      "output": 10000
+    },
+    "amazon/nova-micro": {
+      "context": 128000,
+      "output": 10000
+    },
+    "amazon/nova-pro": {
+      "context": 300000,
+      "output": 10000
+    },
+    "amazon/titan-embed-text-v2": {
+      "context": 8192,
+      "output": 1536
+    },
+    "anthropic/claude-3-haiku": {
+      "context": 200000,
+      "output": 4096
+    },
+    "anthropic/claude-fable-5": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "anthropic/claude-fable-5.1": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "anthropic/claude-haiku-4.5": {
+      "context": 200000,
+      "output": 64000
+    },
+    "anthropic/claude-opus-4": {
+      "context": 200000,
+      "output": 8192
+    },
+    "anthropic/claude-opus-4.5": {
+      "context": 200000,
+      "output": 64000
+    },
+    "anthropic/claude-opus-4.6": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "anthropic/claude-opus-4.7": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "anthropic/claude-opus-4.8": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "anthropic/claude-opus-4.8-fast": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "anthropic/claude-opus-5": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "anthropic/claude-opus-5-fast": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "anthropic/claude-sonnet-4": {
+      "context": 1000000,
+      "output": 8192
+    },
+    "anthropic/claude-sonnet-4.5": {
+      "context": 1000000,
+      "output": 64000
+    },
+    "anthropic/claude-sonnet-4.6": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "anthropic/claude-sonnet-5": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "arcee-ai/trinity-large-thinking": {
+      "context": 262100,
+      "output": 80000
+    },
+    "bfl/flux-2-flex": {
+      "context": 0,
+      "output": 0
+    },
+    "bfl/flux-2-klein-4b": {
+      "context": 0,
+      "output": 0
+    },
+    "bfl/flux-2-klein-9b": {
+      "context": 0,
+      "output": 0
+    },
+    "bfl/flux-2-max": {
+      "context": 67300,
+      "output": 67300
+    },
+    "bfl/flux-2-pro": {
+      "context": 67300,
+      "output": 67300
+    },
+    "bfl/flux-3-video": {
+      "context": 0,
+      "output": 0
+    },
+    "bfl/flux-kontext-max": {
+      "context": 512,
+      "output": 0
+    },
+    "bfl/flux-kontext-pro": {
+      "context": 512,
+      "output": 0
+    },
+    "bfl/flux-pro-1.0-fill": {
+      "context": 512,
+      "output": 0
+    },
+    "bfl/flux-pro-1.1": {
+      "context": 512,
+      "output": 0
+    },
+    "bfl/flux-pro-1.1-ultra": {
+      "context": 512,
+      "output": 0
+    },
+    "bytedance/seed-1.6": {
+      "context": 256000,
+      "output": 32000
+    },
+    "bytedance/seed-1.8": {
+      "context": 256000,
+      "output": 64000
+    },
+    "bytedance/seed-2.1-turbo": {
+      "context": 262144,
+      "output": 262144
+    },
+    "bytedance/seedance-2.0": {
+      "context": 0,
+      "output": 0
+    },
+    "bytedance/seedance-2.0-fast": {
+      "context": 0,
+      "output": 0
+    },
+    "bytedance/seedance-2.0-mini": {
+      "context": 0,
+      "output": 0
+    },
+    "bytedance/seedance-2.5": {
+      "context": 0,
+      "output": 0
+    },
+    "bytedance/seedance-v1.0-pro": {
+      "context": 0,
+      "output": 0
+    },
+    "bytedance/seedance-v1.0-pro-fast": {
+      "context": 0,
+      "output": 0
+    },
+    "bytedance/seedance-v1.5-pro": {
+      "context": 0,
+      "output": 0
+    },
+    "bytedance/seedream-4.0": {
+      "context": 0,
+      "output": 0
+    },
+    "bytedance/seedream-4.5": {
+      "context": 0,
+      "output": 0
+    },
+    "bytedance/seedream-5.0-lite": {
+      "context": 0,
+      "output": 0
+    },
+    "bytedance/seedream-5.0-pro": {
+      "context": 0,
+      "output": 0
+    },
+    "cohere/command-a": {
+      "context": 256000,
+      "output": 8000
+    },
+    "cohere/embed-v4.0": {
+      "context": 128000,
+      "output": 1536
+    },
+    "cohere/rerank-v3.5": {
+      "context": 4096,
+      "output": 4096
+    },
+    "cohere/rerank-v4-fast": {
+      "context": 32000,
+      "output": 32000
+    },
+    "cohere/rerank-v4-pro": {
+      "context": 32000,
+      "output": 32000
+    },
+    "deepseek/deepseek-r1": {
+      "context": 128000,
+      "output": 32768
+    },
+    "deepseek/deepseek-v3.1": {
+      "context": 163840,
+      "output": 128000
+    },
+    "deepseek/deepseek-v3.1-terminus": {
+      "context": 131072,
+      "output": 65536
+    },
+    "deepseek/deepseek-v3.2": {
+      "context": 128000,
+      "output": 8000
+    },
+    "deepseek/deepseek-v3.2-thinking": {
+      "context": 128000,
+      "output": 8000
+    },
+    "deepseek/deepseek-v4-flash": {
+      "context": 1000000,
+      "output": 384000
+    },
+    "deepseek/deepseek-v4-flash-0731": {
+      "context": 1000000,
+      "output": 384000
+    },
+    "deepseek/deepseek-v4-flash-vision-exp": {
+      "context": 1048576,
+      "output": 1048576
+    },
+    "deepseek/deepseek-v4-pro": {
+      "context": 1000000,
+      "output": 384000
+    },
+    "deepseek/deepseek-v4-pro-0813": {
+      "context": 1000000,
+      "output": 384000
+    },
+    "deepseek/deepseek-v4.1-flash": {
+      "context": 1000000,
+      "output": 384000
+    },
+    "fish-audio/s1": {
+      "context": 0,
+      "output": 0
+    },
+    "fish-audio/s1-free": {
+      "context": 0,
+      "output": 0
+    },
+    "fish-audio/s2-pro": {
+      "context": 0,
+      "output": 0
+    },
+    "fish-audio/s2-pro-free": {
+      "context": 0,
+      "output": 0
+    },
+    "fish-audio/s2.1-pro": {
+      "context": 0,
+      "output": 0
+    },
+    "fish-audio/s2.1-pro-free": {
+      "context": 0,
+      "output": 0
+    },
+    "fish-audio/transcribe-1": {
+      "context": 0,
+      "output": 0
+    },
+    "fish-audio/transcribe-1-free": {
+      "context": 0,
+      "output": 0
+    },
+    "google/gemini-2.5-flash": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "google/gemini-2.5-flash-image": {
+      "context": 32768,
+      "output": 65536
+    },
+    "google/gemini-2.5-flash-lite": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "google/gemini-2.5-pro": {
+      "context": 1048576,
+      "output": 65536
+    },
+    "google/gemini-3-flash": {
+      "context": 1000000,
+      "output": 65000
+    },
+    "google/gemini-3-pro-image": {
+      "context": 65536,
+      "output": 32768
+    },
+    "google/gemini-3.1-flash-image": {
+      "context": 131072,
+      "output": 32768
+    },
+    "google/gemini-3.1-flash-image-preview": {
+      "context": 131072,
+      "output": 32768
+    },
+    "google/gemini-3.1-flash-lite": {
+      "context": 1000000,
+      "output": 65000
+    },
+    "google/gemini-3.1-flash-lite-image": {
+      "context": 65536,
+      "output": 4096
+    },
+    "google/gemini-3.1-pro-preview": {
+      "context": 1000000,
+      "output": 64000
+    },
+    "google/gemini-3.5-flash": {
+      "context": 1000000,
+      "output": 64000
+    },
+    "google/gemini-3.5-flash-lite": {
+      "context": 1000000,
+      "output": 65000
+    },
+    "google/gemini-3.5-transcribe": {
+      "context": 0,
+      "output": 0
+    },
+    "google/gemini-3.5-transcribe-live": {
+      "context": 0,
+      "output": 0
+    },
+    "google/gemini-3.6-flash": {
+      "context": 1000000,
+      "output": 64000
+    },
+    "google/gemini-3.7-flash": {
+      "context": 1000000,
+      "output": 65536
+    },
+    "google/gemini-3.8-flash": {
+      "context": 1000000,
+      "output": 65536
+    },
+    "google/gemini-embedding-001": {
+      "context": 8192,
+      "output": 1536
+    },
+    "google/gemini-embedding-2": {
+      "context": 0,
+      "output": 0
+    },
+    "google/gemini-omni-flash-preview": {
+      "context": 1000000,
+      "output": 57920
+    },
+    "google/gemma-4-26b-a4b-it": {
+      "context": 262144,
+      "output": 131072
+    },
+    "google/gemma-4-31b-it": {
+      "context": 262144,
+      "output": 131072
+    },
+    "google/text-embedding-005": {
+      "context": 8192,
+      "output": 1536
+    },
+    "google/text-multilingual-embedding-002": {
+      "context": 8192,
+      "output": 1536
+    },
+    "google/veo-3.0-fast-generate-001": {
+      "context": 0,
+      "output": 0
+    },
+    "google/veo-3.0-generate-001": {
+      "context": 0,
+      "output": 0
+    },
+    "google/veo-3.1-fast-generate-001": {
+      "context": 0,
+      "output": 0
+    },
+    "google/veo-3.1-generate-001": {
+      "context": 0,
+      "output": 0
+    },
+    "google/veo-3.1-lite-generate-001": {
+      "context": 0,
+      "output": 0
+    },
+    "inception/mercury-2": {
+      "context": 128000,
+      "output": 128000
+    },
+    "inception/mercury-2.5": {
+      "context": 260000,
+      "output": 65536
+    },
+    "inception/mercury-coder-small": {
+      "context": 32000,
+      "output": 16384
+    },
+    "inclusionai/ling-3.0-flash": {
+      "context": 256000,
+      "output": 32000
+    },
+    "inclusionai/ling-3.0-flash-fin": {
+      "context": 256000,
+      "output": 32000
+    },
+    "inclusionai/ling-3.0-flash-fin-free": {
+      "context": 256000,
+      "output": 32000
+    },
+    "inclusionai/ling-3.0-flash-sante": {
+      "context": 256000,
+      "output": 32000
+    },
+    "inclusionai/ling-3.0-flash-sante-free": {
+      "context": 256000,
+      "output": 32000
+    },
+    "inclusionai/ling-3.0-flash-vl": {
+      "context": 256000,
+      "output": 32000
+    },
+    "inclusionai/ling-3.0-flash-vl-free": {
+      "context": 256000,
+      "output": 32000
+    },
+    "interfaze/interfaze-beta": {
+      "context": 1000000,
+      "output": 32000
+    },
+    "klingai/kling-v2.5-turbo-i2v": {
+      "context": 0,
+      "output": 0
+    },
+    "klingai/kling-v2.5-turbo-t2v": {
+      "context": 0,
+      "output": 0
+    },
+    "klingai/kling-v2.6-i2v": {
+      "context": 0,
+      "output": 0
+    },
+    "klingai/kling-v2.6-motion-control": {
+      "context": 0,
+      "output": 0
+    },
+    "klingai/kling-v2.6-t2v": {
+      "context": 0,
+      "output": 0
+    },
+    "klingai/kling-v3.0-i2v": {
+      "context": 0,
+      "output": 0
+    },
+    "klingai/kling-v3.0-motion-control": {
+      "context": 0,
+      "output": 0
+    },
+    "klingai/kling-v3.0-t2v": {
+      "context": 0,
+      "output": 0
+    },
+    "kwaipilot/kat-coder-air-v2.5": {
+      "context": 256000,
+      "output": 80000
+    },
+    "kwaipilot/kat-coder-pro-v1": {
+      "context": 256000,
+      "output": 32000
+    },
+    "kwaipilot/kat-coder-pro-v2": {
+      "context": 256000,
+      "output": 256000
+    },
+    "kwaipilot/kat-coder-pro-v2.5": {
+      "context": 256000,
+      "output": 80000
+    },
+    "meta/llama-3.1-70b": {
+      "context": 128000,
+      "output": 8192
+    },
+    "meta/llama-3.1-8b": {
+      "context": 128000,
+      "output": 8192
+    },
+    "meta/llama-3.3-70b": {
+      "context": 128000,
+      "output": 4096
+    },
+    "meta/llama-4-maverick": {
+      "context": 128000,
+      "output": 4096
+    },
+    "meta/llama-4-scout": {
+      "context": 128000,
+      "output": 4096
+    },
+    "meta/muse-glimmer-30b": {
+      "context": 131072,
+      "output": 131072
+    },
+    "meta/muse-image-1.0": {
+      "context": 0,
+      "output": 0
+    },
+    "meta/muse-spark-1.1": {
+      "context": 1048576,
+      "output": 1048576
+    },
+    "meta/muse-spark-1.2": {
+      "context": 1048576,
+      "output": 1048576
+    },
+    "meta/muse-spark-1.2-contributor": {
+      "context": 1048576,
+      "output": 1048576
+    },
+    "meta/muse-spark-1.3": {
+      "context": 1048576,
+      "output": 1048576
+    },
+    "meta/muse-spark-1.3-contributor": {
+      "context": 1048576,
+      "output": 1048576
+    },
+    "minimax/minimax-h3": {
+      "context": 0,
+      "output": 0
+    },
+    "minimax/minimax-h3-max": {
+      "context": 0,
+      "output": 0
+    },
+    "minimax/minimax-m2": {
+      "context": 205000,
+      "output": 205000
+    },
+    "minimax/minimax-m2.1": {
+      "context": 204800,
+      "output": 131072
+    },
+    "minimax/minimax-m2.1-lightning": {
+      "context": 204800,
+      "output": 131072
+    },
+    "minimax/minimax-m2.5": {
+      "context": 204800,
+      "output": 131000
+    },
+    "minimax/minimax-m2.5-highspeed": {
+      "context": 204800,
+      "output": 131000
+    },
+    "minimax/minimax-m2.7": {
+      "context": 204800,
+      "output": 131000
+    },
+    "minimax/minimax-m2.7-highspeed": {
+      "context": 204800,
+      "output": 131100
+    },
+    "minimax/minimax-m3": {
+      "context": 512000,
+      "output": 512000
+    },
+    "mistral/codestral": {
+      "context": 256000,
+      "output": 4096
+    },
+    "mistral/codestral-embed": {
+      "context": 8192,
+      "output": 1536
+    },
+    "mistral/devstral-2": {
+      "context": 256000,
+      "output": 256000
+    },
+    "mistral/devstral-small-2": {
+      "context": 256000,
+      "output": 256000
+    },
+    "mistral/ministral-14b": {
+      "context": 256000,
+      "output": 256000
+    },
+    "mistral/ministral-3b": {
+      "context": 128000,
+      "output": 128000
+    },
+    "mistral/ministral-8b": {
+      "context": 128000,
+      "output": 128000
+    },
+    "mistral/mistral-embed": {
+      "context": 8192,
+      "output": 1536
+    },
+    "mistral/mistral-large-3": {
+      "context": 256000,
+      "output": 256000
+    },
+    "mistral/mistral-medium": {
+      "context": 128000,
+      "output": 64000
+    },
+    "mistral/mistral-medium-3.5": {
+      "context": 256000,
+      "output": 256000
+    },
+    "mistral/mistral-nemo": {
+      "context": 128000,
+      "output": 128000
+    },
+    "mistral/mistral-small": {
+      "context": 32000,
+      "output": 4000
+    },
+    "mistral/pixtral-12b": {
+      "context": 128000,
+      "output": 128000
+    },
+    "moonshotai/kimi-k2": {
+      "context": 131072,
+      "output": 131072
+    },
+    "moonshotai/kimi-k2-thinking": {
+      "context": 216144,
+      "output": 216144
+    },
+    "moonshotai/kimi-k2.5": {
+      "context": 262114,
+      "output": 262114
+    },
+    "moonshotai/kimi-k2.6": {
+      "context": 262000,
+      "output": 262000
+    },
+    "moonshotai/kimi-k2.7-code": {
+      "context": 256000,
+      "output": 32768
+    },
+    "moonshotai/kimi-k2.7-code-highspeed": {
+      "context": 262144,
+      "output": 32768
+    },
+    "moonshotai/kimi-k3": {
+      "context": 1000000,
+      "output": 131072
+    },
+    "moonshotai/kimi-k3-fast": {
+      "context": 1000000,
+      "output": 131072
+    },
+    "morph/morph-v3-fast": {
+      "context": 16000,
+      "output": 16000
+    },
+    "morph/morph-v3-large": {
+      "context": 32000,
+      "output": 32000
+    },
+    "nvidia/nemotron-3-nano-30b-a3b": {
+      "context": 262144,
+      "output": 262144
+    },
+    "nvidia/nemotron-3-super-120b-a12b": {
+      "context": 256000,
+      "output": 32000
+    },
+    "nvidia/nemotron-3-ultra-550b-a55b": {
+      "context": 1000000,
+      "output": 65000
+    },
+    "nvidia/nemotron-3.5-lightning": {
+      "context": 262144,
+      "output": 131072
+    },
+    "nvidia/nemotron-nano-12b-v2-vl": {
+      "context": 131072,
+      "output": 131072
+    },
+    "nvidia/nemotron-nano-9b-v2": {
+      "context": 131072,
+      "output": 131072
+    },
+    "openai/gpt-3.5-turbo": {
+      "context": 16385,
+      "input": 12289,
+      "output": 4096
+    },
+    "openai/gpt-4-turbo": {
+      "context": 128000,
+      "output": 4096
+    },
+    "openai/gpt-4.1": {
+      "context": 1047576,
+      "output": 32768
+    },
+    "openai/gpt-4.1-fast": {
+      "context": 1047576,
+      "input": 1014808,
+      "output": 32768
+    },
+    "openai/gpt-4.1-mini": {
+      "context": 1047576,
+      "output": 32768
+    },
+    "openai/gpt-4.1-mini-fast": {
+      "context": 1047576,
+      "input": 1014808,
+      "output": 32768
+    },
+    "openai/gpt-4.1-nano": {
+      "context": 1047576,
+      "output": 32768
+    },
+    "openai/gpt-4.1-nano-fast": {
+      "context": 1047576,
+      "input": 1014808,
+      "output": 32768
+    },
+    "openai/gpt-4o": {
+      "context": 128000,
+      "output": 16384
+    },
+    "openai/gpt-4o-fast": {
+      "context": 128000,
+      "input": 111616,
+      "output": 16384
+    },
+    "openai/gpt-4o-mini": {
+      "context": 128000,
+      "output": 16384
+    },
+    "openai/gpt-4o-mini-fast": {
+      "context": 128000,
+      "input": 111616,
+      "output": 16384
+    },
+    "openai/gpt-4o-mini-transcribe": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/gpt-4o-transcribe": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/gpt-5": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5-codex": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5-fast": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5-mini": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5-mini-fast": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5-nano": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5-pro": {
+      "context": 400000,
+      "input": 128000,
+      "output": 272000
+    },
+    "openai/gpt-5.1-codex": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.1-codex-max": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.1-codex-mini": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.1-thinking": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.1-thinking-fast": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.2": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.2-codex": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.2-fast": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.2-pro": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.3-codex": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.3-codex-fast": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.4": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "openai/gpt-5.4-fast": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "openai/gpt-5.4-mini": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.4-mini-fast": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.4-nano": {
+      "context": 400000,
+      "input": 272000,
+      "output": 128000
+    },
+    "openai/gpt-5.4-pro": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "openai/gpt-5.5": {
+      "context": 1000000,
+      "input": 872000,
+      "output": 128000
+    },
+    "openai/gpt-5.5-fast": {
+      "context": 1000000,
+      "input": 872000,
+      "output": 128000
+    },
+    "openai/gpt-5.5-pro": {
+      "context": 1000000,
+      "input": 872000,
+      "output": 128000
+    },
+    "openai/gpt-5.6-luna": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "openai/gpt-5.6-luna-fast": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "openai/gpt-5.6-sol": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "openai/gpt-5.6-sol-fast": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "openai/gpt-5.6-terra": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "openai/gpt-5.6-terra-fast": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "openai/gpt-6-astra": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "openai/gpt-6-astra-fast": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
+    "openai/gpt-image-1": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/gpt-image-1-mini": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/gpt-image-1.5": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/gpt-image-2": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/gpt-image-2.5-flare": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/gpt-image-2.5-sunburst": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/gpt-oss-120b": {
+      "context": 131072,
+      "output": 131072
+    },
+    "openai/gpt-oss-20b": {
+      "context": 131072,
+      "input": 122880,
+      "output": 8192
+    },
+    "openai/gpt-oss-safeguard-120b": {
+      "context": 128000,
+      "input": 112000,
+      "output": 16000
+    },
+    "openai/gpt-oss-safeguard-20b": {
+      "context": 128000,
+      "input": 112000,
+      "output": 16000
+    },
+    "openai/gpt-realtime-1.5": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/gpt-realtime-2": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/gpt-realtime-2.1": {
+      "context": 128000,
+      "input": 96000,
+      "output": 32000
+    },
+    "openai/gpt-realtime-mini": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/gpt-realtime-whisper": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/o1": {
+      "context": 200000,
+      "output": 100000
+    },
+    "openai/o3": {
+      "context": 200000,
+      "output": 100000
+    },
+    "openai/o3-fast": {
+      "context": 200000,
+      "input": 100000,
+      "output": 100000
+    },
+    "openai/o3-mini": {
+      "context": 200000,
+      "output": 100000
+    },
+    "openai/o3-pro": {
+      "context": 200000,
+      "input": 100000,
+      "output": 100000
+    },
+    "openai/o4-mini": {
+      "context": 200000,
+      "output": 100000
+    },
+    "openai/o4-mini-fast": {
+      "context": 200000,
+      "input": 100000,
+      "output": 100000
+    },
+    "openai/text-embedding-3-large": {
+      "context": 8192,
+      "input": 6656,
+      "output": 1536
+    },
+    "openai/text-embedding-3-small": {
+      "context": 8192,
+      "input": 6656,
+      "output": 1536
+    },
+    "openai/text-embedding-ada-002": {
+      "context": 8192,
+      "input": 6656,
+      "output": 1536
+    },
+    "openai/tts-1": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/tts-1-hd": {
+      "context": 0,
+      "output": 0
+    },
+    "openai/whisper-1": {
+      "context": 0,
+      "output": 0
+    },
+    "perplexity/pplx-embed-v1-0.6b": {
+      "context": 32000,
+      "output": 0
+    },
+    "perplexity/pplx-embed-v1-4b": {
+      "context": 32000,
+      "output": 0
+    },
+    "perplexity/sonar": {
+      "context": 127000,
+      "output": 8000
+    },
+    "perplexity/sonar-pro": {
+      "context": 200000,
+      "output": 8000
+    },
+    "perplexity/sonar-reasoning-pro": {
+      "context": 127000,
+      "output": 8000
+    },
+    "poolside/laguna-s-2.1": {
+      "context": 1000000,
+      "output": 131072
+    },
+    "poolside/laguna-s-2.1-free": {
+      "context": 256000,
+      "output": 32768
+    },
+    "prodia/flux-fast-schnell": {
+      "context": 512,
+      "output": 0
+    },
+    "quiverai/arrow-1.1": {
+      "context": 131072,
+      "output": 131072
+    },
+    "recraft/recraft-v2": {
+      "context": 512,
+      "output": 0
+    },
+    "recraft/recraft-v3": {
+      "context": 512,
+      "output": 0
+    },
+    "recraft/recraft-v4": {
+      "context": 0,
+      "output": 0
+    },
+    "recraft/recraft-v4-pro": {
+      "context": 0,
+      "output": 0
+    },
+    "recraft/recraft-v4.1": {
+      "context": 0,
+      "output": 0
+    },
+    "recraft/recraft-v4.1-pro": {
+      "context": 0,
+      "output": 0
+    },
+    "recraft/recraft-v4.1-utility": {
+      "context": 0,
+      "output": 0
+    },
+    "recraft/recraft-v4.1-utility-pro": {
+      "context": 0,
+      "output": 0
+    },
+    "sakana/fugu-max": {
+      "context": 1000000,
+      "output": 1000000
+    },
+    "sakana/fugu-ultra": {
+      "context": 1000000,
+      "output": 1000000
+    },
+    "sakana/fugu-ultra-v2": {
+      "context": 1000000,
+      "output": 1000000
+    },
+    "sakana/namazu": {
+      "context": 256000,
+      "output": 256000
+    },
+    "spacexai/grok-4.1-fast-non-reasoning": {
+      "context": 1000000,
+      "output": 1000000
+    },
+    "spacexai/grok-4.1-fast-reasoning": {
+      "context": 1000000,
+      "output": 1000000
+    },
+    "spacexai/grok-4.20-multi-agent": {
+      "context": 2000000,
+      "output": 2000000
+    },
+    "spacexai/grok-4.20-multi-agent-beta": {
+      "context": 2000000,
+      "output": 2000000
+    },
+    "spacexai/grok-4.20-non-reasoning": {
+      "context": 2000000,
+      "output": 2000000
+    },
+    "spacexai/grok-4.20-non-reasoning-beta": {
+      "context": 2000000,
+      "output": 2000000
+    },
+    "spacexai/grok-4.20-reasoning": {
+      "context": 2000000,
+      "output": 2000000
+    },
+    "spacexai/grok-4.20-reasoning-beta": {
+      "context": 2000000,
+      "output": 2000000
+    },
+    "spacexai/grok-4.3": {
+      "context": 1000000,
+      "output": 1000000
+    },
+    "spacexai/grok-4.5": {
+      "context": 500000,
+      "output": 500000
+    },
+    "spacexai/grok-4.6": {
+      "context": 500000,
+      "output": 500000
+    },
+    "spacexai/grok-build-0.1": {
+      "context": 256000,
+      "output": 256000
+    },
+    "spacexai/grok-imagine-image": {
+      "context": 0,
+      "output": 0
+    },
+    "spacexai/grok-imagine-image-2.0": {
+      "context": 0,
+      "output": 0
+    },
+    "spacexai/grok-imagine-video": {
+      "context": 0,
+      "output": 0
+    },
+    "spacexai/grok-imagine-video-1.5": {
+      "context": 0,
+      "output": 0
+    },
+    "spacexai/grok-stt": {
+      "context": 0,
+      "output": 0
+    },
+    "spacexai/grok-tts": {
+      "context": 0,
+      "output": 0
+    },
+    "spacexai/grok-voice-think-fast-1.0": {
+      "context": 0,
+      "output": 0
+    },
+    "spacexai/grok-voice-think-fast-2.0": {
+      "context": 0,
+      "output": 0
+    },
+    "stepfun/step-3.5-flash": {
+      "context": 262114,
+      "output": 262114
+    },
+    "stepfun/step-3.7-flash": {
+      "context": 256000,
+      "input": 256000,
+      "output": 256000
+    },
+    "tencent/hy-mt2-lite": {
+      "context": 8000,
+      "output": 4000
+    },
+    "tencent/hy-mt2-plus": {
+      "context": 8000,
+      "output": 4000
+    },
+    "tencent/hy-mt2-pro": {
+      "context": 8000,
+      "output": 4000
+    },
+    "tencent/hy3": {
+      "context": 262144,
+      "output": 262144
+    },
+    "tencent/hy4-preview": {
+      "context": 1024000,
+      "output": 64000
+    },
+    "thinkingmachines/inkling": {
+      "context": 256000,
+      "output": 256000
+    },
+    "thinkingmachines/inkling-small": {
+      "context": 1000000,
+      "output": 1000000
+    },
+    "voyage/rerank-2.5": {
+      "context": 32000,
+      "output": 32000
+    },
+    "voyage/rerank-2.5-lite": {
+      "context": 32000,
+      "output": 32000
+    },
+    "voyage/voyage-3-large": {
+      "context": 8192,
+      "output": 1536
+    },
+    "voyage/voyage-3.5": {
+      "context": 8192,
+      "output": 1536
+    },
+    "voyage/voyage-3.5-lite": {
+      "context": 8192,
+      "output": 1536
+    },
+    "voyage/voyage-4": {
+      "context": 32000,
+      "output": 0
+    },
+    "voyage/voyage-4-large": {
+      "context": 32000,
+      "output": 0
+    },
+    "voyage/voyage-4-lite": {
+      "context": 32000,
+      "output": 0
+    },
+    "voyage/voyage-code-2": {
+      "context": 8192,
+      "output": 1536
+    },
+    "voyage/voyage-code-3": {
+      "context": 8192,
+      "output": 1536
+    },
+    "voyage/voyage-finance-2": {
+      "context": 8192,
+      "output": 1536
+    },
+    "voyage/voyage-law-2": {
+      "context": 8192,
+      "output": 1536
+    },
+    "xiaomi/mimo-v2.5": {
+      "context": 1050000,
+      "output": 131100
+    },
+    "xiaomi/mimo-v2.5-pro": {
+      "context": 1050000,
+      "output": 131000
+    },
+    "zai/glm-4.5": {
+      "context": 128000,
+      "output": 96000
+    },
+    "zai/glm-4.5-air": {
+      "context": 128000,
+      "output": 96000
+    },
+    "zai/glm-4.5v": {
+      "context": 66000,
+      "output": 16000
+    },
+    "zai/glm-4.6": {
+      "context": 200000,
+      "output": 96000
+    },
+    "zai/glm-4.7": {
+      "context": 200000,
+      "output": 120000
+    },
+    "zai/glm-4.7-flash": {
+      "context": 200000,
+      "output": 131000
+    },
+    "zai/glm-4.7-flashx": {
+      "context": 200000,
+      "output": 128000
+    },
+    "zai/glm-5": {
+      "context": 202800,
+      "output": 131100
+    },
+    "zai/glm-5-turbo": {
+      "context": 202800,
+      "output": 131100
+    },
+    "zai/glm-5.1": {
+      "context": 202800,
+      "output": 64000
+    },
+    "zai/glm-5.2": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "zai/glm-5.2-fast": {
+      "context": 1000000,
+      "output": 128000
+    },
+    "zai/glm-5.3": {
+      "context": 1000000,
+      "output": 1000000
+    },
+    "zai/glm-5.3-fast": {
+      "context": 1048576,
+      "output": 262144
+    },
+    "zai/glm-5.3-flash": {
+      "context": 1000000,
+      "output": 131000
+    },
+    "zai/glm-5v-turbo": {
+      "context": 200000,
+      "output": 128000
+    }
+  },
+  "xai": {
+    "grok-4.20-0309-non-reasoning": {
+      "context": 1000000,
+      "output": 30000
+    },
+    "grok-4.20-0309-reasoning": {
+      "context": 1000000,
+      "output": 30000
+    },
+    "grok-4.20-multi-agent-0309": {
+      "context": 1000000,
+      "output": 30000
+    },
+    "grok-4.3": {
+      "context": 1000000,
+      "output": 30000
+    },
+    "grok-4.5": {
+      "context": 500000,
+      "output": 500000
+    },
+    "grok-4.6": {
+      "context": 500000,
+      "output": 500000
+    },
+    "grok-build-0.1": {
+      "context": 256000,
+      "output": 256000
+    },
+    "grok-imagine-image": {
+      "context": 16000,
+      "output": 0
+    },
+    "grok-imagine-image-2.0": {
+      "context": 64000,
+      "output": 0
+    },
+    "grok-imagine-image-quality": {
+      "context": 16000,
+      "output": 0
+    },
+    "grok-imagine-video": {
+      "context": 1024,
+      "output": 0
+    },
+    "grok-imagine-video-1.5": {
+      "context": 1024,
+      "output": 0
+    }
+  }
+}
