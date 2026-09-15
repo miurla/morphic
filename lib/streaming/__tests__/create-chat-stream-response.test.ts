@@ -556,7 +556,7 @@ describe('createChatStreamResponse', () => {
       input: '"earlier.png" (image/png)',
       output: 'Answer',
       metadata: {
-        carriedContext: { attachments: 1, attachmentTokens: 10_000 }
+        carriedContext: { attachments: 1, attachmentTokens: 4_000 }
       }
     })
   })

@@ -1,8 +1,8 @@
-export const IMAGE_ATTACHMENT_TOKENS = 10_000
+export const IMAGE_ATTACHMENT_TOKENS = 4_000
 export const MIN_PDF_ATTACHMENT_TOKENS = 10_000
-// A 500 KB PDF reaches the small-document floor; larger containers scale so
+// A 300 KB PDF reaches the small-document floor; larger containers scale so
 // multi-page files cannot all hide behind a flat estimate.
-export const PDF_BYTES_PER_TOKEN = 50
+export const PDF_BYTES_PER_TOKEN = 30
 export const BYTES_PER_TOKEN = 3.9
 export const UNKNOWN_ATTACHMENT_TOKENS = 50_000
 
