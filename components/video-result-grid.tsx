@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { IconCirclePlus as PlusCircle } from '@tabler/icons-react'
 
 import { SerperSearchResultItem } from '@/lib/types'
+import { faviconUrl } from '@/lib/utils/favicon'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
@@ -78,9 +79,7 @@ export function VideoResultGrid({
                     <div className="flex items-center space-x-2">
                       <Avatar className="h-4 w-4">
                         <AvatarImage
-                          src={`https://www.google.com/s2/favicons?domain=${
-                            new URL(video.link).hostname
-                          }`}
+                          src={faviconUrl(video.link)}
                           alt={video.channel || video.source}
                         />
                         <AvatarFallback>
