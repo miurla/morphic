@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 
 import type { User } from '@supabase/supabase-js'
 import {
+  IconChartBar as ChartBar,
   IconLink as Link2,
   IconLogout as LogOut,
   IconUserCircle as UserRound
@@ -26,6 +27,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 import { AccountSettingsDialog } from '@/components/account-settings-dialog'
+import { useUsageBudget } from '@/components/usage-budget-provider'
+import { UsageDialog } from '@/components/usage-dialog'
 
 import { Button } from './ui/button'
 import { ExternalLinkItems } from './external-link-items'
@@ -38,6 +41,8 @@ export default function UserMenu({ user }: UserMenuProps) {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const [usageOpen, setUsageOpen] = useState(false)
+  const { usage, isLow, isExhausted, refreshUsage } = useUsageBudget()
   const userName =
     user.user_metadata?.full_name || user.user_metadata?.name || 'User'
   const avatarUrl =
@@ -69,17 +74,42 @@ export default function UserMenu({ user }: UserMenuProps) {
     window.setTimeout(() => setAccountOpen(true), 0)
   }
 
+  const handleOpenUsage = () => {
+    setMenuOpen(false)
+    window.setTimeout(() => {
+      setUsageOpen(true)
+      void refreshUsage()
+    }, 0)
+  }
+
+  const accountMenuLabel = isExhausted
+    ? 'Open account menu. Monthly usage limit reached.'
+    : isLow
+      ? 'Open account menu. Monthly usage is running low.'
+      : 'Open account menu'
+
   return (
     <>
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative size-6 rounded-full">
+          <Button
+            variant="ghost"
+            className="relative size-6 rounded-full"
+            aria-label={accountMenuLabel}
+          >
             <Avatar className="size-6">
               <AvatarImage src={avatarUrl} alt={userName} />
               <AvatarFallback>
                 {getInitials(userName, user.email)}
               </AvatarFallback>
             </Avatar>
+            {isLow && (
+              <span
+                className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-destructive ring-2 ring-background"
+                aria-hidden="true"
+                data-testid="usage-status-dot"
+              />
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-60" align="end" forceMount>
@@ -103,6 +133,20 @@ export default function UserMenu({ user }: UserMenuProps) {
             <UserRound className="size-4" />
             <span>Account</span>
           </DropdownMenuItem>
+          {usage && (
+            <DropdownMenuItem
+              onSelect={event => {
+                event.preventDefault()
+                handleOpenUsage()
+              }}
+            >
+              <ChartBar className="size-4" />
+              <span>Usage</span>
+              <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                {usage.remaining} / {usage.limit}
+              </span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Link2 className="size-4" />
@@ -124,6 +168,13 @@ export default function UserMenu({ user }: UserMenuProps) {
         onOpenChange={setAccountOpen}
         user={user}
       />
+      {usage && (
+        <UsageDialog
+          open={usageOpen}
+          onOpenChange={setUsageOpen}
+          usage={usage}
+        />
+      )}
     </>
   )
 }

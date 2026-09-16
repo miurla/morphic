@@ -10,6 +10,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar
 } from 'drizzle-orm/pg-core'
 
@@ -392,3 +393,117 @@ export const feedback = pgTable(
 ).enableRLS()
 
 export type Feedback = InferSelectModel<typeof feedback>
+
+// Usage grants are the durable authority for allowances. Redis remains the
+// runtime authority for spend and remaining usage.
+export const usageGrants = pgTable(
+  'usage_grants',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    idempotencyKey: varchar('idempotency_key', {
+      length: VARCHAR_LENGTH
+    }).notNull(),
+    kind: varchar('kind', {
+      length: VARCHAR_LENGTH,
+      enum: ['period', 'adjustment']
+    }).notNull(),
+    amount: integer('amount').notNull(),
+    grantedAt: timestamp('granted_at').notNull().defaultNow(),
+    expiresAt: timestamp('expires_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    uniqueIndex('usage_grants_user_idempotency_idx').on(
+      table.userId,
+      table.idempotencyKey
+    ),
+    index('usage_grants_user_expires_idx').on(table.userId, table.expiresAt),
+    pgPolicy('users_read_own_usage_grants', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`user_id = (select current_setting('app.current_user_id', true))`
+    }),
+    pgPolicy('users_insert_own_usage_grants', {
+      as: 'permissive',
+      for: 'insert',
+      to: 'public',
+      withCheck: sql`user_id = (select current_setting('app.current_user_id', true))`
+    })
+  ]
+).enableRLS()
+
+export type UsageGrant = InferSelectModel<typeof usageGrants>
+
+// Usage events are best-effort analytics. They must never be used to rebuild
+// balances or decide whether a request is allowed.
+export const usageEvents = pgTable(
+  'usage_events',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    eventType: varchar('event_type', {
+      length: VARCHAR_LENGTH,
+      enum: ['spend', 'refund', 'limit_reached']
+    }).notNull(),
+    amount: integer('amount').notNull(),
+    mode: varchar('mode', {
+      length: VARCHAR_LENGTH,
+      enum: ['quick', 'adaptive']
+    }),
+    attemptId: varchar('attempt_id', { length: ID_LENGTH }).notNull(),
+    messageId: varchar('message_id', { length: ID_LENGTH }),
+    remaining: integer('remaining'),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => [
+    uniqueIndex('usage_events_user_type_attempt_idx').on(
+      table.userId,
+      table.eventType,
+      table.attemptId
+    ),
+    index('usage_events_user_created_idx').on(table.userId, table.createdAt),
+    pgPolicy('users_read_own_usage_events', {
+      as: 'permissive',
+      for: 'select',
+      to: 'public',
+      using: sql`user_id = (select current_setting('app.current_user_id', true))`
+    }),
+    pgPolicy('users_insert_own_usage_events', {
+      as: 'permissive',
+      for: 'insert',
+      to: 'public',
+      withCheck: sql`user_id = (select current_setting('app.current_user_id', true))`
+    })
+  ]
+).enableRLS()
+
+export type UsageEvent = InferSelectModel<typeof usageEvents>
+
+export const additionalUsageInterest = pgTable(
+  'additional_usage_interest',
+  {
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).primaryKey(),
+    count: integer('count').notNull().default(1),
+    firstClickedAt: timestamp('first_clicked_at').notNull().defaultNow(),
+    lastClickedAt: timestamp('last_clicked_at').notNull().defaultNow()
+  },
+  () => [
+    pgPolicy('users_write_own_additional_usage_interest', {
+      as: 'permissive',
+      for: 'all',
+      to: 'public',
+      using: sql`user_id = (select current_setting('app.current_user_id', true))`,
+      withCheck: sql`user_id = (select current_setting('app.current_user_id', true))`
+    })
+  ]
+).enableRLS()
+
+export type AdditionalUsageInterest = InferSelectModel<
+  typeof additionalUsageInterest
+>

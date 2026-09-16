@@ -34,6 +34,7 @@ import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { dedupeAttachments } from './helpers/dedupe-attachments'
 import { describeTurnInput } from './helpers/describe-turn-input'
+import { hasResponseContentPart } from './helpers/has-response-content'
 import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
   isEmptyResponse
@@ -72,7 +73,8 @@ export async function createChatStreamResponse(
     messageId,
     abortSignal,
     isNewChat,
-    searchMode
+    searchMode,
+    onZeroPartError
   } = config
 
   // Verify that chatId is provided
@@ -343,10 +345,20 @@ export async function createChatStreamResponse(
         onEnd: async ({ responseMessage, isAborted }) => {
           try {
             perfTime('researchAgent.stream completed', llmStart)
-            if (isAborted || !responseMessage) return
+            if (isAborted) return
+            if (!responseMessage) {
+              if (hasStreamError) await onZeroPartError?.()
+              return
+            }
 
             rootOutput = getTextFromParts(responseMessage.parts) || undefined
             hasEmptyResponse = isEmptyResponse(responseMessage)
+            if (
+              hasEmptyResponse ||
+              (hasStreamError && !hasResponseContentPart(responseMessage))
+            ) {
+              await onZeroPartError?.()
+            }
 
             // Persist stream results to database
             await persistStreamResults(
@@ -365,6 +377,11 @@ export async function createChatStreamResponse(
           }
         },
         onError: (error: unknown) => {
+          hasStreamError = true
+          streamError = error
+          streamErrorWasCancelled = abortSignal?.aborted ?? false
+          streamErrorPhase = 'generation'
+
           if (isToolFailureError(error)) {
             console.error('Tool failure:', error)
             return serializeToolFailure(error)

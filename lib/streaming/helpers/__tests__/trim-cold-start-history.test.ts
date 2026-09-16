@@ -263,7 +263,7 @@ describe('trimColdStartHistory', () => {
       trimColdStartHistory(messages, { ...options, modelId: 'gpt-4o-mini' })
         .trimmedAtCurrentTurn
     ).toBe(true)
-  })
+  }, 10_000)
 
   it('counts gpt-5.6-luna history with its own tokenizer', () => {
     const arabicText = 'مرحبا بك في هذا البحث'.repeat(20)

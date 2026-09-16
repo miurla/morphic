@@ -7,6 +7,7 @@ export type PublicErrorCode =
   | 'auth_required'
   | 'bad_request'
   | 'context_length'
+  | 'duplicate_attempt'
   | 'forbidden'
   | 'malformed_request'
   | 'model_unavailable'
@@ -18,6 +19,7 @@ export type PublicErrorCode =
   | 'rate_limit'
   | 'tool_failed'
   | 'unknown'
+  | 'usage_limit'
 
 export type PublicErrorPayload = {
   error: string
@@ -30,6 +32,8 @@ export type PublicErrorPayload = {
   remaining?: number
   limit?: number
   mode?: string
+  reason?: 'monthly' | 'hourly'
+  retryAt?: number
 }
 
 type PublicErrorOptions = {
@@ -57,6 +61,7 @@ const PUBLIC_ERROR_CODES: ReadonlySet<string> = new Set([
   'auth_required',
   'bad_request',
   'context_length',
+  'duplicate_attempt',
   'forbidden',
   'malformed_request',
   'model_unavailable',
@@ -67,7 +72,8 @@ const PUBLIC_ERROR_CODES: ReadonlySet<string> = new Set([
   'provider_unavailable',
   'rate_limit',
   'tool_failed',
-  'unknown'
+  'unknown',
+  'usage_limit'
 ])
 
 const PUBLIC_ERROR_TYPES: ReadonlySet<string> = new Set([
@@ -175,6 +181,10 @@ function getNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
+function getUsageLimitReason(value: unknown): 'monthly' | 'hourly' | undefined {
+  return value === 'monthly' || value === 'hourly' ? value : undefined
+}
+
 function matchesAny(value: string, patterns: RegExp[]): boolean {
   return patterns.some(pattern => pattern.test(value))
 }
@@ -271,6 +281,7 @@ function typeForCode(code: PublicErrorCode): PublicErrorType {
       return 'forbidden'
     case 'provider_rate_limit':
     case 'rate_limit':
+    case 'usage_limit':
       return 'rate-limit'
     default:
       return 'general'
@@ -477,7 +488,9 @@ function fromParsedPayload(
     resetAt: getNumber(value.resetAt),
     remaining: getNumber(value.remaining),
     limit: getNumber(value.limit),
-    mode: getString(value.mode)
+    mode: getString(value.mode),
+    reason: getUsageLimitReason(value.reason),
+    retryAt: getNumber(value.retryAt)
   }
 }
 
@@ -554,6 +567,14 @@ export function createPublicErrorResponse(
 }
 
 export function getPublicRateLimitDetails(error: PublicErrorPayload): string {
+  if (error.code === 'usage_limit' && error.reason === 'hourly') {
+    return 'The hourly usage guard resets at the start of the next UTC hour.'
+  }
+
+  if (error.code === 'usage_limit') {
+    return 'Your monthly usage renews at the end of your current usage period.'
+  }
+
   if (error.mode === 'adaptive') {
     return 'The limit resets at midnight UTC. You can continue using Quick mode without restrictions.'
   }
