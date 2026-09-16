@@ -1,5 +1,7 @@
 import type { RefundResult } from './types'
 
+const REFUND_ATTEMPTS_PER_INVOCATION = 2
+
 export function createUsageRefundHandler(params: {
   charged: boolean
   refund: () => Promise<RefundResult>
@@ -15,11 +17,19 @@ export function createUsageRefundHandler(params: {
 
     inFlight = (async () => {
       try {
-        const refund = await params.refund()
-        if (refund.refunded) params.onRefunded(refund)
-        completed = refund.refunded || refund.duplicate
-      } catch (error) {
-        params.onError?.(error)
+        for (
+          let attempt = 0;
+          attempt < REFUND_ATTEMPTS_PER_INVOCATION && !completed;
+          attempt += 1
+        ) {
+          try {
+            const refund = await params.refund()
+            completed = refund.refunded || refund.duplicate
+            if (refund.refunded) params.onRefunded(refund)
+          } catch (error) {
+            params.onError?.(error)
+          }
+        }
       } finally {
         inFlight = undefined
       }

@@ -19,7 +19,7 @@ function result(overrides: Partial<RefundResult>): RefundResult {
 }
 
 describe('usage refund handler', () => {
-  it('allows a later invocation to retry a transient refund failure', async () => {
+  it('retries a transient refund failure before returning', async () => {
     const refund = vi
       .fn<() => Promise<RefundResult>>()
       .mockResolvedValueOnce(result({}))
@@ -35,10 +35,28 @@ describe('usage refund handler', () => {
 
     await handler()
     await handler()
-    await handler()
 
     expect(refund).toHaveBeenCalledTimes(2)
     expect(onRefunded).toHaveBeenCalledOnce()
+  })
+
+  it('remains retryable after the immediate retry budget is exhausted', async () => {
+    const refund = vi
+      .fn<() => Promise<RefundResult>>()
+      .mockResolvedValueOnce(result({}))
+      .mockResolvedValueOnce(result({}))
+      .mockResolvedValueOnce(result({ refunded: true, enforced: true }))
+    const handler = createUsageRefundHandler({
+      charged: true,
+      refund,
+      onRefunded: vi.fn()
+    })
+
+    await handler()
+    expect(refund).toHaveBeenCalledTimes(2)
+
+    await handler()
+    expect(refund).toHaveBeenCalledTimes(3)
   })
 
   it('treats a duplicate refund as completed', async () => {
