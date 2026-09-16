@@ -77,9 +77,10 @@ export default async function RootLayout({
   }
 
   const userId = user?.id ?? (await getCurrentUserId())
+  const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
   const usageBudgetEnabled = Boolean(
     user &&
-      process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true' &&
+      isCloudDeployment &&
       isUsageBudgetAvailable() &&
       ENFORCEMENT === 'on' &&
       UI_ENABLED
@@ -140,7 +141,7 @@ export default async function RootLayout({
             </UserProvider>
           </PostHogProvider>
           <Toaster />
-          <Analytics />
+          {isCloudDeployment && <Analytics />}
         </ThemeProvider>
       </body>
     </html>
