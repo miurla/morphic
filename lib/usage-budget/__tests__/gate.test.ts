@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   set: vi.fn(),
   eval: vi.fn(),
   hgetall: vi.fn(),
+  redisSignals: [] as AbortSignal[],
   syncUsageGrants: vi.fn(),
   resolveUsageAnchor: vi.fn(),
   getCurrentUser: vi.fn()
@@ -12,6 +13,10 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@upstash/redis', () => ({
   Redis: class {
+    constructor(config: { signal?: AbortSignal }) {
+      if (config.signal) mocks.redisSignals.push(config.signal)
+    }
+
     get = mocks.get
     set = mocks.set
     eval = mocks.eval
@@ -44,6 +49,7 @@ describe('usage budget gate', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.redisSignals.length = 0
     process.env.MORPHIC_CLOUD_DEPLOYMENT = 'true'
     process.env.UPSTASH_REDIS_REST_URL = 'https://redis.example.test'
     process.env.UPSTASH_REDIS_REST_TOKEN = 'token'
@@ -268,6 +274,8 @@ describe('usage budget gate', () => {
 
     expect(result.allowed).toBe(true)
     expect(result.enforced).toBe(false)
+    expect(mocks.redisSignals).toHaveLength(1)
+    expect(mocks.redisSignals[0].aborted).toBe(true)
     errorSpy.mockRestore()
   })
 

@@ -140,23 +140,28 @@ redis.call('HSET', KEYS[3], 'refunded', 1)
 return {1, 0, month_used, hour_used, math.max(0, usage_limit - month_used), cost, usage_limit, reset_at}
 `
 
-function getRedis(): Redis {
+function getRedis(signal?: AbortSignal): Redis {
   return new Redis({
     url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    ...(signal ? { signal } : {})
   })
 }
 
-async function withRedisTimeout<T>(operation: Promise<T>): Promise<T> {
+async function withRedisTimeout<T>(
+  operation: (redis: Redis) => Promise<T>
+): Promise<T> {
+  const controller = new AbortController()
   let timeout: ReturnType<typeof setTimeout> | undefined
   try {
     return await Promise.race([
-      operation,
+      operation(getRedis(controller.signal)),
       new Promise<T>((_, reject) => {
-        timeout = setTimeout(
-          () => reject(new Error('Usage budget Redis timeout')),
-          REDIS_TIMEOUT_MS
-        )
+        timeout = setTimeout(() => {
+          const error = new Error('Usage budget Redis timeout')
+          controller.abort(error)
+          reject(error)
+        }, REDIS_TIMEOUT_MS)
       })
     ])
   } finally {
@@ -193,14 +198,13 @@ function decodeGrant(value: string | null) {
 }
 
 async function getOrSyncGrantLimit(params: {
-  redis: Redis
   userId: string
   periodGrantKey: string
   userCreatedAt: Date
   now: Date
 }): Promise<{ monthly: number; monthlyExpiresAt: number }> {
   const cached = decodeGrant(
-    await withRedisTimeout(params.redis.get<string>(params.periodGrantKey))
+    await withRedisTimeout(redis => redis.get<string>(params.periodGrantKey))
   )
   if (cached) {
     return { monthly: cached.amount, monthlyExpiresAt: cached.expiresAt }
@@ -216,8 +220,8 @@ async function getOrSyncGrantLimit(params: {
     1,
     Math.ceil((monthlyExpiresAt - params.now.getTime()) / 1000)
   )
-  await withRedisTimeout(
-    params.redis.set(
+  await withRedisTimeout(redis =>
+    redis.set(
       params.periodGrantKey,
       encodeGrant(active.monthly, monthlyExpiresAt),
       { ex: ttl, nx: true }
@@ -225,7 +229,7 @@ async function getOrSyncGrantLimit(params: {
   )
 
   const winner = decodeGrant(
-    await withRedisTimeout(params.redis.get<string>(params.periodGrantKey))
+    await withRedisTimeout(redis => redis.get<string>(params.periodGrantKey))
   )
   return winner
     ? { monthly: winner.amount, monthlyExpiresAt: winner.expiresAt }
@@ -292,14 +296,13 @@ export async function consumeUsage(params: {
     }
 
     const period = getUsagePeriod(anchor, now)
-    const redis = getRedis()
     const keys = keysFor(params.userId, params.attemptId, period)
     const attemptTtl = Math.max(
       ATTEMPT_TTL_SECONDS,
       period.periodTtlSeconds + 24 * 60 * 60
     )
     const evaluateGate = () =>
-      withRedisTimeout(
+      withRedisTimeout(redis =>
         redis.eval<unknown[], unknown[]>(
           USAGE_GATE_SCRIPT,
           [keys.periodSpend, keys.hour, keys.attempt, keys.periodGrant],
@@ -322,7 +325,6 @@ export async function consumeUsage(params: {
     let values = await evaluateGate()
     if (numberAt(values, 0) === -1) {
       await getOrSyncGrantLimit({
-        redis,
         userId: params.userId,
         periodGrantKey: keys.periodGrant,
         userCreatedAt: anchor,
@@ -369,16 +371,15 @@ export async function refundUsage(params: {
   if (!isUsageBudgetAvailable()) return failedRefund()
 
   try {
-    const redis = getRedis()
     const attemptKey = attemptKeyFor(params.userId, params.attemptId)
-    const attempt = await withRedisTimeout(
+    const attempt = await withRedisTimeout(redis =>
       redis.hgetall<Record<string, unknown>>(attemptKey)
     )
     const periodSpend = stringField(attempt, 'period_spend_key')
     const hourlySpend = stringField(attempt, 'hourly_spend_key')
     if (!periodSpend || !hourlySpend) return failedRefund(true)
 
-    const values = await withRedisTimeout(
+    const values = await withRedisTimeout(redis =>
       redis.eval<unknown[], unknown[]>(
         USAGE_REFUND_SCRIPT,
         [periodSpend, hourlySpend, attemptKey],
@@ -444,17 +445,16 @@ export async function getUsageBudget(params?: {
     }
 
     const period = getUsagePeriod(anchor, now)
-    const redis = getRedis()
     const keys = keysFor(userId, 'snapshot', period)
     const grant = await getOrSyncGrantLimit({
-      redis,
       userId,
       periodGrantKey: keys.periodGrant,
       userCreatedAt: anchor,
       now
     })
     const used = Number(
-      (await withRedisTimeout(redis.get<number>(keys.periodSpend))) ?? 0
+      (await withRedisTimeout(redis => redis.get<number>(keys.periodSpend))) ??
+        0
     )
 
     return {
