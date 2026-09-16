@@ -10,6 +10,7 @@ This guide covers the optional features and their configuration in Morphic.
 - [Authentication](#authentication)
 - [Guest Mode](#guest-mode)
 - [Other Features](#other-features)
+- [Privacy and Telemetry](./PRIVACY.md)
 
 ## Database
 
@@ -265,10 +266,13 @@ Rate limiting only applies when `MORPHIC_CLOUD_DEPLOYMENT=true`.
 Enable tracing and monitoring with Langfuse:
 
 ```bash
+ENABLE_LANGFUSE_TRACING=true
 LANGFUSE_SECRET_KEY=[YOUR_SECRET_KEY]
 LANGFUSE_PUBLIC_KEY=[YOUR_PUBLIC_KEY]
 LANGFUSE_BASE_URL=https://cloud.langfuse.com
 ```
+
+Off by default. Traces include full prompts and completions, so point `LANGFUSE_BASE_URL` at a self-hosted instance if that content should not leave your infrastructure. See [Privacy and Telemetry](./PRIVACY.md) for everything else a self-hosted instance can send outbound.
 
 ### Outbound Fetch
 
