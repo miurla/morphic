@@ -345,17 +345,20 @@ export async function createChatStreamResponse(
         onEnd: async ({ responseMessage, isAborted }) => {
           try {
             perfTime('researchAgent.stream completed', llmStart)
-            if (
-              hasStreamError &&
-              !isAborted &&
-              !hasResponseContentPart(responseMessage)
-            ) {
-              await onZeroPartError?.()
+            if (isAborted) return
+            if (!responseMessage) {
+              if (hasStreamError) await onZeroPartError?.()
+              return
             }
-            if (isAborted || !responseMessage) return
 
             rootOutput = getTextFromParts(responseMessage.parts) || undefined
             hasEmptyResponse = isEmptyResponse(responseMessage)
+            if (
+              hasEmptyResponse ||
+              (hasStreamError && !hasResponseContentPart(responseMessage))
+            ) {
+              await onZeroPartError?.()
+            }
 
             // Persist stream results to database
             await persistStreamResults(

@@ -582,4 +582,17 @@ describe('createChatStreamResponse', () => {
       statusMessage: EMPTY_RESPONSE_STATUS_MESSAGE
     })
   })
+
+  it('refunds a non-aborted stream that finishes without an answer', async () => {
+    const onZeroPartError = vi.fn(async () => undefined)
+    mocks.stream.mockResolvedValue(createFakeResult(false, []))
+
+    await createChatStreamResponse({
+      ...createConfig(),
+      onZeroPartError
+    })
+    await mocks.finishPromise
+
+    expect(onZeroPartError).toHaveBeenCalledOnce()
+  })
 })
