@@ -100,6 +100,34 @@ describe('GET /api/favicon', () => {
     expect(safeFetch).toHaveBeenCalledTimes(1)
   })
 
+  it('sheds a burst instead of opening unbounded upstream requests', async () => {
+    let release: (() => void) | undefined
+    const held = new Promise<void>(resolve => {
+      release = resolve
+    })
+    safeFetch.mockImplementation(async () => {
+      await held
+      return imageResponse()
+    })
+
+    const inFlightRequests = Array.from({ length: 8 }, () =>
+      get(`domain=${freshDomain()}&sz=16`)
+    )
+    const shed = await get(`domain=${freshDomain()}&sz=16`)
+
+    expect(shed.status).toBe(503)
+    expect(shed.headers.get('cache-control')).toBe('no-store')
+    expect(safeFetch).toHaveBeenCalledTimes(8)
+
+    release?.()
+    for (const response of await Promise.all(inFlightRequests)) {
+      expect(response.status).toBe(200)
+    }
+
+    // The slot frees up once those finish.
+    expect((await get(`domain=${freshDomain()}&sz=16`)).status).toBe(200)
+  })
+
   it('refuses a domain that is not a public hostname', async () => {
     const response = await get('domain=127.0.0.1&sz=16')
 

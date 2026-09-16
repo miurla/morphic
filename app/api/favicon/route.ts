@@ -15,6 +15,9 @@ const UPSTREAM_TIMEOUT_MS = 5000
 const HIT_TTL_MS = 24 * 60 * 60 * 1000
 const MISS_TTL_MS = 10 * 60 * 1000
 const MAX_CACHE_ENTRIES = 512
+// The cache only bounds finished entries, so a burst of never-seen domains
+// would otherwise open as many upstream requests as it likes.
+const MAX_CONCURRENT_LOADS = 8
 
 // SVG is left out on purpose: it is served from our own origin here, where an
 // icon carrying script would run as us.
@@ -154,6 +157,14 @@ function notFound(): Response {
   })
 }
 
+// Kept out of any cache: the icon is fine, this instance is just busy.
+function unavailable(): Response {
+  return new Response(null, {
+    status: 503,
+    headers: { 'cache-control': 'no-store' }
+  })
+}
+
 export async function GET(req: Request): Promise<Response> {
   const params = new URL(req.url).searchParams
 
@@ -172,6 +183,7 @@ export async function GET(req: Request): Promise<Response> {
   if (!entry) {
     let pending = inFlight.get(key)
     if (!pending) {
+      if (inFlight.size >= MAX_CONCURRENT_LOADS) return unavailable()
       pending = loadFavicon(template, domain, size).finally(() => {
         inFlight.delete(key)
       })
