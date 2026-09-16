@@ -185,6 +185,7 @@ export function Chat({
     messages: savedMessages,
     onFinish: ({ message }) => {
       isStreamingRef.current = false
+      if (usageBudgetEnabled) void refreshUsage()
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
 
       const summary = summarizeGenui(getTextFromParts(message.parts))
