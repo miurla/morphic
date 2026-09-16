@@ -223,7 +223,7 @@ export async function POST(req: Request) {
         if (adaptiveLimitResponse) return adaptiveLimitResponse
       }
 
-      if (usageBudgetAvailable && typeof usageAttemptId === 'string') {
+      if (usageBudgetAvailable && isValidUsageAttemptId(usageAttemptId)) {
         const usageNow = new Date()
         const usage = await consumeUsage({
           userId,
