@@ -2,6 +2,7 @@
 'use client'
 
 import { displayUrlName } from '@/lib/utils/domain'
+import { faviconUrl } from '@/lib/utils/favicon'
 
 /**
  * Normalize a user- or model-supplied URL to a safe http(s) URL, or return
@@ -21,15 +22,6 @@ const sanitizeHttpUrl = (raw: string | undefined): string | null => {
   }
 }
 
-export const getFaviconUrl = (imageUrl: string): string => {
-  try {
-    const hostname = new URL(imageUrl).hostname
-    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`
-  } catch {
-    return ''
-  }
-}
-
 type ImageCreditOverlayProps = {
   /** Fallback link URL (e.g. the image URL itself). Used when sourceUrl is not set. */
   url: string
@@ -46,16 +38,13 @@ export function ImageCreditOverlay({
   description
 }: ImageCreditOverlayProps) {
   const safeLink = sanitizeHttpUrl(sourceUrl) ?? sanitizeHttpUrl(url)
+  const favicon = safeLink ? faviconUrl(safeLink, 128) : ''
   const label = title || description
 
   const content = (
     <>
-      {safeLink && (
-        <img
-          src={getFaviconUrl(safeLink)}
-          alt=""
-          className="size-7 rounded-lg shrink-0"
-        />
+      {favicon && (
+        <img src={favicon} alt="" className="size-7 rounded-lg shrink-0" />
       )}
       <div className="min-w-0 flex-1">
         {safeLink && (

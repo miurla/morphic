@@ -280,6 +280,22 @@ FETCH_ALLOW_PRIVATE_NETWORK=true
 
 Leave this off on any instance others can reach. With it on, whoever can send a prompt can read whatever the host can reach.
 
+### Source Favicons
+
+Favicons for cited sources are fetched by the server and served from your own origin at `/api/favicon`, so a visitor's browser never tells the icon provider which sources a result cites. Responses are cached in memory and at the edge.
+
+The provider defaults to Google's favicon service. To point it somewhere else, use `{domain}` and `{size}` as placeholders:
+
+```bash
+FAVICON_PROVIDER_URL=https://icons.example.com/{domain}?size={size}
+```
+
+To fetch no favicons at all, which falls back to the letter or hostname already shown when an icon fails to load:
+
+```bash
+FAVICON_PROVIDER_URL=off
+```
+
 ### File Upload
 
 Enable file upload with Cloudflare R2 or S3-compatible storage:

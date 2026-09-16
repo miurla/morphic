@@ -8,6 +8,8 @@ import {
   IconFileText as FileText
 } from '@tabler/icons-react'
 
+import { faviconUrl } from '@/lib/utils/favicon'
+
 // Collapsed card for a pasted text blob (a `data-pastedContent` part, or a
 // legacy `<user-content>` block in old messages).
 export function PastedContentCard({
@@ -48,6 +50,7 @@ export function UrlChip({ url }: { url: string }) {
   try {
     host = new URL(url).host.replace(/^www\./, '')
   } catch {}
+  const favicon = faviconUrl(host, 32)
   return (
     <a
       href={url}
@@ -55,14 +58,16 @@ export function UrlChip({ url }: { url: string }) {
       rel="noopener noreferrer"
       className="inline-flex w-fit items-center gap-1.5 rounded-full border border-input bg-background py-1 pl-2 pr-2.5 text-xs text-muted-foreground hover:text-foreground"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`https://www.google.com/s2/favicons?domain=${host}&sz=32`}
-        alt=""
-        width={14}
-        height={14}
-        className="size-3.5 shrink-0 rounded-sm"
-      />
+      {favicon && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={favicon}
+          alt=""
+          width={14}
+          height={14}
+          className="size-3.5 shrink-0 rounded-sm"
+        />
+      )}
       <span className="max-w-[220px] truncate">{host}</span>
     </a>
   )

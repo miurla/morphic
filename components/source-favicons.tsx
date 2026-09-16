@@ -2,6 +2,7 @@ import Image from 'next/image'
 
 import type { SearchResultItem } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { faviconUrl } from '@/lib/utils/favicon'
 
 interface SourceFaviconsProps {
   results: SearchResultItem[]
@@ -17,8 +18,8 @@ export function SourceFavicons({
   maxDisplay = 3,
   className
 }: SourceFaviconsProps) {
-  // Extract unique domains from results
-  const uniqueDomains = Array.from(
+  // One favicon per unique result domain
+  const favicons = Array.from(
     new Set(
       results.map(result => {
         try {
@@ -30,25 +31,27 @@ export function SourceFavicons({
     )
   )
     .filter((domain): domain is string => domain !== null)
+    .map(domain => ({ domain, src: faviconUrl(domain, 16) }))
+    .filter(entry => entry.src !== '')
     .slice(0, maxDisplay)
 
-  if (uniqueDomains.length === 0) {
+  if (favicons.length === 0) {
     return null
   }
 
   return (
     <div className={cn('flex items-center', className)}>
-      {uniqueDomains.map((domain, index) => (
+      {favicons.map(({ domain, src }, index) => (
         <div
           key={domain}
           className="relative rounded-full border border-background overflow-hidden"
           style={{
             marginLeft: index > 0 ? '-6px' : '0',
-            zIndex: uniqueDomains.length - index
+            zIndex: favicons.length - index
           }}
         >
           <Image
-            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=16`}
+            src={src}
             alt={domain}
             width={16}
             height={16}

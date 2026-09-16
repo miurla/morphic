@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 import { SearchResultItem } from '@/lib/types'
 import { displayUrlName } from '@/lib/utils/domain'
+import { faviconUrl } from '@/lib/utils/favicon'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -46,9 +47,7 @@ export function SearchResults({
               <CardContent className="p-2 flex items-start space-x-2">
                 <Avatar className="h-4 w-4 mt-1 shrink-0">
                   <AvatarImage
-                    src={`https://www.google.com/s2/favicons?domain=${
-                      new URL(result.url).hostname
-                    }`}
+                    src={faviconUrl(result.url)}
                     alt={new URL(result.url).hostname}
                   />
                   <AvatarFallback className="text-xs">
@@ -90,9 +89,7 @@ export function SearchResults({
                 <div className="flex max-w-[42%] shrink-0 items-center space-x-1 min-w-0 md:mt-2 md:max-w-full md:shrink">
                   <Avatar className="h-4 w-4 shrink-0">
                     <AvatarImage
-                      src={`https://www.google.com/s2/favicons?domain=${
-                        new URL(result.url).hostname
-                      }`}
+                      src={faviconUrl(result.url)}
                       alt={new URL(result.url).hostname}
                     />
                     <AvatarFallback>

@@ -41,6 +41,7 @@ import {
   setCookie,
   subscribeToCookieChange
 } from '@/lib/utils/cookies'
+import { faviconUrl } from '@/lib/utils/favicon'
 import { stripMarkdownText } from '@/lib/utils/markdown'
 
 import { useArtifact } from './artifact/artifact-context'
@@ -718,19 +719,22 @@ export function ChatPanel({
                 try {
                   host = new URL(url).host.replace(/^www\./, '')
                 } catch {}
+                const favicon = faviconUrl(host, 32)
                 return (
                   <span
                     key={i}
                     className="inline-flex items-center gap-1.5 rounded-full border border-input bg-background py-1 pl-2 pr-1 text-xs text-muted-foreground"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`https://www.google.com/s2/favicons?domain=${host}&sz=32`}
-                      alt=""
-                      width={14}
-                      height={14}
-                      className="size-3.5 shrink-0 rounded-sm"
-                    />
+                    {favicon && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={favicon}
+                        alt=""
+                        width={14}
+                        height={14}
+                        className="size-3.5 shrink-0 rounded-sm"
+                      />
+                    )}
                     <span className="max-w-[180px] truncate">{host}</span>
                     <button
                       type="button"
