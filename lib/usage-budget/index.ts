@@ -15,6 +15,7 @@ export {
 } from './config'
 export { recordAdditionalUsageInterest, recordUsageEvent } from './events'
 export { consumeUsage, getUsageBudget, refundUsage } from './gate'
+export { createUsageRefundHandler } from './refund-handler'
 export { usageLimitResponse } from './response'
 export type {
   GateResult,

@@ -23,6 +23,7 @@ import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-epheme
 import { SearchMode } from '@/lib/types/search'
 import {
   consumeUsage,
+  createUsageRefundHandler,
   ENFORCEMENT,
   isUsageBudgetAvailable,
   isValidUsageAttemptId,
@@ -143,7 +144,11 @@ export async function POST(req: Request) {
     }
 
     const usageBudgetAvailable = !isGuest && isUsageBudgetAvailable()
-    if (usageBudgetAvailable && !isValidUsageAttemptId(usageAttemptId)) {
+    if (
+      usageBudgetAvailable &&
+      ENFORCEMENT === 'on' &&
+      !isValidUsageAttemptId(usageAttemptId)
+    ) {
       return new Response(
         JSON.stringify({
           error: 'A valid usage attempt ID is required.',
@@ -266,27 +271,24 @@ export async function POST(req: Request) {
           }
         }
 
-        let refundStarted = false
-        refundUsageOnce = async () => {
-          if (!charged || refundStarted) return
-          refundStarted = true
-
-          try {
-            const refund = await refundUsage({
+        refundUsageOnce = createUsageRefundHandler({
+          charged,
+          refund: () =>
+            refundUsage({
               userId,
               attemptId: usageAttemptId,
               now: usageNow
-            })
-            if (refund.refunded) {
-              settlement.refund = {
-                amount: refund.amount,
-                remaining: refund.remaining
-              }
+            }),
+          onRefunded: refund => {
+            settlement.refund = {
+              amount: refund.amount,
+              remaining: refund.remaining
             }
-          } catch (error) {
+          },
+          onError: error => {
             console.error('Failed to refund usage attempt:', error)
           }
-        }
+        })
 
         if (usage.enforced) {
           after(async () => {
