@@ -120,6 +120,20 @@
       "when": 1782604800001,
       "tag": "0016_wrap_rls_current_setting",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789527361000,
+      "tag": "0017_usage_budget",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789527844631,
+      "tag": "0018_reconcile_usage_budget_snapshot",
+      "breakpoints": true
     }
   ]
 }

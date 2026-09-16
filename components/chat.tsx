@@ -39,6 +39,7 @@ import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
 import { DragOverlay } from './drag-overlay'
 import { ErrorModal } from './error-modal'
+import { UsageBudgetWarning, useUsageBudget } from './usage-budget-provider'
 
 // Define section structure
 interface ChatSection {
@@ -65,6 +66,13 @@ export function Chat({
   modelSelectorData?: ModelSelectorData
 }) {
   const router = useRouter()
+  const {
+    enabled: usageBudgetEnabled,
+    costs: usageCosts,
+    consume: consumeUsage,
+    refreshUsage,
+    showUsageLimit
+  } = useUsageBudget()
 
   // Generate a stable chatId on the client side
   // - If providedId exists (e.g., /search/[id]), use it for existing chats
@@ -142,7 +150,7 @@ export function Chat({
     id: chatId, // use the client-generated or provided chatId
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      prepareSendMessagesRequest: ({ messages, trigger, messageId }) => {
+      prepareSendMessagesRequest: ({ messages, trigger, messageId, body }) => {
         // Simplify by passing AI SDK's default trigger values directly
         const lastMessage = messages[messages.length - 1]
         const messageToRegenerate =
@@ -152,6 +160,7 @@ export function Chat({
 
         return {
           body: {
+            ...body,
             trigger, // Use AI SDK's default trigger value directly
             chatId: chatId,
             messageId,
@@ -187,7 +196,19 @@ export function Chat({
       isStreamingRef.current = false
       const publicError = toPublicErrorPayload(error)
 
-      if (publicError.type === 'rate-limit') {
+      if (
+        usageBudgetEnabled &&
+        publicError.code === 'usage_limit' &&
+        publicError.reason !== 'hourly'
+      ) {
+        const resetAt = publicError.resetAt
+          ? new Date(publicError.resetAt).toISOString()
+          : undefined
+        void refreshUsage().then(usage => {
+          showUsageLimit(usage?.resetAt ?? resetAt)
+        })
+      } else if (publicError.type === 'rate-limit') {
+        if (usageBudgetEnabled) void refreshUsage()
         setErrorModal({
           open: true,
           type: 'rate-limit',
@@ -195,18 +216,21 @@ export function Chat({
           details: getPublicRateLimitDetails(publicError)
         })
       } else if (publicError.type === 'auth') {
+        if (usageBudgetEnabled) void refreshUsage()
         setErrorModal({
           open: true,
           type: 'auth',
           message: publicError.error
         })
       } else if (publicError.type === 'forbidden') {
+        if (usageBudgetEnabled) void refreshUsage()
         setErrorModal({
           open: true,
           type: 'forbidden',
           message: publicError.error
         })
       } else {
+        if (usageBudgetEnabled) void refreshUsage()
         toast.error(publicError.error)
       }
     },
@@ -217,7 +241,7 @@ export function Chat({
   // Keep all request entry points reflected in isStreamingRef so downstream
   // action handlers can reliably reject overlapping sends.
   const safeSendMessage = useCallback<typeof sendMessage>(
-    (...args) => {
+    (message, options) => {
       if (isCurrentAdaptiveModeAuthBlocked()) {
         showAdaptiveModeAuthModal()
         return Promise.resolve()
@@ -225,17 +249,48 @@ export function Chat({
 
       isStreamingRef.current = true
       try {
-        return sendMessage(...args)
+        const tracksUsage = isCloudDeployment && !isGuest
+        const request = sendMessage(
+          message,
+          tracksUsage
+            ? {
+                ...options,
+                body: {
+                  ...options?.body,
+                  usageAttemptId: generateId()
+                }
+              }
+            : options
+        )
+
+        if (tracksUsage && usageBudgetEnabled) {
+          consumeUsage(
+            getCookie('searchMode') === 'adaptive'
+              ? usageCosts.adaptive
+              : usageCosts.quick
+          )
+        }
+
+        return request
       } catch (error) {
         isStreamingRef.current = false
         throw error
       }
     },
-    [sendMessage, isCurrentAdaptiveModeAuthBlocked, showAdaptiveModeAuthModal]
+    [
+      consumeUsage,
+      isCloudDeployment,
+      isCurrentAdaptiveModeAuthBlocked,
+      isGuest,
+      sendMessage,
+      showAdaptiveModeAuthModal,
+      usageBudgetEnabled,
+      usageCosts
+    ]
   )
 
   const safeRegenerate = useCallback(
-    async (...args: Parameters<typeof regenerate>) => {
+    async (options?: Parameters<typeof regenerate>[0]) => {
       if (isCurrentAdaptiveModeAuthBlocked()) {
         showAdaptiveModeAuthModal()
         return
@@ -243,13 +298,43 @@ export function Chat({
 
       isStreamingRef.current = true
       try {
-        return await regenerate(...args)
+        const tracksUsage = isCloudDeployment && !isGuest
+        const request = regenerate(
+          tracksUsage
+            ? {
+                ...options,
+                body: {
+                  ...options?.body,
+                  usageAttemptId: generateId()
+                }
+              }
+            : options
+        )
+
+        if (tracksUsage && usageBudgetEnabled) {
+          consumeUsage(
+            getCookie('searchMode') === 'adaptive'
+              ? usageCosts.adaptive
+              : usageCosts.quick
+          )
+        }
+
+        return await request
       } catch (error) {
         isStreamingRef.current = false
         throw error
       }
     },
-    [regenerate, isCurrentAdaptiveModeAuthBlocked, showAdaptiveModeAuthModal]
+    [
+      consumeUsage,
+      isCloudDeployment,
+      isCurrentAdaptiveModeAuthBlocked,
+      isGuest,
+      regenerate,
+      showAdaptiveModeAuthModal,
+      usageBudgetEnabled,
+      usageCosts
+    ]
   )
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -592,6 +677,7 @@ export function Chat({
           error={error}
           onQuoteContext={handleQuoteContext}
         />
+        <UsageBudgetWarning />
         <ChatPanel
           chatId={chatId}
           input={input}

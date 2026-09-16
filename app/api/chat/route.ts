@@ -1,5 +1,6 @@
 import { revalidateTag } from 'next/cache'
 import { cookies } from 'next/headers'
+import { after } from 'next/server'
 
 import {
   calculateConversationTurn,
@@ -7,7 +8,7 @@ import {
   deriveQueryShape,
   trackChatEvent
 } from '@/lib/analytics'
-import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getCurrentUser, getCurrentUserId } from '@/lib/auth/get-current-user'
 import { getUserMessageIds } from '@/lib/db/actions'
 import { generateId } from '@/lib/db/schema'
 import { checkAndEnforceAdaptiveLimit } from '@/lib/rate-limit/adaptive-limit'
@@ -20,6 +21,17 @@ import {
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { createEphemeralChatStreamResponse } from '@/lib/streaming/create-ephemeral-chat-stream-response'
 import { SearchMode } from '@/lib/types/search'
+import {
+  consumeUsage,
+  ENFORCEMENT,
+  isUsageBudgetAvailable,
+  isValidUsageAttemptId,
+  recordUsageEvent,
+  refundUsage,
+  trackUsageConsumed,
+  trackUsageLimitReached,
+  usageLimitResponse
+} from '@/lib/usage-budget'
 import { getTextFromParts } from '@/lib/utils/message-utils'
 import { selectModel } from '@/lib/utils/model-selection'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
@@ -28,9 +40,20 @@ import { isProviderEnabled } from '@/lib/utils/registry'
 
 export const maxDuration = 300
 
+type UsageSettlementSlot = {
+  spend?: { amount: number; remaining: number }
+  refund?: { amount: number; remaining: number }
+  limitReached?: {
+    amount: number
+    remaining: number
+    reason: 'monthly' | 'hourly'
+  }
+}
+
 export async function POST(req: Request) {
   const startTime = performance.now()
   const abortSignal = req.signal
+  let refundUsageOnce: (() => Promise<void>) | undefined
 
   // Reset counters for new request (development only)
   if (process.env.ENABLE_PERF_LOGGING === 'true') {
@@ -41,6 +64,7 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { message, messages, chatId, trigger, messageId, isNewChat } = body
     const analyticsId: unknown = body.analyticsId
+    const usageAttemptId: unknown = body.usageAttemptId
 
     // Normalize the message id up front so persistence and analytics agree on it.
     if (message && !message.id) {
@@ -72,7 +96,13 @@ export async function POST(req: Request) {
     const isSharePage = referer?.includes('/share/')
 
     const authStart = performance.now()
-    const userId = await getCurrentUserId()
+    const currentUser =
+      process.env.ENABLE_AUTH === 'false' ? null : await getCurrentUser()
+    const userId =
+      currentUser?.id ??
+      (process.env.ENABLE_AUTH === 'false'
+        ? await getCurrentUserId()
+        : undefined)
     perfTime('Auth completed', authStart)
 
     if (isSharePage) {
@@ -110,6 +140,22 @@ export async function POST(req: Request) {
         null
       const guestLimitResponse = await checkAndEnforceGuestLimit(ip)
       if (guestLimitResponse) return guestLimitResponse
+    }
+
+    const usageBudgetAvailable = !isGuest && isUsageBudgetAvailable()
+    if (usageBudgetAvailable && !isValidUsageAttemptId(usageAttemptId)) {
+      return new Response(
+        JSON.stringify({
+          error: 'A valid usage attempt ID is required.',
+          type: 'general',
+          code: 'bad_request',
+          retryable: false
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
     }
 
     const cookieStore = await cookies()
@@ -171,6 +217,143 @@ export async function POST(req: Request) {
         const adaptiveLimitResponse = await checkAndEnforceAdaptiveLimit(userId)
         if (adaptiveLimitResponse) return adaptiveLimitResponse
       }
+
+      if (usageBudgetAvailable && typeof usageAttemptId === 'string') {
+        const usageNow = new Date()
+        const usage = await consumeUsage({
+          userId,
+          mode: searchMode,
+          attemptId: usageAttemptId,
+          messageId: message?.id ?? messageId,
+          userCreatedAt: currentUser?.created_at,
+          now: usageNow
+        })
+
+        if (usage.duplicate) {
+          if (!usage.allowed && ENFORCEMENT === 'on') {
+            return usageLimitResponse(usage)
+          }
+
+          return new Response(
+            JSON.stringify({
+              error: 'This usage attempt was already processed.',
+              type: 'general',
+              code: 'duplicate_attempt',
+              retryable: false
+            }),
+            {
+              status: 409,
+              headers: { 'Content-Type': 'application/json' }
+            }
+          )
+        }
+
+        const charged =
+          usage.enforced && (usage.allowed || ENFORCEMENT === 'shadow')
+        const settlement: UsageSettlementSlot = {}
+
+        if (charged) {
+          settlement.spend = {
+            amount: usage.cost,
+            remaining: usage.remaining
+          }
+        }
+        if (!usage.allowed && usage.reason) {
+          settlement.limitReached = {
+            amount: usage.cost,
+            remaining: usage.remaining,
+            reason: usage.reason
+          }
+        }
+
+        let refundStarted = false
+        refundUsageOnce = async () => {
+          if (!charged || refundStarted) return
+          refundStarted = true
+
+          try {
+            const refund = await refundUsage({
+              userId,
+              attemptId: usageAttemptId,
+              now: usageNow
+            })
+            if (refund.refunded) {
+              settlement.refund = {
+                amount: refund.amount,
+                remaining: refund.remaining
+              }
+            }
+          } catch (error) {
+            console.error('Failed to refund usage attempt:', error)
+          }
+        }
+
+        if (usage.enforced) {
+          after(async () => {
+            const work: Promise<void>[] = []
+
+            if (settlement.spend) {
+              work.push(
+                recordUsageEvent({
+                  userId,
+                  eventType: 'spend',
+                  amount: settlement.spend.amount,
+                  mode: searchMode,
+                  attemptId: usageAttemptId,
+                  messageId: message?.id ?? messageId,
+                  remaining: settlement.spend.remaining
+                }),
+                trackUsageConsumed({
+                  userId,
+                  mode: searchMode,
+                  remaining: settlement.spend.remaining,
+                  enforcement: ENFORCEMENT
+                })
+              )
+            }
+
+            if (settlement.limitReached) {
+              work.push(
+                recordUsageEvent({
+                  userId,
+                  eventType: 'limit_reached',
+                  amount: settlement.limitReached.amount,
+                  mode: searchMode,
+                  attemptId: usageAttemptId,
+                  messageId: message?.id ?? messageId,
+                  remaining: settlement.limitReached.remaining
+                }),
+                trackUsageLimitReached({
+                  userId,
+                  mode: searchMode,
+                  reason: settlement.limitReached.reason,
+                  enforcement: ENFORCEMENT
+                })
+              )
+            }
+
+            if (settlement.refund) {
+              work.push(
+                recordUsageEvent({
+                  userId,
+                  eventType: 'refund',
+                  amount: settlement.refund.amount,
+                  mode: searchMode,
+                  attemptId: usageAttemptId,
+                  messageId: message?.id ?? messageId,
+                  remaining: settlement.refund.remaining
+                })
+              )
+            }
+
+            await Promise.allSettled(work)
+          })
+        }
+
+        if (!usage.allowed && ENFORCEMENT === 'on') {
+          return usageLimitResponse(usage)
+        }
+      }
     }
 
     if (keylessFilePartCount > 0) {
@@ -197,15 +380,18 @@ export async function POST(req: Request) {
       `createChatStreamResponse - Start: model=${selectedModel.providerId}:${selectedModel.id}, searchMode=${searchMode}`
     )
 
-    const response = isGuest
-      ? await createEphemeralChatStreamResponse({
-          messages: Array.isArray(messages) ? messages : [],
-          model: selectedModel,
-          abortSignal,
-          searchMode,
-          chatId
-        })
-      : await createChatStreamResponse({
+    let response: Response
+    if (isGuest) {
+      response = await createEphemeralChatStreamResponse({
+        messages: Array.isArray(messages) ? messages : [],
+        model: selectedModel,
+        abortSignal,
+        searchMode,
+        chatId
+      })
+    } else {
+      try {
+        response = await createChatStreamResponse({
           message,
           model: selectedModel,
           chatId,
@@ -214,8 +400,16 @@ export async function POST(req: Request) {
           messageId,
           abortSignal,
           isNewChat,
-          searchMode
+          searchMode,
+          onZeroPartError: refundUsageOnce
         })
+      } catch (error) {
+        await refundUsageOnce?.()
+        throw error
+      }
+
+      if (!response.ok) await refundUsageOnce?.()
+    }
 
     perfTime('createChatStreamResponse resolved', streamStart)
 
@@ -284,6 +478,7 @@ export async function POST(req: Request) {
 
     return response
   } catch (error) {
+    await refundUsageOnce?.()
     console.error('API route error:', error)
     return new Response('Error processing your request', {
       status: 500,

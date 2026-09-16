@@ -1,0 +1,8 @@
+-- Snapshot-only migration.
+--
+-- Raw SQL migrations 0012-0017 introduced notes, files, and usage-budget
+-- tables without Drizzle snapshots. The generated 0018 snapshot reconciles
+-- that history with lib/db/schema.ts so future `drizzle-kit generate` runs do
+-- not try to recreate those tables. Their SQL changes have already been
+-- applied by the earlier migrations, so this migration intentionally does no
+-- database work.

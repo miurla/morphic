@@ -89,6 +89,58 @@ describe('public error mapping', () => {
     )
   })
 
+  it('preserves monthly usage-limit payloads for the dedicated dialog', () => {
+    const payload = toPublicErrorPayload(
+      JSON.stringify({
+        error: 'You have reached your monthly usage limit.',
+        code: 'usage_limit',
+        type: 'rate-limit',
+        remaining: 0,
+        resetAt: 1790784000000,
+        limit: 100,
+        reason: 'monthly',
+        retryable: false
+      })
+    )
+
+    expect(payload).toMatchObject({
+      error: 'You have reached your monthly usage limit.',
+      code: 'usage_limit',
+      type: 'rate-limit',
+      remaining: 0,
+      resetAt: 1790784000000,
+      limit: 100,
+      reason: 'monthly',
+      retryable: false
+    })
+    expect(getPublicRateLimitDetails(payload)).toBe(
+      'Your monthly usage renews at the end of your current usage period.'
+    )
+  })
+
+  it('preserves hourly usage-limit context without zeroing monthly usage', () => {
+    const payload = toPublicErrorPayload(
+      JSON.stringify({
+        error: 'You have reached the hourly usage limit.',
+        code: 'usage_limit',
+        type: 'rate-limit',
+        remaining: 80,
+        resetAt: 1790812800000,
+        retryAt: 1790730000000,
+        reason: 'hourly',
+        retryable: true
+      })
+    )
+
+    expect(payload).toMatchObject({
+      code: 'usage_limit',
+      remaining: 80,
+      reason: 'hourly',
+      retryAt: 1790730000000,
+      retryable: true
+    })
+  })
+
   it('maps guest limit payloads to the auth modal path', () => {
     const payload = toPublicErrorPayload(
       JSON.stringify({
