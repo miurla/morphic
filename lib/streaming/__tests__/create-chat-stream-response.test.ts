@@ -76,6 +76,7 @@ vi.mock('@/lib/utils/usage-logging', () => ({
 import { loadChat, loadChatUncached } from '@/lib/actions/chat'
 import { researcher } from '@/lib/agents/researcher'
 import { DeterministicPreparationError } from '@/lib/errors/deterministic-preparation-error'
+import { serializeToolFailure, ToolFailureError } from '@/lib/errors/tool-error'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
 import { EMPTY_RESPONSE_STATUS_MESSAGE } from '@/lib/streaming/helpers/is-empty-response'
@@ -95,18 +96,25 @@ type UIMessageStreamResponseOptions = {
     }
     isAborted: boolean
   }) => Promise<void>
+  onError: (error: unknown) => string
 }
 
 function createFakeResult(
   isAborted = false,
   parts: Array<{ type: string; text?: string }> = [
     { type: 'text', text: 'Answer' }
-  ]
+  ],
+  // Raised into the response handler before the turn ends, the way a tool
+  // failure reaches it while the stream keeps going.
+  responseError?: { error: unknown; onSerialized?: (payload: string) => void }
 ) {
   return {
     consumeStream: vi.fn(),
     toUIMessageStreamResponse: vi.fn(
       (options: UIMessageStreamResponseOptions) => {
+        if (responseError) {
+          responseError.onSerialized?.(options.onError(responseError.error))
+        }
         mocks.finishPromise = options.onEnd({
           responseMessage: {
             id: 'response-id',
@@ -593,6 +601,52 @@ describe('createChatStreamResponse', () => {
     })
     await mocks.finishPromise
 
+    expect(onZeroPartError).toHaveBeenCalledOnce()
+  })
+
+  it('keeps the turn successful when a tool fails and the answer still lands', async () => {
+    const onZeroPartError = vi.fn(async () => undefined)
+    const toolFailure = new ToolFailureError(
+      'fetch',
+      new Error('HTTP 403: Forbidden')
+    )
+    let serialized: string | undefined
+    mocks.stream.mockResolvedValue(
+      createFakeResult(false, [{ type: 'text', text: 'Answer' }], {
+        error: toolFailure,
+        onSerialized: payload => {
+          serialized = payload
+        }
+      })
+    )
+
+    await createChatStreamResponse({ ...createConfig(), onZeroPartError })
+    await mocks.finishPromise
+
+    expect(serialized).toBe(serializeToolFailure(toolFailure))
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'hello',
+      output: 'Answer'
+    })
+    expect(onZeroPartError).not.toHaveBeenCalled()
+  })
+
+  it('marks the turn as failed when a tool fails and nothing is answered', async () => {
+    const onZeroPartError = vi.fn(async () => undefined)
+    const toolFailure = new ToolFailureError(
+      'search',
+      new Error('Tavily search failed: HTTP 400: Bad Request')
+    )
+    mocks.stream.mockResolvedValue(
+      createFakeResult(false, [], { error: toolFailure })
+    )
+
+    await createChatStreamResponse({ ...createConfig(), onZeroPartError })
+    await mocks.finishPromise
+
+    const update = mocks.span.update.mock.calls.at(-1)?.[0]
+    expect(update).toMatchObject({ input: 'hello', level: 'ERROR' })
+    expect(update).not.toHaveProperty('output')
     expect(onZeroPartError).toHaveBeenCalledOnce()
   })
 })
