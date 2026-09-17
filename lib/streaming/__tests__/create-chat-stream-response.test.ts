@@ -92,7 +92,7 @@ type UIMessageStreamResponseOptions = {
     responseMessage: {
       id: string
       role: 'assistant'
-      parts: Array<{ type: string; text?: string }>
+      parts: Array<{ type: string; text?: string; state?: string }>
     }
     isAborted: boolean
   }) => Promise<void>
@@ -101,7 +101,7 @@ type UIMessageStreamResponseOptions = {
 
 function createFakeResult(
   isAborted = false,
-  parts: Array<{ type: string; text?: string }> = [
+  parts: Array<{ type: string; text?: string; state?: string }> = [
     { type: 'text', text: 'Answer' }
   ],
   // Raised into the response handler before the turn ends, the way a tool
@@ -113,7 +113,8 @@ function createFakeResult(
     toUIMessageStreamResponse: vi.fn(
       (options: UIMessageStreamResponseOptions) => {
         if (responseError) {
-          responseError.onSerialized?.(options.onError(responseError.error))
+          const serialized = options.onError(responseError.error)
+          if (responseError.onSerialized) responseError.onSerialized(serialized)
         }
         mocks.finishPromise = options.onEnd({
           responseMessage: {
@@ -612,12 +613,19 @@ describe('createChatStreamResponse', () => {
     )
     let serialized: string | undefined
     mocks.stream.mockResolvedValue(
-      createFakeResult(false, [{ type: 'text', text: 'Answer' }], {
-        error: toolFailure,
-        onSerialized: payload => {
-          serialized = payload
+      createFakeResult(
+        false,
+        [
+          { type: 'tool-fetch', state: 'output-error' },
+          { type: 'text', text: 'Answer' }
+        ],
+        {
+          error: toolFailure,
+          onSerialized: payload => {
+            serialized = payload
+          }
         }
-      })
+      )
     )
 
     await createChatStreamResponse({ ...createConfig(), onZeroPartError })
@@ -648,5 +656,29 @@ describe('createChatStreamResponse', () => {
     expect(update).toMatchObject({ input: 'hello', level: 'ERROR' })
     expect(update).not.toHaveProperty('output')
     expect(onZeroPartError).toHaveBeenCalledOnce()
+  })
+
+  it('marks the turn as failed when a tool failure leaves only a preamble', async () => {
+    const toolFailure = new ToolFailureError(
+      'fetch',
+      new Error('HTTP 403: Forbidden')
+    )
+    mocks.stream.mockResolvedValue(
+      createFakeResult(
+        false,
+        [
+          { type: 'text', text: 'Let me look that up.' },
+          { type: 'tool-fetch', state: 'output-error' }
+        ],
+        { error: toolFailure }
+      )
+    )
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    const update = mocks.span.update.mock.calls.at(-1)?.[0]
+    expect(update).toMatchObject({ input: 'hello', level: 'ERROR' })
+    expect(update).not.toHaveProperty('output')
   })
 })

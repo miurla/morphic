@@ -34,6 +34,7 @@ import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { dedupeAttachments } from './helpers/dedupe-attachments'
 import { describeTurnInput } from './helpers/describe-turn-input'
+import { hasAnswerAfterToolFailure } from './helpers/has-answer-after-tool-failure'
 import { hasResponseContentPart } from './helpers/has-response-content'
 import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
@@ -366,11 +367,10 @@ export async function createChatStreamResponse(
             rootOutput = getTextFromParts(responseMessage.parts) || undefined
             hasEmptyResponse = isEmptyResponse(responseMessage)
             // The tool failure is only the turn's failure once the turn has no
-            // answer to show for it.
-            if (
-              hasToolFailure &&
-              (hasEmptyResponse || !hasResponseContentPart(responseMessage))
-            ) {
+            // answer to show for it, and an answer counts only when it came
+            // after the failure: text the model wrote on its way to the tool is
+            // a preamble.
+            if (hasToolFailure && !hasAnswerAfterToolFailure(responseMessage)) {
               hasStreamError = true
             }
             if (
