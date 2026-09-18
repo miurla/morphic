@@ -34,6 +34,7 @@ import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { dedupeAttachments } from './helpers/dedupe-attachments'
 import { describeTurnInput } from './helpers/describe-turn-input'
+import { hasAnswerAfterToolFailure } from './helpers/has-answer-after-tool-failure'
 import { hasResponseContentPart } from './helpers/has-response-content'
 import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
@@ -119,6 +120,10 @@ export async function createChatStreamResponse(
     // be attached to this trace later
     const parentTraceId = rootSpan?.traceId
     let hasStreamError = false
+    // A failing tool is the page or the search service failing, not the turn:
+    // the agent keeps going and the answer still lands. Tracked apart from the
+    // stream's own failures so it can only become one when nothing was answered.
+    let hasToolFailure = false
     let hasEmptyResponse = false
     let streamError: unknown
     // The agent stream call is preparation until its first generation starts.
@@ -296,13 +301,18 @@ export async function createChatStreamResponse(
         `researchAgent.stream - Start: model=${context.modelId}, searchMode=${searchMode}`
       )
       streamErrorStage = 'start-stream'
-      // AgentStreamParameters omits onError, but it reaches streamText where only
-      // stream errors, not recoverable tool errors, invoke it.
+      // AgentStreamParameters omits onError, but it reaches streamText. A tool
+      // failure is classified here too rather than assumed away: the same error
+      // is recoverable whichever handler it arrives at.
       const result = await researchAgent.stream({
         messages: modelMessages,
         abortSignal,
         onError: ({ error }) => {
-          hasStreamError = true
+          if (isToolFailureError(error)) {
+            hasToolFailure = true
+          } else {
+            hasStreamError = true
+          }
           streamError = error
           streamErrorWasCancelled = abortSignal?.aborted ?? false
           streamErrorPhase = 'generation'
@@ -347,12 +357,22 @@ export async function createChatStreamResponse(
             perfTime('researchAgent.stream completed', llmStart)
             if (isAborted) return
             if (!responseMessage) {
-              if (hasStreamError) await onZeroPartError?.()
+              if (hasStreamError || hasToolFailure) {
+                hasStreamError = true
+                await onZeroPartError?.()
+              }
               return
             }
 
             rootOutput = getTextFromParts(responseMessage.parts) || undefined
             hasEmptyResponse = isEmptyResponse(responseMessage)
+            // The tool failure is only the turn's failure once the turn has no
+            // answer to show for it, and an answer counts only when it came
+            // after the failure: text the model wrote on its way to the tool is
+            // a preamble.
+            if (hasToolFailure && !hasAnswerAfterToolFailure(responseMessage)) {
+              hasStreamError = true
+            }
             if (
               hasEmptyResponse ||
               (hasStreamError && !hasResponseContentPart(responseMessage))
@@ -377,16 +397,17 @@ export async function createChatStreamResponse(
           }
         },
         onError: (error: unknown) => {
-          hasStreamError = true
           streamError = error
           streamErrorWasCancelled = abortSignal?.aborted ?? false
           streamErrorPhase = 'generation'
 
           if (isToolFailureError(error)) {
+            hasToolFailure = true
             console.error('Tool failure:', error)
             return serializeToolFailure(error)
           }
 
+          hasStreamError = true
           logAPICallErrorDiagnostics(error)
           console.error('Stream response error:', error)
           return serializePublicError(error)
