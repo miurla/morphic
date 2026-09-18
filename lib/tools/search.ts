@@ -26,6 +26,10 @@ import {
 // ellipsis is counted inside the bound, as it is for historical messages.
 export const SEARCH_MODEL_CONTENT_MAX_CHARACTERS = 600
 
+// The declared SearchResultItem shape. Everything else a provider returns is
+// kept out of the model-facing projection.
+const MODEL_FACING_RESULT_FIELDS = ['url', 'title', 'content', 'label'] as const
+
 function getOptimizedSearchProviderType(): SearchProviderType {
   return (process.env.SEARCH_API as SearchProviderType) || DEFAULT_PROVIDER
 }
@@ -258,12 +262,16 @@ export function createSearchTool(
     // `results` (dropped defensively for older persisted output), state is a
     // streaming marker, and provider/fallback are trace diagnostics.
     // toolCallId is dropped too: citations address a result's own `label`, so
-    // the opaque id no longer belongs in the model's view. Result content is
-    // capped, but every result is kept: dropping results would decide relevance
-    // from provider order, and providers do not all order by relevance (the
-    // firecrawl adapter appends news after web). `execute` still yields the
-    // untruncated content, so the UI and the persisted citation targets are
-    // unaffected. images MUST stay -
+    // the opaque id no longer belongs in the model's view. Each result is
+    // narrowed to MODEL_FACING_RESULT_FIELDS by allowlist rather than by a
+    // delete list, because a provider returns its own per-result fields and
+    // only the declared shape is addressable: a provider's result id sits
+    // beside `label` as a competing citation target that resolves to nothing.
+    // Result content is capped, but every result is kept: dropping results
+    // would decide relevance from provider order, and providers do not all
+    // order by relevance (the firecrawl adapter appends news after web).
+    // `execute` still yields the full result, so the UI and the persisted
+    // citation targets are unaffected. images MUST stay:
     // getImageSpecPrompt instructs the model to embed URLs verbatim from that
     // array. Labels are assigned in `execute` and only passed through here.
     toModelOutput: ({ output }) => {
@@ -284,8 +292,12 @@ export function createSearchTool(
             return result
           }
 
-          const projectedResult = {
-            ...(result as Record<string, unknown>)
+          const sourceResult = result as Record<string, unknown>
+          const projectedResult: Record<string, unknown> = {}
+          for (const field of MODEL_FACING_RESULT_FIELDS) {
+            if (Object.hasOwn(sourceResult, field)) {
+              projectedResult[field] = sourceResult[field]
+            }
           }
           if (
             typeof projectedResult.content === 'string' &&

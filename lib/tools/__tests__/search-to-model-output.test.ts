@@ -69,19 +69,69 @@ describe('search tool toModelOutput', () => {
     expect(value).not.toHaveProperty('toolCallId')
   })
 
+  it('keeps only model-facing fields on each result', async () => {
+    const result = {
+      title: 'A',
+      url: 'https://a.test',
+      content: 'alpha',
+      label: 'S1',
+      id: 'provider-id',
+      score: 0.37,
+      raw_content: null,
+      images: []
+    }
+    const value = await getModelValue({
+      ...fullOutput,
+      results: [result]
+    })
+
+    expect(value.results).toEqual([
+      {
+        title: result.title,
+        url: result.url,
+        content: result.content,
+        label: result.label
+      }
+    ])
+    expect(value.images).toBe(fullOutput.images)
+  })
+
+  it('does not add a label to an unlabelled result', async () => {
+    const value = await getModelValue({
+      ...fullOutput,
+      results: [{ title: 'A', url: 'https://a.test', content: 'alpha' }]
+    })
+    const projectedResult = (value.results as Array<Record<string, unknown>>)[0]
+
+    expect(projectedResult).not.toHaveProperty('label')
+  })
+
   it('truncates long result content and appends a marker inside the bound', async () => {
     const content = 'a'.repeat(SEARCH_MODEL_CONTENT_MAX_CHARACTERS + 10)
     const value = await getModelValue({
       ...fullOutput,
-      results: [{ ...fullOutput.results[0], content }]
+      results: [
+        {
+          ...fullOutput.results[0],
+          content,
+          id: 'provider-id',
+          score: 0.37,
+          raw_content: null,
+          images: []
+        }
+      ]
     })
-    const projectedContent = (value.results as Array<{ content: string }>)[0]
-      .content
+    const projectedResult = (value.results as Array<Record<string, unknown>>)[0]
+    const projectedContent = projectedResult.content as string
 
     expect(projectedContent).toBe(
       `${content.slice(0, SEARCH_MODEL_CONTENT_MAX_CHARACTERS - 1)}…`
     )
     expect(projectedContent).toHaveLength(SEARCH_MODEL_CONTENT_MAX_CHARACTERS)
+    expect(projectedResult).not.toHaveProperty('id')
+    expect(projectedResult).not.toHaveProperty('score')
+    expect(projectedResult).not.toHaveProperty('raw_content')
+    expect(projectedResult).not.toHaveProperty('images')
   })
 
   it('does not split a surrogate pair at the boundary', async () => {
