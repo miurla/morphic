@@ -258,22 +258,14 @@ export function createSearchTool(
         ...(fallback ? { fallback } : {})
       }
     },
-    // Trim the model-facing tool result: citationMap fully duplicates
-    // `results` (dropped defensively for older persisted output), state is a
-    // streaming marker, and provider/fallback are trace diagnostics.
-    // toolCallId is dropped too: citations address a result's own `label`, so
-    // the opaque id no longer belongs in the model's view. Each result is
-    // narrowed to MODEL_FACING_RESULT_FIELDS by allowlist rather than by a
-    // delete list, because a provider returns its own per-result fields and
-    // only the declared shape is addressable: a provider's result id sits
-    // beside `label` as a competing citation target that resolves to nothing.
-    // Result content is capped, but every result is kept: dropping results
-    // would decide relevance from provider order, and providers do not all
-    // order by relevance (the firecrawl adapter appends news after web).
-    // `execute` still yields the full result, so the UI and the persisted
-    // citation targets are unaffected. images MUST stay:
-    // getImageSpecPrompt instructs the model to embed URLs verbatim from that
-    // array. Labels are assigned in `execute` and only passed through here.
+    // Trim the model-facing tool result: the deleted keys are duplicates or
+    // diagnostics the model cannot cite. Results are narrowed by allowlist
+    // rather than by a delete list, because a provider's own result id would
+    // otherwise sit beside `label` as a competing citation target that
+    // resolves to nothing. Content is capped but no result is dropped, since
+    // provider order is not relevance order. `execute` still yields the full
+    // result, so the UI and persisted citations are unaffected. images MUST
+    // stay: getImageSpecPrompt has the model copy URLs verbatim from it.
     toModelOutput: ({ output }) => {
       if (!output || typeof output !== 'object') {
         return { type: 'json', value: (output ?? null) as JSONValue }
