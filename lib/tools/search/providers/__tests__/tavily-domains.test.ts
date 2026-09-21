@@ -150,6 +150,26 @@ describe('TavilySearchProvider domains', () => {
     expect(body.include_domains).toEqual(['example.com'])
   })
 
+  it('keeps a dot-prefixed path component and a version slug', async () => {
+    const wellKnown = await searchAndReadBody(
+      [],
+      [],
+      'site:example.com/.well-known'
+    )
+
+    expect(wellKnown.query).toBe('well known')
+    expect(wellKnown.include_domains).toEqual(['example.com'])
+
+    const versioned = await searchAndReadBody(
+      [],
+      [],
+      'site:example.com/docs/v1.2'
+    )
+
+    expect(versioned.query).toBe('docs v1 2')
+    expect(versioned.include_domains).toEqual(['example.com'])
+  })
+
   it('leaves a site-only path with an invalid host unchanged', async () => {
     const query = 'site:edu/docs'
     const body = await searchAndReadBody([], [], query)
