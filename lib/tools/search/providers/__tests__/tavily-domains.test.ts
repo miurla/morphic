@@ -132,8 +132,34 @@ describe('TavilySearchProvider domains', () => {
     expect(body.include_domains).toEqual([])
   })
 
-  it('leaves a site operand carrying a path unchanged', async () => {
-    const query = 'site:example.com/docs'
+  it('converts a site-only path into a path term and domain entry', async () => {
+    const body = await searchAndReadBody([], [], 'site:example.com/docs')
+
+    expect(body.query).toBe('docs ')
+    expect(body.include_domains).toEqual(['example.com'])
+  })
+
+  it('converts a deep site-only path into terms without its extension', async () => {
+    const body = await searchAndReadBody(
+      [],
+      [],
+      'site:example.com/a/b/teoria_comercio.pdf'
+    )
+
+    expect(body.query).toBe('a b teoria comercio')
+    expect(body.include_domains).toEqual(['example.com'])
+  })
+
+  it('leaves a site-only path with an invalid host unchanged', async () => {
+    const query = 'site:edu/docs'
+    const body = await searchAndReadBody([], [], query)
+
+    expect(body.query).toBe(query)
+    expect(body.include_domains).toEqual([])
+  })
+
+  it('leaves a site path combined with search terms unchanged', async () => {
+    const query = 'site:example.com/docs remodeling services'
     const body = await searchAndReadBody([], [], query)
 
     expect(body.query).toBe(query)
