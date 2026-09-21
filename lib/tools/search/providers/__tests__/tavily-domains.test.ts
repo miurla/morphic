@@ -170,6 +170,26 @@ describe('TavilySearchProvider domains', () => {
     expect(versioned.include_domains).toEqual(['example.com'])
   })
 
+  it('drops an extension carrying digits', async () => {
+    const video = await searchAndReadBody(
+      [],
+      [],
+      'site:example.com/media/interview.mp4'
+    )
+
+    expect(video.query).toBe('media interview')
+    expect(video.include_domains).toEqual(['example.com'])
+
+    const archive = await searchAndReadBody(
+      [],
+      [],
+      'site:example.com/archive.7z'
+    )
+
+    expect(archive.query).toBe('archive')
+    expect(archive.include_domains).toEqual(['example.com'])
+  })
+
   it('leaves a site-only path with an invalid host unchanged', async () => {
     const query = 'site:edu/docs'
     const body = await searchAndReadBody([], [], query)

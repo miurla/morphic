@@ -56,11 +56,12 @@ const normalizeDomains = (domains: string[]) =>
     )
   })
 
-// A trailing extension is dropped, but only when an alphabetic suffix follows a
-// nonempty stem, so `/.well-known` and version slugs like `/v1.2` survive.
+// A trailing extension is dropped, but only when a suffix carrying at least one
+// letter follows a nonempty stem, so `/.well-known` and purely numeric version
+// slugs like `/v1.2` survive.
 const pathToSearchTerms = (path: string): string =>
   path
-    .replace(/([^/.])\.[a-z]{1,8}$/i, '$1')
+    .replace(/([^/.])\.(?=[a-z0-9]{0,7}[a-z])[a-z0-9]{1,8}$/i, '$1')
     .replace(/(?:%20|[/_.+-])+/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim()
