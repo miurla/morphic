@@ -132,8 +132,74 @@ describe('TavilySearchProvider domains', () => {
     expect(body.include_domains).toEqual([])
   })
 
-  it('leaves a site operand carrying a path unchanged', async () => {
-    const query = 'site:example.com/docs'
+  it('converts a site-only path into a path term and domain entry', async () => {
+    const body = await searchAndReadBody([], [], 'site:example.com/docs')
+
+    expect(body.query).toBe('docs ')
+    expect(body.include_domains).toEqual(['example.com'])
+  })
+
+  it('converts a deep site-only path into terms without its extension', async () => {
+    const body = await searchAndReadBody(
+      [],
+      [],
+      'site:example.com/a/b/teoria_comercio.pdf'
+    )
+
+    expect(body.query).toBe('a b teoria comercio')
+    expect(body.include_domains).toEqual(['example.com'])
+  })
+
+  it('keeps a dot-prefixed path component and a version slug', async () => {
+    const wellKnown = await searchAndReadBody(
+      [],
+      [],
+      'site:example.com/.well-known'
+    )
+
+    expect(wellKnown.query).toBe('well known')
+    expect(wellKnown.include_domains).toEqual(['example.com'])
+
+    const versioned = await searchAndReadBody(
+      [],
+      [],
+      'site:example.com/docs/v1.2'
+    )
+
+    expect(versioned.query).toBe('docs v1 2')
+    expect(versioned.include_domains).toEqual(['example.com'])
+  })
+
+  it('drops an extension carrying digits', async () => {
+    const video = await searchAndReadBody(
+      [],
+      [],
+      'site:example.com/media/interview.mp4'
+    )
+
+    expect(video.query).toBe('media interview')
+    expect(video.include_domains).toEqual(['example.com'])
+
+    const archive = await searchAndReadBody(
+      [],
+      [],
+      'site:example.com/archive.7z'
+    )
+
+    expect(archive.query).toBe('archive')
+    expect(archive.include_domains).toEqual(['example.com'])
+  })
+
+  it('leaves a site-only path with an invalid host unchanged', async () => {
+    const query = 'site:edu/docs'
+    const body = await searchAndReadBody([], [], query)
+
+    expect(body.query).toBe(query)
+    expect(body.include_domains).toEqual([])
+  })
+
+  it('leaves a site path combined with search terms unchanged', async () => {
+    const query = 'site:example.com/docs remodeling services'
     const body = await searchAndReadBody([], [], query)
 
     expect(body.query).toBe(query)
