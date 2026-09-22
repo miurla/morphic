@@ -1,6 +1,9 @@
 import type { UIMessage } from 'ai'
 
-import { estimateAttachmentTokens } from '@/lib/utils/attachment-tokens'
+import {
+  type AttachmentTokenEstimator,
+  estimateAttachmentTokens
+} from '@/lib/utils/attachment-tokens'
 
 import { isFilePart } from './attachment-parts'
 
@@ -11,7 +14,8 @@ import { isFilePart } from './attachment-parts'
  * metadata.
  */
 export function buildAttachmentTokenEstimates(
-  messages: UIMessage[]
+  messages: UIMessage[],
+  estimateTokens: AttachmentTokenEstimator = estimateAttachmentTokens
 ): ReadonlyMap<string, number> {
   const estimates = new Map<string, number>()
 
@@ -22,7 +26,7 @@ export function buildAttachmentTokenEstimates(
       const file = part as { mediaType?: string; size?: number; url?: string }
       if (!file.url) continue
 
-      estimates.set(file.url, estimateAttachmentTokens(file))
+      estimates.set(file.url, estimateTokens(file))
     }
   }
 

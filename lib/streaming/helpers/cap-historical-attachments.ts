@@ -1,8 +1,11 @@
 import type { UIMessage } from 'ai'
 
-import { estimateAttachmentTokens } from '@/lib/utils/attachment-tokens'
+import {
+  type AttachmentTokenEstimator,
+  estimateAttachmentTokens
+} from '@/lib/utils/attachment-tokens'
 
-import { describeAttachment, isFilePart } from './attachment-parts'
+import { createAttachmentOmissionPart, isFilePart } from './attachment-parts'
 
 const DEFAULT_REPLAY_LIMIT = 10
 const DEFAULT_ATTACHMENT_TOKEN_BUDGET = 200_000
@@ -121,7 +124,8 @@ function getWeightDroppedCount(weights: number[], tokenBudget: number): number {
 export function capHistoricalAttachments(
   messages: UIMessage[],
   limit: number = HISTORY_ATTACHMENT_REPLAY_LIMIT,
-  tokenBudget: number = HISTORY_ATTACHMENT_TOKEN_BUDGET
+  tokenBudget: number = HISTORY_ATTACHMENT_TOKEN_BUDGET,
+  estimateTokens: AttachmentTokenEstimator = estimateAttachmentTokens
 ): UIMessage[] {
   if (limit <= 0 && tokenBudget <= 0) return messages
 
@@ -151,7 +155,7 @@ export function capHistoricalAttachments(
         mediaType?: string
         size?: number
       }
-      survivingWeights.push(estimateAttachmentTokens(file))
+      survivingWeights.push(estimateTokens(file))
     }
   }
 
@@ -173,13 +177,7 @@ export function capHistoricalAttachments(
       seen += 1
       if (seen > dropCount) return part
 
-      const file = part as { mediaType?: string; filename?: string }
-      return {
-        type: 'text' as const,
-        text: `[Attachment omitted from history: ${describeAttachment(
-          file
-        )}. Ask the user to re-attach it if you need to look at it again.]`
-      }
+      return createAttachmentOmissionPart(part)
     })
 
     return { ...message, parts }

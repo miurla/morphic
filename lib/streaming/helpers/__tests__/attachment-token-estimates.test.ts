@@ -77,4 +77,83 @@ describe('buildAttachmentTokenEstimates', () => {
       )
     ).toBe(true)
   })
+
+  it('uses an injected attachment estimator', () => {
+    const estimates = buildAttachmentTokenEstimates(messages(), () => 123_456)
+
+    expect(estimates.get('https://example.com/large.pdf')).toBe(123_456)
+    expect(estimates.get('https://example.com/unknown.pdf')).toBe(123_456)
+  })
+
+  it('keeps a current 5 MB PDF within a large model context window', async () => {
+    const input = [
+      {
+        id: 'current',
+        role: 'user',
+        parts: [
+          {
+            type: 'file',
+            mediaType: 'application/pdf',
+            url: 'https://example.com/current.pdf',
+            size: 5_000_000
+          }
+        ]
+      }
+    ] as unknown as UIMessage[]
+    const modelMessages = await convertToModelMessages(input)
+
+    expect(
+      shouldTruncateMessages(
+        modelMessages,
+        {
+          id: 'gpt-4.1',
+          name: 'GPT-4.1',
+          provider: 'OpenAI',
+          providerId: 'openai'
+        },
+        buildAttachmentTokenEstimates(input)
+      )
+    ).toBe(false)
+  })
+
+  it('keeps a warm historical 5 MB PDF within a large model context window', async () => {
+    const input = [
+      {
+        id: 'historical',
+        role: 'user',
+        parts: [
+          {
+            type: 'file',
+            mediaType: 'application/pdf',
+            url: 'https://example.com/historical.pdf',
+            size: 5_000_000
+          }
+        ]
+      },
+      {
+        id: 'answer',
+        role: 'assistant',
+        parts: [{ type: 'text', text: 'Earlier answer' }]
+      },
+      {
+        id: 'current',
+        role: 'user',
+        parts: [{ type: 'text', text: 'Follow-up question' }]
+      }
+    ] as unknown as UIMessage[]
+    const modelMessages = await convertToModelMessages(input)
+
+    expect(
+      shouldTruncateMessages(
+        modelMessages,
+        {
+          id: 'gpt-4.1',
+          name: 'GPT-4.1',
+          provider: 'OpenAI',
+          providerId: 'openai'
+        },
+        buildAttachmentTokenEstimates(input)
+      )
+    ).toBe(false)
+  })
 })

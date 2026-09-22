@@ -73,4 +73,20 @@ describe('summarizeCarriedContext', () => {
       attachmentTokens: MIN_PDF_ATTACHMENT_TOKENS
     })
   })
+
+  it('uses an injected attachment estimator', () => {
+    expect(
+      summarizeCarriedContext(
+        createMessages([
+          {
+            type: 'file',
+            mediaType: 'application/pdf',
+            size: 20_000_000,
+            url: 'https://example.com/a'
+          }
+        ]),
+        () => 123_456
+      )
+    ).toEqual({ attachments: 1, attachmentTokens: 123_456 })
+  })
 })

@@ -43,6 +43,16 @@ function userIds(messages: UIMessage[]): string[] {
   return messages.filter(item => item.role === 'user').map(item => item.id)
 }
 
+function pdfPart(filename: string, size: number): UIMessage['parts'][number] {
+  return {
+    type: 'file',
+    mediaType: 'application/pdf',
+    filename,
+    url: `https://example.com/${filename}`,
+    size
+  } as UIMessage['parts'][number]
+}
+
 describe('trimColdStartHistory', () => {
   it('only advances the cut as cold turns are appended', () => {
     let messages: UIMessage[] = []
@@ -206,6 +216,165 @@ describe('trimColdStartHistory', () => {
     ])
     expect(result.messages[0].role).toBe('user')
     expect(result.messages.at(-1)?.parts).toEqual(toolParts)
+  })
+
+  it('retains a placeholder when a middle turn with a large PDF is removed', () => {
+    const coldAt = timestamp(3 * WARM_GAP_MS + COLD_GAP_MS)
+    const messages = [
+      ...turn(0, timestamp(0)),
+      ...turn(1, timestamp(WARM_GAP_MS)),
+      message('u2', 'user', timestamp(2 * WARM_GAP_MS), [
+        pdfPart('middle.pdf', 20_000_000)
+      ]),
+      message('a2', 'assistant', timestamp(2 * WARM_GAP_MS)),
+      ...turn(3, timestamp(3 * WARM_GAP_MS)),
+      ...turn(4, coldAt)
+    ]
+    const result = trimColdStartHistory(messages, {
+      now: coldAt,
+      limit: 100_000
+    })
+
+    expect(userIds(result.messages)).toEqual(['u0', 'u2', 'u3', 'u4'])
+    expect(result.messages.find(item => item.id === 'u2')?.parts).toEqual([
+      expect.objectContaining({
+        type: 'text',
+        text: expect.stringContaining('middle.pdf')
+      })
+    ])
+    expect(result.messages.some(item => item.id === 'a2')).toBe(false)
+    expect(result.trimmedAtCurrentTurn).toBe(true)
+  })
+
+  it('replaces a protected first-turn large PDF while keeping its other content', () => {
+    const coldAt = timestamp(3 * WARM_GAP_MS + COLD_GAP_MS)
+    const messages = [
+      message('u0', 'user', timestamp(0), [
+        pdfPart('first.pdf', 20_000_000),
+        { type: 'text', text: 'Remember this report.' }
+      ]),
+      message('a0', 'assistant', timestamp(0)),
+      ...turn(1, timestamp(WARM_GAP_MS)),
+      ...turn(2, timestamp(2 * WARM_GAP_MS)),
+      ...turn(3, timestamp(3 * WARM_GAP_MS)),
+      ...turn(4, coldAt)
+    ]
+    const original = structuredClone(messages)
+    const result = trimColdStartHistory(messages, {
+      now: coldAt,
+      limit: 100_000
+    })
+
+    expect(result.messages.map(item => item.id)).toEqual([
+      'u0',
+      'a0',
+      'u1',
+      'a1',
+      'u2',
+      'a2',
+      'u3',
+      'a3',
+      'u4',
+      'a4'
+    ])
+    expect(result.messages[0].parts).toEqual([
+      expect.objectContaining({
+        type: 'text',
+        text: expect.stringContaining('first.pdf')
+      }),
+      { type: 'text', text: 'Remember this report.' }
+    ])
+    expect(result.messages.at(-2)).toEqual(messages.at(-2))
+    expect(result.messages.at(-1)).toEqual(messages.at(-1))
+    expect(messages).toEqual(original)
+    expect(result.trimmedAtCurrentTurn).toBe(true)
+
+    const warmAt = timestamp(4 * WARM_GAP_MS + COLD_GAP_MS)
+    const warmResult = trimColdStartHistory(messages.concat(turn(5, warmAt)), {
+      now: warmAt,
+      limit: 100_000
+    })
+
+    expect(warmResult.messages.slice(0, result.messages.length)).toEqual(
+      result.messages
+    )
+    expect(warmResult.trimmedAtCurrentTurn).toBe(false)
+  })
+
+  it('keeps an ordinary persisted PDF when the history fits', () => {
+    const coldAt = timestamp(3 * WARM_GAP_MS + COLD_GAP_MS)
+    const messages = [
+      message('u0', 'user', timestamp(0), [pdfPart('normal.pdf', 500_000)]),
+      message('a0', 'assistant', timestamp(0)),
+      ...turn(1, timestamp(WARM_GAP_MS)),
+      ...turn(2, timestamp(2 * WARM_GAP_MS)),
+      ...turn(3, timestamp(3 * WARM_GAP_MS)),
+      ...turn(4, coldAt)
+    ]
+
+    expect(
+      trimColdStartHistory(messages, { now: coldAt, limit: 100_000 }).messages
+    ).toBe(messages)
+  })
+
+  it('counts retained attachment placeholders against the history budget', () => {
+    const coldAt = timestamp(3 * WARM_GAP_MS + COLD_GAP_MS)
+    const messages = [
+      ...turn(0, timestamp(0)),
+      message('u1', 'user', timestamp(WARM_GAP_MS), [
+        pdfPart('x'.repeat(80), 20_000_000)
+      ]),
+      message('a1', 'assistant', timestamp(WARM_GAP_MS)),
+      message('u2', 'user', timestamp(2 * WARM_GAP_MS), [
+        { type: 'text', text: 'keep me '.repeat(20) }
+      ]),
+      message('a2', 'assistant', timestamp(2 * WARM_GAP_MS), [
+        { type: 'text', text: 'small answer' }
+      ]),
+      ...turn(3, timestamp(3 * WARM_GAP_MS)),
+      ...turn(4, coldAt)
+    ]
+    const result = trimColdStartHistory(messages, {
+      now: coldAt,
+      limit: 100
+    })
+
+    expect(userIds(result.messages)).toEqual(['u0', 'u1', 'u4'])
+    expect(
+      result.messages.find(item => item.id === 'u1')?.parts[0]
+    ).toMatchObject({ type: 'text' })
+  })
+
+  it('preserves attachment placeholders as a prefix on the next warm turn', () => {
+    const coldAt = timestamp(3 * WARM_GAP_MS + COLD_GAP_MS)
+    const warmAt = timestamp(4 * WARM_GAP_MS + COLD_GAP_MS)
+    const atColdRequest = [
+      ...turn(0, timestamp(0)),
+      ...turn(1, timestamp(WARM_GAP_MS)),
+      message('u2', 'user', timestamp(2 * WARM_GAP_MS), [
+        pdfPart('middle.pdf', 20_000_000)
+      ]),
+      message('a2', 'assistant', timestamp(2 * WARM_GAP_MS)),
+      ...turn(3, timestamp(3 * WARM_GAP_MS)),
+      message('u4', 'user', coldAt)
+    ]
+    const coldResult = trimColdStartHistory(atColdRequest, {
+      now: coldAt,
+      limit: 100_000
+    })
+    const appended = [
+      message('a4', 'assistant', coldAt),
+      message('u5', 'user', warmAt)
+    ]
+    const warmResult = trimColdStartHistory(atColdRequest.concat(appended), {
+      now: warmAt,
+      limit: 100_000
+    })
+
+    expect(warmResult.messages.slice(0, coldResult.messages.length)).toEqual(
+      coldResult.messages
+    )
+    expect(warmResult.trimmedAtCurrentTurn).toBe(false)
   })
 
   it('budgets history by what is replayed, not by execution details', () => {

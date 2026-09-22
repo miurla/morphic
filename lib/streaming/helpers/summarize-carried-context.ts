@@ -1,6 +1,9 @@
 import type { UIMessage } from 'ai'
 
-import { estimateAttachmentTokens } from '@/lib/utils/attachment-tokens'
+import {
+  type AttachmentTokenEstimator,
+  estimateAttachmentTokens
+} from '@/lib/utils/attachment-tokens'
 
 import { isFilePart } from './attachment-parts'
 
@@ -28,7 +31,8 @@ import { isFilePart } from './attachment-parts'
  * `contextWindowTruncated` so the two cases are never confused.
  */
 export function summarizeCarriedContext(
-  messages: UIMessage[]
+  messages: UIMessage[],
+  estimateTokens: AttachmentTokenEstimator = estimateAttachmentTokens
 ): Record<string, number> | undefined {
   let attachments = 0
   let attachmentTokens = 0
@@ -40,7 +44,7 @@ export function summarizeCarriedContext(
     for (const part of message.parts) {
       if (isFilePart(part)) {
         attachments += 1
-        attachmentTokens += estimateAttachmentTokens(part)
+        attachmentTokens += estimateTokens(part)
         continue
       }
 

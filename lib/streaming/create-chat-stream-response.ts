@@ -17,6 +17,7 @@ import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import { loadChatUncached } from '../actions/chat'
 import { generateChatTitle } from '../agents/title-generator'
+import { estimatePersistedAttachmentTokens } from '../utils/attachment-tokens'
 import {
   getMaxAllowedTokens,
   shouldTruncateMessages,
@@ -28,7 +29,11 @@ import { isUsageLogging, logUsage } from '../utils/usage-logging'
 
 import { resolveAttachmentSizes } from './helpers/attachment-sizes'
 import { buildAttachmentTokenEstimates } from './helpers/attachment-token-estimates'
-import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
+import {
+  capHistoricalAttachments,
+  HISTORY_ATTACHMENT_REPLAY_LIMIT,
+  HISTORY_ATTACHMENT_TOKEN_BUDGET
+} from './helpers/cap-historical-attachments'
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
@@ -248,10 +253,16 @@ export async function createChatStreamResponse(
       coldStartHistoryTrimmed = coldStartHistory.trimmedAtCurrentTurn
       const messagesToConvert = dedupeAttachments(
         capHistoricalAttachments(
-          compactHistoricalMessages(coldStartHistory.messages)
+          compactHistoricalMessages(coldStartHistory.messages),
+          HISTORY_ATTACHMENT_REPLAY_LIMIT,
+          HISTORY_ATTACHMENT_TOKEN_BUDGET,
+          estimatePersistedAttachmentTokens
         )
       )
-      carriedContext = summarizeCarriedContext(messagesToConvert)
+      carriedContext = summarizeCarriedContext(
+        messagesToConvert,
+        estimatePersistedAttachmentTokens
+      )
       const attachmentTokenEstimates =
         buildAttachmentTokenEstimates(messagesToConvert)
 

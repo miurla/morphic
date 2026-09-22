@@ -6,6 +6,13 @@ export const PDF_BYTES_PER_TOKEN = 30
 export const BYTES_PER_TOKEN = 3.9
 export const UNKNOWN_ATTACHMENT_TOKENS = 50_000
 
+const PERSISTED_PDF_ADDITIONAL_BYTES_PER_TOKEN = 3
+
+export type AttachmentTokenEstimator = (attachment: {
+  mediaType?: string
+  size?: number | null
+}) => number
+
 export function estimateAttachmentTokens({
   mediaType,
   size
@@ -37,4 +44,37 @@ export function estimateAttachmentTokens({
   }
 
   return UNKNOWN_ATTACHMENT_TOKENS
+}
+
+/**
+ * Estimates the expanded model input for attachments loaded from storage.
+ * Large PDFs have a relatively small compressed container but their extracted
+ * text grows much faster after the first megabyte.
+ */
+export function estimatePersistedAttachmentTokens({
+  mediaType,
+  size
+}: {
+  mediaType?: string
+  size?: number | null
+}): number {
+  if (
+    mediaType !== 'application/pdf' ||
+    typeof size !== 'number' ||
+    !Number.isFinite(size) ||
+    size < 0
+  ) {
+    return estimateAttachmentTokens({ mediaType, size })
+  }
+
+  const initialBytes = Math.min(size, 1_000_000)
+  const additionalBytes = Math.max(0, size - 1_000_000)
+
+  return Math.max(
+    MIN_PDF_ATTACHMENT_TOKENS,
+    Math.ceil(
+      initialBytes / PDF_BYTES_PER_TOKEN +
+        additionalBytes / PERSISTED_PDF_ADDITIONAL_BYTES_PER_TOKEN
+    )
+  )
 }

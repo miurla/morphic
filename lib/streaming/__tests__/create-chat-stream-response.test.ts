@@ -81,6 +81,7 @@ import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-res
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
 import { EMPTY_RESPONSE_STATUS_MESSAGE } from '@/lib/streaming/helpers/is-empty-response'
 import { prepareMessages } from '@/lib/streaming/helpers/prepare-messages'
+import { estimatePersistedAttachmentTokens } from '@/lib/utils/attachment-tokens'
 import { getMaxAllowedTokens } from '@/lib/utils/context-window'
 
 type StreamOptions = {
@@ -566,6 +567,42 @@ describe('createChatStreamResponse', () => {
       output: 'Answer',
       metadata: {
         carriedContext: { attachments: 1, attachmentTokens: 4_000 }
+      }
+    })
+  })
+
+  it('reports persisted PDF weight with the expanded estimator', async () => {
+    vi.mocked(prepareMessages).mockResolvedValueOnce([
+      {
+        id: 'current-user',
+        role: 'user',
+        parts: [
+          {
+            type: 'file',
+            filename: 'large.pdf',
+            mediaType: 'application/pdf',
+            url: 'https://example.com/large.pdf',
+            size: 20_000_000
+          }
+        ]
+      }
+    ] as any)
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(mocks.span.update).toHaveBeenCalledWith({
+      input: 'hello',
+      output: 'Answer',
+      metadata: {
+        carriedContext: {
+          attachments: 1,
+          attachmentTokens: estimatePersistedAttachmentTokens({
+            mediaType: 'application/pdf',
+            size: 20_000_000
+          })
+        }
       }
     })
   })

@@ -313,6 +313,15 @@ describe('capHistoricalAttachments', () => {
 
     expect(capHistoricalAttachments(messages, 100, 0)).toBe(messages)
   })
+
+  it('uses an injected estimator for persisted attachment weights', () => {
+    const messages = pdfThread(4, 1).concat(userTurn('current', 0))
+    const estimateTokens = () => 100
+    const capped = capHistoricalAttachments(messages, 0, 150, estimateTokens)
+
+    expect(filenamesReaching(capped)).toEqual(['u2.pdf', 'u3.pdf'])
+    expect(placeholders(capped)).toHaveLength(2)
+  })
 })
 
 describe('parseReplayLimit', () => {

@@ -35,3 +35,12 @@ export function describeAttachment(part: FilePartLike) {
     ? `"${filename}" (${mediaType})`
     : `an earlier ${mediaType} attachment`
 }
+
+export function createAttachmentOmissionPart(part: FilePartLike) {
+  return {
+    type: 'text' as const,
+    text: `[Attachment omitted from history: ${describeAttachment(
+      part
+    )}. Ask the user to re-attach it if you need to look at it again.]`
+  }
+}

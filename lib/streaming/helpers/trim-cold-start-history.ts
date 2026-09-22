@@ -1,8 +1,12 @@
 import type { UIMessage } from 'ai'
 
-import { estimateAttachmentTokens } from '@/lib/utils/attachment-tokens'
+import {
+  type AttachmentTokenEstimator,
+  estimatePersistedAttachmentTokens
+} from '@/lib/utils/attachment-tokens'
 import { countTextTokens } from '@/lib/utils/context-window'
 
+import { createAttachmentOmissionPart, isFilePart } from './attachment-parts'
 import { compactHistoricalMessages } from './compact-historical-messages'
 
 const DEFAULT_COLD_START_HISTORY_TOKEN_LIMIT = 200_000
@@ -38,6 +42,8 @@ type Turn = {
   timestamp?: number
   replayed: ReplayedText[]
   leadingUserReplayed: ReplayedText[]
+  references: UIMessage[]
+  referenceReplayed: ReplayedText[]
 }
 
 const textEncoder = new TextEncoder()
@@ -52,7 +58,10 @@ function serialize(value: unknown): string {
   }
 }
 
-function describeReplayedMessage(message: UIMessage): ReplayedText {
+function describeReplayedMessage(
+  message: UIMessage,
+  estimateTokens: AttachmentTokenEstimator
+): ReplayedText {
   const texts: string[] = []
   let attachmentTokens = 0
 
@@ -66,7 +75,7 @@ function describeReplayedMessage(message: UIMessage): ReplayedText {
       texts.push(serialize((part as { data?: unknown }).data))
     } else if (part.type === 'file') {
       const filePart = part as { mediaType?: string; size?: number }
-      attachmentTokens += estimateAttachmentTokens(filePart)
+      attachmentTokens += estimateTokens(filePart)
     }
   }
 
@@ -78,8 +87,38 @@ function describeReplayedMessage(message: UIMessage): ReplayedText {
 
 // Described on the message's historical replay form, which depends only on
 // the message itself, so the estimate does not change as the thread grows.
-function describeMessage(message: UIMessage): ReplayedText[] {
-  return compactHistoricalMessages([message]).map(describeReplayedMessage)
+function describeMessage(
+  message: UIMessage,
+  estimateTokens: AttachmentTokenEstimator
+): ReplayedText[] {
+  return compactHistoricalMessages([message]).map(replayedMessage =>
+    describeReplayedMessage(replayedMessage, estimateTokens)
+  )
+}
+
+function createAttachmentReferences(messages: UIMessage[]): UIMessage[] {
+  return messages.flatMap(message => {
+    const parts = message.parts
+      .filter(isFilePart)
+      .map(createAttachmentOmissionPart)
+
+    return parts.length > 0 ? [{ ...message, parts }] : []
+  })
+}
+
+function replaceAttachmentsWithPlaceholders(
+  messages: UIMessage[]
+): UIMessage[] {
+  return messages.map(message => {
+    if (!message.parts.some(isFilePart)) return message
+
+    return {
+      ...message,
+      parts: message.parts.map(part =>
+        isFilePart(part) ? createAttachmentOmissionPart(part) : part
+      )
+    }
+  })
 }
 
 // A token always spans at least one UTF-8 byte, so this bounds any tokenizer
@@ -117,7 +156,11 @@ function getCreatedAt(message: UIMessage): unknown {
   return (metadata as { createdAt?: unknown }).createdAt
 }
 
-function buildTurns(messages: UIMessage[], now: Date): Turn[] {
+function buildTurns(
+  messages: UIMessage[],
+  now: Date,
+  estimateTokens: AttachmentTokenEstimator
+): Turn[] {
   const userIndexes = messages.flatMap((message, index) =>
     message.role === 'user' ? [index] : []
   )
@@ -130,12 +173,19 @@ function buildTurns(messages: UIMessage[], now: Date): Turn[] {
     const timestamp =
       parseTimestamp(getCreatedAt(messages[userIndex])) ??
       (turnIndex === userIndexes.length - 1 ? now.getTime() : undefined)
+    const references = createAttachmentReferences(turnMessages)
 
     return {
       messages: turnMessages,
       timestamp,
-      replayed: turnMessages.flatMap(describeMessage),
-      leadingUserReplayed: describeMessage(messages[userIndex])
+      replayed: turnMessages.flatMap(message =>
+        describeMessage(message, estimateTokens)
+      ),
+      leadingUserReplayed: describeMessage(messages[userIndex], estimateTokens),
+      references,
+      referenceReplayed: references.flatMap(message =>
+        describeMessage(message, estimateTokens)
+      )
     }
   })
 }
@@ -147,7 +197,8 @@ export function trimColdStartHistory(
   const limit = options.limit ?? COLD_START_HISTORY_TOKEN_LIMIT
   if (limit <= 0) return { messages, trimmedAtCurrentTurn: false }
 
-  const turns = buildTurns(messages, options.now ?? new Date())
+  const estimateTokens = estimatePersistedAttachmentTokens
+  const turns = buildTurns(messages, options.now ?? new Date(), estimateTokens)
   if (turns.length < MIN_TURNS) {
     return { messages, trimmedAtCurrentTurn: false }
   }
@@ -164,7 +215,23 @@ export function trimColdStartHistory(
   const leadingUserTokens = turns.map(turn =>
     countReplayedTokens(turn.leadingUserReplayed, options.modelId)
   )
+  const referenceTokens = turns.map(turn =>
+    countReplayedTokens(turn.referenceReplayed, options.modelId)
+  )
+  const firstTurnWithPlaceholders = replaceAttachmentsWithPlaceholders(
+    turns[0].messages
+  )
+  const firstTurnHasAttachments = turns[0].messages.some(message =>
+    message.parts.some(isFilePart)
+  )
+  const firstTurnPlaceholderTokens = countReplayedTokens(
+    firstTurnWithPlaceholders.flatMap(message =>
+      describeMessage(message, estimateTokens)
+    ),
+    options.modelId
+  )
   let cut = 1
+  let replaceFirstTurnAttachments = false
   let trimmedAtCurrentTurn = false
 
   for (let i = 1; i < turns.length; i++) {
@@ -177,24 +244,65 @@ export function trimColdStartHistory(
 
     if (!cold || i + 1 < MIN_TURNS) continue
 
-    let total = tokens[0] + leadingUserTokens[i]
+    const cutBefore = cut
+    const replacedFirstTurnBefore: boolean = replaceFirstTurnAttachments
+    let protectedTokens =
+      (replaceFirstTurnAttachments ? firstTurnPlaceholderTokens : tokens[0]) +
+      leadingUserTokens[i]
+    for (let j = 1; j < cut; j++) protectedTokens += referenceTokens[j]
+
+    let total = protectedTokens
     for (let j = cut; j < i; j++) total += tokens[j]
 
-    const cutBefore = cut
-    while (total > limit && cut < i) {
-      total -= tokens[cut]
-      cut += 1
+    if (
+      protectedTokens > limit &&
+      firstTurnHasAttachments &&
+      !replaceFirstTurnAttachments
+    ) {
+      const replacementDelta = firstTurnPlaceholderTokens - tokens[0]
+      replaceFirstTurnAttachments = true
+      protectedTokens += replacementDelta
+      total += replacementDelta
     }
 
-    if (i === turns.length - 1 && cut > cutBefore) {
+    while (total > limit && cut < i) {
+      total += referenceTokens[cut] - tokens[cut]
+      protectedTokens += referenceTokens[cut]
+      cut += 1
+
+      if (
+        protectedTokens > limit &&
+        firstTurnHasAttachments &&
+        !replaceFirstTurnAttachments
+      ) {
+        const replacementDelta = firstTurnPlaceholderTokens - tokens[0]
+        replaceFirstTurnAttachments = true
+        protectedTokens += replacementDelta
+        total += replacementDelta
+      }
+    }
+
+    if (
+      i === turns.length - 1 &&
+      (cut > cutBefore ||
+        replaceFirstTurnAttachments !== replacedFirstTurnBefore)
+    ) {
       trimmedAtCurrentTurn = true
     }
   }
 
-  if (cut === 1) return { messages, trimmedAtCurrentTurn: false }
+  if (cut === 1 && !replaceFirstTurnAttachments) {
+    return { messages, trimmedAtCurrentTurn: false }
+  }
 
   return {
-    messages: [turns[0], ...turns.slice(cut)].flatMap(turn => turn.messages),
+    messages: [
+      ...(replaceFirstTurnAttachments
+        ? firstTurnWithPlaceholders
+        : turns[0].messages),
+      ...turns.slice(1, cut).flatMap(turn => turn.references),
+      ...turns.slice(cut).flatMap(turn => turn.messages)
+    ],
     trimmedAtCurrentTurn
   }
 }
