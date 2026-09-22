@@ -1,4 +1,4 @@
-import { SearchResults } from '@/lib/types'
+import { SearchResultItem, SearchResults } from '@/lib/types'
 import { sanitizeUrl } from '@/lib/utils'
 
 import { BaseSearchProvider } from './base'
@@ -176,9 +176,23 @@ export class TavilySearchProvider extends BaseSearchProvider {
           )
       : data.images.map((url: string) => sanitizeUrl(url))
 
+    const results: SearchResultItem[] = (
+      (data.results ?? []) as Array<{
+        title?: string
+        url?: string
+        content?: string
+      }>
+    ).map(result => ({
+      title: result.title ?? '',
+      url: result.url ?? '',
+      content: result.content ?? ''
+    }))
+
     return {
-      ...data,
-      images: processedImages
+      results,
+      images: processedImages,
+      query: data.query ?? filledQuery,
+      number_of_results: results.length
     }
   }
 }
