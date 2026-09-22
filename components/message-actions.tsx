@@ -30,6 +30,12 @@ import {
   DialogHeader,
   DialogTitle
 } from './ui/dialog'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from './ui/tooltip'
 import { ChatShare } from './chat-share'
 import { RetryButton } from './retry-button'
 
@@ -216,7 +222,7 @@ export function MessageActions({
       <div
         aria-hidden={!visible}
         className={cn(
-          'flex w-full items-center justify-between gap-3 self-stretch transition-opacity duration-200',
+          'flex w-full items-center gap-3 self-stretch transition-opacity duration-200',
           visible ? 'opacity-100' : 'pointer-events-none opacity-0 invisible',
           className
         )}
@@ -266,22 +272,28 @@ export function MessageActions({
               )}
             </>
           )}
+          {showSaveButton && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleSaveNote}
+                    disabled={isSavingNote}
+                    className="rounded-full"
+                    aria-label="Save to library"
+                  >
+                    <Bookmark size={14} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="text-xs">
+                  Save to library
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
-        {showSaveButton ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSaveNote}
-            disabled={isSavingNote}
-            className="h-8 shrink-0 gap-1.5 rounded-full px-3"
-            aria-label="Save to library"
-          >
-            <Bookmark size={14} />
-            Save
-          </Button>
-        ) : (
-          <div />
-        )}
       </div>
 
       <Dialog open={authPromptOpen} onOpenChange={setAuthPromptOpen}>
