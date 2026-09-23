@@ -3,6 +3,7 @@ import type { UIMessage } from 'ai'
 import { estimateAttachmentTokens } from '@/lib/utils/attachment-tokens'
 
 import { describeAttachment, isFilePart } from './attachment-parts'
+import { isSourceContextMessage } from './compact-historical-messages'
 
 const DEFAULT_REPLAY_LIMIT = 10
 const DEFAULT_ATTACHMENT_TOKEN_BUDGET = 200_000
@@ -126,7 +127,7 @@ export function capHistoricalAttachments(
   if (limit <= 0 && tokenBudget <= 0) return messages
 
   const currentTurnIndex = messages.findLastIndex(
-    message => message.role === 'user'
+    message => message.role === 'user' && !isSourceContextMessage(message)
   )
   const historyEnd =
     currentTurnIndex === -1 ? messages.length : currentTurnIndex

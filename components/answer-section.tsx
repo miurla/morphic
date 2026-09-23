@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 
 import { saveNote } from '@/lib/actions/notes'
 import { captureClient } from '@/lib/analytics/posthog-client'
+import { stripSourceContextBlocks } from '@/lib/render/strip-source-context-blocks'
 import type { SearchResultItem } from '@/lib/types'
 import type {
   UIDataTypes,
@@ -71,6 +72,7 @@ export function AnswerSection({
   libraryAvailable = true,
   onQuoteContext
 }: AnswerSectionProps) {
+  const displayContent = stripSourceContextBlocks(content)
   const contentRef = useRef<HTMLDivElement>(null)
   const [selection, setSelection] = useState<{
     text: string
@@ -266,14 +268,17 @@ export function AnswerSection({
       showBorder={false}
       showIcon={false}
     >
-      {content && (
+      {displayContent && (
         <div className="flex flex-col gap-1">
           <div
             ref={contentRef}
             onMouseUp={updateSelection}
             onKeyUp={updateSelection}
           >
-            <MarkdownMessage message={content} citationMaps={citationMaps} />
+            <MarkdownMessage
+              message={displayContent}
+              citationMaps={citationMaps}
+            />
           </div>
           {selection &&
             (showSelectionSaveButton || showSelectionDeepDiveButton) && (

@@ -266,14 +266,14 @@ describe('historical answer text cap', () => {
       `Long answer text ${'x'.repeat(50)} [1](#call_1)`
     )
     const messages = [answer, userTurn('current')]
-    const capped = compact(messages, 10)[0]
-    const uncapped = compact(messages, 0)[0]
-    const cappedTexts = textParts(capped)
-    const sourceContext = cappedTexts.at(-1)!
+    const capped = compact(messages, 10)
+    const uncapped = compact(messages, 0)
+    const cappedTexts = textParts(capped[0])
+    const sourceContext = textParts(capped[1])[0]
 
     expect(cappedTexts[0].length).toBeLessThanOrEqual(10)
-    expect(placeholders(capped)).toHaveLength(1)
-    expect(sourceContext).toBe(textParts(uncapped).at(-1))
+    expect(placeholders(capped[0])).toHaveLength(1)
+    expect(sourceContext).toBe(textParts(uncapped[1])[0])
     expect(sourceContext.length).toBeGreaterThan(10)
     expect(sourceContext).toContain('Evidence that must remain available')
     expect(sourceContext).toContain('https://example.com/a-long-source-path')

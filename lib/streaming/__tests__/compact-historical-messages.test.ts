@@ -199,14 +199,27 @@ describe('compactHistoricalMessages', () => {
       }
     ] as unknown as UIMessage[]
 
-    const [compacted] = compactHistoricalMessages(messages)
-    const [answer, sourceContext] = compacted.parts as Array<{
+    const [compacted, sourceContextMessage] =
+      compactHistoricalMessages(messages)
+    const [answer] = compacted.parts as Array<{
+      type: 'text'
+      text: string
+    }>
+    const [sourceContext] = sourceContextMessage.parts as Array<{
       type: 'text'
       text: string
     }>
 
     expect(answer.text).toContain('(https://example.com/cited)')
     expect(answer.text).not.toContain('#call_1')
+    expect(answer.text).not.toContain('<source_context>')
+    expect(sourceContextMessage).toMatchObject({
+      id: 'assistant-1-source-context',
+      role: 'user'
+    })
+    expect(sourceContext.text).toContain(
+      'Source context attached by the application for the preceding answer.'
+    )
     expect(sourceContext.text).toContain('<source_context>')
     expect(sourceContext.text).toContain('Cited source')
     expect(sourceContext.text).toContain('https://example.com/cited')
@@ -251,8 +264,10 @@ describe('compactHistoricalMessages', () => {
       }
     ] as unknown as UIMessage[]
 
-    const [, sourceContext] = compactHistoricalMessages(messages)[0]
-      .parts as Array<{ type: 'text'; text: string }>
+    const sourceContext = compactHistoricalMessages(messages)[1].parts[0] as {
+      type: 'text'
+      text: string
+    }
 
     expect(sourceContext.text).toContain('First source')
     expect(sourceContext.text).toContain('Later source')
@@ -287,7 +302,7 @@ describe('compactHistoricalMessages', () => {
       }
     ] as unknown as UIMessage[]
 
-    const sourceContext = compactHistoricalMessages(messages)[0].parts[1] as {
+    const sourceContext = compactHistoricalMessages(messages)[1].parts[0] as {
       type: 'text'
       text: string
     }
@@ -302,25 +317,98 @@ describe('compactHistoricalMessages', () => {
       [1, 2, 3].map(createCitedAssistantMessage) as unknown as UIMessage[]
     )
 
-    expect(compacted).toHaveLength(3)
-    for (const [index, message] of compacted.entries()) {
-      const sourceContext = message.parts[1] as { type: 'text'; text: string }
-      expect(message.parts).toHaveLength(2)
+    expect(compacted).toHaveLength(6)
+    for (let index = 0; index < 3; index++) {
+      const answer = compacted[index * 2]
+      const sourceMessage = compacted[index * 2 + 1]
+      const sourceContext = sourceMessage.parts[0] as {
+        type: 'text'
+        text: string
+      }
+
+      expect(answer.role).toBe('assistant')
+      expect(answer.parts).toHaveLength(1)
+      expect(sourceMessage.role).toBe('user')
       expect(sourceContext.text).toContain(`Evidence ${index + 1}`)
     }
+  })
+
+  it.each([
+    '<source_context>leaked evidence</source_context>',
+    '<source_context>truncated leaked evidence'
+  ])('removes leaked source context before replaying citations', leaked => {
+    const message = createCitedAssistantMessage(1) as unknown as UIMessage
+    const textPart = message.parts.find(part => part.type === 'text')
+    if (!textPart || textPart.type !== 'text') {
+      throw new Error('Expected assistant text part')
+    }
+    textPart.text = `Answer [1](#call_1)\n\n${leaked}`
+
+    const compacted = compactHistoricalMessages([message])
+    const serialized = JSON.stringify(compacted)
+
+    expect(compacted).toHaveLength(2)
+    expect(compacted[0].parts[0]).toMatchObject({
+      type: 'text',
+      text: 'Answer [example](https://example.com/1)'
+    })
+    expect(serialized.match(/<source_context>/g)).toHaveLength(1)
+  })
+
+  it('does not add source context after an uncited assistant turn', () => {
+    const message = {
+      id: 'assistant-uncited',
+      role: 'assistant',
+      parts: [{ type: 'text', text: 'Answer without citations.' }]
+    } as UIMessage
+
+    expect(compactHistoricalMessages([message])).toEqual([message])
+  })
+
+  it('drops an assistant message whose only text is leaked source context', () => {
+    const message = {
+      id: 'assistant-leaked-only',
+      role: 'assistant',
+      parts: [
+        {
+          type: 'text',
+          text: '<source_context>leaked evidence</source_context>'
+        }
+      ]
+    } as UIMessage
+
+    expect(compactHistoricalMessages([message])).toEqual([])
   })
 
   it('renders a turn identically however many turns follow it', () => {
     // A message that is already in history must never change: the model saw
     // it that way, and the prompt cache matches on the unchanged prefix.
-    const turns = [1, 2, 3, 4, 5].map(
-      createCitedAssistantMessage
-    ) as unknown as UIMessage[]
+    const turns = [
+      {
+        id: 'user-1',
+        role: 'user',
+        parts: [{ type: 'text', text: 'Question 1' }]
+      },
+      createCitedAssistantMessage(1),
+      {
+        id: 'user-2',
+        role: 'user',
+        parts: [{ type: 'text', text: 'Question 2' }]
+      },
+      createCitedAssistantMessage(2),
+      {
+        id: 'user-3',
+        role: 'user',
+        parts: [{ type: 'text', text: 'Question 3' }]
+      }
+    ] as unknown as UIMessage[]
 
-    const afterTwoTurns = compactHistoricalMessages(turns.slice(0, 2))
+    const afterTwoTurns = compactHistoricalMessages(turns.slice(0, 3))
     const afterFiveTurns = compactHistoricalMessages(turns)
 
-    expect(afterFiveTurns.slice(0, 2)).toEqual(afterTwoTurns)
+    expect(JSON.stringify(afterFiveTurns.slice(0, afterTwoTurns.length))).toBe(
+      JSON.stringify(afterTwoTurns)
+    )
   })
 
   it('keeps labelled source context independent of earlier messages', () => {
@@ -353,13 +441,16 @@ describe('compactHistoricalMessages', () => {
       createCitedAssistantMessage
     ) as unknown as UIMessage[]
 
-    const byItself = compactHistoricalMessages([labelledTurn])[0]
+    const byItself = compactHistoricalMessages([labelledTurn])
     const afterEarlierTurns = compactHistoricalMessages([
       ...earlierTurns,
       labelledTurn
-    ]).at(-1)
-    const answer = byItself.parts[0] as { type: 'text'; text: string }
-    const sourceContext = byItself.parts[1] as { type: 'text'; text: string }
+    ]).slice(-2)
+    const answer = byItself[0].parts[0] as { type: 'text'; text: string }
+    const sourceContext = byItself[1].parts[0] as {
+      type: 'text'
+      text: string
+    }
 
     expect(afterEarlierTurns).toEqual(byItself)
     expect(answer.text).toContain('https://labelled.example/source')
@@ -393,7 +484,7 @@ describe('compactHistoricalMessages', () => {
     ] as unknown as UIMessage[]
 
     const compacted = compactHistoricalMessages(messages)
-    const sourceContext = compacted[0].parts[1] as {
+    const sourceContext = compacted[1].parts[0] as {
       type: 'text'
       text: string
     }
@@ -405,7 +496,10 @@ describe('compactHistoricalMessages', () => {
       expect(sourceContext.text).toContain(`Evidence ${index}`)
       expect(answer.text).toContain(`https://example.com/${index}`)
     }
-    expect(sourceContext.text.length).toBeLessThanOrEqual(800)
+    expect(
+      sourceContext.text.slice(sourceContext.text.indexOf('<source_context>'))
+        .length
+    ).toBeLessThanOrEqual(800)
   })
 
   it('keeps full excerpts and URLs while few sources are cited', () => {
@@ -431,7 +525,7 @@ describe('compactHistoricalMessages', () => {
       }
     ] as unknown as UIMessage[]
 
-    const sourceContext = compactHistoricalMessages(messages)[0].parts[1] as {
+    const sourceContext = compactHistoricalMessages(messages)[1].parts[0] as {
       type: 'text'
       text: string
     }
@@ -443,7 +537,10 @@ describe('compactHistoricalMessages', () => {
         `Evidence ${index} ${'x'.repeat(80)}`
       )
     }
-    expect(sourceContext.text.length).toBeLessThanOrEqual(800)
+    expect(
+      sourceContext.text.slice(sourceContext.text.indexOf('<source_context>'))
+        .length
+    ).toBeLessThanOrEqual(800)
   })
 
   it('strictly bounds source context when base URLs exceed the budget', () => {
@@ -474,7 +571,7 @@ describe('compactHistoricalMessages', () => {
 
     const compacted = compactHistoricalMessages(messages)
     const answer = compacted[0].parts[0] as { type: 'text'; text: string }
-    const sourceContext = compacted[0].parts[1] as {
+    const sourceContext = compacted[1].parts[0] as {
       type: 'text'
       text: string
     }
@@ -486,6 +583,9 @@ describe('compactHistoricalMessages', () => {
     expect(sourceContext.text).toContain(
       'Their URLs remain in the preceding answer.'
     )
-    expect(sourceContext.text.length).toBeLessThanOrEqual(800)
+    expect(
+      sourceContext.text.slice(sourceContext.text.indexOf('<source_context>'))
+        .length
+    ).toBeLessThanOrEqual(800)
   })
 })

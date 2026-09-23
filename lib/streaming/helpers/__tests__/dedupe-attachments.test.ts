@@ -1,6 +1,7 @@
 import type { UIMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 
+import { compactHistoricalMessages } from '../compact-historical-messages'
 import { dedupeAttachments } from '../dedupe-attachments'
 
 type FileSpec = {
@@ -34,6 +35,31 @@ function assistantTurn(id: string): UIMessage {
     id,
     role: 'assistant',
     parts: [{ type: 'text', text: 'Here is what I see.' }]
+  } as unknown as UIMessage
+}
+
+function citedAssistantTurn(id: string): UIMessage {
+  return {
+    id,
+    role: 'assistant',
+    parts: [
+      {
+        type: 'tool-search',
+        toolCallId: `call-${id}`,
+        state: 'output-available',
+        input: { query: id },
+        output: {
+          results: [
+            {
+              title: 'Source',
+              url: 'https://example.com/source',
+              content: 'Evidence'
+            }
+          ]
+        }
+      },
+      { type: 'text', text: `Cited answer [1](#call-${id})` }
+    ]
   } as unknown as UIMessage
 }
 
@@ -150,6 +176,38 @@ describe('dedupeAttachments', () => {
       'report.pdf',
       'report.pdf'
     ])
+  })
+
+  it('keeps current metadata after cited history is compacted', () => {
+    const messages = [
+      userTurn('u0', [
+        { filename: 'report.pdf', key: 'files/one', size: 4096 }
+      ]),
+      citedAssistantTurn('cited'),
+      userTurn('current', [
+        { filename: 'report.pdf', key: 'files/two', size: 4096 }
+      ])
+    ]
+
+    expect(
+      filenamesReaching(dedupeAttachments(compactHistoricalMessages(messages)))
+    ).toEqual(['report.pdf', 'report.pdf'])
+  })
+
+  it('ignores a trailing source-context message when finding the current turn', () => {
+    const messages = [
+      userTurn('u0', [
+        { filename: 'report.pdf', key: 'files/one', size: 4096 }
+      ]),
+      userTurn('current', [
+        { filename: 'report.pdf', key: 'files/two', size: 4096 }
+      ]),
+      citedAssistantTurn('cited')
+    ]
+
+    expect(
+      filenamesReaching(dedupeAttachments(compactHistoricalMessages(messages)))
+    ).toEqual(['report.pdf', 'report.pdf'])
   })
 
   it('still collapses the current turn when the key is the same', () => {
