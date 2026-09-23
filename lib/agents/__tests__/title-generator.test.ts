@@ -23,11 +23,11 @@ describe('generateChatTitle', () => {
     } as never)
   })
 
-  it('disables reasoning without limiting output for GPT-5.6 Luna', async () => {
+  it('disables reasoning without limiting output for GPT-6 Luna', async () => {
     await expect(
       generateChatTitle({
         userMessageContent: 'Explain the latest model changes',
-        modelId: 'openai:gpt-5.6-luna'
+        modelId: 'openai:gpt-6-luna'
       })
     ).resolves.toBe('Concise title')
 

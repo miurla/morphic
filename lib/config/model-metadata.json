@@ -373,6 +373,11 @@
       "input": 922000,
       "output": 128000
     },
+    "gpt-6-luna": {
+      "context": 1050000,
+      "input": 922000,
+      "output": 128000
+    },
     "gpt-image-1": {
       "context": 0,
       "input": 0,

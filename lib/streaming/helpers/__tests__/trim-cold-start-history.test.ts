@@ -265,7 +265,7 @@ describe('trimColdStartHistory', () => {
     ).toBe(true)
   }, 10_000)
 
-  it('counts gpt-5.6-luna history with its own tokenizer', () => {
+  it('counts gpt-6-luna history with its own tokenizer', () => {
     const arabicText = 'مرحبا بك في هذا البحث'.repeat(20)
     const coldAt = timestamp(3 * WARM_GAP_MS + COLD_GAP_MS)
     const messages = Array.from({ length: 5 }, (_, i) => {
@@ -284,7 +284,7 @@ describe('trimColdStartHistory', () => {
         .trimmedAtCurrentTurn
     ).toBe(true)
     expect(
-      trimColdStartHistory(messages, { ...options, modelId: 'gpt-5.6-luna' })
+      trimColdStartHistory(messages, { ...options, modelId: 'gpt-6-luna' })
         .messages
     ).toBe(messages)
   })

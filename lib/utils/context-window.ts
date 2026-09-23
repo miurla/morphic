@@ -44,6 +44,7 @@ const MODEL_TO_ENCODING: Record<string, TiktokenEncoding> = {
   'gpt-4.1-nano': 'cl100k_base',
   'gpt-4o-mini': 'cl100k_base',
   'gpt-5.6-luna': 'o200k_base',
+  'gpt-6-luna': 'o200k_base',
   'claude-opus-4': 'cl100k_base', // Use GPT-4 tokenizer as approximation for Claude
   'claude-sonnet-4': 'cl100k_base',
   'claude-3-7-sonnet': 'cl100k_base',

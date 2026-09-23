@@ -13,9 +13,9 @@ import {
 
 describe('context-window', () => {
   describe('countTextTokens', () => {
-    test('counts gpt-5.6-luna text with the o200k tokenizer', () => {
+    test('counts gpt-6-luna text with the o200k tokenizer', () => {
       const text = 'مرحبا بك في هذا البحث عن الطاقة المتجددة. '.repeat(50)
-      const tokens = countTextTokens(text, 'gpt-5.6-luna')
+      const tokens = countTextTokens(text, 'gpt-6-luna')
 
       expect(tokens).toBe(getEncoding('o200k_base').encode(text).length)
       expect(tokens).toBeLessThan(
@@ -80,11 +80,11 @@ describe('context-window', () => {
       }
     })
 
-    test('uses the real 1.05M window for GPT-5.6 Luna', () => {
+    test('uses the real 1.05M window for GPT-6 Luna', () => {
       // (1050000 - 128000) - floor(1050000 * 0.1) = 817000
       const maxTokens = getMaxAllowedTokens({
         ...mockModel,
-        id: 'gpt-5.6-luna'
+        id: 'gpt-6-luna'
       })
       expect(maxTokens).toBe(817000)
     })
