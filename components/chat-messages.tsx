@@ -169,8 +169,8 @@ export function ChatMessages({
       if (toolCount > 1) {
         return false
       }
-      // Single tool results stay open even if more content follows
-      return true
+      // Keep a single tool open until answer text follows it
+      return !hasNextPart
     }
 
     // For tool-invocations, default to open
