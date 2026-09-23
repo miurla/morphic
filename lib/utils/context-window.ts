@@ -381,7 +381,11 @@ export function truncateMessages(
       usedTokens += tokens
     } else {
       // Try to at least include the last user message if we haven't
-      if (message.role === 'user' && recentMessages.length > 0) {
+      if (
+        message.role === 'user' &&
+        recentMessages.length > 0 &&
+        !recentMessages.some(recent => recent.role === 'user')
+      ) {
         // Remove oldest assistant messages to make room
         while (recentMessages.length > 0 && usedTokens + tokens > maxTokens) {
           const removed = recentMessages.shift()

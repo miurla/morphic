@@ -2,6 +2,8 @@ import type { UIMessage } from 'ai'
 import { convertToModelMessages } from 'ai'
 import { describe, expect, it } from 'vitest'
 
+import { SOURCE_CONTEXT_WARNING } from '@/lib/render/strip-source-context-blocks'
+
 import { compactHistoricalMessages } from '../helpers/compact-historical-messages'
 
 const createCitedAssistantMessage = (id: number) => ({
@@ -334,8 +336,8 @@ describe('compactHistoricalMessages', () => {
   })
 
   it.each([
-    '<source_context>leaked evidence</source_context>',
-    '<source_context>truncated leaked evidence'
+    `<source_context>\n${SOURCE_CONTEXT_WARNING}\n\n1. Leaked\n</source_context>`,
+    `<source_context>\n${SOURCE_CONTEXT_WARNING}\n\n1. Truncated leaked evidence`
   ])('removes leaked source context before replaying citations', leaked => {
     const message = createCitedAssistantMessage(1) as unknown as UIMessage
     const textPart = message.parts.find(part => part.type === 'text')
@@ -372,7 +374,7 @@ describe('compactHistoricalMessages', () => {
       parts: [
         {
           type: 'text',
-          text: '<source_context>leaked evidence</source_context>'
+          text: `<source_context>\n${SOURCE_CONTEXT_WARNING}\n</source_context>`
         }
       ]
     } as UIMessage
