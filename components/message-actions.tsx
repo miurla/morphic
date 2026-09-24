@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 
 import { saveNote } from '@/lib/actions/notes'
 import { captureClient } from '@/lib/analytics/posthog-client'
+import { stripSourceContextBlocks } from '@/lib/render/strip-source-context-blocks'
 import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
 import type { SearchResultItem } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
@@ -93,14 +94,16 @@ export function MessageActions({
   }
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(stripSpecBlocks(mappedMessage))
+    await navigator.clipboard.writeText(
+      stripSpecBlocks(stripSourceContextBlocks(mappedMessage))
+    )
     toast.success('Message copied to clipboard')
   }
 
   async function handleSaveNote() {
     if (isSavingNote) return
 
-    const content = stripSpecBlocks(mappedMessage)
+    const content = stripSpecBlocks(stripSourceContextBlocks(mappedMessage))
     captureClient('note_save_clicked', {
       source: 'button',
       chatId,

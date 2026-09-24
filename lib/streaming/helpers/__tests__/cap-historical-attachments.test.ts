@@ -6,6 +6,7 @@ import {
   parseAttachmentTokenBudget,
   parseReplayLimit
 } from '../cap-historical-attachments'
+import { compactHistoricalMessages } from '../compact-historical-messages'
 
 const LIMIT = 10
 
@@ -33,6 +34,31 @@ function assistantTurn(id: string): UIMessage {
     id,
     role: 'assistant',
     parts: [{ type: 'text', text: 'Here is what I see.' }]
+  } as unknown as UIMessage
+}
+
+function citedAssistantTurn(id: string): UIMessage {
+  return {
+    id,
+    role: 'assistant',
+    parts: [
+      {
+        type: 'tool-search',
+        toolCallId: `call-${id}`,
+        state: 'output-available',
+        input: { query: id },
+        output: {
+          results: [
+            {
+              title: 'Source',
+              url: 'https://example.com/source',
+              content: 'Evidence'
+            }
+          ]
+        }
+      },
+      { type: 'text', text: `Cited answer [1](#call-${id})` }
+    ]
   } as unknown as UIMessage
 }
 
@@ -159,6 +185,32 @@ describe('capHistoricalAttachments', () => {
     expect(
       filenamesReaching(capped).filter(n => n.startsWith('current'))
     ).toHaveLength(4)
+  })
+
+  it('keeps a current attachment current after cited history is compacted', () => {
+    const current = userTurn('current', 1)
+    const compacted = compactHistoricalMessages([
+      ...thread(20, 1),
+      citedAssistantTurn('cited'),
+      current
+    ])
+    const capped = capHistoricalAttachments(compacted, LIMIT)
+
+    expect(capped.at(-1)).toEqual(current)
+    expect(filenamesReaching(capped)).toContain('current-0.png')
+  })
+
+  it('ignores a trailing source-context message when finding the current turn', () => {
+    const current = userTurn('current', 1)
+    const compacted = compactHistoricalMessages([
+      ...thread(20, 1),
+      current,
+      citedAssistantTurn('cited')
+    ])
+    const capped = capHistoricalAttachments(compacted, LIMIT, 1)
+    const currentAfterCap = capped.find(message => message.id === current.id)
+
+    expect(currentAfterCap).toEqual(current)
   })
 
   it('keeps a message that held only attachments non-empty', () => {

@@ -38,14 +38,16 @@ function citedAssistantMessage(sources: Source[]): UIMessage {
 
 function sourceContextFor(sources: Source[]): string {
   const compacted = compactHistoricalMessages([citedAssistantMessage(sources)])
-  const sourceContext = compacted[0]?.parts[1]
+  const sourceContext = compacted[1]?.parts[0]
 
   expect(sourceContext).toMatchObject({ type: 'text' })
   if (!sourceContext || sourceContext.type !== 'text') {
     throw new Error('Expected source context text part')
   }
 
-  return sourceContext.text
+  return sourceContext.text.slice(
+    sourceContext.text.indexOf('<source_context>')
+  )
 }
 
 function expectValidSourceContext(text: string): void {

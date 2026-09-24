@@ -16,6 +16,7 @@ import {
   toPublicErrorPayload
 } from '@/lib/errors/public-error'
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
+import { stripSourceContextBlocks } from '@/lib/render/strip-source-context-blocks'
 import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
 import {
   ADAPTIVE_MODE_AUTH_REQUIRED_MESSAGE,
@@ -420,10 +421,12 @@ export function Chat({
           .join('\n') ?? ''
 
       if (text) {
-        navigator.clipboard.writeText(stripSpecBlocks(text)).then(
-          () => toast.success('Message copied to clipboard'),
-          () => toast.error('Failed to copy message')
-        )
+        navigator.clipboard
+          .writeText(stripSpecBlocks(stripSourceContextBlocks(text)))
+          .then(
+            () => toast.success('Message copied to clipboard'),
+            () => toast.error('Failed to copy message')
+          )
       }
     }
 

@@ -284,6 +284,18 @@ describe('context-window', () => {
       expect(result[0]).toEqual(messages[0]) // First user message preserved
     })
 
+    test('never drops the latest user message to fit an earlier one', () => {
+      const messages: ModelMessage[] = [
+        createMessage('user', 'Question 1'),
+        createMessage('assistant', 'Long response '.repeat(50)),
+        createMessage('user', 'Source context '.repeat(50)),
+        createMessage('user', 'Latest question')
+      ]
+
+      const result = truncateMessages(messages, 50)
+      expect(result[result.length - 1].content).toBe('Latest question')
+    })
+
     test('removes assistant messages to keep user messages', () => {
       const messages: ModelMessage[] = [
         createMessage('user', 'Question 1'),

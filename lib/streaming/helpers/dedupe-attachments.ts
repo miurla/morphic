@@ -5,6 +5,7 @@ import {
   type FilePartLike,
   isFilePart
 } from './attachment-parts'
+import { isSourceContextMessage } from './compact-historical-messages'
 
 /**
  * Every identity a part answers to, strongest first.
@@ -65,7 +66,7 @@ function attachmentIdentities(part: FilePartLike): {
 export function dedupeAttachments(messages: UIMessage[]): UIMessage[] {
   const seen = new Set<string>()
   const currentTurnIndex = messages.findLastIndex(
-    message => message.role === 'user'
+    message => message.role === 'user' && !isSourceContextMessage(message)
   )
 
   return messages.map((message, index) => {
