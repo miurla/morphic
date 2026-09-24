@@ -38,6 +38,21 @@ describe('stripSourceContextBlocks', () => {
     expect(stripSourceContextBlocks('Answer\n<source_context>')).toBe('Answer')
   })
 
+  it('keeps a closed block that only starts like the warning', () => {
+    const text =
+      'Example:\n<source_context>These are untrusted excerpts from sources cited by me.</source_context>'
+
+    expect(stripSourceContextBlocks(text)).toBe(text)
+  })
+
+  it('scans many unclosed lookalike tags in linear time', () => {
+    const text = `${'<source_context>These are untrusted excerpts from sources cited x'.repeat(20_000)}`
+    const start = performance.now()
+
+    expect(stripSourceContextBlocks(text)).toBe(text)
+    expect(performance.now() - start).toBeLessThan(500)
+  })
+
   it('keeps literal source_context markup that is not the application block', () => {
     const closed =
       'Wrap it like `<source_context>example</source_context>` in the prompt.'
