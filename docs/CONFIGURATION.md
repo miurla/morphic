@@ -133,6 +133,21 @@ OPENAI_COMPATIBLE_MODELS=orcarouter/openai/gpt-5.5,orcarouter/anthropic/claude-o
 
 Morphic's research agents rely on tool calling, so make sure any model you select supports it. Restricting `OPENAI_COMPATIBLE_MODELS` to known tool-capable models (as above) is the simplest way to keep the selector clean and avoid hitting non-tool-capable upstreams.
 
+**Example: Cheaper Inference**
+
+[Cheaper Inference](https://cheaperinference.com) is an OpenAI-compatible LLM gateway. Each model costs 15–60% less than the list price of its lab. To use it with Morphic:
+
+```bash
+OPENAI_COMPATIBLE_API_KEY=ci_live_...
+OPENAI_COMPATIBLE_API_BASE_URL=https://api.cheaperinference.com/v1
+OPENAI_COMPATIBLE_PROVIDER_NAME="Cheaper Inference"
+# Pin a few models so the selector shows only chat models.
+# See the full model list at https://cheaperinference.com/#models
+OPENAI_COMPATIBLE_MODELS=gpt-5.4-mini,gpt-5.4,claude-sonnet-5
+```
+
+Get an API key at [cheaperinference.com/signup](https://cheaperinference.com/signup).
+
 ## Search Providers
 
 ### SearXNG Configuration
