@@ -6,11 +6,12 @@ import type {
 } from '@/lib/types/agent'
 import { type Model } from '@/lib/types/models'
 
-import { fetchTool } from '../tools/fetch'
+import { createFetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
 import { createSearchTool } from '../tools/search'
 import { createTodoTools } from '../tools/todo'
 import { SearchMode } from '../types/search'
+import { createCitationLabelAllocator } from '../utils/citation'
 import { getModel } from '../utils/registry'
 import { isTracingEnabled } from '../utils/telemetry'
 
@@ -89,9 +90,11 @@ export function createResearcher({
     const currentDate = new Date().toLocaleDateString()
 
     // Create model-specific tools with proper typing
+    const labelAllocator = createCitationLabelAllocator(citationLabelSeed)
     const originalSearchTool = createSearchTool(model, {
-      labelSeed: citationLabelSeed
+      labelAllocator
     })
+    const fetchTool = createFetchTool({ labelAllocator })
     const askQuestionTool = createQuestionTool(model)
     const todoTools = createTodoTools()
 

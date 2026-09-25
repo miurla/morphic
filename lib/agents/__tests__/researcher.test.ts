@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { createFetchTool } from '@/lib/tools/fetch'
 import { createSearchTool } from '@/lib/tools/search'
 import type { Model } from '@/lib/types/models'
 
@@ -20,7 +21,7 @@ vi.mock('ai', () => ({
 }))
 
 vi.mock('@/lib/tools/fetch', () => ({
-  fetchTool: {}
+  createFetchTool: vi.fn(() => ({}))
 }))
 
 vi.mock('@/lib/tools/question', () => ({
@@ -116,14 +117,16 @@ describe('createResearcher', () => {
     })
   })
 
-  it('passes the citation label seed to the search tool', () => {
+  it('shares a seeded citation label allocator between search and fetch', () => {
     createResearcher({
       model: 'openai:model-id',
       citationLabelSeed: 9
     })
 
-    expect(createSearchTool).toHaveBeenCalledWith('openai:model-id', {
-      labelSeed: 9
-    })
+    const searchOptions = vi.mocked(createSearchTool).mock.calls[0][1]
+    const fetchOptions = vi.mocked(createFetchTool).mock.calls[0][0]
+
+    expect(searchOptions?.labelAllocator).toBe(fetchOptions?.labelAllocator)
+    expect(searchOptions?.labelAllocator?.reserve(1)).toBe(9)
   })
 })
