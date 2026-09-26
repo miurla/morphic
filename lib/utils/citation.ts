@@ -20,6 +20,22 @@ export function isCitationLabel(label: string): boolean {
 
 const DERIVED_LABEL_PATTERN = /^S\d+$/
 
+export type CitationLabelAllocator = {
+  reserve(count: number): number
+}
+
+export function createCitationLabelAllocator(seed = 1): CitationLabelAllocator {
+  let nextLabelNumber = seed
+
+  return {
+    reserve(count) {
+      const blockStart = nextLabelNumber
+      nextLabelNumber += count
+      return blockStart
+    }
+  }
+}
+
 export function createCitationPattern(): RegExp {
   // A global RegExp carries lastIndex state, so each consumer needs a fresh one.
   // The id excludes brackets, parens and whitespace so a citation the model
@@ -71,7 +87,7 @@ export function nextCitationLabelNumber(messages: UIMessage[]): number {
   for (const message of messages) {
     for (const part of message.parts ?? []) {
       if (
-        part.type !== 'tool-search' ||
+        (part.type !== 'tool-search' && part.type !== 'tool-fetch') ||
         part.state !== 'output-available' ||
         !part.output
       ) {
@@ -105,29 +121,31 @@ export function extractCitationMaps(
   if (!message.parts) return citationMaps
 
   message.parts.forEach((part: any) => {
-    // Check for search tool output
+    const isSearchOutput = part.type === 'tool-search'
+    const isFetchOutput = part.type === 'tool-fetch'
     if (
-      part.type === 'tool-search' &&
+      (isSearchOutput || isFetchOutput) &&
       part.state === 'output-available' &&
-      part.output &&
-      part.toolCallId
+      part.output
     ) {
       const searchResults = part.output as SearchResults
 
       // Prefer citationMap when present (older persisted messages still carry
       // it). Newer search outputs omit the redundant citationMap, so derive it
       // from results by index (citation N -> results[N-1]).
-      let citationMap = searchResults.citationMap
-      if (!citationMap && Array.isArray(searchResults.results)) {
-        citationMap = {}
-        searchResults.results.forEach((result, index) => {
-          citationMap![index + 1] = result // Citation numbers start at 1
-        })
-      }
+      if (isSearchOutput && part.toolCallId) {
+        let citationMap = searchResults.citationMap
+        if (!citationMap && Array.isArray(searchResults.results)) {
+          citationMap = {}
+          searchResults.results.forEach((result, index) => {
+            citationMap![index + 1] = result // Citation numbers start at 1
+          })
+        }
 
-      if (citationMap && Object.keys(citationMap).length > 0) {
-        // Store citation map with toolCallId as key
-        citationMaps[part.toolCallId] = citationMap
+        if (citationMap && Object.keys(citationMap).length > 0) {
+          // Store citation map with toolCallId as key
+          citationMaps[part.toolCallId] = citationMap
+        }
       }
 
       for (const result of searchResults.results ?? []) {

@@ -4,6 +4,11 @@ import { INVALID_URL_SENTINEL, ToolFailureError } from '@/lib/errors/tool-error'
 import { fetchSchema } from '@/lib/schema/fetch'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 import {
+  assignCitationLabels,
+  type CitationLabelAllocator,
+  createCitationLabelAllocator
+} from '@/lib/utils/citation'
+import {
   assertPublicUrl,
   assertResolvedPublicUrl,
   safeFetch
@@ -182,60 +187,76 @@ async function fetchTavilyExtractData(url: string): Promise<SearchResultsType> {
   }
 }
 
-export const fetchTool = tool({
-  description:
-    'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. IMPORTANT: "regular" type does NOT support PDFs and will fail on PDF URLs. Use "api" type when you need: 1) PDF content extraction (required for .pdf URLs), 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina or Tavily API keys and uses Jina Reader if available, otherwise falls back to Tavily Extract.',
-  inputSchema: fetchSchema,
-  async *execute({ url, type = 'regular' }) {
-    assertFetchableUrl(url)
-    // Ahead of the branch below, so an address the server must not reach is
-    // refused whether it would be read here or handed to an extraction service.
-    try {
-      assertPublicUrl(url)
-    } catch (error) {
-      throw new ToolFailureError('fetch', error)
-    }
+export function createFetchTool(options?: {
+  labelAllocator?: CitationLabelAllocator
+}) {
+  const labelAllocator =
+    options?.labelAllocator ?? createCitationLabelAllocator()
 
-    // Yield initial fetching state
-    yield {
-      state: 'fetching' as const,
-      url
-    }
-
-    let results: SearchResultsType
-
-    // Only the retrieval is wrapped: a yield rejects when the consumer stops
-    // reading, and an aborted stream is not a failure of the page.
-    try {
-      if (type === 'regular') {
-        // Use regular fetch for direct HTML retrieval
-        results = await fetchRegularData(url)
-      } else {
-        // The extraction service does the requesting here, so the name has to
-        // be settled before it is handed over rather than at connect time.
-        await assertResolvedPublicUrl(url)
-
-        // Use API-based extraction (Jina or Tavily)
-        const useJina = process.env.JINA_API_KEY
-        if (useJina) {
-          results = await fetchJinaReaderData(url)
-        } else {
-          results = await fetchTavilyExtractData(url)
-        }
+  return tool({
+    description:
+      'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. IMPORTANT: "regular" type does NOT support PDFs and will fail on PDF URLs. Use "api" type when you need: 1) PDF content extraction (required for .pdf URLs), 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina or Tavily API keys and uses Jina Reader if available, otherwise falls back to Tavily Extract.',
+    inputSchema: fetchSchema,
+    async *execute({ url, type = 'regular' }) {
+      assertFetchableUrl(url)
+      // Ahead of the branch below, so an address the server must not reach is
+      // refused whether it would be read here or handed to an extraction service.
+      try {
+        assertPublicUrl(url)
+      } catch (error) {
+        throw new ToolFailureError('fetch', error)
       }
-    } catch (error) {
-      throw new ToolFailureError('fetch', error)
-    }
 
-    logToolPayload('fetch', url, { results: results.results })
+      // Yield initial fetching state
+      yield {
+        state: 'fetching' as const,
+        url
+      }
 
-    // Yield final results with complete state
-    yield {
-      state: 'complete' as const,
-      ...results
+      let results: SearchResultsType
+
+      // Only the retrieval is wrapped: a yield rejects when the consumer stops
+      // reading, and an aborted stream is not a failure of the page.
+      try {
+        if (type === 'regular') {
+          // Use regular fetch for direct HTML retrieval
+          results = await fetchRegularData(url)
+        } else {
+          // The extraction service does the requesting here, so the name has to
+          // be settled before it is handed over rather than at connect time.
+          await assertResolvedPublicUrl(url)
+
+          // Use API-based extraction (Jina or Tavily)
+          const useJina = process.env.JINA_API_KEY
+          if (useJina) {
+            results = await fetchJinaReaderData(url)
+          } else {
+            results = await fetchTavilyExtractData(url)
+          }
+        }
+      } catch (error) {
+        throw new ToolFailureError('fetch', error)
+      }
+
+      if (Array.isArray(results.results)) {
+        results.results = assignCitationLabels(
+          results.results,
+          labelAllocator.reserve(results.results.length)
+        )
+      }
+
+      logToolPayload('fetch', url, { results: results.results })
+
+      // Yield final results with complete state
+      yield {
+        state: 'complete' as const,
+        ...results
+      }
     }
-  }
-})
+  })
+}
+
+export const fetchTool = createFetchTool()
 
 // Export type for UI tool invocation
 export type FetchUIToolInvocation = UIToolInvocation<typeof fetchTool>

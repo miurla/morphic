@@ -48,7 +48,9 @@ describe('render prompts', () => {
       const prompt = getPrompt()
 
       expect(prompt).toContain('[number](#label)')
-      expect(prompt).toContain('Each search result carries a `label` field')
+      expect(prompt).toContain(
+        'Each search or fetch result carries a `label` field'
+      )
       expect(prompt).toContain('number in brackets carries no meaning')
       expect(prompt).toContain('[1](#S3)')
       expect(prompt).toContain('[1](#S7)')

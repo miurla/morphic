@@ -15,11 +15,14 @@ export function createFixtureFetchTool(results: SearchFixture[]) {
     description: fetchTool.description,
     inputSchema: fetchTool.inputSchema,
     async execute({ url }: { url: string }) {
-      const match = results.find(result => result.url === url)
+      // Carries the label the fixture search gave the same document, so a
+      // citation of the fetched page resolves like it does in production.
+      const labelledResults = assignCitationLabels(results, 1)
+      const match = labelledResults.find(result => result.url === url)
       return {
         state: 'complete' as const,
         query: url,
-        results: match ? [match] : results,
+        results: match ? [match] : labelledResults,
         images: [],
         number_of_results: match ? 1 : results.length
       }

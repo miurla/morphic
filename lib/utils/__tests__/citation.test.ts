@@ -48,6 +48,34 @@ function labelledAssistantMessage({
   } as unknown as UIMessage
 }
 
+function labelledFetchMessage({
+  id,
+  label,
+  url
+}: {
+  id: string
+  label: string
+  url: string
+}): UIMessage {
+  return {
+    id,
+    role: 'assistant',
+    parts: [
+      {
+        type: 'tool-fetch',
+        state: 'output-available',
+        toolCallId: `fetch-${id}`,
+        input: { url },
+        output: {
+          query: '',
+          images: [],
+          results: [{ label, title: id, url, content: `${id} evidence` }]
+        }
+      }
+    ]
+  } as unknown as UIMessage
+}
+
 describe('processCitations', () => {
   const mockCitationMaps = {
     toolCall1: {
@@ -382,6 +410,20 @@ describe('processCitations', () => {
       expect(maps).not.toHaveProperty('invalid')
       expect(maps.toolCall1[2]).toEqual(labelledResults[1])
     })
+
+    it('maps fetch labels without adding a tool-call map', () => {
+      const message = labelledFetchMessage({
+        id: 'fetched',
+        label: 'S3',
+        url: 'https://fetched.test/source'
+      })
+      const maps = extractCitationMaps(message)
+
+      expect(maps).not.toHaveProperty('fetch-fetched')
+      expect(processCitations('[1](#S3)', maps)).toBe(
+        '[fetched](https://fetched.test/source)'
+      )
+    })
   })
 
   describe('derived citation labels', () => {
@@ -457,6 +499,47 @@ describe('processCitations', () => {
       })
 
       expect(nextCitationLabelNumber([message])).toBe(13)
+    })
+
+    it('advances past labels from fetch outputs', () => {
+      const message = labelledFetchMessage({
+        id: 'fetch-history',
+        label: 'S8',
+        url: 'https://fetched.test/history'
+      })
+
+      expect(nextCitationLabelNumber([message])).toBe(9)
+    })
+
+    it('resolves fetch labels through the combined conversation map', () => {
+      const message = labelledFetchMessage({
+        id: 'fetch-turn',
+        label: 'S3',
+        url: 'https://fetched.test/combined'
+      })
+      const maps = extractCitationMapsFromMessages([message])
+
+      expect(processCitations('[1](#S3)', maps)).toBe(
+        '[fetched](https://fetched.test/combined)'
+      )
+    })
+
+    it('treats a label shared by search and fetch turns as ambiguous', () => {
+      const search = labelledAssistantMessage({
+        id: 'search-turn',
+        toolCallId: 'search-call',
+        labels: ['S3'],
+        urls: ['https://search.test/source']
+      })
+      const fetch = labelledFetchMessage({
+        id: 'fetch-turn',
+        label: 'S3',
+        url: 'https://fetch.test/source'
+      })
+      const maps = extractCitationMapsFromMessages([search, fetch])
+
+      expect(maps).not.toHaveProperty('S3')
+      expect(processCitations('[1](#S3)', maps)).toBe('')
     })
 
     it('refuses to resolve a label two turns both claim', () => {

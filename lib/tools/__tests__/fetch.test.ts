@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { fetchTool } from '@/lib/tools/fetch'
+import { createFetchTool, fetchTool } from '@/lib/tools/fetch'
+import { createCitationLabelAllocator } from '@/lib/utils/citation'
 
 const url = 'https://example.com/resource'
 
@@ -60,6 +61,34 @@ describe('regular fetch content types', () => {
 
     expect(result.value).toMatchObject({
       results: [{ content: 'Page title Hello world', title: 'Page title' }]
+    })
+  })
+
+  it('labels results from the allocator seed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response('Fetched body', {
+            headers: { 'content-type': 'text/plain' }
+          })
+      )
+    )
+    const tool = createFetchTool({
+      labelAllocator: createCitationLabelAllocator(7)
+    })
+    const result = tool.execute?.(
+      { url, type: 'regular' },
+      { toolCallId: 'fetch', messages: [], context: {} }
+    )
+    const iterator = (result as AsyncIterable<unknown>)[Symbol.asyncIterator]()
+
+    await iterator.next()
+    const complete = await iterator.next()
+
+    expect(complete.value).toMatchObject({
+      results: [{ label: 'S7', url }],
+      state: 'complete'
     })
   })
 

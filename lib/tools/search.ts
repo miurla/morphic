@@ -4,7 +4,11 @@ import { ToolFailureError } from '@/lib/errors/tool-error'
 import { getSearchSchemaForModel } from '@/lib/schema/search'
 import { sliceWithoutSplittingSurrogatePair } from '@/lib/streaming/helpers/slice-without-splitting-surrogate-pair'
 import { SearchResults } from '@/lib/types'
-import { assignCitationLabels } from '@/lib/utils/citation'
+import {
+  assignCitationLabels,
+  type CitationLabelAllocator,
+  createCitationLabelAllocator
+} from '@/lib/utils/citation'
 import {
   getGeneralSearchProviderType,
   getSearchToolDescription
@@ -55,9 +59,14 @@ function describeRecoverableSearchFailure(
  */
 export function createSearchTool(
   fullModel: string,
-  options?: { labelSeed?: number }
+  options?: {
+    labelAllocator?: CitationLabelAllocator
+    labelSeed?: number
+  }
 ) {
-  let nextLabelNumber = options?.labelSeed ?? 1
+  const labelAllocator =
+    options?.labelAllocator ??
+    createCitationLabelAllocator(options?.labelSeed ?? 1)
 
   return tool({
     description: getSearchToolDescription(),
@@ -225,8 +234,9 @@ export function createSearchTool(
       // Reserve the block synchronously so searches running in parallel within
       // the same step cannot be handed overlapping labels.
       if (Array.isArray(searchResult.results)) {
-        const labelBlockStart = nextLabelNumber
-        nextLabelNumber += searchResult.results.length
+        const labelBlockStart = labelAllocator.reserve(
+          searchResult.results.length
+        )
         searchResult.results = assignCitationLabels(
           searchResult.results,
           labelBlockStart

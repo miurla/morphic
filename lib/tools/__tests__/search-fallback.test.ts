@@ -11,8 +11,10 @@ vi.mock('@/lib/tools/search/providers', () => ({
   DEFAULT_PROVIDER: 'tavily'
 }))
 
+import { createFetchTool } from '@/lib/tools/fetch'
 import { createSearchTool } from '@/lib/tools/search'
 import type { SearchResultItem } from '@/lib/types'
+import { createCitationLabelAllocator } from '@/lib/utils/citation'
 
 const fallbackResult = {
   results: [
@@ -42,6 +44,15 @@ function executeGeneralSearch(
       exclude_domains: []
     },
     { toolCallId: 'search-call', messages: [], context: {} }
+  )
+
+  return (result as AsyncIterable<unknown>)[Symbol.asyncIterator]()
+}
+
+function executeFetch(fetchTool: ReturnType<typeof createFetchTool>) {
+  const result = fetchTool.execute?.(
+    { url: 'https://example.com/fetched', type: 'regular' },
+    { toolCallId: 'fetch-call', messages: [], context: {} }
   )
 
   return (result as AsyncIterable<unknown>)[Symbol.asyncIterator]()
@@ -124,6 +135,62 @@ describe('general search provider fallback', () => {
     expect(firstLabels).toEqual(['S5', 'S6'])
     expect(secondLabels).toEqual(['S7', 'S8'])
   })
+
+  it.each(['search-first', 'fetch-first'] as const)(
+    'shares non-overlapping labels when %s',
+    async order => {
+      const labelAllocator = createCitationLabelAllocator(5)
+      const searchTool = createSearchTool('openai:gpt-4o-mini', {
+        labelAllocator
+      })
+      const fetchTool = createFetchTool({ labelAllocator })
+      mocks.braveSearch.mockResolvedValue({
+        ...fallbackResult,
+        results: [
+          ...fallbackResult.results,
+          {
+            title: 'Second result',
+            content: 'More content',
+            url: 'https://example.com/second'
+          }
+        ]
+      })
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(
+          async () =>
+            new Response('Fetched content', {
+              headers: { 'content-type': 'text/plain' }
+            })
+        )
+      )
+
+      const search = executeGeneralSearch('basic', searchTool)
+      const fetch = executeFetch(fetchTool)
+      const first = order === 'search-first' ? search : fetch
+      const second = order === 'search-first' ? fetch : search
+
+      await first.next()
+      const firstComplete = await first.next()
+      await second.next()
+      const secondComplete = await second.next()
+      const searchComplete =
+        order === 'search-first' ? firstComplete : secondComplete
+      const fetchComplete =
+        order === 'search-first' ? secondComplete : firstComplete
+      const searchLabels = (
+        searchComplete.value as { results: SearchResultItem[] }
+      ).results.map(result => result.label)
+      const fetchLabels = (
+        fetchComplete.value as { results: SearchResultItem[] }
+      ).results.map(result => result.label)
+
+      expect(searchLabels).toEqual(
+        order === 'search-first' ? ['S5', 'S6'] : ['S6', 'S7']
+      )
+      expect(fetchLabels).toEqual(order === 'search-first' ? ['S7'] : ['S5'])
+    }
+  )
 
   it('uses the optimized provider after a transport failure', async () => {
     mocks.braveSearch.mockRejectedValue(new TypeError('fetch failed'))

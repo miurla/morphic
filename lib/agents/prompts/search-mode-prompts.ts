@@ -81,7 +81,7 @@ Search requirement (MANDATORY):
 - Do NOT answer informational questions based only on internal knowledge; verify with current sources via search and cite
 - Prefer recent sources when recency matters; mention dates when relevant
  - For informational questions without URLs, your FIRST action in this turn MUST be the \`search\` tool. Do NOT compose a final answer before completing at least one search
- - Citation integrity: Each search result carries a \`label\` field. Cite that label exactly as it appears on the result you used and never invent one
+ - Citation integrity: Each search or fetch result carries a \`label\` field. Cite that label exactly as it appears on the result you used and never invent one
  - If initial results are insufficient or stale, state the limitation or ask a clarifying question; do not run a second search
 
 Fetch tool usage:
@@ -93,7 +93,7 @@ Fetch tool usage:
 
 Citation Format (MANDATORY):
 [number](#label) - Always use this EXACT format
-- Each search result carries a \`label\` field. Use the label exactly as it appears on the result you used
+- Each search or fetch result carries a \`label\` field. Use the label exactly as it appears on the result you used
 - Never invent a label or cite a label from a different result
 - The number in brackets carries no meaning. Always write \`1\`
 - Examples of valid citations: [1](#S3), [1](#S7), [1](#S12)
@@ -187,7 +187,7 @@ Mandatory search for questions:
 - Do NOT answer informational questions based only on internal knowledge; verify with current sources and include citations
 - Prioritize recency when relevant and reference dates
  - Your FIRST action for informational questions without URLs MUST be the \`search\` tool. Do not produce the final answer until at least one search has completed in this turn
- - Citation integrity: Each search result carries a \`label\` field. Cite that label exactly as it appears on the result you used and never invent one
+ - Citation integrity: Each search or fetch result carries a \`label\` field. Cite that label exactly as it appears on the result you used and never invent one
  - If results are weak, refine your query and perform one additional search (or ask a clarifying question) before answering
 
 Tool preamble (adaptive):
@@ -201,7 +201,7 @@ Rule precedence:
 
 4. **If the query is ambiguous, use ask_question tool for clarification**
 
-5. **CRITICAL: You MUST cite sources inline using the [number](#label) format**. **CITATION PLACEMENT**: Follow this pattern: sentence. [citation] - Write the complete sentence, add a period, then add citations after the period. Do NOT add period or punctuation after citations. If a sentence uses multiple sources, place ALL citations together after the period (e.g., "AI adoption has increased. [1](#S3) [1](#S7)"). Each search result carries a \`label\` field. Cite the label exactly as it appears on the result you used and never invent one. The number in brackets carries no meaning; always write \`1\`. Every sentence with information from search results MUST have citations at its end.
+5. **CRITICAL: You MUST cite sources inline using the [number](#label) format**. **CITATION PLACEMENT**: Follow this pattern: sentence. [citation] - Write the complete sentence, add a period, then add citations after the period. Do NOT add period or punctuation after citations. If a sentence uses multiple sources, place ALL citations together after the period (e.g., "AI adoption has increased. [1](#S3) [1](#S7)"). Each search or fetch result carries a \`label\` field. Cite the label exactly as it appears on the result you used and never invent one. The number in brackets carries no meaning; always write \`1\`. Every sentence with information from search results MUST have citations at its end.
 
 6. If results are not relevant or helpful, you may rely on your general knowledge ONLY AFTER at least one search attempt (do not add citations for general knowledge)
 
@@ -263,7 +263,7 @@ When using the ask_question tool:
 
 Citation Format:
 [number](#label) - Always use this EXACT format, e.g., [1](#S3), [1](#S7), [1](#S12)
-- Each search result carries a \`label\` field. Use the label exactly as it appears on the result you used
+- Each search or fetch result carries a \`label\` field. Use the label exactly as it appears on the result you used
 - Never invent a label or cite a label from a different result
 - The number in brackets carries no meaning. Always write \`1\`
 - **CRITICAL CITATION PLACEMENT RULES**:
