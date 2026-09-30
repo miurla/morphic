@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   countFileParts,
+  exceedsAttachmentLimit,
   MAX_ATTACHMENTS_PER_MESSAGE,
   remainingAttachmentSlots
 } from '../attachment-limits'
@@ -33,5 +34,61 @@ describe('remainingAttachmentSlots', () => {
     expect(remainingAttachmentSlots(0)).toBe(MAX_ATTACHMENTS_PER_MESSAGE)
     expect(remainingAttachmentSlots(MAX_ATTACHMENTS_PER_MESSAGE)).toBe(0)
     expect(remainingAttachmentSlots(MAX_ATTACHMENTS_PER_MESSAGE + 2)).toBe(0)
+  })
+})
+
+describe('exceedsAttachmentLimit', () => {
+  const withFiles = (count: number) => ({
+    role: 'user',
+    parts: Array.from({ length: count }, () => ({ type: 'file' }))
+  })
+
+  it('checks the submitted message for authenticated users', () => {
+    expect(
+      exceedsAttachmentLimit({
+        isGuest: false,
+        trigger: 'submit-message',
+        message: withFiles(4),
+        messages: undefined
+      })
+    ).toBe(true)
+    expect(
+      exceedsAttachmentLimit({
+        isGuest: false,
+        trigger: 'submit-message',
+        message: withFiles(3),
+        messages: undefined
+      })
+    ).toBe(false)
+  })
+
+  it('does not block regenerating an existing message', () => {
+    expect(
+      exceedsAttachmentLimit({
+        isGuest: false,
+        trigger: 'regenerate-message',
+        message: withFiles(5),
+        messages: undefined
+      })
+    ).toBe(false)
+  })
+
+  it('checks the guest history instead of the separate message field', () => {
+    expect(
+      exceedsAttachmentLimit({
+        isGuest: true,
+        trigger: 'submit-message',
+        message: withFiles(0),
+        messages: [withFiles(1), withFiles(4)]
+      })
+    ).toBe(true)
+    expect(
+      exceedsAttachmentLimit({
+        isGuest: true,
+        trigger: 'submit-message',
+        message: withFiles(0),
+        messages: [withFiles(3), withFiles(3)]
+      })
+    ).toBe(false)
   })
 })
