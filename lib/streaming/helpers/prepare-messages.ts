@@ -13,6 +13,10 @@ import {
   getUserFileObjectKeyPrefix,
   signFilePartUrls
 } from '@/lib/storage/r2-client'
+import {
+  countFileParts,
+  MAX_ATTACHMENTS_PER_MESSAGE
+} from '@/lib/utils/attachment-limits'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 
 import type { StreamContext } from './types'
@@ -70,6 +74,17 @@ export async function prepareMessages(
     } else {
       // User message edit
       if (message && message.id === messageId) {
+        // Messages saved before the limit was enforced may already carry more
+        // files, so only reject an edit that adds files beyond it.
+        const fileCount = countFileParts(message)
+        if (
+          fileCount > MAX_ATTACHMENTS_PER_MESSAGE &&
+          fileCount > countFileParts(targetMessage)
+        ) {
+          throw new DeterministicPreparationError(
+            'Edited message exceeds the attachment limit'
+          )
+        }
         await upsertMessage(chatId, message, userId)
       }
       const messagesToDelete = currentChat.messages.slice(messageIndex + 1)

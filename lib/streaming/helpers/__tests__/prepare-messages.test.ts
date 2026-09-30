@@ -261,6 +261,72 @@ describe('prepareMessages', () => {
       })
     })
 
+    describe('attachment limit on edits', () => {
+      const files = (count: number): UIMessage['parts'] =>
+        Array.from({ length: count }, (_, i) => ({
+          type: 'file' as const,
+          mediaType: 'application/pdf',
+          url: `https://example.com/${i}.pdf`
+        }))
+
+      const chatWithStoredFiles = (
+        count: number
+      ): Chat & { messages: UIMessage[] } => ({
+        id: chatId,
+        title: 'Test Chat',
+        userId,
+        visibility: 'private',
+        createdAt: new Date(),
+        messages: [
+          { id: 'msg-1', role: 'user', parts: files(count) },
+          {
+            id: 'msg-2',
+            role: 'assistant',
+            parts: [{ type: 'text', text: 'Answer' }]
+          }
+        ]
+      })
+
+      const context = (
+        initialChat: Chat & { messages: UIMessage[] }
+      ): StreamContext => ({
+        chatId,
+        userId,
+        modelId: 'gpt-4',
+        trigger: 'regenerate-message',
+        messageId: 'msg-1',
+        initialChat,
+        isNewChat: false
+      })
+
+      it('rejects an edit that adds files beyond the limit', async () => {
+        await expect(
+          prepareMessages(context(chatWithStoredFiles(1)), {
+            id: 'msg-1',
+            role: 'user',
+            parts: files(5)
+          })
+        ).rejects.toBeInstanceOf(DeterministicPreparationError)
+        expect(upsertMessage).not.toHaveBeenCalled()
+      })
+
+      it('allows regenerating a stored message that already exceeds the limit', async () => {
+        vi.mocked(deleteMessagesFromIndex).mockResolvedValue({
+          success: true,
+          count: 1
+        })
+        const initialChat = chatWithStoredFiles(5)
+
+        const result = await prepareMessages(
+          context(initialChat),
+          initialChat.messages[0]
+        )
+
+        expect(result).toHaveLength(1)
+        expect(upsertMessage).toHaveBeenCalled()
+      })
+    })
+
     it('should throw error when no messages found in chat', async () => {
       const emptyChat: Chat & { messages: UIMessage[] } = {
         id: chatId,

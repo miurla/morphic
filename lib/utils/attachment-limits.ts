@@ -19,8 +19,8 @@ export function remainingAttachmentSlots(currentCount: number): number {
 }
 
 // Guests send their whole history and the model receives all of it.
-// Authenticated requests only send `message` on submit; regenerating an
-// older message is left alone.
+// Authenticated requests are checked on submit here; an edit sent with
+// regenerate is checked against the stored message in prepareMessages.
 export function exceedsAttachmentLimit({
   isGuest,
   trigger,
