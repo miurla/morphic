@@ -62,6 +62,19 @@ describe('exceedsAttachmentLimit', () => {
     ).toBe(false)
   })
 
+  it('treats a missing or unknown trigger as a submission', () => {
+    for (const trigger of [undefined, 'something-else']) {
+      expect(
+        exceedsAttachmentLimit({
+          isGuest: false,
+          trigger,
+          message: withFiles(4),
+          messages: undefined
+        })
+      ).toBe(true)
+    }
+  })
+
   it('does not block regenerating an existing message', () => {
     expect(
       exceedsAttachmentLimit({

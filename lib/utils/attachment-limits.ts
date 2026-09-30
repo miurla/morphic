@@ -19,8 +19,9 @@ export function remainingAttachmentSlots(currentCount: number): number {
 }
 
 // Guests send their whole history and the model receives all of it.
-// Authenticated requests are checked on submit here; an edit sent with
-// regenerate is checked against the stored message in prepareMessages.
+// prepareMessages treats every other trigger as a submission, so only
+// regenerate is left to prepareMessages, which compares the edit against
+// the stored message.
 export function exceedsAttachmentLimit({
   isGuest,
   trigger,
@@ -36,9 +37,9 @@ export function exceedsAttachmentLimit({
     ? Array.isArray(messages)
       ? messages
       : []
-    : trigger === 'submit-message'
-      ? [message]
-      : []
+    : trigger === 'regenerate-message'
+      ? []
+      : [message]
 
   return checked.some(
     item => countFileParts(item) > MAX_ATTACHMENTS_PER_MESSAGE
