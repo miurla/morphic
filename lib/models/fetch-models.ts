@@ -8,7 +8,7 @@ export type ModelsByProvider = Record<string, Model[]>
 const MODEL_CACHE_TTL_MS = 2 * 60 * 1000
 const DATE_SNAPSHOT_SUFFIX_REGEX = /-\d{4}-\d{2}-\d{2}$/
 const GOOGLE_PREVIEW_SNAPSHOT_REGEX = /preview-\d{2}-\d{2,4}$/i
-const OPENAI_ALLOWED_PREFIXES = ['gpt-5', 'o1', 'o3', 'o4']
+const OPENAI_ALLOWED_PATTERN = /^(gpt-([5-9]|\d{2,})|o[134])/
 const OPENAI_EXCLUDED_KEYWORDS = [
   'embed',
   'tts',
@@ -28,11 +28,8 @@ const OPENAI_EXCLUDED_KEYWORDS = [
   'instruct',
   'chat-latest'
 ]
-const ANTHROPIC_ALLOWED_PREFIXES = [
-  'claude-opus-4',
-  'claude-sonnet-4',
-  'claude-haiku-4'
-]
+const ANTHROPIC_ALLOWED_PATTERN =
+  /^claude-(opus|sonnet|haiku|fable)-([4-9]|\d{2,})/
 const GOOGLE_ALLOWED_PREFIXES = ['gemini-2.5', 'gemini-3']
 const GOOGLE_EXCLUDED_KEYWORDS = ['image', 'live', 'native-audio', 'embedding']
 const OPENAI_COMPATIBLE_EXCLUDED_KEYWORDS = [
@@ -93,7 +90,7 @@ function passesOpenAIFilters(id: string): boolean {
     return false
   }
 
-  if (!OPENAI_ALLOWED_PREFIXES.some(prefix => id.startsWith(prefix))) {
+  if (!OPENAI_ALLOWED_PATTERN.test(id)) {
     return false
   }
 
@@ -107,7 +104,7 @@ function passesAnthropicFilters(id: string): boolean {
     return false
   }
 
-  return ANTHROPIC_ALLOWED_PREFIXES.some(prefix => id.startsWith(prefix))
+  return ANTHROPIC_ALLOWED_PATTERN.test(id)
 }
 
 function passesGoogleFilters(id: string): boolean {

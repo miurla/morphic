@@ -38,6 +38,7 @@ describe('fetch-models', () => {
       json: async () => ({
         data: [
           { id: 'gpt-5-mini' },
+          { id: 'gpt-6-luna' },
           { id: 'gpt-4o' },
           { id: 'gpt-5-2025-08-07' },
           { id: 'gpt-5-chat-latest' },
@@ -52,7 +53,41 @@ describe('fetch-models', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     const models = await fetchModels.fetchOpenAIModels()
-    expect(models.map(model => model.id)).toEqual(['gpt-5-mini', 'o3-mini'])
+    expect(models.map(model => model.id)).toEqual([
+      'gpt-5-mini',
+      'gpt-6-luna',
+      'o3-mini'
+    ])
+  })
+
+  it('keeps current-generation Anthropic models', async () => {
+    mockIsProviderEnabled.mockImplementation(
+      providerId => providerId === 'anthropic'
+    )
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({
+        data: [
+          { id: 'claude-opus-5-5' },
+          { id: 'claude-fable-5-1' },
+          { id: 'claude-sonnet-4-5' },
+          { id: 'claude-3-5-haiku-20241022' },
+          { id: 'claude-3-opus-latest' }
+        ],
+        has_more: false
+      })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const models = await fetchModels.fetchAnthropicModels()
+    expect(models.map(model => model.id)).toEqual([
+      'claude-fable-5-1',
+      'claude-opus-5-5',
+      'claude-sonnet-4-5'
+    ])
   })
 
   it('groups models by provider and caches results', async () => {
