@@ -33,6 +33,10 @@ import {
   trackUsageLimitReached,
   usageLimitResponse
 } from '@/lib/usage-budget'
+import {
+  countFileParts,
+  MAX_ATTACHMENTS_PER_MESSAGE
+} from '@/lib/utils/attachment-limits'
 import { getTextFromParts } from '@/lib/utils/message-utils'
 import { selectModel } from '@/lib/utils/model-selection'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
@@ -91,6 +95,23 @@ export async function POST(req: Request) {
           statusText: 'Bad Request'
         })
       }
+    }
+
+    const latestMessage =
+      message ?? (Array.isArray(messages) ? messages.at(-1) : undefined)
+    if (countFileParts(latestMessage) > MAX_ATTACHMENTS_PER_MESSAGE) {
+      return new Response(
+        JSON.stringify({
+          error: `You can attach up to ${MAX_ATTACHMENTS_PER_MESSAGE} files per message.`,
+          type: 'general',
+          code: 'bad_request',
+          retryable: false
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
     }
 
     const referer = req.headers.get('referer')
