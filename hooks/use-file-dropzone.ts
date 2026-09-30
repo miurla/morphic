@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 
 import { UploadedFile } from '@/lib/types'
+import { MAX_ATTACHMENTS_PER_MESSAGE } from '@/lib/utils/attachment-limits'
 
 type UseFileDropzoneProps = {
   uploadedFiles: UploadedFile[]
@@ -16,7 +17,7 @@ export function useFileDropzone({
   uploadedFiles,
   setUploadedFiles,
   chatId,
-  maxFiles = 3,
+  maxFiles = MAX_ATTACHMENTS_PER_MESSAGE,
   allowedTypes = ['image/png', 'image/jpeg', 'application/pdf']
 }: UseFileDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false)
@@ -51,7 +52,7 @@ export function useFileDropzone({
 
       const total = uploadedFiles.length + allowed.length
       if (total > maxFiles) {
-        toast.error(`You can upload a maximum of ${maxFiles} files.`)
+        toast.error(`You can attach up to ${maxFiles} files per message.`)
         return
       }
 

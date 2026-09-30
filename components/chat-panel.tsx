@@ -37,6 +37,10 @@ import type { ModelSelectorData } from '@/lib/types/model-selector'
 import type { SearchMode } from '@/lib/types/search'
 import { cn } from '@/lib/utils'
 import {
+  MAX_ATTACHMENTS_PER_MESSAGE,
+  remainingAttachmentSlots
+} from '@/lib/utils/attachment-limits'
+import {
   getCookie,
   setCookie,
   subscribeToCookieChange
@@ -277,9 +281,9 @@ export function ChatPanel({
 
   const uploadSelectedFiles = useCallback(
     async (files: File[]) => {
-      const validFiles = files
-        .slice(0, 3)
-        .filter(file => ALLOWED_FILE_TYPES.includes(file.type))
+      const allowedFiles = files.filter(file =>
+        ALLOWED_FILE_TYPES.includes(file.type)
+      )
       const rejected = files.filter(
         file => !ALLOWED_FILE_TYPES.includes(file.type)
       )
@@ -291,6 +295,14 @@ export function ChatPanel({
         )
       }
 
+      const slots = remainingAttachmentSlots(uploadedFilesRef.current.length)
+      if (allowedFiles.length > slots) {
+        toast.error(
+          `You can attach up to ${MAX_ATTACHMENTS_PER_MESSAGE} files per message.`
+        )
+      }
+      const validFiles = allowedFiles.slice(0, slots)
+
       if (validFiles.length === 0) return
 
       const newFiles: UploadedFile[] = validFiles.map(file => ({
@@ -298,6 +310,7 @@ export function ChatPanel({
         status: 'uploading',
         mediaType: file.type
       }))
+      uploadedFilesRef.current = [...uploadedFilesRef.current, ...newFiles]
       setUploadedFiles(prev => [...prev, ...newFiles])
       await Promise.all(
         newFiles.map(async uf => {
@@ -371,6 +384,12 @@ export function ChatPanel({
           item => item.libraryFileId === file.libraryFileId
         )
       ) {
+        return false
+      }
+      if (remainingAttachmentSlots(uploadedFilesRef.current.length) === 0) {
+        toast.error(
+          `You can attach up to ${MAX_ATTACHMENTS_PER_MESSAGE} files per message.`
+        )
         return false
       }
       uploadedFilesRef.current = [...uploadedFilesRef.current, file]

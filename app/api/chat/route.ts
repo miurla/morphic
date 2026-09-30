@@ -33,6 +33,10 @@ import {
   trackUsageLimitReached,
   usageLimitResponse
 } from '@/lib/usage-budget'
+import {
+  exceedsAttachmentLimit,
+  MAX_ATTACHMENTS_PER_MESSAGE
+} from '@/lib/utils/attachment-limits'
 import { getTextFromParts } from '@/lib/utils/message-utils'
 import { selectModel } from '@/lib/utils/model-selection'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
@@ -115,6 +119,21 @@ export async function POST(req: Request) {
 
     const guestChatEnabled = process.env.ENABLE_GUEST_CHAT === 'true'
     const isGuest = !userId
+
+    if (exceedsAttachmentLimit({ isGuest, trigger, message, messages })) {
+      return new Response(
+        JSON.stringify({
+          error: `You can attach up to ${MAX_ATTACHMENTS_PER_MESSAGE} files per message.`,
+          type: 'general',
+          code: 'bad_request',
+          retryable: false
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
 
     const keylessFilePartCount = Array.isArray(message?.parts)
       ? message.parts.filter(
