@@ -38,7 +38,7 @@ export const UI_ENABLED = process.env.USAGE_BUDGET_UI === 'on'
 
 export function isUsageBudgetAvailable(): boolean {
   return (
-    process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true' &&
+    process.env.SHIFTSAI_CLOUD_DEPLOYMENT === 'true' &&
     Boolean(
       process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
     )

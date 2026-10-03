@@ -1,8 +1,8 @@
 # Privacy and Telemetry
 
-This document lists everything a self-hosted Morphic instance can send outside your own server, what each destination receives, and how to turn it off.
+This document lists everything a self-hosted ShiftsAI instance can send outside your own server, what each destination receives, and how to turn it off.
 
-**Morphic never reports anything to the Morphic project or its maintainers.** There is no phone-home endpoint in the codebase. Beyond that, a self-hosted instance contacts the services you configure credentials for, the sites the agent reads, and the browser-side destinations listed below. One case contacts a service you have not configured: see [Reading pages](#reading-pages).
+**ShiftsAI never reports anything to the ShiftsAI project or its maintainers.** There is no phone-home endpoint in the codebase. Beyond that, a self-hosted instance contacts the services you configure credentials for, the sites the agent reads, and the browser-side destinations listed below. One case contacts a service you have not configured: see [Reading pages](#reading-pages).
 
 ## Summary
 
@@ -85,17 +85,17 @@ Both are the content the search itself returned, loaded from where it lives.
 
 ## Analytics and observability
 
-All of these are off by default. None are needed to run Morphic.
+All of these are off by default. None are needed to run ShiftsAI.
 
 ### PostHog
 
 Product analytics used by the hosted deployment.
 
-The server-side path requires **both** `MORPHIC_CLOUD_DEPLOYMENT=true` and `POSTHOG_KEY` ([lib/analytics/dispatch.ts](../lib/analytics/dispatch.ts)). The browser-side path is gated on `NEXT_PUBLIC_POSTHOG_KEY` alone and does not consult `MORPHIC_CLOUD_DEPLOYMENT`, so setting only the public key produces browser events even with cloud mode off. Neither key ships with a value, and Docker Compose pins `MORPHIC_CLOUD_DEPLOYMENT=false`.
+The server-side path requires **both** `SHIFTSAI_CLOUD_DEPLOYMENT=true` and `POSTHOG_KEY` ([lib/analytics/dispatch.ts](../lib/analytics/dispatch.ts)). The browser-side path is gated on `NEXT_PUBLIC_POSTHOG_KEY` alone and does not consult `SHIFTSAI_CLOUD_DEPLOYMENT`, so setting only the public key produces browser events even with cloud mode off. Neither key ships with a value, and Docker Compose pins `SHIFTSAI_CLOUD_DEPLOYMENT=false`.
 
 When it is on, events are attributed to an identity: the Supabase user id for signed-in users, and for guests a distinct id that persists in browser storage across visits. Chat events also carry the user id as a property, and a `$pageview` is sent on every navigation, which for a saved chat means its URL.
 
-Beyond the identity, events carry the model and provider used, the search mode, the conversation turn number, the chat id, and a derived shape of the query: a length bucket, whether it contained a URL, and a coarse language flag. What the user typed is never sent, and no event carries uploaded filenames. The one event that contains prompt text is `example_prompt_clicked`, which records which of the built-in example prompts a visitor clicked on the home screen. That string comes from Morphic's own list, not from the user. Autocapture and session recording are both disabled in [lib/analytics/posthog-client.ts](../lib/analytics/posthog-client.ts). That does not strip the context `posthog-js` attaches to every capture on its own: the current URL and referrer, browser and OS, screen and viewport size, and session and window ids.
+Beyond the identity, events carry the model and provider used, the search mode, the conversation turn number, the chat id, and a derived shape of the query: a length bucket, whether it contained a URL, and a coarse language flag. What the user typed is never sent, and no event carries uploaded filenames. The one event that contains prompt text is `example_prompt_clicked`, which records which of the built-in example prompts a visitor clicked on the home screen. That string comes from ShiftsAI's own list, not from the user. Autocapture and session recording are both disabled in [lib/analytics/posthog-client.ts](../lib/analytics/posthog-client.ts). That does not strip the context `posthog-js` attaches to every capture on its own: the current URL and referrer, browser and OS, screen and viewport size, and session and window ids.
 
 ### Langfuse
 
@@ -109,11 +109,11 @@ One related note: OpenTelemetry itself is registered unconditionally, so standar
 
 ### Vercel Analytics
 
-Page views, for the hosted deployment. Rendered only when `MORPHIC_CLOUD_DEPLOYMENT=true`, so a self-hosted instance never loads the script.
+Page views, for the hosted deployment. Rendered only when `SHIFTSAI_CLOUD_DEPLOYMENT=true`, so a self-hosted instance never loads the script.
 
 ### Next.js telemetry
 
-Next.js collects its own anonymous usage telemetry during `build` and `dev`. This is a framework behavior unrelated to Morphic, and it carries no application data. The Docker image disables it during build. If you run from a clone, disable it with:
+Next.js collects its own anonymous usage telemetry during `build` and `dev`. This is a framework behavior unrelated to ShiftsAI, and it carries no application data. The Docker image disables it during build. If you run from a clone, disable it with:
 
 ```bash
 NEXT_TELEMETRY_DISABLED=1
@@ -123,7 +123,7 @@ See [Next.js telemetry](https://nextjs.org/telemetry) for what it covers.
 
 ## Fully local setup
 
-To run Morphic with as little as possible leaving your network:
+To run ShiftsAI with as little as possible leaving your network:
 
 - `OLLAMA_BASE_URL` for the model, instead of a hosted provider key
 - `SEARCH_API=searxng` with the bundled SearXNG container, pointed at engines you accept

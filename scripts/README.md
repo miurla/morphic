@@ -22,7 +22,7 @@ A command-line interface for testing the chat API without a browser client. This
 
 1. **Add authentication to `.env.local`**:
    ```env
-   MORPHIC_COOKIES="your-cookie-string-here"
+   SHIFTSAI_COOKIES="your-cookie-string-here"
    ```
 
 ### Usage
@@ -115,9 +115,9 @@ bun chat -c "chat_123" -t regenerate --message-id "msg_456" -m "Tell me about ma
 
 If you encounter "User not authenticated" errors:
 
-1. Ensure you're logged into Morphic in your browser
+1. Ensure you're logged into ShiftsAI in your browser
 2. Get fresh cookies from DevTools
-3. Update `MORPHIC_COOKIES` in `.env.local`
+3. Update `SHIFTSAI_COOKIES` in `.env.local`
 4. Cookies expire after ~1 hour, so refresh them if needed
 
 #### API Errors
@@ -131,7 +131,7 @@ If you encounter "Selected provider is not enabled" errors:
 #### General Issues
 
 - Check the development server is running: `bun dev`
-- Verify `.env.local` exists and contains `MORPHIC_COOKIES`
+- Verify `.env.local` exists and contains `SHIFTSAI_COOKIES`
 - Use `DEBUG=1` prefix for verbose output
 - Ensure the API URL is accessible (default: `http://localhost:3000/api/chat`)
 

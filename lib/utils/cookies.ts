@@ -1,4 +1,4 @@
-const COOKIE_CHANGE_EVENT = 'morphic-cookie-change'
+const COOKIE_CHANGE_EVENT = 'shiftsai-cookie-change'
 
 export function setCookie(name: string, value: string, days = 30) {
   if (typeof document === 'undefined') return

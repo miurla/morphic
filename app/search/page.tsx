@@ -18,7 +18,7 @@ export default async function SearchPage(props: {
 
   const id = generateUUID()
   const userId = await getCurrentUserId()
-  const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
+  const isCloudDeployment = process.env.SHIFTSAI_CLOUD_DEPLOYMENT === 'true'
   const libraryAvailable = process.env.ENABLE_AUTH !== 'false'
   const modelSelectorData = await getModelSelectorData()
 

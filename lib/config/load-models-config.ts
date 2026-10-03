@@ -40,13 +40,13 @@ function validateModelsConfigStructure(
 }
 
 export function isCloudDeployment(): boolean {
-  return process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
+  return process.env.SHIFTSAI_CLOUD_DEPLOYMENT === 'true'
 }
 
 export async function loadModelsConfig(): Promise<ModelsConfig> {
   if (!isCloudDeployment()) {
     throw new Error(
-      'loadModelsConfig is only available when MORPHIC_CLOUD_DEPLOYMENT=true'
+      'loadModelsConfig is only available when SHIFTSAI_CLOUD_DEPLOYMENT=true'
     )
   }
 
@@ -66,7 +66,7 @@ export async function loadModelsConfig(): Promise<ModelsConfig> {
 export function loadModelsConfigSync(): ModelsConfig {
   if (!isCloudDeployment()) {
     throw new Error(
-      'loadModelsConfigSync is only available when MORPHIC_CLOUD_DEPLOYMENT=true'
+      'loadModelsConfigSync is only available when SHIFTSAI_CLOUD_DEPLOYMENT=true'
     )
   }
 

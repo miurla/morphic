@@ -14,7 +14,7 @@ import {
   isAnalyticsEnabled
 } from '@/lib/analytics/dispatch'
 
-const original = process.env.MORPHIC_CLOUD_DEPLOYMENT
+const original = process.env.SHIFTSAI_CLOUD_DEPLOYMENT
 
 describe('analytics dispatch', () => {
   beforeEach(() => {
@@ -23,11 +23,11 @@ describe('analytics dispatch', () => {
   })
 
   afterEach(() => {
-    process.env.MORPHIC_CLOUD_DEPLOYMENT = original
+    process.env.SHIFTSAI_CLOUD_DEPLOYMENT = original
   })
 
   it('is a no-op outside cloud deployment', async () => {
-    process.env.MORPHIC_CLOUD_DEPLOYMENT = 'false'
+    process.env.SHIFTSAI_CLOUD_DEPLOYMENT = 'false'
 
     expect(isAnalyticsEnabled()).toBe(false)
     await capture({ event: 'e', distinctId: 'u' })
@@ -38,7 +38,7 @@ describe('analytics dispatch', () => {
   })
 
   it('forwards to the provider in cloud deployment', async () => {
-    process.env.MORPHIC_CLOUD_DEPLOYMENT = 'true'
+    process.env.SHIFTSAI_CLOUD_DEPLOYMENT = 'true'
 
     await capture({ event: 'e', distinctId: 'u', properties: { a: 1 } })
     await deleteAnalyticsPerson('u')
@@ -52,7 +52,7 @@ describe('analytics dispatch', () => {
   })
 
   it('never throws when the provider fails', async () => {
-    process.env.MORPHIC_CLOUD_DEPLOYMENT = 'true'
+    process.env.SHIFTSAI_CLOUD_DEPLOYMENT = 'true'
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mockCaptureServerEvent.mockRejectedValue(new Error('down'))
 

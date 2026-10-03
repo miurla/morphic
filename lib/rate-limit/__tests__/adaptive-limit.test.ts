@@ -34,7 +34,7 @@ describe('checkAndEnforceAdaptiveLimit', () => {
     mockTrack.mockReset()
     mockTrack.mockResolvedValue(undefined)
     mockAfter.mockReset()
-    process.env.MORPHIC_CLOUD_DEPLOYMENT = 'true'
+    process.env.SHIFTSAI_CLOUD_DEPLOYMENT = 'true'
     process.env.UPSTASH_REDIS_REST_URL = 'https://example.com'
     process.env.UPSTASH_REDIS_REST_TOKEN = 'token'
     delete process.env.ADAPTIVE_CHAT_DAILY_LIMIT
@@ -96,7 +96,7 @@ describe('checkAndEnforceAdaptiveLimit', () => {
   })
 
   it('skips enforcement when not in cloud deployment', async () => {
-    process.env.MORPHIC_CLOUD_DEPLOYMENT = 'false'
+    process.env.SHIFTSAI_CLOUD_DEPLOYMENT = 'false'
     mockRedisIncr.mockResolvedValue(9999)
 
     const response = await checkAndEnforceAdaptiveLimit('user-6')

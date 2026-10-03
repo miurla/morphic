@@ -1,26 +1,26 @@
-# Docker Compose configuration for the morphic-stack development environment
+# Docker Compose configuration for the shiftsai-stack development environment
 
-name: morphic-stack
+name: shiftsai-stack
 services:
-  morphic:
-    image: ghcr.io/${GITHUB_REPOSITORY:-your-username/morphic}:latest
+  shiftsai:
+    image: ghcr.io/${GITHUB_REPOSITORY:-shiftslabs/shiftsai}:latest
     command: npx next start -H 0.0.0.0
     build:
       context: .
       dockerfile: Dockerfile
       cache_from:
-        - morphic:builder
-        - morphic:latest
+        - shiftsai:builder
+        - shiftsai:latest
     env_file: .env.local # Load environment variables
     environment:
       # Database connection for Docker Compose (override any cloud DB from .env.local)
-      DATABASE_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
-      DATABASE_RESTRICTED_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-shiftsai}:${POSTGRES_PASSWORD:-shiftsai}@postgres:5432/${POSTGRES_DB:-shiftsai}
+      DATABASE_RESTRICTED_URL: postgresql://${POSTGRES_USER:-shiftsai}:${POSTGRES_PASSWORD:-shiftsai}@postgres:5432/${POSTGRES_DB:-shiftsai}
       DATABASE_SSL_DISABLED: 'true' # Disable SSL for local Docker PostgreSQL
       # Authentication settings (default: disabled for personal Docker use)
       ENABLE_AUTH: ${ENABLE_AUTH:-false}
       ANONYMOUS_USER_ID: ${ANONYMOUS_USER_ID:-docker-anonymous}
-      MORPHIC_CLOUD_DEPLOYMENT: 'false'
+      SHIFTSAI_CLOUD_DEPLOYMENT: 'false'
       # Docker-internal service URLs
       LOCAL_REDIS_URL: ${LOCAL_REDIS_URL:-redis://redis:6379}
       SEARCH_API: ${SEARCH_API:-searxng}
@@ -38,15 +38,15 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-morphic}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-morphic}
-      POSTGRES_DB: ${POSTGRES_DB:-morphic}
+      POSTGRES_USER: ${POSTGRES_USER:-shiftsai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shiftsai}
+      POSTGRES_DB: ${POSTGRES_DB:-shiftsai}
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-morphic}']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-shiftsai}']
       interval: 10s
       timeout: 5s
       retries: 5

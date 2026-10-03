@@ -24,7 +24,7 @@ export function setupTracing(): Tracing {
 
   const processor = new LangfuseSpanProcessor()
   registerOTel({
-    serviceName: 'morphic-evals',
+    serviceName: 'shiftsai-evals',
     spanProcessors: [processor]
   })
   registerTelemetry(new LangfuseVercelAiSdkIntegration())

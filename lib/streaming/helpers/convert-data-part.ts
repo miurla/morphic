@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto'
 import { isValidDataPartNonce } from './data-part-nonce'
 
 /**
- * Maps Morphic's user-authored data parts into model input for
+ * Maps ShiftsAI's user-authored data parts into model input for
  * `convertToModelMessages({ convertDataPart })`. Returning `undefined` drops
  * the part from the model message.
  *

@@ -15,7 +15,7 @@ let telemetryRegistered = false
 
 export async function register() {
   registerOTel({
-    serviceName: 'morphic-ai-search',
+    serviceName: 'shiftsai-ai-search',
     spanProcessors: [langfuseSpanProcessor]
   })
 

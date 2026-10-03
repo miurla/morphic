@@ -46,7 +46,7 @@ async function checkAdaptiveLimit(
 ): Promise<AdaptiveLimitCheckResult> {
   const limit = getAdaptiveDailyLimit()
 
-  if (process.env.MORPHIC_CLOUD_DEPLOYMENT !== 'true') {
+  if (process.env.SHIFTSAI_CLOUD_DEPLOYMENT !== 'true') {
     return {
       allowed: true,
       used: 0,

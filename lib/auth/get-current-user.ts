@@ -19,10 +19,10 @@ export async function getCurrentUserId() {
 
   // Skip authentication mode (for personal Docker deployments)
   if (process.env.ENABLE_AUTH === 'false') {
-    // Guard: Prevent disabling auth in Morphic Cloud deployments
-    if (process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true') {
+    // Guard: Prevent disabling auth in ShiftsAI Cloud deployments
+    if (process.env.SHIFTSAI_CLOUD_DEPLOYMENT === 'true') {
       throw new Error(
-        'ENABLE_AUTH=false is not allowed in MORPHIC_CLOUD_DEPLOYMENT'
+        'ENABLE_AUTH=false is not allowed in SHIFTSAI_CLOUD_DEPLOYMENT'
       )
     }
 

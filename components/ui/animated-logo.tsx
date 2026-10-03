@@ -53,7 +53,7 @@ export function AnimatedLogo({
       className={cn('size-8', className)}
       {...props}
     >
-      <circle cx="128" cy="128" r="128" fill="black"></circle>
+      <circle cx="128" cy="128" r="128" fill="#1d4ed8"></circle>
       <g
         className={cn(
           'origin-center',

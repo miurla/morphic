@@ -59,7 +59,7 @@ function resolveSelectedModelKey(
 }
 
 export async function getModelSelectorData(): Promise<ModelSelectorData> {
-  if (process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true') {
+  if (process.env.SHIFTSAI_CLOUD_DEPLOYMENT === 'true') {
     return {
       enabled: false,
       modelsByProvider: {},

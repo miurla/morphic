@@ -217,7 +217,7 @@ export function assertPublicUrl(value: string): void {
  * The resolving counterpart of `assertPublicUrl`, for a URL that is about to
  * be handed to an extraction service rather than requested here. Those
  * requests leave from the service, so this is not about reaching our own
- * network: it is about not making Morphic the thing that points a third party
+ * network: it is about not making ShiftsAI the thing that points a third party
  * at private space.
  */
 export async function assertResolvedPublicUrl(value: string): Promise<void> {

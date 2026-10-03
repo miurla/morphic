@@ -18,7 +18,7 @@ describe('checkAndEnforceGuestLimit', () => {
   beforeEach(() => {
     mockRedisIncr.mockReset()
     mockRedisExpire.mockReset()
-    process.env.MORPHIC_CLOUD_DEPLOYMENT = 'true'
+    process.env.SHIFTSAI_CLOUD_DEPLOYMENT = 'true'
     process.env.UPSTASH_REDIS_REST_URL = 'https://example.com'
     process.env.UPSTASH_REDIS_REST_TOKEN = 'token'
     delete process.env.GUEST_CHAT_DAILY_LIMIT

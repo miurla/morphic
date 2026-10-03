@@ -45,7 +45,7 @@ describe('instrumentation', () => {
     await register()
 
     expect(registerOTel).toHaveBeenCalledWith({
-      serviceName: 'morphic-ai-search',
+      serviceName: 'shiftsai-ai-search',
       spanProcessors: [langfuseSpanProcessor]
     })
   })

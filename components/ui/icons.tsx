@@ -14,7 +14,7 @@ function IconLogo({ className, ...props }: React.ComponentProps<'svg'>) {
       className={cn('size-4', className)}
       {...props}
     >
-      <circle cx="128" cy="128" r="128" fill="black"></circle>
+      <circle cx="128" cy="128" r="128" fill="#1d4ed8"></circle>
       <circle cx="102" cy="128" r="18" fill="white"></circle>
       <circle cx="154" cy="128" r="18" fill="white"></circle>
     </svg>
@@ -147,7 +147,7 @@ function IconBlinkingLogo({
       className={cn('size-4', className)}
       {...props}
     >
-      <circle cx="128" cy="128" r="128" fill="#222"></circle>
+      <circle cx="128" cy="128" r="128" fill="#1d4ed8"></circle>
       <ellipse
         cx="102"
         cy="128"

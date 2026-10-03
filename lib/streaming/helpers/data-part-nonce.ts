@@ -17,7 +17,7 @@ const MAX_DERIVED_ATTEMPTS = 16
 
 function hashNonce(seed: string): string {
   return createHash('sha256')
-    .update(`morphic:data-part-nonce:v1:${seed}`)
+    .update(`shiftsai:data-part-nonce:v1:${seed}`)
     .digest('hex')
     .slice(0, NONCE_LENGTH)
 }

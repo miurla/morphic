@@ -1,4 +1,5 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ShiftsLabs — keep this file. Without it, `node_modules` and build output
+# become committable and local secrets leak into git history.
 
 # dependencies
 /node_modules
@@ -25,7 +26,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
+# local env files (contains live credentials — never commit)
+.env
 .env*.local
 
 # vercel
@@ -37,8 +39,5 @@ next-env.d.ts
 
 # temporary files
 .tmp/
-# Local-only scratch / docs (not committed)
 _local/
-
-# claude code local state (settings, launch config, worktrees)
 .claude/

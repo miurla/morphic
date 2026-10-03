@@ -19,10 +19,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Docker
 
-- `docker compose up -d` - Run the application with Docker (includes PostgreSQL 17, Redis, Morphic app, and SearXNG)
+- `docker compose up -d` - Run the application with Docker (includes PostgreSQL 17, Redis, ShiftsAI app, and SearXNG)
 - `docker compose down` - Stop all containers
 - `docker compose down -v` - Stop all containers and remove volumes (deletes database data)
-- `docker pull ghcr.io/miurla/morphic:latest` - Pull prebuilt Docker image
+- `docker pull ghcr.io/shiftslabs/ShiftsAI:latest` - Pull prebuilt Docker image
 
 #### Docker Authentication
 
@@ -35,7 +35,7 @@ When running with Docker Compose, `ENABLE_AUTH=false` is set by default, allowin
 - Anonymous mode is **only for personal, single-user local environments**
 - All chat history is shared under one user ID
 - **NOT suitable** for multi-user or production deployments
-- Morphic Cloud deployments block `ENABLE_AUTH=false` automatically
+- ShiftsAI Cloud deployments block `ENABLE_AUTH=false` automatically
 
 **Enabling Authentication:**
 To require Supabase authentication, set:
@@ -51,7 +51,7 @@ SUPABASE_SECRET_KEY=[your-supabase-secret-key]
 
 - Auth logic: [lib/auth/get-current-user.ts:22-40](lib/auth/get-current-user.ts#L22-L40)
 - Always warns when `ENABLE_AUTH=false` (except in tests)
-- Guards against `MORPHIC_CLOUD_DEPLOYMENT=true`
+- Guards against `SHIFTSAI_CLOUD_DEPLOYMENT=true`
 
 ## Architecture Overview
 

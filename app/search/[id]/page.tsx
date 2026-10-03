@@ -44,7 +44,7 @@ export default async function SearchPage(props: {
   }
 
   const messages: UIMessage[] = chat.messages
-  const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
+  const isCloudDeployment = process.env.SHIFTSAI_CLOUD_DEPLOYMENT === 'true'
   const libraryAvailable = process.env.ENABLE_AUTH !== 'false'
   const modelSelectorData = await getModelSelectorData()
 

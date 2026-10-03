@@ -31,7 +31,7 @@ async function checkGuestLimit(ip: string): Promise<{
   resetAt: number
   limit: number
 }> {
-  if (process.env.MORPHIC_CLOUD_DEPLOYMENT !== 'true') {
+  if (process.env.SHIFTSAI_CLOUD_DEPLOYMENT !== 'true') {
     return { allowed: true, remaining: Infinity, resetAt: 0, limit: 0 }
   }
 

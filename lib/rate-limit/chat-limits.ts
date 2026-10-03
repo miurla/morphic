@@ -49,7 +49,7 @@ async function checkOverallChatLimit(userId: string): Promise<{
   const limit = getDailyChatLimit()
 
   // If not in cloud deployment mode, allow unlimited requests
-  if (process.env.MORPHIC_CLOUD_DEPLOYMENT !== 'true') {
+  if (process.env.SHIFTSAI_CLOUD_DEPLOYMENT !== 'true') {
     return {
       allowed: true,
       remaining: Infinity,

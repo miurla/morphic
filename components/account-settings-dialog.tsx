@@ -125,7 +125,7 @@ export function AccountSettingsDialog({
             <div className="grid gap-1">
               <h3 className="text-sm font-medium">Theme</h3>
               <p className="text-sm text-muted-foreground">
-                Choose how Morphic appears on this device.
+                Choose how ShiftsAI appears on this device.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-2">

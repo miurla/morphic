@@ -116,9 +116,9 @@ class ChatApiTester {
   }
 
   private loadCookiesFromEnv(): string | undefined {
-    if (process.env.MORPHIC_COOKIES) {
-      console.log('🍪 Using cookies from MORPHIC_COOKIES environment variable')
-      return process.env.MORPHIC_COOKIES
+    if (process.env.SHIFTSAI_COOKIES) {
+      console.log('🍪 Using cookies from SHIFTSAI_COOKIES environment variable')
+      return process.env.SHIFTSAI_COOKIES
     }
     return undefined
   }
@@ -384,15 +384,15 @@ Note: Without authentication, you may get "User not authenticated" errors.
 
 Authentication:
 
-1. Add to .env.local: MORPHIC_COOKIES="your-cookie-string"
+1. Add to .env.local: SHIFTSAI_COOKIES="your-cookie-string"
 2. The script will automatically load cookies when it runs
 
 To get cookies:
 1. Open DevTools > Network tab
-2. Make any request in Morphic
+2. Make any request in ShiftsAI
 3. Click on the request > Headers > Request Headers > Cookie
 4. Copy the entire Cookie value
-5. Add to .env.local as MORPHIC_COOKIES="copied-value"
+5. Add to .env.local as SHIFTSAI_COOKIES="copied-value"
 `)
         process.exit(0)
     }
