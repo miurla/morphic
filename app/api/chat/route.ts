@@ -403,8 +403,41 @@ export async function POST(req: Request) {
 
     let response: Response
     if (isGuest) {
+      if (!Array.isArray(messages) || messages.length === 0) {
+        return new Response('messages are required', {
+          status: 400,
+          statusText: 'Bad Request'
+        })
+      }
+
+      if (
+        !messages.every(
+          (message: unknown) =>
+            typeof message === 'object' &&
+            message !== null &&
+            !Array.isArray(message) &&
+            'role' in message &&
+            typeof message.role === 'string' &&
+            'parts' in message &&
+            Array.isArray(message.parts) &&
+            message.parts.every(
+              (part: unknown) =>
+                typeof part === 'object' &&
+                part !== null &&
+                !Array.isArray(part) &&
+                'type' in part &&
+                typeof part.type === 'string'
+            )
+        )
+      ) {
+        return new Response('Invalid message structure', {
+          status: 400,
+          statusText: 'Bad Request'
+        })
+      }
+
       response = await createEphemeralChatStreamResponse({
-        messages: Array.isArray(messages) ? messages : [],
+        messages,
         model: selectedModel,
         abortSignal,
         searchMode,
