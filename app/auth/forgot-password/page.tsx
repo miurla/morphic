@@ -1,6 +1,15 @@
+import { redirect } from 'next/navigation'
+
+import { getAuthProvider } from '@/lib/auth/provider'
+
 import { ForgotPasswordForm } from '@/components/forgot-password-form'
 
-export default function Page() {
+export default function ForgotPasswordPage() {
+  const provider = getAuthProvider()
+  if (!provider.capabilities.passwordReset) {
+    redirect('/auth/login')
+  }
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">

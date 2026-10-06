@@ -110,6 +110,44 @@ bun dev
 
 Visit http://localhost:3000.
 
+### Local Authentication (better-auth)
+
+To run a multi-user Morphic on your own machine or LAN without Supabase, use the built-in `better-auth` provider. Accounts live in Morphic's own Postgres database.
+
+1. Configure `.env.local`:
+
+```bash
+AUTH_PROVIDER=better-auth
+BETTER_AUTH_SECRET=run-openssl-rand-hex-32-for-a-stable-value
+# Recommended whenever the instance is reachable by anyone but you:
+BOOTSTRAP_ADMIN_EMAIL=you@example.com
+```
+
+2. Start Morphic (`docker compose up -d`, or `bun dev` with a local Postgres). Database migrations run automatically and create the auth tables.
+
+3. First boot: open http://localhost:3000/auth/sign-up and create your account. The first account becomes the instance admin; the bootstrap window then closes permanently. When `BOOTSTRAP_ADMIN_EMAIL` is set, only that address can sign up during the window.
+
+#### Invite-only sign-up
+
+Set `AUTH_SIGNUP_MODE=invite` to require an invitation for new accounts:
+
+- As admin, open the admin page (user menu → **Admin**) and create an invitation link, optionally tied to an email address. Links are valid for one sign-up for 7 days and can be revoked until used.
+- The invitee opens the link and completes sign-up; the token is consumed automatically.
+
+#### Password reset and SMTP
+
+Password reset requires SMTP; without it the forgot-password flow is hidden and the admin can set member passwords from the admin page instead.
+
+```bash
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=smtp-user
+SMTP_PASSWORD=smtp-password
+EMAIL_FROM="Morphic <morphic@example.com>"
+```
+
+With SMTP configured, password-reset emails are sent and invitation links are additionally emailed to invitees.
+
 ## Deploy
 
 ### Vercel

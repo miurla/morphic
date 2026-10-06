@@ -21,8 +21,9 @@ import { PasswordInput } from '@/components/ui/password-input'
 
 export function SignUpForm({
   className,
+  token,
   ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
+}: React.ComponentPropsWithoutRef<'div'> & { token?: string }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
@@ -42,7 +43,7 @@ export function SignUpForm({
     }
 
     try {
-      const result = await signUp({ email, password })
+      const result = await signUp({ email, password, token })
       if (!result.success) throw new Error(result.error ?? 'An error occurred')
       router.push('/auth/sign-up-success')
     } catch (error: unknown) {

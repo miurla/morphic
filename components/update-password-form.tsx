@@ -19,8 +19,9 @@ import { Label } from '@/components/ui/label'
 
 export function UpdatePasswordForm({
   className,
+  token,
   ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
+}: React.ComponentPropsWithoutRef<'div'> & { token?: string }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -32,7 +33,7 @@ export function UpdatePasswordForm({
     setError(null)
 
     try {
-      const result = await updatePassword(password)
+      const result = await updatePassword(password, token)
       if (!result.success) throw new Error(result.error ?? 'An error occurred')
       // Redirect to root and refresh to ensure server components get updated session.
       router.push('/')

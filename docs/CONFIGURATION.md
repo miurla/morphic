@@ -194,11 +194,11 @@ By default, Morphic runs in **anonymous mode** (`ENABLE_AUTH=false`). This is id
 
 Auth behavior is controlled by an auth provider. Set `AUTH_PROVIDER` explicitly to one of:
 
-| Value         | Description                                                           |
-| ------------- | --------------------------------------------------------------------- |
-| `supabase`    | Supabase cloud authentication (multi-user)                            |
-| `none`        | Anonymous mode: all users share one user ID                           |
-| `better-auth` | Local accounts in Morphic's own Postgres (reserved, upcoming release) |
+| Value         | Description                                                                         |
+| ------------- | ----------------------------------------------------------------------------------- |
+| `supabase`    | Supabase cloud authentication (multi-user)                                          |
+| `none`        | Anonymous mode: all users share one user ID                                         |
+| `better-auth` | Local accounts in Morphic's own Postgres (see "Local Authentication" in the README) |
 
 When `AUTH_PROVIDER` is **unset**, the provider is derived from the existing
 environment so current deployments keep working unchanged:

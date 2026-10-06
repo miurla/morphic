@@ -1,3 +1,4 @@
+import { betterAuthProvider } from '@/lib/auth/providers/better-auth'
 import { noneAuthProvider } from '@/lib/auth/providers/none'
 import { supabaseAuthProvider } from '@/lib/auth/providers/supabase'
 import type { AuthProvider, AuthProviderName } from '@/lib/auth/types'
@@ -8,10 +9,10 @@ const AUTH_PROVIDER_NAMES: AuthProviderName[] = [
   'none'
 ]
 
-// Providers register here as they ship. `better-auth` is an accepted
-// configuration value reserved for a follow-up release.
+// Providers register here as they ship.
 const providerRegistry: Partial<Record<AuthProviderName, AuthProvider>> = {
   supabase: supabaseAuthProvider,
+  'better-auth': betterAuthProvider,
   none: noneAuthProvider
 }
 

@@ -70,12 +70,10 @@ describe('auth provider dispatch', () => {
       )
     })
 
-    it('accepts better-auth as a name but reports it unavailable in this version', () => {
+    it('resolves better-auth to the better-auth provider', () => {
       process.env.AUTH_PROVIDER = 'better-auth'
       expect(resolveAuthProviderName()).toBe('better-auth')
-      expect(() => getAuthProvider()).toThrow(
-        'AUTH_PROVIDER=better-auth is not available in this version of Morphic.'
-      )
+      expect(getAuthProvider().name).toBe('better-auth')
     })
   })
 

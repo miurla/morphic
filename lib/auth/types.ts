@@ -12,6 +12,8 @@ export interface AppUser {
   name?: string | null
   image?: string | null
   createdAt?: Date | string | null
+  /** Provider role when the provider has one (e.g. `admin` | `user`). */
+  role?: string | null
 }
 
 /**
@@ -62,10 +64,11 @@ export interface AuthProvider {
   signUp?(credentials: {
     email: string
     password: string
+    token?: string
   }): Promise<AuthActionResult>
   signOut?(): Promise<AuthActionResult>
   requestPasswordReset?(email: string): Promise<AuthActionResult>
-  updatePassword?(password: string): Promise<AuthActionResult>
+  updatePassword?(password: string, token?: string): Promise<AuthActionResult>
   deleteUser?(userId: string): Promise<AuthActionResult>
   /**
    * Returns an error message when the provider is not configured to delete
