@@ -249,7 +249,7 @@ export async function POST(req: Request) {
           mode: searchMode,
           attemptId: usageAttemptId,
           messageId: message?.id ?? messageId,
-          userCreatedAt: currentUser?.created_at,
+          userCreatedAt: currentUser?.createdAt,
           now: usageNow
         })
 

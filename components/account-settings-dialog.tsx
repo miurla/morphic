@@ -3,7 +3,6 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
-import type { User } from '@supabase/supabase-js'
 import {
   IconDeviceLaptop as Laptop,
   IconMoon as Moon,
@@ -13,7 +12,9 @@ import {
 import { toast } from 'sonner'
 
 import { deleteAccount } from '@/lib/actions/account'
-import { createClient } from '@/lib/supabase/client'
+import { signOut } from '@/lib/actions/auth'
+import type { AppUser } from '@/lib/auth/types'
+import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
 
 import {
   AlertDialog,
@@ -42,7 +43,7 @@ import { useTheme } from '@/components/theme-provider'
 interface AccountSettingsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  user: User
+  user: AppUser
 }
 
 const themeOptions = [
@@ -58,12 +59,12 @@ export function AccountSettingsDialog({
 }: AccountSettingsDialogProps) {
   const router = useRouter()
   const { setTheme, theme } = useTheme()
+  const capabilities = useAuthCapabilities()
   const [isDeleting, startDeleteTransition] = useTransition()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const activeTheme = theme ?? 'system'
 
-  const userName =
-    user.user_metadata?.full_name || user.user_metadata?.name || 'User'
+  const userName = user.name || 'User'
 
   const handleDeleteAccount = () => {
     startDeleteTransition(async () => {
@@ -71,7 +72,7 @@ export function AccountSettingsDialog({
 
       if (result.success) {
         try {
-          await createClient().auth.signOut()
+          await signOut()
         } catch (error) {
           console.error('Failed to clear client session:', error)
         }
@@ -150,64 +151,68 @@ export function AccountSettingsDialog({
             </div>
           </section>
 
-          <Separator />
+          {capabilities.deleteUser && (
+            <>
+              <Separator />
 
-          <section className="grid gap-3">
-            <div className="grid gap-1">
-              <h3 className="text-sm font-medium text-destructive">
-                Delete account
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Permanently delete your account, chat history, and uploaded
-                files. This action cannot be undone.
-              </p>
-            </div>
+              <section className="grid gap-3">
+                <div className="grid gap-1">
+                  <h3 className="text-sm font-medium text-destructive">
+                    Delete account
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Permanently delete your account, chat history, and uploaded
+                    files. This action cannot be undone.
+                  </p>
+                </div>
 
-            <AlertDialog
-              open={confirmOpen}
-              onOpenChange={nextOpen => {
-                if (!isDeleting) {
-                  setConfirmOpen(nextOpen)
-                }
-              }}
-            >
-              <AlertDialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="w-fit gap-2"
-                  disabled={isDeleting}
+                <AlertDialog
+                  open={confirmOpen}
+                  onOpenChange={nextOpen => {
+                    if (!isDeleting) {
+                      setConfirmOpen(nextOpen)
+                    }
+                  }}
                 >
-                  <Trash2 className="size-4" />
-                  Delete account
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete your account?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. Your account, chat history,
-                    and uploaded files will be permanently deleted.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isDeleting}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    disabled={isDeleting}
-                    onClick={event => {
-                      event.preventDefault()
-                      handleDeleteAccount()
-                    }}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {isDeleting ? <Spinner /> : 'Delete account'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </section>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="w-fit gap-2"
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="size-4" />
+                      Delete account
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. Your account, chat
+                        history, and uploaded files will be permanently deleted.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel disabled={isDeleting}>
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        disabled={isDeleting}
+                        onClick={event => {
+                          event.preventDefault()
+                          handleDeleteAccount()
+                        }}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {isDeleting ? <Spinner /> : 'Delete account'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </section>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -434,7 +434,7 @@ export async function getUsageBudget(params?: {
     const requestedCreatedAt =
       params?.userCreatedAt !== undefined
         ? params.userCreatedAt
-        : user?.created_at
+        : user?.createdAt
     const anchor = await usageAnchor({
       userId,
       userCreatedAt: requestedCreatedAt

@@ -1,8 +1,9 @@
 import React from 'react'
 
-import type { User } from '@supabase/supabase-js'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+
+import type { AppUser } from '@/lib/auth/types'
 
 import {
   UsageBudgetProvider,
@@ -15,10 +16,6 @@ import UserMenu from '@/components/user-menu'
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() })
-}))
-
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({ auth: { signOut: vi.fn() } })
 }))
 
 vi.mock('@/components/account-settings-dialog', () => ({
@@ -64,11 +61,11 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => children
 }))
 
-const user = {
+const user: AppUser = {
   id: 'user-1',
   email: 'person@example.com',
-  user_metadata: { full_name: 'Test Person' }
-} as unknown as User
+  name: 'Test Person'
+}
 
 const initialUsage = {
   remaining: 82,

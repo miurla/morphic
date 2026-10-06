@@ -3,10 +3,10 @@ import { Inter as FontSans } from 'next/font/google'
 
 import { Analytics } from '@vercel/analytics/next'
 
-import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getCurrentUser, getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getAuthProvider } from '@/lib/auth/provider'
+import { AppUserProvider } from '@/lib/contexts/app-user-context'
 import { UserProvider } from '@/lib/contexts/user-context'
-import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
-import { createClient } from '@/lib/supabase/server'
 import {
   ENFORCEMENT,
   getUsageBudget,
@@ -66,15 +66,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  let user = null
-
-  if (hasSupabasePublicConfig()) {
-    const supabase = await createClient()
-    const {
-      data: { user: supabaseUser }
-    } = await supabase.auth.getUser()
-    user = supabaseUser
-  }
+  const user = await getCurrentUser()
+  const capabilities = getAuthProvider().capabilities
 
   const userId = user?.id ?? (await getCurrentUserId())
   const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
@@ -89,7 +82,7 @@ export default async function RootLayout({
     usageBudgetEnabled && user
       ? await getUsageBudget({
           userId: user.id,
-          userCreatedAt: user.created_at
+          userCreatedAt: user.createdAt
         })
       : null
   const initialUsage = usageSnapshot
@@ -119,26 +112,28 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <PostHogProvider userId={user?.id ?? null}>
-            <UserProvider hasUser={!!userId}>
-              <SidebarProvider defaultOpen={false}>
-                <LibraryProvider>
-                  <UsageBudgetProvider
-                    key={user?.id ?? 'guest'}
-                    initialUsage={initialUsage}
-                    enabled={usageBudgetEnabled}
-                  >
-                    {userId && <AppSidebar />}
-                    <KeyboardShortcutHandler />
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <Header user={user} />
-                      <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
-                        <ArtifactRoot>{children}</ArtifactRoot>
-                      </main>
-                    </div>
-                  </UsageBudgetProvider>
-                </LibraryProvider>
-              </SidebarProvider>
-            </UserProvider>
+            <AppUserProvider user={user} capabilities={capabilities}>
+              <UserProvider hasUser={!!userId}>
+                <SidebarProvider defaultOpen={false}>
+                  <LibraryProvider>
+                    <UsageBudgetProvider
+                      key={user?.id ?? 'guest'}
+                      initialUsage={initialUsage}
+                      enabled={usageBudgetEnabled}
+                    >
+                      {userId && <AppSidebar />}
+                      <KeyboardShortcutHandler />
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <Header user={user} />
+                        <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
+                          <ArtifactRoot>{children}</ArtifactRoot>
+                        </main>
+                      </div>
+                    </UsageBudgetProvider>
+                  </LibraryProvider>
+                </SidebarProvider>
+              </UserProvider>
+            </AppUserProvider>
           </PostHogProvider>
           <Toaster />
           {isCloudDeployment && <Analytics />}

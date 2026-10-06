@@ -20,7 +20,7 @@ export async function GET() {
 
   const usage = await getUsageBudget({
     userId: user.id,
-    userCreatedAt: user.created_at
+    userCreatedAt: user.createdAt
   })
   if (!usage) {
     return NextResponse.json(

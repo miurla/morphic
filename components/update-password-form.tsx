@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { createClient } from '@/lib/supabase/client'
+import { updatePassword } from '@/lib/actions/auth'
 import { cn } from '@/lib/utils/index'
 
 import { Button } from '@/components/ui/button'
@@ -28,13 +28,12 @@ export function UpdatePasswordForm({
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.updateUser({ password })
-      if (error) throw error
+      const result = await updatePassword(password)
+      if (!result.success) throw new Error(result.error ?? 'An error occurred')
       // Redirect to root and refresh to ensure server components get updated session.
       router.push('/')
       router.refresh()

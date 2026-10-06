@@ -98,6 +98,8 @@ TAVILY_API_KEY=your_tavily_key
 
 To enable chat history, authentication, file upload, and other features, see [CONFIGURATION.md](./docs/CONFIGURATION.md).
 
+Auth is provided by `AUTH_PROVIDER` (`supabase | better-auth | none`). When unset it is derived from the existing environment: `ENABLE_AUTH=false` selects anonymous mode (`none`), otherwise Supabase auth is used — so existing deployments need no change. See [Authentication](./docs/CONFIGURATION.md#authentication).
+
 For what a self-hosted instance sends outbound, and what is off by default, see [PRIVACY.md](./docs/PRIVACY.md).
 
 3. Start the dev server:

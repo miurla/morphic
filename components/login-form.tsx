@@ -4,7 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { createClient } from '@/lib/supabase/client'
+import { signIn, signInWithGoogle } from '@/lib/actions/auth'
+import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
 import { cn } from '@/lib/utils/index'
 
 import { Button } from '@/components/ui/button'
@@ -30,19 +31,16 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const capabilities = useAuthCapabilities()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
-      if (error) throw error
+      const result = await signIn({ email, password })
+      if (!result.success) throw new Error(result.error ?? 'An error occurred')
       // Redirect to root and refresh to ensure server components get updated session
       router.push('/')
       router.refresh()
@@ -54,18 +52,16 @@ export function LoginForm({
   }
 
   const handleSocialLogin = async () => {
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${location.origin}/auth/oauth`
-        }
-      })
-      if (error) throw error
+      const result = await signInWithGoogle()
+      if (!result.success)
+        throw new Error(result.error ?? 'An OAuth error occurred')
+      if (result.redirectTo) {
+        window.location.href = result.redirectTo
+      }
     } catch (error: unknown) {
       setError(
         error instanceof Error ? error.message : 'An OAuth error occurred'
@@ -124,12 +120,14 @@ export function LoginForm({
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
+                  {capabilities.passwordReset && (
+                    <Link
+                      href="/auth/forgot-password"
+                      className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  )}
                 </div>
                 <PasswordInput
                   id="password"
