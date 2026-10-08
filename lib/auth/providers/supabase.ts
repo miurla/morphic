@@ -129,8 +129,14 @@ export const supabaseAuthProvider: AuthProvider = {
     const supabase = await createClient()
     const origin = await getOrigin()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/auth/update-password`
+      redirectTo: `${origin}/api/auth/confirm`
     })
+    return error ? { success: false, error: error.message } : { success: true }
+  },
+
+  async exchangeEmailActionCode(code: string): Promise<AuthActionResult> {
+    const supabase = await createClient()
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
     return error ? { success: false, error: error.message } : { success: true }
   },
 
