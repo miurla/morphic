@@ -61,6 +61,16 @@ export function resolveAuthProviderName(): AuthProviderName {
   return name
 }
 
+/**
+ * True when the active provider shares a single identity across all visitors
+ * (anonymous mode). Feature gates must use this instead of reading
+ * `ENABLE_AUTH` directly, so that `AUTH_PROVIDER=none` and the derived
+ * `ENABLE_AUTH=false` behavior always agree.
+ */
+export function isAnonymousMode(): boolean {
+  return resolveAuthProviderName() === 'none'
+}
+
 /** Return the active auth provider implementation. */
 export function getAuthProvider(): AuthProvider {
   const name = resolveAuthProviderName()

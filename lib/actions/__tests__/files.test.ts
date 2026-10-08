@@ -43,6 +43,7 @@ describe('File Actions', () => {
 
   afterEach(() => {
     process.env.ENABLE_AUTH = originalEnableAuth
+    delete process.env.AUTH_PROVIDER
   })
 
   it('lists current user files', async () => {
@@ -95,6 +96,20 @@ describe('File Actions', () => {
 
   it('rejects anonymous mode', async () => {
     process.env.ENABLE_AUTH = 'false'
+
+    const result = await listFiles()
+
+    expect(result).toEqual({
+      success: false,
+      files: [],
+      error: 'Library is unavailable in anonymous mode.'
+    })
+    expect(dbActions.getLibraryFiles).not.toHaveBeenCalled()
+  })
+
+  it('rejects anonymous mode when AUTH_PROVIDER=none with ENABLE_AUTH unset', async () => {
+    process.env.AUTH_PROVIDER = 'none'
+    delete process.env.ENABLE_AUTH
 
     const result = await listFiles()
 

@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import { getAuthProvider, resolveAuthProviderName } from '@/lib/auth/provider'
+import {
+  getAuthProvider,
+  isAnonymousMode,
+  resolveAuthProviderName
+} from '@/lib/auth/provider'
 
 const AUTH_ENV_KEYS = [
   'AUTH_PROVIDER',
@@ -72,6 +76,28 @@ describe('auth provider dispatch', () => {
       expect(() => getAuthProvider()).toThrow(
         'AUTH_PROVIDER=better-auth is not available in this version of Morphic.'
       )
+    })
+  })
+
+  describe('isAnonymousMode', () => {
+    it('returns true when AUTH_PROVIDER=none and ENABLE_AUTH is unset', () => {
+      process.env.AUTH_PROVIDER = 'none'
+      expect(isAnonymousMode()).toBe(true)
+    })
+
+    it('returns true when AUTH_PROVIDER=none even if ENABLE_AUTH=true', () => {
+      process.env.AUTH_PROVIDER = 'none'
+      process.env.ENABLE_AUTH = 'true'
+      expect(isAnonymousMode()).toBe(true)
+    })
+
+    it('returns true when ENABLE_AUTH=false', () => {
+      process.env.ENABLE_AUTH = 'false'
+      expect(isAnonymousMode()).toBe(true)
+    })
+
+    it('returns false when unset (supabase derived)', () => {
+      expect(isAnonymousMode()).toBe(false)
     })
   })
 

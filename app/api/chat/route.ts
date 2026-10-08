@@ -9,6 +9,7 @@ import {
   trackChatEvent
 } from '@/lib/analytics'
 import { getCurrentUser, getCurrentUserId } from '@/lib/auth/get-current-user'
+import { isAnonymousMode } from '@/lib/auth/provider'
 import { getUserMessageIds } from '@/lib/db/actions'
 import { generateId } from '@/lib/db/schema'
 import { checkAndEnforceAdaptiveLimit } from '@/lib/rate-limit/adaptive-limit'
@@ -101,13 +102,10 @@ export async function POST(req: Request) {
     const isSharePage = referer?.includes('/share/')
 
     const authStart = performance.now()
-    const currentUser =
-      process.env.ENABLE_AUTH === 'false' ? null : await getCurrentUser()
+    const anonymous = isAnonymousMode()
+    const currentUser = anonymous ? null : await getCurrentUser()
     const userId =
-      currentUser?.id ??
-      (process.env.ENABLE_AUTH === 'false'
-        ? await getCurrentUserId()
-        : undefined)
+      currentUser?.id ?? (anonymous ? await getCurrentUserId() : undefined)
     perfTime('Auth completed', authStart)
 
     if (isSharePage) {

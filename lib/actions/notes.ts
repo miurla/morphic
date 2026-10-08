@@ -1,6 +1,7 @@
 'use server'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { isAnonymousMode } from '@/lib/auth/provider'
 import * as dbActions from '@/lib/db/actions'
 import type { Note } from '@/lib/db/schema'
 import { stripMarkdownText } from '@/lib/utils/markdown'
@@ -33,7 +34,7 @@ function deriveTitle(content: string, title?: string) {
 }
 
 async function requireNoteUserId() {
-  if (process.env.ENABLE_AUTH === 'false') {
+  if (isAnonymousMode()) {
     return {
       userId: null,
       error: 'Library is unavailable in anonymous mode.'
