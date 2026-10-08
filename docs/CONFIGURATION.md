@@ -243,6 +243,18 @@ SUPABASE_SECRET_KEY=[YOUR_SUPABASE_SECRET_KEY]
    - **Publishable Key**: Settings > API Keys > publishable key (`sb_publishable_...`)
    - **Secret Key**: Settings > API Keys > secret key (`sb_secret_...`)
 
+4. For password recovery emails to work, add your site's recovery destination
+   under **Auth → URL Verification → Redirect URLs**:
+
+   ```
+   [YOUR_SITE_URL]/auth/update-password
+   ```
+
+   Recovery links point at this URL (the same destination Morphic has always
+   used, so existing allowlist entries keep working). If the destination is
+   not allowlisted, Supabase silently falls back to the project Site URL and
+   the recovery code can never be exchanged for a session.
+
 ## Guest Mode
 
 Guest mode allows users to try Morphic without creating an account. Guest sessions are ephemeral — no chat history is stored.

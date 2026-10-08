@@ -6,7 +6,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 import type { AppUser, AuthActionResult, AuthProvider } from '@/lib/auth/types'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
-import { updateSession } from '@/lib/supabase/middleware'
+import { exchangeRecoveryCode, updateSession } from '@/lib/supabase/middleware'
 import { createClient } from '@/lib/supabase/server'
 
 function metaString(
@@ -66,6 +66,10 @@ export const supabaseAuthProvider: AuthProvider = {
     if (!hasSupabasePublicConfig()) {
       // If Supabase is not configured, just pass the request through
       return NextResponse.next({ request })
+    }
+    const code = request.nextUrl.searchParams.get('code')
+    if (request.nextUrl.pathname === '/auth/update-password' && code) {
+      return exchangeRecoveryCode(request, code)
     }
     return updateSession(request)
   },
@@ -129,14 +133,10 @@ export const supabaseAuthProvider: AuthProvider = {
     const supabase = await createClient()
     const origin = await getOrigin()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/api/auth/confirm`
+      // Keep the pre-refactor destination: deployments that already allowlist
+      // /auth/update-password in Supabase keep receiving recovery links.
+      redirectTo: `${origin}/auth/update-password`
     })
-    return error ? { success: false, error: error.message } : { success: true }
-  },
-
-  async exchangeEmailActionCode(code: string): Promise<AuthActionResult> {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
     return error ? { success: false, error: error.message } : { success: true }
   },
 

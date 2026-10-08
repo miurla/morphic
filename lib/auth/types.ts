@@ -65,12 +65,6 @@ export interface AuthProvider {
   }): Promise<AuthActionResult>
   signOut?(): Promise<AuthActionResult>
   requestPasswordReset?(email: string): Promise<AuthActionResult>
-  /**
-   * Exchange the one-time code carried by an email action link (e.g. a
-   * Supabase PKCE recovery link) for a session, persisting it as cookies so
-   * subsequent server actions run authenticated.
-   */
-  exchangeEmailActionCode?(code: string): Promise<AuthActionResult>
   updatePassword?(password: string): Promise<AuthActionResult>
   deleteUser?(userId: string): Promise<AuthActionResult>
   /**
