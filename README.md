@@ -131,7 +131,7 @@ BOOTSTRAP_ADMIN_EMAIL=you@example.com
 
 Set `AUTH_SIGNUP_MODE=invite` to require an invitation for new accounts:
 
-- As admin, open the admin page (user menu → **Admin**) and create an invitation link, optionally tied to an email address. Links are valid for one sign-up for 7 days and can be revoked until used.
+- As admin, open the admin page (user menu → **Admin**) and create an invitation link for an email address. Each link is bound to that address, valid for one sign-up for 7 days, and can be revoked until used.
 - The invitee opens the link and completes sign-up; the token is consumed automatically.
 
 #### Password reset and SMTP

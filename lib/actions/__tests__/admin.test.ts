@@ -148,6 +148,16 @@ describe('admin actions', () => {
       expect(result.invitation).toMatchObject({ id: 'inv-1', revoked: false })
     })
 
+    it('rejects invitations without an email address', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
+
+      await expect(createInvitationAction({})).resolves.toMatchObject({
+        success: false,
+        error: 'An email address is required.'
+      })
+      expect(createInvitation).not.toHaveBeenCalled()
+    })
+
     it('emails the invitation when SMTP is configured', async () => {
       process.env.SMTP_HOST = 'smtp.example.com'
       process.env.SMTP_USER = 'user'

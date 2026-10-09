@@ -70,17 +70,17 @@ export function InvitationsManager({
       <form className="flex flex-col gap-2 sm:flex-row" onSubmit={handleCreate}>
         <Input
           type="email"
-          placeholder="invitee@example.com (optional)"
+          placeholder="invitee@example.com"
           value={email}
           onChange={e => setEmail(e.target.value)}
+          required
         />
         <Button type="submit" disabled={isCreating}>
           {isCreating ? 'Creating...' : 'Create invitation'}
         </Button>
       </form>
       <p className="text-xs text-muted-foreground">
-        With an email address the link can only be redeemed by that address;
-        without one it is a generic link anyone with it can use.
+        Each invitation is single-use and can only be redeemed by this address.
       </p>
 
       {newLink && (

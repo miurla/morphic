@@ -97,12 +97,20 @@ export async function createInvitationAction(params: {
     return adminUser
   }
 
+  // Invitations are always addressed to a specific person: an unaddressed
+  // link would just be open sign-up behind an obscure URL, and open sign-up
+  // is already an explicit choice via AUTH_SIGNUP_MODE=open.
+  const email = params.email?.trim()
+  if (!email) {
+    return { success: false, error: 'An email address is required.' }
+  }
+
   try {
     // The plaintext token is only available here, at creation time: the
     // database stores just its hash, so the link cannot be rebuilt later.
     const { invitation, token } = await createInvitation({
       invitedBy: adminUser.id,
-      email: params.email?.trim() || null
+      email
     })
 
     const origin = await getRequestOrigin()
@@ -112,12 +120,11 @@ export async function createInvitationAction(params: {
     if (
       process.env.SMTP_HOST &&
       process.env.SMTP_USER &&
-      process.env.SMTP_PASSWORD &&
-      params.email
+      process.env.SMTP_PASSWORD
     ) {
       try {
         await sendInvitationEmail({
-          to: params.email,
+          to: email,
           inviteLink: link,
           invitedByName: adminUser.name || adminUser.email || 'An admin'
         })

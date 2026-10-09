@@ -49,7 +49,7 @@ export function hashInvitationToken(token: string): string {
 
 export async function createInvitation(params: {
   invitedBy: string
-  email?: string | null
+  email: string
   ttlMs?: number
 }): Promise<{ invitation: InvitationRecord; token: string }> {
   const token = generateInvitationToken()
@@ -57,7 +57,7 @@ export async function createInvitation(params: {
     .insert(invitations)
     .values({
       token: hashInvitationToken(token),
-      email: params.email ?? null,
+      email: params.email,
       invitedBy: params.invitedBy,
       expiresAt: new Date(Date.now() + (params.ttlMs ?? INVITATION_TTL_MS))
     })

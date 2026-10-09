@@ -90,6 +90,9 @@ describe('InvitationsManager', () => {
 
     render(<InvitationsManager invitations={[]} />)
 
+    fireEvent.change(screen.getByPlaceholderText(/invitee/i), {
+      target: { value: 'friend@example.com' }
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Create invitation' }))
 
     await waitFor(() => {
