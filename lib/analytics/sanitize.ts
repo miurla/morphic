@@ -5,7 +5,8 @@ import type { CaptureResult } from 'posthog-js'
  * password resets, bootstrap) carry one-time credentials in the `?token=`
  * query parameter, so the parameter is stripped from every event before
  * it leaves the browser. The `Referer` transport header is handled
- * separately via the site-wide `Referrer-Policy: no-referrer` header.
+ * separately via the `Referrer-Policy: no-referrer` header scoped to the
+ * `/auth/*` pages, the only pages that carry token-bearing URLs.
  */
 const URL_PROPERTIES = ['$current_url', '$referrer'] as const
 

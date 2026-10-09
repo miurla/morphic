@@ -37,6 +37,14 @@ export default async function SearchPage(props: {
   const chat = await loadChat(id, userId)
 
   if (!chat) {
+    // A logged-out visitor cannot tell a private chat from a missing one:
+    // both are hidden behind null by the permission check in the loader.
+    // Send them to sign in (the owner can then open their private link)
+    // instead of a dead-end 404; public chats render above without a
+    // login bounce.
+    if (!userId) {
+      redirect('/auth/login')
+    }
     notFound()
   }
 
