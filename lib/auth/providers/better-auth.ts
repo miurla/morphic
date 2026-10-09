@@ -68,10 +68,20 @@ async function deletionGuard(
   userId: string,
   lock: boolean
 ): Promise<DeletionGuardResult> {
-  // The target row is locked before its role is read: a concurrent
+  // The admin listing is locked first, before the target is classified:
+  // locking each own target first would let two concurrent admin
+  // deletions each hold the row the other needs, deadlocking. When
+  // every guard requests the shared admin set as its first lock, the
+  // second deletion simply waits for the first scan to commit.
+  const adminsQuery = q
+    .select({ id: authUser.id })
+    .from(authUser)
+    .where(eq(authUser.role, 'admin'))
+  const admins = lock ? await adminsQuery.for('update') : await adminsQuery
+
+  // The target row is then locked before its role is read: a concurrent
   // promotion must not let a soon-to-be-admin slip past the last-admin
-  // guard while its own deletion is already in flight. Members take the
-  // same lock as admins so any two deletions serialize on the targets.
+  // guard while its own deletion is already in flight.
   const targetQuery = q
     .select({ role: authUser.role })
     .from(authUser)
@@ -82,11 +92,6 @@ async function deletionGuard(
   if (!wasAdmin) {
     return { error: null, wasAdmin: false }
   }
-  const adminsQuery = q
-    .select({ id: authUser.id })
-    .from(authUser)
-    .where(eq(authUser.role, 'admin'))
-  const admins = lock ? await adminsQuery.for('update') : await adminsQuery
   if (admins.length > 1) {
     return { error: null, wasAdmin }
   }
