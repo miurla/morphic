@@ -5,6 +5,7 @@ import {
   createInvitation,
   hashInvitationToken,
   hasRecentBootstrapInvitation,
+  releaseInvitation,
   revokeInvitation,
   validateInvitation
 } from '@/lib/auth/better-auth/invitations'
@@ -137,6 +138,14 @@ describe('invitations', () => {
     it('fails when already consumed', async () => {
       state.rows = []
       await expect(consumeInvitation('inv-1')).resolves.toBe(false)
+    })
+  })
+
+  describe('releaseInvitation', () => {
+    it('clears the used marker so the same link can be retried', async () => {
+      state.rows = [{ id: 'inv-1' }]
+      await expect(releaseInvitation('inv-1')).resolves.toBeUndefined()
+      expect(db.update).toHaveBeenCalled()
     })
   })
 })

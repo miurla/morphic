@@ -7,6 +7,7 @@ import {
   consumeInvitation,
   createInvitation,
   hasRecentBootstrapInvitation,
+  releaseInvitation,
   revokeInvitation,
   validateInvitation
 } from '@/lib/auth/better-auth/invitations'
@@ -38,6 +39,7 @@ vi.mock('@/lib/auth/better-auth/invitations', () => ({
   consumeInvitation: vi.fn(),
   createInvitation: vi.fn(),
   hasRecentBootstrapInvitation: vi.fn(async () => false),
+  releaseInvitation: vi.fn(async () => {}),
   revokeInvitation: vi.fn(async () => true)
 }))
 
@@ -126,6 +128,7 @@ describe('better-auth provider', () => {
       expect(betterAuthProvider.capabilities.passwordReset).toBe(true)
       expect(betterAuthProvider.capabilities.signUp).toBe(true)
       expect(betterAuthProvider.capabilities.deleteUser).toBe(true)
+      expect(betterAuthProvider.capabilities.share).toBe(true)
     })
   })
 
@@ -427,6 +430,53 @@ describe('better-auth provider', () => {
       expect(result).toEqual({ success: true })
       expect(createInvitation).not.toHaveBeenCalled()
       expect(consumeInvitation).toHaveBeenCalledWith('inv-1')
+    })
+
+    it('releases the invitation when sign-up is rejected', async () => {
+      // better-auth validates the password after the claim: a rejected
+      // credential (e.g. below the minimum length) must not burn the link,
+      // or the invitee needs a fresh invitation for a typo.
+      process.env.AUTH_SIGNUP_MODE = 'invite'
+      vi.mocked(validateInvitation).mockResolvedValue({
+        id: 'inv-9',
+        email: 'member@example.com'
+      } as never)
+      vi.mocked(consumeInvitation).mockResolvedValue(true)
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
+        response: null,
+        headers: new Headers()
+      } as never)
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'member@example.com',
+        password: 'short',
+        token: 'invite-token'
+      })
+
+      expect(result.success).toBe(false)
+      expect(releaseInvitation).toHaveBeenCalledWith('inv-9')
+    })
+
+    it('releases the invitation when sign-up throws', async () => {
+      process.env.AUTH_SIGNUP_MODE = 'invite'
+      vi.mocked(validateInvitation).mockResolvedValue({
+        id: 'inv-9',
+        email: 'member@example.com'
+      } as never)
+      vi.mocked(consumeInvitation).mockResolvedValue(true)
+      vi.mocked(mockAuth.api.signUpEmail).mockRejectedValue(
+        new Error('Password must be at least 8 characters')
+      )
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'member@example.com',
+        password: 'short',
+        token: 'invite-token'
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('at least 8 characters')
+      expect(releaseInvitation).toHaveBeenCalledWith('inv-9')
     })
 
     it('rejects an arbitrary token on the gated address in open mode', async () => {

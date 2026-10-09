@@ -161,3 +161,16 @@ export async function consumeInvitation(id: string): Promise<boolean> {
 
   return Boolean(row)
 }
+
+/**
+ * Undoes a consumption so the same link can be redeemed again. Used when the
+ * sign-up the claim enabled failed before creating the account (e.g. the
+ * password was rejected), so a corrected retry does not need a fresh link.
+ * The address binding and expiry still apply.
+ */
+export async function releaseInvitation(id: string): Promise<void> {
+  await db
+    .update(invitations)
+    .set({ usedAt: null })
+    .where(and(eq(invitations.id, id), isNull(invitations.revokedAt)))
+}

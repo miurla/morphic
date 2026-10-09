@@ -145,7 +145,8 @@ describe('InviteRequired', () => {
           passwordReset: false,
           deleteUser: true,
           oauth: false,
-          emailVerification: false
+          emailVerification: false,
+          share: true
         }}
       >
         <SignUpForm />
@@ -165,7 +166,8 @@ describe('InviteRequired', () => {
           passwordReset: true,
           deleteUser: true,
           oauth: true,
-          emailVerification: true
+          emailVerification: true,
+          share: true
         }}
       >
         <SignUpForm />

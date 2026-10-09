@@ -14,7 +14,8 @@ const NO_CAPABILITIES: AuthCapabilities = {
   passwordReset: false,
   deleteUser: false,
   oauth: false,
-  emailVerification: false
+  emailVerification: false,
+  share: false
 }
 
 const AppUserContext = createContext<AppUserContextValue>({

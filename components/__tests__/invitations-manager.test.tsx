@@ -103,6 +103,41 @@ describe('InvitationsManager', () => {
     }
   })
 
+  it('keeps a live invitation revocable when the browser clock runs fast', async () => {
+    // A browser clock an hour ahead would mark a live invitation expired
+    // and hide its Revoke button, while the server still accepts it. The
+    // server snapshot taken at page load corrects the local clock.
+    const realNow = new Date('2026-01-01T00:00:00Z').getTime()
+    vi.useFakeTimers({ now: realNow + 3_600_000 })
+    try {
+      render(
+        <InvitationsManager
+          serverNow={new Date(realNow).toISOString()}
+          invitations={[
+            {
+              id: 'inv-6',
+              email: 'live@example.com',
+              revoked: false,
+              used: false,
+              expired: false,
+              expiresAt: new Date(realNow + 600_000).toISOString(),
+              createdAt: new Date(realNow - 600_000).toISOString()
+            }
+          ]}
+        />
+      )
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000)
+      })
+
+      expect(screen.getByText('Active')).toBeInTheDocument()
+      expect(screen.getByText('Revoke')).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('creates an invitation and shows a copyable link', async () => {
     const created: InvitationView = {
       id: 'inv-3',

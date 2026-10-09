@@ -14,6 +14,7 @@ import {
   consumeInvitation,
   createInvitation,
   hasRecentBootstrapInvitation,
+  releaseInvitation,
   revokeInvitation,
   validateInvitation
 } from '@/lib/auth/better-auth/invitations'
@@ -138,7 +139,8 @@ export const betterAuthProvider: AuthProvider = {
       // instance, and accounts are usable immediately without email
       // confirmation.
       oauth: false,
-      emailVerification: false
+      emailVerification: false,
+      share: true
     }
   },
 
@@ -225,6 +227,9 @@ export const betterAuthProvider: AuthProvider = {
     // The bootstrap account is the seed admin of a fresh instance:
     // invitations can only be created by an existing admin, so the gated
     // address must be able to sign up without a token.
+    // Set when an invitation claim succeeded, so a failed account creation
+    // can release the claim and let the same link be retried.
+    let consumedInvitationId: string | undefined
     const bootstrapAccount = await isBootstrapAccount(email)
     if (bootstrapAccount && isBetterAuthSmtpConfigured()) {
       const origin = getEmailLinkOrigin()
@@ -311,6 +316,7 @@ export const betterAuthProvider: AuthProvider = {
           error: 'This bootstrap link has already been used.'
         }
       }
+      consumedInvitationId = invitation.id
     } else if (getSignUpMode() === 'invite' && !bootstrapAccount) {
       const invitation = await validateInvitation(token)
       if (!invitation) {
@@ -336,8 +342,8 @@ export const betterAuthProvider: AuthProvider = {
       }
       // Claim the invitation before creating the account so concurrent
       // submissions of the same link cannot both pass validation. If the
-      // sign-up then fails, the invitation stays consumed: safer than
-      // allowing a second redemption.
+      // sign-up then fails before the account exists, the claim is released
+      // below so the same link can be retried with a corrected password.
       const claimed = await consumeInvitation(invitation.id)
       if (!claimed) {
         return {
@@ -345,6 +351,7 @@ export const betterAuthProvider: AuthProvider = {
           error: 'Sign-up requires a valid invitation token.'
         }
       }
+      consumedInvitationId = invitation.id
     }
 
     try {
@@ -361,6 +368,9 @@ export const betterAuthProvider: AuthProvider = {
       // already delivered to the browser, so its presence is the success
       // signal.
       if (!response || !(response as { token?: unknown }).token) {
+        if (consumedInvitationId) {
+          await releaseInvitation(consumedInvitationId).catch(() => {})
+        }
         return {
           success: false,
           error: 'Sign-up failed. The account may already exist.'
@@ -369,6 +379,9 @@ export const betterAuthProvider: AuthProvider = {
 
       return { success: true }
     } catch (error) {
+      if (consumedInvitationId) {
+        await releaseInvitation(consumedInvitationId).catch(() => {})
+      }
       return {
         success: false,
         error: errorMessage(error, 'An error occurred')

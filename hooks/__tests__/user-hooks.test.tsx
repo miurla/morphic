@@ -13,7 +13,8 @@ const capabilities = {
   passwordReset: true,
   deleteUser: true,
   oauth: false,
-  emailVerification: false
+  emailVerification: false,
+  share: true
 }
 
 const user: AppUser = {

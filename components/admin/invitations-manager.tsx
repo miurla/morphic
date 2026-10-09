@@ -13,19 +13,27 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 export function InvitationsManager({
-  invitations: initialInvitations
+  invitations: initialInvitations,
+  serverNow
 }: {
   invitations: InvitationView[]
+  serverNow?: string
 }) {
   const [invitations, setInvitations] = useState(initialInvitations)
   // The server-computed `expired` flag goes stale while the page stays
   // open. A state clock (never read from Date during render) re-evaluates
   // expirations every minute, so an elapsed link is caught within a minute.
+  // The clock is corrected by the offset between the local clock and the
+  // server snapshot taken at page load, so a browser clock running fast
+  // cannot hide the Revoke button of a still-live invitation (or running
+  // behind keep showing an expired one as active).
   const [now, setNow] = useState<number | null>(null)
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60_000)
+    const skew = serverNow ? Date.now() - new Date(serverNow).getTime() : 0
+    const tick = () => setNow(Date.now() - skew)
+    const timer = setInterval(tick, 60_000)
     return () => clearInterval(timer)
-  }, [])
+  }, [serverNow])
   const isExpired = (invitation: InvitationView) =>
     invitation.expired ||
     (now !== null && new Date(invitation.expiresAt).getTime() <= now)

@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 
 import { saveNote } from '@/lib/actions/notes'
 import { captureClient } from '@/lib/analytics/posthog-client'
+import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
 import { stripSourceContextBlocks } from '@/lib/render/strip-source-context-blocks'
 import type { SearchResultItem } from '@/lib/types'
 import type {
@@ -83,8 +84,12 @@ export function AnswerSection({
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
   const lastTrackedSelectionKeyRef = useRef<string | null>(null)
   const { openLibrary, upsertCachedNote } = useLibrary()
-  const enableShare =
-    process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined && !isGuest
+  // Sharing records the chat under the signed-in user, so it needs a real
+  // auth provider (supabase or better-auth), not the anonymous one. The
+  // previous gate keyed on NEXT_PUBLIC_SUPABASE_URL, which silently hid
+  // sharing for better-auth deployments.
+  const capabilities = useAuthCapabilities()
+  const enableShare = capabilities.share && !isGuest
   const showSelectionSaveButton =
     libraryAvailable && (!isGuest || isCloudDeployment)
   const showSelectionDeepDiveButton = Boolean(onQuoteContext)

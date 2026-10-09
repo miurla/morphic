@@ -28,6 +28,8 @@ export interface AuthCapabilities {
   oauth: boolean
   /** Sign-up requires confirming the email address before signing in. */
   emailVerification: boolean
+  /** Sharing a chat records it under a real user (false in anonymous mode). */
+  share: boolean
 }
 
 export interface AuthActionResult {

@@ -40,7 +40,8 @@ const capabilities = {
   passwordReset: true,
   deleteUser: true,
   oauth: false,
-  emailVerification: false
+  emailVerification: false,
+  share: true
 }
 
 function renderDialog(override: Partial<typeof capabilities> = {}) {

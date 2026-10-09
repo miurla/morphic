@@ -91,7 +91,8 @@ describe('none auth provider (anonymous mode)', () => {
       passwordReset: false,
       deleteUser: false,
       oauth: false,
-      emailVerification: false
+      emailVerification: false,
+      share: false
     })
   })
 })

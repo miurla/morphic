@@ -40,7 +40,8 @@ export const supabaseAuthProvider: AuthProvider = {
     passwordReset: true,
     deleteUser: true,
     oauth: true,
-    emailVerification: true
+    emailVerification: true,
+    share: true
   },
 
   async getCurrentUser(): Promise<AppUser | null> {

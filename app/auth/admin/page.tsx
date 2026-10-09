@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-import { invitationView } from '@/lib/actions/admin-views'
+import { invitationView, serverNow } from '@/lib/actions/admin-views'
 import { listInvitations } from '@/lib/auth/better-auth/invitations'
 import { listMembers } from '@/lib/auth/better-auth/members'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
@@ -56,7 +56,10 @@ export default async function AdminPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <InvitationsManager invitations={invitations.map(invitationView)} />
+          <InvitationsManager
+            invitations={invitations.map(invitationView)}
+            serverNow={serverNow()}
+          />
         </CardContent>
       </Card>
 

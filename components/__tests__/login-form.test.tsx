@@ -25,7 +25,8 @@ const capabilities = {
   passwordReset: true,
   deleteUser: true,
   oauth: true,
-  emailVerification: true
+  emailVerification: true,
+  share: true
 }
 
 function renderForm(override: Partial<typeof capabilities> = {}, user = null) {

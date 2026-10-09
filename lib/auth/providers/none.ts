@@ -16,7 +16,8 @@ export const noneAuthProvider: AuthProvider = {
     passwordReset: false,
     deleteUser: false,
     oauth: false,
-    emailVerification: false
+    emailVerification: false,
+    share: false
   },
 
   async getCurrentUser(): Promise<AppUser | null> {
