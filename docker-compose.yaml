@@ -20,18 +20,13 @@ services:
       # Authentication settings (default: disabled for personal Docker use)
       ENABLE_AUTH: ${ENABLE_AUTH:-false}
       ANONYMOUS_USER_ID: ${ANONYMOUS_USER_ID:-docker-anonymous}
-      # Auth provider selection (see README "Local Authentication" section).
-      # Leave AUTH_PROVIDER empty to keep the legacy ENABLE_AUTH behavior.
-      AUTH_PROVIDER: ${AUTH_PROVIDER:-}
-      AUTH_SIGNUP_MODE: ${AUTH_SIGNUP_MODE:-open}
-      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
-      # Optional SMTP for password reset and invitation emails
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      EMAIL_FROM: ${EMAIL_FROM:-}
+      # Better Auth and SMTP settings are deliberately NOT declared here:
+      # `environment` entries override `env_file`, and ${VAR} interpolation
+      # reads the shell or a project .env file — never .env.local. Declaring
+      # them with empty defaults would wipe the values users put in
+      # .env.local. Configure AUTH_PROVIDER, BETTER_AUTH_SECRET,
+      # AUTH_SIGNUP_MODE, BOOTSTRAP_ADMIN_EMAIL and SMTP_* in .env.local
+      # (see README "Local Authentication").
       MORPHIC_CLOUD_DEPLOYMENT: 'false'
       # Docker-internal service URLs
       LOCAL_REDIS_URL: ${LOCAL_REDIS_URL:-redis://redis:6379}
