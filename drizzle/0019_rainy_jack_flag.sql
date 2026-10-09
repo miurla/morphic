@@ -65,3 +65,17 @@ CREATE TABLE "verification" (
 --> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
+
+-- The production restricted connection uses app_user. Keep local databases
+-- without that role migratable while granting the minimum runtime privileges
+-- when it is present (same pattern as 0017).
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_user') THEN
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "user" TO app_user;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "session" TO app_user;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "account" TO app_user;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "verification" TO app_user;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "invitations" TO app_user;
+  END IF;
+END $$;
