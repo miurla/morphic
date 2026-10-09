@@ -201,9 +201,13 @@ describe('claimBootstrapAdmin', () => {
 
     await expect(claimBootstrapAdmin('user-1')).resolves.toBeUndefined()
     expect(errorSpy).toHaveBeenCalledWith(
-      'Bootstrap admin claim failed:',
+      expect.stringContaining('Bootstrap admin claim failed'),
       expect.any(Error)
     )
+    // Exhaustion must read as a repair-needed condition with the
+    // remediation, not a silent success.
+    expect(errorSpy.mock.calls[0][0]).toContain('repair needed')
+    expect(errorSpy.mock.calls[0][0]).toContain("SET role = 'admin'")
 
     errorSpy.mockRestore()
   })
@@ -272,7 +276,7 @@ describe('reElectBootstrapAdmin', () => {
     vi.mocked(db.transaction).mockRejectedValue(new Error('boom'))
     await expect(reElectBootstrapAdmin()).resolves.toBeUndefined()
     expect(errorSpy).toHaveBeenCalledWith(
-      'Bootstrap admin re-election failed:',
+      expect.stringContaining('Bootstrap admin re-election failed'),
       expect.any(Error)
     )
 

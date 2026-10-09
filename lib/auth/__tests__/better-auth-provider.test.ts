@@ -53,7 +53,12 @@ vi.mock('@/lib/auth/better-auth/mailer', async importOriginal => ({
 }))
 
 const { state } = vi.hoisted(() => ({
-  state: { accounts: [] as unknown[], adminCount: 1, userCount: 2 }
+  state: {
+    accounts: [] as unknown[],
+    adminCount: 1,
+    userCount: 2,
+    targetLocked: false
+  }
 }))
 
 vi.mock('@/lib/db', () => {
@@ -80,7 +85,16 @@ vi.mock('@/lib/db', () => {
                 }))
               ),
               {
-                limit: vi.fn(async () => state.accounts),
+                limit: vi.fn(() =>
+                  Object.assign(Promise.resolve(state.accounts), {
+                    // The role lookup goes through FOR UPDATE when the
+                    // guard runs inside a transaction.
+                    for: vi.fn(async () => {
+                      state.targetLocked = true
+                      return state.accounts
+                    })
+                  })
+                ),
                 for: vi.fn(async () =>
                   Array.from({ length: state.adminCount }, (_, i) => ({
                     id: `admin-${i}`
@@ -134,6 +148,7 @@ describe('better-auth provider', () => {
     state.accounts = []
     state.adminCount = 1
     state.userCount = 2
+    state.targetLocked = false
     for (const key of [
       'SMTP_HOST',
       'SMTP_USER',
@@ -920,6 +935,19 @@ describe('better-auth provider', () => {
         betterAuthProvider.canDeleteUser!('user-1')
       ).resolves.toBeNull()
     })
+
+    it('does not take row locks from the unlocked pre-check', async () => {
+      state.accounts = [{ id: 'user-1', role: 'admin' }]
+      state.adminCount = 2
+
+      await expect(
+        betterAuthProvider.canDeleteUser!('user-1')
+      ).resolves.toBeNull()
+
+      // The pre-check runs outside any transaction; FOR UPDATE there
+      // would be pointless contention for a UX-only answer.
+      expect(state.targetLocked).toBe(false)
+    })
   })
 
   describe('deleteUser', () => {
@@ -1016,6 +1044,18 @@ describe('better-auth provider', () => {
       await expect(
         betterAuthProvider.validateDeletion!('user-1', db as never)
       ).resolves.toEqual({ error: null, wasAdmin: false })
+    })
+
+    it('locks the target row before classifying its role', async () => {
+      // A concurrent promotion must not slip a soon-to-be-admin past
+      // the last-admin guard mid-deletion, so the role read happens
+      // under a row lock when the guard runs in a transaction.
+      state.accounts = [{ id: 'user-1', role: 'user' }]
+      const { db } = await import('@/lib/db')
+
+      await betterAuthProvider.validateDeletion!('user-1', db as never)
+
+      expect(state.targetLocked).toBe(true)
     })
   })
 

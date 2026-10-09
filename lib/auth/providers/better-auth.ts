@@ -68,11 +68,16 @@ async function deletionGuard(
   userId: string,
   lock: boolean
 ): Promise<DeletionGuardResult> {
-  const [target] = await q
+  // The target row is locked before its role is read: a concurrent
+  // promotion must not let a soon-to-be-admin slip past the last-admin
+  // guard while its own deletion is already in flight. Members take the
+  // same lock as admins so any two deletions serialize on the targets.
+  const targetQuery = q
     .select({ role: authUser.role })
     .from(authUser)
     .where(eq(authUser.id, userId))
     .limit(1)
+  const [target] = lock ? await targetQuery.for('update') : await targetQuery
   const wasAdmin = target?.role === 'admin'
   if (!wasAdmin) {
     return { error: null, wasAdmin: false }

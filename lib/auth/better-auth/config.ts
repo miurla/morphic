@@ -131,18 +131,31 @@ async function withElectionRetry(
   label: string,
   run: () => Promise<void>
 ): Promise<void> {
-  const maxAttempts = 5
+  // Bounded on purpose: the hook runs inside the sign-up (or deletion)
+  // request after the account work already committed, so retrying
+  // forever would hang the response indefinitely. The window is short
+  // but covers transient blips; exhaustion is a repair-needed condition
+  // logged loudly — the election is deterministic, so a single manual
+  // promotion restores the invariant.
+  const maxAttempts = 6
   for (let attempt = 1; ; attempt++) {
     try {
       await run()
       return
     } catch (error) {
       if (attempt >= maxAttempts) {
-        console.error(`${label} failed:`, error)
+        console.error(
+          `${label} failed after ${maxAttempts} attempts — repair needed. ` +
+            'If the instance is now without an admin, promote the intended ' +
+            `account directly: UPDATE "user" SET role = 'admin' ` +
+            "WHERE id = '<account id>'. Later sign-ups cannot take the " +
+            'claim because the election requires the earliest account.',
+          error
+        )
         return
       }
       await new Promise(resolve =>
-        setTimeout(resolve, 100 * 2 ** (attempt - 1))
+        setTimeout(resolve, Math.min(100 * 2 ** (attempt - 1), 500))
       )
     }
   }

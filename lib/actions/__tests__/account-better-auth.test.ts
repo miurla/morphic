@@ -23,7 +23,11 @@ vi.mock('@/lib/db', () => {
         Object.assign(Promise.resolve([{ n: 0 }]), {
           where: vi.fn(() =>
             Object.assign(Promise.resolve([{ n: 0 }]), {
-              limit: vi.fn(async () => []),
+              limit: vi.fn(() =>
+                Object.assign(Promise.resolve([]), {
+                  for: vi.fn(async () => [])
+                })
+              ),
               for: vi.fn(async () => [])
             })
           )
@@ -129,7 +133,13 @@ describe('deleteAccount with the better-auth provider', () => {
         Object.assign(Promise.resolve([{ n: 2 }]), {
           where: () =>
             Object.assign(Promise.resolve([{ n: 1 }]), {
-              limit: async () => [{ id: 'user-1', role: 'admin' }],
+              limit: () =>
+                Object.assign(
+                  Promise.resolve([{ id: 'user-1', role: 'admin' }]),
+                  {
+                    for: async () => [{ id: 'user-1', role: 'admin' }]
+                  }
+                ),
               for: async () => [{ id: 'user-1' }]
             })
         })
