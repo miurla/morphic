@@ -7,7 +7,6 @@ import nodemailer from 'nodemailer'
 import { getAuth } from '@/lib/auth/better-auth/config'
 import {
   createInvitation,
-  listInvitations,
   revokeInvitation
 } from '@/lib/auth/better-auth/invitations'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
@@ -17,6 +16,17 @@ import type { AppUser } from '@/lib/auth/types'
 export interface AdminActionResult {
   success: boolean
   error?: string
+}
+
+/** Pragmatic format check; better-auth enforces deliverable emails at sign-up. */
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }
 
 export interface InvitationView {
@@ -83,7 +93,7 @@ async function sendInvitationEmail(params: {
     to: params.to,
     subject: 'You are invited to Morphic',
     text: `${params.invitedByName} invited you to Morphic. Accept the invitation: ${params.inviteLink}`,
-    html: `<p>${params.invitedByName} invited you to Morphic.</p><p><a href="${params.inviteLink}">Accept the invitation</a></p>`
+    html: `<p>${escapeHtml(params.invitedByName)} invited you to Morphic.</p><p><a href="${escapeHtml(params.inviteLink)}">Accept the invitation</a></p>`
   })
 }
 
@@ -101,8 +111,8 @@ export async function createInvitationAction(params: {
   // link would just be open sign-up behind an obscure URL, and open sign-up
   // is already an explicit choice via AUTH_SIGNUP_MODE=open.
   const email = params.email?.trim()
-  if (!email) {
-    return { success: false, error: 'An email address is required.' }
+  if (!email || !EMAIL_REGEX.test(email)) {
+    return { success: false, error: 'A valid email address is required.' }
   }
 
   try {
@@ -161,28 +171,6 @@ export async function revokeInvitationAction(
       success: false,
       error:
         error instanceof Error ? error.message : 'Failed to revoke invitation'
-    }
-  }
-}
-
-export async function listInvitationsAction(): Promise<{
-  success: boolean
-  error?: string
-  invitations?: InvitationView[]
-}> {
-  const adminUser = await requireAdmin()
-  if (isAdmin(adminUser)) {
-    return adminUser
-  }
-
-  try {
-    const invitations = await listInvitations()
-    return { success: true, invitations: invitations.map(invitationView) }
-  } catch (error) {
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : 'Failed to list invitations'
     }
   }
 }

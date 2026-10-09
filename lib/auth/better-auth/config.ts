@@ -91,9 +91,14 @@ export async function claimBootstrapAdmin(userId: string): Promise<void> {
         .set({ role: 'admin' })
         .where(eq(authSchema.user.id, userId))
     })
-  } catch {
-    // Serialization failure: the concurrent sign-up won the claim and keeps
-    // the admin role; this account stays a regular user.
+  } catch (error) {
+    // A serialization failure (SQLSTATE 40001) is the expected outcome for
+    // the loser of a concurrent first-sign-up race: the other account keeps
+    // the admin role and this one stays a regular user. Any other failure
+    // would silently leave the instance without an admin, so surface it.
+    if ((error as { code?: string } | null)?.code !== '40001') {
+      console.error('Bootstrap admin claim failed:', error)
+    }
   }
 }
 

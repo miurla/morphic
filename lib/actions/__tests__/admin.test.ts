@@ -2,14 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   createInvitationAction,
-  listInvitationsAction,
   resetMemberPasswordAction,
   revokeInvitationAction
 } from '@/lib/actions/admin'
 import { getAuth } from '@/lib/auth/better-auth/config'
 import {
   createInvitation,
-  listInvitations,
   revokeInvitation
 } from '@/lib/auth/better-auth/invitations'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
@@ -95,9 +93,6 @@ describe('admin actions', () => {
       await expect(revokeInvitationAction('inv-1')).resolves.toMatchObject({
         success: false
       })
-      await expect(listInvitationsAction()).resolves.toMatchObject({
-        success: false
-      })
       await expect(
         resetMemberPasswordAction({ userId: 'u', newPassword: 'password123' })
       ).resolves.toMatchObject({ success: false })
@@ -111,10 +106,6 @@ describe('admin actions', () => {
         error: 'Admin access required.'
       })
       await expect(revokeInvitationAction('inv-1')).resolves.toMatchObject({
-        success: false,
-        error: 'Admin access required.'
-      })
-      await expect(listInvitationsAction()).resolves.toMatchObject({
         success: false,
         error: 'Admin access required.'
       })
@@ -148,12 +139,18 @@ describe('admin actions', () => {
       expect(result.invitation).toMatchObject({ id: 'inv-1', revoked: false })
     })
 
-    it('rejects invitations without an email address', async () => {
+    it('rejects invitations without a valid email address', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
 
       await expect(createInvitationAction({})).resolves.toMatchObject({
         success: false,
-        error: 'An email address is required.'
+        error: 'A valid email address is required.'
+      })
+      await expect(
+        createInvitationAction({ email: 'not-an-email' })
+      ).resolves.toMatchObject({
+        success: false,
+        error: 'A valid email address is required.'
       })
       expect(createInvitation).not.toHaveBeenCalled()
     })

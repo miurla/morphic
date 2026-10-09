@@ -127,12 +127,34 @@ describe('claimBootstrapAdmin', () => {
     expect(update).not.toHaveBeenCalled()
   })
 
-  it('swallows serialization failures from concurrent first sign-ups', async () => {
+  it('silently accepts serialization failures from concurrent first sign-ups', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     vi.mocked(db.transaction).mockRejectedValue(
-      new Error('could not serialize access due to concurrent update')
+      Object.assign(
+        new Error('could not serialize access due to concurrent update'),
+        {
+          code: '40001'
+        }
+      )
     )
 
     await expect(claimBootstrapAdmin('user-1')).resolves.toBeUndefined()
+    expect(errorSpy).not.toHaveBeenCalled()
+
+    errorSpy.mockRestore()
+  })
+
+  it('logs unexpected claim failures', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(db.transaction).mockRejectedValue(new Error('connection lost'))
+
+    await expect(claimBootstrapAdmin('user-1')).resolves.toBeUndefined()
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Bootstrap admin claim failed:',
+      expect.any(Error)
+    )
+
+    errorSpy.mockRestore()
   })
 })
 

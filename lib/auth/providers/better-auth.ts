@@ -162,8 +162,9 @@ export const betterAuthProvider: AuthProvider = {
         }
       }
       // Invitations issued for a specific address can only be redeemed by
-      // that address, so a forwarded link is useless to anyone else.
-      // Generic invitations (created without an email) stay transferable.
+      // that address, so a forwarded link is useless to anyone else. The
+      // admin action always requires an email, so the truthy check is
+      // defense-in-depth for rows that predate that requirement.
       // Checked before the claim so a mismatched attempt does not burn the
       // invitation for its intended recipient.
       if (
