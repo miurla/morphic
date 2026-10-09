@@ -542,6 +542,12 @@ export const betterAuthProvider: AuthProvider = {
       // SELECT ... FOR UPDATE locks every admin row, so concurrent
       // deletions serialize and the second recount sees the first delete
       // instead of both counting each other as still present.
+      // Residual window: a concurrent sign-up inserts a new row, which
+      // does not conflict with the admin-row locks, so a first sign-up
+      // committing between this count and the commit can still leave the
+      // instance without an admin. The window is sub-second and requires
+      // the sole admin to self-delete at the moment of a first sign-up;
+      // recovery is a manual role update on the remaining account.
       return await db.transaction(async tx => {
         const [target] = await tx
           .select({ role: authUser.role })
