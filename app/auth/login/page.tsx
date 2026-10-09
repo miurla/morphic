@@ -4,11 +4,15 @@ import { LoginForm } from '@/components/login-form'
 // a prerendered login page would bake in build-time values in prebuilt images.
 export const dynamic = 'force-dynamic'
 
-export default function Page() {
+export default async function Page(props: {
+  searchParams: Promise<{ next?: string }>
+}) {
+  const { next } = await props.searchParams
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <LoginForm />
+        <LoginForm next={next} />
       </div>
     </div>
   )

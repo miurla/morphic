@@ -22,10 +22,19 @@ import { Label } from '@/components/ui/label'
 
 import { PasswordInput } from './ui/password-input'
 
+/**
+ * Only same-origin relative paths may be used as post-sign-in targets, so
+ * a crafted ?next= cannot bounce a signed-in user to another host.
+ */
+function safeNextPath(next: string | undefined): string {
+  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/'
+}
+
 export function LoginForm({
   className,
+  next,
   ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
+}: React.ComponentPropsWithoutRef<'div'> & { next?: string }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -41,8 +50,10 @@ export function LoginForm({
     try {
       const result = await signIn({ email, password })
       if (!result.success) throw new Error(result.error ?? 'An error occurred')
-      // Redirect to root and refresh to ensure server components get updated session
-      router.push('/')
+      // Redirect to the page that required sign-in (when it is a safe
+      // relative path) and refresh to ensure server components get
+      // updated session
+      router.push(safeNextPath(next))
       router.refresh()
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')

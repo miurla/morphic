@@ -29,13 +29,17 @@ const capabilities = {
   share: true
 }
 
-function renderForm(override: Partial<typeof capabilities> = {}, user = null) {
+function renderForm(
+  override: Partial<typeof capabilities> = {},
+  user = null,
+  next?: string
+) {
   return render(
     <AppUserProvider
       user={user}
       capabilities={{ ...capabilities, ...override }}
     >
-      <LoginForm />
+      <LoginForm next={next} />
     </AppUserProvider>
   )
 }
@@ -64,6 +68,42 @@ describe('LoginForm', () => {
       })
       expect(mockPush).toHaveBeenCalledWith('/')
       expect(mockRefresh).toHaveBeenCalled()
+    })
+  })
+
+  it('returns to the requested page after sign-in', async () => {
+    // A logged-out owner of a private shared chat arrives via
+    // /auth/login?next=/search/<id>; the link must survive the sign-in.
+    vi.mocked(signIn).mockResolvedValue({ success: true })
+    renderForm({}, null, '/search/abc123')
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'user@example.com' }
+    })
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secret' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/search/abc123')
+    })
+  })
+
+  it('ignores an off-site next target', async () => {
+    vi.mocked(signIn).mockResolvedValue({ success: true })
+    renderForm({}, null, '//evil.example.com')
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'user@example.com' }
+    })
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secret' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/')
     })
   })
 
