@@ -54,7 +54,12 @@ export async function deleteAccount(): Promise<{
     // locked transaction, and must run before any destructive step: a
     // concurrent deletion can flip the pre-check's answer, and a
     // rejection after the data cleanup would leave a retained account
-    // whose chats, notes, and files were already erased.
+    // whose chats, notes, and files were already erased. The accepted
+    // trade-off: a cleanup failure below can no longer be retried by
+    // the (already deleted) user, so each one logs the orphaned user
+    // id for operator cleanup. Full atomicity is not possible — the R2
+    // objects and, for Supabase, the auth deletion itself live outside
+    // this database's transactions.
     const deleteAuthResult = await provider.deleteUser!(user.id)
     if (!deleteAuthResult.success) {
       return {
@@ -63,39 +68,45 @@ export async function deleteAccount(): Promise<{
       }
     }
 
+    const cleanupFailed = (step: string, error: string) => {
+      console.error(
+        `Account deletion cleanup failed (${step}) for user ${user.id}: ${error}`
+      )
+      return { success: false, error }
+    }
+
     const deleteChatsResult = await dbActions.deleteUserChats(user.id)
     if (!deleteChatsResult.success) {
-      return {
-        success: false,
-        error: deleteChatsResult.error ?? 'Failed to delete account data'
-      }
+      return cleanupFailed(
+        'chats',
+        deleteChatsResult.error ?? 'Failed to delete account data'
+      )
     }
 
     const deleteNotesResult = await dbActions.deleteUserNotes(user.id)
     if (!deleteNotesResult.success) {
-      return {
-        success: false,
-        error: deleteNotesResult.error ?? 'Failed to delete account data'
-      }
+      return cleanupFailed(
+        'notes',
+        deleteNotesResult.error ?? 'Failed to delete account data'
+      )
     }
 
     const deleteFilesResult = await dbActions.deleteUserLibraryFiles(user.id)
     if (!deleteFilesResult.success) {
-      return {
-        success: false,
-        error: deleteFilesResult.error ?? 'Failed to delete account data'
-      }
+      return cleanupFailed(
+        'files',
+        deleteFilesResult.error ?? 'Failed to delete account data'
+      )
     }
 
     const anonymizeFeedbackResult = await dbActions.anonymizeUserFeedback(
       user.id
     )
     if (!anonymizeFeedbackResult.success) {
-      return {
-        success: false,
-        error:
-          anonymizeFeedbackResult.error ?? 'Failed to anonymize user feedback'
-      }
+      return cleanupFailed(
+        'feedback',
+        anonymizeFeedbackResult.error ?? 'Failed to anonymize user feedback'
+      )
     }
 
     await deleteUserObjects(user.id)
