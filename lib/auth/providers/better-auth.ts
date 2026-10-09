@@ -22,7 +22,13 @@ import {
 import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
 import { user as authUser } from '@/lib/auth/better-auth/schema'
 import { getRequestOrigin } from '@/lib/auth/request'
-import type { AppUser, AuthActionResult, AuthProvider } from '@/lib/auth/types'
+import type {
+  AppUser,
+  AuthActionResult,
+  AuthProvider,
+  AuthTransaction,
+  DeletionGuardResult
+} from '@/lib/auth/types'
 import { db } from '@/lib/db'
 
 /**
@@ -47,6 +53,48 @@ async function accountExists(email: string): Promise<boolean> {
 
 const LAST_ADMIN_ERROR =
   'You are the only admin. Promote another member to admin before deleting this account.'
+
+/**
+ * The last-admin invariant, evaluated against db (unlocked UX gate) or a
+ * transaction (authoritative check). When lock is set the admin listing
+ * uses SELECT ... FOR UPDATE, so concurrent deletions serialize on the
+ * admin rows until the owning transaction commits. A concurrent sign-up
+ * inserts a new row, which does not conflict with the admin-row locks,
+ * so its insert can commit just after the user count below; the
+ * post-commit re-election (postDeletion) covers that case.
+ */
+async function deletionGuard(
+  q: Pick<typeof db, 'select' | 'delete'>,
+  userId: string,
+  lock: boolean
+): Promise<DeletionGuardResult> {
+  const [target] = await q
+    .select({ role: authUser.role })
+    .from(authUser)
+    .where(eq(authUser.id, userId))
+    .limit(1)
+  const wasAdmin = target?.role === 'admin'
+  if (!wasAdmin) {
+    return { error: null, wasAdmin: false }
+  }
+  const adminsQuery = q
+    .select({ id: authUser.id })
+    .from(authUser)
+    .where(eq(authUser.role, 'admin'))
+  const admins = lock ? await adminsQuery.for('update') : await adminsQuery
+  if (admins.length > 1) {
+    return { error: null, wasAdmin }
+  }
+  // Last admin: deletion is only refused while other users remain.
+  // Members left without an admin have no in-product path back, but an
+  // empty user table is the documented re-bootstrap state, so the sole
+  // account of a single-user instance must be able to delete itself.
+  const [userCount] = await q.select({ n: count() }).from(authUser)
+  if ((userCount?.n ?? 0) <= 1) {
+    return { error: null, wasAdmin }
+  }
+  return { error: LAST_ADMIN_ERROR, wasAdmin }
+}
 
 /**
  * Minimum gap between bootstrap invitation emails for the same address.
@@ -509,80 +557,53 @@ export const betterAuthProvider: AuthProvider = {
 
   async canDeleteUser(userId: string): Promise<string | null> {
     // Best-effort UX gate: callers run this before destructive side
-    // effects. deleteUser repeats the check inside a locked transaction,
-    // which is the authoritative guard.
-    const [target] = await db
-      .select({ role: authUser.role })
-      .from(authUser)
-      .where(eq(authUser.id, userId))
-      .limit(1)
-    if (target?.role !== 'admin') {
-      return null
-    }
-    const [adminCount] = await db
-      .select({ n: count() })
-      .from(authUser)
-      .where(eq(authUser.role, 'admin'))
-    if ((adminCount?.n ?? 0) > 1) {
-      return null
-    }
-    // Last admin: deletion is only refused while other users remain.
-    // Members left without an admin have no in-product path back, but an
-    // empty user table is the documented re-bootstrap state, so the sole
-    // account of a single-user instance must be able to delete itself.
-    const [userCount] = await db.select({ n: count() }).from(authUser)
-    if ((userCount?.n ?? 0) <= 1) {
-      return null
-    }
-    return LAST_ADMIN_ERROR
+    // effects. validateDeletion is the authoritative locked check.
+    const { error } = await deletionGuard(db, userId, false)
+    return error
   },
 
-  async deleteUser(userId: string): Promise<AuthActionResult> {
+  async validateDeletion(
+    userId: string,
+    tx: AuthTransaction
+  ): Promise<DeletionGuardResult> {
+    // Runs inside the caller's transaction: FOR UPDATE on the admin rows
+    // serializes concurrent admin deletions until that transaction
+    // commits, so the answer cannot flip before the identity delete that
+    // consumes this result.
+    return deletionGuard(tx, userId, true)
+  },
+
+  async postDeletion(wasAdmin: boolean): Promise<void> {
+    if (wasAdmin) {
+      // Completes the bootstrap election for a sign-up whose own claim
+      // declined because the admin row still existed when it ran (see
+      // reElectBootstrapAdmin).
+      await reElectBootstrapAdmin()
+    }
+  },
+
+  async deleteUser(
+    userId: string,
+    tx?: AuthTransaction
+  ): Promise<AuthActionResult> {
     try {
-      // The last-admin check and the delete share one transaction:
-      // SELECT ... FOR UPDATE locks every admin row, so concurrent
-      // deletions serialize and the second recount sees the first delete
-      // instead of both counting each other as still present. A
-      // concurrent sign-up inserts a new row, which does not conflict
-      // with the admin-row locks, so its insert can commit just after
-      // the user count below; the post-commit re-election covers that
-      // case (see reElectBootstrapAdmin).
-      const result = await db.transaction(async tx => {
-        const [target] = await tx
-          .select({ role: authUser.role })
-          .from(authUser)
-          .where(eq(authUser.id, userId))
-          .limit(1)
-        if (target?.role === 'admin') {
-          const admins = await tx
-            .select({ id: authUser.id })
-            .from(authUser)
-            .where(eq(authUser.role, 'admin'))
-            .for('update')
-          if (admins.length <= 1) {
-            // Refuse only while other users would remain without an
-            // admin; deleting the very last account is the documented
-            // re-bootstrap path.
-            const [userCount] = await tx.select({ n: count() }).from(authUser)
-            if ((userCount?.n ?? 0) > 1) {
-              return { success: false, error: LAST_ADMIN_ERROR }
-            }
-          }
+      if (tx) {
+        // Runs inside the caller's transaction; the caller validated the
+        // guard under this transaction's locks before any cleanup.
+        await tx.delete(authUser).where(eq(authUser.id, userId))
+        return { success: true }
+      }
+      // Self-contained path: guard and delete share one locked
+      // transaction so concurrent deletions serialize.
+      return await db.transaction(async innerTx => {
+        const guard = await deletionGuard(innerTx, userId, true)
+        if (guard.error) {
+          return { success: false, error: guard.error }
         }
         // Cascades remove sessions and accounts via foreign keys
-        await tx.delete(authUser).where(eq(authUser.id, userId))
-        return { success: true, wasAdmin: target?.role === 'admin' }
+        await innerTx.delete(authUser).where(eq(authUser.id, userId))
+        return { success: true }
       })
-      if (!result.success) {
-        return { success: false, error: result.error }
-      }
-      if (result.wasAdmin) {
-        // Completes the bootstrap election for a sign-up whose own
-        // claim declined because this admin row still existed when it
-        // ran. No-op unless the deletion left users without an admin.
-        await reElectBootstrapAdmin()
-      }
-      return { success: true }
     } catch (error) {
       return {
         success: false,

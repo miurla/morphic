@@ -5,6 +5,10 @@ import { type NextRequest } from 'next/server'
 const ASSET_SEGMENTS = new Set(['static', 'array'])
 const ASSET_HOST = 'us-assets.i.posthog.com'
 const API_HOST = 'us.i.posthog.com'
+// Generous cap that only rejects absurd declared sizes; the body itself
+// is streamed through, so an undeclared (chunked) payload cannot be
+// used to balloon process memory.
+const MAX_BODY_BYTES = 32 * 1024 * 1024
 
 /**
  * Same-origin PostHog relay, implemented as a route handler instead of a
@@ -29,6 +33,11 @@ async function relay(
   }
   target.search = request.nextUrl.search
 
+  const contentLength = Number(request.headers.get('content-length'))
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+    return new Response('Payload too large', { status: 413 })
+  }
+
   const headers = new Headers()
   const contentType = request.headers.get('content-type')
   if (contentType) {
@@ -37,16 +46,20 @@ async function relay(
   // Cookie and Authorization are deliberately not forwarded: session
   // credentials must never reach the analytics provider.
 
+  // The body is streamed through rather than buffered: /relay is
+  // reachable without a session, so materializing an attacker-sized
+  // POST in memory would be a denial-of-service vector.
   const body =
     request.method === 'GET' || request.method === 'HEAD'
       ? undefined
-      : await request.arrayBuffer()
+      : request.body
 
   const upstream = await fetch(target, {
     method: request.method,
     headers,
-    body
-  })
+    body,
+    duplex: 'half'
+  } as RequestInit & { duplex?: 'half' })
 
   const responseHeaders = new Headers()
   const upstreamContentType = upstream.headers.get('content-type')

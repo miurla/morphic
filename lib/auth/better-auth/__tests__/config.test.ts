@@ -175,18 +175,21 @@ describe('claimBootstrapAdmin', () => {
     expect(claims).toEqual(['alice'])
   })
 
-  it('silently accepts serialization failures from concurrent first sign-ups', async () => {
+  it('retries serialization failures and completes the claim when no admin materialized', async () => {
+    // A 40001 abort does not prove a concurrent claimant committed:
+    // both claimants can abort. The retry must re-run the election
+    // instead of giving up and stranding the instance admin-less.
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    vi.mocked(db.transaction).mockRejectedValue(
-      Object.assign(
-        new Error('could not serialize access due to concurrent update'),
-        {
-          code: '40001'
-        }
-      )
+    const { update } = mockClaim({ earliest: 'user-1' })
+    vi.mocked(db.transaction).mockRejectedValueOnce(
+      Object.assign(new Error('could not serialize access'), {
+        code: '40001'
+      })
     )
 
     await expect(claimBootstrapAdmin('user-1')).resolves.toBeUndefined()
+
+    expect(update).toHaveBeenCalled()
     expect(errorSpy).not.toHaveBeenCalled()
 
     errorSpy.mockRestore()
@@ -256,15 +259,17 @@ describe('reElectBootstrapAdmin', () => {
     expect(update).not.toHaveBeenCalled()
   })
 
-  it('silently accepts serialization failures and logs other failures', async () => {
+  it('retries serialization failures and logs after exhausting attempts', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { update } = mockClaim({ earliest: 'raced-signup' })
     vi.mocked(db.transaction).mockRejectedValueOnce(
       Object.assign(new Error('could not serialize'), { code: '40001' })
     )
     await expect(reElectBootstrapAdmin()).resolves.toBeUndefined()
+    expect(update).toHaveBeenCalled()
     expect(errorSpy).not.toHaveBeenCalled()
 
-    vi.mocked(db.transaction).mockRejectedValueOnce(new Error('boom'))
+    vi.mocked(db.transaction).mockRejectedValue(new Error('boom'))
     await expect(reElectBootstrapAdmin()).resolves.toBeUndefined()
     expect(errorSpy).toHaveBeenCalledWith(
       'Bootstrap admin re-election failed:',

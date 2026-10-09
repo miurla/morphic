@@ -1,5 +1,7 @@
 import type { NextRequest, NextResponse } from 'next/server'
 
+import type { db } from '@/lib/db'
+
 export type AuthProviderName = 'supabase' | 'better-auth' | 'none'
 
 /**
@@ -81,7 +83,7 @@ export interface AuthProvider {
   signOut?(): Promise<AuthActionResult>
   requestPasswordReset?(email: string): Promise<AuthActionResult>
   updatePassword?(password: string, token?: string): Promise<AuthActionResult>
-  deleteUser?(userId: string): Promise<AuthActionResult>
+  deleteUser?(userId: string, tx?: AuthTransaction): Promise<AuthActionResult>
   /**
    * Returns an error message when the provider is not configured to delete
    * users, or null when deletion is available.
@@ -90,7 +92,39 @@ export interface AuthProvider {
   /**
    * Returns an error message when this specific account must not be deleted
    * (e.g. the last remaining admin), or null when deletion may proceed.
-   * Callers must run this before any destructive side effects.
+   * Best-effort UX gate: callers run it before destructive side effects,
+   * but it does not lock; validateDeletion is the authoritative check.
    */
   canDeleteUser?(userId: string): Promise<string | null>
+  /**
+   * Authoritative deletion guard, run inside the caller's transaction so
+   * the provider's locks are held until the identity deletion that uses
+   * this result commits. Providers without concurrency-sensitive invariants
+   * omit it.
+   */
+  validateDeletion?(
+    userId: string,
+    tx: AuthTransaction
+  ): Promise<DeletionGuardResult>
+  /**
+   * Runs after a deletion that reported wasAdmin has committed. Used to
+   * complete role elections that a concurrent sign-up could not finish
+   * while the deleted admin row still existed.
+   */
+  postDeletion?(wasAdmin: boolean): Promise<void>
+}
+
+/**
+ * A database transaction handed to provider methods that must share their
+ * locks with the caller's surrounding transaction.
+ */
+export type AuthTransaction = Parameters<
+  Parameters<typeof db.transaction>[0]
+>[0]
+
+export interface DeletionGuardResult {
+  /** Error message when the account must not be deleted, otherwise null. */
+  error: string | null
+  /** Whether the target account held the admin role. */
+  wasAdmin: boolean
 }

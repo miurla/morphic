@@ -87,6 +87,21 @@ describe('deleteAccount with the better-auth provider', () => {
     expect(db.delete).toHaveBeenCalled()
   })
 
+  it('keeps the auth account when cleanup fails so the user can retry', async () => {
+    vi.mocked(dbActions.deleteUserChats).mockResolvedValue({
+      success: false,
+      error: 'db down'
+    })
+
+    const result = await deleteAccount()
+
+    expect(result.success).toBe(false)
+    expect(result.error).toBe('db down')
+    // The identity deletion is the last step: a cleanup failure must
+    // leave the account (and its sessions) in place for a retry.
+    expect(db.delete).not.toHaveBeenCalled()
+  })
+
   it('refuses before destroying any data when the user is the only admin', async () => {
     vi.mocked(db.select).mockImplementation((() => ({
       from: () =>

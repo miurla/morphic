@@ -68,15 +68,26 @@ vi.mock('@/lib/db', () => {
       // shapes resolve.
       from: vi.fn(() =>
         Object.assign(Promise.resolve([{ total: 0, n: state.userCount }]), {
+          // Awaited directly it is the admin listing (one row per admin);
+          // chained it serves the role lookup (.limit) and the locked
+          // admin listing (.for) inside deletionGuard.
           where: vi.fn(() =>
-            Object.assign(Promise.resolve([{ n: state.adminCount }]), {
-              limit: vi.fn(async () => state.accounts),
-              for: vi.fn(async () =>
+            Object.assign(
+              Promise.resolve(
                 Array.from({ length: state.adminCount }, (_, i) => ({
-                  id: `admin-${i}`
+                  id: `admin-${i}`,
+                  n: state.adminCount
                 }))
-              )
-            })
+              ),
+              {
+                limit: vi.fn(async () => state.accounts),
+                for: vi.fn(async () =>
+                  Array.from({ length: state.adminCount }, (_, i) => ({
+                    id: `admin-${i}`
+                  }))
+                )
+              }
+            )
           )
         })
       )
@@ -956,23 +967,68 @@ describe('better-auth provider', () => {
       expect(db.delete).toHaveBeenCalled()
     })
 
-    it('re-runs the bootstrap election after an admin deletion', async () => {
+    it('deletes through a caller-supplied transaction without re-guarding', async () => {
+      // The caller (deleteAccount) already validated the guard under this
+      // transaction's locks; deleteUser must not refuse here even though
+      // the state alone (last admin with members) would.
+      state.accounts = [{ id: 'user-1', role: 'admin' }]
+      state.adminCount = 1
+      state.userCount = 2
+      const { db } = await import('@/lib/db')
+
+      const result = await betterAuthProvider.deleteUser!('user-1', db as never)
+
+      expect(result).toEqual({ success: true })
+      expect(db.delete).toHaveBeenCalled()
+    })
+  })
+
+  describe('validateDeletion', () => {
+    it('refuses the last admin while members remain and reports wasAdmin', async () => {
+      state.accounts = [{ id: 'user-1', role: 'admin' }]
+      state.adminCount = 1
+      state.userCount = 2
+      const { db } = await import('@/lib/db')
+
+      await expect(
+        betterAuthProvider.validateDeletion!('user-1', db as never)
+      ).resolves.toEqual({
+        error: expect.stringMatching(/only admin/i),
+        wasAdmin: true
+      })
+    })
+
+    it('allows the sole account of a single-user instance', async () => {
       state.accounts = [{ id: 'user-1', role: 'admin' }]
       state.adminCount = 1
       state.userCount = 1
+      const { db } = await import('@/lib/db')
 
-      const result = await betterAuthProvider.deleteUser!('user-1')
+      await expect(
+        betterAuthProvider.validateDeletion!('user-1', db as never)
+      ).resolves.toEqual({ error: null, wasAdmin: true })
+    })
 
-      expect(result).toEqual({ success: true })
+    it('reports wasAdmin false for regular members', async () => {
+      state.accounts = [{ id: 'user-1', role: 'user' }]
+      const { db } = await import('@/lib/db')
+
+      await expect(
+        betterAuthProvider.validateDeletion!('user-1', db as never)
+      ).resolves.toEqual({ error: null, wasAdmin: false })
+    })
+  })
+
+  describe('postDeletion', () => {
+    it('re-runs the bootstrap election when the deleted account was admin', async () => {
+      await betterAuthProvider.postDeletion!(true)
+
       expect(reElectBootstrapAdmin).toHaveBeenCalledTimes(1)
     })
 
-    it('does not re-run the bootstrap election after a member deletion', async () => {
-      state.accounts = [{ id: 'user-1', role: 'user' }]
+    it('is a no-op for member deletions', async () => {
+      await betterAuthProvider.postDeletion!(false)
 
-      const result = await betterAuthProvider.deleteUser!('user-1')
-
-      expect(result).toEqual({ success: true })
       expect(reElectBootstrapAdmin).not.toHaveBeenCalled()
     })
   })
