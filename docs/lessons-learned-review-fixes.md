@@ -45,7 +45,7 @@ grepped mid-fix and the mismatch with the docs was literally in hand.
    values into client bundles at build time. Anything runtime-configurable
    must be evaluated server-side (e.g. folded into capabilities in
    `app/layout.tsx`) — never read from client code. The same applies to the
-   deployment *profile*: the primary Morphic deployment is a single-user
+   deployment _profile_: the primary Morphic deployment is a single-user
    instance, and a guard added for multi-admin scenarios must be checked
    against the single-user shape first — the last-admin guard initially
    made the sole account unable to delete itself, contradicting the
@@ -100,6 +100,16 @@ Before committing any review fix:
       could both pass the count. If the consequence is loss of control,
       serialize it (transaction + `SELECT ... FOR UPDATE`); at minimum,
       document the accepted race where the reader will see it.
+- [ ] **A fast pre-check and the authoritative check can diverge.** The
+      unlocked `canDeleteUser` pre-check and the locked check inside
+      `deleteUser` can disagree under concurrency; the destructive steps
+      must be ordered after the *authoritative* check, not merely after
+      the pre-check.
+- [ ] **Concatenating user input into a URL is a security primitive.**
+      `new URL('/' + userInput, base)` escapes the origin when a decoded
+      segment starts with a slash (an encoded `%2f` turns the path
+      protocol-relative). Always assert the resolved `host` matches the
+      expected allowlist after construction.
 
 ## The meta-lesson
 
