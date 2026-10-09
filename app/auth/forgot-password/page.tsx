@@ -4,6 +4,10 @@ import { getAuthProvider } from '@/lib/auth/provider'
 
 import { ForgotPasswordForm } from '@/components/forgot-password-form'
 
+// The passwordReset capability depends on runtime env (SMTP configuration),
+// so the gate must not be frozen into a static prerender.
+export const dynamic = 'force-dynamic'
+
 export default function ForgotPasswordPage() {
   const provider = getAuthProvider()
   if (!provider.capabilities.passwordReset) {

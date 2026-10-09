@@ -16,6 +16,11 @@ import {
 import { InvitationsManager } from '@/components/admin/invitations-manager'
 import { ResetMemberPasswordForm } from '@/components/admin/reset-member-password-form'
 
+// The provider check below short-circuits at build time (the build has no
+// better-auth configuration), which would bake the redirect('/') into a
+// static route and make the admin page unreachable at runtime.
+export const dynamic = 'force-dynamic'
+
 export default async function AdminPage() {
   const provider = getAuthProvider()
   if (provider.name !== 'better-auth') {

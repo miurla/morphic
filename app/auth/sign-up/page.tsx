@@ -7,6 +7,12 @@ import { getAuthProvider } from '@/lib/auth/provider'
 import { InviteRequired } from '@/components/invite-required'
 import { SignUpForm } from '@/components/sign-up-form'
 
+// The provider, sign-up mode, and invitation validity are runtime concerns.
+// Without this, a build where the better-auth branch is not taken gets
+// prerendered as a static page, so the invite wall and ?token= prefill
+// never run in an invite-mode deployment.
+export const dynamic = 'force-dynamic'
+
 export default async function SignUpPage({
   searchParams
 }: {
