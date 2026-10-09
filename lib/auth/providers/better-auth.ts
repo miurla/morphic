@@ -106,9 +106,11 @@ export const betterAuthProvider: AuthProvider = {
   },
 
   async handleSession(request: NextRequest): Promise<NextResponse> {
-    const session = await getAuth().api.getSession({
-      headers: request.headers
-    })
+    const { response: session, headers: responseHeaders } =
+      await getAuth().api.getSession({
+        headers: request.headers,
+        returnHeaders: true
+      })
 
     // Public paths that do not require a session (mirrors the supabase middleware)
     const publicPaths = ['/auth', '/share', '/api']
@@ -124,7 +126,16 @@ export const betterAuthProvider: AuthProvider = {
       return NextResponse.redirect(url)
     }
 
-    return NextResponse.next({ request })
+    const response = NextResponse.next({ request })
+    // better-auth refreshes the session cookie once a session passes half
+    // its lifetime (updateAge). Forward the refreshed cookie so active
+    // sessions do not expire at the original expiry time.
+    if (responseHeaders) {
+      for (const raw of responseHeaders.getSetCookie()) {
+        response.headers.append('set-cookie', raw)
+      }
+    }
+    return response
   },
 
   async signIn({

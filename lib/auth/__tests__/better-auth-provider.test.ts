@@ -137,7 +137,10 @@ describe('better-auth provider', () => {
 
   describe('handleSession', () => {
     it('redirects unauthenticated requests to protected paths', async () => {
-      vi.mocked(mockAuth.api.getSession).mockResolvedValue(null)
+      vi.mocked(mockAuth.api.getSession).mockResolvedValue({
+        response: null,
+        headers: new Headers()
+      } as never)
 
       const response = await betterAuthProvider.handleSession!(
         makeRequest('/some-protected-page')
@@ -150,7 +153,10 @@ describe('better-auth provider', () => {
     })
 
     it('lets unauthenticated requests through on public paths', async () => {
-      vi.mocked(mockAuth.api.getSession).mockResolvedValue(null)
+      vi.mocked(mockAuth.api.getSession).mockResolvedValue({
+        response: null,
+        headers: new Headers()
+      } as never)
 
       const response = await betterAuthProvider.handleSession!(
         makeRequest('/auth/login')
@@ -161,7 +167,8 @@ describe('better-auth provider', () => {
 
     it('lets authenticated requests through', async () => {
       vi.mocked(mockAuth.api.getSession).mockResolvedValue({
-        user: sessionUser
+        response: { user: sessionUser },
+        headers: new Headers()
       } as never)
 
       const response = await betterAuthProvider.handleSession!(
@@ -169,6 +176,26 @@ describe('better-auth provider', () => {
       )
 
       expect(response.status).toBe(200)
+    })
+
+    it('forwards refreshed session cookies to the response', async () => {
+      // better-auth renews the cookie past half the session lifetime; the
+      // middleware must pass it on or active users expire at the old time.
+      const responseHeaders = new Headers()
+      responseHeaders.append(
+        'set-cookie',
+        'better-auth.session_token=refreshed; Path=/; HttpOnly'
+      )
+      vi.mocked(mockAuth.api.getSession).mockResolvedValue({
+        response: { user: sessionUser },
+        headers: responseHeaders
+      } as never)
+
+      const response = await betterAuthProvider.handleSession!(
+        makeRequest('/some-protected-page')
+      )
+
+      expect(response.headers.get('set-cookie')).toContain('refreshed')
     })
   })
 
