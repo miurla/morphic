@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import type { CaptureResult } from 'posthog-js'
+import { describe, expect, it } from 'vitest'
 
 import { scrubTokenFromEvent } from '../sanitize'
 
