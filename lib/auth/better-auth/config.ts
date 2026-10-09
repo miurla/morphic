@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError } from 'better-auth/api'
 import { admin } from 'better-auth/plugins'
-import { count, eq, sql } from 'drizzle-orm'
+import { count, eq, ne, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 
@@ -21,7 +21,19 @@ export function isBetterAuthSmtpConfigured(): boolean {
 }
 
 export function getSignUpMode(): SignUpMode {
-  return process.env.AUTH_SIGNUP_MODE === 'invite' ? 'invite' : 'open'
+  const raw = process.env.AUTH_SIGNUP_MODE?.trim().toLowerCase()
+  if (!raw) {
+    return 'open' // documented default
+  }
+  if (raw === 'open' || raw === 'invite') {
+    return raw
+  }
+  // A typo must not silently open an invite-only instance to the internet:
+  // fail loudly instead of guessing (same policy as BETTER_AUTH_SECRET).
+  throw new Error(
+    `Invalid AUTH_SIGNUP_MODE "${process.env.AUTH_SIGNUP_MODE}". ` +
+      'Expected "open" or "invite".'
+  )
 }
 
 function getSecret(): string {
@@ -69,22 +81,27 @@ export async function applyBootstrapAdminGate(data: {
 }
 
 /**
- * Grant the admin role to the first account. Runs in a serializable
+ * Grant the admin role to the very first account. Runs in a serializable
  * transaction: two concurrent first sign-ups would otherwise both observe an
- * empty admin set and both claim the role (write skew), so Postgres aborts
+ * empty user set and both claim the role (write skew), so Postgres aborts
  * one transaction and exactly one account wins the claim.
+ *
+ * The condition is "no other user exists", not "no admin exists": if the
+ * sole admin later deletes their account while regular members remain, a
+ * subsequent registrant must not inherit the role. Re-bootstrapping then
+ * requires removing every account (the bootstrap window reopens with an
+ * empty table) or promoting a successor directly in the database.
  */
 export async function claimBootstrapAdmin(userId: string): Promise<void> {
   try {
     await db.transaction(async tx => {
       await tx.execute(sql`set transaction isolation level serializable`)
-      const [admin] = await tx
-        .select({ id: authSchema.user.id })
+      const [others] = await tx
+        .select({ total: count() })
         .from(authSchema.user)
-        .where(eq(authSchema.user.role, 'admin'))
-        .limit(1)
-      if (admin) {
-        return
+        .where(ne(authSchema.user.id, userId))
+      if ((others?.total ?? 0) > 0) {
+        return // Not the first account: the bootstrap window is closed
       }
       await tx
         .update(authSchema.user)

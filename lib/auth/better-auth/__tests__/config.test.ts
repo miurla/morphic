@@ -4,6 +4,7 @@ import {
   applyBootstrapAdminGate,
   claimBootstrapAdmin,
   getAuth,
+  getSignUpMode,
   resetAuthInstance
 } from '@/lib/auth/better-auth/config'
 import { db } from '@/lib/db'
@@ -23,16 +24,14 @@ function mockUserCount(total: number) {
   } as never)
 }
 
-function mockClaim(admins: Array<{ id: string }>) {
+function mockClaim(otherUsers: number) {
   const set = vi.fn(() => ({ where: vi.fn() }))
   const update = vi.fn(() => ({ set }))
   const tx = {
     execute: vi.fn(),
     select: vi.fn(() => ({
       from: vi.fn(() => ({
-        where: vi.fn(() => ({
-          limit: vi.fn().mockResolvedValue(admins)
-        }))
+        where: vi.fn().mockResolvedValue([{ total: otherUsers }])
       }))
     })),
     update
@@ -109,8 +108,8 @@ describe('bootstrap admin gate', () => {
 })
 
 describe('claimBootstrapAdmin', () => {
-  it('grants the admin role when no admin exists yet', async () => {
-    const { tx, update, set } = mockClaim([])
+  it('grants the admin role to the first account', async () => {
+    const { tx, update, set } = mockClaim(0)
 
     await claimBootstrapAdmin('user-1')
 
@@ -119,8 +118,10 @@ describe('claimBootstrapAdmin', () => {
     expect(set).toHaveBeenCalledWith({ role: 'admin' })
   })
 
-  it('does nothing when an admin already exists', async () => {
-    const { update } = mockClaim([{ id: 'existing-admin' }])
+  it('does nothing when other users remain (no re-bootstrap after the first account)', async () => {
+    // Sole admin deleted their account while members remained: the next
+    // registrant must not inherit the role.
+    const { update } = mockClaim(2)
 
     await claimBootstrapAdmin('user-1')
 
@@ -155,6 +156,35 @@ describe('claimBootstrapAdmin', () => {
     )
 
     errorSpy.mockRestore()
+  })
+})
+
+describe('getSignUpMode', () => {
+  const original = process.env.AUTH_SIGNUP_MODE
+
+  afterEach(() => {
+    if (original === undefined) {
+      delete process.env.AUTH_SIGNUP_MODE
+    } else {
+      process.env.AUTH_SIGNUP_MODE = original
+    }
+  })
+
+  it('defaults to open when unset', () => {
+    delete process.env.AUTH_SIGNUP_MODE
+    expect(getSignUpMode()).toBe('open')
+  })
+
+  it('accepts open and invite (case-insensitive, trimmed)', () => {
+    process.env.AUTH_SIGNUP_MODE = ' invite '
+    expect(getSignUpMode()).toBe('invite')
+    process.env.AUTH_SIGNUP_MODE = 'Open'
+    expect(getSignUpMode()).toBe('open')
+  })
+
+  it('throws on an unsupported value instead of silently opening sign-ups', () => {
+    process.env.AUTH_SIGNUP_MODE = 'invte'
+    expect(() => getSignUpMode()).toThrow(/Invalid AUTH_SIGNUP_MODE/)
   })
 })
 
