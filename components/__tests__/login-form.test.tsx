@@ -202,6 +202,36 @@ describe('LoginForm', () => {
     })
   })
 
+  it('clears a stale next cookie when the later login has no destination', async () => {
+    // An abandoned OAuth attempt leaves the cookie behind; the next
+    // destination-less sign-in must not be sent to the old page.
+    const originalLocation = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { href: '' }
+    })
+    document.cookie = 'auth_next=%2Fstale; path=/; max-age=300; SameSite=Lax'
+    vi.mocked(signInWithGoogle).mockResolvedValue({
+      success: true,
+      redirectTo: 'https://accounts.google.com/authorize'
+    })
+    renderForm()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In with Google' }))
+
+    await waitFor(() => {
+      expect(signInWithGoogle).toHaveBeenCalled()
+    })
+    expect(document.cookie).not.toContain('auth_next')
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: originalLocation
+    })
+  })
+
   it('hides the Google button when the provider has no OAuth', () => {
     renderForm({ oauth: false })
     expect(

@@ -60,14 +60,16 @@ export function LoginForm({
     setError(null)
 
     try {
-      if (next) {
-        // Supabase's redirect allowlist matches the callback URL exactly,
-        // so the destination cannot ride on the OAuth redirectTo as a
-        // query parameter; a short-lived cookie carries it to the callback.
-        document.cookie = `auth_next=${encodeURIComponent(
-          safeRedirectPath(next)
-        )}; path=/; max-age=300; SameSite=Lax`
-      }
+      // Supabase's redirect allowlist matches the callback URL exactly, so
+      // the destination rides in a short-lived cookie, not the redirectTo.
+      // Always write it: a login without a destination must clear a stale
+      // cookie left by an abandoned attempt, or that old destination would
+      // hijack the later sign-in.
+      document.cookie = next
+        ? `auth_next=${encodeURIComponent(
+            safeRedirectPath(next)
+          )}; path=/; max-age=300; SameSite=Lax`
+        : 'auth_next=; path=/; max-age=0; SameSite=Lax'
       const result = await signInWithGoogle()
       if (!result.success)
         throw new Error(result.error ?? 'An OAuth error occurred')
