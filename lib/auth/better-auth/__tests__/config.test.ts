@@ -24,14 +24,24 @@ function mockUserCount(total: number) {
   } as never)
 }
 
-function mockClaim(otherUsers: number) {
+function mockClaim(opts: {
+  admins?: Array<{ id: string }>
+  earliest?: string
+}) {
   const set = vi.fn(() => ({ where: vi.fn() }))
   const update = vi.fn(() => ({ set }))
   const tx = {
     execute: vi.fn(),
     select: vi.fn(() => ({
       from: vi.fn(() => ({
-        where: vi.fn().mockResolvedValue([{ total: otherUsers }])
+        where: vi.fn(() => ({
+          limit: vi.fn().mockResolvedValue(opts.admins ?? [])
+        })),
+        orderBy: vi.fn(() => ({
+          limit: vi
+            .fn()
+            .mockResolvedValue(opts.earliest ? [{ id: opts.earliest }] : [])
+        }))
       }))
     })),
     update
@@ -109,7 +119,7 @@ describe('bootstrap admin gate', () => {
 
 describe('claimBootstrapAdmin', () => {
   it('grants the admin role to the first account', async () => {
-    const { tx, update, set } = mockClaim(0)
+    const { tx, update, set } = mockClaim({ earliest: 'user-1' })
 
     await claimBootstrapAdmin('user-1')
 
@@ -118,14 +128,42 @@ describe('claimBootstrapAdmin', () => {
     expect(set).toHaveBeenCalledWith({ role: 'admin' })
   })
 
-  it('does nothing when other users remain (no re-bootstrap after the first account)', async () => {
-    // Sole admin deleted their account while members remained: the next
-    // registrant must not inherit the role.
-    const { update } = mockClaim(2)
+  it('does nothing when an admin already exists', async () => {
+    const { update } = mockClaim({
+      admins: [{ id: 'existing-admin' }],
+      earliest: 'user-1'
+    })
 
     await claimBootstrapAdmin('user-1')
 
     expect(update).not.toHaveBeenCalled()
+  })
+
+  it('does nothing when other users remain (no re-bootstrap after the first account)', async () => {
+    // Sole admin deleted their account while members remained: the next
+    // registrant is neither an admin nor the earliest account, so it must
+    // not inherit the role.
+    const { update } = mockClaim({ earliest: 'older-user' })
+
+    await claimBootstrapAdmin('user-1')
+
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('elects exactly one admin when concurrent first sign-ups both observe each other', async () => {
+    // Alice and Bob commit before either after-hook claims; each claim sees
+    // both rows. Only the earliest account may claim, so exactly one wins
+    // regardless of interleaving.
+    const claims: string[] = []
+    for (const userId of ['alice', 'bob']) {
+      const { update } = mockClaim({ earliest: 'alice' })
+      await claimBootstrapAdmin(userId)
+      if (update.mock.calls.length > 0) {
+        claims.push(userId)
+      }
+    }
+
+    expect(claims).toEqual(['alice'])
   })
 
   it('silently accepts serialization failures from concurrent first sign-ups', async () => {

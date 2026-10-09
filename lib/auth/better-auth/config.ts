@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError } from 'better-auth/api'
 import { admin } from 'better-auth/plugins'
-import { count, eq, ne, sql } from 'drizzle-orm'
+import { asc, count, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 
@@ -81,27 +81,43 @@ export async function applyBootstrapAdminGate(data: {
 }
 
 /**
- * Grant the admin role to the very first account. Runs in a serializable
- * transaction: two concurrent first sign-ups would otherwise both observe an
- * empty user set and both claim the role (write skew), so Postgres aborts
- * one transaction and exactly one account wins the claim.
+ * Grant the admin role to the very first account.
  *
- * The condition is "no other user exists", not "no admin exists": if the
- * sole admin later deletes their account while regular members remain, a
- * subsequent registrant must not inherit the role. Re-bootstrapping then
- * requires removing every account (the bootstrap window reopens with an
- * empty table) or promoting a successor directly in the database.
+ * The after-create hook runs in its own transaction once the sign-up has
+ * committed, so two concurrent first sign-ups can each observe the other's
+ * committed row: a "no other user exists" condition would make both decline
+ * and leave the instance without any admin. The claim is therefore a
+ * deterministic election — the role goes to the earliest account (createdAt,
+ * tie-broken by id) whenever no admin exists. Exactly one of any set of
+ * concurrent sign-ups can be the earliest, so exactly one account claims the
+ * role regardless of interleaving.
+ *
+ * "No admin exists" alone would allow escalation: if the sole admin later
+ * deletes their account while regular members remain, the next registrant
+ * must not inherit the role — and it cannot be the earliest account, so the
+ * election declines it. Re-bootstrapping then requires removing every
+ * account (the bootstrap window reopens with an empty table) or promoting a
+ * successor directly in the database.
  */
 export async function claimBootstrapAdmin(userId: string): Promise<void> {
   try {
     await db.transaction(async tx => {
       await tx.execute(sql`set transaction isolation level serializable`)
-      const [others] = await tx
-        .select({ total: count() })
+      const [admin] = await tx
+        .select({ id: authSchema.user.id })
         .from(authSchema.user)
-        .where(ne(authSchema.user.id, userId))
-      if ((others?.total ?? 0) > 0) {
-        return // Not the first account: the bootstrap window is closed
+        .where(eq(authSchema.user.role, 'admin'))
+        .limit(1)
+      if (admin) {
+        return // An admin exists: the bootstrap window is closed
+      }
+      const [earliest] = await tx
+        .select({ id: authSchema.user.id })
+        .from(authSchema.user)
+        .orderBy(asc(authSchema.user.createdAt), asc(authSchema.user.id))
+        .limit(1)
+      if (earliest?.id !== userId) {
+        return // Not the earliest account: another sign-up owns the claim
       }
       await tx
         .update(authSchema.user)
@@ -110,8 +126,8 @@ export async function claimBootstrapAdmin(userId: string): Promise<void> {
     })
   } catch (error) {
     // A serialization failure (SQLSTATE 40001) is the expected outcome for
-    // the loser of a concurrent first-sign-up race: the other account keeps
-    // the admin role and this one stays a regular user. Any other failure
+    // the loser of a concurrent first-sign-up race: the winner keeps the
+    // admin role and this account stays a regular user. Any other failure
     // would silently leave the instance without an admin, so surface it.
     if ((error as { code?: string } | null)?.code !== '40001') {
       console.error('Bootstrap admin claim failed:', error)
