@@ -124,8 +124,10 @@ export const betterAuthProvider: AuthProvider = {
         returnHeaders: true
       })
 
-    // Public paths that do not require a session (mirrors the supabase middleware)
-    const publicPaths = ['/auth', '/share', '/api']
+    // Public paths that do not require a session (mirrors the supabase
+    // middleware). /relay is the PostHog reverse proxy: analytics requests
+    // from the login and sign-up pages must not bounce to /auth/login.
+    const publicPaths = ['/auth', '/share', '/api', '/relay']
     const pathname = request.nextUrl.pathname
 
     if (

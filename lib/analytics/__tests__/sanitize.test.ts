@@ -31,6 +31,23 @@ describe('scrubTokenFromEvent', () => {
     expect(url).not.toContain('token=abc')
   })
 
+  it('strips the token from the referrer on later events', () => {
+    // Arriving from an auth link leaves the credential in $referrer even
+    // though $current_url is clean.
+    const result = scrubTokenFromEvent({
+      event_name: '$pageview',
+      properties: {
+        $current_url: 'http://localhost:3000/',
+        $referrer: 'http://localhost:3000/auth/update-password?token=abc123'
+      }
+    } as unknown as CaptureResult)
+
+    expect(result?.properties?.$current_url).toBe('http://localhost:3000/')
+    expect(result?.properties?.$referrer).toBe(
+      'http://localhost:3000/auth/update-password'
+    )
+  })
+
   it('leaves events without a token untouched', () => {
     const event = pageview('http://localhost:3000/search?q=hello')
 

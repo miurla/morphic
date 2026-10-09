@@ -180,6 +180,21 @@ describe('better-auth provider', () => {
       expect(response.status).toBe(200)
     })
 
+    it('lets unauthenticated analytics through the posthog relay', async () => {
+      // Guest pageviews from the login and sign-up pages must reach PostHog
+      // instead of bouncing to /auth/login.
+      vi.mocked(mockAuth.api.getSession).mockResolvedValue({
+        response: null,
+        headers: new Headers()
+      } as never)
+
+      const response = await betterAuthProvider.handleSession!(
+        makeRequest('/relay/e/?ip=1')
+      )
+
+      expect(response.status).toBe(200)
+    })
+
     it('lets authenticated requests through', async () => {
       vi.mocked(mockAuth.api.getSession).mockResolvedValue({
         response: { user: sessionUser },

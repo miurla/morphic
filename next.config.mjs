@@ -18,6 +18,24 @@ const nextConfig = {
       }
     ]
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            // Auth links (invitations, password resets, bootstrap) carry
+            // one-time credentials in ?token=. no-referrer keeps those
+            // URLs out of Referer headers on outbound and same-origin
+            // requests, including the /relay PostHog proxy above, which
+            // would otherwise forward a token-bearing Referer upstream.
+            key: 'Referrer-Policy',
+            value: 'no-referrer'
+          }
+        ]
+      }
+    ]
+  },
   images: {
     remotePatterns: [
       {
