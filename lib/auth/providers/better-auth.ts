@@ -522,10 +522,18 @@ export const betterAuthProvider: AuthProvider = {
       .select({ n: count() })
       .from(authUser)
       .where(eq(authUser.role, 'admin'))
-    if ((adminCount?.n ?? 0) <= 1) {
-      return LAST_ADMIN_ERROR
+    if ((adminCount?.n ?? 0) > 1) {
+      return null
     }
-    return null
+    // Last admin: deletion is only refused while other users remain.
+    // Members left without an admin have no in-product path back, but an
+    // empty user table is the documented re-bootstrap state, so the sole
+    // account of a single-user instance must be able to delete itself.
+    const [userCount] = await db.select({ n: count() }).from(authUser)
+    if ((userCount?.n ?? 0) <= 1) {
+      return null
+    }
+    return LAST_ADMIN_ERROR
   },
 
   async deleteUser(userId: string): Promise<AuthActionResult> {
@@ -547,7 +555,13 @@ export const betterAuthProvider: AuthProvider = {
             .where(eq(authUser.role, 'admin'))
             .for('update')
           if (admins.length <= 1) {
-            return { success: false, error: LAST_ADMIN_ERROR }
+            // Refuse only while other users would remain without an
+            // admin; deleting the very last account is the documented
+            // re-bootstrap path.
+            const [userCount] = await tx.select({ n: count() }).from(authUser)
+            if ((userCount?.n ?? 0) > 1) {
+              return { success: false, error: LAST_ADMIN_ERROR }
+            }
           }
         }
         // Cascades remove sessions and accounts via foreign keys

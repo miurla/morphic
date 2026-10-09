@@ -49,7 +49,7 @@ vi.mock('@/lib/auth/better-auth/mailer', async importOriginal => ({
 }))
 
 const { state } = vi.hoisted(() => ({
-  state: { accounts: [] as unknown[], adminCount: 1 }
+  state: { accounts: [] as unknown[], adminCount: 1, userCount: 2 }
 }))
 
 vi.mock('@/lib/db', () => {
@@ -63,7 +63,7 @@ vi.mock('@/lib/db', () => {
       // .where().for() for the locked admin listing) so all query
       // shapes resolve.
       from: vi.fn(() =>
-        Object.assign(Promise.resolve([{ total: 0 }]), {
+        Object.assign(Promise.resolve([{ total: 0, n: state.userCount }]), {
           where: vi.fn(() =>
             Object.assign(Promise.resolve([{ n: state.adminCount }]), {
               limit: vi.fn(async () => state.accounts),
@@ -118,6 +118,7 @@ describe('better-auth provider', () => {
   beforeEach(() => {
     state.accounts = []
     state.adminCount = 1
+    state.userCount = 2
     for (const key of [
       'SMTP_HOST',
       'SMTP_USER',
@@ -894,6 +895,16 @@ describe('better-auth provider', () => {
         betterAuthProvider.canDeleteUser!('user-1')
       ).resolves.toBeNull()
     })
+
+    it('allows the sole account of a single-user instance', async () => {
+      state.accounts = [{ id: 'user-1', role: 'admin' }]
+      state.adminCount = 1
+      state.userCount = 1
+
+      await expect(
+        betterAuthProvider.canDeleteUser!('user-1')
+      ).resolves.toBeNull()
+    })
   })
 
   describe('deleteUser', () => {
@@ -921,6 +932,18 @@ describe('better-auth provider', () => {
     it('deletes an admin account while another admin remains', async () => {
       state.accounts = [{ id: 'user-1', role: 'admin' }]
       state.adminCount = 2
+      const { db } = await import('@/lib/db')
+
+      const result = await betterAuthProvider.deleteUser!('user-1')
+
+      expect(result).toEqual({ success: true })
+      expect(db.delete).toHaveBeenCalled()
+    })
+
+    it('deletes the last remaining account even when it is the only admin', async () => {
+      state.accounts = [{ id: 'user-1', role: 'admin' }]
+      state.adminCount = 1
+      state.userCount = 1
       const { db } = await import('@/lib/db')
 
       const result = await betterAuthProvider.deleteUser!('user-1')

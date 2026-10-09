@@ -90,7 +90,7 @@ describe('deleteAccount with the better-auth provider', () => {
   it('refuses before destroying any data when the user is the only admin', async () => {
     vi.mocked(db.select).mockImplementation((() => ({
       from: () =>
-        Object.assign(Promise.resolve([{ n: 1 }]), {
+        Object.assign(Promise.resolve([{ n: 2 }]), {
           where: () =>
             Object.assign(Promise.resolve([{ n: 1 }]), {
               limit: async () => [{ id: 'user-1', role: 'admin' }],
