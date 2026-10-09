@@ -38,6 +38,9 @@ vi.mock('@/lib/db', () => ({
   db: {
     delete: vi.fn(() => ({
       where: vi.fn(async () => undefined)
+    })),
+    select: vi.fn(() => ({
+      from: vi.fn(async () => [{ total: 0 }])
     }))
   }
 }))
@@ -76,7 +79,8 @@ describe('better-auth provider', () => {
       'SMTP_HOST',
       'SMTP_USER',
       'SMTP_PASSWORD',
-      'AUTH_SIGNUP_MODE'
+      'AUTH_SIGNUP_MODE',
+      'BOOTSTRAP_ADMIN_EMAIL'
     ]) {
       originalEnv[key] = process.env[key]
       delete process.env[key]
@@ -264,6 +268,25 @@ describe('better-auth provider', () => {
         error: 'Sign-up requires a valid invitation token.'
       })
       expect(mockAuth.api.signUpEmail).not.toHaveBeenCalled()
+    })
+
+    it('lets the BOOTSTRAP_ADMIN_EMAIL account sign up without an invitation', async () => {
+      // Fresh invite-only instance: invitations require an admin, so the
+      // gated seed address must be able to create the first account.
+      process.env.AUTH_SIGNUP_MODE = 'invite'
+      process.env.BOOTSTRAP_ADMIN_EMAIL = 'Admin@Corp.local'
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
+        response: signUpResult,
+        headers: new Headers()
+      } as never)
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'admin@corp.local',
+        password: 'secret'
+      })
+
+      expect(result).toEqual({ success: true })
+      expect(validateInvitation).not.toHaveBeenCalled()
     })
 
     it('claims the invitation before creating the account', async () => {

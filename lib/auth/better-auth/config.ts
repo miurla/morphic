@@ -80,6 +80,22 @@ export async function applyBootstrapAdminGate(data: {
 }
 
 /**
+ * True when the email is the seed administrator of a fresh instance:
+ * `BOOTSTRAP_ADMIN_EMAIL` is set, the address matches, and the user table
+ * is still empty. Invite-only instances use this to let the first admin
+ * sign up without an invitation — creating invitations requires an admin,
+ * so the instance would otherwise have no way to bootstrap.
+ */
+export async function isBootstrapAccount(email: string): Promise<boolean> {
+  const gate = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase()
+  if (!gate || email.trim().toLowerCase() !== gate) {
+    return false
+  }
+  const [existing] = await db.select({ total: count() }).from(authSchema.user)
+  return (existing?.total ?? 0) === 0
+}
+
+/**
  * Grant the admin role to the very first account.
  *
  * The after-create hook runs in its own transaction once the sign-up has

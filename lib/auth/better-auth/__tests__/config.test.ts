@@ -5,6 +5,7 @@ import {
   claimBootstrapAdmin,
   getAuth,
   getSignUpMode,
+  isBootstrapAccount,
   resetAuthInstance
 } from '@/lib/auth/better-auth/config'
 import { db } from '@/lib/db'
@@ -223,6 +224,91 @@ describe('getSignUpMode', () => {
   it('throws on an unsupported value instead of silently opening sign-ups', () => {
     process.env.AUTH_SIGNUP_MODE = 'invte'
     expect(() => getSignUpMode()).toThrow(/Invalid AUTH_SIGNUP_MODE/)
+  })
+})
+
+describe('isBootstrapAccount', () => {
+  const original = process.env.BOOTSTRAP_ADMIN_EMAIL
+
+  afterEach(() => {
+    if (original === undefined) {
+      delete process.env.BOOTSTRAP_ADMIN_EMAIL
+    } else {
+      process.env.BOOTSTRAP_ADMIN_EMAIL = original
+    }
+  })
+
+  it('is false when no gate is configured', async () => {
+    delete process.env.BOOTSTRAP_ADMIN_EMAIL
+    mockUserCount(0)
+    await expect(isBootstrapAccount('anyone@example.com')).resolves.toBe(false)
+  })
+
+  it('accepts the gated address while the table is empty', async () => {
+    process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+    mockUserCount(0)
+    await expect(isBootstrapAccount('admin@corp.local')).resolves.toBe(true)
+  })
+
+  it('matches the gate case-insensitively and trimmed', async () => {
+    process.env.BOOTSTRAP_ADMIN_EMAIL = ' Admin@Corp.local '
+    mockUserCount(0)
+    await expect(isBootstrapAccount('ADMIN@CORP.LOCAL')).resolves.toBe(true)
+  })
+
+  it('rejects other addresses', async () => {
+    process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+    mockUserCount(0)
+    await expect(isBootstrapAccount('intruder@example.com')).resolves.toBe(
+      false
+    )
+  })
+
+  it('is false once the bootstrap window closed', async () => {
+    process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+    mockUserCount(1)
+    await expect(isBootstrapAccount('admin@corp.local')).resolves.toBe(false)
+  })
+})
+
+describe('reset password mailer wiring', () => {
+  const original: Record<string, string | undefined> = {}
+
+  beforeEach(() => {
+    resetAuthInstance()
+    for (const key of ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD']) {
+      original[key] = process.env[key]
+      delete process.env[key]
+    }
+  })
+
+  afterEach(() => {
+    resetAuthInstance()
+    for (const [key, value] of Object.entries(original)) {
+      if (value === undefined) {
+        delete process.env[key]
+      } else {
+        process.env[key] = value
+      }
+    }
+  })
+
+  it('wires the reset mailer through the shared SMTP transport', () => {
+    process.env.SMTP_HOST = 'smtp.example.com'
+    process.env.SMTP_USER = 'user'
+    process.env.SMTP_PASSWORD = 'pass'
+
+    const auth = getAuth()
+
+    expect(typeof auth.options.emailAndPassword?.sendResetPassword).toBe(
+      'function'
+    )
+  })
+
+  it('omits the reset mailer when SMTP is not configured', () => {
+    const auth = getAuth()
+
+    expect(auth.options.emailAndPassword?.sendResetPassword).toBeUndefined()
   })
 })
 

@@ -6,7 +6,8 @@ import { eq } from 'drizzle-orm'
 import {
   getAuth,
   getSignUpMode,
-  isBetterAuthSmtpConfigured
+  isBetterAuthSmtpConfigured,
+  isBootstrapAccount
 } from '@/lib/auth/better-auth/config'
 import {
   consumeInvitation,
@@ -158,7 +159,13 @@ export const betterAuthProvider: AuthProvider = {
     password: string
     token?: string
   }): Promise<AuthActionResult> {
-    if (getSignUpMode() === 'invite') {
+    if (
+      getSignUpMode() === 'invite' &&
+      // The bootstrap account is the seed admin of a fresh invite-only
+      // instance: invitations can only be created by an existing admin, so
+      // the gated address must be able to sign up without a token.
+      !(await isBootstrapAccount(email))
+    ) {
       const invitation = await validateInvitation(token)
       if (!invitation) {
         return {
