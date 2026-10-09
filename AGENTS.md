@@ -152,6 +152,10 @@ These checks are enforced in CI/CD and PRs will fail if any of these steps don't
 
 Note: Import sorting is handled by ESLint using `eslint-plugin-simple-import-sort`. Run `bun lint --fix` to automatically sort imports according to the configured order.
 
+### Review-Fix Discipline
+
+When addressing review feedback, treat each fix as a change in its own right: walk every affected user journey (each auth provider, logged-in and logged-out states) and add test or harness coverage in the same commit rather than waiting for the next review round. See [docs/lessons-learned-review-fixes.md](docs/lessons-learned-review-fixes.md) for the checklist and the concrete failure patterns it is based on.
+
 ## Model Configuration
 
 Models are defined in `public/config/models.json` with:
