@@ -154,7 +154,7 @@ Note: Import sorting is handled by ESLint using `eslint-plugin-simple-import-sor
 
 ### Review-Fix Discipline
 
-When addressing review feedback, treat each fix as a change in its own right: walk every affected user journey (each auth provider, logged-in and logged-out states) and add test or harness coverage in the same commit rather than waiting for the next review round. See [docs/lessons-learned-review-fixes.md](docs/lessons-learned-review-fixes.md) for the checklist and the concrete failure patterns it is based on.
+When addressing review feedback, treat each fix as a change in its own right: walk every affected user journey (each auth provider, logged-in and logged-out states) and add test or harness coverage in the same commit rather than waiting for the next review round. See [docs/lessons-learned-review-fixes.md](docs/lessons-learned-review-fixes.md) for the full fix-round checklist.
 
 ## Model Configuration
 
