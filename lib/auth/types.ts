@@ -87,4 +87,10 @@ export interface AuthProvider {
    * users, or null when deletion is available.
    */
   validateDeleteUserConfig?(): string | null
+  /**
+   * Returns an error message when this specific account must not be deleted
+   * (e.g. the last remaining admin), or null when deletion may proceed.
+   * Callers must run this before any destructive side effects.
+   */
+  canDeleteUser?(userId: string): Promise<string | null>
 }

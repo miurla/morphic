@@ -41,6 +41,14 @@ export async function deleteAccount(): Promise<{
     }
   }
 
+  // Per-account refusal (e.g. the last admin) must happen before any
+  // destructive step below, or a rejected deletion would still destroy
+  // the user's data while leaving the account in place.
+  const deleteCheck = await provider.canDeleteUser?.(user.id)
+  if (deleteCheck) {
+    return { success: false, error: deleteCheck }
+  }
+
   try {
     const deleteChatsResult = await dbActions.deleteUserChats(user.id)
     if (!deleteChatsResult.success) {

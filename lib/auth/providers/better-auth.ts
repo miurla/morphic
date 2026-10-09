@@ -44,6 +44,9 @@ async function accountExists(email: string): Promise<boolean> {
   }
 }
 
+const LAST_ADMIN_ERROR =
+  'You are the only admin. Promote another member to admin before deleting this account.'
+
 /**
  * Minimum gap between bootstrap invitation emails for the same address.
  * The bootstrap branch runs before better-auth's rate limiter, so this
@@ -503,31 +506,54 @@ export const betterAuthProvider: AuthProvider = {
     return null
   },
 
+  async canDeleteUser(userId: string): Promise<string | null> {
+    // Best-effort UX gate: callers run this before destructive side
+    // effects. deleteUser repeats the check inside a locked transaction,
+    // which is the authoritative guard.
+    const [target] = await db
+      .select({ role: authUser.role })
+      .from(authUser)
+      .where(eq(authUser.id, userId))
+      .limit(1)
+    if (target?.role !== 'admin') {
+      return null
+    }
+    const [adminCount] = await db
+      .select({ n: count() })
+      .from(authUser)
+      .where(eq(authUser.role, 'admin'))
+    if ((adminCount?.n ?? 0) <= 1) {
+      return LAST_ADMIN_ERROR
+    }
+    return null
+  },
+
   async deleteUser(userId: string): Promise<AuthActionResult> {
     try {
-      // Refuse to remove the last admin: without one, /auth/admin becomes
-      // unreachable and there is no in-product path back to an admin role.
-      const [target] = await db
-        .select({ role: authUser.role })
-        .from(authUser)
-        .where(eq(authUser.id, userId))
-        .limit(1)
-      if (target?.role === 'admin') {
-        const [adminCount] = await db
-          .select({ n: count() })
+      // The last-admin check and the delete share one transaction:
+      // SELECT ... FOR UPDATE locks every admin row, so concurrent
+      // deletions serialize and the second recount sees the first delete
+      // instead of both counting each other as still present.
+      return await db.transaction(async tx => {
+        const [target] = await tx
+          .select({ role: authUser.role })
           .from(authUser)
-          .where(eq(authUser.role, 'admin'))
-        if ((adminCount?.n ?? 0) <= 1) {
-          return {
-            success: false,
-            error:
-              'You are the only admin. Promote another member to admin before deleting this account.'
+          .where(eq(authUser.id, userId))
+          .limit(1)
+        if (target?.role === 'admin') {
+          const admins = await tx
+            .select({ id: authUser.id })
+            .from(authUser)
+            .where(eq(authUser.role, 'admin'))
+            .for('update')
+          if (admins.length <= 1) {
+            return { success: false, error: LAST_ADMIN_ERROR }
           }
         }
-      }
-      // Cascades remove sessions and accounts via foreign keys
-      await db.delete(authUser).where(eq(authUser.id, userId))
-      return { success: true }
+        // Cascades remove sessions and accounts via foreign keys
+        await tx.delete(authUser).where(eq(authUser.id, userId))
+        return { success: true }
+      })
     } catch (error) {
       return {
         success: false,

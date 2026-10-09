@@ -52,27 +52,37 @@ const { state } = vi.hoisted(() => ({
   state: { accounts: [] as unknown[], adminCount: 1 }
 }))
 
-vi.mock('@/lib/db', () => ({
-  db: {
+vi.mock('@/lib/db', () => {
+  const db: Record<string, unknown> = {
     delete: vi.fn(() => ({
       where: vi.fn(async () => undefined)
     })),
     select: vi.fn(() => ({
       // Awaitable (user-count and admin-count queries) and chainable
-      // (.where().limit() for the account-exists and role lookups) so
-      // both query shapes resolve.
+      // (.where().limit() for the account-exists and role lookups,
+      // .where().for() for the locked admin listing) so all query
+      // shapes resolve.
       from: vi.fn(() =>
         Object.assign(Promise.resolve([{ total: 0 }]), {
           where: vi.fn(() =>
             Object.assign(Promise.resolve([{ n: state.adminCount }]), {
-              limit: vi.fn(async () => state.accounts)
+              limit: vi.fn(async () => state.accounts),
+              for: vi.fn(async () =>
+                Array.from({ length: state.adminCount }, (_, i) => ({
+                  id: `admin-${i}`
+                }))
+              )
             })
           )
         })
       )
     }))
   }
-}))
+  // Transactions receive the same mock object, so assertions on db.delete
+  // also cover deletes issued through tx.
+  db.transaction = vi.fn((cb: (tx: unknown) => unknown) => cb(db))
+  return { db }
+})
 
 vi.mock('next/headers', () => ({
   headers: vi.fn(async () => new Headers({ origin: 'http://localhost:3000' })),
@@ -855,6 +865,34 @@ describe('better-auth provider', () => {
       const result = await betterAuthProvider.updatePassword!('new-password')
 
       expect(result).toEqual({ success: true })
+    })
+  })
+
+  describe('canDeleteUser', () => {
+    it('returns null for non-admin accounts', async () => {
+      state.accounts = [{ id: 'user-1', role: 'user' }]
+
+      await expect(
+        betterAuthProvider.canDeleteUser!('user-1')
+      ).resolves.toBeNull()
+    })
+
+    it('refuses for the only remaining admin', async () => {
+      state.accounts = [{ id: 'user-1', role: 'admin' }]
+      state.adminCount = 1
+
+      await expect(
+        betterAuthProvider.canDeleteUser!('user-1')
+      ).resolves.toMatch(/only admin/i)
+    })
+
+    it('allows an admin while another remains', async () => {
+      state.accounts = [{ id: 'user-1', role: 'admin' }]
+      state.adminCount = 2
+
+      await expect(
+        betterAuthProvider.canDeleteUser!('user-1')
+      ).resolves.toBeNull()
     })
   })
 

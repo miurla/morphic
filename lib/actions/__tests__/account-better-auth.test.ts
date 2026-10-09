@@ -12,21 +12,30 @@ vi.mock('@/lib/analytics')
 vi.mock('@/lib/auth/get-current-user')
 vi.mock('@/lib/db/actions')
 vi.mock('@/lib/storage/r2-client')
-vi.mock('@/lib/db', () => ({
-  db: {
+vi.mock('@/lib/db', () => {
+  const db: Record<string, unknown> = {
     delete: vi.fn(() => ({
       where: vi.fn(async () => undefined)
     })),
     // Role lookup for the last-admin guard: no row -> guard skipped.
     select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({
-          limit: vi.fn(async () => [])
-        }))
-      }))
+      from: vi.fn(() =>
+        Object.assign(Promise.resolve([{ n: 0 }]), {
+          where: vi.fn(() =>
+            Object.assign(Promise.resolve([{ n: 0 }]), {
+              limit: vi.fn(async () => []),
+              for: vi.fn(async () => [])
+            })
+          )
+        })
+      )
     }))
   }
-}))
+  // Transactions receive the same mock object so deletes through tx
+  // are visible on db.delete.
+  db.transaction = vi.fn((cb: (tx: unknown) => unknown) => cb(db))
+  return { db }
+})
 
 describe('deleteAccount with the better-auth provider', () => {
   const originalEnv: Record<string, string | undefined> = {}
@@ -76,5 +85,30 @@ describe('deleteAccount with the better-auth provider', () => {
     expect(dbActions.anonymizeUserFeedback).toHaveBeenCalledWith('user-1')
     expect(deleteUserObjects).toHaveBeenCalledWith('user-1')
     expect(db.delete).toHaveBeenCalled()
+  })
+
+  it('refuses before destroying any data when the user is the only admin', async () => {
+    vi.mocked(db.select).mockImplementation((() => ({
+      from: () =>
+        Object.assign(Promise.resolve([{ n: 1 }]), {
+          where: () =>
+            Object.assign(Promise.resolve([{ n: 1 }]), {
+              limit: async () => [{ id: 'user-1', role: 'admin' }],
+              for: async () => [{ id: 'user-1' }]
+            })
+        })
+    })) as never)
+
+    const result = await deleteAccount()
+
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/only admin/i)
+    // The rejection must happen before the destructive steps: a rejected
+    // deletion must leave the account's chats, notes, and files intact.
+    expect(dbActions.deleteUserChats).not.toHaveBeenCalled()
+    expect(dbActions.deleteUserNotes).not.toHaveBeenCalled()
+    expect(dbActions.deleteUserLibraryFiles).not.toHaveBeenCalled()
+    expect(deleteUserObjects).not.toHaveBeenCalled()
+    expect(db.delete).not.toHaveBeenCalled()
   })
 })
