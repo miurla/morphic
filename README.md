@@ -148,6 +148,10 @@ EMAIL_FROM="Morphic <morphic@example.com>"
 
 With SMTP configured, password-reset emails are sent and invitation links are additionally emailed to invitees.
 
+#### HTTPS and secure cookies
+
+In production builds (Docker), session cookies carry the `__Secure-` prefix, so browsers only store and send them over HTTPS or on `localhost`. An instance reached via `http://<LAN-IP>:3000` will not stay logged in; serve it over HTTPS (reverse proxy, Tailscale Serve, etc.). Development mode (`bun dev`) is not affected.
+
 ## Deploy
 
 ### Vercel
