@@ -173,6 +173,35 @@ describe('LoginForm', () => {
     })
   })
 
+  it('carries the next target to the OAuth callback via a cookie', async () => {
+    // Supabase's redirect allowlist matches the callback URL exactly, so
+    // the destination rides in a short-lived cookie, not the redirectTo.
+    const originalLocation = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { href: '' }
+    })
+    vi.mocked(signInWithGoogle).mockResolvedValue({
+      success: true,
+      redirectTo: 'https://accounts.google.com/authorize'
+    })
+    renderForm({}, null, '/search/abc123')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In with Google' }))
+
+    await waitFor(() => {
+      expect(signInWithGoogle).toHaveBeenCalled()
+    })
+    expect(document.cookie).toContain('auth_next=%2Fsearch%2Fabc123')
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: originalLocation
+    })
+  })
+
   it('hides the Google button when the provider has no OAuth', () => {
     renderForm({ oauth: false })
     expect(

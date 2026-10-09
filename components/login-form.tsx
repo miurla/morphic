@@ -60,9 +60,15 @@ export function LoginForm({
     setError(null)
 
     try {
-      const result = await signInWithGoogle(
-        next ? safeRedirectPath(next) : undefined
-      )
+      if (next) {
+        // Supabase's redirect allowlist matches the callback URL exactly,
+        // so the destination cannot ride on the OAuth redirectTo as a
+        // query parameter; a short-lived cookie carries it to the callback.
+        document.cookie = `auth_next=${encodeURIComponent(
+          safeRedirectPath(next)
+        )}; path=/; max-age=300; SameSite=Lax`
+      }
+      const result = await signInWithGoogle()
       if (!result.success)
         throw new Error(result.error ?? 'An OAuth error occurred')
       if (result.redirectTo) {

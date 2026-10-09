@@ -81,16 +81,17 @@ export const supabaseAuthProvider: AuthProvider = {
     return error ? { success: false, error: error.message } : { success: true }
   },
 
-  async signInWithOAuth(
-    provider: string,
-    next?: string
-  ): Promise<AuthActionResult> {
+  async signInWithOAuth(provider: string): Promise<AuthActionResult> {
     const supabase = await createClient()
     const origin = await getRequestOrigin()
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider as 'google',
       options: {
-        redirectTo: `${origin}/auth/oauth${next ? `?next=${encodeURIComponent(next)}` : ''}`
+        // Fixed callback URL: Supabase's redirect allowlist matches the
+        // configured Redirect URLs exactly, so a ?next= query here would
+        // fall out of the allowlist and break the exchange. The login form
+        // carries the destination in a short-lived cookie instead.
+        redirectTo: `${origin}/auth/oauth`
       }
     })
     if (error) {
