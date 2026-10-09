@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { signUp } from '@/lib/actions/auth'
+import { AppUserProvider } from '@/lib/contexts/app-user-context'
 
 import { InviteRequired } from '@/components/invite-required'
 import { SignUpForm } from '@/components/sign-up-form'
@@ -10,8 +11,13 @@ vi.mock('@/lib/actions/auth', () => ({
   signUp: vi.fn()
 }))
 
+const { push, refresh } = vi.hoisted(() => ({
+  push: vi.fn(),
+  refresh: vi.fn()
+}))
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() })
+  useRouter: () => ({ push, refresh })
 }))
 
 function fillAndSubmit() {
@@ -91,6 +97,48 @@ describe('SignUpForm', () => {
 })
 
 describe('InviteRequired', () => {
+  it('routes to the app when the provider signs users in immediately', async () => {
+    vi.mocked(signUp).mockResolvedValue({ success: true })
+    render(
+      <AppUserProvider
+        user={null}
+        capabilities={{
+          signUp: true,
+          passwordReset: false,
+          deleteUser: true,
+          oauth: false,
+          emailVerification: false
+        }}
+      >
+        <SignUpForm />
+      </AppUserProvider>
+    )
+    fillAndSubmit()
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/'))
+  })
+
+  it('routes to the confirmation page when email verification is required', async () => {
+    vi.mocked(signUp).mockResolvedValue({ success: true })
+    render(
+      <AppUserProvider
+        user={null}
+        capabilities={{
+          signUp: true,
+          passwordReset: true,
+          deleteUser: true,
+          oauth: true,
+          emailVerification: true
+        }}
+      >
+        <SignUpForm />
+      </AppUserProvider>
+    )
+    fillAndSubmit()
+    await waitFor(() =>
+      expect(push).toHaveBeenCalledWith('/auth/sign-up-success')
+    )
+  })
+
   it('explains that sign-up requires an invitation', () => {
     render(<InviteRequired />)
 

@@ -20,7 +20,13 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, refresh: mockRefresh })
 }))
 
-const capabilities = { signUp: true, passwordReset: true, deleteUser: true }
+const capabilities = {
+  signUp: true,
+  passwordReset: true,
+  deleteUser: true,
+  oauth: true,
+  emailVerification: true
+}
 
 function renderForm(override: Partial<typeof capabilities> = {}, user = null) {
   return render(
@@ -106,6 +112,13 @@ describe('LoginForm', () => {
       writable: true,
       value: originalLocation
     })
+  })
+
+  it('hides the Google button when the provider has no OAuth', () => {
+    renderForm({ oauth: false })
+    expect(
+      screen.queryByRole('button', { name: 'Sign In with Google' })
+    ).not.toBeInTheDocument()
   })
 
   it('offers password recovery when the provider supports it', () => {

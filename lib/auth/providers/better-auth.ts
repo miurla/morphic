@@ -85,7 +85,12 @@ export const betterAuthProvider: AuthProvider = {
     return {
       signUp: true,
       passwordReset: isBetterAuthSmtpConfigured(),
-      deleteUser: true
+      deleteUser: true,
+      // Email/password only: no OAuth provider is wired into the local
+      // instance, and accounts are usable immediately without email
+      // confirmation.
+      oauth: false,
+      emailVerification: false
     }
   },
 

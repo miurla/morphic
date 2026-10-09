@@ -8,7 +8,13 @@ import { useAuthCheck } from '@/hooks/use-auth-check'
 import { useCurrentUserImage } from '@/hooks/use-current-user-image'
 import { useCurrentUserName } from '@/hooks/use-current-user-name'
 
-const capabilities = { signUp: true, passwordReset: true, deleteUser: true }
+const capabilities = {
+  signUp: true,
+  passwordReset: true,
+  deleteUser: true,
+  oauth: false,
+  emailVerification: false
+}
 
 const user: AppUser = {
   id: 'user-1',

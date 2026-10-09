@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { signUp } from '@/lib/actions/auth'
+import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
 import { cn } from '@/lib/utils/index'
 
 import { Button } from '@/components/ui/button'
@@ -34,6 +35,7 @@ export function SignUpForm({
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const capabilities = useAuthCapabilities()
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,7 +51,14 @@ export function SignUpForm({
     try {
       const result = await signUp({ email, password, token })
       if (!result.success) throw new Error(result.error ?? 'An error occurred')
-      router.push('/auth/sign-up-success')
+      if (capabilities.emailVerification) {
+        router.push('/auth/sign-up-success')
+      } else {
+        // Providers without email verification sign the user in immediately;
+        // send them straight to the app instead of a confirmation notice.
+        router.push('/')
+        router.refresh()
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {

@@ -24,6 +24,10 @@ export interface AuthCapabilities {
   signUp: boolean
   passwordReset: boolean
   deleteUser: boolean
+  /** Provider implements `signInWithOAuth` (e.g. a Google button can work). */
+  oauth: boolean
+  /** Sign-up requires confirming the email address before signing in. */
+  emailVerification: boolean
 }
 
 export interface AuthActionResult {

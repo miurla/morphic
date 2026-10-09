@@ -35,7 +35,13 @@ const user: AppUser = {
   name: 'Test Person'
 }
 
-const capabilities = { signUp: true, passwordReset: true, deleteUser: true }
+const capabilities = {
+  signUp: true,
+  passwordReset: true,
+  deleteUser: true,
+  oauth: false,
+  emailVerification: false
+}
 
 function renderDialog(override: Partial<typeof capabilities> = {}) {
   return render(
