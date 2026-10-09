@@ -2,7 +2,30 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { getAuthProvider } from '@/lib/auth/provider'
 
+/**
+ * Headers forwarded to the PostHog relay destination: the incoming request
+ * minus credentials. The /relay rewrite proxies to an external host and
+ * forwards request headers with it, so the session cookie must be removed
+ * here. PostHog authenticates through the project key in the payload,
+ * not cookies.
+ */
+export function relayStrippedHeaders(source: Headers): Headers {
+  const headers = new Headers(source)
+  headers.delete('cookie')
+  headers.delete('authorization')
+  return headers
+}
+
 export async function proxy(request: NextRequest) {
+  // Strip credentials from PostHog relay requests before the rewrite
+  // proxies them off-box. Covers both auth providers because every
+  // request funnels through here.
+  if (request.nextUrl.pathname.startsWith('/relay')) {
+    return NextResponse.next({
+      request: { headers: relayStrippedHeaders(request.headers) }
+    })
+  }
+
   // Get the protocol from X-Forwarded-Proto header or request protocol
   const protocol =
     request.headers.get('x-forwarded-proto') || request.nextUrl.protocol

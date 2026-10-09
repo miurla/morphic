@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { updateSession } from '@/lib/supabase/middleware'
 
-import { proxy } from './proxy'
+import { proxy, relayStrippedHeaders } from './proxy'
 
 vi.mock('@/lib/supabase/middleware', () => ({
   updateSession: vi.fn()
@@ -69,5 +69,31 @@ describe('proxy', () => {
     await proxy(request)
 
     expect(updateSession).toHaveBeenCalledTimes(1)
+  })
+
+  it('strips credentials from PostHog relay requests', () => {
+    const stripped = relayStrippedHeaders(
+      new Headers({
+        cookie: 'better-auth.session_token=abc',
+        authorization: 'Bearer token',
+        'user-agent': 'test-agent'
+      })
+    )
+
+    expect(stripped.get('cookie')).toBeNull()
+    expect(stripped.get('authorization')).toBeNull()
+    expect(stripped.get('user-agent')).toBe('test-agent')
+  })
+
+  it('short-circuits relay requests before session handling', async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co'
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_key'
+    vi.mocked(updateSession).mockResolvedValue(NextResponse.next())
+
+    const request = new NextRequest('http://localhost:3000/relay/capture')
+    const response = await proxy(request)
+
+    expect(updateSession).not.toHaveBeenCalled()
+    expect(response.status).toBe(200)
   })
 })

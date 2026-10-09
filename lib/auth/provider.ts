@@ -1,7 +1,11 @@
 import { betterAuthProvider } from '@/lib/auth/providers/better-auth'
 import { noneAuthProvider } from '@/lib/auth/providers/none'
 import { supabaseAuthProvider } from '@/lib/auth/providers/supabase'
-import type { AuthProvider, AuthProviderName } from '@/lib/auth/types'
+import type {
+  AuthCapabilities,
+  AuthProvider,
+  AuthProviderName
+} from '@/lib/auth/types'
 
 const AUTH_PROVIDER_NAMES: AuthProviderName[] = [
   'supabase',
@@ -32,6 +36,22 @@ function enforceCloudDeploymentGuard(
   throw new Error(
     `AUTH_PROVIDER=${name} is not allowed in MORPHIC_CLOUD_DEPLOYMENT`
   )
+}
+
+/**
+ * Fold the sharing opt-in flag into a provider's capabilities. Must be
+ * evaluated on the server: client components inline NEXT_PUBLIC_* values
+ * at build time, which would freeze the setting in prebuilt images.
+ * shareChat enforces the same flag server-side.
+ */
+export function withShareOptIn(
+  capabilities: AuthCapabilities
+): AuthCapabilities {
+  return {
+    ...capabilities,
+    share:
+      capabilities.share && process.env.NEXT_PUBLIC_ENABLE_SHARE === 'true'
+  }
 }
 
 /**

@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   getAuthProvider,
   isAnonymousMode,
-  resolveAuthProviderName
+  resolveAuthProviderName,
+  withShareOptIn
 } from '@/lib/auth/provider'
 
 const AUTH_ENV_KEYS = [
@@ -187,5 +188,41 @@ describe('supabase provider without configuration', () => {
     const response = await provider.handleSession(request)
     expect(response.status).toBe(200)
     expect(response.headers.get('location')).toBeNull()
+  })
+})
+
+describe('withShareOptIn', () => {
+  const base = {
+    signUp: true,
+    passwordReset: true,
+    deleteUser: true,
+    oauth: false,
+    emailVerification: false,
+    share: true
+  }
+
+  it('keeps sharing only when the opt-in flag is true', () => {
+    const original = process.env.NEXT_PUBLIC_ENABLE_SHARE
+    try {
+      delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      expect(withShareOptIn(base).share).toBe(false)
+
+      process.env.NEXT_PUBLIC_ENABLE_SHARE = 'true'
+      expect(withShareOptIn(base).share).toBe(true)
+
+      process.env.NEXT_PUBLIC_ENABLE_SHARE = 'false'
+      expect(withShareOptIn(base).share).toBe(false)
+    } finally {
+      if (original === undefined) {
+        delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      } else {
+        process.env.NEXT_PUBLIC_ENABLE_SHARE = original
+      }
+    }
+  })
+
+  it('never enables sharing for a provider without the capability', () => {
+    process.env.NEXT_PUBLIC_ENABLE_SHARE = 'true'
+    expect(withShareOptIn({ ...base, share: false }).share).toBe(false)
   })
 })

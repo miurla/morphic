@@ -85,14 +85,12 @@ export function AnswerSection({
   const lastTrackedSelectionKeyRef = useRef<string | null>(null)
   const { openLibrary, upsertCachedNote } = useLibrary()
   // Sharing records the chat under the signed-in user, so it needs a real
-  // auth provider (supabase or better-auth), not the anonymous one. It is
-  // also opt-in: NEXT_PUBLIC_ENABLE_SHARE must be "true" (the same flag
-  // shareChat enforces server-side).
+  // auth provider (supabase or better-auth), not the anonymous one. The
+  // opt-in flag (NEXT_PUBLIC_ENABLE_SHARE) is folded into this capability
+  // server-side by the root layout, so a prebuilt image can still enable
+  // sharing at runtime; shareChat enforces the same flag again.
   const capabilities = useAuthCapabilities()
-  const enableShare =
-    capabilities.share &&
-    process.env.NEXT_PUBLIC_ENABLE_SHARE === 'true' &&
-    !isGuest
+  const enableShare = capabilities.share && !isGuest
   const showSelectionSaveButton =
     libraryAvailable && (!isGuest || isCloudDeployment)
   const showSelectionDeepDiveButton = Boolean(onQuoteContext)

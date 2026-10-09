@@ -16,6 +16,14 @@ vi.mock('@/lib/db', () => ({
   db: {
     delete: vi.fn(() => ({
       where: vi.fn(async () => undefined)
+    })),
+    // Role lookup for the last-admin guard: no row -> guard skipped.
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({
+          limit: vi.fn(async () => [])
+        }))
+      }))
     }))
   }
 }))

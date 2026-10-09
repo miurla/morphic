@@ -49,7 +49,7 @@ vi.mock('@/lib/auth/better-auth/mailer', async importOriginal => ({
 }))
 
 const { state } = vi.hoisted(() => ({
-  state: { accounts: [] as unknown[] }
+  state: { accounts: [] as unknown[], adminCount: 1 }
 }))
 
 vi.mock('@/lib/db', () => ({
@@ -58,13 +58,16 @@ vi.mock('@/lib/db', () => ({
       where: vi.fn(async () => undefined)
     })),
     select: vi.fn(() => ({
-      // Awaitable (user-count queries) and chainable (.where().limit() for
-      // the account-exists check) so both query shapes resolve.
+      // Awaitable (user-count and admin-count queries) and chainable
+      // (.where().limit() for the account-exists and role lookups) so
+      // both query shapes resolve.
       from: vi.fn(() =>
         Object.assign(Promise.resolve([{ total: 0 }]), {
-          where: vi.fn(() => ({
-            limit: vi.fn(async () => state.accounts)
-          }))
+          where: vi.fn(() =>
+            Object.assign(Promise.resolve([{ n: state.adminCount }]), {
+              limit: vi.fn(async () => state.accounts)
+            })
+          )
         })
       )
     }))
@@ -78,10 +81,12 @@ vi.mock('next/headers', () => ({
 
 function makeRequest(pathname: string): NextRequest {
   const href = `http://localhost:3000${pathname}`
+  const url = new URL(href)
   return {
     nextUrl: {
       href,
-      pathname,
+      pathname: url.pathname,
+      search: url.search,
       clone: () => new URL(href)
     },
     headers: new Headers()
@@ -102,6 +107,7 @@ describe('better-auth provider', () => {
 
   beforeEach(() => {
     state.accounts = []
+    state.adminCount = 1
     for (const key of [
       'SMTP_HOST',
       'SMTP_USER',
@@ -182,6 +188,22 @@ describe('better-auth provider', () => {
       expect(response.status).toBe(307)
       expect(response.headers.get('location')).toBe(
         'http://localhost:3000/auth/login?next=%2Fsome-protected-page'
+      )
+    })
+
+    it('carries the query string through the login redirect', async () => {
+      vi.mocked(mockAuth.api.getSession).mockResolvedValue({
+        response: null,
+        headers: new Headers()
+      } as never)
+
+      const response = await betterAuthProvider.handleSession!(
+        makeRequest('/some-protected-page?q=hello%20world')
+      )
+
+      expect(response.status).toBe(307)
+      expect(response.headers.get('location')).toBe(
+        'http://localhost:3000/auth/login?next=%2Fsome-protected-page%3Fq%3Dhello%2520world'
       )
     })
 
@@ -838,6 +860,29 @@ describe('better-auth provider', () => {
 
   describe('deleteUser', () => {
     it('deletes the auth user row', async () => {
+      const { db } = await import('@/lib/db')
+
+      const result = await betterAuthProvider.deleteUser!('user-1')
+
+      expect(result).toEqual({ success: true })
+      expect(db.delete).toHaveBeenCalled()
+    })
+
+    it('refuses to delete the only remaining admin', async () => {
+      state.accounts = [{ id: 'user-1', role: 'admin' }]
+      state.adminCount = 1
+      const { db } = await import('@/lib/db')
+
+      const result = await betterAuthProvider.deleteUser!('user-1')
+
+      expect(result.success).toBe(false)
+      expect(result.error).toMatch(/only admin/i)
+      expect(db.delete).not.toHaveBeenCalled()
+    })
+
+    it('deletes an admin account while another admin remains', async () => {
+      state.accounts = [{ id: 'user-1', role: 'admin' }]
+      state.adminCount = 2
       const { db } = await import('@/lib/db')
 
       const result = await betterAuthProvider.deleteUser!('user-1')

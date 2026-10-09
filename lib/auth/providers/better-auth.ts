@@ -1,7 +1,7 @@
 import { cookies, headers } from 'next/headers'
 import { type NextRequest, NextResponse } from 'next/server'
 
-import { eq } from 'drizzle-orm'
+import { count, eq } from 'drizzle-orm'
 
 import {
   getAuth,
@@ -197,9 +197,11 @@ export const betterAuthProvider: AuthProvider = {
     ) {
       const url = request.nextUrl.clone()
       url.pathname = '/auth/login'
-      // Carry the intended destination through the login (the login form
-      // validates it with safeRedirectPath before following it).
-      url.searchParams.set('next', pathname)
+      // Drop the original query from the login URL itself; it travels
+      // inside `next` (including its query string) instead. The login
+      // form validates it with safeRedirectPath before following it.
+      url.search = ''
+      url.searchParams.set('next', pathname + request.nextUrl.search)
       return NextResponse.redirect(url)
     }
 
@@ -503,6 +505,26 @@ export const betterAuthProvider: AuthProvider = {
 
   async deleteUser(userId: string): Promise<AuthActionResult> {
     try {
+      // Refuse to remove the last admin: without one, /auth/admin becomes
+      // unreachable and there is no in-product path back to an admin role.
+      const [target] = await db
+        .select({ role: authUser.role })
+        .from(authUser)
+        .where(eq(authUser.id, userId))
+        .limit(1)
+      if (target?.role === 'admin') {
+        const [adminCount] = await db
+          .select({ n: count() })
+          .from(authUser)
+          .where(eq(authUser.role, 'admin'))
+        if ((adminCount?.n ?? 0) <= 1) {
+          return {
+            success: false,
+            error:
+              'You are the only admin. Promote another member to admin before deleting this account.'
+          }
+        }
+      }
       // Cascades remove sessions and accounts via foreign keys
       await db.delete(authUser).where(eq(authUser.id, userId))
       return { success: true }
