@@ -198,7 +198,11 @@ export const betterAuthProvider: AuthProvider = {
         })
       await applySetCookieHeaders(responseHeaders)
 
-      if (!response || !(response as { session?: unknown }).session) {
+      // signUpEmail resolves to `{ token, user }` — there is no `session`
+      // field. The token is the session token the set-cookie headers above
+      // already delivered to the browser, so its presence is the success
+      // signal.
+      if (!response || !(response as { token?: unknown }).token) {
         return {
           success: false,
           error: 'Sign-up failed. The account may already exist.'

@@ -217,7 +217,7 @@ describe('better-auth provider', () => {
   })
 
   describe('signUp', () => {
-    const signUpResult = { session: {}, user: sessionUser }
+    const signUpResult = { token: 'session-token', user: sessionUser }
 
     it('signs up in open mode without a token', async () => {
       vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
@@ -232,6 +232,22 @@ describe('better-auth provider', () => {
 
       expect(result).toEqual({ success: true })
       expect(validateInvitation).not.toHaveBeenCalled()
+    })
+
+    it('reports failure when the response carries no session token', async () => {
+      // Regression: signUpEmail resolves to `{ token, user }`; a response
+      // without a token means the account was not created.
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
+        response: { user: sessionUser },
+        headers: new Headers()
+      } as never)
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'new@example.com',
+        password: 'secret'
+      })
+
+      expect(result.success).toBe(false)
     })
 
     it('requires a valid invitation in invite mode', async () => {
