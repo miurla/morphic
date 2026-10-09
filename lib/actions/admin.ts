@@ -202,3 +202,14 @@ export async function promoteMemberAction(params: {
     }
   }
 }
+
+/**
+ * Server clock sample for the invitations manager's expiry clock. The
+ * round-trip latency of this call is the only error it carries, unlike
+ * the render-time snapshot whose age includes the pre-hydration delay.
+ * No guard: the server clock is already observable from any response's
+ * Date header.
+ */
+export async function getServerTime(): Promise<number> {
+  return Date.now()
+}

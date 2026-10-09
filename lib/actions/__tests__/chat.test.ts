@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getAuthProvider } from '@/lib/auth/provider'
 import * as dbActions from '@/lib/db/actions'
 import type { Chat, Message } from '@/lib/db/schema'
 import {
@@ -32,6 +33,12 @@ import {
 vi.mock('@/lib/auth/get-current-user')
 vi.mock('@/lib/db/actions')
 vi.mock('@/lib/agents/title-generator')
+vi.mock('@/lib/auth/provider', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/lib/auth/provider')>()),
+  // Default: a provider that supports sharing; individual tests
+  // override for the anonymous-mode shape.
+  getAuthProvider: vi.fn(() => ({ capabilities: { share: true } }))
+}))
 vi.mock('@/lib/storage/r2-client', () => ({
   getUserFileObjectKeyPrefix: vi.fn((userId: string) => `${userId}/`),
   signFilePartUrlsInMessages: vi.fn(async messages => messages)
@@ -510,6 +517,9 @@ describe('Chat Actions', () => {
     beforeEach(() => {
       // Sharing is opt-in; the action enforces the same flag as the UI.
       process.env.NEXT_PUBLIC_ENABLE_SHARE = 'true'
+      vi.mocked(getAuthProvider).mockReturnValue({
+        capabilities: { share: true }
+      } as never)
     })
 
     afterEach(() => {
@@ -556,6 +566,21 @@ describe('Chat Actions', () => {
 
     it('should return null while sharing is not enabled', async () => {
       delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+
+      const result = await shareChat('chat-123')
+
+      expect(result).toBeNull()
+      expect(dbActions.updateChatVisibility).not.toHaveBeenCalled()
+    })
+
+    it('should return null when the active provider has no sharing capability', async () => {
+      // Anonymous mode: every chat belongs to one shared identity, so
+      // the action must not publish even with ENABLE_SHARE set while
+      // the provider (and the UI) has sharing disabled.
+      vi.mocked(getAuthProvider).mockReturnValue({
+        capabilities: { share: false }
+      } as never)
+      vi.mocked(getCurrentUserId).mockResolvedValue('user-123')
 
       const result = await shareChat('chat-123')
 

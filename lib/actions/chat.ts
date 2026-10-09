@@ -4,7 +4,7 @@ import { revalidateTag, unstable_cache } from 'next/cache'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
-import { isShareEnabled } from '@/lib/auth/provider'
+import { getAuthProvider, isShareEnabled } from '@/lib/auth/provider'
 import * as dbActions from '@/lib/db/actions'
 import type { Chat, Message } from '@/lib/db/schema'
 import { generateId } from '@/lib/db/schema'
@@ -300,8 +300,11 @@ export async function deleteMessagesAfter(chatId: string, messageId: string) {
 export async function shareChat(chatId: string) {
   // Sharing is opt-in (ENABLE_SHARE=true); enforce the same gate here
   // that the share UI applies, so the action cannot be called directly
-  // while sharing is disabled.
-  if (!isShareEnabled()) {
+  // while sharing is disabled. The active provider's capability is
+  // enforced too: in anonymous mode every chat belongs to one shared
+  // identity, so the action must not publish chats even when the flag
+  // is set while the provider (and the UI) has sharing off.
+  if (!isShareEnabled() || !getAuthProvider().capabilities.share) {
     return null
   }
 

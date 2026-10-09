@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   createInvitationAction,
+  getServerTime,
   type InvitationView,
   revokeInvitationAction
 } from '@/lib/actions/admin'
@@ -11,7 +12,10 @@ import { InvitationsManager } from '@/components/admin/invitations-manager'
 
 vi.mock('@/lib/actions/admin', () => ({
   createInvitationAction: vi.fn(),
-  revokeInvitationAction: vi.fn()
+  revokeInvitationAction: vi.fn(),
+  // Default: the server clock matches the (possibly faked) local clock,
+  // so the round-trip sample confirms zero skew.
+  getServerTime: vi.fn(async () => Date.now())
 }))
 
 const invitations: InvitationView[] = [
@@ -38,6 +42,8 @@ const invitations: InvitationView[] = [
 describe('InvitationsManager', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // clearAllMocks keeps implementations; restore the default sample.
+    vi.mocked(getServerTime).mockImplementation(async () => Date.now())
   })
 
   it('lists invitations with their status', () => {
@@ -109,6 +115,9 @@ describe('InvitationsManager', () => {
     // server snapshot taken at page load corrects the local clock.
     const realNow = new Date('2026-01-01T00:00:00Z').getTime()
     vi.useFakeTimers({ now: realNow + 3_600_000 })
+    // The round-trip sample reports the true server time, confirming
+    // the browser clock is an hour fast.
+    vi.mocked(getServerTime).mockResolvedValue(realNow)
     try {
       render(
         <InvitationsManager
@@ -170,6 +179,33 @@ describe('InvitationsManager', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('replaces the provisional snapshot skew after a long pre-hydration delay', async () => {
+    // A tab backgrounded for five minutes before hydration makes the
+    // render snapshot look five minutes stale. Trusting it as clock
+    // drift pins the clock to the render time and keeps an elapsed
+    // invitation Active forever; the round-trip sample (server clock
+    // equal to the client clock here) must replace that estimate.
+    const now = Date.now()
+    render(
+      <InvitationsManager
+        serverNow={new Date(now - 300_000).toISOString()}
+        invitations={[
+          {
+            id: 'inv-8',
+            email: 'bg@example.com',
+            revoked: false,
+            used: false,
+            expired: false,
+            expiresAt: new Date(now - 60_000).toISOString(),
+            createdAt: new Date(now - 600_000).toISOString()
+          }
+        ]}
+      />
+    )
+
+    await waitFor(() => expect(screen.getByText('Expired')).toBeInTheDocument())
   })
 
   it('creates an invitation and shows a copyable link', async () => {
