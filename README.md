@@ -125,7 +125,7 @@ BOOTSTRAP_ADMIN_EMAIL=you@example.com
 
 2. Start Morphic. With Docker (`docker compose up -d`), database migrations run automatically at container start and create the auth tables. For local development (`bun dev` with a local Postgres), run `bun migrate` once before starting the dev server.
 
-3. First boot: open http://localhost:3000/auth/sign-up and create your account. The first account becomes the instance admin; the bootstrap window then closes permanently. When `BOOTSTRAP_ADMIN_EMAIL` is set, only that address can sign up during the window. If SMTP and `BETTER_AUTH_URL` are configured, the bootstrap sign-up emails a one-time link to that address, so only someone who controls the mailbox can complete it; otherwise the first person to submit the gated address wins the window, so finish first boot before exposing the instance to others.
+3. First boot: open http://localhost:3000/auth/sign-up and create your account. The first account becomes the instance admin; the bootstrap window then closes permanently. When `BOOTSTRAP_ADMIN_EMAIL` is set, only that address can sign up during the window. If SMTP is configured, the bootstrap sign-up emails a one-time link to that address, so only someone who controls the mailbox can complete it — this requires `BETTER_AUTH_URL` (the link origin); without SMTP the first person to submit the gated address wins the window, so finish first boot before exposing the instance to others.
 
 #### Invite-only sign-up
 

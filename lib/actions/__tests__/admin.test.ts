@@ -25,7 +25,9 @@ const { mockSetUserPassword } = vi.hoisted(() => ({
 }))
 
 vi.mock('@/lib/auth/better-auth/config', () => ({
-  getAuth: () => ({ api: { setUserPassword: mockSetUserPassword } })
+  getAuth: () => ({ api: { setUserPassword: mockSetUserPassword } }),
+  getEmailLinkOrigin: () =>
+    (process.env.BETTER_AUTH_URL ?? '').trim().replace(/\/+$/, '')
 }))
 
 vi.mock('next/headers', () => ({
@@ -65,7 +67,12 @@ describe('admin actions', () => {
   const originalEnv: Record<string, string | undefined> = {}
 
   beforeEach(() => {
-    for (const key of ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD']) {
+    for (const key of [
+      'SMTP_HOST',
+      'SMTP_USER',
+      'SMTP_PASSWORD',
+      'BETTER_AUTH_URL'
+    ]) {
       originalEnv[key] = process.env[key]
       delete process.env[key]
     }
@@ -159,6 +166,7 @@ describe('admin actions', () => {
       process.env.SMTP_HOST = 'smtp.example.com'
       process.env.SMTP_USER = 'user'
       process.env.SMTP_PASSWORD = 'secret'
+      process.env.BETTER_AUTH_URL = 'http://localhost:3000'
       const sendMail = vi.fn(async () => {})
       const nodemailer = await import('nodemailer')
       vi.mocked(nodemailer.default.createTransport).mockReturnValue({
@@ -177,6 +185,38 @@ describe('admin actions', () => {
 
       expect(result.success).toBe(true)
       expect(sendMail).toHaveBeenCalled()
+      // The emailed link must use the canonical origin, never request
+      // headers: a spoofed Host could ship the live token to an attacker.
+      expect(JSON.stringify(sendMail.mock.calls)).toContain(
+        'http://localhost:3000/auth/sign-up?token=tok123'
+      )
+    })
+
+    it('withholds the invitation email without a canonical origin', async () => {
+      // SMTP configured but BETTER_AUTH_URL unset: the link is still
+      // returned to the admin, but nothing is emailed.
+      process.env.SMTP_HOST = 'smtp.example.com'
+      process.env.SMTP_USER = 'user'
+      process.env.SMTP_PASSWORD = 'secret'
+      const sendMail = vi.fn(async () => {})
+      const nodemailer = await import('nodemailer')
+      vi.mocked(nodemailer.default.createTransport).mockReturnValue({
+        sendMail
+      } as never)
+
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
+      vi.mocked(createInvitation).mockResolvedValue({
+        invitation: invitationRecord,
+        token: 'tok123'
+      })
+
+      const result = await createInvitationAction({
+        email: 'friend@example.com'
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.link).toContain('auth/sign-up?token=tok123')
+      expect(sendMail).not.toHaveBeenCalled()
     })
   })
 

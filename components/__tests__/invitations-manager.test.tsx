@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
@@ -69,6 +69,38 @@ describe('InvitationsManager', () => {
     expect(screen.getByText('Expired')).toBeInTheDocument()
     expect(screen.queryByText('Active')).not.toBeInTheDocument()
     expect(screen.queryByText('Revoke')).not.toBeInTheDocument()
+  })
+
+  it('rechecks expiration while the page stays open', async () => {
+    // The server-computed flag says active, but the link elapsed after
+    // the page rendered: the client clock tick must catch up.
+    vi.useFakeTimers()
+    try {
+      render(
+        <InvitationsManager
+          invitations={[
+            {
+              id: 'inv-5',
+              email: 'late@example.com',
+              revoked: false,
+              used: false,
+              expired: false,
+              expiresAt: new Date(Date.now() - 1000).toISOString(),
+              createdAt: new Date().toISOString()
+            }
+          ]}
+        />
+      )
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000)
+      })
+
+      expect(screen.getByText('Expired')).toBeInTheDocument()
+      expect(screen.queryByText('Revoke')).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('creates an invitation and shows a copyable link', async () => {

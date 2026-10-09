@@ -3,7 +3,7 @@
 import { headers } from 'next/headers'
 
 import { type InvitationView, invitationView } from '@/lib/actions/admin-views'
-import { getAuth } from '@/lib/auth/better-auth/config'
+import { getAuth, getEmailLinkOrigin } from '@/lib/auth/better-auth/config'
 import {
   createInvitation,
   revokeInvitation
@@ -87,11 +87,16 @@ export async function createInvitationAction(params: {
       email
     })
 
-    const origin = await getRequestOrigin()
-    const link = `${origin}/auth/sign-up?token=${token}`
+    const canonical = getEmailLinkOrigin()
+    const link = `${canonical || (await getRequestOrigin())}/auth/sign-up?token=${token}`
 
-    // Additionally email the invitation when SMTP is configured
+    // Additionally email the invitation when SMTP is configured. The
+    // emailed link uses only the canonical BETTER_AUTH_URL origin: a link
+    // built from request headers could ship the live token to an attacker
+    // domain via a spoofed Host. Without a canonical origin the admin
+    // copies the link manually instead.
     if (
+      canonical &&
       process.env.SMTP_HOST &&
       process.env.SMTP_USER &&
       process.env.SMTP_PASSWORD
@@ -99,7 +104,7 @@ export async function createInvitationAction(params: {
       try {
         await sendInvitationEmail({
           to: email,
-          inviteLink: link,
+          inviteLink: `${canonical}/auth/sign-up?token=${token}`,
           invitedByName: adminUser.name || adminUser.email || 'An admin'
         })
       } catch (error) {

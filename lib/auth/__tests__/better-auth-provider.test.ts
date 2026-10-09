@@ -7,6 +7,7 @@ import {
   consumeInvitation,
   createInvitation,
   hasRecentBootstrapInvitation,
+  revokeInvitation,
   validateInvitation
 } from '@/lib/auth/better-auth/invitations'
 import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
@@ -36,7 +37,8 @@ vi.mock('@/lib/auth/better-auth/invitations', () => ({
   validateInvitation: vi.fn(),
   consumeInvitation: vi.fn(),
   createInvitation: vi.fn(),
-  hasRecentBootstrapInvitation: vi.fn(async () => false)
+  hasRecentBootstrapInvitation: vi.fn(async () => false),
+  revokeInvitation: vi.fn(async () => true)
 }))
 
 vi.mock('@/lib/auth/better-auth/mailer', async importOriginal => ({
@@ -504,27 +506,50 @@ describe('better-auth provider', () => {
       expect(mockAuth.api.signUpEmail).not.toHaveBeenCalled()
     })
 
-    it('falls back to trust-on-first-use without a canonical origin', async () => {
-      // Emailed links must never be built from caller-controlled headers,
-      // so SMTP alone does not enable the mailbox-proof flow.
+    it('refuses the bootstrap flow when SMTP is set without a canonical origin', async () => {
+      // Fail closed: silently falling back to first-come sign-up would
+      // let anyone who guesses the gated address claim admin while the
+      // operator believes mailbox proof is active.
       process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
       process.env.SMTP_HOST = 'smtp.example.com'
       process.env.SMTP_USER = 'user'
       process.env.SMTP_PASSWORD = 'pass'
-
-      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
-        response: signUpResult,
-        headers: new Headers()
-      } as never)
 
       const result = await betterAuthProvider.signUp!({
         email: 'admin@corp.local',
         password: 'secret'
       })
 
-      expect(result).toEqual({ success: true })
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('BETTER_AUTH_URL')
       expect(createInvitation).not.toHaveBeenCalled()
       expect(sendSmtpMail).not.toHaveBeenCalled()
+      expect(mockAuth.api.signUpEmail).not.toHaveBeenCalled()
+    })
+
+    it('releases the invitation when the bootstrap email fails to send', async () => {
+      // Otherwise the cooldown would treat the unsent invitation as
+      // delivered and block retries for 15 minutes.
+      process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+      process.env.SMTP_HOST = 'smtp.example.com'
+      process.env.SMTP_USER = 'user'
+      process.env.SMTP_PASSWORD = 'pass'
+      process.env.BETTER_AUTH_URL = 'http://localhost:3000'
+      vi.mocked(hasRecentBootstrapInvitation).mockResolvedValue(false)
+      vi.mocked(createInvitation).mockResolvedValue({
+        invitation: { id: 'inv-boot' } as never,
+        token: 'boot-token'
+      })
+      vi.mocked(sendSmtpMail).mockRejectedValue(new Error('smtp down'))
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'admin@corp.local',
+        password: 'secret'
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('smtp down')
+      expect(revokeInvitation).toHaveBeenCalledWith('inv-boot')
     })
 
     it('claims the invitation before creating the account', async () => {

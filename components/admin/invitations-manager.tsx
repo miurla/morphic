@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   createInvitationAction,
@@ -18,6 +18,17 @@ export function InvitationsManager({
   invitations: InvitationView[]
 }) {
   const [invitations, setInvitations] = useState(initialInvitations)
+  // The server-computed `expired` flag goes stale while the page stays
+  // open. A state clock (never read from Date during render) re-evaluates
+  // expirations every minute, so an elapsed link is caught within a minute.
+  const [now, setNow] = useState<number | null>(null)
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(timer)
+  }, [])
+  const isExpired = (invitation: InvitationView) =>
+    invitation.expired ||
+    (now !== null && new Date(invitation.expiresAt).getTime() <= now)
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
@@ -120,14 +131,14 @@ export function InvitationsManager({
                 <Badge variant="secondary">Used</Badge>
               ) : invitation.revoked ? (
                 <Badge variant="destructive">Revoked</Badge>
-              ) : invitation.expired ? (
+              ) : isExpired(invitation) ? (
                 <Badge variant="outline">Expired</Badge>
               ) : (
                 <Badge>Active</Badge>
               )}
               {!invitation.revoked &&
                 !invitation.used &&
-                !invitation.expired && (
+                !isExpired(invitation) && (
                   <Button
                     type="button"
                     size="sm"

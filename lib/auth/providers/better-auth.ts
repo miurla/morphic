@@ -14,6 +14,7 @@ import {
   consumeInvitation,
   createInvitation,
   hasRecentBootstrapInvitation,
+  revokeInvitation,
   validateInvitation
 } from '@/lib/auth/better-auth/invitations'
 import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
@@ -188,11 +189,19 @@ export const betterAuthProvider: AuthProvider = {
     // invitations can only be created by an existing admin, so the gated
     // address must be able to sign up without a token.
     const bootstrapAccount = await isBootstrapAccount(email)
-    if (
-      bootstrapAccount &&
-      isBetterAuthSmtpConfigured() &&
-      getEmailLinkOrigin()
-    ) {
+    if (bootstrapAccount && isBetterAuthSmtpConfigured()) {
+      const origin = getEmailLinkOrigin()
+      if (!origin) {
+        // Fail closed: without a canonical origin the confirmation link
+        // cannot be delivered safely, and silently falling back to
+        // first-come sign-up would let anyone who guesses the address
+        // claim admin while the operator believes mailbox proof is active.
+        return {
+          success: false,
+          error:
+            'Bootstrap sign-up requires BETTER_AUTH_URL to deliver its confirmation email. Set it, or unset SMTP to accept the first sign-up directly.'
+        }
+      }
       // The bootstrap gate only compares caller-supplied email text, so on
       // an instance reachable by others anyone who guesses the operator's
       // address could claim the admin role. When SMTP is available, require
@@ -216,17 +225,23 @@ export const betterAuthProvider: AuthProvider = {
               notice: `A bootstrap link was sent to ${email}. Open it to finish creating the admin account.`
             }
           }
-          const { token: inviteToken } = await createInvitation({
+          const { invitation, token: inviteToken } = await createInvitation({
             invitedBy: 'bootstrap',
             email: emailKey
           })
-          const link = `${getEmailLinkOrigin()}/auth/sign-up?token=${inviteToken}`
-          await sendSmtpMail({
-            to: email,
-            subject: 'Finish creating your Morphic admin account',
-            text: `Use this link to finish creating the admin account for ${email} (valid for one week): ${link}`,
-            html: `<p>Use this link to finish creating the admin account for ${email} (valid for one week):</p><p><a href="${link}">Complete sign-up</a></p>`
-          })
+          try {
+            await sendSmtpMail({
+              to: email,
+              subject: 'Finish creating your Morphic admin account',
+              text: `Use this link to finish creating the admin account for ${email} (valid for one week): ${origin}/auth/sign-up?token=${inviteToken}`,
+              html: `<p>Use this link to finish creating the admin account for ${email} (valid for one week):</p><p><a href="${origin}/auth/sign-up?token=${inviteToken}">Complete sign-up</a></p>`
+            })
+          } catch (error) {
+            // Delivery failed: release the invitation so a retry can send
+            // a fresh link instead of being locked out by the cooldown.
+            await revokeInvitation(invitation.id).catch(() => {})
+            throw error
+          }
           return {
             success: true,
             notice: `A bootstrap link was sent to ${email}. Open it to finish creating the admin account.`
