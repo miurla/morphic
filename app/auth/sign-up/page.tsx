@@ -31,13 +31,17 @@ export default async function SignUpPage({
   let validToken: string | undefined
   let inviteEmail: string | undefined
 
-  if (provider.name === 'better-auth' && getSignUpMode() === 'invite') {
+  if (provider.name === 'better-auth') {
+    // Read the token in every sign-up mode: with SMTP configured the
+    // bootstrap address receives its link by email, and open mode must
+    // pass that token through or the form would restart the email flow
+    // forever.
     const { token } = await searchParams
-    const invitation = await validateInvitation(token)
+    const invitation = token ? await validateInvitation(token) : null
     if (invitation) {
       validToken = token
       inviteEmail = invitation.email ?? undefined
-    } else {
+    } else if (getSignUpMode() === 'invite') {
       // A fresh invite-only instance has no invitations yet: show the form
       // while the bootstrap window is open so the gated address can create
       // the first account. The address itself is enforced at creation time.

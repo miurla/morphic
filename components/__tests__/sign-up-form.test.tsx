@@ -70,6 +70,27 @@ describe('SignUpForm', () => {
     expect(push).not.toHaveBeenCalled()
   })
 
+  it('clears a previous notice when a later attempt fails', async () => {
+    vi.mocked(signUp)
+      .mockResolvedValueOnce({
+        success: true,
+        notice: 'A bootstrap link was sent to admin@corp.local.'
+      })
+      .mockResolvedValueOnce({ success: false, error: 'Server error' })
+
+    render(<SignUpForm />)
+    fillAndSubmit()
+    expect(
+      await screen.findByText('A bootstrap link was sent to admin@corp.local.')
+    ).toBeInTheDocument()
+
+    fillAndSubmit()
+    expect(await screen.findByText('Server error')).toBeInTheDocument()
+    expect(
+      screen.queryByText('A bootstrap link was sent to admin@corp.local.')
+    ).not.toBeInTheDocument()
+  })
+
   it('prefills and flags the email an invitation is bound to', async () => {
     vi.mocked(signUp).mockResolvedValue({ success: true })
 

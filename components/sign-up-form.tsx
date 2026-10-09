@@ -42,6 +42,7 @@ export function SignUpForm({
     e.preventDefault()
     setIsLoading(true)
     setError(null)
+    setNotice(null)
 
     if (password !== repeatPassword) {
       setError('Passwords do not match')

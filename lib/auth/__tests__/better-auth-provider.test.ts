@@ -387,6 +387,74 @@ describe('better-auth provider', () => {
       expect(consumeInvitation).toHaveBeenCalledWith('inv-1')
     })
 
+    it('rejects an arbitrary token on the gated address in open mode', async () => {
+      // Open mode ignores tokens for regular sign-ups, so the bootstrap
+      // proof must validate them itself: any non-empty token must not be
+      // enough to skip mailbox control.
+      process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+      process.env.SMTP_HOST = 'smtp.example.com'
+      process.env.SMTP_USER = 'user'
+      process.env.SMTP_PASSWORD = 'pass'
+      vi.mocked(validateInvitation).mockResolvedValue(null)
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'admin@corp.local',
+        password: 'secret',
+        token: 'arbitrary-token'
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('link sent to your email')
+      expect(mockAuth.api.signUpEmail).not.toHaveBeenCalled()
+      expect(createInvitation).not.toHaveBeenCalled()
+    })
+
+    it('redeems the emailed bootstrap invitation in open mode too', async () => {
+      process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+      process.env.SMTP_HOST = 'smtp.example.com'
+      process.env.SMTP_USER = 'user'
+      process.env.SMTP_PASSWORD = 'pass'
+      vi.mocked(validateInvitation).mockResolvedValue({
+        id: 'inv-2',
+        email: 'admin@corp.local'
+      } as never)
+      vi.mocked(consumeInvitation).mockResolvedValue(true)
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
+        response: signUpResult,
+        headers: new Headers()
+      } as never)
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'admin@corp.local',
+        password: 'secret',
+        token: 'boot-token'
+      })
+
+      expect(result).toEqual({ success: true })
+      expect(consumeInvitation).toHaveBeenCalledWith('inv-2')
+    })
+
+    it('rejects a bootstrap token not bound to the gated address', async () => {
+      process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+      process.env.SMTP_HOST = 'smtp.example.com'
+      process.env.SMTP_USER = 'user'
+      process.env.SMTP_PASSWORD = 'pass'
+      vi.mocked(validateInvitation).mockResolvedValue({
+        id: 'inv-3',
+        email: null
+      } as never)
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'admin@corp.local',
+        password: 'secret',
+        token: 'unbound-token'
+      })
+
+      expect(result.success).toBe(false)
+      expect(mockAuth.api.signUpEmail).not.toHaveBeenCalled()
+      expect(consumeInvitation).not.toHaveBeenCalled()
+    })
+
     it('claims the invitation before creating the account', async () => {
       process.env.AUTH_SIGNUP_MODE = 'invite'
       vi.mocked(validateInvitation).mockResolvedValue({

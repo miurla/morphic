@@ -75,6 +75,32 @@ describe('sign-up page', () => {
     })
   })
 
+  it('forwards a valid invitation token in open mode too', async () => {
+    // SMTP bootstrap flow: the emailed link must reach the form even in
+    // open mode, or submitting the gated address restarts the email loop.
+    vi.mocked(getAuthProvider).mockReturnValue({
+      name: 'better-auth',
+      capabilities: { signUp: true }
+    } as never)
+    vi.mocked(validateInvitation).mockResolvedValue({
+      id: 'inv-1',
+      email: 'admin@corp.local'
+    } as never)
+
+    const tree = (await Page({
+      searchParams: Promise.resolve({ token: 'boot-token' })
+    })) as unknown as {
+      props: {
+        children: { props: { children: { props: Record<string, unknown> } } }
+      }
+    }
+
+    expect(tree.props.children.props.children.props).toMatchObject({
+      token: 'boot-token',
+      inviteEmail: 'admin@corp.local'
+    })
+  })
+
   it('renders the form while the bootstrap window is open in invite mode', async () => {
     // Fresh invite-only instance: the gated address must reach the form;
     // the address itself is enforced at creation time.
