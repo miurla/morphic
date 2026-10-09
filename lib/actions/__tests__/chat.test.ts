@@ -1,6 +1,6 @@
 import { revalidateTag } from 'next/cache'
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
@@ -505,6 +505,21 @@ describe('Chat Actions', () => {
   })
 
   describe('shareChat', () => {
+    const originalShareFlag = process.env.NEXT_PUBLIC_ENABLE_SHARE
+
+    beforeEach(() => {
+      // Sharing is opt-in; the action enforces the same flag as the UI.
+      process.env.NEXT_PUBLIC_ENABLE_SHARE = 'true'
+    })
+
+    afterEach(() => {
+      if (originalShareFlag === undefined) {
+        delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      } else {
+        process.env.NEXT_PUBLIC_ENABLE_SHARE = originalShareFlag
+      }
+    })
+
     it('should update chat visibility to public', async () => {
       const chatId = 'chat-123'
       const userId = 'user-123'
@@ -532,6 +547,15 @@ describe('Chat Actions', () => {
 
     it('should return null for unauthenticated user', async () => {
       vi.mocked(getCurrentUserId).mockResolvedValue(undefined)
+
+      const result = await shareChat('chat-123')
+
+      expect(result).toBeNull()
+      expect(dbActions.updateChatVisibility).not.toHaveBeenCalled()
+    })
+
+    it('should return null while sharing is not enabled', async () => {
+      delete process.env.NEXT_PUBLIC_ENABLE_SHARE
 
       const result = await shareChat('chat-123')
 

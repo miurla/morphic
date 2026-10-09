@@ -25,11 +25,6 @@ import type { AppUser, AuthActionResult, AuthProvider } from '@/lib/auth/types'
 import { db } from '@/lib/db'
 
 /**
- * Minimum gap between bootstrap invitation emails for the same address.
- * The bootstrap branch runs before better-auth's rate limiter, so this
- * is the only throttle on repeated tokenless sign-up attempts.
- */
-/**
  * Whether an account already exists for the address. Used to decide whether
  * an uncertain sign-up failure (a throw after better-auth may have already
  * committed the user) may safely release the invitation claim.
@@ -49,6 +44,11 @@ async function accountExists(email: string): Promise<boolean> {
   }
 }
 
+/**
+ * Minimum gap between bootstrap invitation emails for the same address.
+ * The bootstrap branch runs before better-auth's rate limiter, so this
+ * is the only throttle on repeated tokenless sign-up attempts.
+ */
 const BOOTSTRAP_INVITE_COOLDOWN_MS = 15 * 60 * 1000
 
 /**
@@ -197,6 +197,9 @@ export const betterAuthProvider: AuthProvider = {
     ) {
       const url = request.nextUrl.clone()
       url.pathname = '/auth/login'
+      // Carry the intended destination through the login (the login form
+      // validates it with safeRedirectPath before following it).
+      url.searchParams.set('next', pathname)
       return NextResponse.redirect(url)
     }
 

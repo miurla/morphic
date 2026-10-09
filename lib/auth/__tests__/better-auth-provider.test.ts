@@ -181,7 +181,7 @@ describe('better-auth provider', () => {
 
       expect(response.status).toBe(307)
       expect(response.headers.get('location')).toBe(
-        'http://localhost:3000/auth/login'
+        'http://localhost:3000/auth/login?next=%2Fsome-protected-page'
       )
     })
 

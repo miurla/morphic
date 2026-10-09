@@ -57,20 +57,34 @@ export function InvitationsManager({
     setError(null)
     setNewLink(null)
 
-    const result = await createInvitationAction({ email })
-    if (result.success && result.invitation) {
-      setInvitations(current => [result.invitation!, ...current])
-      setNewLink(result.link ?? null)
-      setEmail('')
-    } else {
-      setError(result.error ?? 'Failed to create invitation')
+    try {
+      const result = await createInvitationAction({ email })
+      if (result.success && result.invitation) {
+        setInvitations(current => [result.invitation!, ...current])
+        setNewLink(result.link ?? null)
+        setEmail('')
+      } else {
+        setError(result.error ?? 'Failed to create invitation')
+      }
+    } catch (error: unknown) {
+      setError(
+        error instanceof Error ? error.message : 'Failed to create invitation'
+      )
     }
     setIsCreating(false)
   }
 
   const handleRevoke = async (id: string) => {
     setError(null)
-    const result = await revokeInvitationAction(id)
+    let result
+    try {
+      result = await revokeInvitationAction(id)
+    } catch (error: unknown) {
+      setError(
+        error instanceof Error ? error.message : 'Failed to revoke invitation'
+      )
+      return
+    }
     if (result.success) {
       setInvitations(current =>
         current.map(invitation =>

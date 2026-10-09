@@ -297,6 +297,13 @@ export async function deleteMessagesAfter(chatId: string, messageId: string) {
  * Share a chat (make it public)
  */
 export async function shareChat(chatId: string) {
+  // Sharing is opt-in (NEXT_PUBLIC_ENABLE_SHARE=true); enforce the same
+  // gate here that the share UI applies, so the action cannot be called
+  // directly while sharing is disabled.
+  if (process.env.NEXT_PUBLIC_ENABLE_SHARE !== 'true') {
+    return null
+  }
+
   const userId = await getCurrentUserId()
   if (!userId) {
     return null

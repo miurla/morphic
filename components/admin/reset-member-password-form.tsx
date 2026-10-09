@@ -26,16 +26,22 @@ export function ResetMemberPasswordForm({
     setError(null)
     setSuccess(false)
 
-    const result = await resetMemberPasswordAction({
-      userId,
-      newPassword: password
-    })
+    try {
+      const result = await resetMemberPasswordAction({
+        userId,
+        newPassword: password
+      })
 
-    if (result.success) {
-      setSuccess(true)
-      setPassword('')
-    } else {
-      setError(result.error ?? 'Failed to reset password')
+      if (result.success) {
+        setSuccess(true)
+        setPassword('')
+      } else {
+        setError(result.error ?? 'Failed to reset password')
+      }
+    } catch (error: unknown) {
+      setError(
+        error instanceof Error ? error.message : 'Failed to reset password'
+      )
     }
     setIsSubmitting(false)
   }
