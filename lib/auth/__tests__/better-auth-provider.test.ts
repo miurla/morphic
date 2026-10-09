@@ -250,12 +250,13 @@ describe('better-auth provider', () => {
       expect(mockAuth.api.signUpEmail).not.toHaveBeenCalled()
     })
 
-    it('consumes the invitation after a successful sign-up', async () => {
+    it('claims the invitation before creating the account', async () => {
       process.env.AUTH_SIGNUP_MODE = 'invite'
       vi.mocked(validateInvitation).mockResolvedValue({
         id: 'inv-1',
         token: 'tok'
       } as never)
+      vi.mocked(consumeInvitation).mockResolvedValue(true)
       vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
         response: signUpResult,
         headers: new Headers()
@@ -269,6 +270,27 @@ describe('better-auth provider', () => {
 
       expect(result).toEqual({ success: true })
       expect(consumeInvitation).toHaveBeenCalledWith('inv-1')
+    })
+
+    it('rejects when the invitation was already claimed concurrently', async () => {
+      process.env.AUTH_SIGNUP_MODE = 'invite'
+      vi.mocked(validateInvitation).mockResolvedValue({
+        id: 'inv-1',
+        token: 'tok'
+      } as never)
+      vi.mocked(consumeInvitation).mockResolvedValue(false)
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'new@example.com',
+        password: 'secret',
+        token: 'tok'
+      })
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Sign-up requires a valid invitation token.'
+      })
+      expect(mockAuth.api.signUpEmail).not.toHaveBeenCalled()
     })
   })
 

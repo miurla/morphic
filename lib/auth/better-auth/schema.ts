@@ -71,6 +71,8 @@ export const invitations = pgTable('invitations', {
     .primaryKey()
     .$defaultFn(() => createId()),
   email: text('email'),
+  // SHA-256 hash of the invitation token; the plaintext only exists in the
+  // link returned to the admin at creation time.
   token: text('token').notNull().unique(),
   invitedBy: text('invited_by').notNull(),
   revokedAt: timestamp('revoked_at'),

@@ -22,7 +22,6 @@ export interface AdminActionResult {
 export interface InvitationView {
   id: string
   email: string | null
-  token: string
   revoked: boolean
   used: boolean
   expiresAt: string
@@ -49,7 +48,6 @@ function isAdmin(
 function invitationView(invitation: {
   id: string
   email: string | null
-  token: string
   revokedAt: Date | null
   usedAt: Date | null
   expiresAt: Date
@@ -58,7 +56,6 @@ function invitationView(invitation: {
   return {
     id: invitation.id,
     email: invitation.email,
-    token: invitation.token,
     revoked: Boolean(invitation.revokedAt),
     used: Boolean(invitation.usedAt),
     expiresAt: invitation.expiresAt.toISOString(),
@@ -101,13 +98,15 @@ export async function createInvitationAction(params: {
   }
 
   try {
-    const invitation = await createInvitation({
+    // The plaintext token is only available here, at creation time: the
+    // database stores just its hash, so the link cannot be rebuilt later.
+    const { invitation, token } = await createInvitation({
       invitedBy: adminUser.id,
       email: params.email?.trim() || null
     })
 
     const origin = await getRequestOrigin()
-    const link = `${origin}/auth/sign-up?token=${invitation.token}`
+    const link = `${origin}/auth/sign-up?token=${token}`
 
     // Additionally email the invitation when SMTP is configured
     if (

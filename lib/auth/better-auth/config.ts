@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError } from 'better-auth/api'
 import { admin } from 'better-auth/plugins'
-import { count } from 'drizzle-orm'
+import { count, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 
@@ -29,6 +29,13 @@ function getSecret(): string {
   if (secret) {
     return secret
   }
+  if (process.env.NODE_ENV === 'production') {
+    // Never fall back to a publicly known secret in production: better-auth
+    // must fail fast instead of silently signing with a shared default.
+    throw new Error(
+      'BETTER_AUTH_SECRET must be set when running AUTH_PROVIDER=better-auth.'
+    )
+  }
   if (process.env.NODE_ENV !== 'test') {
     console.warn(
       '⚠️  BETTER_AUTH_SECRET is not set. Using an insecure development ' +
@@ -39,19 +46,17 @@ function getSecret(): string {
 }
 
 /**
- * Bootstrap admin: while the user table is empty, the first account to sign
- * up receives the admin role and the window closes permanently. When
- * `BOOTSTRAP_ADMIN_EMAIL` is set, sign-up during the window only succeeds
- * for that email address.
+ * Sign-up gate for the bootstrap window: while the user table is empty and
+ * `BOOTSTRAP_ADMIN_EMAIL` is set, only that address may sign up. The admin
+ * role itself is granted by `claimBootstrapAdmin` once the row exists.
  */
-export async function applyBootstrapAdminHook(data: {
+export async function applyBootstrapAdminGate(data: {
   email?: string
-  role?: string
-}): Promise<{ data: { role: string } } | undefined> {
+}): Promise<void> {
   const [existing] = await db.select({ total: count() }).from(authSchema.user)
 
   if ((existing?.total ?? 0) > 0) {
-    return undefined // Bootstrap window is closed
+    return // Bootstrap window is closed
   }
 
   const gate = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase()
@@ -61,8 +66,35 @@ export async function applyBootstrapAdminHook(data: {
         'Sign-up is restricted to the configured BOOTSTRAP_ADMIN_EMAIL address.'
     })
   }
+}
 
-  return { data: { ...data, role: 'admin' } }
+/**
+ * Grant the admin role to the first account. Runs in a serializable
+ * transaction: two concurrent first sign-ups would otherwise both observe an
+ * empty admin set and both claim the role (write skew), so Postgres aborts
+ * one transaction and exactly one account wins the claim.
+ */
+export async function claimBootstrapAdmin(userId: string): Promise<void> {
+  try {
+    await db.transaction(async tx => {
+      await tx.execute(sql`set transaction isolation level serializable`)
+      const [admin] = await tx
+        .select({ id: authSchema.user.id })
+        .from(authSchema.user)
+        .where(eq(authSchema.user.role, 'admin'))
+        .limit(1)
+      if (admin) {
+        return
+      }
+      await tx
+        .update(authSchema.user)
+        .set({ role: 'admin' })
+        .where(eq(authSchema.user.id, userId))
+    })
+  } catch {
+    // Serialization failure: the concurrent sign-up won the claim and keeps
+    // the admin role; this account stays a regular user.
+  }
 }
 
 function createAuth() {
@@ -93,7 +125,10 @@ function createAuth() {
     databaseHooks: {
       user: {
         create: {
-          before: async user => applyBootstrapAdminHook(user)
+          before: async user => applyBootstrapAdminGate(user),
+          after: async user => {
+            await claimBootstrapAdmin(user.id)
+          }
         }
       }
     }

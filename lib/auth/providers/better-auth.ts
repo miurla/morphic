@@ -153,8 +153,6 @@ export const betterAuthProvider: AuthProvider = {
     password: string
     token?: string
   }): Promise<AuthActionResult> {
-    let invitationId: string | null = null
-
     if (getSignUpMode() === 'invite') {
       const invitation = await validateInvitation(token)
       if (!invitation) {
@@ -163,7 +161,17 @@ export const betterAuthProvider: AuthProvider = {
           error: 'Sign-up requires a valid invitation token.'
         }
       }
-      invitationId = invitation.id
+      // Claim the invitation before creating the account so concurrent
+      // submissions of the same link cannot both pass validation. If the
+      // sign-up then fails, the invitation stays consumed: safer than
+      // allowing a second redemption.
+      const claimed = await consumeInvitation(invitation.id)
+      if (!claimed) {
+        return {
+          success: false,
+          error: 'Sign-up requires a valid invitation token.'
+        }
+      }
     }
 
     try {
@@ -180,10 +188,6 @@ export const betterAuthProvider: AuthProvider = {
           success: false,
           error: 'Sign-up failed. The account may already exist.'
         }
-      }
-
-      if (invitationId) {
-        await consumeInvitation(invitationId)
       }
 
       return { success: true }

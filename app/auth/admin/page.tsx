@@ -54,7 +54,6 @@ export default async function AdminPage() {
             invitations={invitations.map(invitation => ({
               id: invitation.id,
               email: invitation.email,
-              token: invitation.token,
               revoked: Boolean(invitation.revokedAt),
               used: Boolean(invitation.usedAt),
               expiresAt: invitation.expiresAt.toISOString(),

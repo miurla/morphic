@@ -18,7 +18,6 @@ const invitations: InvitationView[] = [
   {
     id: 'inv-1',
     email: 'friend@example.com',
-    token: 'tok1',
     revoked: false,
     used: false,
     expiresAt: new Date(Date.now() + 60_000).toISOString(),
@@ -27,7 +26,6 @@ const invitations: InvitationView[] = [
   {
     id: 'inv-2',
     email: 'old@example.com',
-    token: 'tok2',
     revoked: true,
     used: false,
     expiresAt: new Date(Date.now() - 60_000).toISOString(),
@@ -53,7 +51,6 @@ describe('InvitationsManager', () => {
     const created: InvitationView = {
       id: 'inv-3',
       email: 'new@example.com',
-      token: 'tok3',
       revoked: false,
       used: false,
       expiresAt: new Date(Date.now() + 60_000).toISOString(),

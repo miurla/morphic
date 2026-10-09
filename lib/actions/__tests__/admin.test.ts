@@ -132,7 +132,10 @@ describe('admin actions', () => {
   describe('createInvitationAction', () => {
     it('creates an invitation and returns a redeemable link', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
-      vi.mocked(createInvitation).mockResolvedValue(invitationRecord)
+      vi.mocked(createInvitation).mockResolvedValue({
+        invitation: invitationRecord,
+        token: 'tok123'
+      })
 
       const result = await createInvitationAction({
         email: 'friend@example.com'
@@ -156,7 +159,10 @@ describe('admin actions', () => {
       } as never)
 
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
-      vi.mocked(createInvitation).mockResolvedValue(invitationRecord)
+      vi.mocked(createInvitation).mockResolvedValue({
+        invitation: invitationRecord,
+        token: 'tok123'
+      })
 
       const result = await createInvitationAction({
         email: 'friend@example.com'

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   consumeInvitation,
   createInvitation,
+  hashInvitationToken,
   revokeInvitation,
   validateInvitation
 } from '@/lib/auth/better-auth/invitations'
@@ -91,16 +92,25 @@ describe('invitations', () => {
     })
   })
 
+  describe('hashInvitationToken', () => {
+    it('returns the SHA-256 hex digest of the token', () => {
+      expect(hashInvitationToken('')).toBe(
+        'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      )
+    })
+  })
+
   describe('createInvitation', () => {
-    it('inserts a row with a generated token', async () => {
+    it('inserts a hashed token and returns the plaintext once', async () => {
       state.rows = [activeInvitation()]
 
-      const invitation = await createInvitation({
+      const { invitation, token } = await createInvitation({
         invitedBy: 'admin-1',
         email: 'friend@example.com'
       })
 
       expect(invitation.id).toBe('inv-1')
+      expect(token).toMatch(/^[0-9a-f]{48}$/)
       expect(db.insert).toHaveBeenCalled()
     })
   })

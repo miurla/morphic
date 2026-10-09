@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto'
+import { createHash, randomBytes } from 'crypto'
 import { and, desc, eq, isNull } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
@@ -38,22 +38,32 @@ export function generateInvitationToken(): string {
   return randomBytes(24).toString('hex')
 }
 
+/**
+ * Invitation tokens are stored as SHA-256 hashes. The plaintext token only
+ * exists in the link handed to the admin at creation time, so a database
+ * leak cannot be replayed as valid invitations.
+ */
+export function hashInvitationToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex')
+}
+
 export async function createInvitation(params: {
   invitedBy: string
   email?: string | null
   ttlMs?: number
-}): Promise<InvitationRecord> {
+}): Promise<{ invitation: InvitationRecord; token: string }> {
+  const token = generateInvitationToken()
   const [row] = await db
     .insert(invitations)
     .values({
-      token: generateInvitationToken(),
+      token: hashInvitationToken(token),
       email: params.email ?? null,
       invitedBy: params.invitedBy,
       expiresAt: new Date(Date.now() + (params.ttlMs ?? INVITATION_TTL_MS))
     })
     .returning()
 
-  return toRecord(row)
+  return { invitation: toRecord(row), token }
 }
 
 export async function listInvitations(): Promise<InvitationRecord[]> {
@@ -79,7 +89,12 @@ export async function validateInvitation(
   const [row] = await db
     .select()
     .from(invitations)
-    .where(and(eq(invitations.token, token), isNull(invitations.revokedAt)))
+    .where(
+      and(
+        eq(invitations.token, hashInvitationToken(token)),
+        isNull(invitations.revokedAt)
+      )
+    )
 
   if (!row) {
     return null
