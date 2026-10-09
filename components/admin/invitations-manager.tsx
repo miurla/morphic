@@ -120,19 +120,23 @@ export function InvitationsManager({
                 <Badge variant="secondary">Used</Badge>
               ) : invitation.revoked ? (
                 <Badge variant="destructive">Revoked</Badge>
+              ) : invitation.expired ? (
+                <Badge variant="outline">Expired</Badge>
               ) : (
                 <Badge>Active</Badge>
               )}
-              {!invitation.revoked && !invitation.used && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleRevoke(invitation.id)}
-                >
-                  Revoke
-                </Button>
-              )}
+              {!invitation.revoked &&
+                !invitation.used &&
+                !invitation.expired && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleRevoke(invitation.id)}
+                  >
+                    Revoke
+                  </Button>
+                )}
             </div>
           </li>
         ))}

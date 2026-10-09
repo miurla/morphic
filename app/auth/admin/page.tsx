@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 
+import { invitationView } from '@/lib/actions/admin-views'
 import { listInvitations } from '@/lib/auth/better-auth/invitations'
 import { listMembers } from '@/lib/auth/better-auth/members'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
@@ -55,16 +56,7 @@ export default async function AdminPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <InvitationsManager
-            invitations={invitations.map(invitation => ({
-              id: invitation.id,
-              email: invitation.email,
-              revoked: Boolean(invitation.revokedAt),
-              used: Boolean(invitation.usedAt),
-              expiresAt: invitation.expiresAt.toISOString(),
-              createdAt: invitation.createdAt.toISOString()
-            }))}
-          />
+          <InvitationsManager invitations={invitations.map(invitationView)} />
         </CardContent>
       </Card>
 

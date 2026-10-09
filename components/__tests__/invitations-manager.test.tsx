@@ -20,6 +20,7 @@ const invitations: InvitationView[] = [
     email: 'friend@example.com',
     revoked: false,
     used: false,
+    expired: false,
     expiresAt: new Date(Date.now() + 60_000).toISOString(),
     createdAt: new Date().toISOString()
   },
@@ -28,6 +29,7 @@ const invitations: InvitationView[] = [
     email: 'old@example.com',
     revoked: true,
     used: false,
+    expired: false,
     expiresAt: new Date(Date.now() - 60_000).toISOString(),
     createdAt: new Date().toISOString()
   }
@@ -47,12 +49,35 @@ describe('InvitationsManager', () => {
     expect(screen.queryByText('old@example.com')).toBeInTheDocument()
   })
 
+  it('marks elapsed invitations as expired without a revoke action', () => {
+    render(
+      <InvitationsManager
+        invitations={[
+          {
+            id: 'inv-4',
+            email: 'gone@example.com',
+            revoked: false,
+            used: false,
+            expired: true,
+            expiresAt: new Date(Date.now() - 60_000).toISOString(),
+            createdAt: new Date().toISOString()
+          }
+        ]}
+      />
+    )
+
+    expect(screen.getByText('Expired')).toBeInTheDocument()
+    expect(screen.queryByText('Active')).not.toBeInTheDocument()
+    expect(screen.queryByText('Revoke')).not.toBeInTheDocument()
+  })
+
   it('creates an invitation and shows a copyable link', async () => {
     const created: InvitationView = {
       id: 'inv-3',
       email: 'new@example.com',
       revoked: false,
       used: false,
+      expired: false,
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
       createdAt: new Date().toISOString()
     }

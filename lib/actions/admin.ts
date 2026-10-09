@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers'
 
+import { type InvitationView, invitationView } from '@/lib/actions/admin-views'
 import { getAuth } from '@/lib/auth/better-auth/config'
 import {
   createInvitation,
@@ -11,6 +12,8 @@ import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { getRequestOrigin } from '@/lib/auth/request'
 import type { AppUser } from '@/lib/auth/types'
+
+export type { InvitationView } from '@/lib/actions/admin-views'
 
 export interface AdminActionResult {
   success: boolean
@@ -28,15 +31,6 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;')
 }
 
-export interface InvitationView {
-  id: string
-  email: string | null
-  revoked: boolean
-  used: boolean
-  expiresAt: string
-  createdAt: string
-}
-
 async function requireAdmin(): Promise<AppUser | AdminActionResult> {
   const user = await getCurrentUser()
   if (!user) {
@@ -52,24 +46,6 @@ function isAdmin(
   result: AppUser | AdminActionResult
 ): result is AdminActionResult {
   return typeof (result as AdminActionResult).success === 'boolean'
-}
-
-function invitationView(invitation: {
-  id: string
-  email: string | null
-  revokedAt: Date | null
-  usedAt: Date | null
-  expiresAt: Date
-  createdAt: Date
-}): InvitationView {
-  return {
-    id: invitation.id,
-    email: invitation.email,
-    revoked: Boolean(invitation.revokedAt),
-    used: Boolean(invitation.usedAt),
-    expiresAt: invitation.expiresAt.toISOString(),
-    createdAt: invitation.createdAt.toISOString()
-  }
 }
 
 async function sendInvitationEmail(params: {
