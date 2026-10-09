@@ -1,6 +1,7 @@
 'use server'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { isAnonymousMode } from '@/lib/auth/provider'
 import * as dbActions from '@/lib/db/actions'
 import type { LibraryFile } from '@/lib/db/schema'
 import { getSignedFileUrl } from '@/lib/storage/r2-client'
@@ -32,7 +33,7 @@ async function signLibraryFiles(
 }
 
 async function requireLibraryFileUserId() {
-  if (process.env.ENABLE_AUTH === 'false') {
+  if (isAnonymousMode()) {
     return {
       userId: null,
       error: 'Library is unavailable in anonymous mode.'

@@ -1,4 +1,5 @@
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { isAnonymousMode } from '@/lib/auth/provider'
 import { getModelSelectorData } from '@/lib/model-selector/get-model-selector-data'
 
 import { Chat } from '@/components/chat'
@@ -6,7 +7,7 @@ import { Chat } from '@/components/chat'
 export default async function Page() {
   const userId = await getCurrentUserId()
   const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
-  const libraryAvailable = process.env.ENABLE_AUTH !== 'false'
+  const libraryAvailable = !isAnonymousMode()
   const modelSelectorData = await getModelSelectorData()
 
   return (

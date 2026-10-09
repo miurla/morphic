@@ -86,6 +86,7 @@ describe('POST /api/upload', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     delete process.env.ENABLE_AUTH
+    delete process.env.AUTH_PROVIDER
     vi.mocked(getObjectContentMd5).mockResolvedValue(md5OfUpload())
     vi.mocked(dbActions.createLibraryFile).mockResolvedValue({
       ...EXISTING,
@@ -240,6 +241,15 @@ describe('POST /api/upload', () => {
 
   it('skips the lookup in anonymous mode, which has no library', async () => {
     process.env.ENABLE_AUTH = 'false'
+
+    await POST(uploadRequest())
+
+    expect(dbActions.findChatFileCandidates).not.toHaveBeenCalled()
+    expect(send).toHaveBeenCalledOnce()
+  })
+
+  it('skips the lookup when AUTH_PROVIDER=none with ENABLE_AUTH unset', async () => {
+    process.env.AUTH_PROVIDER = 'none'
 
     await POST(uploadRequest())
 

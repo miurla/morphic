@@ -34,7 +34,7 @@ export async function resolveUsageAnchor(
 
   const user = await getCurrentUser()
   if (!user || user.id !== userId) return null
-  return parseAnchor(user.created_at)
+  return parseAnchor(user.createdAt)
 }
 
 export async function syncUsageGrants(params: {

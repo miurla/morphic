@@ -190,6 +190,27 @@ If not configured, `type="general"` searches fall back to your configured search
 
 By default, Morphic runs in **anonymous mode** (`ENABLE_AUTH=false`). This is ideal for personal, single-user environments.
 
+### Auth Provider (`AUTH_PROVIDER`)
+
+Auth behavior is controlled by an auth provider. Set `AUTH_PROVIDER` explicitly to one of:
+
+| Value         | Description                                                           |
+| ------------- | --------------------------------------------------------------------- |
+| `supabase`    | Supabase cloud authentication (multi-user)                            |
+| `none`        | Anonymous mode: all users share one user ID                           |
+| `better-auth` | Local accounts in Morphic's own Postgres (reserved, upcoming release) |
+
+When `AUTH_PROVIDER` is **unset**, the provider is derived from the existing
+environment so current deployments keep working unchanged:
+
+- `ENABLE_AUTH=false` → `none` (anonymous mode, shared `ANONYMOUS_USER_ID`)
+- otherwise → `supabase` (when Supabase is not configured, no user is resolved
+  and the app behaves as before: guest/anonymous access without a shared ID)
+
+`MORPHIC_CLOUD_DEPLOYMENT=true` requires Supabase-backed auth: startup fails
+with a clear error when the resolved provider is `none` or any non-Supabase
+provider.
+
 ### Anonymous Mode (Default)
 
 ```bash
@@ -221,6 +242,18 @@ SUPABASE_SECRET_KEY=[YOUR_SUPABASE_SECRET_KEY]
    - **Project URL**: Settings > API > Project URL
    - **Publishable Key**: Settings > API Keys > publishable key (`sb_publishable_...`)
    - **Secret Key**: Settings > API Keys > secret key (`sb_secret_...`)
+
+4. For password recovery emails to work, add your site's recovery destination
+   under **Auth → URL Verification → Redirect URLs**:
+
+   ```
+   [YOUR_SITE_URL]/auth/update-password
+   ```
+
+   Recovery links point at this URL (the same destination Morphic has always
+   used, so existing allowlist entries keep working). If the destination is
+   not allowlisted, Supabase silently falls back to the project Site URL and
+   the recovery code can never be exchanged for a session.
 
 ## Guest Mode
 

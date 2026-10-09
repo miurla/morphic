@@ -4,8 +4,7 @@
 import React, { useState } from 'react'
 import { usePathname } from 'next/navigation'
 
-import { User } from '@supabase/supabase-js'
-
+import type { AppUser } from '@/lib/auth/types'
 import { cn } from '@/lib/utils'
 
 import { useSidebar } from '@/components/ui/sidebar'
@@ -17,7 +16,7 @@ import GuestMenu from './guest-menu' // Import the new GuestMenu component
 import UserMenu from './user-menu'
 
 interface HeaderProps {
-  user: User | null
+  user: AppUser | null
 }
 
 export const Header: React.FC<HeaderProps> = ({ user }) => {

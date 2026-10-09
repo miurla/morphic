@@ -1,42 +1,22 @@
-import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthProvider } from '@/lib/auth/provider'
 import { perfLog } from '@/lib/utils/perf-logging'
 import { incrementAuthCallCount } from '@/lib/utils/perf-tracking'
 
-export async function getCurrentUser() {
-  if (!hasSupabasePublicConfig()) {
-    return null // Supabase is not configured
-  }
+import type { AppUser } from './types'
 
-  const supabase = await createClient()
-  const { data } = await supabase.auth.getUser()
-  return data.user ?? null
+export async function getCurrentUser(): Promise<AppUser | null> {
+  return getAuthProvider().getCurrentUser()
 }
 
 export async function getCurrentUserId() {
   const count = incrementAuthCallCount()
   perfLog(`getCurrentUserId called - count: ${count}`)
 
-  // Skip authentication mode (for personal Docker deployments)
-  if (process.env.ENABLE_AUTH === 'false') {
-    // Guard: Prevent disabling auth in Morphic Cloud deployments
-    if (process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true') {
-      throw new Error(
-        'ENABLE_AUTH=false is not allowed in MORPHIC_CLOUD_DEPLOYMENT'
-      )
-    }
-
-    // Always warn when authentication is disabled (except in tests)
-    if (process.env.NODE_ENV !== 'test') {
-      console.warn(
-        '⚠️  Authentication disabled. Running in anonymous mode.\n' +
-          '   All users share the same user ID. For personal use only.'
-      )
-    }
-
-    return process.env.ANONYMOUS_USER_ID || 'anonymous-user'
+  const provider = getAuthProvider()
+  if (provider.getCurrentUserId) {
+    return provider.getCurrentUserId()
   }
 
-  const user = await getCurrentUser()
+  const user = await provider.getCurrentUser()
   return user?.id
 }

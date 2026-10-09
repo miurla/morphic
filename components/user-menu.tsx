@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import type { User } from '@supabase/supabase-js'
 import {
   IconChartBar as ChartBar,
   IconLink as Link2,
@@ -11,7 +10,8 @@ import {
   IconUserCircle as UserRound
 } from '@tabler/icons-react'
 
-import { createClient } from '@/lib/supabase/client'
+import { signOut } from '@/lib/actions/auth'
+import type { AppUser } from '@/lib/auth/types'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -34,7 +34,7 @@ import { Button } from './ui/button'
 import { ExternalLinkItems } from './external-link-items'
 
 interface UserMenuProps {
-  user: User
+  user: AppUser
 }
 
 export default function UserMenu({ user }: UserMenuProps) {
@@ -43,12 +43,10 @@ export default function UserMenu({ user }: UserMenuProps) {
   const [accountOpen, setAccountOpen] = useState(false)
   const [usageOpen, setUsageOpen] = useState(false)
   const { usage, isLow, isExhausted, refreshUsage } = useUsageBudget()
-  const userName =
-    user.user_metadata?.full_name || user.user_metadata?.name || 'User'
-  const avatarUrl =
-    user.user_metadata?.avatar_url || user.user_metadata?.picture
+  const userName = user.name || 'User'
+  const avatarUrl = user.image ?? undefined
 
-  const getInitials = (name: string, email: string | undefined) => {
+  const getInitials = (name: string, email: string | null | undefined) => {
     if (name && name !== 'User') {
       const names = name.split(' ')
       if (names.length > 1) {
@@ -63,8 +61,7 @@ export default function UserMenu({ user }: UserMenuProps) {
   }
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await signOut()
     router.push('/')
     router.refresh()
   }

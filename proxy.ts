@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
-import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
-import { updateSession } from '@/lib/supabase/middleware'
+import { getAuthProvider } from '@/lib/auth/provider'
 
 export async function proxy(request: NextRequest) {
   // Get the protocol from X-Forwarded-Proto header or request protocol
@@ -15,17 +14,11 @@ export async function proxy(request: NextRequest) {
   // Construct the base URL - ensure protocol has :// format
   const baseUrl = `${protocol}${protocol.endsWith(':') ? '//' : '://'}${host}`
 
-  // Create a response
+  // Create a response via the active auth provider's session enforcement
+  // (supabase refreshes/validates the session, none passes through)
   let response: NextResponse
 
-  if (hasSupabasePublicConfig()) {
-    response = await updateSession(request)
-  } else {
-    // If Supabase is not configured, just pass the request through
-    response = NextResponse.next({
-      request
-    })
-  }
+  response = await getAuthProvider().handleSession(request)
 
   // Add request information to response headers
   response.headers.set('x-url', request.url)

@@ -38,6 +38,7 @@ describe('Note Actions', () => {
 
   afterEach(() => {
     process.env.ENABLE_AUTH = originalEnableAuth
+    delete process.env.AUTH_PROVIDER
   })
 
   it('saves a markdown note for the current user', async () => {
@@ -66,6 +67,19 @@ describe('Note Actions', () => {
 
   it('rejects anonymous mode', async () => {
     process.env.ENABLE_AUTH = 'false'
+
+    const result = await saveNote({ content: 'Saved answer' })
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Library is unavailable in anonymous mode.'
+    })
+    expect(dbActions.createNote).not.toHaveBeenCalled()
+  })
+
+  it('rejects anonymous mode when AUTH_PROVIDER=none with ENABLE_AUTH unset', async () => {
+    process.env.AUTH_PROVIDER = 'none'
+    delete process.env.ENABLE_AUTH
 
     const result = await saveNote({ content: 'Saved answer' })
 

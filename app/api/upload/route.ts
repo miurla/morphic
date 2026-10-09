@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto'
 
 import { capture } from '@/lib/analytics/dispatch'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { isAnonymousMode } from '@/lib/auth/provider'
 import * as dbActions from '@/lib/db/actions'
 import {
   detectFileMediaType,
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    const isAnonymous = process.env.ENABLE_AUTH === 'false'
+    const isAnonymous = isAnonymousMode()
     const buffer = Buffer.from(await file.arrayBuffer())
 
     // The browser reports file.type from the name, so the check above says

@@ -4,9 +4,9 @@ import { revalidateTag } from 'next/cache'
 
 import { trackAccountDeleted } from '@/lib/analytics'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
+import { getAuthProvider } from '@/lib/auth/provider'
 import * as dbActions from '@/lib/db/actions'
 import { deleteUserObjects } from '@/lib/storage/r2-client'
-import { createAdminClient } from '@/lib/supabase/admin'
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) {
@@ -20,7 +20,8 @@ export async function deleteAccount(): Promise<{
   success: boolean
   error?: string
 }> {
-  if (process.env.ENABLE_AUTH === 'false') {
+  const provider = getAuthProvider()
+  if (!provider.capabilities.deleteUser || !provider.deleteUser) {
     return {
       success: false,
       error: 'Account deletion is unavailable in anonymous mode.'
@@ -32,14 +33,11 @@ export async function deleteAccount(): Promise<{
     return { success: false, error: 'User not authenticated' }
   }
 
-  let adminClient: ReturnType<typeof createAdminClient>
-  try {
-    adminClient = createAdminClient()
-  } catch (error) {
-    console.error('Supabase admin client is not configured:', error)
+  const configError = provider.validateDeleteUserConfig?.() ?? null
+  if (configError) {
     return {
       success: false,
-      error: 'Account deletion is not configured. Set SUPABASE_SECRET_KEY.'
+      error: configError
     }
   }
 
@@ -81,9 +79,9 @@ export async function deleteAccount(): Promise<{
 
     await deleteUserObjects(user.id)
 
-    const { error } = await adminClient.auth.admin.deleteUser(user.id)
-    if (error) {
-      throw error
+    const deleteAuthResult = await provider.deleteUser!(user.id)
+    if (!deleteAuthResult.success) {
+      throw new Error(deleteAuthResult.error ?? 'Failed to delete user')
     }
 
     revalidateTag('chat', 'max')
