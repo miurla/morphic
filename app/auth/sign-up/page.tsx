@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+
 import { getSignUpMode } from '@/lib/auth/better-auth/config'
 import { validateInvitation } from '@/lib/auth/better-auth/invitations'
 import { getAuthProvider } from '@/lib/auth/provider'
@@ -11,6 +13,10 @@ export default async function SignUpPage({
   searchParams: Promise<{ token?: string }>
 }) {
   const provider = getAuthProvider()
+
+  if (!provider.capabilities.signUp) {
+    redirect('/auth/login')
+  }
 
   let inviteRequired = false
   let validToken: string | undefined

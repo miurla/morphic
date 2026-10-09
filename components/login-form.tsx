@@ -144,12 +144,17 @@ export function LoginForm({
               </Button>
             </form>
           </div>
-          <div className="mt-6 text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/auth/sign-up" className="underline underline-offset-4">
-              Sign Up
-            </Link>
-          </div>
+          {capabilities.signUp && (
+            <div className="mt-6 text-center text-sm">
+              Don&apos;t have an account?{' '}
+              <Link
+                href="/auth/sign-up"
+                className="underline underline-offset-4"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
       <div className="text-center text-xs text-muted-foreground">

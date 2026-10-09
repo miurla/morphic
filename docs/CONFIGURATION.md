@@ -207,7 +207,7 @@ environment so current deployments keep working unchanged:
 - otherwise → `supabase` (when Supabase is not configured, no user is resolved
   and the app behaves as before: guest/anonymous access without a shared ID)
 
-`MORPHIC_CLOUD_DEPLOYMENT=true` requires Supabase-backed auth: startup fails
+`MORPHIC_CLOUD_DEPLOYMENT=true` requires Supabase-backed auth: requests fail
 with a clear error when the resolved provider is `none` or any non-Supabase
 provider.
 

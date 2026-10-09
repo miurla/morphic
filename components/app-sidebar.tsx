@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 
+import { isAnonymousMode } from '@/lib/auth/provider'
 import { cn } from '@/lib/utils'
 
 import {
@@ -21,7 +22,7 @@ import { IconLogo } from './ui/icons'
 export default function AppSidebar() {
   // Anonymous mode has no per-user library, and the server actions reject it,
   // so the entry point follows the same switch the pages use.
-  const libraryAvailable = process.env.ENABLE_AUTH !== 'false'
+  const libraryAvailable = !isAnonymousMode()
 
   return (
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas">

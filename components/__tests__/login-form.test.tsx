@@ -121,4 +121,16 @@ describe('LoginForm', () => {
       screen.queryByRole('link', { name: 'Forgot password?' })
     ).not.toBeInTheDocument()
   })
+
+  it('shows the Sign Up link by default', () => {
+    renderForm()
+    expect(screen.getByRole('link', { name: 'Sign Up' })).toBeInTheDocument()
+  })
+
+  it('hides Sign Up when the provider lacks the capability', () => {
+    renderForm({ signUp: false })
+    expect(
+      screen.queryByRole('link', { name: 'Sign Up' })
+    ).not.toBeInTheDocument()
+  })
 })
