@@ -100,10 +100,17 @@ Before committing any review fix:
       could both pass the count. If the consequence is loss of control,
       serialize it (transaction + `SELECT ... FOR UPDATE`); at minimum,
       document the accepted race where the reader will see it.
+- [ ] **An insert can always commit just after your count — re-check after
+      commit.** Row locks serialize updates to existing rows but not new
+      inserts. When the invariant is "at least one X exists", a
+      post-commit re-election (re-run the deterministic election after
+      the deleting transaction commits) closes the window: the racing
+      writer's own after-commit hook and the re-election cannot both miss
+      each other without a timestamp cycle.
 - [ ] **A fast pre-check and the authoritative check can diverge.** The
       unlocked `canDeleteUser` pre-check and the locked check inside
       `deleteUser` can disagree under concurrency; the destructive steps
-      must be ordered after the *authoritative* check, not merely after
+      must be ordered after the _authoritative_ check, not merely after
       the pre-check.
 - [ ] **Concatenating user input into a URL is a security primitive.**
       `new URL('/' + userInput, base)` escapes the origin when a decoded
