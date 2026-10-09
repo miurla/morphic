@@ -11,13 +11,9 @@ updates:
           - minor
           - patch
 
+  # Security updates only: a limit of 0 disables version update PRs.
   - package-ecosystem: bun
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 3
-    groups:
-      bun-minor-patch:
-        update-types:
-          - minor
-          - patch
+    open-pull-requests-limit: 0
