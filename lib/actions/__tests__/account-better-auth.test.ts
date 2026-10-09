@@ -87,7 +87,7 @@ describe('deleteAccount with the better-auth provider', () => {
     expect(db.delete).toHaveBeenCalled()
   })
 
-  it('keeps the auth account when cleanup fails so the user can retry', async () => {
+  it('rolls back the identity deletion when cleanup fails', async () => {
     vi.mocked(dbActions.deleteUserChats).mockResolvedValue({
       success: false,
       error: 'db down'
@@ -97,9 +97,30 @@ describe('deleteAccount with the better-auth provider', () => {
 
     expect(result.success).toBe(false)
     expect(result.error).toBe('db down')
-    // The identity deletion is the last step: a cleanup failure must
-    // leave the account (and its sessions) in place for a retry.
-    expect(db.delete).not.toHaveBeenCalled()
+    // The identity delete shares the guard transaction, so the real
+    // database rolls it back when a cleanup step fails (the mock
+    // transaction has no rollback to show). The user keeps the account
+    // and its sessions, and can retry the deletion.
+    expect(trackAccountDeleted).not.toHaveBeenCalled()
+  })
+
+  it('serializes concurrent deletions in-process', async () => {
+    // The guard transaction holds a pooled connection while cleanup
+    // steps check out their own; unbounded concurrency could occupy the
+    // whole pool. Deletions must run one at a time per process.
+    let active = 0
+    let maxActive = 0
+    vi.mocked(dbActions.deleteUserChats).mockImplementation(async () => {
+      active++
+      maxActive = Math.max(maxActive, active)
+      await new Promise(resolve => setTimeout(resolve, 5))
+      active--
+      return { success: true }
+    })
+
+    await Promise.all([deleteAccount(), deleteAccount()])
+
+    expect(maxActive).toBe(1)
   })
 
   it('refuses before destroying any data when the user is the only admin', async () => {

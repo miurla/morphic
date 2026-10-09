@@ -17,6 +17,24 @@ function getErrorMessage(error: unknown) {
   return 'Failed to delete account'
 }
 
+// Serializes account deletion within this process. The better-auth flow
+// holds a pooled connection for its guard transaction while the cleanup
+// steps check out their own connections; unbounded concurrent deletions
+// could occupy the whole pool (each outer transaction waiting on inner
+// cleanup connections that can no longer be checked out). Deletions are
+// rare, so an in-process chain bounds the held connections to one per
+// process.
+let deletionChain: Promise<unknown> = Promise.resolve()
+
+function withDeletionLock<T>(task: () => Promise<T>): Promise<T> {
+  const result = deletionChain.then(task, task)
+  deletionChain = result.then(
+    () => undefined,
+    () => undefined
+  )
+  return result
+}
+
 export async function deleteAccount(): Promise<{
   success: boolean
   error?: string
@@ -58,26 +76,9 @@ export async function deleteAccount(): Promise<{
       return { success: false as const, error }
     }
 
-    // The authoritative guard (where the provider has one) runs inside
-    // this transaction and holds its locks until it commits, so a
-    // concurrent deletion cannot flip the answer before the identity is
-    // removed. Cleanup runs after the guard but before the identity
-    // deletion: a guard refusal precedes every destructive step, and a
-    // cleanup failure leaves the account in place so the user can retry
-    // (each step is idempotent). The cleanup steps run on their own
-    // connections and R2 lives outside the database entirely, which is
-    // why a rollback cannot undo partial cleanup — retrying the action
-    // completes it instead.
-    const result = await db.transaction(async tx => {
-      let wasAdmin = false
-      if (provider.validateDeletion) {
-        const guard = await provider.validateDeletion(user.id, tx)
-        if (guard.error) {
-          return { success: false as const, error: guard.error }
-        }
-        wasAdmin = guard.wasAdmin
-      }
-
+    const cleanup = async (): Promise<
+      { success: true } | { success: false; error: string }
+    > => {
       const deleteChatsResult = await dbActions.deleteUserChats(user.id)
       if (!deleteChatsResult.success) {
         return cleanupFailed(
@@ -113,14 +114,64 @@ export async function deleteAccount(): Promise<{
       }
 
       await deleteUserObjects(user.id)
+      return { success: true as const }
+    }
 
-      const deleteAuthResult = await provider.deleteUser!(user.id, tx)
-      if (!deleteAuthResult.success) {
-        throw new Error(deleteAuthResult.error ?? 'Failed to delete user')
+    let wasAdmin = false
+    let result: { success: true } | { success: false; error: string }
+
+    if (provider.validateDeletion) {
+      // better-auth: guard, identity deletion, and cleanup share one
+      // transaction. The guard's FOR UPDATE locks are held until the
+      // commit, so a concurrent deletion cannot flip the answer. The
+      // identity delete runs before the cleanup inside that transaction:
+      // a failed delete rolls back with nothing destroyed, and a cleanup
+      // failure rolls the identity back too, leaving the user able to
+      // retry. The cleanup steps run on their own connections (RLS
+      // transactions), so a rollback cannot undo partial cleanup —
+      // retrying the action completes it. The transaction holds a pooled
+      // connection while cleanup checks out another, so deletions are
+      // serialized in-process (withDeletionLock) to keep the pool from
+      // being exhausted by outer transactions waiting on inner ones.
+      result = await withDeletionLock(() =>
+        db.transaction(async tx => {
+          const guard = await provider.validateDeletion!(user.id, tx)
+          if (guard.error) {
+            return { success: false as const, error: guard.error }
+          }
+          wasAdmin = guard.wasAdmin
+
+          const deleteAuthResult = await provider.deleteUser!(user.id, tx)
+          if (!deleteAuthResult.success) {
+            throw new Error(deleteAuthResult.error ?? 'Failed to delete user')
+          }
+
+          return await cleanup()
+        })
+      )
+    } else {
+      // supabase: the identity deletion is an admin-API call that cannot
+      // join a transaction, so it runs last: a cleanup failure leaves the
+      // account in place and the user can retry (each step is
+      // idempotent). A failed identity deletion after committed cleanup
+      // is the accepted mirror of that trade-off — the account and its
+      // sessions survive, so retrying the deletion completes it.
+      const cleanupResult = await cleanup()
+      if (!cleanupResult.success) {
+        result = cleanupResult
+      } else {
+        const deleteAuthResult = await provider.deleteUser!(user.id)
+        if (deleteAuthResult.success) {
+          result = { success: true as const }
+        } else {
+          const error = deleteAuthResult.error ?? 'Failed to delete user'
+          console.error(
+            `Account deletion identity step failed for user ${user.id}: ${error}`
+          )
+          result = { success: false as const, error }
+        }
       }
-
-      return { success: true, wasAdmin }
-    })
+    }
 
     if (!result.success) {
       return { success: false, error: result.error }
@@ -128,7 +179,7 @@ export async function deleteAccount(): Promise<{
 
     // Runs after the deletion committed: completes any role election the
     // provider deferred because of concurrent sign-ups.
-    await provider.postDeletion?.(result.wasAdmin)
+    await provider.postDeletion?.(wasAdmin)
 
     revalidateTag('chat', 'max')
     await trackAccountDeleted(user.id)

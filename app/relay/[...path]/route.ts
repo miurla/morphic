@@ -10,6 +10,36 @@ const API_HOST = 'us.i.posthog.com'
 // used to balloon process memory.
 const MAX_BODY_BYTES = 32 * 1024 * 1024
 
+export class PayloadTooLargeError extends Error {}
+
+/**
+ * Passes the stream through while counting bytes, erroring the stream
+ * when the cap is exceeded: a declared content-length can be absent
+ * (chunked) or a lie, so the actual bytes must be counted as they flow.
+ * Nothing is buffered; the cap only bounds how much is forwarded.
+ */
+export function cappedBody(
+  body: ReadableStream<Uint8Array> | null,
+  max: number = MAX_BODY_BYTES
+): ReadableStream<Uint8Array> | null {
+  if (!body) {
+    return null
+  }
+  let total = 0
+  return body.pipeThrough(
+    new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        total += chunk.byteLength
+        if (total > max) {
+          controller.error(new PayloadTooLargeError())
+          return
+        }
+        controller.enqueue(chunk)
+      }
+    })
+  )
+}
+
 /**
  * Same-origin PostHog relay, implemented as a route handler instead of a
  * next.config rewrite so credentials are structurally never forwarded:
@@ -48,18 +78,30 @@ async function relay(
 
   // The body is streamed through rather than buffered: /relay is
   // reachable without a session, so materializing an attacker-sized
-  // POST in memory would be a denial-of-service vector.
+  // POST in memory would be a denial-of-service vector. cappedBody
+  // bounds the forwarded bytes even when no content-length was sent.
   const body =
     request.method === 'GET' || request.method === 'HEAD'
       ? undefined
-      : request.body
+      : cappedBody(request.body)
 
-  const upstream = await fetch(target, {
-    method: request.method,
-    headers,
-    body,
-    duplex: 'half'
-  } as RequestInit & { duplex?: 'half' })
+  let upstream: Response
+  try {
+    upstream = await fetch(target, {
+      method: request.method,
+      headers,
+      body,
+      duplex: 'half'
+    } as RequestInit & { duplex?: 'half' })
+  } catch (error) {
+    if (
+      error instanceof PayloadTooLargeError ||
+      (error instanceof Error && error.cause instanceof PayloadTooLargeError)
+    ) {
+      return new Response('Payload too large', { status: 413 })
+    }
+    throw error
+  }
 
   const responseHeaders = new Headers()
   const upstreamContentType = upstream.headers.get('content-type')

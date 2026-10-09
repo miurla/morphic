@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { trackAccountDeleted } from '@/lib/analytics'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
+import { db } from '@/lib/db'
 import * as dbActions from '@/lib/db/actions'
 import { deleteUserObjects } from '@/lib/storage/r2-client'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -110,6 +111,10 @@ describe('Account Actions', () => {
     expect(deleteUser).toHaveBeenCalledWith(user.id)
     expect(revalidateTag).toHaveBeenCalledWith('chat', 'max')
     expect(trackAccountDeleted).toHaveBeenCalledTimes(1)
+    // supabase has no in-database guard, so no transaction is opened:
+    // an outer transaction would hold a pooled connection while the
+    // cleanup steps check out their own.
+    expect(db.transaction).not.toHaveBeenCalled()
   })
 
   it('deletes the auth user only after all data cleanup succeeds', async () => {

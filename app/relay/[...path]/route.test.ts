@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { GET, POST } from './route'
+import { cappedBody, GET, POST } from './route'
 
 function upstreamResponse() {
   return new Response('{"status":"ok"}', {
@@ -115,5 +115,35 @@ describe('relay route', () => {
     )
     expect(init.method).toBe('GET')
     expect(init.body).toBeUndefined()
+  })
+})
+
+describe('cappedBody', () => {
+  it('errors the stream when actual bytes exceed the cap', async () => {
+    // A chunked (undeclared) payload must be bounded by counting the
+    // bytes as they flow, not by the declared content-length.
+    const source = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(100))
+        controller.enqueue(new Uint8Array(100))
+        controller.close()
+      }
+    })
+
+    const capped = cappedBody(source, 150)
+
+    await expect(new Response(capped).text()).rejects.toBeDefined()
+  })
+
+  it('passes through bodies within the cap', async () => {
+    const source = new Response('hello').body
+
+    const capped = cappedBody(source, 10)
+
+    expect(await new Response(capped).text()).toBe('hello')
+  })
+
+  it('returns null for a missing body', () => {
+    expect(cappedBody(null)).toBeNull()
   })
 })
