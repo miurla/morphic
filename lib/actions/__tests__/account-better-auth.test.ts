@@ -36,8 +36,17 @@ vi.mock('@/lib/db', () => {
     }))
   }
   // Transactions receive the same mock object so deletes through tx
-  // are visible on db.delete.
-  db.transaction = vi.fn((cb: (tx: unknown) => unknown) => cb(db))
+  // are visible on db.delete. A callback that throws simulates an
+  // aborted transaction: deletes recorded inside it are undone.
+  db.transaction = vi.fn(async (cb: (tx: unknown) => unknown) => {
+    const mark = (db.delete as ReturnType<typeof vi.fn>).mock.calls.length
+    try {
+      return await cb(db)
+    } catch (error) {
+      ;(db.delete as ReturnType<typeof vi.fn>).mock.calls.length = mark
+      throw error
+    }
+  })
   return { db }
 })
 
@@ -101,10 +110,11 @@ describe('deleteAccount with the better-auth provider', () => {
 
     expect(result.success).toBe(false)
     expect(result.error).toBe('db down')
-    // The identity delete shares the guard transaction, so the real
-    // database rolls it back when a cleanup step fails (the mock
-    // transaction has no rollback to show). The user keeps the account
-    // and its sessions, and can retry the deletion.
+    // The cleanup failure aborts the transaction, so the identity
+    // delete that ran inside it is rolled back (the mock transaction
+    // undoes recorded deletes when the callback throws). The user
+    // keeps the account and its sessions, and can retry the deletion.
+    expect(db.delete).not.toHaveBeenCalled()
     expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
 

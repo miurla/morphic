@@ -146,7 +146,15 @@ export async function deleteAccount(): Promise<{
             throw new Error(deleteAuthResult.error ?? 'Failed to delete user')
           }
 
-          return await cleanup()
+          const cleanupResult = await cleanup()
+          if (!cleanupResult.success) {
+            // Throwing (rather than returning the error) is what makes
+            // the transaction roll back: returning would commit the
+            // identity deletion that ran above, destroying the account
+            // while reporting failure.
+            throw new Error(cleanupResult.error)
+          }
+          return { success: true as const }
         })
       )
     } else {
