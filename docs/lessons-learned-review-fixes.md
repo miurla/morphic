@@ -44,7 +44,12 @@ grepped mid-fix and the mismatch with the docs was literally in hand.
 4. **Distribution model ignored.** Prebuilt images freeze `NEXT_PUBLIC_*`
    values into client bundles at build time. Anything runtime-configurable
    must be evaluated server-side (e.g. folded into capabilities in
-   `app/layout.tsx`) — never read from client code.
+   `app/layout.tsx`) — never read from client code. The same applies to the
+   deployment *profile*: the primary Morphic deployment is a single-user
+   instance, and a guard added for multi-admin scenarios must be checked
+   against the single-user shape first — the last-admin guard initially
+   made the sole account unable to delete itself, contradicting the
+   documented re-bootstrap flow.
 5. **Test layers are journey-blind.** Unit tests mock at exactly the seams
    where these bugs lived (redirectTo shape, cookie lifecycle, middleware
    redirects). The Docker integration harness only caught journey bugs after
