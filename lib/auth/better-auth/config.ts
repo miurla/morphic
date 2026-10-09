@@ -190,6 +190,52 @@ export async function claimBootstrapAdmin(userId: string): Promise<void> {
   }
 }
 
+/**
+ * Completes the bootstrap election after the last admin account is
+ * deleted. A sign-up that commits while the deletion is in flight sees
+ * the admin row in its own claim and declines; the deletion's locked
+ * count in turn cannot see the uncommitted insert. Running the election
+ * again after the deletion commits closes the window: the sign-up's
+ * claim runs after its insert commits and the re-election runs after
+ * the deletion commits, so neither can miss the other without a
+ * timestamp cycle — at least one of them observes both states and the
+ * earliest account takes the role.
+ */
+export async function reElectBootstrapAdmin(): Promise<void> {
+  try {
+    await db.transaction(async tx => {
+      await tx.execute(sql`set transaction isolation level serializable`)
+      const [admin] = await tx
+        .select({ id: authSchema.user.id })
+        .from(authSchema.user)
+        .where(eq(authSchema.user.role, 'admin'))
+        .limit(1)
+      if (admin) {
+        return // An admin exists: nothing to re-elect
+      }
+      const [earliest] = await tx
+        .select({ id: authSchema.user.id })
+        .from(authSchema.user)
+        .orderBy(asc(authSchema.user.createdAt), asc(authSchema.user.id))
+        .limit(1)
+      if (!earliest) {
+        return // Empty table: the bootstrap window is the recovery path
+      }
+      await tx
+        .update(authSchema.user)
+        .set({ role: 'admin' })
+        .where(eq(authSchema.user.id, earliest.id))
+    })
+  } catch (error) {
+    // A serialization failure means a concurrent claim won the election:
+    // same outcome either way. Anything else is logged, not thrown — the
+    // account deletion itself already succeeded.
+    if ((error as { code?: string } | null)?.code !== '40001') {
+      console.error('Bootstrap admin re-election failed:', error)
+    }
+  }
+}
+
 function createAuth() {
   const smtpConfigured = isBetterAuthSmtpConfigured()
 

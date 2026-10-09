@@ -8,7 +8,8 @@ import {
   getEmailLinkOrigin,
   getSignUpMode,
   isBetterAuthSmtpConfigured,
-  isBootstrapAccount
+  isBootstrapAccount,
+  reElectBootstrapAdmin
 } from '@/lib/auth/better-auth/config'
 import {
   consumeInvitation,
@@ -541,14 +542,12 @@ export const betterAuthProvider: AuthProvider = {
       // The last-admin check and the delete share one transaction:
       // SELECT ... FOR UPDATE locks every admin row, so concurrent
       // deletions serialize and the second recount sees the first delete
-      // instead of both counting each other as still present.
-      // Residual window: a concurrent sign-up inserts a new row, which
-      // does not conflict with the admin-row locks, so a first sign-up
-      // committing between this count and the commit can still leave the
-      // instance without an admin. The window is sub-second and requires
-      // the sole admin to self-delete at the moment of a first sign-up;
-      // recovery is a manual role update on the remaining account.
-      return await db.transaction(async tx => {
+      // instead of both counting each other as still present. A
+      // concurrent sign-up inserts a new row, which does not conflict
+      // with the admin-row locks, so its insert can commit just after
+      // the user count below; the post-commit re-election covers that
+      // case (see reElectBootstrapAdmin).
+      const result = await db.transaction(async tx => {
         const [target] = await tx
           .select({ role: authUser.role })
           .from(authUser)
@@ -572,8 +571,18 @@ export const betterAuthProvider: AuthProvider = {
         }
         // Cascades remove sessions and accounts via foreign keys
         await tx.delete(authUser).where(eq(authUser.id, userId))
-        return { success: true }
+        return { success: true, wasAdmin: target?.role === 'admin' }
       })
+      if (!result.success) {
+        return { success: false, error: result.error }
+      }
+      if (result.wasAdmin) {
+        // Completes the bootstrap election for a sign-up whose own
+        // claim declined because this admin row still existed when it
+        // ran. No-op unless the deletion left users without an admin.
+        await reElectBootstrapAdmin()
+      }
+      return { success: true }
     } catch (error) {
       return {
         success: false,

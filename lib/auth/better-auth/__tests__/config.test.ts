@@ -7,6 +7,7 @@ import {
   getSignUpMode,
   isBootstrapAccount,
   isBootstrapWindowOpen,
+  reElectBootstrapAdmin,
   resetAuthInstance
 } from '@/lib/auth/better-auth/config'
 import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
@@ -218,6 +219,57 @@ describe('claimBootstrapAdmin', () => {
 
     expect(update).toHaveBeenCalled()
     expect(errorSpy).not.toHaveBeenCalled()
+
+    errorSpy.mockRestore()
+  })
+})
+
+describe('reElectBootstrapAdmin', () => {
+  it('promotes the earliest account when the deletion left no admin', async () => {
+    // A sign-up raced the sole admin's deletion: its own claim declined
+    // because the admin row still existed. The re-election completes the
+    // election for the earliest remaining account.
+    const { update, set } = mockClaim({ earliest: 'raced-signup' })
+
+    await reElectBootstrapAdmin()
+
+    expect(update).toHaveBeenCalled()
+    expect(set).toHaveBeenCalledWith({ role: 'admin' })
+  })
+
+  it('does nothing when an admin exists', async () => {
+    const { update } = mockClaim({
+      admins: [{ id: 'existing-admin' }],
+      earliest: 'user-1'
+    })
+
+    await reElectBootstrapAdmin()
+
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('does nothing on an empty table', async () => {
+    const { update } = mockClaim({})
+
+    await reElectBootstrapAdmin()
+
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('silently accepts serialization failures and logs other failures', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(db.transaction).mockRejectedValueOnce(
+      Object.assign(new Error('could not serialize'), { code: '40001' })
+    )
+    await expect(reElectBootstrapAdmin()).resolves.toBeUndefined()
+    expect(errorSpy).not.toHaveBeenCalled()
+
+    vi.mocked(db.transaction).mockRejectedValueOnce(new Error('boom'))
+    await expect(reElectBootstrapAdmin()).resolves.toBeUndefined()
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Bootstrap admin re-election failed:',
+      expect.any(Error)
+    )
 
     errorSpy.mockRestore()
   })

@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server'
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getAuth } from '@/lib/auth/better-auth/config'
+import { getAuth, reElectBootstrapAdmin } from '@/lib/auth/better-auth/config'
 import {
   consumeInvitation,
   createInvitation,
@@ -31,7 +31,11 @@ const { mockAuth, mockSetCookie } = vi.hoisted(() => ({
 vi.mock('@/lib/auth/better-auth/config', async importOriginal => {
   const actual =
     await importOriginal<typeof import('@/lib/auth/better-auth/config')>()
-  return { ...actual, getAuth: () => mockAuth }
+  return {
+    ...actual,
+    getAuth: () => mockAuth,
+    reElectBootstrapAdmin: vi.fn()
+  }
 })
 
 vi.mock('@/lib/auth/better-auth/invitations', () => ({
@@ -950,6 +954,26 @@ describe('better-auth provider', () => {
 
       expect(result).toEqual({ success: true })
       expect(db.delete).toHaveBeenCalled()
+    })
+
+    it('re-runs the bootstrap election after an admin deletion', async () => {
+      state.accounts = [{ id: 'user-1', role: 'admin' }]
+      state.adminCount = 1
+      state.userCount = 1
+
+      const result = await betterAuthProvider.deleteUser!('user-1')
+
+      expect(result).toEqual({ success: true })
+      expect(reElectBootstrapAdmin).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not re-run the bootstrap election after a member deletion', async () => {
+      state.accounts = [{ id: 'user-1', role: 'user' }]
+
+      const result = await betterAuthProvider.deleteUser!('user-1')
+
+      expect(result).toEqual({ success: true })
+      expect(reElectBootstrapAdmin).not.toHaveBeenCalled()
     })
   })
 })
