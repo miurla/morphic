@@ -49,8 +49,7 @@ export function withShareOptIn(
 ): AuthCapabilities {
   return {
     ...capabilities,
-    share:
-      capabilities.share && process.env.NEXT_PUBLIC_ENABLE_SHARE === 'true'
+    share: capabilities.share && process.env.NEXT_PUBLIC_ENABLE_SHARE === 'true'
   }
 }
 
