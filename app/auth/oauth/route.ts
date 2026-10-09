@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server'
 
 // The client you created from the Server-Side Auth instructions
+import { safeRedirectPath } from '@/lib/auth/redirect-target'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/'
+  // if "next" is in param, use it as the redirect URL (same-origin paths
+  // only, so a crafted ?next= cannot bounce the signed-in user off-site)
+  const next = safeRedirectPath(searchParams.get('next') ?? undefined)
 
   if (code) {
     const supabase = await createClient()

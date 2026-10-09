@@ -107,6 +107,24 @@ describe('LoginForm', () => {
     })
   })
 
+  it('ignores a backslash-normalized next target', async () => {
+    // Browsers resolve /\evil.example.com to an off-site origin.
+    vi.mocked(signIn).mockResolvedValue({ success: true })
+    renderForm({}, null, '/\\evil.example.com')
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'user@example.com' }
+    })
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secret' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/')
+    })
+  })
+
   it('shows the error returned by the auth provider', async () => {
     vi.mocked(signIn).mockResolvedValue({
       success: false,

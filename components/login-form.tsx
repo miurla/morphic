@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { signIn, signInWithGoogle } from '@/lib/actions/auth'
+import { safeRedirectPath } from '@/lib/auth/redirect-target'
 import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
 import { cn } from '@/lib/utils/index'
 
@@ -21,14 +22,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 import { PasswordInput } from './ui/password-input'
-
-/**
- * Only same-origin relative paths may be used as post-sign-in targets, so
- * a crafted ?next= cannot bounce a signed-in user to another host.
- */
-function safeNextPath(next: string | undefined): string {
-  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/'
-}
 
 export function LoginForm({
   className,
@@ -53,7 +46,7 @@ export function LoginForm({
       // Redirect to the page that required sign-in (when it is a safe
       // relative path) and refresh to ensure server components get
       // updated session
-      router.push(safeNextPath(next))
+      router.push(safeRedirectPath(next))
       router.refresh()
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
@@ -67,7 +60,9 @@ export function LoginForm({
     setError(null)
 
     try {
-      const result = await signInWithGoogle()
+      const result = await signInWithGoogle(
+        next ? safeRedirectPath(next) : undefined
+      )
       if (!result.success)
         throw new Error(result.error ?? 'An OAuth error occurred')
       if (result.redirectTo) {

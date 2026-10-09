@@ -18,12 +18,14 @@ export async function signIn(credentials: {
   return provider.signIn(credentials)
 }
 
-export async function signInWithGoogle(): Promise<AuthActionResult> {
+export async function signInWithGoogle(
+  next?: string
+): Promise<AuthActionResult> {
   const provider = getAuthProvider()
   if (!provider.signInWithOAuth) {
     return unavailable()
   }
-  return provider.signInWithOAuth('google')
+  return provider.signInWithOAuth('google', next)
 }
 
 export async function signUp(credentials: {

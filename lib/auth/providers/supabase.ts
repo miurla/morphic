@@ -81,13 +81,16 @@ export const supabaseAuthProvider: AuthProvider = {
     return error ? { success: false, error: error.message } : { success: true }
   },
 
-  async signInWithOAuth(provider: string): Promise<AuthActionResult> {
+  async signInWithOAuth(
+    provider: string,
+    next?: string
+  ): Promise<AuthActionResult> {
     const supabase = await createClient()
     const origin = await getRequestOrigin()
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider as 'google',
       options: {
-        redirectTo: `${origin}/auth/oauth`
+        redirectTo: `${origin}/auth/oauth${next ? `?next=${encodeURIComponent(next)}` : ''}`
       }
     })
     if (error) {

@@ -72,7 +72,7 @@ export interface AuthProvider {
     email: string
     password: string
   }): Promise<AuthActionResult>
-  signInWithOAuth?(provider: string): Promise<AuthActionResult>
+  signInWithOAuth?(provider: string, next?: string): Promise<AuthActionResult>
   signUp?(credentials: {
     email: string
     password: string
