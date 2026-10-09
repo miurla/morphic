@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation'
 
-import { getSignUpMode } from '@/lib/auth/better-auth/config'
+import {
+  getSignUpMode,
+  isBootstrapWindowOpen
+} from '@/lib/auth/better-auth/config'
 import { validateInvitation } from '@/lib/auth/better-auth/invitations'
 import { getAuthProvider } from '@/lib/auth/provider'
 
@@ -35,7 +38,10 @@ export default async function SignUpPage({
       validToken = token
       inviteEmail = invitation.email ?? undefined
     } else {
-      inviteRequired = true
+      // A fresh invite-only instance has no invitations yet: show the form
+      // while the bootstrap window is open so the gated address can create
+      // the first account. The address itself is enforced at creation time.
+      inviteRequired = !(await isBootstrapWindowOpen())
     }
   }
 

@@ -80,6 +80,20 @@ export async function applyBootstrapAdminGate(data: {
 }
 
 /**
+ * True while the bootstrap window is open: `BOOTSTRAP_ADMIN_EMAIL` is set
+ * and the user table is still empty. The sign-up page uses this to render
+ * the form (without a token) on a fresh invite-only instance; the address
+ * itself is enforced by `applyBootstrapAdminGate` at creation time.
+ */
+export async function isBootstrapWindowOpen(): Promise<boolean> {
+  if (!process.env.BOOTSTRAP_ADMIN_EMAIL?.trim()) {
+    return false
+  }
+  const [existing] = await db.select({ total: count() }).from(authSchema.user)
+  return (existing?.total ?? 0) === 0
+}
+
+/**
  * True when the email is the seed administrator of a fresh instance:
  * `BOOTSTRAP_ADMIN_EMAIL` is set, the address matches, and the user table
  * is still empty. Invite-only instances use this to let the first admin
@@ -91,8 +105,7 @@ export async function isBootstrapAccount(email: string): Promise<boolean> {
   if (!gate || email.trim().toLowerCase() !== gate) {
     return false
   }
-  const [existing] = await db.select({ total: count() }).from(authSchema.user)
-  return (existing?.total ?? 0) === 0
+  return isBootstrapWindowOpen()
 }
 
 /**

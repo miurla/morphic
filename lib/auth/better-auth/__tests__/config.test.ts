@@ -6,6 +6,7 @@ import {
   getAuth,
   getSignUpMode,
   isBootstrapAccount,
+  isBootstrapWindowOpen,
   resetAuthInstance
 } from '@/lib/auth/better-auth/config'
 import { db } from '@/lib/db'
@@ -268,6 +269,36 @@ describe('isBootstrapAccount', () => {
     process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
     mockUserCount(1)
     await expect(isBootstrapAccount('admin@corp.local')).resolves.toBe(false)
+  })
+})
+
+describe('isBootstrapWindowOpen', () => {
+  const original = process.env.BOOTSTRAP_ADMIN_EMAIL
+
+  afterEach(() => {
+    if (original === undefined) {
+      delete process.env.BOOTSTRAP_ADMIN_EMAIL
+    } else {
+      process.env.BOOTSTRAP_ADMIN_EMAIL = original
+    }
+  })
+
+  it('is false when no gate is configured', async () => {
+    delete process.env.BOOTSTRAP_ADMIN_EMAIL
+    mockUserCount(0)
+    await expect(isBootstrapWindowOpen()).resolves.toBe(false)
+  })
+
+  it('is true while the gate is set and the table is empty', async () => {
+    process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+    mockUserCount(0)
+    await expect(isBootstrapWindowOpen()).resolves.toBe(true)
+  })
+
+  it('is false once the first account exists', async () => {
+    process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+    mockUserCount(1)
+    await expect(isBootstrapWindowOpen()).resolves.toBe(false)
   })
 })
 
