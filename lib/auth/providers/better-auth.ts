@@ -5,14 +5,17 @@ import { eq } from 'drizzle-orm'
 
 import {
   getAuth,
+  getEmailLinkOrigin,
   getSignUpMode,
   isBetterAuthSmtpConfigured,
   isBootstrapAccount
 } from '@/lib/auth/better-auth/config'
 import {
   consumeInvitation,
+  createInvitation,
   validateInvitation
 } from '@/lib/auth/better-auth/invitations'
+import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
 import { user as authUser } from '@/lib/auth/better-auth/schema'
 import { getRequestOrigin } from '@/lib/auth/request'
 import type { AppUser, AuthActionResult, AuthProvider } from '@/lib/auth/types'
@@ -170,13 +173,40 @@ export const betterAuthProvider: AuthProvider = {
     password: string
     token?: string
   }): Promise<AuthActionResult> {
-    if (
-      getSignUpMode() === 'invite' &&
-      // The bootstrap account is the seed admin of a fresh invite-only
-      // instance: invitations can only be created by an existing admin, so
-      // the gated address must be able to sign up without a token.
-      !(await isBootstrapAccount(email))
-    ) {
+    // The bootstrap account is the seed admin of a fresh instance:
+    // invitations can only be created by an existing admin, so the gated
+    // address must be able to sign up without a token.
+    const bootstrap = !token && (await isBootstrapAccount(email))
+    if (bootstrap && isBetterAuthSmtpConfigured()) {
+      // The bootstrap gate only compares caller-supplied email text, so on
+      // an instance reachable by others anyone who guesses the operator's
+      // address could claim the admin role. When SMTP is available, require
+      // proof of mailbox control instead: send a one-time invitation bound
+      // to the address and let the normal invitation path finish sign-up.
+      try {
+        const { token: inviteToken } = await createInvitation({
+          invitedBy: 'bootstrap',
+          email: email.trim().toLowerCase()
+        })
+        const link = `${await getEmailLinkOrigin()}/auth/sign-up?token=${inviteToken}`
+        await sendSmtpMail({
+          to: email,
+          subject: 'Finish creating your Morphic admin account',
+          text: `Use this link to finish creating the admin account for ${email} (valid for one week): ${link}`,
+          html: `<p>Use this link to finish creating the admin account for ${email} (valid for one week):</p><p><a href="${link}">Complete sign-up</a></p>`
+        })
+        return {
+          success: true,
+          notice: `A bootstrap link was sent to ${email}. Open it to finish creating the admin account.`
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: errorMessage(error, 'Could not send the bootstrap email.')
+        }
+      }
+    }
+    if (getSignUpMode() === 'invite' && !bootstrap) {
       const invitation = await validateInvitation(token)
       if (!invitation) {
         return {

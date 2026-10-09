@@ -38,6 +38,12 @@ export interface AuthActionResult {
    * (e.g. an OAuth redirect to the identity provider).
    */
   redirectTo?: string
+  /**
+   * Present when the action did not complete sign-in but the client should
+   * display this message instead of redirecting (e.g. a bootstrap link was
+   * emailed and sign-up continues from the mail).
+   */
+  notice?: string
 }
 
 /**

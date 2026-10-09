@@ -33,6 +33,7 @@ export function SignUpForm({
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const capabilities = useAuthCapabilities()
@@ -51,6 +52,12 @@ export function SignUpForm({
     try {
       const result = await signUp({ email, password, token })
       if (!result.success) throw new Error(result.error ?? 'An error occurred')
+      if (result.notice) {
+        // Sign-up continues out-of-band (e.g. an emailed bootstrap link);
+        // show the message instead of redirecting.
+        setNotice(result.notice)
+        return
+      }
       if (capabilities.emailVerification) {
         router.push('/auth/sign-up-success')
       } else {
@@ -127,6 +134,7 @@ export function SignUpForm({
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
+              {notice && <p className="text-sm text-green-600">{notice}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'Creating account...' : 'Sign Up'}
               </Button>

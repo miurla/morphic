@@ -53,6 +53,23 @@ describe('SignUpForm', () => {
     })
   })
 
+  it('shows a notice and stays on the page when sign-up continues out-of-band', async () => {
+    // E.g. the bootstrap mailbox-proof flow: an emailed link finishes the
+    // admin account, so the form must not redirect.
+    vi.mocked(signUp).mockResolvedValue({
+      success: true,
+      notice: 'A bootstrap link was sent to admin@corp.local.'
+    })
+
+    render(<SignUpForm />)
+    fillAndSubmit()
+
+    expect(
+      await screen.findByText('A bootstrap link was sent to admin@corp.local.')
+    ).toBeInTheDocument()
+    expect(push).not.toHaveBeenCalled()
+  })
+
   it('prefills and flags the email an invitation is bound to', async () => {
     vi.mocked(signUp).mockResolvedValue({ success: true })
 

@@ -5,8 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getAuth } from '@/lib/auth/better-auth/config'
 import {
   consumeInvitation,
+  createInvitation,
   validateInvitation
 } from '@/lib/auth/better-auth/invitations'
+import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
 import { betterAuthProvider } from '@/lib/auth/providers/better-auth'
 
 const { mockAuth, mockSetCookie } = vi.hoisted(() => ({
@@ -31,7 +33,13 @@ vi.mock('@/lib/auth/better-auth/config', async importOriginal => {
 
 vi.mock('@/lib/auth/better-auth/invitations', () => ({
   validateInvitation: vi.fn(),
-  consumeInvitation: vi.fn()
+  consumeInvitation: vi.fn(),
+  createInvitation: vi.fn()
+}))
+
+vi.mock('@/lib/auth/better-auth/mailer', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/lib/auth/better-auth/mailer')>()),
+  sendSmtpMail: vi.fn()
 }))
 
 vi.mock('@/lib/db', () => ({
@@ -314,6 +322,69 @@ describe('better-auth provider', () => {
 
       expect(result).toEqual({ success: true })
       expect(validateInvitation).not.toHaveBeenCalled()
+    })
+
+    it('emails a bootstrap invitation instead of creating the gated account when SMTP is set', async () => {
+      // The gate only compares caller-supplied text; with SMTP available the
+      // gated address must prove mailbox control before the admin account
+      // is created.
+      process.env.AUTH_SIGNUP_MODE = 'invite'
+      process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+      process.env.SMTP_HOST = 'smtp.example.com'
+      process.env.SMTP_USER = 'user'
+      process.env.SMTP_PASSWORD = 'pass'
+      vi.mocked(createInvitation).mockResolvedValue({
+        invitation: {} as never,
+        token: 'boot-token'
+      })
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'admin@corp.local',
+        password: 'secret'
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.notice).toContain('bootstrap link')
+      expect(createInvitation).toHaveBeenCalledWith({
+        invitedBy: 'bootstrap',
+        email: 'admin@corp.local'
+      })
+      expect(sendSmtpMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'admin@corp.local',
+          text: expect.stringContaining('/auth/sign-up?token=boot-token')
+        })
+      )
+      expect(mockAuth.api.signUpEmail).not.toHaveBeenCalled()
+    })
+
+    it('still validates the emailed bootstrap invitation through the normal token path', async () => {
+      // Following the emailed link must go through invitation validation,
+      // not the mailbox-proof branch (which would loop forever).
+      process.env.AUTH_SIGNUP_MODE = 'invite'
+      process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+      process.env.SMTP_HOST = 'smtp.example.com'
+      process.env.SMTP_USER = 'user'
+      process.env.SMTP_PASSWORD = 'pass'
+      vi.mocked(validateInvitation).mockResolvedValue({
+        id: 'inv-1',
+        email: 'admin@corp.local'
+      } as never)
+      vi.mocked(consumeInvitation).mockResolvedValue(true)
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
+        response: signUpResult,
+        headers: new Headers()
+      } as never)
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'admin@corp.local',
+        password: 'secret',
+        token: 'boot-token'
+      })
+
+      expect(result).toEqual({ success: true })
+      expect(createInvitation).not.toHaveBeenCalled()
+      expect(consumeInvitation).toHaveBeenCalledWith('inv-1')
     })
 
     it('claims the invitation before creating the account', async () => {
