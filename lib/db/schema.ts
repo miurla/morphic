@@ -507,3 +507,9 @@ export const additionalUsageInterest = pgTable(
 export type AdditionalUsageInterest = InferSelectModel<
   typeof additionalUsageInterest
 >
+
+// Better Auth tables (user, session, account, verification, invitations)
+// are defined in lib/auth/better-auth/schema.ts and re-exported here so the
+// canonical schema module — and drizzle-kit generation anchored on it —
+// covers every table in the database.
+export * from '../auth/better-auth/schema'
