@@ -201,10 +201,19 @@ describe('withShareOptIn', () => {
     share: true
   }
 
-  it('keeps sharing only when the opt-in flag is true', () => {
-    const original = process.env.NEXT_PUBLIC_ENABLE_SHARE
+  it('keeps sharing only when an opt-in flag is true', () => {
+    const originalPublic = process.env.NEXT_PUBLIC_ENABLE_SHARE
+    const originalRuntime = process.env.ENABLE_SHARE
     try {
       delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      delete process.env.ENABLE_SHARE
+      expect(withShareOptIn(base).share).toBe(false)
+
+      // The runtime flag is the one that works in prebuilt images, where
+      // the public flag was inlined at build time.
+      process.env.ENABLE_SHARE = 'true'
+      expect(withShareOptIn(base).share).toBe(true)
+      process.env.ENABLE_SHARE = 'false'
       expect(withShareOptIn(base).share).toBe(false)
 
       process.env.NEXT_PUBLIC_ENABLE_SHARE = 'true'
@@ -213,10 +222,15 @@ describe('withShareOptIn', () => {
       process.env.NEXT_PUBLIC_ENABLE_SHARE = 'false'
       expect(withShareOptIn(base).share).toBe(false)
     } finally {
-      if (original === undefined) {
+      if (originalPublic === undefined) {
         delete process.env.NEXT_PUBLIC_ENABLE_SHARE
       } else {
-        process.env.NEXT_PUBLIC_ENABLE_SHARE = original
+        process.env.NEXT_PUBLIC_ENABLE_SHARE = originalPublic
+      }
+      if (originalRuntime === undefined) {
+        delete process.env.ENABLE_SHARE
+      } else {
+        process.env.ENABLE_SHARE = originalRuntime
       }
     }
   })

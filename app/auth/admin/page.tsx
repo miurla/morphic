@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/card'
 
 import { InvitationsManager } from '@/components/admin/invitations-manager'
+import { MemberRoleManager } from '@/components/admin/member-role-manager'
 import { ResetMemberPasswordForm } from '@/components/admin/reset-member-password-form'
 
 // The provider check below short-circuits at build time (the build has no
@@ -60,6 +61,19 @@ export default async function AdminPage() {
             invitations={invitations.map(invitationView)}
             serverNow={serverNow()}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Member roles</CardTitle>
+          <CardDescription>
+            Promote members to admin. The last remaining admin cannot delete
+            their own account until another admin exists.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MemberRoleManager members={members} />
         </CardContent>
       </Card>
 

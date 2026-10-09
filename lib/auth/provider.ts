@@ -39,6 +39,20 @@ function enforceCloudDeploymentGuard(
 }
 
 /**
+ * Whether sharing is enabled. ENABLE_SHARE is the runtime (non-public)
+ * flag and works in prebuilt images; NEXT_PUBLIC_ENABLE_SHARE is kept for
+ * source builds, but Next inlines NEXT_PUBLIC_* at build time even in
+ * server bundles, so it cannot be flipped at runtime in a published
+ * image. shareChat enforces the same helper server-side.
+ */
+export function isShareEnabled(): boolean {
+  return (
+    process.env.ENABLE_SHARE === 'true' ||
+    process.env.NEXT_PUBLIC_ENABLE_SHARE === 'true'
+  )
+}
+
+/**
  * Fold the sharing opt-in flag into a provider's capabilities. Must be
  * evaluated on the server: client components inline NEXT_PUBLIC_* values
  * at build time, which would freeze the setting in prebuilt images.
@@ -49,7 +63,7 @@ export function withShareOptIn(
 ): AuthCapabilities {
   return {
     ...capabilities,
-    share: capabilities.share && process.env.NEXT_PUBLIC_ENABLE_SHARE === 'true'
+    share: capabilities.share && isShareEnabled()
   }
 }
 

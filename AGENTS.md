@@ -120,7 +120,7 @@ DATABASE_URL=        # PostgreSQL connection string
 - Chat history: Set `ENABLE_SAVE_CHAT_HISTORY=true` and configure Redis
 - Alternative AI providers: Add corresponding API keys (ANTHROPIC_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, etc.)
 - Alternative search: Configure SEARCH_API and provider-specific settings
-- Sharing: Set `NEXT_PUBLIC_ENABLE_SHARE=true`
+- Sharing: Set `ENABLE_SHARE=true` (runtime flag; `NEXT_PUBLIC_ENABLE_SHARE=true` also works for source builds)
 
 ## Key Development Patterns
 

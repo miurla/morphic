@@ -67,9 +67,9 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const user = await getCurrentUser()
-  // Sharing is opt-in (NEXT_PUBLIC_ENABLE_SHARE=true); the flag is folded
-  // into the capabilities on the server so a prebuilt image can still
-  // toggle it at runtime. shareChat enforces the same flag again.
+  // Sharing is opt-in (ENABLE_SHARE=true); the flag is folded into the
+  // capabilities on the server so a prebuilt image can still toggle it at
+  // runtime. shareChat enforces the same flag again.
   const capabilities = withShareOptIn(getAuthProvider().capabilities)
 
   const userId = user?.id ?? (await getCurrentUserId())

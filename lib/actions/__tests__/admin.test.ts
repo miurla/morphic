@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   createInvitationAction,
+  promoteMemberAction,
   resetMemberPasswordAction,
   revokeInvitationAction
 } from '@/lib/actions/admin'
@@ -20,12 +21,15 @@ vi.mock('nodemailer', () => ({
   }
 }))
 
-const { mockSetUserPassword } = vi.hoisted(() => ({
-  mockSetUserPassword: vi.fn()
+const { mockSetUserPassword, mockSetRole } = vi.hoisted(() => ({
+  mockSetUserPassword: vi.fn(),
+  mockSetRole: vi.fn()
 }))
 
 vi.mock('@/lib/auth/better-auth/config', () => ({
-  getAuth: () => ({ api: { setUserPassword: mockSetUserPassword } }),
+  getAuth: () => ({
+    api: { setUserPassword: mockSetUserPassword, setRole: mockSetRole }
+  }),
   getEmailLinkOrigin: () =>
     (process.env.BETTER_AUTH_URL ?? '').trim().replace(/\/+$/, '')
 }))
@@ -258,6 +262,42 @@ describe('admin actions', () => {
         resetMemberPasswordAction({ userId: 'user-1', newPassword: 'short' })
       ).resolves.toMatchObject({ success: false })
       expect(mockSetUserPassword).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('promoteMemberAction', () => {
+    it('promotes a member to admin for admins', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
+
+      const result = await promoteMemberAction({ userId: 'user-1' })
+
+      expect(result).toEqual({ success: true })
+      expect(mockSetRole).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: { userId: 'user-1', role: 'admin' }
+        })
+      )
+    })
+
+    it('rejects non-admin callers', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(memberUser)
+
+      await expect(
+        promoteMemberAction({ userId: 'user-2' })
+      ).resolves.toMatchObject({
+        success: false,
+        error: 'Admin access required.'
+      })
+      expect(mockSetRole).not.toHaveBeenCalled()
+    })
+
+    it('surfaces provider failures as error results', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
+      mockSetRole.mockRejectedValueOnce(new Error('cannot promote self'))
+
+      await expect(
+        promoteMemberAction({ userId: 'user-1' })
+      ).resolves.toMatchObject({ success: false, error: 'cannot promote self' })
     })
   })
 })

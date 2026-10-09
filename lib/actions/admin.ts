@@ -177,3 +177,28 @@ export async function resetMemberPasswordAction(params: {
     }
   }
 }
+
+export async function promoteMemberAction(params: {
+  userId: string
+}): Promise<AdminActionResult> {
+  const adminUser = await requireAdmin()
+  if (isAdmin(adminUser)) {
+    return adminUser
+  }
+
+  try {
+    // Promotion only ever adds an admin, so it cannot strand the instance
+    // without one; demotion is deliberately not offered because the
+    // last-admin deletion guard has no equivalent for role changes.
+    await getAuth().api.setRole({
+      body: { userId: params.userId, role: 'admin' },
+      headers: await headers()
+    })
+    return { success: true }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to promote member'
+    }
+  }
+}

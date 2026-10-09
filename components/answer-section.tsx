@@ -86,9 +86,9 @@ export function AnswerSection({
   const { openLibrary, upsertCachedNote } = useLibrary()
   // Sharing records the chat under the signed-in user, so it needs a real
   // auth provider (supabase or better-auth), not the anonymous one. The
-  // opt-in flag (NEXT_PUBLIC_ENABLE_SHARE) is folded into this capability
-  // server-side by the root layout, so a prebuilt image can still enable
-  // sharing at runtime; shareChat enforces the same flag again.
+  // opt-in flag (ENABLE_SHARE) is folded into this capability server-side
+  // by the root layout, so a prebuilt image can still enable sharing at
+  // runtime; shareChat enforces the same flag again.
   const capabilities = useAuthCapabilities()
   const enableShare = capabilities.share && !isGuest
   const showSelectionSaveButton =

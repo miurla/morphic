@@ -307,6 +307,16 @@ LANGFUSE_BASE_URL=https://cloud.langfuse.com
 
 Off by default. Traces include full prompts and completions, so point `LANGFUSE_BASE_URL` at a self-hosted instance if that content should not leave your infrastructure. See [Privacy and Telemetry](./PRIVACY.md) for everything else a self-hosted instance can send outbound.
 
+### Chat Sharing
+
+Sharing chats is opt-in:
+
+```bash
+ENABLE_SHARE=true  # runtime flag; works with prebuilt Docker images
+```
+
+`NEXT_PUBLIC_ENABLE_SHARE=true` also works when building from source, but Next.js inlines `NEXT_PUBLIC_*` values at build time, so setting it at runtime has no effect in a published image.
+
 ### Outbound Fetch
 
 The `fetch` tool and the advanced-search crawler refuse private address space: loopback, RFC1918, link-local (which carries the cloud metadata endpoint), and the other non-global ranges. To let them read a service on the host's own network:

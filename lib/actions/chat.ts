@@ -4,6 +4,7 @@ import { revalidateTag, unstable_cache } from 'next/cache'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { isShareEnabled } from '@/lib/auth/provider'
 import * as dbActions from '@/lib/db/actions'
 import type { Chat, Message } from '@/lib/db/schema'
 import { generateId } from '@/lib/db/schema'
@@ -297,10 +298,10 @@ export async function deleteMessagesAfter(chatId: string, messageId: string) {
  * Share a chat (make it public)
  */
 export async function shareChat(chatId: string) {
-  // Sharing is opt-in (NEXT_PUBLIC_ENABLE_SHARE=true); enforce the same
-  // gate here that the share UI applies, so the action cannot be called
-  // directly while sharing is disabled.
-  if (process.env.NEXT_PUBLIC_ENABLE_SHARE !== 'true') {
+  // Sharing is opt-in (ENABLE_SHARE=true); enforce the same gate here
+  // that the share UI applies, so the action cannot be called directly
+  // while sharing is disabled.
+  if (!isShareEnabled()) {
     return null
   }
 
