@@ -47,6 +47,33 @@ describe('SignUpForm', () => {
     })
   })
 
+  it('prefills and flags the email an invitation is bound to', async () => {
+    vi.mocked(signUp).mockResolvedValue({ success: true })
+
+    render(<SignUpForm token="inv-token" inviteEmail="friend@example.com" />)
+
+    expect(screen.getByLabelText('Email')).toHaveValue('friend@example.com')
+    expect(
+      screen.getByText(/bound to friend@example\.com/i)
+    ).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secret-password' }
+    })
+    fireEvent.change(screen.getByLabelText('Repeat Password'), {
+      target: { value: 'secret-password' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign Up' }))
+
+    await waitFor(() => {
+      expect(signUp).toHaveBeenCalledWith({
+        email: 'friend@example.com',
+        password: 'secret-password',
+        token: 'inv-token'
+      })
+    })
+  })
+
   it('signs up without a token in open mode', async () => {
     vi.mocked(signUp).mockResolvedValue({ success: true })
 

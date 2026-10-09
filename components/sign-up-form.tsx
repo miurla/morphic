@@ -22,9 +22,13 @@ import { PasswordInput } from '@/components/ui/password-input'
 export function SignUpForm({
   className,
   token,
+  inviteEmail,
   ...props
-}: React.ComponentPropsWithoutRef<'div'> & { token?: string }) {
-  const [email, setEmail] = useState('')
+}: React.ComponentPropsWithoutRef<'div'> & {
+  token?: string
+  inviteEmail?: string
+}) {
+  const [email, setEmail] = useState(inviteEmail ?? '')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -81,6 +85,11 @@ export function SignUpForm({
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                 />
+                {inviteEmail && (
+                  <p className="text-xs text-muted-foreground">
+                    This invitation is bound to {inviteEmail}.
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">

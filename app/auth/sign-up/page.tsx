@@ -20,12 +20,14 @@ export default async function SignUpPage({
 
   let inviteRequired = false
   let validToken: string | undefined
+  let inviteEmail: string | undefined
 
   if (provider.name === 'better-auth' && getSignUpMode() === 'invite') {
     const { token } = await searchParams
     const invitation = await validateInvitation(token)
     if (invitation) {
       validToken = token
+      inviteEmail = invitation.email ?? undefined
     } else {
       inviteRequired = true
     }
@@ -37,7 +39,7 @@ export default async function SignUpPage({
         {inviteRequired ? (
           <InviteRequired />
         ) : (
-          <SignUpForm token={validToken} />
+          <SignUpForm token={validToken} inviteEmail={inviteEmail} />
         )}
       </div>
     </div>

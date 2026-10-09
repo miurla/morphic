@@ -161,6 +161,20 @@ export const betterAuthProvider: AuthProvider = {
           error: 'Sign-up requires a valid invitation token.'
         }
       }
+      // Invitations issued for a specific address can only be redeemed by
+      // that address, so a forwarded link is useless to anyone else.
+      // Generic invitations (created without an email) stay transferable.
+      // Checked before the claim so a mismatched attempt does not burn the
+      // invitation for its intended recipient.
+      if (
+        invitation.email &&
+        invitation.email.trim().toLowerCase() !== email.trim().toLowerCase()
+      ) {
+        return {
+          success: false,
+          error: 'This invitation was issued for a different email address.'
+        }
+      }
       // Claim the invitation before creating the account so concurrent
       // submissions of the same link cannot both pass validation. If the
       // sign-up then fails, the invitation stays consumed: safer than

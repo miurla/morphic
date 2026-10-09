@@ -78,6 +78,10 @@ export function InvitationsManager({
           {isCreating ? 'Creating...' : 'Create invitation'}
         </Button>
       </form>
+      <p className="text-xs text-muted-foreground">
+        With an email address the link can only be redeemed by that address;
+        without one it is a generic link anyone with it can use.
+      </p>
 
       {newLink && (
         <div className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center">

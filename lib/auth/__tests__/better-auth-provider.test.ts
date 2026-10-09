@@ -272,6 +272,49 @@ describe('better-auth provider', () => {
       expect(consumeInvitation).toHaveBeenCalledWith('inv-1')
     })
 
+    it('rejects a sign-up whose email does not match the invitation', async () => {
+      process.env.AUTH_SIGNUP_MODE = 'invite'
+      vi.mocked(validateInvitation).mockResolvedValue({
+        id: 'inv-1',
+        email: 'friend@example.com'
+      } as never)
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'someone-else@example.com',
+        password: 'secret',
+        token: 'tok'
+      })
+
+      expect(result).toEqual({
+        success: false,
+        error: 'This invitation was issued for a different email address.'
+      })
+      // A mismatched attempt must not burn the invitation for its recipient
+      expect(consumeInvitation).not.toHaveBeenCalled()
+      expect(mockAuth.api.signUpEmail).not.toHaveBeenCalled()
+    })
+
+    it('accepts a case-insensitive match with the invited email', async () => {
+      process.env.AUTH_SIGNUP_MODE = 'invite'
+      vi.mocked(validateInvitation).mockResolvedValue({
+        id: 'inv-1',
+        email: 'Friend@Example.com'
+      } as never)
+      vi.mocked(consumeInvitation).mockResolvedValue(true)
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
+        response: signUpResult,
+        headers: new Headers()
+      } as never)
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'friend@example.com',
+        password: 'secret',
+        token: 'tok'
+      })
+
+      expect(result).toEqual({ success: true })
+    })
+
     it('rejects when the invitation was already claimed concurrently', async () => {
       process.env.AUTH_SIGNUP_MODE = 'invite'
       vi.mocked(validateInvitation).mockResolvedValue({

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { getSignUpMode } from '@/lib/auth/better-auth/config'
+import { validateInvitation } from '@/lib/auth/better-auth/invitations'
 import { getAuthProvider } from '@/lib/auth/provider'
 
 import Page from '../sign-up/page'
@@ -39,5 +41,30 @@ describe('sign-up page', () => {
     await Page({ searchParams: Promise.resolve({}) })
 
     expect(redirect).not.toHaveBeenCalled()
+  })
+
+  it('passes the bound invitation email to the form', async () => {
+    vi.mocked(getAuthProvider).mockReturnValue({
+      name: 'better-auth',
+      capabilities: { signUp: true }
+    } as never)
+    vi.mocked(getSignUpMode).mockReturnValue('invite')
+    vi.mocked(validateInvitation).mockResolvedValue({
+      id: 'inv-1',
+      email: 'friend@example.com'
+    } as never)
+
+    const tree = (await Page({
+      searchParams: Promise.resolve({ token: 'tok' })
+    })) as unknown as {
+      props: {
+        children: { props: { children: { props: Record<string, unknown> } } }
+      }
+    }
+
+    expect(tree.props.children.props.children.props).toMatchObject({
+      token: 'tok',
+      inviteEmail: 'friend@example.com'
+    })
   })
 })
