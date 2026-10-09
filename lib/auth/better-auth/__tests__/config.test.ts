@@ -9,7 +9,13 @@ import {
   isBootstrapWindowOpen,
   resetAuthInstance
 } from '@/lib/auth/better-auth/config'
+import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
 import { db } from '@/lib/db'
+
+vi.mock('@/lib/auth/better-auth/mailer', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/lib/auth/better-auth/mailer')>()),
+  sendSmtpMail: vi.fn()
+}))
 
 vi.mock('@/lib/db', () => ({
   db: {
@@ -307,7 +313,12 @@ describe('reset password mailer wiring', () => {
 
   beforeEach(() => {
     resetAuthInstance()
-    for (const key of ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD']) {
+    for (const key of [
+      'SMTP_HOST',
+      'SMTP_USER',
+      'SMTP_PASSWORD',
+      'BETTER_AUTH_URL'
+    ]) {
       original[key] = process.env[key]
       delete process.env[key]
     }
@@ -340,6 +351,35 @@ describe('reset password mailer wiring', () => {
     const auth = getAuth()
 
     expect(auth.options.emailAndPassword?.sendResetPassword).toBeUndefined()
+  })
+
+  it('links the in-app reset page instead of better-auth unmounted endpoint', async () => {
+    // better-auth's own /api/auth/reset-password/:token handler is not
+    // mounted, so its generated url would 404; the email must carry the
+    // raw token to the in-app page instead.
+    process.env.SMTP_HOST = 'smtp.example.com'
+    process.env.SMTP_USER = 'user'
+    process.env.SMTP_PASSWORD = 'pass'
+    process.env.BETTER_AUTH_URL = 'http://localhost:3000/'
+
+    const auth = getAuth()
+    const sendResetPassword = auth.options.emailAndPassword?.sendResetPassword
+    expect(sendResetPassword).toBeDefined()
+
+    await sendResetPassword!({
+      user: { email: 'admin@corp.local' },
+      url: 'http://localhost:3000/api/auth/reset-password/tok?callbackURL=x',
+      token: 'tok'
+    } as never)
+
+    expect(sendSmtpMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'admin@corp.local',
+        text: expect.stringContaining(
+          'http://localhost:3000/auth/update-password?token=tok'
+        )
+      })
+    )
   })
 })
 

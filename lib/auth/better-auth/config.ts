@@ -4,6 +4,7 @@ import { APIError } from 'better-auth/api'
 import { admin } from 'better-auth/plugins'
 import { asc, count, eq, sql } from 'drizzle-orm'
 
+import { getRequestOrigin } from '@/lib/auth/request'
 import { db } from '@/lib/db'
 
 import { isSmtpConfigured, sendSmtpMail } from './mailer'
@@ -17,6 +18,23 @@ export type SignUpMode = 'open' | 'invite'
  */
 export function isBetterAuthSmtpConfigured(): boolean {
   return isSmtpConfigured()
+}
+
+/**
+ * Origin for absolute links delivered by email: `BETTER_AUTH_URL` when
+ * configured (the canonical base), otherwise the current request's origin.
+ */
+export async function getEmailLinkOrigin(): Promise<string> {
+  const configured = process.env.BETTER_AUTH_URL?.trim()
+  if (configured) {
+    return configured.replace(/\/+$/, '')
+  }
+  try {
+    return await getRequestOrigin()
+  } catch {
+    // Outside a request scope (background email delivery)
+    return ''
+  }
 }
 
 export function getSignUpMode(): SignUpMode {
@@ -178,12 +196,18 @@ function createAuth() {
       // verification, so this is the only email better-auth delivers;
       // invitation mail goes through lib/actions/admin.ts.
       sendResetPassword: smtpConfigured
-        ? async ({ user, url }) => {
+        ? async ({ user, token }) => {
+            // better-auth's generated url targets its own
+            // /api/auth/reset-password/:token endpoint, which this app does
+            // not expose (the API handler is not mounted), so it would 404.
+            // Link the in-app page directly with the raw token instead; it
+            // resets the password through the provider's server action.
+            const link = `${await getEmailLinkOrigin()}/auth/update-password?token=${token}`
             await sendSmtpMail({
               to: user.email,
               subject: 'Reset your Morphic password',
-              text: `Use this link to reset your password (valid for one hour): ${url}`,
-              html: `<p>Use this link to reset your password (valid for one hour):</p><p><a href="${url}">Reset password</a></p>`
+              text: `Use this link to reset your password (valid for one hour): ${link}`,
+              html: `<p>Use this link to reset your password (valid for one hour):</p><p><a href="${link}">Reset password</a></p>`
             })
           }
         : undefined
