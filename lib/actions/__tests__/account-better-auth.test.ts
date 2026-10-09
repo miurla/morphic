@@ -111,4 +111,16 @@ describe('deleteAccount with the better-auth provider', () => {
     expect(deleteUserObjects).not.toHaveBeenCalled()
     expect(db.delete).not.toHaveBeenCalled()
   })
+
+  it('returns an error result when the pre-check throws', async () => {
+    vi.mocked(db.select).mockImplementation(() => {
+      throw new Error('db down')
+    })
+
+    const result = await deleteAccount()
+
+    expect(result.success).toBe(false)
+    expect(result.error).toBe('db down')
+    expect(dbActions.deleteUserChats).not.toHaveBeenCalled()
+  })
 })

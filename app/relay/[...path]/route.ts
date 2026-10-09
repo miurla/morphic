@@ -3,6 +3,8 @@ import { type NextRequest } from 'next/server'
 // Mirrors the destinations of the PostHog proxy rewrites this handler
 // replaced.
 const ASSET_SEGMENTS = new Set(['static', 'array'])
+const ASSET_HOST = 'us-assets.i.posthog.com'
+const API_HOST = 'us.i.posthog.com'
 
 /**
  * Same-origin PostHog relay, implemented as a route handler instead of a
@@ -17,10 +19,14 @@ async function relay(
   { params }: { params: Promise<{ path: string[] }> }
 ): Promise<Response> {
   const { path } = await params
-  const host = ASSET_SEGMENTS.has(path[0])
-    ? 'https://us-assets.i.posthog.com'
-    : 'https://us.i.posthog.com'
-  const target = new URL(`/${path.join('/')}`, host)
+  const host = ASSET_SEGMENTS.has(path[0]) ? ASSET_HOST : API_HOST
+  const target = new URL(`/${path.join('/')}`, `https://${host}`)
+  if (target.host !== host) {
+    // A decoded path segment escaped the PostHog origin (e.g. an encoded
+    // slash turning the joined path protocol-relative). Refuse rather
+    // than proxy payloads to an attacker-chosen host.
+    return new Response('Not found', { status: 404 })
+  }
   target.search = request.nextUrl.search
 
   const headers = new Headers()

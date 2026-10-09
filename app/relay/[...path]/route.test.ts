@@ -57,6 +57,24 @@ describe('relay route', () => {
     expect(new TextDecoder().decode(init.body)).toBe('{"api_key":"phk"}')
   })
 
+  it('refuses paths that resolve off the PostHog origin', async () => {
+    const fetchMock = vi.fn(async () => upstreamResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    // A decoded segment starting with a slash would turn the joined path
+    // protocol-relative and resolve the target to an attacker host.
+    const request = new NextRequest(
+      'http://localhost:3000/relay/%2f%2fevil.example/x'
+    )
+
+    const response = await GET(request, {
+      params: Promise.resolve({ path: ['//evil.example', 'x'] })
+    })
+
+    expect(response.status).toBe(404)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('routes static and array paths to the asset host', async () => {
     const fetchMock = vi.fn(async () => upstreamResponse())
     vi.stubGlobal('fetch', fetchMock)

@@ -104,7 +104,49 @@ describe('Account Actions', () => {
     expect(trackAccountDeleted).toHaveBeenCalledTimes(1)
   })
 
-  it('stops before storage and auth deletion when app data deletion fails', async () => {
+  it('deletes the auth user before any data cleanup', async () => {
+    const calls: string[] = []
+    deleteUser.mockImplementation(async () => {
+      calls.push('auth')
+      return { data: { user: null }, error: null }
+    })
+    vi.mocked(dbActions.deleteUserChats).mockImplementation(async () => {
+      calls.push('chats')
+      return { success: true }
+    })
+    vi.mocked(dbActions.deleteUserNotes).mockImplementation(async () => {
+      calls.push('notes')
+      return { success: true }
+    })
+    vi.mocked(dbActions.deleteUserLibraryFiles).mockImplementation(async () => {
+      calls.push('files')
+      return { success: true }
+    })
+    vi.mocked(dbActions.anonymizeUserFeedback).mockImplementation(async () => {
+      calls.push('feedback')
+      return { success: true }
+    })
+    vi.mocked(deleteUserObjects).mockImplementation(async () => {
+      calls.push('objects')
+      return { deletedCount: 0, skipped: true }
+    })
+
+    await deleteAccount()
+
+    // The provider-side guard lives inside deleteUser and must run
+    // before any destructive step, so a refusal (e.g. the last admin
+    // with members remaining) can never destroy data.
+    expect(calls).toEqual([
+      'auth',
+      'chats',
+      'notes',
+      'files',
+      'feedback',
+      'objects'
+    ])
+  })
+
+  it('stops before remaining cleanup when app data deletion fails', async () => {
     vi.mocked(dbActions.deleteUserChats).mockResolvedValue({
       success: false,
       error: 'Failed to delete user chats'
@@ -116,12 +158,13 @@ describe('Account Actions', () => {
       success: false,
       error: 'Failed to delete user chats'
     })
+    expect(deleteUser).toHaveBeenCalledWith(user.id)
+    expect(dbActions.deleteUserNotes).not.toHaveBeenCalled()
     expect(deleteUserObjects).not.toHaveBeenCalled()
-    expect(deleteUser).not.toHaveBeenCalled()
     expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
 
-  it('stops before storage and auth deletion when notes deletion fails', async () => {
+  it('stops before remaining cleanup when notes deletion fails', async () => {
     vi.mocked(dbActions.deleteUserNotes).mockResolvedValue({
       success: false,
       error: 'Failed to delete user notes'
@@ -133,12 +176,13 @@ describe('Account Actions', () => {
       success: false,
       error: 'Failed to delete user notes'
     })
+    expect(deleteUser).toHaveBeenCalledWith(user.id)
+    expect(dbActions.deleteUserLibraryFiles).not.toHaveBeenCalled()
     expect(deleteUserObjects).not.toHaveBeenCalled()
-    expect(deleteUser).not.toHaveBeenCalled()
     expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
 
-  it('stops before storage and auth deletion when feedback anonymization fails', async () => {
+  it('stops before remaining cleanup when feedback anonymization fails', async () => {
     vi.mocked(dbActions.anonymizeUserFeedback).mockResolvedValue({
       success: false,
       error: 'Failed to anonymize user feedback'
@@ -150,12 +194,13 @@ describe('Account Actions', () => {
       success: false,
       error: 'Failed to anonymize user feedback'
     })
+    expect(deleteUser).toHaveBeenCalledWith(user.id)
+    expect(dbActions.deleteUserLibraryFiles).toHaveBeenCalledWith(user.id)
     expect(deleteUserObjects).not.toHaveBeenCalled()
-    expect(deleteUser).not.toHaveBeenCalled()
     expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
 
-  it('stops before storage and auth deletion when library file deletion fails', async () => {
+  it('stops before remaining cleanup when library file deletion fails', async () => {
     vi.mocked(dbActions.deleteUserLibraryFiles).mockResolvedValue({
       success: false,
       error: 'Failed to delete user files'
@@ -167,12 +212,13 @@ describe('Account Actions', () => {
       success: false,
       error: 'Failed to delete user files'
     })
+    expect(deleteUser).toHaveBeenCalledWith(user.id)
+    expect(dbActions.anonymizeUserFeedback).not.toHaveBeenCalled()
     expect(deleteUserObjects).not.toHaveBeenCalled()
-    expect(deleteUser).not.toHaveBeenCalled()
     expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
 
-  it('stops before auth deletion when uploaded file deletion fails', async () => {
+  it('returns an error when uploaded file deletion fails', async () => {
     vi.mocked(deleteUserObjects).mockRejectedValue(new Error('Storage error'))
 
     const result = await deleteAccount()
@@ -184,7 +230,7 @@ describe('Account Actions', () => {
     expect(dbActions.deleteUserChats).toHaveBeenCalledWith(user.id)
     expect(dbActions.deleteUserNotes).toHaveBeenCalledWith(user.id)
     expect(dbActions.deleteUserLibraryFiles).toHaveBeenCalledWith(user.id)
-    expect(deleteUser).not.toHaveBeenCalled()
+    expect(deleteUser).toHaveBeenCalledWith(user.id)
     expect(trackAccountDeleted).not.toHaveBeenCalled()
   })
 

@@ -41,15 +41,28 @@ export async function deleteAccount(): Promise<{
     }
   }
 
-  // Per-account refusal (e.g. the last admin) must happen before any
-  // destructive step below, or a rejected deletion would still destroy
-  // the user's data while leaving the account in place.
-  const deleteCheck = await provider.canDeleteUser?.(user.id)
-  if (deleteCheck) {
-    return { success: false, error: deleteCheck }
-  }
-
   try {
+    // Per-account refusal (e.g. the last admin) before any destructive
+    // step. A throw here must surface as an error result, not reject
+    // the action.
+    const deleteCheck = await provider.canDeleteUser?.(user.id)
+    if (deleteCheck) {
+      return { success: false, error: deleteCheck }
+    }
+
+    // The authoritative last-admin guard lives inside deleteUser, in a
+    // locked transaction, and must run before any destructive step: a
+    // concurrent deletion can flip the pre-check's answer, and a
+    // rejection after the data cleanup would leave a retained account
+    // whose chats, notes, and files were already erased.
+    const deleteAuthResult = await provider.deleteUser!(user.id)
+    if (!deleteAuthResult.success) {
+      return {
+        success: false,
+        error: deleteAuthResult.error ?? 'Failed to delete user'
+      }
+    }
+
     const deleteChatsResult = await dbActions.deleteUserChats(user.id)
     if (!deleteChatsResult.success) {
       return {
@@ -86,11 +99,6 @@ export async function deleteAccount(): Promise<{
     }
 
     await deleteUserObjects(user.id)
-
-    const deleteAuthResult = await provider.deleteUser!(user.id)
-    if (!deleteAuthResult.success) {
-      throw new Error(deleteAuthResult.error ?? 'Failed to delete user')
-    }
 
     revalidateTag('chat', 'max')
     await trackAccountDeleted(user.id)
