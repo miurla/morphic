@@ -40,7 +40,7 @@
     "@opentelemetry/resources": "^2.9.0",
     "@opentelemetry/sdk-logs": "0.220.0",
     "@opentelemetry/sdk-trace-base": "^2.9.0",
-    "@paralleldrive/cuid2": "^2.2.2",
+    "@paralleldrive/cuid2": "^3.3.0",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.1.9",
     "@radix-ui/react-checkbox": "^1.0.4",
