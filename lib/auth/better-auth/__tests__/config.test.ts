@@ -203,6 +203,24 @@ describe('claimBootstrapAdmin', () => {
 
     errorSpy.mockRestore()
   })
+
+  it('retries a transient claim failure until it succeeds', async () => {
+    // The user insert is already committed at this point and the
+    // earliest-account guard means no later sign-up can take the claim
+    // over, so a transient blip must be retried rather than logged away.
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { update } = mockClaim({ earliest: 'user-1' })
+    vi.mocked(db.transaction).mockRejectedValueOnce(
+      Object.assign(new Error('connection lost'), { code: '08006' })
+    )
+
+    await expect(claimBootstrapAdmin('user-1')).resolves.toBeUndefined()
+
+    expect(update).toHaveBeenCalled()
+    expect(errorSpy).not.toHaveBeenCalled()
+
+    errorSpy.mockRestore()
+  })
 })
 
 describe('getSignUpMode', () => {

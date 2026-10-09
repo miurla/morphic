@@ -146,37 +146,53 @@ export async function isBootstrapAccount(email: string): Promise<boolean> {
  * successor directly in the database.
  */
 export async function claimBootstrapAdmin(userId: string): Promise<void> {
-  try {
-    await db.transaction(async tx => {
-      await tx.execute(sql`set transaction isolation level serializable`)
-      const [admin] = await tx
-        .select({ id: authSchema.user.id })
-        .from(authSchema.user)
-        .where(eq(authSchema.user.role, 'admin'))
-        .limit(1)
-      if (admin) {
-        return // An admin exists: the bootstrap window is closed
+  // A transient failure here (e.g. the connection drops after the user
+  // insert already committed) must not strand the instance without an
+  // admin: the earliest-account guard means no later sign-up can take the
+  // claim over, so retry a few times before giving up.
+  const maxAttempts = 5
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await db.transaction(async tx => {
+        await tx.execute(sql`set transaction isolation level serializable`)
+        const [admin] = await tx
+          .select({ id: authSchema.user.id })
+          .from(authSchema.user)
+          .where(eq(authSchema.user.role, 'admin'))
+          .limit(1)
+        if (admin) {
+          return // An admin exists: the bootstrap window is closed
+        }
+        const [earliest] = await tx
+          .select({ id: authSchema.user.id })
+          .from(authSchema.user)
+          .orderBy(asc(authSchema.user.createdAt), asc(authSchema.user.id))
+          .limit(1)
+        if (earliest?.id !== userId) {
+          return // Not the earliest account: another sign-up owns the claim
+        }
+        await tx
+          .update(authSchema.user)
+          .set({ role: 'admin' })
+          .where(eq(authSchema.user.id, userId))
+      })
+      return
+    } catch (error) {
+      // A serialization failure (SQLSTATE 40001) is the expected outcome
+      // for the loser of a concurrent first-sign-up race: the winner keeps
+      // the admin role and this account stays a regular user. Any other
+      // failure would silently leave the instance without an admin, so
+      // retry and then surface it.
+      if ((error as { code?: string } | null)?.code === '40001') {
+        return
       }
-      const [earliest] = await tx
-        .select({ id: authSchema.user.id })
-        .from(authSchema.user)
-        .orderBy(asc(authSchema.user.createdAt), asc(authSchema.user.id))
-        .limit(1)
-      if (earliest?.id !== userId) {
-        return // Not the earliest account: another sign-up owns the claim
+      if (attempt >= maxAttempts) {
+        console.error('Bootstrap admin claim failed:', error)
+        return
       }
-      await tx
-        .update(authSchema.user)
-        .set({ role: 'admin' })
-        .where(eq(authSchema.user.id, userId))
-    })
-  } catch (error) {
-    // A serialization failure (SQLSTATE 40001) is the expected outcome for
-    // the loser of a concurrent first-sign-up race: the winner keeps the
-    // admin role and this account stays a regular user. Any other failure
-    // would silently leave the instance without an admin, so surface it.
-    if ((error as { code?: string } | null)?.code !== '40001') {
-      console.error('Bootstrap admin claim failed:', error)
+      await new Promise(resolve =>
+        setTimeout(resolve, 100 * 2 ** (attempt - 1))
+      )
     }
   }
 }
