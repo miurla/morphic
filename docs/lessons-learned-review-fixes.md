@@ -83,6 +83,18 @@ Before committing any review fix:
       at a time.
 - [ ] **Mirror test:** ask what the fix _newly enables_ (a stale cookie, a
       re-enabled link, a hidden button) and check that state too.
+- [ ] **Trace callers of a function you guard.** A guard inside a callee
+      runs _after_ the caller's side effects. This PR's last-admin deletion
+      guard was added inside `deleteUser`, but the caller had already
+      deleted chats, notes, and files by then — a rejected deletion still
+      destroyed the account's data. Destructive flows need the check at a
+      pre-check hook (see `canDeleteUser` / `validateDeleteUserConfig`)
+      before the first destructive step.
+- [ ] **Never leave an identified race "acceptable" in silence.** The same
+      guard counted admins without a lock; two concurrent admin deletions
+      could both pass the count. If the consequence is loss of control,
+      serialize it (transaction + `SELECT ... FOR UPDATE`); at minimum,
+      document the accepted race where the reader will see it.
 
 ## The meta-lesson
 
