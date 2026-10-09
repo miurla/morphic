@@ -13,6 +13,7 @@ import {
 import {
   consumeInvitation,
   createInvitation,
+  hasRecentBootstrapInvitation,
   validateInvitation
 } from '@/lib/auth/better-auth/invitations'
 import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
@@ -20,6 +21,13 @@ import { user as authUser } from '@/lib/auth/better-auth/schema'
 import { getRequestOrigin } from '@/lib/auth/request'
 import type { AppUser, AuthActionResult, AuthProvider } from '@/lib/auth/types'
 import { db } from '@/lib/db'
+
+/**
+ * Minimum gap between bootstrap invitation emails for the same address.
+ * The bootstrap branch runs before better-auth's rate limiter, so this
+ * is the only throttle on repeated tokenless sign-up attempts.
+ */
+const BOOTSTRAP_INVITE_COOLDOWN_MS = 15 * 60 * 1000
 
 function errorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message) {
@@ -88,7 +96,8 @@ export const betterAuthProvider: AuthProvider = {
   get capabilities() {
     return {
       signUp: true,
-      passwordReset: isBetterAuthSmtpConfigured(),
+      passwordReset:
+        isBetterAuthSmtpConfigured() && getEmailLinkOrigin() !== '',
       deleteUser: true,
       // Email/password only: no OAuth provider is wired into the local
       // instance, and accounts are usable immediately without email
@@ -177,7 +186,11 @@ export const betterAuthProvider: AuthProvider = {
     // invitations can only be created by an existing admin, so the gated
     // address must be able to sign up without a token.
     const bootstrapAccount = await isBootstrapAccount(email)
-    if (bootstrapAccount && isBetterAuthSmtpConfigured()) {
+    if (
+      bootstrapAccount &&
+      isBetterAuthSmtpConfigured() &&
+      getEmailLinkOrigin()
+    ) {
       // The bootstrap gate only compares caller-supplied email text, so on
       // an instance reachable by others anyone who guesses the operator's
       // address could claim the admin role. When SMTP is available, require
@@ -187,11 +200,25 @@ export const betterAuthProvider: AuthProvider = {
       // ignores tokens, which would let any non-empty token skip the proof.
       if (!token) {
         try {
+          const emailKey = email.trim().toLowerCase()
+          if (
+            await hasRecentBootstrapInvitation(
+              emailKey,
+              BOOTSTRAP_INVITE_COOLDOWN_MS
+            )
+          ) {
+            // A live link is already on its way: this branch runs before
+            // better-auth's rate limiter, so do not spam the mailbox.
+            return {
+              success: true,
+              notice: `A bootstrap link was sent to ${email}. Open it to finish creating the admin account.`
+            }
+          }
           const { token: inviteToken } = await createInvitation({
             invitedBy: 'bootstrap',
-            email: email.trim().toLowerCase()
+            email: emailKey
           })
-          const link = `${await getEmailLinkOrigin()}/auth/sign-up?token=${inviteToken}`
+          const link = `${getEmailLinkOrigin()}/auth/sign-up?token=${inviteToken}`
           await sendSmtpMail({
             to: email,
             subject: 'Finish creating your Morphic admin account',

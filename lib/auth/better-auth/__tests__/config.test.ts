@@ -371,6 +371,28 @@ describe('reset password mailer wiring', () => {
     expect(auth.options.emailAndPassword?.sendResetPassword).toBeUndefined()
   })
 
+  it('refuses to send a reset email without a canonical origin', async () => {
+    // Without BETTER_AUTH_URL the link could only be built from
+    // caller-controlled headers: the mailer must fail instead of
+    // delivering a live credential to a spoofed host.
+    process.env.SMTP_HOST = 'smtp.example.com'
+    process.env.SMTP_USER = 'user'
+    process.env.SMTP_PASSWORD = 'pass'
+
+    const auth = getAuth()
+    const sendResetPassword = auth.options.emailAndPassword?.sendResetPassword
+    expect(sendResetPassword).toBeDefined()
+
+    await expect(
+      sendResetPassword!({
+        user: { email: 'admin@corp.local' },
+        url: 'http://localhost:3000/api/auth/reset-password/tok',
+        token: 'tok'
+      } as never)
+    ).rejects.toThrow('BETTER_AUTH_URL')
+    expect(sendSmtpMail).not.toHaveBeenCalled()
+  })
+
   it('links the in-app reset page instead of better-auth unmounted endpoint', async () => {
     // better-auth's own /api/auth/reset-password/:token handler is not
     // mounted, so its generated url would 404; the email must carry the

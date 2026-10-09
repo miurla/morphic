@@ -125,7 +125,7 @@ BOOTSTRAP_ADMIN_EMAIL=you@example.com
 
 2. Start Morphic. With Docker (`docker compose up -d`), database migrations run automatically at container start and create the auth tables. For local development (`bun dev` with a local Postgres), run `bun migrate` once before starting the dev server.
 
-3. First boot: open http://localhost:3000/auth/sign-up and create your account. The first account becomes the instance admin; the bootstrap window then closes permanently. When `BOOTSTRAP_ADMIN_EMAIL` is set, only that address can sign up during the window. If SMTP is configured, the bootstrap sign-up emails a one-time link to that address, so only someone who controls the mailbox can complete it; without SMTP the first person to submit the gated address wins the window, so finish first boot before exposing the instance to others.
+3. First boot: open http://localhost:3000/auth/sign-up and create your account. The first account becomes the instance admin; the bootstrap window then closes permanently. When `BOOTSTRAP_ADMIN_EMAIL` is set, only that address can sign up during the window. If SMTP and `BETTER_AUTH_URL` are configured, the bootstrap sign-up emails a one-time link to that address, so only someone who controls the mailbox can complete it; otherwise the first person to submit the gated address wins the window, so finish first boot before exposing the instance to others.
 
 #### Invite-only sign-up
 
@@ -137,7 +137,7 @@ Set `AUTH_SIGNUP_MODE=invite` to require an invitation for new accounts:
 
 #### Password reset and SMTP
 
-Password reset requires SMTP; without it the forgot-password flow is hidden and the admin can set member passwords from the admin page instead.
+Password reset requires SMTP and `BETTER_AUTH_URL`; without them the forgot-password flow is hidden and the admin can set member passwords from the admin page instead. `BETTER_AUTH_URL` is the canonical origin embedded in emailed links (password resets, invitations, bootstrap) — it is never derived from request headers, so a spoofed `Host` cannot redirect a live credential to an attacker domain.
 
 ```bash
 SMTP_HOST=smtp.example.com
@@ -145,6 +145,7 @@ SMTP_PORT=587
 SMTP_USER=smtp-user
 SMTP_PASSWORD=smtp-password
 EMAIL_FROM="Morphic <morphic@example.com>"
+BETTER_AUTH_URL=https://morphic.example.com
 ```
 
 With SMTP configured, password-reset emails are sent and invitation links are additionally emailed to invitees.

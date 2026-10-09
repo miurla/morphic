@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'crypto'
-import { and, desc, eq, isNull } from 'drizzle-orm'
+import { and, desc, eq, gt, isNull } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 
@@ -73,6 +73,33 @@ export async function listInvitations(): Promise<InvitationRecord[]> {
     .orderBy(desc(invitations.createdAt))
 
   return rows.map(toRecord)
+}
+
+/**
+ * True when a live bootstrap invitation for the address was created within
+ * the cooldown window. The bootstrap branch runs before better-auth's rate
+ * limiter, so without this a caller who knows the gated address could loop
+ * the sign-up action to flood the mailbox and the table with admin links.
+ */
+export async function hasRecentBootstrapInvitation(
+  email: string,
+  cooldownMs: number
+): Promise<boolean> {
+  const [existing] = await db
+    .select({ id: invitations.id })
+    .from(invitations)
+    .where(
+      and(
+        eq(invitations.email, email),
+        eq(invitations.invitedBy, 'bootstrap'),
+        isNull(invitations.usedAt),
+        isNull(invitations.revokedAt),
+        gt(invitations.expiresAt, new Date()),
+        gt(invitations.createdAt, new Date(Date.now() - cooldownMs))
+      )
+    )
+
+  return Boolean(existing)
 }
 
 /**

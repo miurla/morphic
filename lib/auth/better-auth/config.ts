@@ -4,7 +4,6 @@ import { APIError } from 'better-auth/api'
 import { admin } from 'better-auth/plugins'
 import { asc, count, eq, sql } from 'drizzle-orm'
 
-import { getRequestOrigin } from '@/lib/auth/request'
 import { db } from '@/lib/db'
 
 import { isSmtpConfigured, sendSmtpMail } from './mailer'
@@ -21,20 +20,14 @@ export function isBetterAuthSmtpConfigured(): boolean {
 }
 
 /**
- * Origin for absolute links delivered by email: `BETTER_AUTH_URL` when
- * configured (the canonical base), otherwise the current request's origin.
+ * Canonical origin for absolute links delivered by email. Never derived
+ * from request headers: `Origin` and `x-forwarded-host` are caller-
+ * controlled, and a spoofed value would deliver a valid one-time
+ * credential to an attacker domain (host-header injection). Deployments
+ * that deliver email must set `BETTER_AUTH_URL`.
  */
-export async function getEmailLinkOrigin(): Promise<string> {
-  const configured = process.env.BETTER_AUTH_URL?.trim()
-  if (configured) {
-    return configured.replace(/\/+$/, '')
-  }
-  try {
-    return await getRequestOrigin()
-  } catch {
-    // Outside a request scope (background email delivery)
-    return ''
-  }
+export function getEmailLinkOrigin(): string {
+  return (process.env.BETTER_AUTH_URL ?? '').trim().replace(/\/+$/, '')
 }
 
 export function getSignUpMode(): SignUpMode {
@@ -218,7 +211,16 @@ function createAuth() {
             // not expose (the API handler is not mounted), so it would 404.
             // Link the in-app page directly with the raw token instead; it
             // resets the password through the provider's server action.
-            const link = `${await getEmailLinkOrigin()}/auth/update-password?token=${token}`
+            const origin = getEmailLinkOrigin()
+            if (!origin) {
+              // Without a canonical origin the link could only be built
+              // from caller-controlled headers: fail loudly rather than
+              // deliver a live credential to the wrong host.
+              throw new Error(
+                'BETTER_AUTH_URL must be set to deliver password reset emails'
+              )
+            }
+            const link = `${origin}/auth/update-password?token=${token}`
             await sendSmtpMail({
               to: user.email,
               subject: 'Reset your Morphic password',

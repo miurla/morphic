@@ -4,6 +4,7 @@ import {
   consumeInvitation,
   createInvitation,
   hashInvitationToken,
+  hasRecentBootstrapInvitation,
   revokeInvitation,
   validateInvitation
 } from '@/lib/auth/better-auth/invitations'
@@ -137,5 +138,23 @@ describe('invitations', () => {
       state.rows = []
       await expect(consumeInvitation('inv-1')).resolves.toBe(false)
     })
+  })
+})
+
+describe('hasRecentBootstrapInvitation', () => {
+  it('is true when a live bootstrap invitation row exists', async () => {
+    state.rows = [{ id: 'inv-1' }]
+
+    await expect(
+      hasRecentBootstrapInvitation('admin@corp.local', 15 * 60 * 1000)
+    ).resolves.toBe(true)
+  })
+
+  it('is false when no row matches', async () => {
+    state.rows = []
+
+    await expect(
+      hasRecentBootstrapInvitation('admin@corp.local', 15 * 60 * 1000)
+    ).resolves.toBe(false)
   })
 })
