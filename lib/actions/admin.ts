@@ -2,13 +2,12 @@
 
 import { headers } from 'next/headers'
 
-import nodemailer from 'nodemailer'
-
 import { getAuth } from '@/lib/auth/better-auth/config'
 import {
   createInvitation,
   revokeInvitation
 } from '@/lib/auth/better-auth/invitations'
+import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { getRequestOrigin } from '@/lib/auth/request'
 import type { AppUser } from '@/lib/auth/types'
@@ -78,18 +77,7 @@ async function sendInvitationEmail(params: {
   inviteLink: string
   invitedByName: string
 }): Promise<void> {
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD
-    }
-  })
-
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM ?? 'Morphic <noreply@morphic.local>',
+  await sendSmtpMail({
     to: params.to,
     subject: 'You are invited to Morphic',
     text: `${params.invitedByName} invited you to Morphic. Accept the invitation: ${params.inviteLink}`,

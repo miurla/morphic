@@ -6,6 +6,7 @@ import { asc, count, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 
+import { isSmtpConfigured, sendSmtpMail } from './mailer'
 import * as authSchema from './schema'
 
 export type SignUpMode = 'open' | 'invite'
@@ -15,9 +16,7 @@ export type SignUpMode = 'open' | 'invite'
  * capability of the better-auth provider is gated on this at runtime.
  */
 export function isBetterAuthSmtpConfigured(): boolean {
-  return Boolean(
-    process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD
-  )
+  return isSmtpConfigured()
 }
 
 export function getSignUpMode(): SignUpMode {
@@ -143,22 +142,23 @@ function createAuth() {
     secret: getSecret(),
     database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
     emailAndPassword: {
-      enabled: true
+      enabled: true,
+      // better-auth 1.7 removed the built-in nodemailer transport: without
+      // this callback, requestPasswordReset fails with RESET_PASSWORD_DISABLED
+      // even when the SMTP variables are present. Morphic does not use email
+      // verification, so this is the only email better-auth delivers;
+      // invitation mail goes through lib/actions/admin.ts.
+      sendResetPassword: smtpConfigured
+        ? async ({ user, url }) => {
+            await sendSmtpMail({
+              to: user.email,
+              subject: 'Reset your Morphic password',
+              text: `Use this link to reset your password (valid for one hour): ${url}`,
+              html: `<p>Use this link to reset your password (valid for one hour):</p><p><a href="${url}">Reset password</a></p>`
+            })
+          }
+        : undefined
     },
-    email: smtpConfigured
-      ? {
-          server: {
-            host: process.env.SMTP_HOST!,
-            port: Number(process.env.SMTP_PORT ?? 587),
-            secure: process.env.SMTP_SECURE === 'true',
-            auth: {
-              user: process.env.SMTP_USER!,
-              pass: process.env.SMTP_PASSWORD!
-            }
-          },
-          from: process.env.EMAIL_FROM ?? 'Morphic <noreply@morphic.local>'
-        }
-      : undefined,
     plugins: [admin({ defaultRole: 'user' })],
     databaseHooks: {
       user: {
