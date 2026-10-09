@@ -48,13 +48,25 @@ vi.mock('@/lib/auth/better-auth/mailer', async importOriginal => ({
   sendSmtpMail: vi.fn()
 }))
 
+const { state } = vi.hoisted(() => ({
+  state: { accounts: [] as unknown[] }
+}))
+
 vi.mock('@/lib/db', () => ({
   db: {
     delete: vi.fn(() => ({
       where: vi.fn(async () => undefined)
     })),
     select: vi.fn(() => ({
-      from: vi.fn(async () => [{ total: 0 }])
+      // Awaitable (user-count queries) and chainable (.where().limit() for
+      // the account-exists check) so both query shapes resolve.
+      from: vi.fn(() =>
+        Object.assign(Promise.resolve([{ total: 0 }]), {
+          where: vi.fn(() => ({
+            limit: vi.fn(async () => state.accounts)
+          }))
+        })
+      )
     }))
   }
 }))
@@ -89,6 +101,7 @@ describe('better-auth provider', () => {
   const originalEnv: Record<string, string | undefined> = {}
 
   beforeEach(() => {
+    state.accounts = []
     for (const key of [
       'SMTP_HOST',
       'SMTP_USER',
@@ -477,6 +490,30 @@ describe('better-auth provider', () => {
       expect(result.success).toBe(false)
       expect(result.error).toContain('at least 8 characters')
       expect(releaseInvitation).toHaveBeenCalledWith('inv-9')
+    })
+
+    it('keeps the invitation consumed when the account exists despite a throw', async () => {
+      // The throw may have happened after better-auth committed the user:
+      // releasing the claim would re-enable a link whose address is taken.
+      process.env.AUTH_SIGNUP_MODE = 'invite'
+      state.accounts = [{ id: 'user-1' }]
+      vi.mocked(validateInvitation).mockResolvedValue({
+        id: 'inv-9',
+        email: 'member@example.com'
+      } as never)
+      vi.mocked(consumeInvitation).mockResolvedValue(true)
+      vi.mocked(mockAuth.api.signUpEmail).mockRejectedValue(
+        new Error('connection dropped')
+      )
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'member@example.com',
+        password: 'secret',
+        token: 'invite-token'
+      })
+
+      expect(result.success).toBe(false)
+      expect(releaseInvitation).not.toHaveBeenCalled()
     })
 
     it('rejects an arbitrary token on the gated address in open mode', async () => {

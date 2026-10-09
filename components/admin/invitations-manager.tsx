@@ -29,7 +29,15 @@ export function InvitationsManager({
   // behind keep showing an expired one as active).
   const [now, setNow] = useState<number | null>(null)
   useEffect(() => {
-    const skew = serverNow ? Date.now() - new Date(serverNow).getTime() : 0
+    const rawSkew = serverNow ? Date.now() - new Date(serverNow).getTime() : 0
+    // The gap between server render and hydration (slow devices, tabs
+    // backgrounded before hydration) is indistinguishable from clock drift
+    // here, and correcting it would pin the clock to the render time and
+    // keep freshly expired invitations Active. Sub-minute errors cannot
+    // change an outcome evaluated once a minute, so only drift larger than
+    // the tick is corrected: transit delay no longer freezes the clock in
+    // the past, while a clock genuinely minutes off is still corrected.
+    const skew = Math.abs(rawSkew) < 60_000 ? 0 : rawSkew
     const tick = () => setNow(Date.now() - skew)
     const timer = setInterval(tick, 60_000)
     return () => clearInterval(timer)

@@ -29,6 +29,26 @@ import { db } from '@/lib/db'
  * The bootstrap branch runs before better-auth's rate limiter, so this
  * is the only throttle on repeated tokenless sign-up attempts.
  */
+/**
+ * Whether an account already exists for the address. Used to decide whether
+ * an uncertain sign-up failure (a throw after better-auth may have already
+ * committed the user) may safely release the invitation claim.
+ */
+async function accountExists(email: string): Promise<boolean> {
+  try {
+    const [row] = await db
+      .select({ id: authUser.id })
+      .from(authUser)
+      .where(eq(authUser.email, email))
+      .limit(1)
+    return Boolean(row)
+  } catch {
+    // Uncertain: prefer leaving the claim consumed over re-enabling a link
+    // that may already have been redeemed.
+    return true
+  }
+}
+
 const BOOTSTRAP_INVITE_COOLDOWN_MS = 15 * 60 * 1000
 
 /**
@@ -361,13 +381,14 @@ export const betterAuthProvider: AuthProvider = {
           headers: await headers(),
           returnHeaders: true
         })
-      await applySetCookieHeaders(responseHeaders)
 
       // signUpEmail resolves to `{ token, user }` — there is no `session`
-      // field. The token is the session token the set-cookie headers above
-      // already delivered to the browser, so its presence is the success
-      // signal.
+      // field. The token is the session token the set-cookie headers below
+      // deliver to the browser, so its presence is the success signal.
       if (!response || !(response as { token?: unknown }).token) {
+        // A structured rejection: no account was created, so the claim is
+        // released and the same link can be retried (e.g. with a password
+        // that passes better-auth's rules).
         if (consumedInvitationId) {
           await releaseInvitation(consumedInvitationId).catch(() => {})
         }
@@ -377,9 +398,25 @@ export const betterAuthProvider: AuthProvider = {
         }
       }
 
+      try {
+        await applySetCookieHeaders(responseHeaders)
+      } catch {
+        // The account exists at this point: releasing the claim now would
+        // re-enable a link whose address is taken. Report the failure
+        // without touching the invitation.
+        return {
+          success: false,
+          error:
+            'Account created, but the sign-in could not be completed. Sign in with your new password.'
+        }
+      }
+
       return { success: true }
     } catch (error) {
-      if (consumedInvitationId) {
+      // Uncertain outcome: better-auth may have committed the user before
+      // the connection failed. Only release the claim when no account
+      // exists for the address.
+      if (consumedInvitationId && !(await accountExists(email))) {
         await releaseInvitation(consumedInvitationId).catch(() => {})
       }
       return {

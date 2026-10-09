@@ -138,6 +138,40 @@ describe('InvitationsManager', () => {
     }
   })
 
+  it('does not let render-to-hydration delay keep expired invitations active', async () => {
+    // A slow hydration (30s after the server snapshot) must not be treated
+    // as clock drift: the invitation expired during the delay and must
+    // flip to Expired on the next tick.
+    const realNow = new Date('2026-01-01T00:00:00Z').getTime()
+    vi.useFakeTimers({ now: realNow })
+    try {
+      render(
+        <InvitationsManager
+          serverNow={new Date(realNow - 30_000).toISOString()}
+          invitations={[
+            {
+              id: 'inv-7',
+              email: 'gap@example.com',
+              revoked: false,
+              used: false,
+              expired: false,
+              expiresAt: new Date(realNow - 10_000).toISOString(),
+              createdAt: new Date(realNow - 600_000).toISOString()
+            }
+          ]}
+        />
+      )
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000)
+      })
+
+      expect(screen.getByText('Expired')).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('creates an invitation and shows a copyable link', async () => {
     const created: InvitationView = {
       id: 'inv-3',
