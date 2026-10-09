@@ -36,7 +36,9 @@ export function UpdatePasswordForm({
       const result = await updatePassword(password, token)
       if (!result.success) throw new Error(result.error ?? 'An error occurred')
       // Redirect to root and refresh to ensure server components get updated session.
-      router.push('/')
+      // A token reset (better-auth) establishes no session: the provider
+      // redirects to the sign-in page instead.
+      router.push(result.redirectTo ?? '/')
       router.refresh()
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')

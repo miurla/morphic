@@ -21,14 +21,15 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*',
+        // Only the auth pages carry one-time credentials in ?token=
+        // (invitations, password resets, bootstrap). no-referrer on those
+        // pages keeps the token-bearing URL out of Referer headers on
+        // outbound and same-origin requests — including the /relay PostHog
+        // proxy above, which would otherwise forward it upstream — while
+        // the rest of the site keeps normal referrer data for analytics.
+        source: '/auth/:path*',
         headers: [
           {
-            // Auth links (invitations, password resets, bootstrap) carry
-            // one-time credentials in ?token=. no-referrer keeps those
-            // URLs out of Referer headers on outbound and same-origin
-            // requests, including the /relay PostHog proxy above, which
-            // would otherwise forward a token-bearing Referer upstream.
             key: 'Referrer-Policy',
             value: 'no-referrer'
           }

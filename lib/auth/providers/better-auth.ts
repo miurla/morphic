@@ -30,6 +30,40 @@ import { db } from '@/lib/db'
  */
 const BOOTSTRAP_INVITE_COOLDOWN_MS = 15 * 60 * 1000
 
+/**
+ * Serializes the bootstrap cooldown check + invitation creation + send per
+ * address. The check and the insert are separate queries, so concurrent
+ * tokenless sign-ups for the gated address could all pass the check before
+ * the first insert landed and each mail a live admin link. Morphic runs as
+ * a single instance, so an in-process chain per address is sufficient.
+ */
+const bootstrapSendLocks = new Map<string, Promise<unknown>>()
+
+async function withBootstrapSendLock<T>(
+  emailKey: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  const previous = bootstrapSendLocks.get(emailKey) ?? Promise.resolve()
+  let release!: () => void
+  const gate = new Promise<void>(resolve => {
+    release = resolve
+  })
+  const entry = previous.then(
+    () => gate,
+    () => gate
+  )
+  bootstrapSendLocks.set(emailKey, entry)
+  await previous.catch(() => {})
+  try {
+    return await fn()
+  } finally {
+    release()
+    if (bootstrapSendLocks.get(emailKey) === entry) {
+      bootstrapSendLocks.delete(emailKey)
+    }
+  }
+}
+
 function errorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message) {
     return error.message
@@ -128,7 +162,10 @@ export const betterAuthProvider: AuthProvider = {
     // Public paths that do not require a session (mirrors the supabase
     // middleware). /relay is the PostHog reverse proxy: analytics requests
     // from the login and sign-up pages must not bounce to /auth/login.
-    const publicPaths = ['/auth', '/share', '/api', '/relay']
+    // /search hosts the shared-chat pages: app/search/[id]/page.tsx decides
+    // visibility (public chats are viewable logged out, private ones are
+    // rejected there), so the proxy must not pre-empt that check.
+    const publicPaths = ['/auth', '/share', '/api', '/relay', '/search']
     const pathname = request.nextUrl.pathname
 
     if (
@@ -210,48 +247,50 @@ export const betterAuthProvider: AuthProvider = {
       // invitation. Validated in every sign-up mode — open mode otherwise
       // ignores tokens, which would let any non-empty token skip the proof.
       if (!token) {
-        try {
-          const emailKey = email.trim().toLowerCase()
-          if (
-            await hasRecentBootstrapInvitation(
-              emailKey,
-              BOOTSTRAP_INVITE_COOLDOWN_MS
-            )
-          ) {
-            // A live link is already on its way: this branch runs before
-            // better-auth's rate limiter, so do not spam the mailbox.
+        const emailKey = email.trim().toLowerCase()
+        return withBootstrapSendLock(emailKey, async () => {
+          try {
+            if (
+              await hasRecentBootstrapInvitation(
+                emailKey,
+                BOOTSTRAP_INVITE_COOLDOWN_MS
+              )
+            ) {
+              // A live link is already on its way: this branch runs before
+              // better-auth's rate limiter, so do not spam the mailbox.
+              return {
+                success: true,
+                notice: `A bootstrap link was sent to ${email}. Open it to finish creating the admin account.`
+              }
+            }
+            const { invitation, token: inviteToken } = await createInvitation({
+              invitedBy: 'bootstrap',
+              email: emailKey
+            })
+            try {
+              await sendSmtpMail({
+                to: email,
+                subject: 'Finish creating your Morphic admin account',
+                text: `Use this link to finish creating the admin account for ${email} (valid for one week): ${origin}/auth/sign-up?token=${inviteToken}`,
+                html: `<p>Use this link to finish creating the admin account for ${email} (valid for one week):</p><p><a href="${origin}/auth/sign-up?token=${inviteToken}">Complete sign-up</a></p>`
+              })
+            } catch (error) {
+              // Delivery failed: release the invitation so a retry can send
+              // a fresh link instead of being locked out by the cooldown.
+              await revokeInvitation(invitation.id).catch(() => {})
+              throw error
+            }
             return {
               success: true,
               notice: `A bootstrap link was sent to ${email}. Open it to finish creating the admin account.`
             }
-          }
-          const { invitation, token: inviteToken } = await createInvitation({
-            invitedBy: 'bootstrap',
-            email: emailKey
-          })
-          try {
-            await sendSmtpMail({
-              to: email,
-              subject: 'Finish creating your Morphic admin account',
-              text: `Use this link to finish creating the admin account for ${email} (valid for one week): ${origin}/auth/sign-up?token=${inviteToken}`,
-              html: `<p>Use this link to finish creating the admin account for ${email} (valid for one week):</p><p><a href="${origin}/auth/sign-up?token=${inviteToken}">Complete sign-up</a></p>`
-            })
           } catch (error) {
-            // Delivery failed: release the invitation so a retry can send
-            // a fresh link instead of being locked out by the cooldown.
-            await revokeInvitation(invitation.id).catch(() => {})
-            throw error
+            return {
+              success: false,
+              error: errorMessage(error, 'Could not send the bootstrap email.')
+            }
           }
-          return {
-            success: true,
-            notice: `A bootstrap link was sent to ${email}. Open it to finish creating the admin account.`
-          }
-        } catch (error) {
-          return {
-            success: false,
-            error: errorMessage(error, 'Could not send the bootstrap email.')
-          }
-        }
+        })
       }
       const invitation = await validateInvitation(token)
       if (
@@ -391,7 +430,12 @@ export const betterAuthProvider: AuthProvider = {
         },
         headers: await headers()
       })
-      return { success: true }
+      // A token reset changes the credential only: no session cookie is
+      // issued, so send the user to sign in with the new password instead
+      // of landing logged-out on the app root.
+      return token
+        ? { success: true, redirectTo: '/auth/login' }
+        : { success: true }
     } catch (error) {
       return {
         success: false,

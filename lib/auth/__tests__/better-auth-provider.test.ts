@@ -197,6 +197,22 @@ describe('better-auth provider', () => {
       expect(response.status).toBe(200)
     })
 
+    it('lets logged-out users open shared chat links', async () => {
+      // /search/<id> is the share URL: app/search/[id]/page.tsx enforces
+      // visibility (public chats viewable, private rejected), so the proxy
+      // must not pre-empt that check with a login redirect.
+      vi.mocked(mockAuth.api.getSession).mockResolvedValue({
+        response: null,
+        headers: new Headers()
+      } as never)
+
+      const response = await betterAuthProvider.handleSession!(
+        makeRequest('/search/abc123')
+      )
+
+      expect(response.status).toBe(200)
+    })
+
     it('lets authenticated requests through', async () => {
       vi.mocked(mockAuth.api.getSession).mockResolvedValue({
         response: { user: sessionUser },
@@ -552,6 +568,42 @@ describe('better-auth provider', () => {
       expect(revokeInvitation).toHaveBeenCalledWith('inv-boot')
     })
 
+    it('serializes concurrent bootstrap requests per address', async () => {
+      // The cooldown check and the insert are separate queries: without the
+      // per-address lock, two concurrent calls would both pass the check
+      // before either insert landed and each would mail a live admin link.
+      process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+      process.env.SMTP_HOST = 'smtp.example.com'
+      process.env.SMTP_USER = 'user'
+      process.env.SMTP_PASSWORD = 'pass'
+      process.env.BETTER_AUTH_URL = 'http://localhost:3000'
+      let created = false
+      vi.mocked(hasRecentBootstrapInvitation).mockImplementation(
+        async () => created
+      )
+      vi.mocked(createInvitation).mockImplementation(async () => {
+        created = true
+        return { invitation: { id: 'inv-boot' } as never, token: 'boot-token' }
+      })
+      vi.mocked(sendSmtpMail).mockResolvedValue(undefined)
+
+      const [first, second] = await Promise.all([
+        betterAuthProvider.signUp!({
+          email: 'admin@corp.local',
+          password: 'secret'
+        }),
+        betterAuthProvider.signUp!({
+          email: 'admin@corp.local',
+          password: 'secret'
+        })
+      ])
+
+      expect(first.success).toBe(true)
+      expect(second.success).toBe(true)
+      expect(createInvitation).toHaveBeenCalledTimes(1)
+      expect(sendSmtpMail).toHaveBeenCalledTimes(1)
+    })
+
     it('claims the invitation before creating the account', async () => {
       process.env.AUTH_SIGNUP_MODE = 'invite'
       vi.mocked(validateInvitation).mockResolvedValue({
@@ -668,6 +720,32 @@ describe('better-auth provider', () => {
           }
         })
       )
+    })
+  })
+
+  describe('updatePassword', () => {
+    it('routes token resets to the sign-in page', async () => {
+      // A token reset changes the credential only: no session cookie is
+      // issued, so landing on the app root would show the anonymous UI.
+      vi.mocked(mockAuth.api.resetPassword).mockResolvedValue({} as never)
+
+      const result = await betterAuthProvider.updatePassword!(
+        'new-password',
+        'reset-token'
+      )
+
+      expect(result).toEqual({
+        success: true,
+        redirectTo: '/auth/login'
+      })
+    })
+
+    it('keeps the session-based flow on the app root', async () => {
+      vi.mocked(mockAuth.api.resetPassword).mockResolvedValue({} as never)
+
+      const result = await betterAuthProvider.updatePassword!('new-password')
+
+      expect(result).toEqual({ success: true })
     })
   })
 
