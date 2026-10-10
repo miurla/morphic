@@ -56,11 +56,19 @@ export function isShareEnabled(): boolean {
  * Fold the sharing opt-in flag into a provider's capabilities. Must be
  * evaluated on the server: client components inline NEXT_PUBLIC_* values
  * at build time, which would freeze the setting in prebuilt images.
- * shareChat enforces the same flag server-side.
+ * shareChat enforces the same rule server-side.
+ *
+ * The opt-in applies to Better Auth only: Supabase deployments have
+ * always shared without an env var, and anonymous mode has no sharing
+ * capability to fold into.
  */
 export function withShareOptIn(
-  capabilities: AuthCapabilities
+  capabilities: AuthCapabilities,
+  providerName: AuthProviderName
 ): AuthCapabilities {
+  if (providerName !== 'better-auth') {
+    return capabilities
+  }
   return {
     ...capabilities,
     share: capabilities.share && isShareEnabled()

@@ -201,26 +201,49 @@ describe('withShareOptIn', () => {
     share: true
   }
 
-  it('keeps sharing only when an opt-in flag is true', () => {
+  it('keeps sharing only when an opt-in flag is true (better-auth)', () => {
     const originalPublic = process.env.NEXT_PUBLIC_ENABLE_SHARE
     const originalRuntime = process.env.ENABLE_SHARE
     try {
       delete process.env.NEXT_PUBLIC_ENABLE_SHARE
       delete process.env.ENABLE_SHARE
-      expect(withShareOptIn(base).share).toBe(false)
+      expect(withShareOptIn(base, 'better-auth').share).toBe(false)
 
       // The runtime flag is the one that works in prebuilt images, where
       // the public flag was inlined at build time.
       process.env.ENABLE_SHARE = 'true'
-      expect(withShareOptIn(base).share).toBe(true)
+      expect(withShareOptIn(base, 'better-auth').share).toBe(true)
       process.env.ENABLE_SHARE = 'false'
-      expect(withShareOptIn(base).share).toBe(false)
+      expect(withShareOptIn(base, 'better-auth').share).toBe(false)
 
       process.env.NEXT_PUBLIC_ENABLE_SHARE = 'true'
-      expect(withShareOptIn(base).share).toBe(true)
+      expect(withShareOptIn(base, 'better-auth').share).toBe(true)
 
       process.env.NEXT_PUBLIC_ENABLE_SHARE = 'false'
-      expect(withShareOptIn(base).share).toBe(false)
+      expect(withShareOptIn(base, 'better-auth').share).toBe(false)
+    } finally {
+      if (originalPublic === undefined) {
+        delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      } else {
+        process.env.NEXT_PUBLIC_ENABLE_SHARE = originalPublic
+      }
+      if (originalRuntime === undefined) {
+        delete process.env.ENABLE_SHARE
+      } else {
+        process.env.ENABLE_SHARE = originalRuntime
+      }
+    }
+  })
+
+  it('leaves supabase sharing untouched by the opt-in flag', () => {
+    // The default Supabase path must behave as it always has: sharing
+    // with no env var configured.
+    const originalPublic = process.env.NEXT_PUBLIC_ENABLE_SHARE
+    const originalRuntime = process.env.ENABLE_SHARE
+    try {
+      delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      delete process.env.ENABLE_SHARE
+      expect(withShareOptIn(base, 'supabase').share).toBe(true)
     } finally {
       if (originalPublic === undefined) {
         delete process.env.NEXT_PUBLIC_ENABLE_SHARE
@@ -237,6 +260,8 @@ describe('withShareOptIn', () => {
 
   it('never enables sharing for a provider without the capability', () => {
     process.env.NEXT_PUBLIC_ENABLE_SHARE = 'true'
-    expect(withShareOptIn({ ...base, share: false }).share).toBe(false)
+    expect(withShareOptIn({ ...base, share: false }, 'better-auth').share).toBe(
+      false
+    )
   })
 })

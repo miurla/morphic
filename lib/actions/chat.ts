@@ -298,13 +298,18 @@ export async function deleteMessagesAfter(chatId: string, messageId: string) {
  * Share a chat (make it public)
  */
 export async function shareChat(chatId: string) {
-  // Sharing is opt-in (ENABLE_SHARE=true); enforce the same gate here
-  // that the share UI applies, so the action cannot be called directly
-  // while sharing is disabled. The active provider's capability is
-  // enforced too: in anonymous mode every chat belongs to one shared
-  // identity, so the action must not publish chats even when the flag
-  // is set while the provider (and the UI) has sharing off.
-  if (!isShareEnabled() || !getAuthProvider().capabilities.share) {
+  // The active provider must support sharing: anonymous mode maps every
+  // chat to one shared identity and has no share capability, so the
+  // action must not publish chats the UI refuses to share.
+  const provider = getAuthProvider()
+  if (!provider.capabilities.share) {
+    return null
+  }
+  // Better Auth additionally requires the ENABLE_SHARE opt-in; Supabase
+  // sharing has never needed a flag, so the default path behaves as on
+  // main. Enforced here, not just in the UI, so the action cannot be
+  // called directly while sharing is disabled.
+  if (provider.name === 'better-auth' && !isShareEnabled()) {
     return null
   }
 
