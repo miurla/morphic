@@ -32,6 +32,12 @@ services:
       LOCAL_REDIS_URL: ${LOCAL_REDIS_URL:-redis://redis:6379}
       SEARCH_API: ${SEARCH_API:-searxng}
       SEARXNG_API_URL: ${SEARXNG_API_URL:-http://searxng:8080}
+      # Version footer / update check (all optional, see docs/CONFIGURATION.md)
+      # MORPHIC_INSTALL_METHOD: docker # Footer label; the image already sets this
+      # MORPHIC_UPDATE_CHECK_REPO: miurla/morphic # Upstream repo to check (default: miurla/morphic)
+      # MORPHIC_UPDATE_CHECK_TTL_SECONDS: '86400' # Check cache window in seconds (default: 86400, floor 300)
+      # MORPHIC_UPDATE_CHECK_DISABLED: 'false' # Set to 'true' to skip upstream requests entirely
+      # MORPHIC_ADMIN_EMAILS: 'ops@example.com' # Extra admin emails for the update link (providers without roles)
     ports:
       - '3000:3000' # Maps port 3000 on the host to port 3000 in the container.
     depends_on:

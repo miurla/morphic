@@ -501,3 +501,34 @@ CRAWL4AI_BASE_URL=http://localhost:11235
 # Optional: only needed when the instance requires an API key
 # CRAWL4AI_API_KEY=[YOUR_CRAWL4AI_API_KEY]
 ```
+
+### Version and Update Check
+
+The sidebar footer shows the running version (linking to the upstream releases page) and the install method. The server checks the upstream GitHub releases feed once per cache window; when a newer stable release exists, admins see an `Update: vX.Y.Z` link in place of the install label. The check is not user-specific: it runs once per cache window whenever any viewer triggers a render, and the cached result is shared. The check is silent on any failure and never blocks rendering.
+
+```bash
+# Optional: install-method label shown in the footer. Used verbatim, so any
+# value works (the Docker image sets `docker`). Defaults to `vercel` on
+# Vercel, `source` elsewhere.
+MORPHIC_INSTALL_METHOD=docker
+
+# Optional: upstream owner/repo whose latest release is checked
+# (default: miurla/morphic)
+MORPHIC_UPDATE_CHECK_REPO=miurla/morphic
+
+# Optional: cache window for the release check, in seconds
+# (default: 86400; values below 300 are clamped to 300; unset, empty, or
+# non-numeric values fall back to the default)
+MORPHIC_UPDATE_CHECK_TTL_SECONDS=86400
+
+# Optional: set to true to perform no upstream requests at all (default: false)
+MORPHIC_UPDATE_CHECK_DISABLED=false
+
+# Optional: comma-separated email addresses treated as admins for the update
+# link (case-insensitive). Useful when the auth provider has no role concept,
+# e.g. Supabase, where no user carries an `admin` role. No effect in anonymous
+# mode, where every viewer counts as an admin.
+MORPHIC_ADMIN_EMAILS=ops@example.com,me@example.com
+```
+
+The update link is shown to administrators only: users with the `admin` role, users whose email is listed in `MORPHIC_ADMIN_EMAILS`, or any user when `ENABLE_AUTH=false` (single-operator anonymous mode). The email allowlist only controls visibility of the update link; it grants no privileges elsewhere in the app. The version identifier and install label stay visible to everyone.
