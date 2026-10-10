@@ -29,6 +29,7 @@ import { isUsageLogging, logUsage } from '../utils/usage-logging'
 import { resolveAttachmentSizes } from './helpers/attachment-sizes'
 import { buildAttachmentTokenEstimates } from './helpers/attachment-token-estimates'
 import { capHistoricalAttachments } from './helpers/cap-historical-attachments'
+import { capHistoricalPastedContent } from './helpers/cap-historical-pasted-content'
 import { compactHistoricalMessages } from './helpers/compact-historical-messages'
 import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
@@ -233,7 +234,7 @@ export async function createChatStreamResponse(
         userId
       )
       const coldStartHistory = trimColdStartHistory(
-        messagesWithAttachmentSizes,
+        capHistoricalPastedContent(messagesWithAttachmentSizes),
         {
           limit:
             COLD_START_HISTORY_TOKEN_LIMIT > 0
