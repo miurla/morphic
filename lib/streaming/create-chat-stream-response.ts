@@ -234,7 +234,7 @@ export async function createChatStreamResponse(
         userId
       )
       const coldStartHistory = trimColdStartHistory(
-        messagesWithAttachmentSizes,
+        capHistoricalPastedContent(messagesWithAttachmentSizes),
         {
           limit:
             COLD_START_HISTORY_TOKEN_LIMIT > 0
@@ -248,10 +248,8 @@ export async function createChatStreamResponse(
       )
       coldStartHistoryTrimmed = coldStartHistory.trimmedAtCurrentTurn
       const messagesToConvert = dedupeAttachments(
-        capHistoricalPastedContent(
-          capHistoricalAttachments(
-            compactHistoricalMessages(coldStartHistory.messages)
-          )
+        capHistoricalAttachments(
+          compactHistoricalMessages(coldStartHistory.messages)
         )
       )
       carriedContext = summarizeCarriedContext(messagesToConvert)

@@ -5,6 +5,7 @@ import {
   capHistoricalPastedContent,
   parsePastedContentCharBudget
 } from '../cap-historical-pasted-content'
+import { trimColdStartHistory } from '../trim-cold-start-history'
 
 const BUDGET = 100
 
@@ -127,6 +128,38 @@ describe('capHistoricalPastedContent', () => {
   it('is disabled by a zero budget', () => {
     const messages = [...thread([500, 500, 500, 500]), textTurn('u4', 'user')]
     expect(capHistoricalPastedContent(messages, 0)).toBe(messages)
+  })
+})
+
+describe('capHistoricalPastedContent before the cold-start trim', () => {
+  const start = Date.parse('2026-01-01T00:00:00Z')
+  const minute = 60 * 1000
+
+  function at(message: UIMessage, minutes: number): UIMessage {
+    return {
+      ...message,
+      metadata: { createdAt: new Date(start + minutes * minute).toISOString() }
+    } as UIMessage
+  }
+
+  const history = [0, 1, 2, 3, 4].flatMap(i => [
+    at(pasteTurn(`u${i}`, 4000), i),
+    textTurn(`a${i}`)
+  ])
+  const messages = [...history, at(textTurn('u5', 'user'), 120)]
+  const options = { now: new Date(start + 120 * minute), limit: 2500 }
+
+  it('keeps the turns a cold return would otherwise drop', () => {
+    const uncapped = trimColdStartHistory(messages, options).messages
+    const capped = trimColdStartHistory(
+      capHistoricalPastedContent(messages, 4000),
+      options
+    ).messages
+
+    expect(uncapped.length).toBeLessThan(messages.length)
+    expect(capped.map(message => message.id)).toEqual(
+      messages.map(message => message.id)
+    )
   })
 })
 
