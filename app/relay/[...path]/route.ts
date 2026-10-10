@@ -73,8 +73,18 @@ async function relay(
   if (contentType) {
     headers.set('content-type', contentType)
   }
-  // Cookie and Authorization are deliberately not forwarded: session
-  // credentials must never reach the analytics provider.
+  // PostHog derives geo/device stats from these; the old next.config
+  // rewrites forwarded them too. Cookie and Authorization are
+  // deliberately not forwarded: session credentials must never reach
+  // the analytics provider.
+  const forwardedFor = request.headers.get('x-forwarded-for')
+  if (forwardedFor) {
+    headers.set('x-forwarded-for', forwardedFor)
+  }
+  const userAgent = request.headers.get('user-agent')
+  if (userAgent) {
+    headers.set('user-agent', userAgent)
+  }
 
   // The body is streamed through rather than buffered: /relay is
   // reachable without a session, so materializing an attacker-sized

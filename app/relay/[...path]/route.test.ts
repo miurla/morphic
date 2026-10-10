@@ -30,7 +30,9 @@ describe('relay route', () => {
         headers: {
           'content-type': 'application/json',
           cookie: 'better-auth.session_token=abc',
-          authorization: 'Bearer token'
+          authorization: 'Bearer token',
+          'x-forwarded-for': '203.0.113.7',
+          'user-agent': 'Mozilla/5.0 (test)'
         },
         body: '{"api_key":"phk"}'
       }
@@ -51,6 +53,10 @@ describe('relay route', () => {
     expect(url.toString()).toBe('https://us.i.posthog.com/capture?batch=1')
     expect(init.method).toBe('POST')
     expect(init.headers.get('content-type')).toBe('application/json')
+    // PostHog geo/device stats need these (the old rewrites forwarded
+    // them too).
+    expect(init.headers.get('x-forwarded-for')).toBe('203.0.113.7')
+    expect(init.headers.get('user-agent')).toBe('Mozilla/5.0 (test)')
     // Session credentials must never be forwarded to the analytics host.
     expect(init.headers.get('cookie')).toBeNull()
     expect(init.headers.get('authorization')).toBeNull()
