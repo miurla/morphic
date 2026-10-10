@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import {
   createInvitationAction,
-  getServerTime,
   type InvitationView,
   revokeInvitationAction
 } from '@/lib/actions/admin'
@@ -14,63 +13,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 export function InvitationsManager({
-  invitations: initialInvitations,
-  serverNow
+  invitations: initialInvitations
 }: {
   invitations: InvitationView[]
-  serverNow?: string
 }) {
   const [invitations, setInvitations] = useState(initialInvitations)
-  // The server-computed `expired` flag goes stale while the page stays
-  // open. A state clock (never read from Date during render) re-evaluates
-  // expirations every minute, so an elapsed link is caught within a
-  // minute. The clock is corrected for the offset between the local
-  // clock and the server: a browser running fast cannot hide the Revoke
-  // button of a still-live invitation (or running behind keep showing an
-  // expired one as active). The render-time snapshot cannot tell clock
-  // drift from the delay before hydration, so a fresh round-trip sample
-  // re-estimates the offset once the page is live.
-  const [now, setNow] = useState<number | null>(null)
-  useEffect(() => {
-    let cancelled = false
-    // The gap between server render and hydration (slow devices, tabs
-    // backgrounded before hydration) is indistinguishable from clock
-    // drift in the snapshot, so it is only a provisional estimate: the
-    // round-trip sample below replaces it as soon as it lands.
-    const rawSkew = serverNow ? Date.now() - new Date(serverNow).getTime() : 0
-    // Sub-minute errors cannot change an outcome evaluated once a
-    // minute, so only drift larger than the tick is corrected.
-    let skew = Math.abs(rawSkew) < 60_000 ? 0 : rawSkew
-    const tick = () => setNow(Date.now() - skew)
-    tick()
-    const timer = setInterval(tick, 60_000)
-    // NTP-style midpoint: the response arrives halfway through the
-    // round-trip on average, so the estimate's error is bounded by half
-    // the (small, post-hydration) round-trip instead of the unbounded
-    // pre-hydration delay baked into the snapshot. Without this, a tab
-    // backgrounded for minutes before hydration pins the clock to the
-    // render time and keeps expired invitations shown as Active.
-    const t0 = Date.now()
-    getServerTime()
-      .then(serverTime => {
-        if (cancelled || typeof serverTime !== 'number') {
-          return
-        }
-        const offset = t0 + (Date.now() - t0) / 2 - serverTime
-        skew = Math.abs(offset) < 60_000 ? 0 : offset
-        setNow(Date.now() - skew)
-      })
-      .catch(() => {
-        // Sample failed: keep the snapshot-derived estimate.
-      })
-    return () => {
-      cancelled = true
-      clearInterval(timer)
-    }
-  }, [serverNow])
-  const isExpired = (invitation: InvitationView) =>
-    invitation.expired ||
-    (now !== null && new Date(invitation.expiresAt).getTime() <= now)
+  // Expiration is computed server-side when the list is rendered, and
+  // each row shows its exact expiry time. The server rejects expired
+  // invitations at redemption, so a badge that goes stale while the
+  // page sits open is cosmetic only — no client clock is kept, because
+  // a client clock cannot tell its own skew or sleep from real time.
+  const isExpired = (invitation: InvitationView) => invitation.expired
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)

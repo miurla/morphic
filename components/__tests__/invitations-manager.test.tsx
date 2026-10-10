@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   createInvitationAction,
-  getServerTime,
   type InvitationView,
   revokeInvitationAction
 } from '@/lib/actions/admin'
@@ -12,10 +11,7 @@ import { InvitationsManager } from '@/components/admin/invitations-manager'
 
 vi.mock('@/lib/actions/admin', () => ({
   createInvitationAction: vi.fn(),
-  revokeInvitationAction: vi.fn(),
-  // Default: the server clock matches the (possibly faked) local clock,
-  // so the round-trip sample confirms zero skew.
-  getServerTime: vi.fn(async () => Date.now())
+  revokeInvitationAction: vi.fn()
 }))
 
 const invitations: InvitationView[] = [
@@ -42,8 +38,6 @@ const invitations: InvitationView[] = [
 describe('InvitationsManager', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // clearAllMocks keeps implementations; restore the default sample.
-    vi.mocked(getServerTime).mockImplementation(async () => Date.now())
   })
 
   it('lists invitations with their status', () => {
@@ -75,137 +69,6 @@ describe('InvitationsManager', () => {
     expect(screen.getByText('Expired')).toBeInTheDocument()
     expect(screen.queryByText('Active')).not.toBeInTheDocument()
     expect(screen.queryByText('Revoke')).not.toBeInTheDocument()
-  })
-
-  it('rechecks expiration while the page stays open', async () => {
-    // The server-computed flag says active, but the link elapsed after
-    // the page rendered: the client clock tick must catch up.
-    vi.useFakeTimers()
-    try {
-      render(
-        <InvitationsManager
-          invitations={[
-            {
-              id: 'inv-5',
-              email: 'late@example.com',
-              revoked: false,
-              used: false,
-              expired: false,
-              expiresAt: new Date(Date.now() - 1000).toISOString(),
-              createdAt: new Date().toISOString()
-            }
-          ]}
-        />
-      )
-
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(60_000)
-      })
-
-      expect(screen.getByText('Expired')).toBeInTheDocument()
-      expect(screen.queryByText('Revoke')).not.toBeInTheDocument()
-    } finally {
-      vi.useRealTimers()
-    }
-  })
-
-  it('keeps a live invitation revocable when the browser clock runs fast', async () => {
-    // A browser clock an hour ahead would mark a live invitation expired
-    // and hide its Revoke button, while the server still accepts it. The
-    // server snapshot taken at page load corrects the local clock.
-    const realNow = new Date('2026-01-01T00:00:00Z').getTime()
-    vi.useFakeTimers({ now: realNow + 3_600_000 })
-    // The round-trip sample reports the true server time, confirming
-    // the browser clock is an hour fast.
-    vi.mocked(getServerTime).mockResolvedValue(realNow)
-    try {
-      render(
-        <InvitationsManager
-          serverNow={new Date(realNow).toISOString()}
-          invitations={[
-            {
-              id: 'inv-6',
-              email: 'live@example.com',
-              revoked: false,
-              used: false,
-              expired: false,
-              expiresAt: new Date(realNow + 600_000).toISOString(),
-              createdAt: new Date(realNow - 600_000).toISOString()
-            }
-          ]}
-        />
-      )
-
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(60_000)
-      })
-
-      expect(screen.getByText('Active')).toBeInTheDocument()
-      expect(screen.getByText('Revoke')).toBeInTheDocument()
-    } finally {
-      vi.useRealTimers()
-    }
-  })
-
-  it('does not let render-to-hydration delay keep expired invitations active', async () => {
-    // A slow hydration (30s after the server snapshot) must not be treated
-    // as clock drift: the invitation expired during the delay and must
-    // flip to Expired on the next tick.
-    const realNow = new Date('2026-01-01T00:00:00Z').getTime()
-    vi.useFakeTimers({ now: realNow })
-    try {
-      render(
-        <InvitationsManager
-          serverNow={new Date(realNow - 30_000).toISOString()}
-          invitations={[
-            {
-              id: 'inv-7',
-              email: 'gap@example.com',
-              revoked: false,
-              used: false,
-              expired: false,
-              expiresAt: new Date(realNow - 10_000).toISOString(),
-              createdAt: new Date(realNow - 600_000).toISOString()
-            }
-          ]}
-        />
-      )
-
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(60_000)
-      })
-
-      expect(screen.getByText('Expired')).toBeInTheDocument()
-    } finally {
-      vi.useRealTimers()
-    }
-  })
-
-  it('replaces the provisional snapshot skew after a long pre-hydration delay', async () => {
-    // A tab backgrounded for five minutes before hydration makes the
-    // render snapshot look five minutes stale. Trusting it as clock
-    // drift pins the clock to the render time and keeps an elapsed
-    // invitation Active forever; the round-trip sample (server clock
-    // equal to the client clock here) must replace that estimate.
-    const now = Date.now()
-    render(
-      <InvitationsManager
-        serverNow={new Date(now - 300_000).toISOString()}
-        invitations={[
-          {
-            id: 'inv-8',
-            email: 'bg@example.com',
-            revoked: false,
-            used: false,
-            expired: false,
-            expiresAt: new Date(now - 60_000).toISOString(),
-            createdAt: new Date(now - 600_000).toISOString()
-          }
-        ]}
-      />
-    )
-
-    await waitFor(() => expect(screen.getByText('Expired')).toBeInTheDocument())
   })
 
   it('creates an invitation and shows a copyable link', async () => {
