@@ -81,7 +81,11 @@ function getDroppedCount(total: number, limit: number): number {
  * exceeds the budget. That overshoot is the cost of prefix stability while
  * guaranteeing that at least one historical attachment always survives.
  */
-function getWeightDroppedCount(weights: number[], tokenBudget: number): number {
+export function getWeightDroppedCount(
+  weights: number[],
+  tokenBudget: number,
+  minBlockSize: number = MIN_WEIGHT_BLOCK_ATTACHMENTS
+): number {
   let blockTokens = 0
   let blockAttachmentCount = 0
   let latestBlockEnd = 0
@@ -90,10 +94,7 @@ function getWeightDroppedCount(weights: number[], tokenBudget: number): number {
   for (let i = 0; i < weights.length; i++) {
     blockTokens += weights[i]
     blockAttachmentCount += 1
-    if (
-      blockTokens < tokenBudget ||
-      blockAttachmentCount < MIN_WEIGHT_BLOCK_ATTACHMENTS
-    ) {
+    if (blockTokens < tokenBudget || blockAttachmentCount < minBlockSize) {
       continue
     }
 
