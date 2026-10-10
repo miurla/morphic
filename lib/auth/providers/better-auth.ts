@@ -1,4 +1,4 @@
-import { cookies, headers } from 'next/headers'
+import { headers } from 'next/headers'
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { count, eq } from 'drizzle-orm'
@@ -21,6 +21,7 @@ import {
 } from '@/lib/auth/better-auth/invitations'
 import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
 import { user as authUser } from '@/lib/auth/better-auth/schema'
+import { checkRateLimit } from '@/lib/auth/rate-limit'
 import { getRequestOrigin } from '@/lib/auth/request'
 import type {
   AppUser,
@@ -108,8 +109,10 @@ async function deletionGuard(
 
 /**
  * Minimum gap between bootstrap invitation emails for the same address.
- * The bootstrap branch runs before better-auth's rate limiter, so this
- * is the only throttle on repeated tokenless sign-up attempts.
+ * The action-level rate limiter bounds attempts per IP+email, but a
+ * patient caller can still space requests a minute apart; this cooldown
+ * is what keeps the mailbox quiet while the bootstrap token is being
+ * chased down.
  */
 const BOOTSTRAP_INVITE_COOLDOWN_MS = 15 * 60 * 1000
 
@@ -154,38 +157,26 @@ function errorMessage(error: unknown, fallback: string): string {
   return fallback
 }
 
+const TOO_MANY_REQUESTS = 'Too many attempts. Please try again in a minute.'
+
+async function clientIp(): Promise<string> {
+  const requestHeaders = await headers()
+  const forwarded = requestHeaders.get('x-forwarded-for')
+  return (
+    forwarded?.split(',')[0]?.trim() ||
+    requestHeaders.get('x-real-ip') ||
+    'local'
+  )
+}
+
 /**
- * Copy `set-cookie` headers produced by Better Auth API calls back into the
- * response cookies so the browser stores (or clears) the session cookie.
+ * Bounds repeated auth attempts per IP+email. better-auth's own rate
+ * limiter only runs in its HTTP handler, which Morphic does not mount,
+ * so the direct auth.api.* actions need their own throttle.
  */
-async function applySetCookieHeaders(responseHeaders: Headers | undefined) {
-  if (!responseHeaders) {
-    return
-  }
-  const cookieStore = await cookies()
-  for (const raw of responseHeaders.getSetCookie()) {
-    const [pair, ...attributes] = raw.split(';')
-    const separator = pair.indexOf('=')
-    if (separator === -1) {
-      continue
-    }
-    const name = pair.slice(0, separator).trim()
-    const value = pair.slice(separator + 1).trim()
-    const options: Record<string, string | number | boolean | Date> = {}
-    for (const attribute of attributes) {
-      const [rawName, rawValue] = attribute.trim().split('=')
-      const key = rawName.toLowerCase()
-      if (key === 'max-age') options.maxAge = Number(rawValue)
-      else if (key === 'expires') options.expires = new Date(rawValue)
-      else if (key === 'path') options.path = rawValue
-      else if (key === 'domain') options.domain = rawValue
-      else if (key === 'samesite')
-        options.sameSite = rawValue.toLowerCase() as 'lax' | 'strict' | 'none'
-      else if (key === 'secure') options.secure = true
-      else if (key === 'httponly') options.httpOnly = true
-    }
-    cookieStore.set(name, value, options)
-  }
+async function attemptAllowed(action: string, email: string): Promise<boolean> {
+  const ip = await clientIp()
+  return checkRateLimit(`${action}:${ip}:${email.trim().toLowerCase()}`)
 }
 
 interface BetterAuthSessionUser {
@@ -286,13 +277,18 @@ export const betterAuthProvider: AuthProvider = {
     email: string
     password: string
   }): Promise<AuthActionResult> {
+    if (!(await attemptAllowed('sign-in', email))) {
+      return { success: false, error: TOO_MANY_REQUESTS }
+    }
     try {
-      const { headers: responseHeaders } = await getAuth().api.signInEmail({
+      await getAuth().api.signInEmail({
         body: { email, password },
-        headers: await headers(),
-        returnHeaders: true
+        headers: await headers()
       })
-      await applySetCookieHeaders(responseHeaders)
+      // The nextCookies plugin stores the session cookie through
+      // next/headers; no manual set-cookie copy is needed (and a manual
+      // cookies().set of the raw header would double-encode the signed
+      // value, breaking the signature check on read).
       return { success: true }
     } catch (error) {
       return {
@@ -311,6 +307,9 @@ export const betterAuthProvider: AuthProvider = {
     password: string
     token?: string
   }): Promise<AuthActionResult> {
+    if (!(await attemptAllowed('sign-up', email))) {
+      return { success: false, error: TOO_MANY_REQUESTS }
+    }
     // The bootstrap account is the seed admin of a fresh instance:
     // invitations can only be created by an existing admin, so the gated
     // address must be able to sign up without a token.
@@ -348,8 +347,9 @@ export const betterAuthProvider: AuthProvider = {
                 BOOTSTRAP_INVITE_COOLDOWN_MS
               )
             ) {
-              // A live link is already on its way: this branch runs before
-              // better-auth's rate limiter, so do not spam the mailbox.
+              // A live link is already on its way: the per-address
+              // cooldown keeps the mailbox quiet while the operator
+              // chases down the first link.
               return {
                 success: true,
                 notice: `A bootstrap link was sent to ${email}. Open it to finish creating the admin account.`
@@ -387,6 +387,11 @@ export const betterAuthProvider: AuthProvider = {
       const invitation = await validateInvitation(token)
       if (
         !invitation ||
+        // An ordinary invitation (invitedBy = the inviting admin) for
+        // the same address must not claim admin: only the invitation
+        // this branch mailed itself (invitedBy = 'bootstrap') proves
+        // mailbox control of the gated address.
+        invitation.invitedBy !== 'bootstrap' ||
         !invitation.email ||
         invitation.email.trim().toLowerCase() !== email.trim().toLowerCase()
       ) {
@@ -442,16 +447,14 @@ export const betterAuthProvider: AuthProvider = {
     }
 
     try {
-      const { response, headers: responseHeaders } =
-        await getAuth().api.signUpEmail({
-          body: { name: email, email, password },
-          headers: await headers(),
-          returnHeaders: true
-        })
+      const response = await getAuth().api.signUpEmail({
+        body: { name: email, email, password },
+        headers: await headers()
+      })
 
       // signUpEmail resolves to `{ token, user }` — there is no `session`
-      // field. The token is the session token the set-cookie headers below
-      // deliver to the browser, so its presence is the success signal.
+      // field. The token is the session token the nextCookies plugin
+      // delivers to the browser, so its presence is the success signal.
       if (!response || !(response as { token?: unknown }).token) {
         // A structured rejection: no account was created, so the claim is
         // released and the same link can be retried (e.g. with a password
@@ -462,19 +465,6 @@ export const betterAuthProvider: AuthProvider = {
         return {
           success: false,
           error: 'Sign-up failed. The account may already exist.'
-        }
-      }
-
-      try {
-        await applySetCookieHeaders(responseHeaders)
-      } catch {
-        // The account exists at this point: releasing the claim now would
-        // re-enable a link whose address is taken. Report the failure
-        // without touching the invitation.
-        return {
-          success: false,
-          error:
-            'Account created, but the sign-in could not be completed. Sign in with your new password.'
         }
       }
 
@@ -495,11 +485,11 @@ export const betterAuthProvider: AuthProvider = {
 
   async signOut(): Promise<AuthActionResult> {
     try {
-      const { headers: responseHeaders } = await getAuth().api.signOut({
-        headers: await headers(),
-        returnHeaders: true
+      await getAuth().api.signOut({
+        headers: await headers()
       })
-      await applySetCookieHeaders(responseHeaders)
+      // The nextCookies plugin clears the session cookie through
+      // next/headers; no manual set-cookie copy is needed.
       return { success: true }
     } catch (error) {
       return {
@@ -515,6 +505,9 @@ export const betterAuthProvider: AuthProvider = {
         success: false,
         error: 'Password reset is not configured on this instance.'
       }
+    }
+    if (!(await attemptAllowed('password-reset', email))) {
+      return { success: false, error: TOO_MANY_REQUESTS }
     }
 
     try {

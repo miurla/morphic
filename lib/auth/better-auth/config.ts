@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError } from 'better-auth/api'
+import { nextCookies } from 'better-auth/next-js'
 import { admin } from 'better-auth/plugins'
 import { asc, count, eq, sql } from 'drizzle-orm'
 
@@ -291,7 +292,10 @@ function createAuth() {
           }
         : undefined
     },
-    plugins: [admin({ defaultRole: 'user' })],
+    // nextCookies must stay last: it re-applies the session cookie
+    // through next/headers so server actions (signIn/signUp/signOut)
+    // deliver it to the browser without a hand-written header copy.
+    plugins: [admin({ defaultRole: 'user' }), nextCookies()],
     databaseHooks: {
       user: {
         create: {

@@ -13,6 +13,7 @@ import {
 } from '@/lib/auth/better-auth/invitations'
 import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
 import { betterAuthProvider } from '@/lib/auth/providers/better-auth'
+import { resetRateLimits } from '@/lib/auth/rate-limit'
 
 const { mockAuth, mockSetCookie } = vi.hoisted(() => ({
   mockAuth: {
@@ -145,6 +146,7 @@ describe('better-auth provider', () => {
   const originalEnv: Record<string, string | undefined> = {}
 
   beforeEach(() => {
+    resetRateLimits()
     state.accounts = []
     state.adminCount = 1
     state.userCount = 2
@@ -327,15 +329,10 @@ describe('better-auth provider', () => {
   })
 
   describe('signIn', () => {
-    it('signs in and stores the session cookie', async () => {
-      const responseHeaders = new Headers()
-      responseHeaders.append(
-        'set-cookie',
-        'better-auth.session_token=token; Path=/; HttpOnly'
-      )
+    it('signs in without a manual set-cookie copy', async () => {
       vi.mocked(mockAuth.api.signInEmail).mockResolvedValue({
-        response: { session: {}, user: sessionUser },
-        headers: responseHeaders
+        session: {},
+        user: sessionUser
       } as never)
 
       const result = await betterAuthProvider.signIn!({
@@ -344,16 +341,14 @@ describe('better-auth provider', () => {
       })
 
       expect(result).toEqual({ success: true })
+      // The nextCookies plugin (registered on the real auth instance)
+      // stores the cookie via next/headers; the action must not ask for
+      // raw headers and re-apply them, which would double-encode the
+      // signed value.
       expect(mockAuth.api.signInEmail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: { email: 'admin@example.com', password: 'secret' }
-        })
+        expect.not.objectContaining({ returnHeaders: true })
       )
-      expect(mockSetCookie).toHaveBeenCalledWith(
-        'better-auth.session_token',
-        'token',
-        expect.objectContaining({ path: '/', httpOnly: true })
-      )
+      expect(mockSetCookie).not.toHaveBeenCalled()
     })
 
     it('reports invalid credentials', async () => {
@@ -372,16 +367,38 @@ describe('better-auth provider', () => {
       })
       expect(mockSetCookie).not.toHaveBeenCalled()
     })
+
+    it('blocks repeated attempts for the same ip and email', async () => {
+      // better-auth's own limiter only runs in its HTTP handler; the
+      // direct action needs the in-process limiter.
+      vi.mocked(mockAuth.api.signInEmail).mockResolvedValue({} as never)
+
+      for (let attempt = 0; attempt < 10; attempt++) {
+        await betterAuthProvider.signIn!({
+          email: 'a@b.co',
+          password: 'x'
+        })
+      }
+
+      const result = await betterAuthProvider.signIn!({
+        email: 'a@b.co',
+        password: 'x'
+      })
+
+      expect(result).toEqual({
+        success: false,
+        error: expect.stringContaining('Too many attempts')
+      })
+    })
   })
 
   describe('signUp', () => {
     const signUpResult = { token: 'session-token', user: sessionUser }
 
     it('signs up in open mode without a token', async () => {
-      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
-        response: signUpResult,
-        headers: new Headers()
-      } as never)
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue(
+        signUpResult as never
+      )
 
       const result = await betterAuthProvider.signUp!({
         email: 'new@example.com',
@@ -396,8 +413,7 @@ describe('better-auth provider', () => {
       // Regression: signUpEmail resolves to `{ token, user }`; a response
       // without a token means the account was not created.
       vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
-        response: { user: sessionUser },
-        headers: new Headers()
+        user: sessionUser
       } as never)
 
       const result = await betterAuthProvider.signUp!({
@@ -429,10 +445,9 @@ describe('better-auth provider', () => {
       // gated seed address must be able to create the first account.
       process.env.AUTH_SIGNUP_MODE = 'invite'
       process.env.BOOTSTRAP_ADMIN_EMAIL = 'Admin@Corp.local'
-      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
-        response: signUpResult,
-        headers: new Headers()
-      } as never)
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue(
+        signUpResult as never
+      )
 
       const result = await betterAuthProvider.signUp!({
         email: 'admin@corp.local',
@@ -489,13 +504,13 @@ describe('better-auth provider', () => {
       process.env.BETTER_AUTH_URL = 'http://localhost:3000'
       vi.mocked(validateInvitation).mockResolvedValue({
         id: 'inv-1',
-        email: 'admin@corp.local'
+        email: 'admin@corp.local',
+        invitedBy: 'bootstrap'
       } as never)
       vi.mocked(consumeInvitation).mockResolvedValue(true)
-      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
-        response: signUpResult,
-        headers: new Headers()
-      } as never)
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue(
+        signUpResult as never
+      )
 
       const result = await betterAuthProvider.signUp!({
         email: 'admin@corp.local',
@@ -610,13 +625,13 @@ describe('better-auth provider', () => {
       process.env.BETTER_AUTH_URL = 'http://localhost:3000'
       vi.mocked(validateInvitation).mockResolvedValue({
         id: 'inv-2',
-        email: 'admin@corp.local'
+        email: 'admin@corp.local',
+        invitedBy: 'bootstrap'
       } as never)
       vi.mocked(consumeInvitation).mockResolvedValue(true)
-      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
-        response: signUpResult,
-        headers: new Headers()
-      } as never)
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue(
+        signUpResult as never
+      )
 
       const result = await betterAuthProvider.signUp!({
         email: 'admin@corp.local',
@@ -646,6 +661,34 @@ describe('better-auth provider', () => {
       })
 
       expect(result.success).toBe(false)
+      expect(mockAuth.api.signUpEmail).not.toHaveBeenCalled()
+      expect(consumeInvitation).not.toHaveBeenCalled()
+    })
+
+    it('rejects an ordinary invitation used for bootstrap sign-up', async () => {
+      // In a reopened bootstrap window, an ordinary invitation (from an
+      // inviting admin) for the same address must not claim admin:
+      // only the invitation this branch mailed itself (invitedBy =
+      // 'bootstrap') proves mailbox control of the gated address.
+      process.env.BOOTSTRAP_ADMIN_EMAIL = 'admin@corp.local'
+      process.env.SMTP_HOST = 'smtp.example.com'
+      process.env.SMTP_USER = 'user'
+      process.env.SMTP_PASSWORD = 'pass'
+      process.env.BETTER_AUTH_URL = 'http://localhost:3000'
+      vi.mocked(validateInvitation).mockResolvedValue({
+        id: 'inv-5',
+        email: 'admin@corp.local',
+        invitedBy: 'some-admin-id'
+      } as never)
+
+      const result = await betterAuthProvider.signUp!({
+        email: 'admin@corp.local',
+        password: 'secret',
+        token: 'ordinary-invitation-token'
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('link sent to your email')
       expect(mockAuth.api.signUpEmail).not.toHaveBeenCalled()
       expect(consumeInvitation).not.toHaveBeenCalled()
     })
@@ -761,10 +804,9 @@ describe('better-auth provider', () => {
         token: 'tok'
       } as never)
       vi.mocked(consumeInvitation).mockResolvedValue(true)
-      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
-        response: signUpResult,
-        headers: new Headers()
-      } as never)
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue(
+        signUpResult as never
+      )
 
       const result = await betterAuthProvider.signUp!({
         email: 'new@example.com',
@@ -805,10 +847,9 @@ describe('better-auth provider', () => {
         email: 'Friend@Example.com'
       } as never)
       vi.mocked(consumeInvitation).mockResolvedValue(true)
-      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue({
-        response: signUpResult,
-        headers: new Headers()
-      } as never)
+      vi.mocked(mockAuth.api.signUpEmail).mockResolvedValue(
+        signUpResult as never
+      )
 
       const result = await betterAuthProvider.signUp!({
         email: 'friend@example.com',
