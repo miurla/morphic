@@ -2,6 +2,8 @@
 
 import posthog from 'posthog-js'
 
+import { scrubTokenFromEvent } from '@/lib/analytics/sanitize'
+
 let initialized = false
 
 function clientKey(): string | undefined {
@@ -25,7 +27,11 @@ export function initPostHog(): void {
     autocapture: false,
     capture_pageview: false,
     disable_session_recording: true,
-    session_recording: { maskAllInputs: true }
+    session_recording: { maskAllInputs: true },
+    // Auth links (invitations, password resets, bootstrap) carry one-time
+    // credentials in ?token= and posthog-js attaches the page URL to every
+    // event; strip the parameter before anything leaves the browser.
+    before_send: scrubTokenFromEvent
   })
   initialized = true
 }

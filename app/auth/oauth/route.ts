@@ -1,13 +1,22 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 // The client you created from the Server-Side Auth instructions
+import { safeRedirectPath } from '@/lib/auth/redirect-target'
 import { createClient } from '@/lib/supabase/server'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/'
+  // if "next" is in param, use it as the redirect URL (same-origin paths
+  // only, so a crafted ?next= cannot bounce the signed-in user off-site).
+  // The login form carries the destination in a short-lived cookie because
+  // Supabase's redirect allowlist matches the callback URL exactly and
+  // would reject a query-string variant of it.
+  const next = safeRedirectPath(
+    searchParams.get('next') ??
+      request.cookies.get('auth_next')?.value ??
+      undefined
+  )
 
   if (code) {
     const supabase = await createClient()
@@ -15,14 +24,14 @@ export async function GET(request: Request) {
     if (!error) {
       const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === 'development'
-      if (isLocalEnv) {
-        // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
-      } else {
-        return NextResponse.redirect(`${origin}${next}`)
-      }
+      const target = isLocalEnv
+        ? `${origin}${next}`
+        : forwardedHost
+          ? `https://${forwardedHost}${next}`
+          : `${origin}${next}`
+      const response = NextResponse.redirect(target)
+      response.cookies.delete('auth_next')
+      return response
     }
   }
 

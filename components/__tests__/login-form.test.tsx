@@ -20,15 +20,26 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, refresh: mockRefresh })
 }))
 
-const capabilities = { signUp: true, passwordReset: true, deleteUser: true }
+const capabilities = {
+  signUp: true,
+  passwordReset: true,
+  deleteUser: true,
+  oauth: true,
+  emailVerification: true,
+  share: true
+}
 
-function renderForm(override: Partial<typeof capabilities> = {}, user = null) {
+function renderForm(
+  override: Partial<typeof capabilities> = {},
+  user = null,
+  next?: string
+) {
   return render(
     <AppUserProvider
       user={user}
       capabilities={{ ...capabilities, ...override }}
     >
-      <LoginForm />
+      <LoginForm next={next} />
     </AppUserProvider>
   )
 }
@@ -57,6 +68,60 @@ describe('LoginForm', () => {
       })
       expect(mockPush).toHaveBeenCalledWith('/')
       expect(mockRefresh).toHaveBeenCalled()
+    })
+  })
+
+  it('returns to the requested page after sign-in', async () => {
+    // A logged-out owner of a private shared chat arrives via
+    // /auth/login?next=/search/<id>; the link must survive the sign-in.
+    vi.mocked(signIn).mockResolvedValue({ success: true })
+    renderForm({}, null, '/search/abc123')
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'user@example.com' }
+    })
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secret' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/search/abc123')
+    })
+  })
+
+  it('ignores an off-site next target', async () => {
+    vi.mocked(signIn).mockResolvedValue({ success: true })
+    renderForm({}, null, '//evil.example.com')
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'user@example.com' }
+    })
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secret' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/')
+    })
+  })
+
+  it('ignores a backslash-normalized next target', async () => {
+    // Browsers resolve /\evil.example.com to an off-site origin.
+    vi.mocked(signIn).mockResolvedValue({ success: true })
+    renderForm({}, null, '/\\evil.example.com')
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'user@example.com' }
+    })
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secret' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/')
     })
   })
 
@@ -108,6 +173,72 @@ describe('LoginForm', () => {
     })
   })
 
+  it('carries the next target to the OAuth callback via a cookie', async () => {
+    // Supabase's redirect allowlist matches the callback URL exactly, so
+    // the destination rides in a short-lived cookie, not the redirectTo.
+    const originalLocation = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { href: '' }
+    })
+    vi.mocked(signInWithGoogle).mockResolvedValue({
+      success: true,
+      redirectTo: 'https://accounts.google.com/authorize'
+    })
+    renderForm({}, null, '/search/abc123')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In with Google' }))
+
+    await waitFor(() => {
+      expect(signInWithGoogle).toHaveBeenCalled()
+    })
+    expect(document.cookie).toContain('auth_next=%2Fsearch%2Fabc123')
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: originalLocation
+    })
+  })
+
+  it('clears a stale next cookie when the later login has no destination', async () => {
+    // An abandoned OAuth attempt leaves the cookie behind; the next
+    // destination-less sign-in must not be sent to the old page.
+    const originalLocation = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { href: '' }
+    })
+    document.cookie = 'auth_next=%2Fstale; path=/; max-age=300; SameSite=Lax'
+    vi.mocked(signInWithGoogle).mockResolvedValue({
+      success: true,
+      redirectTo: 'https://accounts.google.com/authorize'
+    })
+    renderForm()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In with Google' }))
+
+    await waitFor(() => {
+      expect(signInWithGoogle).toHaveBeenCalled()
+    })
+    expect(document.cookie).not.toContain('auth_next')
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: originalLocation
+    })
+  })
+
+  it('hides the Google button when the provider has no OAuth', () => {
+    renderForm({ oauth: false })
+    expect(
+      screen.queryByRole('button', { name: 'Sign In with Google' })
+    ).not.toBeInTheDocument()
+  })
+
   it('offers password recovery when the provider supports it', () => {
     renderForm()
     expect(
@@ -119,6 +250,18 @@ describe('LoginForm', () => {
     renderForm({ passwordReset: false })
     expect(
       screen.queryByRole('link', { name: 'Forgot password?' })
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows the Sign Up link by default', () => {
+    renderForm()
+    expect(screen.getByRole('link', { name: 'Sign Up' })).toBeInTheDocument()
+  })
+
+  it('hides Sign Up when the provider lacks the capability', () => {
+    renderForm({ signUp: false })
+    expect(
+      screen.queryByRole('link', { name: 'Sign Up' })
     ).not.toBeInTheDocument()
   })
 })

@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import {
   IconChartBar as ChartBar,
   IconLink as Link2,
   IconLogout as LogOut,
+  IconShield,
   IconUserCircle as UserRound
 } from '@tabler/icons-react'
 
@@ -130,6 +132,14 @@ export default function UserMenu({ user }: UserMenuProps) {
             <UserRound className="size-4" />
             <span>Account</span>
           </DropdownMenuItem>
+          {user.role === 'admin' && (
+            <DropdownMenuItem asChild>
+              <Link href="/auth/admin">
+                <IconShield className="size-4" />
+                <span>Admin</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
           {usage && (
             <DropdownMenuItem
               onSelect={event => {

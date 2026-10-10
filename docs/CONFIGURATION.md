@@ -194,11 +194,11 @@ By default, Morphic runs in **anonymous mode** (`ENABLE_AUTH=false`). This is id
 
 Auth behavior is controlled by an auth provider. Set `AUTH_PROVIDER` explicitly to one of:
 
-| Value         | Description                                                           |
-| ------------- | --------------------------------------------------------------------- |
-| `supabase`    | Supabase cloud authentication (multi-user)                            |
-| `none`        | Anonymous mode: all users share one user ID                           |
-| `better-auth` | Local accounts in Morphic's own Postgres (reserved, upcoming release) |
+| Value         | Description                                                                         |
+| ------------- | ----------------------------------------------------------------------------------- |
+| `supabase`    | Supabase cloud authentication (multi-user)                                          |
+| `none`        | Anonymous mode: all users share one user ID                                         |
+| `better-auth` | Local accounts in Morphic's own Postgres (see "Local Authentication" in the README) |
 
 When `AUTH_PROVIDER` is **unset**, the provider is derived from the existing
 environment so current deployments keep working unchanged:
@@ -207,7 +207,7 @@ environment so current deployments keep working unchanged:
 - otherwise → `supabase` (when Supabase is not configured, no user is resolved
   and the app behaves as before: guest/anonymous access without a shared ID)
 
-`MORPHIC_CLOUD_DEPLOYMENT=true` requires Supabase-backed auth: startup fails
+`MORPHIC_CLOUD_DEPLOYMENT=true` requires Supabase-backed auth: requests fail
 with a clear error when the resolved provider is `none` or any non-Supabase
 provider.
 
@@ -306,6 +306,16 @@ LANGFUSE_BASE_URL=https://cloud.langfuse.com
 ```
 
 Off by default. Traces include full prompts and completions, so point `LANGFUSE_BASE_URL` at a self-hosted instance if that content should not leave your infrastructure. See [Privacy and Telemetry](./PRIVACY.md) for everything else a self-hosted instance can send outbound.
+
+### Chat Sharing
+
+Sharing chats is opt-in:
+
+```bash
+ENABLE_SHARE=true  # runtime flag; works with prebuilt Docker images
+```
+
+`NEXT_PUBLIC_ENABLE_SHARE=true` also works when building from source, but Next.js inlines `NEXT_PUBLIC_*` values at build time, so setting it at runtime has no effect in a published image.
 
 ### Outbound Fetch
 

@@ -12,7 +12,10 @@ interface AppUserContextValue {
 const NO_CAPABILITIES: AuthCapabilities = {
   signUp: false,
   passwordReset: false,
-  deleteUser: false
+  deleteUser: false,
+  oauth: false,
+  emailVerification: false,
+  share: false
 }
 
 const AppUserContext = createContext<AppUserContextValue>({

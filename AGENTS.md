@@ -120,7 +120,7 @@ DATABASE_URL=        # PostgreSQL connection string
 - Chat history: Set `ENABLE_SAVE_CHAT_HISTORY=true` and configure Redis
 - Alternative AI providers: Add corresponding API keys (ANTHROPIC_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, etc.)
 - Alternative search: Configure SEARCH_API and provider-specific settings
-- Sharing: Set `NEXT_PUBLIC_ENABLE_SHARE=true`
+- Sharing: Set `ENABLE_SHARE=true` (runtime flag; `NEXT_PUBLIC_ENABLE_SHARE=true` also works for source builds)
 
 ## Key Development Patterns
 
@@ -151,6 +151,10 @@ Before creating a pull request, you MUST ensure all of the following checks pass
 These checks are enforced in CI/CD and PRs will fail if any of these steps don't pass.
 
 Note: Import sorting is handled by ESLint using `eslint-plugin-simple-import-sort`. Run `bun lint --fix` to automatically sort imports according to the configured order.
+
+### Review-Fix Discipline
+
+When addressing review feedback, treat each fix as a change in its own right: walk every affected user journey (each auth provider, logged-in and logged-out states) and add test or harness coverage in the same commit rather than waiting for the next review round. See [docs/lessons-learned-review-fixes.md](docs/lessons-learned-review-fixes.md) for the full fix-round checklist.
 
 ## Model Configuration
 

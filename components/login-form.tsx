@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { signIn, signInWithGoogle } from '@/lib/actions/auth'
+import { safeRedirectPath } from '@/lib/auth/redirect-target'
 import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
 import { cn } from '@/lib/utils/index'
 
@@ -24,8 +25,9 @@ import { PasswordInput } from './ui/password-input'
 
 export function LoginForm({
   className,
+  next,
   ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
+}: React.ComponentPropsWithoutRef<'div'> & { next?: string }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -41,8 +43,10 @@ export function LoginForm({
     try {
       const result = await signIn({ email, password })
       if (!result.success) throw new Error(result.error ?? 'An error occurred')
-      // Redirect to root and refresh to ensure server components get updated session
-      router.push('/')
+      // Redirect to the page that required sign-in (when it is a safe
+      // relative path) and refresh to ensure server components get
+      // updated session
+      router.push(safeRedirectPath(next))
       router.refresh()
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
@@ -56,6 +60,16 @@ export function LoginForm({
     setError(null)
 
     try {
+      // Supabase's redirect allowlist matches the callback URL exactly, so
+      // the destination rides in a short-lived cookie, not the redirectTo.
+      // Always write it: a login without a destination must clear a stale
+      // cookie left by an abandoned attempt, or that old destination would
+      // hijack the later sign-in.
+      document.cookie = next
+        ? `auth_next=${encodeURIComponent(
+            safeRedirectPath(next)
+          )}; path=/; max-age=300; SameSite=Lax`
+        : 'auth_next=; path=/; max-age=0; SameSite=Lax'
       const result = await signInWithGoogle()
       if (!result.success)
         throw new Error(result.error ?? 'An OAuth error occurred')
@@ -86,24 +100,30 @@ export function LoginForm({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
-            <Button
-              variant="outline"
-              type="button"
-              className="w-full"
-              onClick={handleSocialLogin}
-              disabled={isLoading}
-            >
-              Sign In with Google
-            </Button>
+            {capabilities.oauth && (
+              <>
+                <Button
+                  variant="outline"
+                  type="button"
+                  className="w-full"
+                  onClick={handleSocialLogin}
+                  disabled={isLoading}
+                >
+                  Sign In with Google
+                </Button>
 
-            <div className="relative my-2">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-muted px-2 text-muted-foreground">Or</span>
-              </div>
-            </div>
+                <div className="relative my-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-muted px-2 text-muted-foreground">
+                      Or
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
 
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
               <div className="grid gap-2">
@@ -144,12 +164,17 @@ export function LoginForm({
               </Button>
             </form>
           </div>
-          <div className="mt-6 text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/auth/sign-up" className="underline underline-offset-4">
-              Sign Up
-            </Link>
-          </div>
+          {capabilities.signUp && (
+            <div className="mt-6 text-center text-sm">
+              Don&apos;t have an account?{' '}
+              <Link
+                href="/auth/sign-up"
+                className="underline underline-offset-4"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
       <div className="text-center text-xs text-muted-foreground">

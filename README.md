@@ -110,6 +110,50 @@ bun dev
 
 Visit http://localhost:3000.
 
+### Local Authentication (better-auth)
+
+To run a multi-user Morphic on your own machine or LAN without Supabase, use the built-in `better-auth` provider. Accounts live in Morphic's own Postgres database.
+
+1. Configure `.env.local`:
+
+```bash
+AUTH_PROVIDER=better-auth
+BETTER_AUTH_SECRET=run-openssl-rand-hex-32-for-a-stable-value
+# Recommended whenever the instance is reachable by anyone but you:
+BOOTSTRAP_ADMIN_EMAIL=you@example.com
+```
+
+2. Start Morphic. With Docker (`docker compose up -d`), database migrations run automatically at container start and create the auth tables. For local development (`bun dev` with a local Postgres), run `bun migrate` once before starting the dev server.
+
+3. First boot: open http://localhost:3000/auth/sign-up and create your account. The first account becomes the instance admin; the bootstrap window then closes. Note that the window is tied to the user table being empty: if the last account is ever deleted, the window reopens and the gated address (or, without SMTP, whoever signs up first) can claim admin again. Keep at least one account, or unset `BOOTSTRAP_ADMIN_EMAIL` before deleting the last one. When `BOOTSTRAP_ADMIN_EMAIL` is set, only that address can sign up during the window. If SMTP is configured, the bootstrap sign-up emails a one-time link to that address, so only someone who controls the mailbox can complete it — this requires `BETTER_AUTH_URL` (the link origin); without SMTP the first person to submit the gated address wins the window, so finish first boot before exposing the instance to others.
+
+#### Invite-only sign-up
+
+Set `AUTH_SIGNUP_MODE=invite` to require an invitation for new accounts:
+
+- On a fresh instance there are no invitations yet: set `BOOTSTRAP_ADMIN_EMAIL` and the first account for that address can sign up without an invitation (with SMTP configured, the bootstrap link is emailed to that address first), then create invitations from the admin page.
+- As admin, open the admin page (user menu → **Admin**) and create an invitation link for an email address. Each link is bound to that address, valid for one sign-up for 7 days, and can be revoked until used.
+- The invitee opens the link and completes sign-up; the token is consumed automatically.
+
+#### Password reset and SMTP
+
+Password reset requires SMTP and `BETTER_AUTH_URL`; without them the forgot-password flow is hidden and the admin can set member passwords from the admin page instead. `BETTER_AUTH_URL` is the canonical origin embedded in emailed links (password resets, invitations, bootstrap) — it is never derived from request headers, so a spoofed `Host` cannot redirect a live credential to an attacker domain.
+
+```bash
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=smtp-user
+SMTP_PASSWORD=smtp-password
+EMAIL_FROM="Morphic <morphic@example.com>"
+BETTER_AUTH_URL=https://morphic.example.com
+```
+
+With SMTP configured, password-reset emails are sent and invitation links are additionally emailed to invitees.
+
+#### HTTPS and secure cookies
+
+In production builds (Docker), session cookies carry the `__Secure-` prefix, so browsers only store and send them over HTTPS or on `localhost`. An instance reached via `http://<LAN-IP>:3000` will not stay logged in; serve it over HTTPS (reverse proxy, Tailscale Serve, etc.). Development mode (`bun dev`) is not affected.
+
 ## Deploy
 
 ### Vercel

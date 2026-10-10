@@ -1,9 +1,10 @@
 import { revalidateTag } from 'next/cache'
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getAuthProvider } from '@/lib/auth/provider'
 import * as dbActions from '@/lib/db/actions'
 import type { Chat, Message } from '@/lib/db/schema'
 import {
@@ -32,6 +33,15 @@ import {
 vi.mock('@/lib/auth/get-current-user')
 vi.mock('@/lib/db/actions')
 vi.mock('@/lib/agents/title-generator')
+vi.mock('@/lib/auth/provider', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/lib/auth/provider')>()),
+  // Default: a supabase-shaped provider that supports sharing;
+  // individual tests override for other providers.
+  getAuthProvider: vi.fn(() => ({
+    name: 'supabase',
+    capabilities: { share: true }
+  }))
+}))
 vi.mock('@/lib/storage/r2-client', () => ({
   getUserFileObjectKeyPrefix: vi.fn((userId: string) => `${userId}/`),
   signFilePartUrlsInMessages: vi.fn(async messages => messages)
@@ -505,6 +515,24 @@ describe('Chat Actions', () => {
   })
 
   describe('shareChat', () => {
+    const originalShareFlag = process.env.NEXT_PUBLIC_ENABLE_SHARE
+
+    beforeEach(() => {
+      // Default: supabase, which shares without any flag (as on main).
+      vi.mocked(getAuthProvider).mockReturnValue({
+        name: 'supabase',
+        capabilities: { share: true }
+      } as never)
+    })
+
+    afterEach(() => {
+      if (originalShareFlag === undefined) {
+        delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      } else {
+        process.env.NEXT_PUBLIC_ENABLE_SHARE = originalShareFlag
+      }
+    })
+
     it('should update chat visibility to public', async () => {
       const chatId = 'chat-123'
       const userId = 'user-123'
@@ -532,6 +560,75 @@ describe('Chat Actions', () => {
 
     it('should return null for unauthenticated user', async () => {
       vi.mocked(getCurrentUserId).mockResolvedValue(undefined)
+
+      const result = await shareChat('chat-123')
+
+      expect(result).toBeNull()
+      expect(dbActions.updateChatVisibility).not.toHaveBeenCalled()
+    })
+
+    it('shares on supabase without any opt-in flag', async () => {
+      // The default Supabase path must behave as on main: no env var
+      // required.
+      delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      delete process.env.ENABLE_SHARE
+      vi.mocked(getCurrentUserId).mockResolvedValue('user-123')
+      vi.mocked(dbActions.updateChatVisibility).mockResolvedValue({
+        id: 'chat-123',
+        userId: 'user-123',
+        visibility: 'public'
+      } as Chat)
+
+      const result = await shareChat('chat-123')
+
+      expect(result).not.toBeNull()
+      expect(dbActions.updateChatVisibility).toHaveBeenCalled()
+    })
+
+    it('requires the opt-in flag for better-auth', async () => {
+      delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      delete process.env.ENABLE_SHARE
+      vi.mocked(getAuthProvider).mockReturnValue({
+        name: 'better-auth',
+        capabilities: { share: true }
+      } as never)
+      vi.mocked(getCurrentUserId).mockResolvedValue('user-123')
+
+      const result = await shareChat('chat-123')
+
+      expect(result).toBeNull()
+      expect(dbActions.updateChatVisibility).not.toHaveBeenCalled()
+    })
+
+    it('allows better-auth sharing once the opt-in flag is set', async () => {
+      process.env.NEXT_PUBLIC_ENABLE_SHARE = 'true'
+      vi.mocked(getAuthProvider).mockReturnValue({
+        name: 'better-auth',
+        capabilities: { share: true }
+      } as never)
+      vi.mocked(getCurrentUserId).mockResolvedValue('user-123')
+      vi.mocked(dbActions.updateChatVisibility).mockResolvedValue({
+        id: 'chat-123',
+        userId: 'user-123',
+        visibility: 'public'
+      } as Chat)
+
+      const result = await shareChat('chat-123')
+
+      expect(result).not.toBeNull()
+      expect(dbActions.updateChatVisibility).toHaveBeenCalled()
+    })
+
+    it('should return null when the active provider has no sharing capability', async () => {
+      // Anonymous mode: every chat belongs to one shared identity, so
+      // the action must not publish even with ENABLE_SHARE set while
+      // the provider (and the UI) has sharing disabled.
+      process.env.NEXT_PUBLIC_ENABLE_SHARE = 'true'
+      vi.mocked(getAuthProvider).mockReturnValue({
+        name: 'none',
+        capabilities: { share: false }
+      } as never)
+      vi.mocked(getCurrentUserId).mockResolvedValue('user-123')
 
       const result = await shareChat('chat-123')
 

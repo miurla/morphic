@@ -29,6 +29,7 @@ export async function signInWithGoogle(): Promise<AuthActionResult> {
 export async function signUp(credentials: {
   email: string
   password: string
+  token?: string
 }): Promise<AuthActionResult> {
   const provider = getAuthProvider()
   if (!provider.signUp) {
@@ -56,11 +57,12 @@ export async function requestPasswordReset(
 }
 
 export async function updatePassword(
-  password: string
+  password: string,
+  token?: string
 ): Promise<AuthActionResult> {
   const provider = getAuthProvider()
   if (!provider.updatePassword) {
     return unavailable()
   }
-  return provider.updatePassword(password)
+  return provider.updatePassword(password, token)
 }

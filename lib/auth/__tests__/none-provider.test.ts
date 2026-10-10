@@ -89,7 +89,10 @@ describe('none auth provider (anonymous mode)', () => {
     expect(noneAuthProvider.capabilities).toEqual({
       signUp: false,
       passwordReset: false,
-      deleteUser: false
+      deleteUser: false,
+      oauth: false,
+      emailVerification: false,
+      share: false
     })
   })
 })
