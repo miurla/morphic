@@ -87,6 +87,18 @@ describe('fetch tool SSRF guard', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  // The same settlement applies when the extraction service is crawl4ai: the
+  // target is checked before it leaves the server, independently of who fetches.
+  it('refuses a name that resolves into private space on the crawl4ai path', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    vi.stubEnv('CRAWL4AI_BASE_URL', 'http://crawl4ai.internal:11235')
+
+    await expectBlocked('http://localhost/admin', 'api')
+
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('never reaches a live private host, and never returns its body', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 

@@ -187,6 +187,68 @@ async function fetchTavilyExtractData(url: string): Promise<SearchResultsType> {
   }
 }
 
+async function fetchCrawl4aiData(url: string): Promise<SearchResultsType> {
+  try {
+    const baseUrl = process.env.CRAWL4AI_BASE_URL
+    if (!baseUrl) {
+      throw new Error('CRAWL4AI_BASE_URL is not configured')
+    }
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
+    const response = await fetch(`${baseUrl}/md`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.CRAWL4AI_API_KEY ?? ''}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url, f: 'fit' }),
+      signal: controller.signal
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      throw new Error(
+        `crawl4ai request failed: HTTP ${response.status} ${response.statusText}`
+      )
+    }
+
+    const json = await response.json()
+    if (!json.success || !json.markdown) {
+      throw new Error('No data returned from crawl4ai')
+    }
+
+    const content = json.markdown.slice(0, CONTENT_CHARACTER_LIMIT)
+    const rawTitle = new URL(json.url || url).hostname
+    const title =
+      rawTitle.length > TITLE_CHARACTER_LIMIT
+        ? rawTitle.substring(0, TITLE_CHARACTER_LIMIT) + '...'
+        : rawTitle
+
+    return {
+      results: [
+        {
+          title,
+          content,
+          url: json.url || url
+        }
+      ],
+      query: '',
+      images: []
+    }
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timeout after 30 seconds')
+    }
+    console.error('API Error:', error)
+    throw error instanceof Error
+      ? error
+      : new Error('crawl4ai extraction failed')
+  }
+}
+
 export function createFetchTool(options?: {
   labelAllocator?: CitationLabelAllocator
 }) {
@@ -195,7 +257,7 @@ export function createFetchTool(options?: {
 
   return tool({
     description:
-      'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. IMPORTANT: "regular" type does NOT support PDFs and will fail on PDF URLs. Use "api" type when you need: 1) PDF content extraction (required for .pdf URLs), 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina or Tavily API keys and uses Jina Reader if available, otherwise falls back to Tavily Extract.',
+      'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. IMPORTANT: "regular" type does NOT support PDFs and will fail on PDF URLs. Use "api" type when you need: 1) PDF content extraction (required for .pdf URLs), 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina, Tavily, or a self-hosted crawl4ai instance and uses crawl4ai if configured, otherwise Jina Reader if available, otherwise falls back to Tavily Extract.',
     inputSchema: fetchSchema,
     async *execute({ url, type = 'regular' }) {
       assertFetchableUrl(url)
@@ -226,9 +288,12 @@ export function createFetchTool(options?: {
           // be settled before it is handed over rather than at connect time.
           await assertResolvedPublicUrl(url)
 
-          // Use API-based extraction (Jina or Tavily)
+          // Use API-based extraction (crawl4ai, Jina or Tavily)
+          const crawl4aiBaseUrl = process.env.CRAWL4AI_BASE_URL
           const useJina = process.env.JINA_API_KEY
-          if (useJina) {
+          if (crawl4aiBaseUrl) {
+            results = await fetchCrawl4aiData(url)
+          } else if (useJina) {
             results = await fetchJinaReaderData(url)
           } else {
             results = await fetchTavilyExtractData(url)

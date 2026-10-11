@@ -389,3 +389,11 @@ Use Jina for enhanced content extraction:
 ```bash
 JINA_API_KEY=[YOUR_API_KEY]
 ```
+
+Alternatively, a self-hosted [crawl4ai](https://github.com/unclecode/crawl4ai) instance can serve as the extraction backend. When `CRAWL4AI_BASE_URL` is set it takes precedence over Jina and Tavily for API extraction:
+
+```bash
+CRAWL4AI_BASE_URL=http://localhost:11235
+# Optional: only needed when the instance requires an API key
+# CRAWL4AI_API_KEY=[YOUR_CRAWL4AI_API_KEY]
+```
