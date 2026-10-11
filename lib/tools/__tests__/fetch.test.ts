@@ -156,10 +156,85 @@ describe('crawl4ai extraction', () => {
     await iterator.next()
     const complete = await iterator.next()
 
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${baseUrl}/md`)
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(`${baseUrl}/md`)
     expect(complete.value).toMatchObject({
       state: 'complete',
       results: [{ title: 'example.com', content: mdResponse.markdown, url }]
+    })
+  })
+
+  it('routes .pdf URLs to the /crawl endpoint with the PDF strategy', async () => {
+    const pdfUrl = 'https://example.com/paper.pdf'
+    const crawlResponse = {
+      success: true,
+      results: [
+        {
+          url: pdfUrl,
+          success: true,
+          markdown: { raw_markdown: 'PDF text content', fit_markdown: '' },
+          metadata: { title: 'A Paper' }
+        }
+      ]
+    }
+    const fetchMock = fetchCrawl4ai(
+      () => new Response(JSON.stringify(crawlResponse))
+    )
+
+    const result = fetchTool.execute?.(
+      { url: pdfUrl, type: 'regular' },
+      { toolCallId: 'fetch', messages: [], context: {} }
+    )
+    const iterator = (result as AsyncIterable<unknown>)[Symbol.asyncIterator]()
+    await iterator.next()
+    const complete = await iterator.next()
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${baseUrl}/crawl`)
+    expect(
+      JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
+    ).toMatchObject({
+      urls: [pdfUrl],
+      crawler_config: {
+        scraping_strategy: { type: 'PDFContentScrapingStrategy', params: {} }
+      }
+    })
+    expect(complete.value).toMatchObject({
+      state: 'complete',
+      results: [
+        { title: 'example.com', content: 'PDF text content', url: pdfUrl }
+      ]
+    })
+  })
+
+  it('probes content type for extensionless PDF URLs', async () => {
+    const pdfUrl = 'https://arxiv.org/pdf/2310.06825'
+    const crawlResponse = {
+      success: true,
+      results: [
+        {
+          url: pdfUrl,
+          success: true,
+          markdown: { raw_markdown: 'Paper text' }
+        }
+      ]
+    }
+    const fetchMock = fetchCrawl4ai(init =>
+      init?.method === 'HEAD'
+        ? new Response(null, { headers: { 'content-type': 'application/pdf' } })
+        : new Response(JSON.stringify(crawlResponse))
+    )
+
+    const result = fetchTool.execute?.(
+      { url: pdfUrl, type: 'regular' },
+      { toolCallId: 'fetch', messages: [], context: {} }
+    )
+    const iterator = (result as AsyncIterable<unknown>)[Symbol.asyncIterator]()
+    await iterator.next()
+    const complete = await iterator.next()
+
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('HEAD')
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(`${baseUrl}/crawl`)
+    expect(complete.value).toMatchObject({
+      results: [{ content: 'Paper text' }]
     })
   })
 
@@ -191,7 +266,7 @@ describe('crawl4ai extraction', () => {
 
     await runCrawl4ai()
 
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${baseUrl}/md`)
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(`${baseUrl}/md`)
   })
 
   it('sends the API key when one is configured', async () => {
@@ -202,7 +277,7 @@ describe('crawl4ai extraction', () => {
 
     await runCrawl4ai()
 
-    expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({
+    expect(fetchMock.mock.calls[1]?.[1]?.headers).toMatchObject({
       Authorization: 'Bearer test-crawl4ai-key'
     })
   })

@@ -243,6 +243,7 @@ export async function assertResolvedPublicUrl(value: string): Promise<void> {
 }
 
 interface SafeFetchInit {
+  method?: string
   headers?: Record<string, string>
   signal?: AbortSignal
 }

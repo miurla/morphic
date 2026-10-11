@@ -187,23 +187,68 @@ async function fetchTavilyExtractData(url: string): Promise<SearchResultsType> {
   }
 }
 
-async function fetchCrawl4aiData(url: string): Promise<SearchResultsType> {
+// PDFs take a different server-side pipeline: the /md endpoint drives a
+// browser that cannot render them, so PDF URLs go to /crawl with the PDF
+// scraping strategy, which swaps in crawl4ai's dedicated PDF crawler.
+// The extension is the cheap test; a HEAD probe catches extensionless URLs
+// like arxiv's /pdf/2310.06825, whose response is application/pdf. The probe
+// runs through safeFetch so the connect-time guard covers it like any direct
+// request this server makes.
+async function isPdfUrl(url: string): Promise<boolean> {
+  const path = new URL(url).pathname.toLowerCase()
+  if (path.endsWith('.pdf')) {
+    return true
+  }
   try {
-    const baseUrl = process.env.CRAWL4AI_BASE_URL
-    if (!baseUrl) {
-      throw new Error('CRAWL4AI_BASE_URL is not configured')
-    }
+    const response = await safeFetch(url, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(10000)
+    })
+    const contentType = response.headers
+      .get('content-type')
+      ?.split(';', 1)[0]
+      ?.trim()
+      .toLowerCase()
+    return contentType === 'application/pdf'
+  } catch {
+    return false
+  }
+}
 
+async function fetchCrawl4aiData(url: string): Promise<SearchResultsType> {
+  const baseUrl = process.env.CRAWL4AI_BASE_URL
+  if (!baseUrl) {
+    throw new Error('CRAWL4AI_BASE_URL is not configured')
+  }
+
+  const isPdf = await isPdfUrl(url)
+  // PDFs download and parse server-side, which is slower than a page render.
+  const timeoutMs = isPdf ? 60000 : 30000
+
+  try {
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
-    const response = await fetch(`${baseUrl}/md`, {
+    const endpoint = isPdf ? `${baseUrl}/crawl` : `${baseUrl}/md`
+    const body = isPdf
+      ? {
+          urls: [url],
+          crawler_config: {
+            scraping_strategy: {
+              type: 'PDFContentScrapingStrategy',
+              params: {}
+            }
+          }
+        }
+      : { url, f: 'fit' }
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${process.env.CRAWL4AI_API_KEY ?? ''}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ url, f: 'fit' }),
+      body: JSON.stringify(body),
       signal: controller.signal
     })
 
@@ -216,12 +261,23 @@ async function fetchCrawl4aiData(url: string): Promise<SearchResultsType> {
     }
 
     const json = await response.json()
-    if (!json.success || !json.markdown) {
+    // /md returns markdown as a string on the body; /crawl returns it inside
+    // results[0].markdown, an object whose raw_markdown holds the extracted
+    // text (fit_markdown is empty for PDFs, there is no HTML to prune).
+    const crawlResult = isPdf ? json.results?.[0] : null
+    const markdownSource = isPdf ? crawlResult?.markdown : json.markdown
+    if (!json.success || !markdownSource) {
       throw new Error('No data returned from crawl4ai')
     }
 
-    const content = json.markdown.slice(0, CONTENT_CHARACTER_LIMIT)
-    const rawTitle = new URL(json.url || url).hostname
+    const markdown =
+      typeof markdownSource === 'string'
+        ? markdownSource
+        : (markdownSource.raw_markdown ?? '')
+
+    const content = markdown.slice(0, CONTENT_CHARACTER_LIMIT)
+    const resultUrl = isPdf ? (crawlResult?.url ?? url) : (json.url ?? url)
+    const rawTitle = new URL(resultUrl).hostname
     const title =
       rawTitle.length > TITLE_CHARACTER_LIMIT
         ? rawTitle.substring(0, TITLE_CHARACTER_LIMIT) + '...'
@@ -232,7 +288,7 @@ async function fetchCrawl4aiData(url: string): Promise<SearchResultsType> {
         {
           title,
           content,
-          url: json.url || url
+          url: resultUrl
         }
       ],
       query: '',
@@ -240,7 +296,7 @@ async function fetchCrawl4aiData(url: string): Promise<SearchResultsType> {
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error('Request timeout after 30 seconds')
+      throw new Error(`Request timeout after ${timeoutMs / 1000} seconds`)
     }
     console.error('API Error:', error)
     throw error instanceof Error
