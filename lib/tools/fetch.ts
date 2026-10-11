@@ -257,7 +257,7 @@ export function createFetchTool(options?: {
 
   return tool({
     description:
-      'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. IMPORTANT: "regular" type does NOT support PDFs and will fail on PDF URLs. Use "api" type when you need: 1) PDF content extraction (required for .pdf URLs), 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina, Tavily, or a self-hosted crawl4ai instance and uses crawl4ai if configured, otherwise Jina Reader if available, otherwise falls back to Tavily Extract.',
+      'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. IMPORTANT: "regular" type does NOT support PDFs and will fail on PDF URLs. Use "api" type when you need: 1) PDF content extraction (required for .pdf URLs), 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina, Tavily, or a self-hosted crawl4ai instance and uses crawl4ai if configured, otherwise Jina Reader if available, otherwise falls back to Tavily Extract. When a crawl4ai instance is configured, both regular and api fetches go through it.',
     inputSchema: fetchSchema,
     async *execute({ url, type = 'regular' }) {
       assertFetchableUrl(url)
@@ -280,7 +280,12 @@ export function createFetchTool(options?: {
       // Only the retrieval is wrapped: a yield rejects when the consumer stops
       // reading, and an aborted stream is not a failure of the page.
       try {
-        if (type === 'regular') {
+        if (process.env.CRAWL4AI_BASE_URL) {
+          // A configured crawl4ai instance is the fetch backend for every
+          // type: it takes over regular fetching too, not just API extraction.
+          await assertResolvedPublicUrl(url)
+          results = await fetchCrawl4aiData(url)
+        } else if (type === 'regular') {
           // Use regular fetch for direct HTML retrieval
           results = await fetchRegularData(url)
         } else {

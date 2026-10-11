@@ -143,6 +143,26 @@ describe('crawl4ai extraction', () => {
     vi.restoreAllMocks()
   })
 
+  it('routes regular-type fetches through crawl4ai when configured', async () => {
+    const fetchMock = fetchCrawl4ai(
+      () => new Response(JSON.stringify(mdResponse))
+    )
+
+    const result = fetchTool.execute?.(
+      { url, type: 'regular' },
+      { toolCallId: 'fetch', messages: [], context: {} }
+    )
+    const iterator = (result as AsyncIterable<unknown>)[Symbol.asyncIterator]()
+    await iterator.next()
+    const complete = await iterator.next()
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${baseUrl}/md`)
+    expect(complete.value).toMatchObject({
+      state: 'complete',
+      results: [{ title: 'example.com', content: mdResponse.markdown, url }]
+    })
+  })
+
   it('posts to the /md endpoint with fit mode', async () => {
     const fetchMock = fetchCrawl4ai(
       () => new Response(JSON.stringify(mdResponse))
@@ -200,6 +220,33 @@ describe('crawl4ai extraction', () => {
       'No results returned from content extraction service'
     )
     expect(fetchMock.mock.calls[0]?.[0]).toBe('https://api.tavily.com/extract')
+  })
+
+  it('keeps regular fetches direct without CRAWL4AI_BASE_URL', async () => {
+    type FetchLike = (url: string | URL | Request) => Promise<Response>
+    const fetchMock = vi.fn<FetchLike>(
+      async () =>
+        new Response(
+          '<html><title>Page title</title><body>Hello</body></html>',
+          {
+            headers: { 'content-type': 'text/html' }
+          }
+        )
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = fetchTool.execute?.(
+      { url, type: 'regular' },
+      { toolCallId: 'fetch', messages: [], context: {} }
+    )
+    const iterator = (result as AsyncIterable<unknown>)[Symbol.asyncIterator]()
+    await iterator.next()
+    const complete = await iterator.next()
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(url)
+    expect(complete.value).toMatchObject({
+      results: [{ content: 'Page title Hello' }]
+    })
   })
 
   it('rejects an unsuccessful crawl4ai response', async () => {
