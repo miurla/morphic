@@ -8,6 +8,10 @@ This guide covers the optional features and their configuration in Morphic.
 - [AI Providers](#ai-providers)
 - [Search Providers](#search-providers)
 - [Authentication](#authentication)
+  - [Auth Provider](#auth-provider-auth_provider)
+  - [Anonymous Mode](#anonymous-mode-default)
+  - [Better Auth](#better-auth)
+  - [Supabase](#supabase)
 - [Guest Mode](#guest-mode)
 - [Other Features](#other-features)
 - [Privacy and Telemetry](./PRIVACY.md)
@@ -188,30 +192,42 @@ If not configured, `type="general"` searches fall back to your configured search
 
 ## Authentication
 
-By default, Morphic runs in **anonymous mode** (`ENABLE_AUTH=false`). This is ideal for personal, single-user environments.
+Morphic has three auth providers. Pick the one that matches how the instance is used:
+
+| Use case                           | Provider                                  |
+| ---------------------------------- | ----------------------------------------- |
+| Personal, single user              | [Anonymous mode](#anonymous-mode-default) |
+| Self-hosted, multiple users        | [Better Auth](#better-auth)               |
+| You already run a Supabase project | [Supabase](#supabase)                     |
 
 ### Auth Provider (`AUTH_PROVIDER`)
 
-Auth behavior is controlled by an auth provider. Set `AUTH_PROVIDER` explicitly to one of:
+Set `AUTH_PROVIDER` explicitly to one of:
 
-| Value         | Description                                                                         |
-| ------------- | ----------------------------------------------------------------------------------- |
-| `supabase`    | Supabase cloud authentication (multi-user)                                          |
-| `none`        | Anonymous mode: all users share one user ID                                         |
-| `better-auth` | Local accounts in Morphic's own Postgres (see "Local Authentication" in the README) |
+| Value         | Description                                                     |
+| ------------- | --------------------------------------------------------------- |
+| `none`        | Anonymous mode: all users share one user ID                     |
+| `better-auth` | Built-in accounts stored in Morphic's own Postgres (multi-user) |
+| `supabase`    | Supabase cloud authentication (multi-user)                      |
 
 When `AUTH_PROVIDER` is **unset**, the provider is derived from the existing
 environment so current deployments keep working unchanged:
 
-- `ENABLE_AUTH=false` → `none` (anonymous mode, shared `ANONYMOUS_USER_ID`)
+- `ENABLE_AUTH=false` → `none` (anonymous mode, shared `ANONYMOUS_USER_ID`).
+  This is what `.env.local.example` and Docker Compose set.
 - otherwise → `supabase` (when Supabase is not configured, no user is resolved
   and the app behaves as before: guest/anonymous access without a shared ID)
+
+Better Auth is never selected implicitly. An explicit `AUTH_PROVIDER` takes
+precedence over `ENABLE_AUTH`.
 
 `MORPHIC_CLOUD_DEPLOYMENT=true` requires Supabase-backed auth: requests fail
 with a clear error when the resolved provider is `none` or any non-Supabase
 provider.
 
 ### Anonymous Mode (Default)
+
+For personal, single-user environments.
 
 ```bash
 ENABLE_AUTH=false
@@ -222,9 +238,74 @@ All users share a single anonymous user ID. No additional configuration needed.
 
 Anyone who can reach the instance can send prompts, and a prompt is what decides which addresses the server requests on the sender's behalf.
 
-### Enabling Supabase Authentication
+### Better Auth
 
-For multi-user deployments:
+For multi-user self-hosting, this is the recommended provider. Accounts live in Morphic's own Postgres database, so no external auth service is needed.
+
+> **Note**: This provider is new. Its built-in rate limiting for sign-in, sign-up, and password reset is basic and in-process. If the instance is reachable from the internet, put it behind a reverse proxy that enforces its own rate limits and terminates HTTPS.
+
+#### Setup
+
+1. Configure `.env.local`:
+
+```bash
+AUTH_PROVIDER=better-auth
+BETTER_AUTH_SECRET=run-openssl-rand-hex-32-for-a-stable-value
+# Recommended whenever the instance is reachable by anyone but you:
+BOOTSTRAP_ADMIN_EMAIL=you@example.com
+```
+
+`BETTER_AUTH_SECRET` is required in production builds. Keep it stable across restarts.
+
+2. Start Morphic. The auth tables are created by the database migration. With Docker (`docker compose up -d`), migrations run automatically at container start. For local development (`bun dev` with a local Postgres), run `bun migrate` once before starting the dev server.
+
+3. Open http://localhost:3000/auth/sign-up and create your account. The first account becomes the instance admin, and the bootstrap window then closes.
+
+#### First boot and `BOOTSTRAP_ADMIN_EMAIL`
+
+When `BOOTSTRAP_ADMIN_EMAIL` is set, only that address can sign up while the user table is empty.
+
+- With SMTP configured, the bootstrap sign-up emails a one-time link to that address, so only someone who controls the mailbox can complete it. This requires `BETTER_AUTH_URL` (the link origin).
+- Without SMTP, the first person to submit the gated address wins the window, so finish first boot before exposing the instance to others.
+
+The window is tied to the user table being empty. If the last account is ever deleted, the window reopens and the gated address (or, without SMTP, whoever signs up first) can claim admin again. Keep at least one account, or unset `BOOTSTRAP_ADMIN_EMAIL` before deleting the last one.
+
+#### Invite-only sign-up
+
+`AUTH_SIGNUP_MODE` is `open` (default) or `invite`. Set `AUTH_SIGNUP_MODE=invite` to require an invitation for new accounts:
+
+- On a fresh instance there are no invitations yet: set `BOOTSTRAP_ADMIN_EMAIL` and the first account for that address can sign up without an invitation (with SMTP configured, the bootstrap link is emailed to that address first), then create invitations from the admin page.
+- As admin, open the admin page (user menu → **Admin**) and create an invitation link for an email address. Each link is bound to that address, valid for one sign-up for 7 days, and can be revoked until used.
+- The invitee opens the link and completes sign-up. The token is consumed automatically.
+
+#### Password reset and SMTP
+
+Password reset requires SMTP and `BETTER_AUTH_URL`. Without them the forgot-password flow is hidden and the admin can set member passwords from the admin page instead.
+
+```bash
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=smtp-user
+SMTP_PASSWORD=smtp-password
+EMAIL_FROM="Morphic <morphic@example.com>"
+BETTER_AUTH_URL=https://morphic.example.com
+```
+
+With SMTP configured, password-reset emails are sent and invitation links are additionally emailed to invitees.
+
+`BETTER_AUTH_URL` is the canonical origin embedded in emailed links (password resets, invitations, bootstrap). It is never derived from request headers, so a spoofed `Host` cannot redirect a live credential to an attacker domain.
+
+#### HTTPS and secure cookies
+
+In production builds (Docker), session cookies carry the `__Secure-` prefix, so browsers only store and send them over HTTPS or on `localhost`. An instance reached via `http://<LAN-IP>:3000` will not stay logged in. Serve it over HTTPS (reverse proxy, Tailscale Serve, etc.). Development mode (`bun dev`) is not affected.
+
+#### Chat sharing
+
+With Better Auth, sharing chats is off until you set `ENABLE_SHARE=true`. See [Chat Sharing](#chat-sharing).
+
+### Supabase
+
+For deployments that already use Supabase, or that prefer a hosted auth service.
 
 1. Create a Supabase project at [supabase.com](https://supabase.com)
 
@@ -286,11 +367,12 @@ Rate limiting only applies when `MORPHIC_CLOUD_DEPLOYMENT=true`.
 
 ### Recommended Setup
 
-| Environment    | Configuration                                |
-| -------------- | -------------------------------------------- |
-| Personal/Local | `ENABLE_AUTH=false` (anonymous mode)         |
-| Public Demo    | `ENABLE_GUEST_CHAT=true` with rate limiting  |
-| Production     | `ENABLE_AUTH=true` (Supabase authentication) |
+| Environment             | Configuration                                   |
+| ----------------------- | ----------------------------------------------- |
+| Personal/Local          | `ENABLE_AUTH=false` (anonymous mode)            |
+| Self-hosted, multi-user | `AUTH_PROVIDER=better-auth` (built-in accounts) |
+| Public Demo             | `ENABLE_GUEST_CHAT=true` with rate limiting     |
+| Production              | `ENABLE_AUTH=true` (Supabase authentication)    |
 
 ## Other Features
 
@@ -309,13 +391,15 @@ Off by default. Traces include full prompts and completions, so point `LANGFUSE_
 
 ### Chat Sharing
 
-Sharing chats is opt-in:
+With Supabase, signed-in users can share chats without extra configuration. With Better Auth, sharing is opt-in:
 
 ```bash
 ENABLE_SHARE=true  # runtime flag; works with prebuilt Docker images
 ```
 
 `NEXT_PUBLIC_ENABLE_SHARE=true` also works when building from source, but Next.js inlines `NEXT_PUBLIC_*` values at build time, so setting it at runtime has no effect in a published image.
+
+Sharing is not available in anonymous mode.
 
 ### Outbound Fetch
 

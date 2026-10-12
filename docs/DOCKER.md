@@ -98,9 +98,22 @@ docker compose down -v  # Deletes all data
 
 ## Enabling Authentication
 
-By default, Docker runs in anonymous mode — all users share a single anonymous user ID. This is intended for **personal, single-user local environments only**.
+By default, Docker runs in anonymous mode: all users share a single anonymous user ID. This is intended for **personal, single-user local environments only**.
 
-To enable Supabase authentication for multi-user deployments:
+### Better Auth (built-in accounts)
+
+For a multi-user instance, use the built-in Better Auth provider. Accounts live in the bundled PostgreSQL database, and it works with the prebuilt image. Add to `.env.local`:
+
+```bash
+AUTH_PROVIDER=better-auth
+BETTER_AUTH_SECRET=run-openssl-rand-hex-32-for-a-stable-value
+```
+
+Then restart with `docker compose up -d`. See [Better Auth](./CONFIGURATION.md#better-auth) for sign-up modes, the first admin account, SMTP, and HTTPS.
+
+### Supabase
+
+To use Supabase authentication instead:
 
 1. Set up a [Supabase](https://supabase.com/) project
 2. Build from source with the Supabase environment variables:
@@ -118,7 +131,7 @@ ENABLE_AUTH=true
 docker compose up -d --build
 ```
 
-**Note**: The prebuilt image does not support authentication because `NEXT_PUBLIC_*` variables are embedded at build time by Next.js. You must build from source to enable authentication.
+**Note**: The prebuilt image does not support Supabase authentication because `NEXT_PUBLIC_*` variables are embedded at build time by Next.js. You must build from source to use Supabase.
 
 ## Useful Commands
 
