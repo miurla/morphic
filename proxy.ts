@@ -3,13 +3,14 @@ import { type NextRequest, NextResponse } from 'next/server'
 import {
   exceedsRelayBodyCap,
   RELAY_PREFIX,
+  relayRequestHeaders,
   relayTarget
 } from '@/lib/analytics/relay-target'
 import { getAuthProvider, resolveAuthProviderName } from '@/lib/auth/provider'
 
-// Better Auth sends /relay through the route handler, which forwards an
-// explicit header allowlist. Other providers proxy straight to PostHog so
-// analytics requests cost no function invocation and keep upstream caching.
+// Better Auth sends /relay through the route handler. Other providers
+// proxy straight to PostHog so analytics requests cost no function
+// invocation and keep upstream caching.
 function relayRewrite(request: NextRequest): NextResponse | null {
   const { pathname, search } = request.nextUrl
   if (pathname !== RELAY_PREFIX && !pathname.startsWith(`${RELAY_PREFIX}/`)) {
@@ -25,10 +26,9 @@ function relayRewrite(request: NextRequest): NextResponse | null {
   if (exceedsRelayBodyCap(request.headers)) {
     return new NextResponse('Payload too large', { status: 413 })
   }
-  const headers = new Headers(request.headers)
-  headers.delete('cookie')
-  headers.delete('authorization')
-  return NextResponse.rewrite(target, { request: { headers } })
+  return NextResponse.rewrite(target, {
+    request: { headers: relayRequestHeaders(request.headers) }
+  })
 }
 
 export async function proxy(request: NextRequest) {

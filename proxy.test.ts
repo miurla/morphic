@@ -79,6 +79,8 @@ describe('proxy', () => {
         headers: {
           cookie: 'sb-access-token=abc',
           authorization: 'Bearer token',
+          'cf-access-jwt-assertion': 'gateway-token',
+          'x-forwarded-for': '203.0.113.7',
           'user-agent': 'Mozilla/5.0 (test)'
         }
       })
@@ -88,9 +90,10 @@ describe('proxy', () => {
         'https://us.i.posthog.com/e/?ip=0'
       )
       const forwarded = response.headers.get('x-middleware-override-headers')
-      expect(forwarded).toContain('user-agent')
-      expect(forwarded).not.toContain('cookie')
-      expect(forwarded).not.toContain('authorization')
+      expect(forwarded?.split(',').sort()).toEqual([
+        'user-agent',
+        'x-forwarded-for'
+      ])
       expect(updateSession).not.toHaveBeenCalled()
     })
 
