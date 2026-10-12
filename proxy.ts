@@ -1,8 +1,42 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
-import { getAuthProvider } from '@/lib/auth/provider'
+import {
+  exceedsRelayBodyCap,
+  RELAY_PREFIX,
+  relayRequestHeaders,
+  relayTarget
+} from '@/lib/analytics/relay-target'
+import { getAuthProvider, resolveAuthProviderName } from '@/lib/auth/provider'
+
+// Better Auth sends /relay through the route handler. Other providers
+// proxy straight to PostHog so analytics requests cost no function
+// invocation and keep upstream caching.
+function relayRewrite(request: NextRequest): NextResponse | null {
+  const { pathname, search } = request.nextUrl
+  if (pathname !== RELAY_PREFIX && !pathname.startsWith(`${RELAY_PREFIX}/`)) {
+    return null
+  }
+  if (resolveAuthProviderName() === 'better-auth') {
+    return null
+  }
+  const target = relayTarget(pathname.slice(RELAY_PREFIX.length) || '/', search)
+  if (!target) {
+    return new NextResponse('Not found', { status: 404 })
+  }
+  if (exceedsRelayBodyCap(request.headers)) {
+    return new NextResponse('Payload too large', { status: 413 })
+  }
+  return NextResponse.rewrite(target, {
+    request: { headers: relayRequestHeaders(request.headers) }
+  })
+}
 
 export async function proxy(request: NextRequest) {
+  const relay = relayRewrite(request)
+  if (relay) {
+    return relay
+  }
+
   // Get the protocol from X-Forwarded-Proto header or request protocol
   const protocol =
     request.headers.get('x-forwarded-proto') || request.nextUrl.protocol
