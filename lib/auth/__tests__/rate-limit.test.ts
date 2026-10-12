@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { checkRateLimit, resetRateLimits } from '../rate-limit'
+import {
+  checkRateLimit,
+  rateLimitKeyCount,
+  resetRateLimits
+} from '../rate-limit'
 
 describe('checkRateLimit', () => {
   beforeEach(() => {
@@ -40,5 +44,39 @@ describe('checkRateLimit', () => {
     expect(checkRateLimit('sign-in:1.2.3.4:victim@b.co')).toBe(true)
     expect(checkRateLimit('sign-in:5.6.7.8:a@b.co')).toBe(true)
     expect(checkRateLimit('sign-up:1.2.3.4:a@b.co')).toBe(true)
+  })
+
+  it('evicts the oldest keys when the cap is reached within one window', () => {
+    for (let attempt = 0; attempt < 11; attempt++) {
+      checkRateLimit('sign-in:oldest@b.co')
+    }
+    expect(checkRateLimit('sign-in:oldest@b.co')).toBe(false)
+
+    for (let index = 0; index < 20_000; index++) {
+      checkRateLimit(`sign-in:10.0.0.${index}:a@b.co`)
+    }
+
+    expect(rateLimitKeyCount()).toBeLessThanOrEqual(10_000)
+    // The newest key survives with its count; the oldest lost its window.
+    for (let attempt = 0; attempt < 9; attempt++) {
+      expect(checkRateLimit('sign-in:10.0.0.19999:a@b.co')).toBe(true)
+    }
+    expect(checkRateLimit('sign-in:10.0.0.19999:a@b.co')).toBe(false)
+    expect(checkRateLimit('sign-in:oldest@b.co')).toBe(true)
+  })
+
+  it('drops expired keys before live ones at the cap', () => {
+    for (let index = 0; index < 9_999; index++) {
+      checkRateLimit(`sign-in:stale-${index}`)
+    }
+    vi.advanceTimersByTime(60_001)
+    for (let attempt = 0; attempt < 11; attempt++) {
+      checkRateLimit('sign-in:live@b.co')
+    }
+
+    checkRateLimit('sign-in:overflow@b.co')
+
+    expect(rateLimitKeyCount()).toBe(2)
+    expect(checkRateLimit('sign-in:live@b.co')).toBe(false)
   })
 })
