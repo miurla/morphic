@@ -26,7 +26,7 @@ services:
       # them with empty defaults would wipe the values users put in
       # .env.local. Configure AUTH_PROVIDER, BETTER_AUTH_SECRET,
       # AUTH_SIGNUP_MODE, BOOTSTRAP_ADMIN_EMAIL and SMTP_* in .env.local
-      # (see README "Local Authentication").
+      # (see "Better Auth" in docs/CONFIGURATION.md).
       MORPHIC_CLOUD_DEPLOYMENT: 'false'
       # Docker-internal service URLs
       LOCAL_REDIS_URL: ${LOCAL_REDIS_URL:-redis://redis:6379}

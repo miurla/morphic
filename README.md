@@ -98,8 +98,6 @@ TAVILY_API_KEY=your_tavily_key
 
 To enable chat history, authentication, file upload, and other features, see [CONFIGURATION.md](./docs/CONFIGURATION.md).
 
-Auth is provided by `AUTH_PROVIDER` (`supabase | better-auth | none`). When unset it is derived from the existing environment: `ENABLE_AUTH=false` selects anonymous mode (`none`), otherwise Supabase auth is used. Existing deployments need no change. See [Authentication](./docs/CONFIGURATION.md#authentication).
-
 For what a self-hosted instance sends outbound, and what is off by default, see [PRIVACY.md](./docs/PRIVACY.md).
 
 3. Start the dev server:
@@ -109,17 +107,6 @@ bun dev
 ```
 
 Visit http://localhost:3000.
-
-### Local Authentication (better-auth)
-
-To run a multi-user Morphic without Supabase, use the built-in `better-auth` provider. Accounts live in Morphic's own Postgres database. It is opt-in: set these in `.env.local`, then run `bun migrate` (Docker runs migrations at container start).
-
-```bash
-AUTH_PROVIDER=better-auth
-BETTER_AUTH_SECRET=run-openssl-rand-hex-32-for-a-stable-value
-```
-
-The first account to sign up becomes the admin. For first boot, invite-only sign-up, password reset, and HTTPS, see [Authentication](./docs/CONFIGURATION.md#better-auth) in the configuration guide.
 
 ## Deploy
 
