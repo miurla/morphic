@@ -10,15 +10,9 @@ vi.mock('next/headers', () => ({
   }))
 }))
 
-// Mock Supabase
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(() => ({
-    auth: {
-      getUser: vi.fn(() =>
-        Promise.resolve({ data: { user: null }, error: null })
-      )
-    }
-  }))
+// Mock the auth provider seam
+vi.mock('@/lib/auth/get-current-user', () => ({
+  getCurrentUser: vi.fn(async () => null)
 }))
 
 // Mock the modules
@@ -45,6 +39,7 @@ vi.mock('@langfuse/client', () => ({
 import { LangfuseClient } from '@langfuse/client'
 
 import { updateMessageFeedback } from '@/lib/actions/feedback'
+import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
 import { POST } from '../route'
@@ -102,6 +97,48 @@ describe('Feedback API Route', () => {
         'test-message-id',
         1,
         null
+      )
+    })
+
+    it('should attribute feedback to the active provider user', async () => {
+      vi.mocked(isTracingEnabled).mockReturnValue(true)
+      vi.mocked(updateMessageFeedback).mockResolvedValue({
+        success: true
+      })
+      vi.mocked(getCurrentUser).mockResolvedValue({
+        id: 'provider-user-1',
+        email: 'user@example.com'
+      })
+
+      const mockScoreCreate = vi.fn()
+      vi.mocked(LangfuseClient).mockImplementation(function () {
+        return {
+          score: {
+            create: mockScoreCreate,
+            flush: vi.fn(() => Promise.resolve())
+          }
+        } as any
+      } as any)
+
+      const request = new Request('http://localhost:3000/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          traceId: 'test-trace-id',
+          score: 1,
+          messageId: 'test-message-id'
+        })
+      })
+
+      const response = await POST(request)
+
+      expect(response.status).toBe(200)
+      expect(updateMessageFeedback).toHaveBeenCalledWith(
+        'test-message-id',
+        1,
+        'provider-user-1'
       )
     })
 

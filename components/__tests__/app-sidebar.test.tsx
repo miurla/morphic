@@ -52,4 +52,11 @@ describe('AppSidebar library entry', () => {
     expect(screen.queryByText('Library')).not.toBeInTheDocument()
     expect(screen.getByText('New')).toBeInTheDocument()
   })
+
+  test('hides the Library entry when AUTH_PROVIDER=none with ENABLE_AUTH unset', () => {
+    vi.stubEnv('AUTH_PROVIDER', 'none')
+    renderSidebar()
+
+    expect(screen.queryByText('Library')).not.toBeInTheDocument()
+  })
 })

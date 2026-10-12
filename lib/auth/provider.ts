@@ -1,6 +1,11 @@
+import { betterAuthProvider } from '@/lib/auth/providers/better-auth'
 import { noneAuthProvider } from '@/lib/auth/providers/none'
 import { supabaseAuthProvider } from '@/lib/auth/providers/supabase'
-import type { AuthProvider, AuthProviderName } from '@/lib/auth/types'
+import type {
+  AuthCapabilities,
+  AuthProvider,
+  AuthProviderName
+} from '@/lib/auth/types'
 
 const AUTH_PROVIDER_NAMES: AuthProviderName[] = [
   'supabase',
@@ -8,10 +13,10 @@ const AUTH_PROVIDER_NAMES: AuthProviderName[] = [
   'none'
 ]
 
-// Providers register here as they ship. `better-auth` is an accepted
-// configuration value reserved for a follow-up release.
+// Providers register here as they ship.
 const providerRegistry: Partial<Record<AuthProviderName, AuthProvider>> = {
   supabase: supabaseAuthProvider,
+  'better-auth': betterAuthProvider,
   none: noneAuthProvider
 }
 
@@ -31,6 +36,43 @@ function enforceCloudDeploymentGuard(
   throw new Error(
     `AUTH_PROVIDER=${name} is not allowed in MORPHIC_CLOUD_DEPLOYMENT`
   )
+}
+
+/**
+ * Whether sharing is enabled. ENABLE_SHARE is the runtime (non-public)
+ * flag and works in prebuilt images; NEXT_PUBLIC_ENABLE_SHARE is kept for
+ * source builds, but Next inlines NEXT_PUBLIC_* at build time even in
+ * server bundles, so it cannot be flipped at runtime in a published
+ * image. shareChat enforces the same helper server-side.
+ */
+export function isShareEnabled(): boolean {
+  return (
+    process.env.ENABLE_SHARE === 'true' ||
+    process.env.NEXT_PUBLIC_ENABLE_SHARE === 'true'
+  )
+}
+
+/**
+ * Fold the sharing opt-in flag into a provider's capabilities. Must be
+ * evaluated on the server: client components inline NEXT_PUBLIC_* values
+ * at build time, which would freeze the setting in prebuilt images.
+ * shareChat enforces the same rule server-side.
+ *
+ * The opt-in applies to Better Auth only: Supabase deployments have
+ * always shared without an env var, and anonymous mode has no sharing
+ * capability to fold into.
+ */
+export function withShareOptIn(
+  capabilities: AuthCapabilities,
+  providerName: AuthProviderName
+): AuthCapabilities {
+  if (providerName !== 'better-auth') {
+    return capabilities
+  }
+  return {
+    ...capabilities,
+    share: capabilities.share && isShareEnabled()
+  }
 }
 
 /**

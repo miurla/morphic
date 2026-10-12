@@ -1,10 +1,9 @@
 'use server'
 
+import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { db } from '@/lib/db'
 import { feedback, generateId } from '@/lib/db/schema'
 import { withOptionalRLS } from '@/lib/db/with-rls'
-import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
-import { createClient } from '@/lib/supabase/server'
 
 export async function submitFeedback(data: {
   sentiment: 'positive' | 'neutral' | 'negative'
@@ -12,18 +11,10 @@ export async function submitFeedback(data: {
   pageUrl: string
 }) {
   try {
-    // Get current user if logged in
-    let userId: string | undefined
-    let userEmail: string | undefined
-
-    if (hasSupabasePublicConfig()) {
-      const supabase = await createClient()
-      const {
-        data: { user }
-      } = await supabase.auth.getUser()
-      userId = user?.id
-      userEmail = user?.email
-    }
+    // Get current user if logged in (provider-agnostic seam)
+    const user = await getCurrentUser()
+    const userId = user?.id
+    const userEmail = user?.email ?? undefined
 
     // Get user agent from headers
     const { headers } = await import('next/headers')

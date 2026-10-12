@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { signUp } from '@/lib/actions/auth'
+import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
 import { cn } from '@/lib/utils/index'
 
 import { Button } from '@/components/ui/button'
@@ -21,19 +22,27 @@ import { PasswordInput } from '@/components/ui/password-input'
 
 export function SignUpForm({
   className,
+  token,
+  inviteEmail,
   ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
-  const [email, setEmail] = useState('')
+}: React.ComponentPropsWithoutRef<'div'> & {
+  token?: string
+  inviteEmail?: string
+}) {
+  const [email, setEmail] = useState(inviteEmail ?? '')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const capabilities = useAuthCapabilities()
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
+    setNotice(null)
 
     if (password !== repeatPassword) {
       setError('Passwords do not match')
@@ -42,9 +51,22 @@ export function SignUpForm({
     }
 
     try {
-      const result = await signUp({ email, password })
+      const result = await signUp({ email, password, token })
       if (!result.success) throw new Error(result.error ?? 'An error occurred')
-      router.push('/auth/sign-up-success')
+      if (result.notice) {
+        // Sign-up continues out-of-band (e.g. an emailed bootstrap link);
+        // show the message instead of redirecting.
+        setNotice(result.notice)
+        return
+      }
+      if (capabilities.emailVerification) {
+        router.push('/auth/sign-up-success')
+      } else {
+        // Providers without email verification sign the user in immediately;
+        // send them straight to the app instead of a confirmation notice.
+        router.push('/')
+        router.refresh()
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
@@ -80,6 +102,11 @@ export function SignUpForm({
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                 />
+                {inviteEmail && (
+                  <p className="text-xs text-muted-foreground">
+                    This invitation is bound to {inviteEmail}.
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
@@ -108,6 +135,7 @@ export function SignUpForm({
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
+              {notice && <p className="text-sm text-green-600">{notice}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'Creating account...' : 'Sign Up'}
               </Button>

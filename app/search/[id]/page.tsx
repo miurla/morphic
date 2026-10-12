@@ -37,11 +37,19 @@ export default async function SearchPage(props: {
   const chat = await loadChat(id, userId)
 
   if (!chat) {
+    // A logged-out visitor cannot tell a private chat from a missing one:
+    // both are hidden behind null by the permission check in the loader.
+    // Send them to sign in (the owner can then open their private link)
+    // instead of a dead-end 404; public chats render above without a
+    // login bounce. The ?next= carries the chat back through the login.
+    if (!userId) {
+      redirect(`/auth/login?next=${encodeURIComponent(`/search/${id}`)}`)
+    }
     notFound()
   }
 
   if (chat.visibility === 'private' && !userId) {
-    redirect('/auth/login')
+    redirect(`/auth/login?next=${encodeURIComponent(`/search/${id}`)}`)
   }
 
   const messages: UIMessage[] = chat.messages

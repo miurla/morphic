@@ -1,8 +1,8 @@
-import { headers } from 'next/headers'
 import { type NextRequest, NextResponse } from 'next/server'
 
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
+import { getRequestOrigin } from '@/lib/auth/request'
 import type { AppUser, AuthActionResult, AuthProvider } from '@/lib/auth/types'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
@@ -33,23 +33,15 @@ function toAppUser(user: SupabaseUser): AppUser {
   }
 }
 
-async function getOrigin(): Promise<string> {
-  const headerStore = await headers()
-  const origin = headerStore.get('origin')
-  if (origin) {
-    return origin
-  }
-  const host = headerStore.get('x-forwarded-host') ?? headerStore.get('host')
-  const protocol = headerStore.get('x-forwarded-proto') ?? 'https'
-  return host ? `${protocol}://${host}` : ''
-}
-
 export const supabaseAuthProvider: AuthProvider = {
   name: 'supabase',
   capabilities: {
     signUp: true,
     passwordReset: true,
-    deleteUser: true
+    deleteUser: true,
+    oauth: true,
+    emailVerification: true,
+    share: true
   },
 
   async getCurrentUser(): Promise<AppUser | null> {
@@ -91,10 +83,14 @@ export const supabaseAuthProvider: AuthProvider = {
 
   async signInWithOAuth(provider: string): Promise<AuthActionResult> {
     const supabase = await createClient()
-    const origin = await getOrigin()
+    const origin = await getRequestOrigin()
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider as 'google',
       options: {
+        // Fixed callback URL: Supabase's redirect allowlist matches the
+        // configured Redirect URLs exactly, so a ?next= query here would
+        // fall out of the allowlist and break the exchange. The login form
+        // carries the destination in a short-lived cookie instead.
         redirectTo: `${origin}/auth/oauth`
       }
     })
@@ -112,7 +108,7 @@ export const supabaseAuthProvider: AuthProvider = {
     password: string
   }): Promise<AuthActionResult> {
     const supabase = await createClient()
-    const origin = await getOrigin()
+    const origin = await getRequestOrigin()
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -131,7 +127,7 @@ export const supabaseAuthProvider: AuthProvider = {
 
   async requestPasswordReset(email: string): Promise<AuthActionResult> {
     const supabase = await createClient()
-    const origin = await getOrigin()
+    const origin = await getRequestOrigin()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       // Keep the pre-refactor destination: deployments that already allowlist
       // /auth/update-password in Supabase keep receiving recovery links.

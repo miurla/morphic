@@ -4,7 +4,7 @@ import { Inter as FontSans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 
 import { getCurrentUser, getCurrentUserId } from '@/lib/auth/get-current-user'
-import { getAuthProvider } from '@/lib/auth/provider'
+import { getAuthProvider, withShareOptIn } from '@/lib/auth/provider'
 import { AppUserProvider } from '@/lib/contexts/app-user-context'
 import { UserProvider } from '@/lib/contexts/user-context'
 import {
@@ -67,7 +67,15 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const user = await getCurrentUser()
-  const capabilities = getAuthProvider().capabilities
+  // Sharing is opt-in for Better Auth (ENABLE_SHARE=true); the flag is
+  // folded into the capabilities on the server so a prebuilt image can
+  // still toggle it at runtime. Supabase shares without the flag, as it
+  // always has. shareChat enforces the same rule again.
+  const authProvider = getAuthProvider()
+  const capabilities = withShareOptIn(
+    authProvider.capabilities,
+    authProvider.name
+  )
 
   const userId = user?.id ?? (await getCurrentUserId())
   const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'

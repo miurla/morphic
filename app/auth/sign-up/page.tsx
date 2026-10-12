@@ -1,10 +1,62 @@
+import { redirect } from 'next/navigation'
+
+import {
+  getSignUpMode,
+  isBootstrapWindowOpen
+} from '@/lib/auth/better-auth/config'
+import { validateInvitation } from '@/lib/auth/better-auth/invitations'
+import { getAuthProvider } from '@/lib/auth/provider'
+
+import { InviteRequired } from '@/components/invite-required'
 import { SignUpForm } from '@/components/sign-up-form'
 
-export default function Page() {
+// The provider, sign-up mode, and invitation validity are runtime concerns.
+// Without this, a build where the better-auth branch is not taken gets
+// prerendered as a static page, so the invite wall and ?token= prefill
+// never run in an invite-mode deployment.
+export const dynamic = 'force-dynamic'
+
+export default async function SignUpPage({
+  searchParams
+}: {
+  searchParams: Promise<{ token?: string }>
+}) {
+  const provider = getAuthProvider()
+
+  if (!provider.capabilities.signUp) {
+    redirect('/auth/login')
+  }
+
+  let inviteRequired = false
+  let validToken: string | undefined
+  let inviteEmail: string | undefined
+
+  if (provider.name === 'better-auth') {
+    // Read the token in every sign-up mode: with SMTP configured the
+    // bootstrap address receives its link by email, and open mode must
+    // pass that token through or the form would restart the email flow
+    // forever.
+    const { token } = await searchParams
+    const invitation = token ? await validateInvitation(token) : null
+    if (invitation) {
+      validToken = token
+      inviteEmail = invitation.email ?? undefined
+    } else if (getSignUpMode() === 'invite') {
+      // A fresh invite-only instance has no invitations yet: show the form
+      // while the bootstrap window is open so the gated address can create
+      // the first account. The address itself is enforced at creation time.
+      inviteRequired = !(await isBootstrapWindowOpen())
+    }
+  }
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <SignUpForm />
+        {inviteRequired ? (
+          <InviteRequired />
+        ) : (
+          <SignUpForm token={validToken} inviteEmail={inviteEmail} />
+        )}
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import { revalidateTag, unstable_cache } from 'next/cache'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getAuthProvider, isShareEnabled } from '@/lib/auth/provider'
 import * as dbActions from '@/lib/db/actions'
 import type { Chat, Message } from '@/lib/db/schema'
 import { generateId } from '@/lib/db/schema'
@@ -297,6 +298,21 @@ export async function deleteMessagesAfter(chatId: string, messageId: string) {
  * Share a chat (make it public)
  */
 export async function shareChat(chatId: string) {
+  // The active provider must support sharing: anonymous mode maps every
+  // chat to one shared identity and has no share capability, so the
+  // action must not publish chats the UI refuses to share.
+  const provider = getAuthProvider()
+  if (!provider.capabilities.share) {
+    return null
+  }
+  // Better Auth additionally requires the ENABLE_SHARE opt-in; Supabase
+  // sharing has never needed a flag, so the default path behaves as on
+  // main. Enforced here, not just in the UI, so the action cannot be
+  // called directly while sharing is disabled.
+  if (provider.name === 'better-auth' && !isShareEnabled()) {
+    return null
+  }
+
   const userId = await getCurrentUserId()
   if (!userId) {
     return null

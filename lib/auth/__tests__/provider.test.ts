@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   getAuthProvider,
   isAnonymousMode,
-  resolveAuthProviderName
+  resolveAuthProviderName,
+  withShareOptIn
 } from '@/lib/auth/provider'
 
 const AUTH_ENV_KEYS = [
@@ -70,12 +71,10 @@ describe('auth provider dispatch', () => {
       )
     })
 
-    it('accepts better-auth as a name but reports it unavailable in this version', () => {
+    it('resolves better-auth to the better-auth provider', () => {
       process.env.AUTH_PROVIDER = 'better-auth'
       expect(resolveAuthProviderName()).toBe('better-auth')
-      expect(() => getAuthProvider()).toThrow(
-        'AUTH_PROVIDER=better-auth is not available in this version of Morphic.'
-      )
+      expect(getAuthProvider().name).toBe('better-auth')
     })
   })
 
@@ -189,5 +188,80 @@ describe('supabase provider without configuration', () => {
     const response = await provider.handleSession(request)
     expect(response.status).toBe(200)
     expect(response.headers.get('location')).toBeNull()
+  })
+})
+
+describe('withShareOptIn', () => {
+  const base = {
+    signUp: true,
+    passwordReset: true,
+    deleteUser: true,
+    oauth: false,
+    emailVerification: false,
+    share: true
+  }
+
+  it('keeps sharing only when an opt-in flag is true (better-auth)', () => {
+    const originalPublic = process.env.NEXT_PUBLIC_ENABLE_SHARE
+    const originalRuntime = process.env.ENABLE_SHARE
+    try {
+      delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      delete process.env.ENABLE_SHARE
+      expect(withShareOptIn(base, 'better-auth').share).toBe(false)
+
+      // The runtime flag is the one that works in prebuilt images, where
+      // the public flag was inlined at build time.
+      process.env.ENABLE_SHARE = 'true'
+      expect(withShareOptIn(base, 'better-auth').share).toBe(true)
+      process.env.ENABLE_SHARE = 'false'
+      expect(withShareOptIn(base, 'better-auth').share).toBe(false)
+
+      process.env.NEXT_PUBLIC_ENABLE_SHARE = 'true'
+      expect(withShareOptIn(base, 'better-auth').share).toBe(true)
+
+      process.env.NEXT_PUBLIC_ENABLE_SHARE = 'false'
+      expect(withShareOptIn(base, 'better-auth').share).toBe(false)
+    } finally {
+      if (originalPublic === undefined) {
+        delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      } else {
+        process.env.NEXT_PUBLIC_ENABLE_SHARE = originalPublic
+      }
+      if (originalRuntime === undefined) {
+        delete process.env.ENABLE_SHARE
+      } else {
+        process.env.ENABLE_SHARE = originalRuntime
+      }
+    }
+  })
+
+  it('leaves supabase sharing untouched by the opt-in flag', () => {
+    // The default Supabase path must behave as it always has: sharing
+    // with no env var configured.
+    const originalPublic = process.env.NEXT_PUBLIC_ENABLE_SHARE
+    const originalRuntime = process.env.ENABLE_SHARE
+    try {
+      delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      delete process.env.ENABLE_SHARE
+      expect(withShareOptIn(base, 'supabase').share).toBe(true)
+    } finally {
+      if (originalPublic === undefined) {
+        delete process.env.NEXT_PUBLIC_ENABLE_SHARE
+      } else {
+        process.env.NEXT_PUBLIC_ENABLE_SHARE = originalPublic
+      }
+      if (originalRuntime === undefined) {
+        delete process.env.ENABLE_SHARE
+      } else {
+        process.env.ENABLE_SHARE = originalRuntime
+      }
+    }
+  })
+
+  it('never enables sharing for a provider without the capability', () => {
+    process.env.NEXT_PUBLIC_ENABLE_SHARE = 'true'
+    expect(withShareOptIn({ ...base, share: false }, 'better-auth').share).toBe(
+      false
+    )
   })
 })

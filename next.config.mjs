@@ -1,20 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Reverse proxy for PostHog to reduce tracking-blocker interception.
   skipTrailingSlashRedirect: true,
-  async rewrites() {
+  async headers() {
     return [
       {
-        source: '/relay/static/:path*',
-        destination: 'https://us-assets.i.posthog.com/static/:path*'
-      },
-      {
-        source: '/relay/array/:path*',
-        destination: 'https://us-assets.i.posthog.com/array/:path*'
-      },
-      {
-        source: '/relay/:path*',
-        destination: 'https://us.i.posthog.com/:path*'
+        // Only the auth pages carry one-time credentials in ?token=
+        // (invitations, password resets, bootstrap). no-referrer on those
+        // pages keeps the token-bearing URL out of Referer headers on
+        // outbound and same-origin requests — including requests the
+        // /relay PostHog proxy route makes upstream — while the rest of
+        // the site keeps normal referrer data for analytics.
+        source: '/auth/:path*',
+        headers: [
+          {
+            key: 'Referrer-Policy',
+            value: 'no-referrer'
+          }
+        ]
       }
     ]
   },

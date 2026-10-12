@@ -80,7 +80,14 @@ const user: AppUser = {
   name: 'Test Person'
 }
 
-const capabilities = { signUp: true, passwordReset: true, deleteUser: true }
+const capabilities = {
+  signUp: true,
+  passwordReset: true,
+  deleteUser: true,
+  oauth: false,
+  emailVerification: false,
+  share: true
+}
 
 describe('UserMenu', () => {
   beforeEach(() => {
