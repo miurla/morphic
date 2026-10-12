@@ -49,7 +49,11 @@ async function relay(
   { params }: { params: Promise<{ path: string[] }> }
 ): Promise<Response> {
   const { path } = await params
-  const target = relayTarget(`/${path.join('/')}`, request.nextUrl.search)
+  // Segments arrive decoded: one holding a slash would shift the path
+  // boundaries the host selection relies on.
+  const target = path.some(segment => segment.includes('/'))
+    ? null
+    : relayTarget(`/${path.join('/')}`, request.nextUrl.search)
   if (!target) {
     return new Response('Not found', { status: 404 })
   }

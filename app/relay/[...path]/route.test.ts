@@ -101,6 +101,19 @@ describe('relay route', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it('refuses segments that carry an encoded slash', async () => {
+    const fetchMock = vi.fn(async () => upstreamResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    const response = await GET(
+      new NextRequest('http://localhost:3000/relay/static%2F..%2Fcapture'),
+      { params: Promise.resolve({ path: ['static/../capture'] }) }
+    )
+
+    expect(response.status).toBe(404)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('routes static and array paths to the asset host', async () => {
     const fetchMock = vi.fn(async () => upstreamResponse())
     vi.stubGlobal('fetch', fetchMock)
