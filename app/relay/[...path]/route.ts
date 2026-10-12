@@ -1,11 +1,10 @@
 import { type NextRequest } from 'next/server'
 
-import { relayTarget } from '@/lib/analytics/relay-target'
-
-// Generous cap that only rejects absurd declared sizes; the body itself
-// is streamed through, so an undeclared (chunked) payload cannot be
-// used to balloon process memory.
-const MAX_BODY_BYTES = 32 * 1024 * 1024
+import {
+  exceedsRelayBodyCap,
+  RELAY_MAX_BODY_BYTES,
+  relayTarget
+} from '@/lib/analytics/relay-target'
 
 export class PayloadTooLargeError extends Error {}
 
@@ -17,7 +16,7 @@ export class PayloadTooLargeError extends Error {}
  */
 export function cappedBody(
   body: ReadableStream<Uint8Array> | null,
-  max: number = MAX_BODY_BYTES
+  max: number = RELAY_MAX_BODY_BYTES
 ): ReadableStream<Uint8Array> | null {
   if (!body) {
     return null
@@ -58,8 +57,7 @@ async function relay(
     return new Response('Not found', { status: 404 })
   }
 
-  const contentLength = Number(request.headers.get('content-length'))
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+  if (exceedsRelayBodyCap(request.headers)) {
     return new Response('Payload too large', { status: 413 })
   }
 

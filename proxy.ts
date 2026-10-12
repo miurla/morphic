@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
-import { RELAY_PREFIX, relayTarget } from '@/lib/analytics/relay-target'
+import {
+  exceedsRelayBodyCap,
+  RELAY_PREFIX,
+  relayTarget
+} from '@/lib/analytics/relay-target'
 import { getAuthProvider, resolveAuthProviderName } from '@/lib/auth/provider'
 
 // Better Auth sends /relay through the route handler, which forwards an
@@ -17,6 +21,9 @@ function relayRewrite(request: NextRequest): NextResponse | null {
   const target = relayTarget(pathname.slice(RELAY_PREFIX.length) || '/', search)
   if (!target) {
     return new NextResponse('Not found', { status: 404 })
+  }
+  if (exceedsRelayBodyCap(request.headers)) {
+    return new NextResponse('Payload too large', { status: 413 })
   }
   const headers = new Headers(request.headers)
   headers.delete('cookie')

@@ -124,6 +124,19 @@ describe('proxy', () => {
       expect(response.headers.get('x-middleware-rewrite')).toBeNull()
     })
 
+    it('refuses declared payloads above the cap', async () => {
+      const response = await proxy(
+        new NextRequest('http://localhost:3000/relay/e/', {
+          method: 'POST',
+          headers: { 'content-length': String(64 * 1024 * 1024) },
+          body: '{}'
+        })
+      )
+
+      expect(response.status).toBe(413)
+      expect(response.headers.get('x-middleware-rewrite')).toBeNull()
+    })
+
     it('leaves /relay to the route handler under Better Auth', async () => {
       process.env.AUTH_PROVIDER = 'better-auth'
       const handleSession = vi
