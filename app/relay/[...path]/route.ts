@@ -1,10 +1,7 @@
 import { type NextRequest } from 'next/server'
 
-// Mirrors the destinations of the PostHog proxy rewrites this handler
-// replaced.
-const ASSET_SEGMENTS = new Set(['static', 'array'])
-const ASSET_HOST = 'us-assets.i.posthog.com'
-const API_HOST = 'us.i.posthog.com'
+import { relayTarget } from '@/lib/analytics/relay-target'
+
 // Generous cap that only rejects absurd declared sizes; the body itself
 // is streamed through, so an undeclared (chunked) payload cannot be
 // used to balloon process memory.
@@ -41,27 +38,21 @@ export function cappedBody(
 }
 
 /**
- * Same-origin PostHog relay, implemented as a route handler instead of a
- * next.config rewrite so credentials are structurally never forwarded:
- * a rewrite proxies the incoming request headers (session cookie
- * included) to an external host, and keeping any middleware strip in
- * sync with the rewrite's path matching is a drift hazard. This handler
- * forwards only what PostHog needs and nothing else.
+ * Same-origin PostHog relay for Better Auth. A proxy rewrite forwards the
+ * incoming request headers to the external host, so this handler builds
+ * the upstream request from an explicit allowlist instead: the session
+ * cookie is structurally never forwarded. Other providers are rewritten
+ * in proxy.ts and do not reach this handler.
  */
 async function relay(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ): Promise<Response> {
   const { path } = await params
-  const host = ASSET_SEGMENTS.has(path[0]) ? ASSET_HOST : API_HOST
-  const target = new URL(`/${path.join('/')}`, `https://${host}`)
-  if (target.host !== host) {
-    // A decoded path segment escaped the PostHog origin (e.g. an encoded
-    // slash turning the joined path protocol-relative). Refuse rather
-    // than proxy payloads to an attacker-chosen host.
+  const target = relayTarget(`/${path.join('/')}`, request.nextUrl.search)
+  if (!target) {
     return new Response('Not found', { status: 404 })
   }
-  target.search = request.nextUrl.search
 
   const contentLength = Number(request.headers.get('content-length'))
   if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
