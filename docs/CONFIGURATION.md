@@ -391,13 +391,15 @@ Off by default. Traces include full prompts and completions, so point `LANGFUSE_
 
 ### Chat Sharing
 
-Sharing chats is opt-in:
+With Supabase, signed-in users can share chats without extra configuration. With Better Auth, sharing is opt-in:
 
 ```bash
 ENABLE_SHARE=true  # runtime flag; works with prebuilt Docker images
 ```
 
 `NEXT_PUBLIC_ENABLE_SHARE=true` also works when building from source, but Next.js inlines `NEXT_PUBLIC_*` values at build time, so setting it at runtime has no effect in a published image.
+
+Sharing is not available in anonymous mode.
 
 ### Outbound Fetch
 
