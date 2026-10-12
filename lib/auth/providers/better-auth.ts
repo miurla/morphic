@@ -170,13 +170,19 @@ async function clientIp(): Promise<string> {
 }
 
 /**
- * Bounds repeated auth attempts per IP+email. better-auth's own rate
- * limiter only runs in its HTTP handler, which Morphic does not mount,
- * so the direct auth.api.* actions need their own throttle.
+ * Bounds repeated auth attempts per IP+email and per email alone.
+ * better-auth's own rate limiter only runs in its HTTP handler, which
+ * Morphic does not mount, so the direct auth.api.* actions need their
+ * own throttle. The IP comes from a caller-supplied header, so the
+ * email-only bucket is what bounds guessing against one account when
+ * that header is rotated.
  */
 async function attemptAllowed(action: string, email: string): Promise<boolean> {
   const ip = await clientIp()
-  return checkRateLimit(`${action}:${ip}:${email.trim().toLowerCase()}`)
+  const emailKey = email.trim().toLowerCase()
+  const ipAllowed = checkRateLimit(`${action}:${ip}:${emailKey}`)
+  const emailAllowed = checkRateLimit(`${action}:${emailKey}`)
+  return ipAllowed && emailAllowed
 }
 
 interface BetterAuthSessionUser {

@@ -1,3 +1,4 @@
+import { headers } from 'next/headers'
 import type { NextRequest } from 'next/server'
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -389,6 +390,42 @@ describe('better-auth provider', () => {
         success: false,
         error: expect.stringContaining('Too many attempts')
       })
+    })
+
+    it('blocks repeated attempts for one email across rotating ips', async () => {
+      // x-forwarded-for is caller-supplied, so a fresh value per request
+      // must not buy a fresh budget against the same account.
+      vi.mocked(mockAuth.api.signInEmail).mockResolvedValue({} as never)
+      let attempt = 0
+      vi.mocked(headers).mockImplementation(
+        async () =>
+          new Headers({ 'x-forwarded-for': `10.0.0.${attempt}` }) as never
+      )
+
+      try {
+        for (; attempt < 10; attempt++) {
+          expect(
+            await betterAuthProvider.signIn!({ email: 'a@b.co', password: 'x' })
+          ).toEqual({ success: true })
+        }
+
+        expect(
+          await betterAuthProvider.signIn!({ email: 'A@b.co ', password: 'x' })
+        ).toEqual({
+          success: false,
+          error: expect.stringContaining('Too many attempts')
+        })
+        expect(
+          await betterAuthProvider.signIn!({
+            email: 'other@b.co',
+            password: 'x'
+          })
+        ).toEqual({ success: true })
+      } finally {
+        vi.mocked(headers).mockImplementation(
+          async () => new Headers({ origin: 'http://localhost:3000' }) as never
+        )
+      }
     })
   })
 
