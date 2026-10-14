@@ -65,8 +65,6 @@ export const supabaseAuthProvider: AuthProvider = {
       if (pathname === '/auth/update-password') {
         return exchangeAuthCode(request, code)
       }
-      // Sign-up confirmation links land here. A missing code verifier means
-      // the link was opened in another browser, but the email is confirmed.
       if (pathname === '/') {
         return exchangeAuthCode(request, code, '?confirmed=1')
       }

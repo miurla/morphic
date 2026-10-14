@@ -78,13 +78,7 @@ export async function updateSession(request: NextRequest) {
   return supabaseResponse
 }
 
-/**
- * Exchange the one-time PKCE code of an emailed link (password recovery or
- * sign-up confirmation) for a session, persisting it as cookies, then
- * redirect to the clean destination URL. Links keep pointing at their legacy
- * destinations (already allowlisted in Supabase), so the exchange runs here
- * in middleware where response cookies can be written.
- */
+// Exchanges the PKCE code from an emailed link for session cookies.
 export async function exchangeAuthCode(
   request: NextRequest,
   code: string,
