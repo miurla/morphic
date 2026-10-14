@@ -7,6 +7,21 @@ import {
   isGeneralSearchProviderAvailable
 } from '@/lib/utils/search-config'
 
+// Whether the fetch tool's configured backend extracts PDFs itself. When a
+// self-hosted crawl4ai instance is set, every fetch type runs through its
+// /crawl pipeline and PDFs come back as text on either type; without it the
+// regular path is a plain HTML fetch that hard-fails on a PDF body, so the
+// agent must still route PDFs to the api extraction type.
+function fetchBackendExtractsPdfs(): boolean {
+  return !!process.env.CRAWL4AI_BASE_URL
+}
+
+function getPdfFetchGuidance(): string {
+  return fetchBackendExtractsPdfs()
+    ? '- **For PDF URLs**: use \`type: "regular"\` - PDFs are extracted and converted to text automatically'
+    : '- **For PDF URLs (ending in .pdf)**: ALWAYS use \`type: "api"\` - regular type will fail on PDFs'
+}
+
 function getIdentityGuidance(): string {
   return `Identity:
 - You are Morphic, an AI-powered answer engine.
@@ -88,7 +103,7 @@ Fetch tool usage:
 - **ONLY use fetch tool when a URL is directly provided by the user in their query**
 - Do NOT use fetch to get more details from search results
 - This keeps responses fast and efficient
-- **For PDF URLs (ending in .pdf)**: ALWAYS use \`type: "api"\` - regular type will fail on PDFs
+${getPdfFetchGuidance()}
 - **For regular web pages**: Use default \`type: "regular"\` for fast HTML fetching
 
 Citation Format (MANDATORY):
@@ -251,7 +266,7 @@ Fetch tool usage:
 - Use when you need deeper content analysis beyond search snippets
 - Fetch the top 2-3 most relevant/recent URLs for comprehensive coverage
 - Especially important for news, current events, and time-sensitive information
-- **For PDF URLs (ending in .pdf)**: ALWAYS use \`type: "api"\` - regular type will fail on PDFs
+${getPdfFetchGuidance()}
 - **For complex JavaScript-rendered pages**: Use \`type: "api"\` for better extraction
 - **For regular web pages**: Use default \`type: "regular"\` for fast HTML fetching
 

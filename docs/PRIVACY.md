@@ -52,7 +52,7 @@ SearXNG keeps this on your own infrastructure, and the Docker Compose setup ship
 
 ### Reading pages
 
-By default the `fetch` tool retrieves a URL directly from your server, so only the origin site sees the request. It routes through an extraction service when the agent asks for API extraction, which it does for PDFs and JavaScript-rendered pages: Jina when `JINA_API_KEY` is set, Tavily Extract otherwise.
+By default the `fetch` tool retrieves a URL directly from your server, so only the origin site sees the request. It routes through an extraction service when the agent asks for API extraction, which it does for PDFs and JavaScript-rendered pages: your self-hosted crawl4ai instance when `CRAWL4AI_BASE_URL` is set, Jina when `JINA_API_KEY` is set, Tavily Extract otherwise. When `CRAWL4AI_BASE_URL` is set, crawl4ai handles every fetch — regular and API extraction both, PDF detection included — so no page is retrieved directly from your server and the origin only ever sees requests from your crawler.
 
 The Tavily Extract path does not check for a key first, so an instance with no `TAVILY_API_KEY` still posts the URL to Tavily and gets an authentication error back. If you want no requests to Tavily at all, set `JINA_API_KEY` or keep the agent off API extraction.
 
