@@ -104,13 +104,20 @@ describe('regular fetch content types', () => {
 
 describe('crawl4ai extraction', () => {
   const baseUrl = 'http://crawl4ai.internal:11235'
-  const mdResponse = {
-    url,
-    filter: 'fit',
-    query: null,
-    cache: '0',
-    markdown: '# Fitted page\n\nBody text.',
-    success: true
+  const pageResponse = {
+    success: true,
+    results: [
+      {
+        url,
+        redirected_url: url,
+        success: true,
+        markdown: {
+          fit_markdown: '# Fitted page\n\nBody text.',
+          raw_markdown: '# Fitted page\n\nBody text.'
+        },
+        metadata: { title: 'Fitted page' }
+      }
+    ]
   }
 
   function fetchCrawl4ai(handler: (init: RequestInit) => Response) {
@@ -126,9 +133,24 @@ describe('crawl4ai extraction', () => {
     return fetchMock
   }
 
-  async function runCrawl4ai() {
+  type FetchMock = {
+    mock: { calls: Array<[string | URL | Request, RequestInit?]> }
+  }
+
+  function crawlBody(call: 0 | 1): {
+    urls: string[]
+    crawler_config: Record<string, unknown>
+  } {
+    const fetchMock = globalThis.fetch as unknown as FetchMock
+    return JSON.parse(fetchMock.mock.calls[call]?.[1]?.body as string) as {
+      urls: string[]
+      crawler_config: Record<string, unknown>
+    }
+  }
+
+  async function runCrawl4ai(type: 'regular' | 'api' = 'api') {
     const result = fetchTool.execute?.(
-      { url, type: 'api' },
+      { url, type },
       { toolCallId: 'fetch', messages: [], context: {} }
     )
     const iterator = (result as AsyncIterable<unknown>)[Symbol.asyncIterator]()
@@ -145,7 +167,7 @@ describe('crawl4ai extraction', () => {
 
   it('routes regular-type fetches through crawl4ai when configured', async () => {
     const fetchMock = fetchCrawl4ai(
-      () => new Response(JSON.stringify(mdResponse))
+      () => new Response(JSON.stringify(pageResponse))
     )
 
     const result = fetchTool.execute?.(
@@ -156,28 +178,63 @@ describe('crawl4ai extraction', () => {
     await iterator.next()
     const complete = await iterator.next()
 
-    expect(fetchMock.mock.calls[1]?.[0]).toBe(`${baseUrl}/md`)
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${baseUrl}/crawl`)
     expect(complete.value).toMatchObject({
       state: 'complete',
-      results: [{ title: 'example.com', content: mdResponse.markdown, url }]
+      results: [
+        {
+          title: 'Fitted page',
+          content: pageResponse.results[0].markdown.fit_markdown,
+          url
+        }
+      ]
     })
   })
 
-  it('routes .pdf URLs to the /crawl endpoint with the PDF strategy', async () => {
+  it('renders pages with the fit generator on the first pass', async () => {
+    fetchCrawl4ai(() => new Response(JSON.stringify(pageResponse)))
+
+    await runCrawl4ai()
+
+    expect(crawlBody(0).crawler_config).toMatchObject({
+      markdown_generator: {
+        type: 'DefaultMarkdownGenerator',
+        params: {
+          content_filter: { type: 'PruningContentFilterLXML', params: {} }
+        }
+      }
+    })
+  })
+
+  it('retries a PDF with the dedicated strategy when the page pass yields nothing', async () => {
     const pdfUrl = 'https://example.com/paper.pdf'
     const crawlResponse = {
       success: true,
       results: [
         {
           url: pdfUrl,
+          redirected_url: pdfUrl,
           success: true,
           markdown: { raw_markdown: 'PDF text content', fit_markdown: '' },
           metadata: { title: 'A Paper' }
         }
       ]
     }
-    const fetchMock = fetchCrawl4ai(
-      () => new Response(JSON.stringify(crawlResponse))
+    const fetchMock = fetchCrawl4ai(init =>
+      JSON.parse(String(init?.body)).crawler_config.scraping_strategy
+        ? new Response(JSON.stringify(crawlResponse))
+        : new Response(
+            JSON.stringify({
+              success: true,
+              results: [
+                {
+                  url: pdfUrl,
+                  success: true,
+                  markdown: { fit_markdown: '', raw_markdown: '' }
+                }
+              ]
+            })
+          )
     )
 
     const result = fetchTool.execute?.(
@@ -188,96 +245,90 @@ describe('crawl4ai extraction', () => {
     await iterator.next()
     const complete = await iterator.next()
 
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${baseUrl}/crawl`)
-    expect(
-      JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
-    ).toMatchObject({
-      urls: [pdfUrl],
-      crawler_config: {
-        scraping_strategy: { type: 'PDFContentScrapingStrategy', params: {} }
-      }
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(`${baseUrl}/crawl`)
+    expect(crawlBody(1).crawler_config).toMatchObject({
+      scraping_strategy: { type: 'PDFContentScrapingStrategy', params: {} }
     })
     expect(complete.value).toMatchObject({
       state: 'complete',
-      results: [
-        { title: 'example.com', content: 'PDF text content', url: pdfUrl }
-      ]
+      results: [{ title: 'A Paper', content: 'PDF text content', url: pdfUrl }]
     })
   })
 
-  it('probes content type for extensionless PDF URLs', async () => {
-    const pdfUrl = 'https://arxiv.org/pdf/2310.06825'
-    const crawlResponse = {
+  it('falls back to raw markdown when the fit pruner drops everything', async () => {
+    const sparse = {
       success: true,
       results: [
         {
-          url: pdfUrl,
+          url,
           success: true,
-          markdown: { raw_markdown: 'Paper text' }
+          markdown: { fit_markdown: '', raw_markdown: 'just a line' },
+          metadata: null
         }
       ]
     }
-    const fetchMock = fetchCrawl4ai(init =>
-      init?.method === 'HEAD'
-        ? new Response(null, { headers: { 'content-type': 'application/pdf' } })
-        : new Response(JSON.stringify(crawlResponse))
-    )
+    fetchCrawl4ai(() => new Response(JSON.stringify(sparse)))
 
-    const result = fetchTool.execute?.(
-      { url: pdfUrl, type: 'regular' },
-      { toolCallId: 'fetch', messages: [], context: {} }
-    )
-    const iterator = (result as AsyncIterable<unknown>)[Symbol.asyncIterator]()
-    await iterator.next()
-    const complete = await iterator.next()
+    const complete = await runCrawl4ai()
 
-    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('HEAD')
-    expect(fetchMock.mock.calls[1]?.[0]).toBe(`${baseUrl}/crawl`)
     expect(complete.value).toMatchObject({
-      results: [{ content: 'Paper text' }]
+      results: [{ title: 'example.com', content: 'just a line' }]
     })
   })
 
-  it('posts to the /md endpoint with fit mode', async () => {
-    const fetchMock = fetchCrawl4ai(
-      () => new Response(JSON.stringify(mdResponse))
-    )
+  it('uses the redirected URL from the crawl result', async () => {
+    const moved = {
+      success: true,
+      results: [
+        {
+          url,
+          redirected_url: 'https://www.example.com/final',
+          success: true,
+          markdown: { fit_markdown: 'moved content' },
+          metadata: null
+        }
+      ]
+    }
+    fetchCrawl4ai(() => new Response(JSON.stringify(moved)))
 
-    const result = await runCrawl4ai()
+    const complete = await runCrawl4ai()
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${baseUrl}/md`,
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({ url, f: 'fit' })
-      })
-    )
-    expect(result.value).toMatchObject({
-      state: 'complete',
-      results: [{ title: 'example.com', content: mdResponse.markdown, url }]
+    expect(complete.value).toMatchObject({
+      results: [{ url: 'https://www.example.com/final' }]
     })
+  })
+
+  it('posts the page pass to /crawl with fit mode', async () => {
+    const fetchMock = fetchCrawl4ai(
+      () => new Response(JSON.stringify(pageResponse))
+    )
+
+    await runCrawl4ai()
+
+    expect(crawlBody(0).urls).toEqual([url])
   })
 
   it('prefers crawl4ai over Jina when both are configured', async () => {
     const fetchMock = fetchCrawl4ai(
-      () => new Response(JSON.stringify(mdResponse))
+      () => new Response(JSON.stringify(pageResponse))
     )
     vi.stubEnv('JINA_API_KEY', 'test-jina-key')
 
     await runCrawl4ai()
 
-    expect(fetchMock.mock.calls[1]?.[0]).toBe(`${baseUrl}/md`)
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${baseUrl}/crawl`)
   })
 
   it('sends the API key when one is configured', async () => {
     vi.stubEnv('CRAWL4AI_API_KEY', 'test-crawl4ai-key')
     const fetchMock = fetchCrawl4ai(
-      () => new Response(JSON.stringify(mdResponse))
+      () => new Response(JSON.stringify(pageResponse))
     )
 
     await runCrawl4ai()
 
-    expect(fetchMock.mock.calls[1]?.[1]?.headers).toMatchObject({
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({
       Authorization: 'Bearer test-crawl4ai-key'
     })
   })
@@ -335,14 +386,40 @@ describe('crawl4ai extraction', () => {
     )
   })
 
-  it('rejects a success response without markdown', async () => {
+  it('reports the server error when both passes yield nothing', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
-    fetchCrawl4ai(
-      () => new Response(JSON.stringify({ url, success: true, markdown: '' }))
-    )
+    const failing = {
+      success: true,
+      results: [
+        {
+          url,
+          success: false,
+          error_message: 'seek of closed file',
+          markdown: null
+        }
+      ]
+    }
+    fetchCrawl4ai(() => new Response(JSON.stringify(failing)))
 
-    await expect(runCrawl4ai()).rejects.toThrow(
-      'No data returned from crawl4ai'
-    )
+    await expect(runCrawl4ai()).rejects.toThrow('seek of closed file')
+  })
+
+  it('refuses a private result URL reported by the crawler', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const internal = {
+      success: true,
+      results: [
+        {
+          url,
+          redirected_url: 'http://169.254.169.254/latest/meta-data/',
+          success: true,
+          markdown: { fit_markdown: 'stolen credentials' },
+          metadata: null
+        }
+      ]
+    }
+    fetchCrawl4ai(() => new Response(JSON.stringify(internal)))
+
+    await expect(runCrawl4ai()).rejects.toThrow('Blocked fetch URL.')
   })
 })
