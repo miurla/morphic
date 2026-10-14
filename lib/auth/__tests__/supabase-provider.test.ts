@@ -3,9 +3,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { supabaseAuthProvider } from '@/lib/auth/providers/supabase'
-import { createClient } from '@/lib/supabase/server'
+import { createAuthActionClient } from '@/lib/supabase/server'
 
-vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }))
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+  createAuthActionClient: vi.fn()
+}))
 vi.mock('@/lib/supabase/middleware', () => ({
   updateSession: vi.fn(),
   exchangeRecoveryCode: vi.fn()
@@ -28,7 +31,7 @@ describe('supabase provider', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(createClient).mockResolvedValue({
+    vi.mocked(createAuthActionClient).mockResolvedValue({
       auth: { resetPasswordForEmail }
     } as never)
     vi.mocked(headers).mockResolvedValue(
