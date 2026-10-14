@@ -339,8 +339,8 @@ SUPABASE_SECRET_KEY=[YOUR_SUPABASE_SECRET_KEY]
    Sign-up confirmation links return to your site root (`[YOUR_SITE_URL]/`),
    which is normally the Site URL and needs no extra entry. Morphic signs the
    user in there. If the link is opened in a different browser from the one
-   used to sign up, the email is still confirmed and the user is asked to
-   sign in.
+   used to sign up, the email is still confirmed but no session can be
+   created, so the user is asked to sign in.
 
 5. Optional: keep Supabase's per-IP rate limits per visitor. Sign-up,
    password sign-in, and password reset run as server actions, so Supabase

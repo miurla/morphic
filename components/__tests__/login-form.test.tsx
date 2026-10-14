@@ -50,11 +50,11 @@ describe('LoginForm', () => {
     vi.clearAllMocks()
   })
 
-  it('tells users arriving from a confirmation link that their email is confirmed', () => {
+  it('prompts users arriving from a confirmation link to sign in', () => {
     renderForm({}, null, undefined, true)
 
     expect(
-      screen.getByText('Email confirmed. Sign in to continue.')
+      screen.getByText('If you just confirmed your email, sign in to continue.')
     ).toBeInTheDocument()
   })
 

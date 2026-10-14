@@ -102,7 +102,7 @@ export function LoginForm({
           </CardTitle>
           <CardDescription>
             {confirmed
-              ? 'Email confirmed. Sign in to continue.'
+              ? 'If you just confirmed your email, sign in to continue.'
               : 'Sign in to your account'}
           </CardDescription>
         </CardHeader>
