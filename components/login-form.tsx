@@ -26,8 +26,12 @@ import { PasswordInput } from './ui/password-input'
 export function LoginForm({
   className,
   next,
+  confirmed = false,
   ...props
-}: React.ComponentPropsWithoutRef<'div'> & { next?: string }) {
+}: React.ComponentPropsWithoutRef<'div'> & {
+  next?: string
+  confirmed?: boolean
+}) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -96,7 +100,11 @@ export function LoginForm({
             <IconLogo className="size-12" />
             Welcome back
           </CardTitle>
-          <CardDescription>Sign in to your account</CardDescription>
+          <CardDescription>
+            {confirmed
+              ? 'Email confirmed. Sign in to continue.'
+              : 'Sign in to your account'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">

@@ -5,14 +5,14 @@ import { LoginForm } from '@/components/login-form'
 export const dynamic = 'force-dynamic'
 
 export default async function Page(props: {
-  searchParams: Promise<{ next?: string }>
+  searchParams: Promise<{ next?: string; confirmed?: string }>
 }) {
-  const { next } = await props.searchParams
+  const { next, confirmed } = await props.searchParams
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <LoginForm next={next} />
+        <LoginForm next={next} confirmed={confirmed === '1'} />
       </div>
     </div>
   )

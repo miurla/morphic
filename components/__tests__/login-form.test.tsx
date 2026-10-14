@@ -32,14 +32,15 @@ const capabilities = {
 function renderForm(
   override: Partial<typeof capabilities> = {},
   user = null,
-  next?: string
+  next?: string,
+  confirmed?: boolean
 ) {
   return render(
     <AppUserProvider
       user={user}
       capabilities={{ ...capabilities, ...override }}
     >
-      <LoginForm next={next} />
+      <LoginForm next={next} confirmed={confirmed} />
     </AppUserProvider>
   )
 }
@@ -47,6 +48,14 @@ function renderForm(
 describe('LoginForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  it('tells users arriving from a confirmation link that their email is confirmed', () => {
+    renderForm({}, null, undefined, true)
+
+    expect(
+      screen.getByText('Email confirmed. Sign in to continue.')
+    ).toBeInTheDocument()
   })
 
   it('signs in through the auth server action and refreshes the router', async () => {
