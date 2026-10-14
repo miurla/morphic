@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 
 import { createFetchTool, fetchTool } from '@/lib/tools/fetch'
 import { createCitationLabelAllocator } from '@/lib/utils/citation'
@@ -340,6 +341,32 @@ describe('crawl4ai extraction', () => {
     await runCrawl4ai()
 
     expect(fetchMock.mock.calls[0]?.[0]).toBe(`${baseUrl}/crawl`)
+  })
+
+  it('sends no Authorization header without an API key', async () => {
+    const fetchMock = fetchCrawl4ai(
+      () => new Response(JSON.stringify(pageResponse))
+    )
+
+    await runCrawl4ai()
+
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).not.toHaveProperty(
+      'Authorization'
+    )
+  })
+
+  it('tells the model both types read PDFs only when configured', () => {
+    const unsupported = 'does NOT support PDFs'
+    const describeTool = () => {
+      const tool = createFetchTool()
+      return `${tool.description} ${JSON.stringify(z.toJSONSchema(tool.inputSchema as z.ZodType))}`
+    }
+
+    expect(describeTool()).toContain(unsupported)
+
+    vi.stubEnv('CRAWL4AI_BASE_URL', baseUrl)
+
+    expect(describeTool()).not.toContain(unsupported)
   })
 
   it('sends the API key when one is configured', async () => {
