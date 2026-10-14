@@ -43,12 +43,7 @@ export async function createClient() {
   )
 }
 
-/**
- * Whether x-forwarded-for can be trusted as the visitor's address. Vercel
- * deployments overwrite the header at the edge; anywhere else, including
- * `vercel dev`, a client can set it, so the operator has to opt in once a
- * proxy that overwrites it is in front of Morphic.
- */
+// Only Vercel deployments overwrite x-forwarded-for at the edge.
 function trustsForwardedFor(): boolean {
   const setting = process.env.SUPABASE_FORWARD_CLIENT_IP?.trim()
   if (setting === 'true') return true
@@ -67,16 +62,8 @@ async function forwardableClientIp(): Promise<string | null> {
   return ip && isIP(ip) ? ip : null
 }
 
-/**
- * Client for server actions that call Supabase Auth on the visitor's
- * behalf (sign-up, password sign-in, password reset). Calls made from the
- * server reach Supabase from the server's address, so its per-IP rate
- * limits stop applying per visitor. Supabase accepts the visitor's address
- * in Sb-Forwarded-For when the request uses a secret key and the project
- * has IP address forwarding enabled; otherwise this is the regular client.
- *
- * The secret key bypasses RLS: use this client for Auth calls only.
- */
+// Forwards the visitor's IP to Supabase Auth rate limits. The secret key
+// bypasses RLS: use for Auth calls only.
 export async function createAuthActionClient() {
   const secretKey = process.env.SUPABASE_SECRET_KEY
   const clientIp = await forwardableClientIp()
