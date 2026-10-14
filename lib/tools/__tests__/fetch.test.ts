@@ -321,10 +321,10 @@ describe('crawl4ai extraction', () => {
   })
 
   it('normalizes a trailing slash on the configured base URL', async () => {
-    vi.stubEnv('CRAWL4AI_BASE_URL', `${baseUrl}/`)
     const fetchMock = fetchCrawl4ai(
       () => new Response(JSON.stringify(pageResponse))
     )
+    vi.stubEnv('CRAWL4AI_BASE_URL', `${baseUrl}/`)
 
     await runCrawl4ai()
 
@@ -332,10 +332,10 @@ describe('crawl4ai extraction', () => {
   })
 
   it('normalizes multiple trailing slashes on the configured base URL', async () => {
-    vi.stubEnv('CRAWL4AI_BASE_URL', `${baseUrl}///`)
     const fetchMock = fetchCrawl4ai(
       () => new Response(JSON.stringify(pageResponse))
     )
+    vi.stubEnv('CRAWL4AI_BASE_URL', `${baseUrl}///`)
 
     await runCrawl4ai()
 
