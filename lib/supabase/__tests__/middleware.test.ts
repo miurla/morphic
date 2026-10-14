@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { exchangeRecoveryCode } from '../middleware'
+import { exchangeAuthCode } from '../middleware'
 
 vi.mock('@supabase/ssr', () => ({ createServerClient: vi.fn() }))
 vi.mock('@/lib/supabase/keys', () => ({
@@ -11,7 +11,7 @@ vi.mock('@/lib/supabase/keys', () => ({
 
 import { createServerClient } from '@supabase/ssr'
 
-describe('exchangeRecoveryCode', () => {
+describe('exchangeAuthCode', () => {
   const exchangeCodeForSession = vi.fn()
   let cookieOptions: {
     cookies: {
@@ -44,7 +44,7 @@ describe('exchangeRecoveryCode', () => {
       return { error: null }
     })
 
-    const response = await exchangeRecoveryCode(requestWithCode(), 'abc')
+    const response = await exchangeAuthCode(requestWithCode(), 'abc')
 
     expect(exchangeCodeForSession).toHaveBeenCalledWith('abc')
     expect(response.status).toBe(307)
@@ -59,11 +59,27 @@ describe('exchangeRecoveryCode', () => {
       error: { message: 'invalid code' }
     })
 
-    const response = await exchangeRecoveryCode(requestWithCode(), 'abc')
+    const response = await exchangeAuthCode(requestWithCode(), 'abc')
 
     expect(response.status).toBe(307)
     expect(response.headers.get('location')).toBe(
       'http://localhost:3000/auth/login'
+    )
+  })
+
+  it('carries the failure query to login', async () => {
+    exchangeCodeForSession.mockResolvedValue({
+      error: { message: 'code verifier not found' }
+    })
+
+    const response = await exchangeAuthCode(
+      new NextRequest('http://localhost:3000/?code=abc'),
+      'abc',
+      '?confirmed=1'
+    )
+
+    expect(response.headers.get('location')).toBe(
+      'http://localhost:3000/auth/login?confirmed=1'
     )
   })
 })

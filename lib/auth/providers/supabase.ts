@@ -6,7 +6,7 @@ import { getRequestOrigin } from '@/lib/auth/request'
 import type { AppUser, AuthActionResult, AuthProvider } from '@/lib/auth/types'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hasSupabasePublicConfig } from '@/lib/supabase/keys'
-import { exchangeRecoveryCode, updateSession } from '@/lib/supabase/middleware'
+import { exchangeAuthCode, updateSession } from '@/lib/supabase/middleware'
 import { createAuthActionClient, createClient } from '@/lib/supabase/server'
 
 function metaString(
@@ -60,8 +60,14 @@ export const supabaseAuthProvider: AuthProvider = {
       return NextResponse.next({ request })
     }
     const code = request.nextUrl.searchParams.get('code')
-    if (request.nextUrl.pathname === '/auth/update-password' && code) {
-      return exchangeRecoveryCode(request, code)
+    if (code) {
+      const { pathname } = request.nextUrl
+      if (pathname === '/auth/update-password') {
+        return exchangeAuthCode(request, code)
+      }
+      if (pathname === '/') {
+        return exchangeAuthCode(request, code, '?confirmed=1')
+      }
     }
     return updateSession(request)
   },

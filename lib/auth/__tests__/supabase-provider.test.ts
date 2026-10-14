@@ -11,7 +11,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }))
 vi.mock('@/lib/supabase/middleware', () => ({
   updateSession: vi.fn(),
-  exchangeRecoveryCode: vi.fn()
+  exchangeAuthCode: vi.fn()
 }))
 vi.mock('@/lib/supabase/keys', () => ({
   hasSupabasePublicConfig: vi.fn(() => true)
@@ -20,7 +20,7 @@ vi.mock('next/headers', () => ({ headers: vi.fn() }))
 
 import { headers } from 'next/headers'
 
-import { exchangeRecoveryCode, updateSession } from '@/lib/supabase/middleware'
+import { exchangeAuthCode, updateSession } from '@/lib/supabase/middleware'
 
 function request(url: string) {
   return new NextRequest(url)
@@ -58,14 +58,14 @@ describe('supabase provider', () => {
       const exchanged = NextResponse.redirect(
         'http://localhost:3000/auth/update-password'
       )
-      vi.mocked(exchangeRecoveryCode).mockResolvedValue(exchanged)
+      vi.mocked(exchangeAuthCode).mockResolvedValue(exchanged)
       const req = request(
         'http://localhost:3000/auth/update-password?code=abc&state=xyz'
       )
 
       const response = await supabaseAuthProvider.handleSession!(req)
 
-      expect(exchangeRecoveryCode).toHaveBeenCalledWith(req, 'abc')
+      expect(exchangeAuthCode).toHaveBeenCalledWith(req, 'abc')
       expect(updateSession).not.toHaveBeenCalled()
       expect(response).toBe(exchanged)
     })
@@ -79,8 +79,20 @@ describe('supabase provider', () => {
       )
 
       expect(updateSession).toHaveBeenCalledOnce()
-      expect(exchangeRecoveryCode).not.toHaveBeenCalled()
+      expect(exchangeAuthCode).not.toHaveBeenCalled()
       expect(response).toBe(next)
+    })
+
+    it('exchanges a sign-up confirmation code arriving at the root', async () => {
+      const exchanged = NextResponse.redirect('http://localhost:3000/')
+      vi.mocked(exchangeAuthCode).mockResolvedValue(exchanged)
+      const req = request('http://localhost:3000/?code=abc')
+
+      const response = await supabaseAuthProvider.handleSession!(req)
+
+      expect(exchangeAuthCode).toHaveBeenCalledWith(req, 'abc', '?confirmed=1')
+      expect(updateSession).not.toHaveBeenCalled()
+      expect(response).toBe(exchanged)
     })
 
     it('ignores code params on other paths', async () => {
@@ -92,7 +104,7 @@ describe('supabase provider', () => {
       )
 
       expect(updateSession).toHaveBeenCalledOnce()
-      expect(exchangeRecoveryCode).not.toHaveBeenCalled()
+      expect(exchangeAuthCode).not.toHaveBeenCalled()
     })
   })
 })

@@ -78,16 +78,11 @@ export async function updateSession(request: NextRequest) {
   return supabaseResponse
 }
 
-/**
- * Exchange the one-time PKCE code of a password-recovery link for a session,
- * persisting it as cookies, then redirect to the clean destination URL. The
- * recovery link keeps pointing at `/auth/update-password` (the destination
- * existing deployments already allowlist in Supabase), so the exchange runs
- * here in middleware where response cookies can be written.
- */
-export async function exchangeRecoveryCode(
+// Exchanges the PKCE code from an emailed link for session cookies.
+export async function exchangeAuthCode(
   request: NextRequest,
-  code: string
+  code: string,
+  failureSearch = ''
 ): Promise<NextResponse> {
   const url = request.nextUrl.clone()
   url.search = ''
@@ -115,7 +110,7 @@ export async function exchangeRecoveryCode(
   if (error) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/auth/login'
-    loginUrl.search = ''
+    loginUrl.search = failureSearch
     return NextResponse.redirect(loginUrl)
   }
 
