@@ -336,6 +336,15 @@ SUPABASE_SECRET_KEY=[YOUR_SUPABASE_SECRET_KEY]
    not allowlisted, Supabase silently falls back to the project Site URL and
    the recovery code can never be exchanged for a session.
 
+5. Optional: keep Supabase's per-IP rate limits per visitor. Sign-up,
+   password sign-in, and password reset run as server actions, so Supabase
+   sees the server's address unless Morphic forwards the visitor's. To
+   forward it, use an `sb_secret_...` key for `SUPABASE_SECRET_KEY` and turn
+   on **Authentication → Rate Limits → IP Address Forwarding**. On Vercel
+   this is automatic. Elsewhere, set `SUPABASE_FORWARD_CLIENT_IP=true` only
+   when a reverse proxy in front of Morphic overwrites `X-Forwarded-For`;
+   otherwise visitors can spoof it to dodge the limits.
+
 ## Guest Mode
 
 Guest mode allows users to try Morphic without creating an account. Guest sessions are ephemeral — no chat history is stored.
