@@ -307,7 +307,10 @@ function crawl4aiPayload(json: {
 }
 
 async function fetchCrawl4aiData(url: string): Promise<SearchResultsType> {
-  const baseUrl = process.env.CRAWL4AI_BASE_URL
+  // Strip trailing slashes so `http://crawler:11235/` never degrades into
+  // `//crawl`: this backend takes over every fetch, so a malformed route
+  // would break all of them at once.
+  const baseUrl = process.env.CRAWL4AI_BASE_URL?.replace(/\/+$/, '')
   if (!baseUrl) {
     throw new Error('CRAWL4AI_BASE_URL is not configured')
   }
@@ -361,13 +364,15 @@ export function createFetchTool(options?: {
   // The PDF guidance must match the configured backend: a self-hosted
   // crawl4ai instance extracts PDFs on either type, while the plain HTML
   // path (and the Jina/Tavily extraction services behind "api") only serve
-  // PDFs through "api".
-  const pdfNote = process.env.CRAWL4AI_BASE_URL
-    ? 'PDFs are extracted and converted to text on either type.'
-    : 'IMPORTANT: "regular" type does NOT support PDFs and will fail on PDF URLs - use "api" type for PDF content extraction.'
+  // PDFs through "api". Without crawl4ai the description is byte-identical
+  // to the one on main: deployments that never set the variable must not
+  // see their prompts move with this change.
+  const description = process.env.CRAWL4AI_BASE_URL
+    ? 'Fetch content from any URL and get clean markdown back. Use "regular" (default) for web pages and "api" for pages that need advanced handling. PDFs are extracted and converted to text on either type. The "api" type also gives deeper extraction for complex JavaScript-rendered pages, better markdown formatting, and table extraction. When a crawl4ai instance is configured via CRAWL4AI_BASE_URL it serves both types; otherwise "api" uses Jina Reader if available and falls back to Tavily Extract.'
+    : 'Fetch content from any URL. By default uses "regular" type which performs fast, direct HTML fetching without external APIs - ideal for most websites. IMPORTANT: "regular" type does NOT support PDFs and will fail on PDF URLs. Use "api" type when you need: 1) PDF content extraction (required for .pdf URLs), 2) Complex JavaScript-rendered pages, 3) Better markdown formatting, 4) Table extraction. The "api" type requires Jina or Tavily API keys and uses Jina Reader if available, otherwise falls back to Tavily Extract.'
 
   return tool({
-    description: `Fetch content from any URL and get clean markdown back. Use "regular" (default) for web pages and "api" for pages that need advanced handling of complex JavaScript-rendered pages. ${pdfNote} The "api" type uses a self-hosted crawl4ai instance if configured, otherwise Jina Reader if available, otherwise falls back to Tavily Extract. When a crawl4ai instance is configured via CRAWL4AI_BASE_URL it serves both types.`,
+    description,
     inputSchema: fetchSchema,
     async *execute({ url, type = 'regular' }) {
       assertFetchableUrl(url)
@@ -409,12 +414,10 @@ export function createFetchTool(options?: {
           // be settled before it is handed over rather than at connect time.
           await assertResolvedPublicUrl(url)
 
-          // Use API-based extraction (crawl4ai, Jina or Tavily)
-          const crawl4aiBaseUrl = process.env.CRAWL4AI_BASE_URL
+          // Use API-based extraction (Jina or Tavily; crawl4ai, when
+          // configured, already took the branch above for every type)
           const useJina = process.env.JINA_API_KEY
-          if (crawl4aiBaseUrl) {
-            results = await fetchCrawl4aiData(url)
-          } else if (useJina) {
+          if (useJina) {
             results = await fetchJinaReaderData(url)
           } else {
             results = await fetchTavilyExtractData(url)

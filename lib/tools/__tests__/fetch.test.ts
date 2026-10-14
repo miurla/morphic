@@ -320,6 +320,28 @@ describe('crawl4ai extraction', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe(`${baseUrl}/crawl`)
   })
 
+  it('normalizes a trailing slash on the configured base URL', async () => {
+    vi.stubEnv('CRAWL4AI_BASE_URL', `${baseUrl}/`)
+    const fetchMock = fetchCrawl4ai(
+      () => new Response(JSON.stringify(pageResponse))
+    )
+
+    await runCrawl4ai()
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${baseUrl}/crawl`)
+  })
+
+  it('normalizes multiple trailing slashes on the configured base URL', async () => {
+    vi.stubEnv('CRAWL4AI_BASE_URL', `${baseUrl}///`)
+    const fetchMock = fetchCrawl4ai(
+      () => new Response(JSON.stringify(pageResponse))
+    )
+
+    await runCrawl4ai()
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${baseUrl}/crawl`)
+  })
+
   it('sends the API key when one is configured', async () => {
     vi.stubEnv('CRAWL4AI_API_KEY', 'test-crawl4ai-key')
     const fetchMock = fetchCrawl4ai(
