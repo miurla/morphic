@@ -19,7 +19,8 @@ const ENV_KEYS = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'SUPABASE_SECRET_KEY',
   'SUPABASE_FORWARD_CLIENT_IP',
-  'VERCEL'
+  'VERCEL',
+  'VERCEL_ENV'
 ] as const
 
 function lastClientArgs() {
@@ -41,6 +42,7 @@ describe('createAuthActionClient', () => {
     process.env.SUPABASE_SECRET_KEY = 'sb_secret_test'
     delete process.env.SUPABASE_FORWARD_CLIENT_IP
     process.env.VERCEL = '1'
+    process.env.VERCEL_ENV = 'production'
     vi.mocked(headers).mockResolvedValue(
       new Headers({ 'x-forwarded-for': '203.0.113.7, 10.0.0.1' }) as never
     )
@@ -71,6 +73,14 @@ describe('createAuthActionClient', () => {
     const [, key, options] = lastClientArgs()
     expect(key).toBe('sb_publishable_test')
     expect(options.global).toBeUndefined()
+  })
+
+  it('does not trust x-forwarded-for under vercel dev', async () => {
+    process.env.VERCEL_ENV = 'development'
+
+    await createAuthActionClient()
+
+    expect(lastClientArgs()[1]).toBe('sb_publishable_test')
   })
 
   it('forwards outside Vercel when SUPABASE_FORWARD_CLIENT_IP=true', async () => {

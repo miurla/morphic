@@ -45,15 +45,19 @@ export async function createClient() {
 
 /**
  * Whether x-forwarded-for can be trusted as the visitor's address. Vercel
- * overwrites the header at its edge; anywhere else a client can set it,
- * so the operator has to opt in once a proxy that overwrites it is in
- * front of Morphic.
+ * deployments overwrite the header at the edge; anywhere else, including
+ * `vercel dev`, a client can set it, so the operator has to opt in once a
+ * proxy that overwrites it is in front of Morphic.
  */
 function trustsForwardedFor(): boolean {
   const setting = process.env.SUPABASE_FORWARD_CLIENT_IP?.trim()
   if (setting === 'true') return true
   if (setting === 'false') return false
-  return process.env.VERCEL === '1'
+  return (
+    process.env.VERCEL === '1' &&
+    (process.env.VERCEL_ENV === 'production' ||
+      process.env.VERCEL_ENV === 'preview')
+  )
 }
 
 async function forwardableClientIp(): Promise<string | null> {

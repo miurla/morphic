@@ -341,9 +341,10 @@ SUPABASE_SECRET_KEY=[YOUR_SUPABASE_SECRET_KEY]
    sees the server's address unless Morphic forwards the visitor's. To
    forward it, use an `sb_secret_...` key for `SUPABASE_SECRET_KEY` and turn
    on **Authentication → Rate Limits → IP Address Forwarding**. On Vercel
-   this is automatic. Elsewhere, set `SUPABASE_FORWARD_CLIENT_IP=true` only
-   when a reverse proxy in front of Morphic overwrites `X-Forwarded-For`;
-   otherwise visitors can spoof it to dodge the limits.
+   production and preview deployments this is automatic. Elsewhere,
+   including `vercel dev`, set `SUPABASE_FORWARD_CLIENT_IP=true` only when a
+   reverse proxy in front of Morphic overwrites `X-Forwarded-For`; otherwise
+   visitors can spoof it to dodge the limits.
 
 ## Guest Mode
 
