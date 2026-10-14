@@ -13,4 +13,13 @@ export const fetchSchema = z.object({
     )
 })
 
+export const crawl4aiFetchSchema = fetchSchema.extend({
+  type: z
+    .enum(['regular', 'api'])
+    .default('regular')
+    .describe(
+      'Fetch method: "regular" (default) and "api" behave the same, and both support PDFs'
+    )
+})
+
 export type PartialInquiry = DeepPartial<typeof fetchSchema>
