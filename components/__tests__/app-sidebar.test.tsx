@@ -22,7 +22,7 @@ vi.mock('../sidebar/library-menu-item', () => ({
 }))
 
 vi.mock('../sidebar/version-footer', () => ({
-  VersionFooter: () => <div />
+  VersionFooter: () => <div>Version footer</div>
 }))
 
 vi.mock('@/hooks/use-mobile', () => ({
@@ -62,5 +62,24 @@ describe('AppSidebar library entry', () => {
     renderSidebar()
 
     expect(screen.queryByText('Library')).not.toBeInTheDocument()
+  })
+})
+
+describe('AppSidebar version footer', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('shows the version footer by default', () => {
+    renderSidebar()
+
+    expect(screen.getByText('Version footer')).toBeInTheDocument()
+  })
+
+  test('hides the version footer when MORPHIC_VERSION_FOOTER_DISABLED=true', () => {
+    vi.stubEnv('MORPHIC_VERSION_FOOTER_DISABLED', 'true')
+    renderSidebar()
+
+    expect(screen.queryByText('Version footer')).not.toBeInTheDocument()
   })
 })

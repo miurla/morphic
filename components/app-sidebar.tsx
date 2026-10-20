@@ -27,6 +27,8 @@ export default function AppSidebar({ user }: { user?: AppUser | null }) {
   // Anonymous mode has no per-user library, and the server actions reject it,
   // so the entry point follows the same switch the pages use.
   const libraryAvailable = !isAnonymousMode()
+  const versionFooterEnabled =
+    process.env.MORPHIC_VERSION_FOOTER_DISABLED !== 'true'
 
   return (
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
@@ -48,11 +50,13 @@ export default function AppSidebar({ user }: { user?: AppUser | null }) {
           </Suspense>
         </div>
       </SidebarContent>
-      <SidebarFooter>
-        <Suspense fallback={<VersionFooterSkeleton />}>
-          <VersionFooter user={user} />
-        </Suspense>
-      </SidebarFooter>
+      {versionFooterEnabled && (
+        <SidebarFooter>
+          <Suspense fallback={<VersionFooterSkeleton />}>
+            <VersionFooter user={user} />
+          </Suspense>
+        </SidebarFooter>
+      )}
       <SidebarRail />
     </Sidebar>
   )
