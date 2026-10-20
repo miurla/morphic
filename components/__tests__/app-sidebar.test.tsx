@@ -76,8 +76,8 @@ describe('AppSidebar version footer', () => {
     expect(screen.getByText('Version footer')).toBeInTheDocument()
   })
 
-  test('hides the version footer when MORPHIC_VERSION_FOOTER_DISABLED=true', () => {
-    vi.stubEnv('MORPHIC_VERSION_FOOTER_DISABLED', 'true')
+  test('hides the version footer on the cloud deployment', () => {
+    vi.stubEnv('MORPHIC_CLOUD_DEPLOYMENT', 'true')
     renderSidebar()
 
     expect(screen.queryByText('Version footer')).not.toBeInTheDocument()

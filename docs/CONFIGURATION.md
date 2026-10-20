@@ -524,10 +524,6 @@ MORPHIC_UPDATE_CHECK_TTL_SECONDS=86400
 # Optional: set to true to perform no upstream requests at all (default: false)
 MORPHIC_UPDATE_CHECK_DISABLED=false
 
-# Optional: set to true to hide the version footer entirely (default: false).
-# Hiding it also skips the update check.
-MORPHIC_VERSION_FOOTER_DISABLED=false
-
 # Optional: comma-separated email addresses treated as admins for the update
 # link (case-insensitive). Useful when the auth provider has no role concept,
 # e.g. Supabase, where no user carries an `admin` role. No effect in anonymous

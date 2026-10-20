@@ -27,8 +27,7 @@ export default function AppSidebar({ user }: { user?: AppUser | null }) {
   // Anonymous mode has no per-user library, and the server actions reject it,
   // so the entry point follows the same switch the pages use.
   const libraryAvailable = !isAnonymousMode()
-  const versionFooterEnabled =
-    process.env.MORPHIC_VERSION_FOOTER_DISABLED !== 'true'
+  const versionFooterEnabled = process.env.MORPHIC_CLOUD_DEPLOYMENT !== 'true'
 
   return (
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas">

@@ -37,7 +37,6 @@ services:
       # MORPHIC_UPDATE_CHECK_REPO: miurla/morphic # Upstream repo to check (default: miurla/morphic)
       # MORPHIC_UPDATE_CHECK_TTL_SECONDS: '86400' # Check cache window in seconds (default: 86400, floor 300)
       # MORPHIC_UPDATE_CHECK_DISABLED: 'false' # Set to 'true' to skip upstream requests entirely
-      # MORPHIC_VERSION_FOOTER_DISABLED: 'false' # Set to 'true' to hide the footer (also skips the update check)
       # MORPHIC_ADMIN_EMAILS: 'ops@example.com' # Extra admin emails for the update link (providers without roles)
     ports:
       - '3000:3000' # Maps port 3000 on the host to port 3000 in the container.
