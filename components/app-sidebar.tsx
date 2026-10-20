@@ -2,11 +2,13 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 
 import { isAnonymousMode } from '@/lib/auth/provider'
+import type { AppUser } from '@/lib/auth/types'
 import { cn } from '@/lib/utils'
 
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarRail,
@@ -17,9 +19,11 @@ import { ChatHistorySection } from './sidebar/chat-history-section'
 import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
 import { LibraryMenuItem } from './sidebar/library-menu-item'
 import { NewChatMenuItem } from './sidebar/new-chat-menu-item'
+import { VersionFooter } from './sidebar/version-footer'
+import { VersionFooterSkeleton } from './sidebar/version-footer-skeleton'
 import { IconLogo } from './ui/icons'
 
-export default function AppSidebar() {
+export default function AppSidebar({ user }: { user?: AppUser | null }) {
   // Anonymous mode has no per-user library, and the server actions reject it,
   // so the entry point follows the same switch the pages use.
   const libraryAvailable = !isAnonymousMode()
@@ -44,6 +48,11 @@ export default function AppSidebar() {
           </Suspense>
         </div>
       </SidebarContent>
+      <SidebarFooter>
+        <Suspense fallback={<VersionFooterSkeleton />}>
+          <VersionFooter user={user} />
+        </Suspense>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

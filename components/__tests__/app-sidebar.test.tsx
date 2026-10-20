@@ -21,6 +21,10 @@ vi.mock('../sidebar/library-menu-item', () => ({
   LibraryMenuItem: () => <div>Library</div>
 }))
 
+vi.mock('../sidebar/version-footer', () => ({
+  VersionFooter: () => <div />
+}))
+
 vi.mock('@/hooks/use-mobile', () => ({
   useIsMobile: () => false
 }))
