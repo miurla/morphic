@@ -480,9 +480,8 @@ visible in the conversation, and the model is told to ask for it again if it nee
 ```bash
 # Optional: characters of pasted content replayed from earlier turns, excluding the
 # newest message. Dropped in whole blocks so the prompt prefix stays cacheable, so the
-# amount replayed can reach about twice the budget. The most recent earlier paste is
-# always kept, even when it alone exceeds the budget. Set to 0 to replay every pasted
-# block (default: 200000)
+# amount replayed can reach about twice the budget. A single earlier paste larger than
+# the budget is always replaced. Set to 0 to replay every pasted block (default: 200000)
 HISTORY_PASTED_CONTENT_CHAR_BUDGET=200000
 ```
 
