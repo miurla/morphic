@@ -41,10 +41,25 @@ const OPENAI_COMPATIBLE_EXCLUDED_KEYWORDS = [
   'image',
   'realtime'
 ]
-const GATEWAY_MINIMAX_MODEL_IDS = new Set([
-  'minimax-m3.1-flash',
-  'minimax-m3'
-])
+const GATEWAY_MINIMAX_MODEL_IDS = new Set(['minimax-m3.1-flash', 'minimax-m3'])
+
+function compatibleMiniMaxModels(): string[] | undefined {
+  const baseURL = (process.env.OPENAI_COMPATIBLE_API_BASE_URL || '').replace(
+    /\/+$/,
+    ''
+  )
+  if (
+    /^https:\/\/(api\.minimax\.io|api\.minimaxi\.com|api\.minimax\.cn)(\/v1)?$/.test(
+      baseURL
+    )
+  ) {
+    return ['MiniMax-M3.1-Flash', 'MiniMax-M3']
+  }
+  if (baseURL === 'https://openrouter.ai/api/v1') {
+    return ['minimax/minimax-m3.1-flash:free', 'minimax/minimax-m3']
+  }
+  return undefined
+}
 
 let modelsCache:
   | {
@@ -54,7 +69,26 @@ let modelsCache:
   | undefined
 
 function sortModels(models: Model[]): Model[] {
-  return [...models].sort((a, b) => a.name.localeCompare(b.name))
+  const sorted = [...models].sort((a, b) => a.name.localeCompare(b.name))
+  const compatibleIds = process.env.OPENAI_COMPATIBLE_MODELS
+    ? undefined
+    : compatibleMiniMaxModels()
+  const rank = (model: Model): number => {
+    const ids =
+      model.providerId === 'gateway'
+        ? ['minimax/minimax-m3.1-flash', 'minimax/minimax-m3']
+        : model.providerId === 'openai-compatible'
+          ? compatibleIds
+          : undefined
+    return ids?.indexOf(model.id) ?? -1
+  }
+  // Reorder only MiniMax slots; keep every other model's position unchanged.
+  const currentMiniMax = sorted.filter(model => rank(model) >= 0)
+  currentMiniMax.sort((a, b) => rank(a) - rank(b))
+  let index = 0
+  return sorted.map(model =>
+    rank(model) >= 0 ? currentMiniMax[index++] : model
+  )
 }
 
 function dedupeModels(models: Model[]): Model[] {
@@ -130,6 +164,14 @@ function passesGoogleFilters(id: string): boolean {
 }
 
 function passesOpenAICompatibleFilters(id: string): boolean {
+  const currentIds = compatibleMiniMaxModels()
+  if (
+    currentIds &&
+    (/^minimax\//i.test(id) || /^MiniMax-(M\d|Text-|VL-)/i.test(id)) &&
+    !currentIds.includes(id)
+  ) {
+    return false
+  }
   return !OPENAI_COMPATIBLE_EXCLUDED_KEYWORDS.some(keyword =>
     id.toLowerCase().includes(keyword)
   )
@@ -163,23 +205,6 @@ function passesGatewayFilters(id: string): boolean {
     default:
       return true
   }
-}
-
-function sortGatewayModels(models: Model[]): Model[] {
-  const minimaxOrder = new Map([
-    ['minimax/minimax-m3.1-flash', 0],
-    ['minimax/minimax-m3', 1]
-  ])
-
-  return [...models].sort((a, b) => {
-    const aRank = minimaxOrder.get(a.id)
-    const bRank = minimaxOrder.get(b.id)
-    if (aRank !== undefined || bRank !== undefined) {
-      return (aRank ?? 2) - (bRank ?? 2)
-    }
-
-    return a.name.localeCompare(b.name)
-  })
 }
 
 async function fetchJson(
@@ -455,7 +480,7 @@ export async function fetchGatewayModels(): Promise<Model[]> {
     const metadata = await gateway.getAvailableModels()
     const availableModels = metadata.models ?? []
 
-    return sortGatewayModels(
+    return sortModels(
       dedupeModels(
         availableModels
           .filter(model => model?.modelType === 'language')

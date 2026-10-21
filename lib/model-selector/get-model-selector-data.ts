@@ -68,11 +68,48 @@ export async function getModelSelectorData(): Promise<ModelSelectorData> {
     }
   }
 
-  const modelsByProvider = await fetchAvailableModels()
+  let modelsByProvider = await fetchAvailableModels()
+  const cookieStore = await cookies()
+  const saved = parseModelSelectionCookie(
+    cookieStore.get(MODEL_SELECTION_COOKIE)?.value
+  )
+  if (
+    saved &&
+    ['gateway', 'openai-compatible'].includes(saved.providerId) &&
+    /^(minimax\/|MiniMax-)/i.test(saved.modelId) &&
+    isProviderEnabled(saved.providerId) &&
+    !Object.values(modelsByProvider)
+      .flat()
+      .some(
+        model =>
+          model.providerId === saved.providerId && model.id === saved.modelId
+      )
+  ) {
+    // Match selectModel: an explicit saved ID remains usable after discovery
+    // filters change. Copy the group so one user's choice never enters the cache.
+    const provider =
+      Object.entries(modelsByProvider).find(([, models]) =>
+        models.some(model => model.providerId === saved.providerId)
+      )?.[0] ??
+      (saved.providerId === 'gateway'
+        ? 'Gateway'
+        : process.env.OPENAI_COMPATIBLE_PROVIDER_NAME || 'OpenAI Compatible')
+    modelsByProvider = {
+      ...modelsByProvider,
+      [provider]: [
+        ...(modelsByProvider[provider] ?? []),
+        {
+          id: saved.modelId,
+          name: saved.modelId,
+          provider,
+          providerId: saved.providerId
+        }
+      ]
+    }
+  }
   const fallbackModel = pickFirstAvailableModel(modelsByProvider)
   const hasAvailableModels =
     fallbackModel !== null || isProviderEnabled(DEFAULT_MODEL.providerId)
-  const cookieStore = await cookies()
   const selectedModelKey = resolveSelectedModelKey(
     modelsByProvider,
     fallbackModel,

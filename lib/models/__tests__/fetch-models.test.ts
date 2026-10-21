@@ -230,6 +230,43 @@ describe('fetch-models', () => {
       'minimax/minimax-m3.1-flash',
       'minimax/minimax-m3'
     ])
+    const grouped = await fetchModels.fetchAvailableModels({
+      forceRefresh: true
+    })
+    expect(grouped.Gateway.map(model => model.id)).toEqual(
+      models.map(model => model.id)
+    )
+  })
+
+  it('preserves other gateway models and their alphabetical positions', async () => {
+    mockIsProviderEnabled.mockImplementation(id => id === 'gateway')
+    mockCreateGateway.mockReturnValue({
+      getAvailableModels: vi.fn().mockResolvedValue({
+        models: [
+          { id: 'other/a', name: 'A', modelType: 'language' },
+          {
+            id: 'minimax/minimax-m3',
+            name: 'MiniMax M3',
+            modelType: 'language'
+          },
+          {
+            id: 'minimax/minimax-m3.1-flash',
+            name: 'MiniMax M3.1 Flash',
+            modelType: 'language'
+          },
+          { id: 'other/z', name: 'Z', modelType: 'language' }
+        ]
+      })
+    } as any)
+    const grouped = await fetchModels.fetchAvailableModels({
+      forceRefresh: true
+    })
+    expect(grouped.Gateway.map(model => model.id)).toEqual([
+      'other/a',
+      'minimax/minimax-m3.1-flash',
+      'minimax/minimax-m3',
+      'other/z'
+    ])
   })
 
   it('filters google models to active gemini chat models', async () => {
@@ -321,6 +358,94 @@ describe('fetch-models', () => {
       delete process.env.OPENAI_COMPATIBLE_API_KEY
       delete process.env.OPENAI_COMPATIBLE_PROVIDER_NAME
       delete process.env.OPENAI_COMPATIBLE_MODELS
+    })
+
+    it.each([
+      'https://api.minimax.io',
+      'https://api.minimax.io/v1/',
+      'https://api.minimaxi.com/v1',
+      'https://api.minimax.cn/v1'
+    ])('keeps current direct MiniMax choices at %s', async baseURL => {
+      mockIsProviderEnabled.mockImplementation(id => id === 'openai-compatible')
+      process.env.OPENAI_COMPATIBLE_API_BASE_URL = baseURL
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({
+            data: [
+              { id: 'MiniMax-M3' },
+              { id: 'MiniMax-M2.7' },
+              { id: 'MiniMax-M3.1-Flash' },
+              { id: 'custom-model' }
+            ]
+          })
+        })
+      )
+      const grouped = await fetchModels.fetchAvailableModels({
+        forceRefresh: true
+      })
+      expect(grouped['OpenAI Compatible'].map(model => model.id)).toEqual([
+        'custom-model',
+        'MiniMax-M3.1-Flash',
+        'MiniMax-M3'
+      ])
+    })
+
+    it('uses the verified OpenRouter Flash route without rewriting returned IDs', async () => {
+      mockIsProviderEnabled.mockImplementation(id => id === 'openai-compatible')
+      process.env.OPENAI_COMPATIBLE_API_BASE_URL =
+        'https://openrouter.ai/api/v1'
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({
+            data: [
+              { id: 'minimax/minimax-m3' },
+              { id: 'minimax/minimax-m2.7' },
+              { id: 'minimax/minimax-m3.1-flash:free' },
+              { id: 'minimax/minimax-m3.1-flash' },
+              { id: 'other/chat' }
+            ]
+          })
+        })
+      )
+      const models = await fetchModels.fetchOpenAICompatibleModels()
+      expect(models.map(model => model.id)).toEqual([
+        'minimax/minimax-m3.1-flash:free',
+        'minimax/minimax-m3',
+        'other/chat'
+      ])
+    })
+
+    it('preserves explicit legacy and custom static choices', async () => {
+      mockIsProviderEnabled.mockImplementation(id => id === 'openai-compatible')
+      process.env.OPENAI_COMPATIBLE_API_BASE_URL = 'https://api.minimax.io/v1'
+      process.env.OPENAI_COMPATIBLE_MODELS = 'MiniMax-M2.7,custom-model'
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+      const models = await fetchModels.fetchOpenAICompatibleModels()
+      expect(models.map(model => model.id)).toEqual([
+        'custom-model',
+        'MiniMax-M2.7'
+      ])
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('does not filter MiniMax-like IDs on a custom compatible endpoint', async () => {
+      mockIsProviderEnabled.mockImplementation(id => id === 'openai-compatible')
+      process.env.OPENAI_COMPATIBLE_API_BASE_URL = 'https://custom.example/v1'
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({ data: [{ id: 'MiniMax-M2.7' }] })
+        })
+      )
+      expect((await fetchModels.fetchOpenAICompatibleModels())[0].id).toBe(
+        'MiniMax-M2.7'
+      )
     })
 
     it('fetches /v1/models and filters embeddings + audio', async () => {
