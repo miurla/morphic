@@ -186,6 +186,52 @@ describe('fetch-models', () => {
     ])
   })
 
+  it('keeps only current MiniMax gateway text models and puts Flash first', async () => {
+    mockIsProviderEnabled.mockImplementation(
+      providerId => providerId === 'gateway'
+    )
+
+    const getAvailableModels = vi.fn().mockResolvedValue({
+      models: [
+        {
+          id: 'minimax/minimax-m3',
+          name: 'MiniMax M3',
+          modelType: 'language'
+        },
+        {
+          id: 'minimax/minimax-m2.7',
+          name: 'MiniMax M2.7',
+          modelType: 'language'
+        },
+        {
+          id: 'minimax/minimax-m3.1-flash',
+          name: 'MiniMax M3.1 Flash',
+          modelType: 'language'
+        },
+        {
+          id: 'minimax/minimax-speech-2.8',
+          name: 'MiniMax Speech 2.8',
+          modelType: 'language'
+        },
+        {
+          id: 'minimax/minimax-m3.1-flash',
+          name: 'MiniMax M3.1 Flash duplicate',
+          modelType: 'embedding'
+        }
+      ]
+    })
+    mockCreateGateway.mockReturnValue({
+      getAvailableModels
+    } as any)
+
+    const models = await fetchModels.fetchGatewayModels()
+
+    expect(models.map(model => model.id)).toEqual([
+      'minimax/minimax-m3.1-flash',
+      'minimax/minimax-m3'
+    ])
+  })
+
   it('filters google models to active gemini chat models', async () => {
     mockIsProviderEnabled.mockImplementation(
       providerId => providerId === 'google'

@@ -41,6 +41,10 @@ const OPENAI_COMPATIBLE_EXCLUDED_KEYWORDS = [
   'image',
   'realtime'
 ]
+const GATEWAY_MINIMAX_MODEL_IDS = new Set([
+  'minimax-m3.1-flash',
+  'minimax-m3'
+])
 
 let modelsCache:
   | {
@@ -154,9 +158,28 @@ function passesGatewayFilters(id: string): boolean {
       return passesAnthropicFilters(modelId)
     case 'google':
       return passesGoogleFilters(modelId)
+    case 'minimax':
+      return GATEWAY_MINIMAX_MODEL_IDS.has(modelId)
     default:
       return true
   }
+}
+
+function sortGatewayModels(models: Model[]): Model[] {
+  const minimaxOrder = new Map([
+    ['minimax/minimax-m3.1-flash', 0],
+    ['minimax/minimax-m3', 1]
+  ])
+
+  return [...models].sort((a, b) => {
+    const aRank = minimaxOrder.get(a.id)
+    const bRank = minimaxOrder.get(b.id)
+    if (aRank !== undefined || bRank !== undefined) {
+      return (aRank ?? 2) - (bRank ?? 2)
+    }
+
+    return a.name.localeCompare(b.name)
+  })
 }
 
 async function fetchJson(
@@ -432,7 +455,7 @@ export async function fetchGatewayModels(): Promise<Model[]> {
     const metadata = await gateway.getAvailableModels()
     const availableModels = metadata.models ?? []
 
-    return sortModels(
+    return sortGatewayModels(
       dedupeModels(
         availableModels
           .filter(model => model?.modelType === 'language')
