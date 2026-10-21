@@ -33,10 +33,10 @@ function getPastedLength(part: UIMessage['parts'][number]): number {
  *
  * Older blocks become a text placeholder giving their size. They are dropped
  * by the same weight quantization as attachments, so the prompt prefix stays
- * cacheable between block crossings. A block may be a single paste: when one
- * paste exceeds the budget, moving the boundary on each new paste rewrites far
- * less than carrying a second copy would. The newest user message and the
- * newest historical paste are never capped.
+ * cacheable between block crossings. A single paste larger than the budget is
+ * replaced as soon as it leaves the newest message, so it is replayed at most
+ * once and its placeholder never moves. The newest user message is never
+ * capped.
  */
 export function capHistoricalPastedContent(
   messages: UIMessage[],
@@ -51,27 +51,31 @@ export function capHistoricalPastedContent(
     currentTurnIndex === -1 ? messages.length : currentTurnIndex
 
   const weights: number[] = []
+  let oversizedCount = 0
   for (let i = 0; i < historyEnd; i++) {
     for (const part of messages[i].parts) {
       const length = getPastedLength(part)
-      if (length > 0) weights.push(length)
+      if (length > charBudget) oversizedCount += 1
+      else if (length > 0) weights.push(length)
     }
   }
 
   const dropCount = getWeightDroppedCount(weights, charBudget, 1)
-  if (dropCount === 0) return messages
+  if (dropCount === 0 && oversizedCount === 0) return messages
 
   let seen = 0
   return messages.map((message, index) => {
-    if (index >= historyEnd || seen >= dropCount) return message
+    if (index >= historyEnd) return message
     if (!message.parts.some(part => getPastedLength(part) > 0)) return message
 
     const parts = message.parts.map(part => {
       const length = getPastedLength(part)
       if (length === 0) return part
 
-      seen += 1
-      if (seen > dropCount) return part
+      if (length <= charBudget) {
+        seen += 1
+        if (seen > dropCount) return part
+      }
 
       return {
         type: 'text' as const,
@@ -79,6 +83,8 @@ export function capHistoricalPastedContent(
       }
     })
 
-    return { ...message, parts }
+    return parts.every((part, i) => part === message.parts[i])
+      ? message
+      : { ...message, parts }
   })
 }

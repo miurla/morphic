@@ -86,8 +86,8 @@ describe('capHistoricalPastedContent', () => {
     expect(after.slice(0, before.length - 1)).toEqual(before.slice(0, -1))
   })
 
-  it('keeps only the newest historical paste when each exceeds the budget', () => {
-    const dropped = [1, 2, 3, 4].map(count =>
+  it('replaces every historical paste that alone exceeds the budget', () => {
+    const dropped = [1, 2, 3].map(count =>
       omittedIds(
         capHistoricalPastedContent(
           [...thread(Array(count).fill(500)), textTurn('next', 'user')],
@@ -96,15 +96,42 @@ describe('capHistoricalPastedContent', () => {
       )
     )
 
-    expect(dropped).toEqual([[], ['u0'], ['u0', 'u1'], ['u0', 'u1', 'u2']])
+    expect(dropped).toEqual([['u0'], ['u0', 'u1'], ['u0', 'u1', 'u2']])
+  })
+
+  it('keeps a paste exactly at the budget', () => {
+    const messages = [...thread([BUDGET]), textTurn('u1', 'user')]
+    expect(capHistoricalPastedContent(messages, BUDGET)).toBe(messages)
   })
 
   it('keeps a small paste that follows an oversized one', () => {
     const messages = [...thread([500, 500, 10]), textTurn('u3', 'user')]
 
     expect(omittedIds(capHistoricalPastedContent(messages, BUDGET))).toEqual([
-      'u0'
+      'u0',
+      'u1'
     ])
+  })
+
+  it('does not let an oversized paste close a block of smaller ones', () => {
+    const messages = [...thread([40, 500, 40]), textTurn('u3', 'user')]
+
+    expect(omittedIds(capHistoricalPastedContent(messages, BUDGET))).toEqual([
+      'u1'
+    ])
+  })
+
+  it('keeps the placeholder for an oversized paste stable across turns', () => {
+    const before = capHistoricalPastedContent(
+      [...thread([500]), textTurn('u1', 'user')],
+      BUDGET
+    )
+    const after = capHistoricalPastedContent(
+      [...thread([500, 10]), textTurn('u2', 'user')],
+      BUDGET
+    )
+
+    expect(after.slice(0, before.length - 1)).toEqual(before.slice(0, -1))
   })
 
   it('never caps the newest user message', () => {
