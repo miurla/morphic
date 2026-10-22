@@ -2,10 +2,15 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError } from 'better-auth/api'
 import { nextCookies } from 'better-auth/next-js'
-import { admin } from 'better-auth/plugins'
+import { admin, genericOAuth } from 'better-auth/plugins'
 import { asc, count, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
+
+import {
+  getOidcProviderName as getOidcProviderNameUtil,
+  isOidcConfigured as isOidcConfiguredUtil
+} from '../oauth-config'
 
 import { isSmtpConfigured, sendSmtpMail } from './mailer'
 import * as authSchema from './schema'
@@ -18,6 +23,18 @@ export type SignUpMode = 'open' | 'invite'
  */
 export function isBetterAuthSmtpConfigured(): boolean {
   return isSmtpConfigured()
+}
+
+/**
+ * True when OIDC is configured: all required environment variables are set.
+ * OIDC_SCOPE is optional and defaults to 'openid profile email'.
+ */
+export function isOidcConfigured(): boolean {
+  return isOidcConfiguredUtil()
+}
+
+export function getOidcProviderName(): string {
+  return getOidcProviderNameUtil()
 }
 
 /**
@@ -254,6 +271,49 @@ export async function reElectBootstrapAdmin(): Promise<void> {
 
 function createAuth() {
   const smtpConfigured = isBetterAuthSmtpConfigured()
+  const oidcConfigured = isOidcConfigured()
+
+  // Conditionally spread the OIDC plugin inline so the concrete plugin
+  // types reach betterAuth(): a `plugins: any[]` assertion would strip
+  // every declared endpoint (e.g. admin's setRole/setUserPassword) from
+  // the inferred auth.api type.
+  const oidcPlugins = oidcConfigured
+    ? [
+        genericOAuth({
+          config: [
+            {
+              providerId: 'oidc',
+              // Trailing slash is a common typo: without stripping, the
+              // discovery URL becomes "...//.well-known/..." and most IdPs
+              // answer 404, which better-auth reports as "discovery left no
+              // usable authorization endpoint or token exchange".
+              discoveryUrl: `${process.env.OIDC_ISSUER?.trim().replace(/\/+$/, '')}/.well-known/openid-configuration`,
+              clientId: process.env.OIDC_CLIENT_ID?.trim() ?? '',
+              clientSecret: process.env.OIDC_CLIENT_SECRET?.trim() ?? '',
+              scopes: (
+                process.env.OIDC_SCOPE?.trim() || 'openid profile email'
+              ).split(' '),
+              pkce: true,
+              // Map OIDC claims to Better Auth user fields
+              // Note: Do not map 'id' here - Better Auth gets user identity from
+              // the accountSubject (OIDC 'sub' claim) automatically
+              mapProfileToUser: profile => ({
+                email: profile.email as string,
+                emailVerified: (profile.email_verified ?? false) as boolean,
+                name: (profile.name ||
+                  profile.preferred_username ||
+                  profile.email) as string,
+                image: profile.picture as string | undefined
+              })
+            }
+          ]
+        })
+      ]
+    : []
+
+  // nextCookies must stay last: it re-applies the session cookie
+  // through next/headers so server actions (signIn/signUp/signOut)
+  // deliver it to the browser without a hand-written header copy.
 
   return betterAuth({
     appName: 'Morphic',
@@ -292,10 +352,7 @@ function createAuth() {
           }
         : undefined
     },
-    // nextCookies must stay last: it re-applies the session cookie
-    // through next/headers so server actions (signIn/signUp/signOut)
-    // deliver it to the browser without a hand-written header copy.
-    plugins: [admin({ defaultRole: 'user' }), nextCookies()],
+    plugins: [admin({ defaultRole: 'user' }), ...oidcPlugins, nextCookies()],
     databaseHooks: {
       user: {
         create: {

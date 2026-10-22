@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { signIn, signInWithGoogle } from '@/lib/actions/auth'
+import { signIn, signInWithGoogle, signInWithOidc } from '@/lib/actions/auth'
 import { safeRedirectPath } from '@/lib/auth/redirect-target'
 import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
 import { cn } from '@/lib/utils/index'
@@ -89,6 +89,31 @@ export function LoginForm({
     }
   }
 
+  const handleOidcLogin = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      document.cookie = next
+        ? `auth_next=${encodeURIComponent(
+            safeRedirectPath(next)
+          )}; path=/; max-age=300; SameSite=Lax`
+        : 'auth_next=; path=/; max-age=0; SameSite=Lax'
+      const result = await signInWithOidc()
+      if (!result.success)
+        throw new Error(result.error ?? 'An OAuth error occurred')
+      if (result.redirectTo) {
+        window.location.href = result.redirectTo
+      }
+    } catch (error: unknown) {
+      setError(
+        error instanceof Error ? error.message : 'An OAuth error occurred'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div
       className={cn('flex flex-col items-center gap-6', className)}
@@ -114,10 +139,16 @@ export function LoginForm({
                   variant="outline"
                   type="button"
                   className="w-full"
-                  onClick={handleSocialLogin}
+                  onClick={
+                    capabilities.oauthProvider
+                      ? handleOidcLogin
+                      : handleSocialLogin
+                  }
                   disabled={isLoading}
                 >
-                  Sign In with Google
+                  {capabilities.oauthProvider
+                    ? `Sign In with ${capabilities.oauthProvider}`
+                    : 'Sign In with Google'}
                 </Button>
 
                 <div className="relative my-2">

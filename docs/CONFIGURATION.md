@@ -303,6 +303,64 @@ In production builds (Docker), session cookies carry the `__Secure-` prefix, so 
 
 With Better Auth, sharing chats is off until you set `ENABLE_SHARE=true`. See [Chat Sharing](#chat-sharing).
 
+#### OIDC / OAuth Integration
+
+Better Auth supports generic OIDC authentication for corporate identity providers like Keycloak, Authentik, Okta, Azure AD, and others.
+
+**Required environment variables:**
+
+```bash
+OIDC_ISSUER=https://keycloak.example.com/realms/your-realm
+OIDC_CLIENT_ID=morphic-client
+OIDC_CLIENT_SECRET=your-client-secret
+```
+
+**Optional customization:**
+
+```bash
+# OAuth scopes (defaults to 'openid profile email')
+OIDC_SCOPE=openid profile email groups
+
+# Provider display name in login UI (defaults to 'OIDC')
+OIDC_PROVIDER_NAME=Keycloak
+```
+
+**How it works:**
+
+- When OIDC environment variables are set, the login form replaces the Google OAuth button with your configured provider
+- Uses OpenID Connect Discovery to automatically fetch endpoints from `OIDC_ISSUER/.well-known/openid-configuration`
+- Implements PKCE (Proof Key for Code Exchange) for secure authorization flows
+- User accounts are stored in the same `users` and `accounts` tables as email/password users
+- The OIDC `sub` claim is stored as `accounts.accountId` with `accounts.providerId='oidc'`
+
+**Identity provider setup:**
+
+1. Create a new OAuth/OIDC client in your identity provider
+2. Set the redirect/callback URL to: `https://your-morphic-url.com/api/auth/callback/oidc`
+3. Enable authorization code flow with PKCE
+4. Request scopes: `openid`, `profile`, `email` (and any additional scopes like `groups`)
+5. Copy the client ID, client secret, and issuer URL to your environment variables
+
+**Keycloak example:**
+
+```bash
+OIDC_ISSUER=https://keycloak.example.com/realms/company
+OIDC_CLIENT_ID=morphic
+OIDC_CLIENT_SECRET=abc123...
+OIDC_PROVIDER_NAME=Company Login
+```
+
+**Authentik example:**
+
+```bash
+OIDC_ISSUER=https://authentik.example.com/application/o/morphic/
+OIDC_CLIENT_ID=morphic-client
+OIDC_CLIENT_SECRET=xyz789...
+OIDC_PROVIDER_NAME=Authentik
+```
+
+When OIDC is configured, users can sign in with their corporate accounts. Email/password registration and login remain available for admin bootstrap and local accounts.
+
 ### Supabase
 
 For deployments that already use Supabase, or that prefer a hosted auth service.
