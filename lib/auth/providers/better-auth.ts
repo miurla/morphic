@@ -6,9 +6,11 @@ import { count, eq } from 'drizzle-orm'
 import {
   getAuth,
   getEmailLinkOrigin,
+  getOidcProviderName,
   getSignUpMode,
   isBetterAuthSmtpConfigured,
   isBootstrapAccount,
+  isOidcConfigured,
   reElectBootstrapAdmin
 } from '@/lib/auth/better-auth/config'
 import {
@@ -214,10 +216,8 @@ export const betterAuthProvider: AuthProvider = {
       passwordReset:
         isBetterAuthSmtpConfigured() && getEmailLinkOrigin() !== '',
       deleteUser: true,
-      // Email/password only: no OAuth provider is wired into the local
-      // instance, and accounts are usable immediately without email
-      // confirmation.
-      oauth: false,
+      // OAuth available when OIDC is configured or other OAuth providers are enabled
+      oauth: isOidcConfigured(),
       emailVerification: false,
       share: true
     }
@@ -620,4 +620,14 @@ export const betterAuthProvider: AuthProvider = {
       }
     }
   }
+}
+
+/**
+ * Get OAuth provider configuration for UI display
+ */
+export function getOAuthConfig(): { provider: 'oidc' | null; name: string } {
+  if (isOidcConfigured()) {
+    return { provider: 'oidc', name: getOidcProviderName() }
+  }
+  return { provider: null, name: '' }
 }

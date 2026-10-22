@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError } from 'better-auth/api'
 import { nextCookies } from 'better-auth/next-js'
-import { admin } from 'better-auth/plugins'
+import { admin, genericOAuth } from 'better-auth/plugins'
 import { asc, count, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
@@ -18,6 +18,22 @@ export type SignUpMode = 'open' | 'invite'
  */
 export function isBetterAuthSmtpConfigured(): boolean {
   return isSmtpConfigured()
+}
+
+/**
+ * True when OIDC is configured: all required environment variables are set.
+ * OIDC_SCOPE is optional and defaults to 'openid profile email'.
+ */
+export function isOidcConfigured(): boolean {
+  return !!(
+    process.env.OIDC_ISSUER?.trim() &&
+    process.env.OIDC_CLIENT_ID?.trim() &&
+    process.env.OIDC_CLIENT_SECRET?.trim()
+  )
+}
+
+export function getOidcProviderName(): string {
+  return process.env.OIDC_PROVIDER_NAME?.trim() || 'OIDC'
 }
 
 /**
@@ -254,6 +270,42 @@ export async function reElectBootstrapAdmin(): Promise<void> {
 
 function createAuth() {
   const smtpConfigured = isBetterAuthSmtpConfigured()
+  const oidcConfigured = isOidcConfigured()
+
+  // Build plugins array with optional OIDC support
+  // Use type assertion to work around plugin array type inference
+  const plugins: any[] = [admin({ defaultRole: 'user' })]
+
+  if (oidcConfigured) {
+    plugins.push(
+      genericOAuth({
+        config: [
+          {
+            providerId: 'oidc',
+            discoveryUrl: `${process.env.OIDC_ISSUER?.trim()}/.well-known/openid-configuration`,
+            clientId: process.env.OIDC_CLIENT_ID?.trim() ?? '',
+            clientSecret: process.env.OIDC_CLIENT_SECRET?.trim() ?? '',
+            scopes: (process.env.OIDC_SCOPE?.trim() || 'openid profile email').split(' '),
+            pkce: true,
+            // Map OIDC claims to Better Auth user fields
+            // Note: Do not map 'id' here - Better Auth gets user identity from
+            // the accountSubject (OIDC 'sub' claim) automatically
+            mapProfileToUser: profile => ({
+              email: profile.email as string,
+              emailVerified: (profile.email_verified ?? false) as boolean,
+              name: (profile.name || profile.preferred_username || profile.email) as string,
+              image: profile.picture as string | undefined
+            })
+          }
+        ]
+      })
+    )
+  }
+
+  // nextCookies must stay last: it re-applies the session cookie
+  // through next/headers so server actions (signIn/signUp/signOut)
+  // deliver it to the browser without a hand-written header copy.
+  plugins.push(nextCookies())
 
   return betterAuth({
     appName: 'Morphic',
@@ -292,10 +344,7 @@ function createAuth() {
           }
         : undefined
     },
-    // nextCookies must stay last: it re-applies the session cookie
-    // through next/headers so server actions (signIn/signUp/signOut)
-    // deliver it to the browser without a hand-written header copy.
-    plugins: [admin({ defaultRole: 'user' }), nextCookies()],
+    plugins,
     databaseHooks: {
       user: {
         create: {

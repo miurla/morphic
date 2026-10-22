@@ -4,7 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { signIn, signInWithGoogle } from '@/lib/actions/auth'
+import { signIn, signInWithGoogle, signInWithOidc } from '@/lib/actions/auth'
+import { getOAuthConfig } from '@/lib/auth/providers/better-auth'
 import { safeRedirectPath } from '@/lib/auth/redirect-target'
 import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
 import { cn } from '@/lib/utils/index'
@@ -89,6 +90,31 @@ export function LoginForm({
     }
   }
 
+  const handleOidcLogin = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      document.cookie = next
+        ? `auth_next=${encodeURIComponent(
+            safeRedirectPath(next)
+          )}; path=/; max-age=300; SameSite=Lax`
+        : 'auth_next=; path=/; max-age=0; SameSite=Lax'
+      const result = await signInWithOidc()
+      if (!result.success)
+        throw new Error(result.error ?? 'An OAuth error occurred')
+      if (result.redirectTo) {
+        window.location.href = result.redirectTo
+      }
+    } catch (error: unknown) {
+      setError(
+        error instanceof Error ? error.message : 'An OAuth error occurred'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div
       className={cn('flex flex-col items-center gap-6', className)}
@@ -108,30 +134,38 @@ export function LoginForm({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
-            {capabilities.oauth && (
-              <>
-                <Button
-                  variant="outline"
-                  type="button"
-                  className="w-full"
-                  onClick={handleSocialLogin}
-                  disabled={isLoading}
-                >
-                  Sign In with Google
-                </Button>
+            {capabilities.oauth && (() => {
+              const oauthConfig = getOAuthConfig()
+              const handleOAuthLogin = oauthConfig.provider === 'oidc' ? handleOidcLogin : handleSocialLogin
+              const buttonText = oauthConfig.provider === 'oidc' 
+                ? `Sign In with ${oauthConfig.name}`
+                : 'Sign In with Google'
+              
+              return (
+                <>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    className="w-full"
+                    onClick={handleOAuthLogin}
+                    disabled={isLoading}
+                  >
+                    {buttonText}
+                  </Button>
 
-                <div className="relative my-2">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
+                  <div className="relative my-2">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-muted px-2 text-muted-foreground">
+                        Or
+                      </span>
+                    </div>
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-muted px-2 text-muted-foreground">
-                      Or
-                    </span>
-                  </div>
-                </div>
-              </>
-            )}
+                </>
+              )
+            })()}
 
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
               <div className="grid gap-2">
