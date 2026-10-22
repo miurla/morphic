@@ -621,13 +621,3 @@ export const betterAuthProvider: AuthProvider = {
     }
   }
 }
-
-/**
- * Get OAuth provider configuration for UI display
- */
-export function getOAuthConfig(): { provider: 'oidc' | null; name: string } {
-  if (isOidcConfigured()) {
-    return { provider: 'oidc', name: getOidcProviderName() }
-  }
-  return { provider: null, name: '' }
-}

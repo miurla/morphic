@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { signIn, signInWithGoogle, signInWithOidc } from '@/lib/actions/auth'
-import { getOAuthConfig } from '@/lib/auth/providers/better-auth'
+import { getOAuthConfig } from '@/lib/auth/oauth-config'
 import { safeRedirectPath } from '@/lib/auth/redirect-target'
 import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
 import { cn } from '@/lib/utils/index'
@@ -134,38 +134,43 @@ export function LoginForm({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
-            {capabilities.oauth && (() => {
-              const oauthConfig = getOAuthConfig()
-              const handleOAuthLogin = oauthConfig.provider === 'oidc' ? handleOidcLogin : handleSocialLogin
-              const buttonText = oauthConfig.provider === 'oidc' 
-                ? `Sign In with ${oauthConfig.name}`
-                : 'Sign In with Google'
-              
-              return (
-                <>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    className="w-full"
-                    onClick={handleOAuthLogin}
-                    disabled={isLoading}
-                  >
-                    {buttonText}
-                  </Button>
+            {capabilities.oauth &&
+              (() => {
+                const oauthConfig = getOAuthConfig()
+                const handleOAuthLogin =
+                  oauthConfig.provider === 'oidc'
+                    ? handleOidcLogin
+                    : handleSocialLogin
+                const buttonText =
+                  oauthConfig.provider === 'oidc'
+                    ? `Sign In with ${oauthConfig.name}`
+                    : 'Sign In with Google'
 
-                  <div className="relative my-2">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
+                return (
+                  <>
+                    <Button
+                      variant="outline"
+                      type="button"
+                      className="w-full"
+                      onClick={handleOAuthLogin}
+                      disabled={isLoading}
+                    >
+                      {buttonText}
+                    </Button>
+
+                    <div className="relative my-2">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-muted px-2 text-muted-foreground">
+                          Or
+                        </span>
+                      </div>
                     </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-muted px-2 text-muted-foreground">
-                        Or
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )
-            })()}
+                  </>
+                )
+              })()}
 
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
               <div className="grid gap-2">

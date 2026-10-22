@@ -7,6 +7,11 @@ import { asc, count, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
 
+import {
+  getOidcProviderName as getOidcProviderNameUtil,
+  isOidcConfigured as isOidcConfiguredUtil
+} from '../oauth-config'
+
 import { isSmtpConfigured, sendSmtpMail } from './mailer'
 import * as authSchema from './schema'
 
@@ -25,15 +30,11 @@ export function isBetterAuthSmtpConfigured(): boolean {
  * OIDC_SCOPE is optional and defaults to 'openid profile email'.
  */
 export function isOidcConfigured(): boolean {
-  return !!(
-    process.env.OIDC_ISSUER?.trim() &&
-    process.env.OIDC_CLIENT_ID?.trim() &&
-    process.env.OIDC_CLIENT_SECRET?.trim()
-  )
+  return isOidcConfiguredUtil()
 }
 
 export function getOidcProviderName(): string {
-  return process.env.OIDC_PROVIDER_NAME?.trim() || 'OIDC'
+  return getOidcProviderNameUtil()
 }
 
 /**
@@ -272,40 +273,43 @@ function createAuth() {
   const smtpConfigured = isBetterAuthSmtpConfigured()
   const oidcConfigured = isOidcConfigured()
 
-  // Build plugins array with optional OIDC support
-  // Use type assertion to work around plugin array type inference
-  const plugins: any[] = [admin({ defaultRole: 'user' })]
-
-  if (oidcConfigured) {
-    plugins.push(
-      genericOAuth({
-        config: [
-          {
-            providerId: 'oidc',
-            discoveryUrl: `${process.env.OIDC_ISSUER?.trim()}/.well-known/openid-configuration`,
-            clientId: process.env.OIDC_CLIENT_ID?.trim() ?? '',
-            clientSecret: process.env.OIDC_CLIENT_SECRET?.trim() ?? '',
-            scopes: (process.env.OIDC_SCOPE?.trim() || 'openid profile email').split(' '),
-            pkce: true,
-            // Map OIDC claims to Better Auth user fields
-            // Note: Do not map 'id' here - Better Auth gets user identity from
-            // the accountSubject (OIDC 'sub' claim) automatically
-            mapProfileToUser: profile => ({
-              email: profile.email as string,
-              emailVerified: (profile.email_verified ?? false) as boolean,
-              name: (profile.name || profile.preferred_username || profile.email) as string,
-              image: profile.picture as string | undefined
-            })
-          }
-        ]
-      })
-    )
-  }
+  // Conditionally spread the OIDC plugin inline so the concrete plugin
+  // types reach betterAuth(): a `plugins: any[]` assertion would strip
+  // every declared endpoint (e.g. admin's setRole/setUserPassword) from
+  // the inferred auth.api type.
+  const oidcPlugins = oidcConfigured
+    ? [
+        genericOAuth({
+          config: [
+            {
+              providerId: 'oidc',
+              discoveryUrl: `${process.env.OIDC_ISSUER?.trim()}/.well-known/openid-configuration`,
+              clientId: process.env.OIDC_CLIENT_ID?.trim() ?? '',
+              clientSecret: process.env.OIDC_CLIENT_SECRET?.trim() ?? '',
+              scopes: (
+                process.env.OIDC_SCOPE?.trim() || 'openid profile email'
+              ).split(' '),
+              pkce: true,
+              // Map OIDC claims to Better Auth user fields
+              // Note: Do not map 'id' here - Better Auth gets user identity from
+              // the accountSubject (OIDC 'sub' claim) automatically
+              mapProfileToUser: profile => ({
+                email: profile.email as string,
+                emailVerified: (profile.email_verified ?? false) as boolean,
+                name: (profile.name ||
+                  profile.preferred_username ||
+                  profile.email) as string,
+                image: profile.picture as string | undefined
+              })
+            }
+          ]
+        })
+      ]
+    : []
 
   // nextCookies must stay last: it re-applies the session cookie
   // through next/headers so server actions (signIn/signUp/signOut)
   // deliver it to the browser without a hand-written header copy.
-  plugins.push(nextCookies())
 
   return betterAuth({
     appName: 'Morphic',
@@ -344,7 +348,7 @@ function createAuth() {
           }
         : undefined
     },
-    plugins,
+    plugins: [admin({ defaultRole: 'user' }), ...oidcPlugins, nextCookies()],
     databaseHooks: {
       user: {
         create: {
