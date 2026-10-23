@@ -141,6 +141,13 @@
       "when": 1791284859864,
       "tag": "0019_rainy_jack_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792769389252,
+      "tag": "0020_add_parts_search_fts",
+      "breakpoints": true
     }
   ]
 }

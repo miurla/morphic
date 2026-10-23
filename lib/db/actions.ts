@@ -371,6 +371,135 @@ export async function getChatsPage(
 }
 
 /**
+ * Search chat titles for a user (case-insensitive substring match), newest first.
+ */
+export async function searchChatTitles(
+  userId: string,
+  query: string,
+  limit = 20
+): Promise<Chat[]> {
+  const trimmed = query.trim()
+  if (!trimmed) {
+    return []
+  }
+  // Escape ILIKE wildcards so user input matches literally
+  const pattern = `%${trimmed.replace(/[\\%_]/g, '\\$&')}%`
+
+  return withRLS(userId, async tx => {
+    return tx
+      .select()
+      .from(chats)
+      .where(and(eq(chats.userId, userId), ilike(chats.title, pattern)))
+      .orderBy(desc(chats.createdAt))
+      .limit(Math.max(1, Math.min(limit, 50)))
+  })
+}
+
+export type ChatContentSearchResult = {
+  chatId: string
+  title: string
+  snippet: string
+}
+
+// Whitelisted column pairs for the full-text search scopes (never user input)
+const FTS_SCOPES = {
+  content: { tsvectorColumn: 'search', textColumn: 'text_text' },
+  reasoning: {
+    tsvectorColumn: 'search_reasoning',
+    textColumn: 'reasoning_text'
+  }
+} as const
+
+type FtsSearchScope = keyof typeof FTS_SCOPES
+
+/**
+ * Full-text search over message parts of the user's chats.
+ * Keeps the best-scoring part per chat (DISTINCT ON + ts_rank), with a
+ * ts_headline snippet containing <b></b> highlight markers. Ties on rank
+ * are broken by newest chat first.
+ */
+async function searchChatParts(
+  userId: string,
+  query: string,
+  limit: number,
+  scope: FtsSearchScope
+): Promise<ChatContentSearchResult[]> {
+  const trimmed = query.trim()
+  if (!trimmed) {
+    return []
+  }
+
+  const { tsvectorColumn, textColumn } = FTS_SCOPES[scope]
+  const tsvectorCol = sql.identifier(tsvectorColumn)
+  const textCol = sql.identifier(textColumn)
+  const pageLimit = Math.max(1, Math.min(limit, 50))
+
+  return withRLS(userId, async tx => {
+    const rows = await tx.execute<{
+      chat_id: string
+      title: string
+      snippet: string
+    }>(sql`
+      WITH fts_query AS (
+        SELECT plainto_tsquery('english', ${trimmed}) AS q
+      ),
+      ranked AS (
+        SELECT DISTINCT ON (c.id)
+          c.id AS chat_id,
+          c.title AS title,
+          c.created_at AS chat_created_at,
+          ts_rank(p.${tsvectorCol}, fts_query.q) AS match_rank,
+          ts_headline(
+            'english',
+            coalesce(p.${textCol}, ''),
+            fts_query.q,
+            'MaxWords=14, MinWords=7'
+          ) AS snippet
+        FROM fts_query
+        CROSS JOIN ${parts} p
+        JOIN ${messages} msg ON msg.id = p.message_id
+        JOIN ${chats} c ON c.id = msg.chat_id
+        WHERE c.user_id = ${userId}
+          AND p.${tsvectorCol} @@ fts_query.q
+        ORDER BY c.id, match_rank DESC, p.id
+      )
+      SELECT chat_id, title, snippet
+      FROM ranked
+      ORDER BY match_rank DESC, chat_created_at DESC
+      LIMIT ${pageLimit}
+    `)
+
+    return (rows as unknown as Array<Record<string, string>>).map(row => ({
+      chatId: row.chat_id,
+      title: row.title,
+      snippet: row.snippet
+    }))
+  })
+}
+
+/**
+ * Full-text search over user/assistant message text of the user's chats.
+ */
+export async function searchChatContent(
+  userId: string,
+  query: string,
+  limit = 20
+): Promise<ChatContentSearchResult[]> {
+  return searchChatParts(userId, query, limit, 'content')
+}
+
+/**
+ * Full-text search over stored reasoning output of the user's chats.
+ */
+export async function searchChatReasoning(
+  userId: string,
+  query: string,
+  limit = 10
+): Promise<ChatContentSearchResult[]> {
+  return searchChatParts(userId, query, limit, 'reasoning')
+}
+
+/**
  * Delete a chat
  */
 export async function deleteChat(
