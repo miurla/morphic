@@ -11,7 +11,8 @@ import {
   isBetterAuthSmtpConfigured,
   isBootstrapAccount,
   isOidcConfigured,
-  reElectBootstrapAdmin
+  reElectBootstrapAdmin,
+  resetOidcBootstrapGate
 } from '@/lib/auth/better-auth/config'
 import {
   consumeInvitation,
@@ -659,6 +660,11 @@ export const betterAuthProvider: AuthProvider = {
       // reElectBootstrapAdmin).
       await reElectBootstrapAdmin()
     }
+    // Deletions can reopen the OIDC bootstrap window (an instance whose
+    // accounts are all gone regains it); reset the calibration so the next
+    // auth instance re-derives the window from the live table state.
+    // No-op unless the OIDC bootstrap gate can apply at all.
+    resetOidcBootstrapGate()
   },
 
   async deleteUser(
