@@ -313,7 +313,10 @@ Better Auth supports generic OIDC authentication for corporate identity provider
 OIDC_ISSUER=https://keycloak.example.com/realms/your-realm
 OIDC_CLIENT_ID=morphic-client
 OIDC_CLIENT_SECRET=your-client-secret
+BETTER_AUTH_URL=https://your-morphic-url.com
 ```
+
+`BETTER_AUTH_URL` is required: it is the canonical origin the provider redirect URI (`<BETTER_AUTH_URL>/api/auth/callback/oidc`) and the post-SignIn redirect are derived from. Without it, OAuth sign-in is refused at click time even when OIDC is otherwise fully configured.
 
 **Optional customization:**
 
@@ -338,7 +341,7 @@ OIDC_PROVIDER_NAME=Keycloak
 
 - `AUTH_SIGNUP_MODE=open`: any identity accepted by your IdP can create a local account on first sign-in
 - `AUTH_SIGNUP_MODE=invite` (or an invalid mode): implicit sign-up through OIDC is disabled. An IdP user must already have a local account — e.g. one created through an invitation — otherwise sign-in is rejected; invited members therefore register once with the credential flow and use OIDC afterwards. Members of your IdP tenant are never handed an account implicitly.
-- The bootstrap window (`BOOTSTRAP_ADMIN_EMAIL`, empty user table) applies to OIDC account creation as well.
+- The bootstrap window (`BOOTSTRAP_ADMIN_EMAIL`, empty user table) applies to OIDC account creation as well. With SMTP configured, the first account is created only through the emailed bootstrap link (proof of mailbox ownership of its address); an OIDC callback cannot account-create until that first sign-in closes the window. Without SMTP, the address gate is the accepted proof, as for credential sign-up.
 
 **HTTP surface:**
 

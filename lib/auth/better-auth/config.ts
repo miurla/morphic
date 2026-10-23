@@ -290,6 +290,18 @@ function createAuth() {
     }
   })()
 
+  // Mailbox proof anchors the bootstrap window: with SMTP configured, the
+  // first account is created only through the emailed bootstrap link
+  // (invitedBy = 'bootstrap'), so whoever owns the operator's address
+  // proves it. An OIDC callback account-creates directly, without any
+  // chance to prove that mailbox — so until the first account exists, the
+  // instance must not mint accounts through OIDC. SMTP-off bootstrap keeps
+  // the address gate as its (accepted) proof, same as credential sign-up.
+  const bootstrapRequiresMailboxProof =
+    smtpConfigured && Boolean(process.env.BOOTSTRAP_ADMIN_EMAIL?.trim())
+  const oidcImplicitSignUpAllowed =
+    oidcSignUpAllowed && !bootstrapRequiresMailboxProof
+
   // Conditionally spread the OIDC plugin inline so the concrete plugin
   // types reach betterAuth(): a `plugins: any[]` assertion would strip
   // every declared endpoint (e.g. admin's setRole/setUserPassword) from
@@ -316,7 +328,10 @@ function createAuth() {
               // local user has yet been created for; known users can still
               // sign in. Invited members register through the credential
               // sign-up flow (invitation token), then use OIDC thereafter.
-              disableSignUp: !oidcSignUpAllowed,
+              // It also covers the SMTP bootstrap window: the first account
+              // must come from the emailed bootstrap link, not an OIDC
+              // callback (see bootstrapRequiresMailboxProof above).
+              disableSignUp: !oidcImplicitSignUpAllowed,
               // Map OIDC claims to Better Auth user fields
               // Note: Do not map 'id' here - Better Auth gets user identity from
               // the accountSubject (OIDC 'sub' claim) automatically
