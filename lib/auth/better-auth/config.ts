@@ -273,6 +273,23 @@ function createAuth() {
   const smtpConfigured = isBetterAuthSmtpConfigured()
   const oidcConfigured = isOidcConfigured()
 
+  // An identity provider's tenant must not gain members outside the sign-up
+  // policy: implicit OAuth sign-up is only allowed in explicitly open mode.
+  // An invalid AUTH_SIGNUP_MODE fails closed (unless it says "open", the
+  // user creation stays disabled); the credential sign-up path still throws
+  // its explanatory error before reaching the database hook.
+  const oidcSignUpAllowed = (() => {
+    try {
+      return getSignUpMode() === 'open'
+    } catch (error) {
+      console.warn(
+        'AUTH_SIGNUP_MODE is invalid — disabling implicit OIDC sign-up.',
+        error
+      )
+      return false
+    }
+  })()
+
   // Conditionally spread the OIDC plugin inline so the concrete plugin
   // types reach betterAuth(): a `plugins: any[]` assertion would strip
   // every declared endpoint (e.g. admin's setRole/setUserPassword) from
@@ -294,6 +311,12 @@ function createAuth() {
                 process.env.OIDC_SCOPE?.trim() || 'openid profile email'
               ).split(' '),
               pkce: true,
+              // Resolution for invite-only instances: an OAuth callback must
+              // not account-create. disableSignUp rejects identities no
+              // local user has yet been created for; known users can still
+              // sign in. Invited members register through the credential
+              // sign-up flow (invitation token), then use OIDC thereafter.
+              disableSignUp: !oidcSignUpAllowed,
               // Map OIDC claims to Better Auth user fields
               // Note: Do not map 'id' here - Better Auth gets user identity from
               // the accountSubject (OIDC 'sub' claim) automatically
@@ -330,7 +353,8 @@ function createAuth() {
         ? async ({ user, token }) => {
             // better-auth's generated url targets its own
             // /api/auth/reset-password/:token endpoint, which this app does
-            // not expose (the API handler is not mounted), so it would 404.
+            // not expose (the mounted HTTP surface is restricted to provider
+            // callbacks, see app/api/auth/[...all]/route.ts), so it would 404.
             // Link the in-app page directly with the raw token instead; it
             // resets the password through the provider's server action.
             const origin = getEmailLinkOrigin()

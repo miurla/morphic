@@ -332,6 +332,17 @@ OIDC_PROVIDER_NAME=Keycloak
 - Implements PKCE (Proof Key for Code Exchange) for secure authorization flows
 - User accounts are stored in the same `users` and `accounts` tables as email/password users
 - The OIDC `sub` claim is stored as `accounts.accountId` with `accounts.providerId='oidc'`
+- A transient discovery outage does not permanently disable the provider: a failed discovery is retried on the next sign-in attempt
+
+**Sign-up policy:**
+
+- `AUTH_SIGNUP_MODE=open`: any identity accepted by your IdP can create a local account on first sign-in
+- `AUTH_SIGNUP_MODE=invite` (or an invalid mode): implicit sign-up through OIDC is disabled. An IdP user must already have a local account — e.g. one created through an invitation — otherwise sign-in is rejected; invited members therefore register once with the credential flow and use OIDC afterwards. Members of your IdP tenant are never handed an account implicitly.
+- The bootstrap window (`BOOTSTRAP_ADMIN_EMAIL`, empty user table) applies to OIDC account creation as well.
+
+**HTTP surface:**
+
+Better Auth's API is driven through server actions. Only the provider callback is mounted as an HTTP route (`GET /api/auth/callback/<providerId>`); other endpoints (credential sign-up, sign-in, password reset) are reachable only inside the server actions, which enforce the sign-up policy — a direct `POST /api/auth/sign-up/email` on a mounted catch-all would otherwise bypass invitations.
 
 **Identity provider setup:**
 
