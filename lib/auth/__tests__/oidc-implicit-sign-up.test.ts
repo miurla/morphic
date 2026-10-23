@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { isOidcImplicitSignUpBlocked } from '@/lib/auth/better-auth/config'
+import {
+  BOOTSTRAP_CALIBRATION_RETRY_MS,
+  isBootstrapCalibrationRetryDue,
+  isOidcImplicitSignUpBlocked} from '@/lib/auth/better-auth/config'
 
 /**
  * The gate has two lifetimes that must behave independently:
@@ -92,5 +95,31 @@ describe('isOidcImplicitSignUpBlocked', () => {
     const gate = isOidcImplicitSignUpBlocked({ ...base, userTableEmpty: false })
     expect(gate.blocked).toBe(false)
     expect(gate.liftsWithFirstAccount).toBe(false)
+  })
+})
+
+describe('isBootstrapCalibrationRetryDue', () => {
+  it('never retries without a failed attempt', () => {
+    expect(isBootstrapCalibrationRetryDue(0, Date.now())).toBe(false)
+  })
+
+  it('stays throttled inside the retry interval', () => {
+    const failedAt = 1_000
+    expect(
+      isBootstrapCalibrationRetryDue(
+        failedAt,
+        failedAt + BOOTSTRAP_CALIBRATION_RETRY_MS - 1
+      )
+    ).toBe(false)
+  })
+
+  it('re-arms the measurement once the interval elapsed', () => {
+    const failedAt = 1_000
+    expect(
+      isBootstrapCalibrationRetryDue(
+        failedAt,
+        failedAt + BOOTSTRAP_CALIBRATION_RETRY_MS
+      )
+    ).toBe(true)
   })
 })

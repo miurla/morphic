@@ -293,6 +293,30 @@ let bootstrapOidcGateReleasable = false
 /** True once the calibration query ran; guards against rebuild loops. */
 let bootstrapOidcCalibrated = false
 
+/**
+ * Timestamp of the last failed calibration count query (0 = none): a failed
+ * measurement re-arms itself after {@link BOOTSTRAP_CALIBRATION_RETRY_MS},
+ * so a transient database outage during the calibration does not leave
+ * implicit OIDC sign-up blocked until a process restart.
+ */
+let bootstrapOidcCalibrationFailedAt = 0
+
+/** Throttle for re-measuring after a failed calibration count query. */
+export const BOOTSTRAP_CALIBRATION_RETRY_MS = 5_000
+
+/**
+ * Decide when a failed bootstrap-window calibration may re-run: a bounded
+ * retry (instance rebuild + count query) at most once per retry interval.
+ * The gate stays closed (safe side) until a successful count proves the
+ * window closed.
+ */
+export function isBootstrapCalibrationRetryDue(
+  failedAtMs: number,
+  nowMs: number
+): boolean {
+  return failedAtMs > 0 && nowMs - failedAtMs >= BOOTSTRAP_CALIBRATION_RETRY_MS
+}
+
 /** True when OIDC + SMTP + BOOTSTRAP_ADMIN_EMAIL can gate at all. */
 let bootstrapOidcGatePossible = false
 
@@ -331,9 +355,11 @@ export function isOidcImplicitSignUpBlocked(params: {
 
 /**
  * `createAuth` is synchronous and must not await a database read: it starts
- * optimistically with the window open and measures ONCE. A rebuild that
- * measured again could recurse, hence the sticky `bootstrapOidcCalibrated`
- * flag: only a real state change (first account / reset) re-arms it.
+ * optimistically with the window open and measures once per instance. A
+ * rebuild that measured again could recurse, hence the sticky
+ * `bootstrapOidcCalibrated` flag: only a real state change (first account /
+ * reset) or a failed attempt (re-armed by getAuth after the retry interval)
+ * re-arms the measurement.
  */
 function scheduleBootstrapWindowCalibration(): void {
   if (bootstrapOidcCalibrated) {
@@ -346,15 +372,24 @@ function scheduleBootstrapWindowCalibration(): void {
       if ((row?.total ?? 0) > 0 && bootstrapWindowEmpty !== false) {
         // Accounts predate this process: the window closed before boot.
         bootstrapWindowEmpty = false
+        bootstrapOidcCalibrationFailedAt = 0
         authInstance = null // next getAuth() rebuilds with the gate off
       } else if ((row?.total ?? 0) === 0) {
         bootstrapWindowEmpty = true
+        bootstrapOidcCalibrationFailedAt = 0
       }
     } catch (error) {
+      // Transient database outage: keep the gate closed (safe side) and
+      // re-arm the measurement — getAuth() rebuilds the instance after the
+      // retry interval and re-runs the count query, so registration is not
+      // stuck until a process restart.
+      bootstrapOidcCalibrationFailedAt = Date.now()
       console.warn(
         'Could not measure the bootstrap window state for OIDC sign-up; ' +
-          'the gate stays on until the wrong state is corrected by a ' +
-          'sign-up event or a process restart.',
+          'the gate stays on until a successful count closes the window ' +
+          '(retried after ' +
+          BOOTSTRAP_CALIBRATION_RETRY_MS +
+          ' ms).',
         error
       )
     }
@@ -388,6 +423,7 @@ export function resetOidcBootstrapGate(): void {
     return
   }
   bootstrapOidcCalibrated = false
+  bootstrapOidcCalibrationFailedAt = 0
   bootstrapWindowEmpty = null
   bootstrapOidcGateReleasable = false
   authInstance = null
@@ -552,6 +588,18 @@ let authInstance: BetterAuth | null = null
 
 /** Lazily create the shared Better Auth instance. */
 export function getAuth(): BetterAuth {
+  // A failed calibration re-arms itself: rebuild the instance (which
+  // re-schedules the count query) at most once per retry interval, so a
+  // transient database outage heals without hammering the database or
+  // blocking implicit OIDC sign-up until a process restart.
+  if (
+    authInstance &&
+    isBootstrapCalibrationRetryDue(bootstrapOidcCalibrationFailedAt, Date.now())
+  ) {
+    bootstrapOidcCalibrationFailedAt = 0
+    bootstrapOidcCalibrated = false
+    authInstance = null // rebuild below re-schedules the measurement
+  }
   if (!authInstance) {
     authInstance = createAuth()
   }
@@ -564,4 +612,5 @@ export function resetAuthInstance(): void {
   bootstrapWindowEmpty = null
   bootstrapOidcGateReleasable = false
   bootstrapOidcCalibrated = false
+  bootstrapOidcCalibrationFailedAt = 0
 }
