@@ -212,11 +212,15 @@ export const betterAuthProvider: AuthProvider = {
   name: 'better-auth',
 
   get capabilities() {
-    const oidcConfigured = isOidcConfigured()
+    // Every OAuth sign-in routes through the canonical origin: the IdP's
+    // redirect_uri and the post-sign-in redirect derive from
+    // BETTER_AUTH_URL (see signInWithOAuth), so OIDC credentials alone do
+    // not make the button work — mirror the passwordReset gate.
+    const canonicalOrigin = getEmailLinkOrigin() !== ''
+    const oidcConfigured = canonicalOrigin ? isOidcConfigured() : false
     return {
       signUp: true,
-      passwordReset:
-        isBetterAuthSmtpConfigured() && getEmailLinkOrigin() !== '',
+      passwordReset: isBetterAuthSmtpConfigured() && canonicalOrigin,
       deleteUser: true,
       // OAuth available when OIDC is configured or other OAuth providers are enabled
       oauth: oidcConfigured,
