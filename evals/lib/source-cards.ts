@@ -1,3 +1,7 @@
+import {
+  reachableElements,
+  type SpecElement
+} from '@/lib/render/linked-cards-markdown'
 import { parseSpecBlock } from '@/lib/render/parse-spec-block'
 import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
 
@@ -107,12 +111,6 @@ export type SourceCardsAnalysis = {
   duplicatedAsList: boolean
 }
 
-type SpecElement = {
-  type: string
-  props?: Record<string, unknown>
-  children?: string[]
-}
-
 const SPEC_BLOCK_PATTERN = /```spec\n([\s\S]*?)```/g
 const MIN_ITEMS = 2
 const MAX_ITEMS = 8
@@ -134,15 +132,19 @@ function extractCards(markdown: string): {
     if (!source.includes('"Card"') || !source.includes('"href"')) continue
     found = true
 
+    let root: string
     let elements: Record<string, SpecElement>
     try {
-      elements = parseSpecBlock(source).elements as typeof elements
+      const spec = parseSpecBlock(source)
+      root = spec.root
+      elements = spec.elements as typeof elements
     } catch {
       parseFailures++
       continue
     }
 
-    for (const element of Object.values(elements)) {
+    // Only cards reachable from the root render, so only those count.
+    for (const element of reachableElements(root, elements)) {
       const href = element.props?.href
       if (element.type !== 'Card' || typeof href !== 'string') continue
       // The card's name is its first Text child, per the prompt.

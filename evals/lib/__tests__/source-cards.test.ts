@@ -53,6 +53,21 @@ describe('analyzeSourceCards', () => {
     expect(analysis.misattributedUrls).toEqual([URLS[2]])
   })
 
+  test('does not count cards the root does not reach', () => {
+    const answer = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"note"}',
+      '{"op":"add","path":"/elements/note","value":{"type":"Text","props":{"text":"Nothing linked here"},"children":[]}}',
+      `{"op":"add","path":"/elements/c1","value":{"type":"Card","props":{"href":"${URLS[0]}"},"children":[]}}`,
+      `{"op":"add","path":"/elements/c2","value":{"type":"Card","props":{"href":"${URLS[1]}"},"children":[]}}`,
+      '```'
+    ].join('\n')
+    const analysis = analyzeSourceCards(answer, URLS)
+
+    expect(analysis.cards).toEqual([])
+    expect(analysis.wellFormed).toBe(false)
+  })
+
   test('flags a single card as malformed', () => {
     const analysis = analyzeSourceCards(
       cardsBlock([{ title: 'Alpha', url: URLS[0] }]),

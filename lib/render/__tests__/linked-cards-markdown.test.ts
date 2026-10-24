@@ -66,6 +66,21 @@ describe('linkedCardsFenceToMarkdown', () => {
     )
   })
 
+  test('keeps the cards that render when one line is malformed', () => {
+    const fence = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"g"}',
+      '{"op":"add","path":"/elements/g","value":{"type":"Grid","props":{"columns":2},"children":["c1","c2"]}}',
+      '{"op":"add","path":"/elements/c1","value":{"type":"Card","props":{"href":"https://one.example/"},"children":["t1"]}}',
+      '{"op":"add","path":"/elements/t1","value":{"type":"Text","props":{"text":"One"},"children":[]}}',
+      '{"op":"add","path":"/elements/c2","value":{"type":"Card","props":{"href":',
+      '```'
+    ].join('\n')
+    expect(linkedCardsFenceToMarkdown(fence)).toBe(
+      '- [One](https://one.example/)'
+    )
+  })
+
   test('returns null for cards without href', () => {
     const fence = [
       '```spec',

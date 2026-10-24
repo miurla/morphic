@@ -1,11 +1,33 @@
-import { parseSpecBlock } from './parse-spec-block'
+import { createPartialSpecParser } from './parse-spec-block'
 
 const FENCE_BODY = /^```spec\s*\n([\s\S]*?)```$/
 
-type Element = {
+export type SpecElement = {
   type: string
   props?: Record<string, unknown>
   children?: string[]
+}
+
+/**
+ * Elements reachable from the root, in the order they render. Elements the
+ * root does not reach are never shown, so they are left out.
+ */
+export function reachableElements(
+  root: string,
+  elements: Record<string, SpecElement>
+): SpecElement[] {
+  const ordered: SpecElement[] = []
+  const seen = new Set<string>()
+  const walk = (key: string) => {
+    if (seen.has(key)) return
+    seen.add(key)
+    const element = elements[key]
+    if (!element) return
+    ordered.push(element)
+    for (const child of element.children ?? []) walk(child)
+  }
+  walk(root)
+  return ordered
 }
 
 /**
@@ -21,32 +43,16 @@ export function linkedCardsFenceToMarkdown(fence: string): string | null {
   const body = FENCE_BODY.exec(fence.trim())?.[1]
   if (!body) return null
 
-  let root: string
-  let elements: Record<string, Element>
-  try {
-    const spec = parseSpecBlock(body)
-    root = spec.root
-    elements = spec.elements as Record<string, Element>
-  } catch {
-    return null
-  }
-
-  // Walk from the root in child order so the list matches the rendered order;
-  // a follow-up like "the second one" must point at the same item.
-  const ordered: Element[] = []
-  const seen = new Set<string>()
-  const walk = (key: string) => {
-    if (seen.has(key)) return
-    seen.add(key)
-    const element = elements[key]
-    if (!element) return
-    ordered.push(element)
-    for (const child of element.children ?? []) walk(child)
-  }
-  walk(root)
+  // The same lenient parser the renderer uses, so a block that renders some
+  // cards despite a malformed line keeps those cards here too.
+  const spec = createPartialSpecParser().parse(body)
+  if (!spec) return null
+  const elements = spec.elements as Record<string, SpecElement>
 
   const lines: string[] = []
-  for (const element of ordered) {
+  // Rendered order, so a follow-up like "the second one" points at the same
+  // item the user sees.
+  for (const element of reachableElements(spec.root, elements)) {
     const href = element.props?.href
     if (element.type !== 'Card' || typeof href !== 'string') continue
 
