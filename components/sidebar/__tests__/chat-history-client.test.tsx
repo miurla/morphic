@@ -212,6 +212,73 @@ describe('ChatHistoryClient search mode', () => {
     expect(screen.getByText('Existing chat')).toBeInTheDocument()
   })
 
+  it('marks the list stale when a hidden refresh fails after the query is cleared', async () => {
+    const fetchMock = mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+    fetchMock.mockClear()
+
+    // The refresh starts while search mode hides the list, but the user
+    // clears the query before the failing response lands: the failure
+    // counts as a hidden-refresh failure (mode at request start, not at
+    // completion) and must still be retried.
+    fetchMock.mockImplementationOnce(async () => {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      return { ok: false, json: async () => ({ chats: [], nextOffset: null }) }
+    })
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Clear search'))
+    })
+    await flush(200)
+    const chatsCalls = fetchMock.mock.calls.filter(([url]) =>
+      String(url).startsWith('/api/chats')
+    ).length
+    expect(chatsCalls).toBe(2)
+    expect(screen.getByText('Existing chat')).toBeInTheDocument()
+  })
+
+  it('offers a retry instead of stale chats when the exit retry also fails', async () => {
+    const fetchMock = mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+    fetchMock.mockClear()
+
+    const failChats = async () => ({
+      ok: false,
+      json: async () => ({ chats: [], nextOffset: null })
+    })
+    fetchMock.mockImplementationOnce(failChats)
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    await flush(50)
+
+    // The retry issued on leaving search mode fails too (outage spanning
+    // both requests): the deleted chats must stay hidden behind an
+    // actionable retry instead of reappearing.
+    fetchMock.mockImplementationOnce(failChats)
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Clear search'))
+    })
+    await flush(50)
+    expect(screen.queryByText('Existing chat')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+
+    // Recovering now, the manual retry shows the fresh list.
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    })
+    await flush(50)
+    expect(screen.getByText('Existing chat')).toBeInTheDocument()
+  })
+
   it('refetches search results when chat data changes during search', async () => {
     const fetchMock = mockFetch()
     render(<ChatHistoryClient />)

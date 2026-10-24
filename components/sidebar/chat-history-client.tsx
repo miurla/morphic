@@ -45,8 +45,13 @@ export function ChatHistoryClient() {
   // list instead of mounting a search view that can never produce results.
   const searchMode = normalizeSearchQuery(query).length >= MIN_QUERY_LENGTH
   const searchModeRef = useRef(searchMode)
+  // A list refresh that failed while search mode hid the list: the stale
+  // items (possibly deleted chats) must not be revealed until a refresh
+  // succeeds. Cleared only by a successful fetch.
   const [staleHiddenRefresh, setStaleHiddenRefresh] = useState(false)
-  const [isRetryingList, setIsRetryingList] = useState(false)
+  // The exit-from-search retry also failed: show an actionable error
+  // instead of an endless skeleton or the stale items.
+  const [listRetryFailed, setListRetryFailed] = useState(false)
   // Bumped when chat data changes during search mode, telling the results
   // view to refetch so stale matches (e.g. after Clear History) cannot be
   // opened.
@@ -113,13 +118,12 @@ export function ChatHistoryClient() {
 
   useEffect(() => {
     const handleHistoryUpdate = () => {
-      // Chat data changed (e.g. Clear History). Refresh the chronological
-      // list even while search mode hides it: deferring the refresh would
-      // reveal stale items when the user leaves search mode (deleted chats
-      // stay clickable for the whole deferred request). The hidden list
-      // renders nothing, so refreshing it cannot disturb the results view,
-      // which refetches via the epoch bump below.
-      if (searchModeRef.current) {
+      // Capture the mode at request start: the user may leave search mode
+      // before the request settles, and a refresh that began while the list
+      // was hidden must be treated as hidden regardless of the mode at
+      // completion.
+      const startedHidden = searchModeRef.current
+      if (startedHidden) {
         setSearchEpoch(epoch => epoch + 1)
       }
       startTransition(async () => {
@@ -129,7 +133,7 @@ export function ChatHistoryClient() {
         // retry when search mode ends. The marker clears only on success.
         if (ok) {
           setStaleHiddenRefresh(false)
-        } else if (searchModeRef.current) {
+        } else if (startedHidden) {
           setStaleHiddenRefresh(true)
         }
       })
@@ -140,22 +144,27 @@ export function ChatHistoryClient() {
     }
   }, [fetchInitialChats, startTransition])
 
-  // Retry a refresh that failed while the list was hidden. Stale items
-  // (possibly deleted chats) stay suppressed while the retry is in flight;
-  // a failed retry keeps the marker so the next exit from search mode
-  // tries again.
+  // Retry a refresh that failed while the list was hidden. The stale items
+  // (possibly deleted chats) stay suppressed until a refresh succeeds:
+  // skeleton while a retry is in flight, an actionable error once one
+  // fails. The marker clears only on success.
+  const retryStaleList = useCallback(() => {
+    setListRetryFailed(false)
+    startTransition(async () => {
+      const ok = await fetchInitialChats()
+      if (ok) {
+        setStaleHiddenRefresh(false)
+      } else {
+        setListRetryFailed(true)
+      }
+    })
+  }, [fetchInitialChats, startTransition])
+
   useEffect(() => {
     if (!searchMode && staleHiddenRefresh) {
-      setIsRetryingList(true)
-      startTransition(async () => {
-        const ok = await fetchInitialChats()
-        setIsRetryingList(false)
-        if (ok) {
-          setStaleHiddenRefresh(false)
-        }
-      })
+      retryStaleList()
     }
-  }, [searchMode, staleHiddenRefresh, fetchInitialChats, startTransition])
+  }, [searchMode, staleHiddenRefresh, retryStaleList])
 
   const fetchMoreChats = useCallback(async () => {
     if (isLoading || nextOffset === null) return
@@ -277,10 +286,25 @@ export function ChatHistoryClient() {
             query={query}
             onActiveValueChange={setActiveResult}
           />
-        ) : isRetryingList ? (
-          <div className="py-2">
-            <ChatHistorySkeleton />
-          </div>
+        ) : staleHiddenRefresh ? (
+          listRetryFailed ? (
+            <div className="px-2 py-4 text-center">
+              <p className="text-muted-foreground text-sm">
+                Failed to load chat history.
+              </p>
+              <button
+                type="button"
+                onClick={retryStaleList}
+                className="text-muted-foreground hover:text-foreground hover:bg-accent mt-1 rounded-sm px-2 py-1 text-xs transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <div className="py-2">
+              <ChatHistorySkeleton />
+            </div>
+          )
         ) : isHistoryEmpty && !isPending ? (
           <div className="px-2 text-foreground/30 text-sm text-center py-4">
             No chats yet
@@ -294,7 +318,7 @@ export function ChatHistoryClient() {
           </SidebarMenu>
         )}
         {!searchMode && <div ref={loadMoreRef} style={{ height: '1px' }} />}
-        {!searchMode && !isRetryingList && (isLoading || isPending) && (
+        {!searchMode && !staleHiddenRefresh && (isLoading || isPending) && (
           <div className="py-2">
             <ChatHistorySkeleton />
           </div>
