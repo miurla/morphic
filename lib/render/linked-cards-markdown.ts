@@ -21,15 +21,32 @@ export function linkedCardsFenceToMarkdown(fence: string): string | null {
   const body = FENCE_BODY.exec(fence.trim())?.[1]
   if (!body) return null
 
+  let root: string
   let elements: Record<string, Element>
   try {
-    elements = parseSpecBlock(body).elements as Record<string, Element>
+    const spec = parseSpecBlock(body)
+    root = spec.root
+    elements = spec.elements as Record<string, Element>
   } catch {
     return null
   }
 
+  // Walk from the root in child order so the list matches the rendered order;
+  // a follow-up like "the second one" must point at the same item.
+  const ordered: Element[] = []
+  const seen = new Set<string>()
+  const walk = (key: string) => {
+    if (seen.has(key)) return
+    seen.add(key)
+    const element = elements[key]
+    if (!element) return
+    ordered.push(element)
+    for (const child of element.children ?? []) walk(child)
+  }
+  walk(root)
+
   const lines: string[] = []
-  for (const element of Object.values(elements)) {
+  for (const element of ordered) {
     const href = element.props?.href
     if (element.type !== 'Card' || typeof href !== 'string') continue
 

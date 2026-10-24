@@ -36,6 +36,36 @@ describe('linkedCardsFenceToMarkdown', () => {
     )
   })
 
+  test('follows the rendered order, not the definition order', () => {
+    const fence = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"g"}',
+      '{"op":"add","path":"/elements/g","value":{"type":"Grid","props":{"columns":2},"children":["c2","c1"]}}',
+      '{"op":"add","path":"/elements/c1","value":{"type":"Card","props":{"href":"https://one.example/"},"children":["t1"]}}',
+      '{"op":"add","path":"/elements/t1","value":{"type":"Text","props":{"text":"One"},"children":[]}}',
+      '{"op":"add","path":"/elements/c2","value":{"type":"Card","props":{"href":"https://two.example/"},"children":["t2"]}}',
+      '{"op":"add","path":"/elements/t2","value":{"type":"Text","props":{"text":"Two"},"children":[]}}',
+      '```'
+    ].join('\n')
+    expect(linkedCardsFenceToMarkdown(fence)).toBe(
+      '- [Two](https://two.example/)\n- [One](https://one.example/)'
+    )
+  })
+
+  test('skips cards the root does not reach', () => {
+    const fence = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"g"}',
+      '{"op":"add","path":"/elements/g","value":{"type":"Grid","props":{"columns":1},"children":["c1"]}}',
+      '{"op":"add","path":"/elements/c1","value":{"type":"Card","props":{"href":"https://one.example/"},"children":[]}}',
+      '{"op":"add","path":"/elements/orphan","value":{"type":"Card","props":{"href":"https://orphan.example/"},"children":[]}}',
+      '```'
+    ].join('\n')
+    expect(linkedCardsFenceToMarkdown(fence)).toBe(
+      '- [https://one.example/](https://one.example/)'
+    )
+  })
+
   test('returns null for cards without href', () => {
     const fence = [
       '```spec',
