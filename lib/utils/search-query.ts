@@ -13,10 +13,20 @@
  */
 export const MAX_QUERY_LENGTH = 200
 
+// Slicing can split a surrogate pair, and lone surrogates are rejected by
+// encodeURIComponent (URIError) and by Postgres' UTF-8 validation. Strip
+// them so the normalized query is always encodable.
+function stripLoneSurrogates(value: string): string {
+  return value.replace(
+    /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,
+    ''
+  )
+}
+
 export function normalizeSearchQuery(query: string): string {
   const trimmed = query.trim()
   if (trimmed.length <= MAX_QUERY_LENGTH) {
-    return trimmed
+    return stripLoneSurrogates(trimmed)
   }
   const capped = trimmed.slice(0, MAX_QUERY_LENGTH)
   // Drop everything from the last whitespace run on, so a token sliced by
@@ -24,5 +34,7 @@ export function normalizeSearchQuery(query: string): string {
   // ' '): pasted queries may separate words with newlines or tabs, which
   // Postgres' parser also treats as word boundaries.
   const boundary = capped.match(/\s\S*$/)
-  return (boundary ? capped.slice(0, boundary.index) : capped).trim()
+  return stripLoneSurrogates(
+    (boundary ? capped.slice(0, boundary.index) : capped).trim()
+  )
 }

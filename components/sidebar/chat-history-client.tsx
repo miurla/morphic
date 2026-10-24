@@ -6,6 +6,7 @@ import { IconX as X } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { Chat as DBChat } from '@/lib/db/schema'
+import { normalizeSearchQuery } from '@/lib/utils/search-query'
 
 import { Input } from '@/components/ui/input'
 import {
@@ -37,7 +38,10 @@ export function ChatHistoryClient() {
   const resultsRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [isPending, startTransition] = useTransition()
-  const searchMode = query.trim().length >= MIN_SEARCH_LENGTH
+  // Based on the normalized query (what the search actually runs): a paste
+  // whose bounded form falls below the minimum keeps the chronological
+  // list instead of mounting a search view that can never produce results.
+  const searchMode = normalizeSearchQuery(query).length >= MIN_SEARCH_LENGTH
   const searchModeRef = useRef(searchMode)
   const pendingListRefreshRef = useRef(false)
   // Bumped when chat data changes during search mode, telling the results

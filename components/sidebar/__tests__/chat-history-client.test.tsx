@@ -357,6 +357,30 @@ describe('ChatHistoryClient search mode', () => {
     ).toBe('note '.repeat(40).trim())
   })
 
+  it('keeps the chronological list when normalization drops the query below the minimum', async () => {
+    mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    // 'a ' + a 300-char token: the bound drops the partial second token,
+    // leaving one character — too short to search, so the list stays
+    await typeInSearch('a ' + 'x'.repeat(300))
+
+    expect(screen.getByText('Existing chat')).toBeInTheDocument()
+  })
+
+  it('searches a paste whose cap split falls inside a surrogate pair', async () => {
+    const fetchMock = mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    // the 200-code-unit cut lands inside an emoji; without the surrogate
+    // backoff, encodeURIComponent throws and no request is ever issued
+    await typeInSearch('a' + '😀'.repeat(100))
+
+    expect(calledWith(fetchMock, '/api/search')).toBe(true)
+  })
+
   it('does not forward Enter or Escape while an IME composition is active', async () => {
     mockFetch()
     render(<ChatHistoryClient />)
