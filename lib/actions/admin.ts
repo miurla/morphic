@@ -158,7 +158,7 @@ export async function resetMemberPasswordAction(params: {
   }
 
   try {
-    // Note: better-auth's admin setUserPassword re-hashes the credential but
+    // Note: better-auth's setUserPassword re-hashes the credential but
     // leaves the member's existing sessions valid; a reset done because of
     // a suspected compromise does not log the member out until those
     // sessions expire naturally.

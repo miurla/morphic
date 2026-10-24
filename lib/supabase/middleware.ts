@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
-import { createServerClient, type SetAllCookies } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 
 import { getSupabasePublishableKey } from './keys'
 
@@ -18,7 +18,7 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet: Parameters<SetAllCookies>[0]) {
+        setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
@@ -97,7 +97,7 @@ export async function exchangeAuthCode(
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet: Parameters<SetAllCookies>[0]) {
+        setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
