@@ -407,9 +407,22 @@ export function Chat({
       messages,
       isStreaming: status === 'streaming' || status === 'submitted',
       quote: handleQuoteContext,
+      chatId,
+      isGuest,
+      isCloudDeployment,
+      libraryAvailable,
       isVisible: () => Boolean(scrollContainerRef.current?.offsetParent)
     })
-  }, [draftSourceId, messages, status, handleQuoteContext])
+  }, [
+    draftSourceId,
+    messages,
+    status,
+    handleQuoteContext,
+    chatId,
+    isGuest,
+    isCloudDeployment,
+    libraryAvailable
+  ])
   useEffect(() => () => unregisterDraftSource(draftSourceId), [draftSourceId])
 
   useEffect(() => {

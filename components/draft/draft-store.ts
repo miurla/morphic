@@ -13,6 +13,11 @@ type DraftSource = {
   messages: UIMessage[]
   isStreaming: boolean
   quote: ((text: string) => void) | null
+  // What the panel's Save button needs, matching the answer Save button.
+  chatId?: string
+  isGuest?: boolean
+  isCloudDeployment?: boolean
+  libraryAvailable?: boolean
 }
 
 type Registration = DraftSource & { isVisible: () => boolean }
