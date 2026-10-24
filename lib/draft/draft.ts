@@ -36,6 +36,8 @@ export type DraftVersion = {
   /** Set on edit versions: how many edits applied and which failed. */
   applied?: number
   failed?: DraftEditFailure[]
+  /** Set on a write whose block never closed because the answer stopped. */
+  interrupted?: boolean
 }
 
 function parseBody(body: string): { title: string; content: string } {
@@ -120,7 +122,10 @@ export function parseDraftBlocks(text: string): DraftBlock[] {
   }))
 }
 
-/** Replace each closed draft block with what the callback returns. */
+/**
+ * Replace each draft block with what the callback returns. An unclosed block
+ * runs to the end of the text; in history it is one an answer stopped inside.
+ */
 export function replaceDraftBlocks(
   text: string,
   replace: (draft: { title: string; content: string }) => string
@@ -129,7 +134,6 @@ export function replaceDraftBlocks(
   let out = ''
   let from = 0
   for (const block of locateDraftBlocks(text)) {
-    if (!block.closed) break
     out +=
       text.slice(from, block.open) +
       replace(parseBody(text.slice(block.bodyStart, block.bodyEnd)))
@@ -200,24 +204,31 @@ type MessageLike = {
 }
 
 /**
- * Rebuild every version of the chat's draft from its messages. A closed draft
- * block starts a new version; a completed editDraft call edits the latest.
+ * Rebuild every version of the chat's draft from its messages. A draft block
+ * starts a new version; a completed editDraft call edits the latest.
  * One draft per chat: a new block replaces the previous draft.
+ *
+ * An unclosed block is kept as an interrupted version, so a stopped or failed
+ * answer leaves its partial draft readable. An edit replays only when the tool
+ * saw the same draft: the tool holds the turn-start version, so an edit after a
+ * block written in the same answer, or one the tool rejected, is skipped.
  */
 export function buildDraftVersions(messages: MessageLike[]): DraftVersion[] {
   const versions: DraftVersion[] = []
   for (const message of messages) {
     if (message.role !== 'assistant') continue
+    let wroteHere = false
     for (const part of message.parts ?? []) {
       if (part.type === 'text' && typeof part.text === 'string') {
         for (const block of parseDraftBlocks(part.text)) {
-          if (!block.closed) continue
+          wroteHere = true
           versions.push({
             version: versions.length + 1,
             title: block.title,
             content: block.content,
             kind: 'write',
-            messageId: message.id
+            messageId: message.id,
+            ...(!block.closed && { interrupted: true })
           })
         }
       } else if (
@@ -226,7 +237,9 @@ export function buildDraftVersions(messages: MessageLike[]): DraftVersion[] {
       ) {
         const latest = versions.at(-1)
         const edits = (part.input as { edits?: DraftEdit[] } | undefined)?.edits
-        if (!latest || !Array.isArray(edits)) continue
+        const output = part.output as { applied?: unknown } | undefined
+        if (!latest || wroteHere || !Array.isArray(edits)) continue
+        if (output?.applied === 0) continue
         const result = applyDraftEdits(latest.content, edits)
         if (result.applied === 0) continue
         versions.push({
@@ -245,7 +258,7 @@ export function buildDraftVersions(messages: MessageLike[]): DraftVersion[] {
 }
 
 /**
- * Replace closed draft blocks in a historical answer with a one-line stub. The
+ * Replace draft blocks in a historical answer with a one-line stub. The
  * stub depends only on the block, so a message replays identically on every
  * turn and the prompt-cache prefix holds.
  */

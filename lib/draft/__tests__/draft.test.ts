@@ -107,6 +107,59 @@ describe('buildDraftVersions', () => {
     expect(versions[1].title).toBe('Cutting boards')
   })
 
+  test('keeps a block an answer stopped inside as an interrupted version', () => {
+    const versions = buildDraftVersions([
+      {
+        id: 'a1',
+        role: 'assistant',
+        parts: [{ type: 'text', text: '````draft\ntitle: Note\n\nHalf a sent' }]
+      }
+    ])
+    expect(versions).toHaveLength(1)
+    expect(versions[0]).toMatchObject({
+      content: 'Half a sent',
+      interrupted: true
+    })
+  })
+
+  test('skips an edit the tool rejected', () => {
+    const versions = buildDraftVersions([
+      { id: 'a1', role: 'assistant', parts: [{ type: 'text', text: BLOCK }] },
+      {
+        id: 'a2',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-editDraft',
+            state: 'output-available',
+            input: { edits: [{ find: 'End.', replace: 'The end.' }] },
+            output: { applied: 0, failed: [] }
+          }
+        ]
+      }
+    ])
+    expect(versions).toHaveLength(1)
+  })
+
+  test('skips an edit after a block written in the same answer', () => {
+    const versions = buildDraftVersions([
+      {
+        id: 'a1',
+        role: 'assistant',
+        parts: [
+          { type: 'text', text: BLOCK },
+          {
+            type: 'tool-editDraft',
+            state: 'output-available',
+            input: { edits: [{ find: 'End.', replace: 'The end.' }] },
+            output: { applied: 1, failed: [] }
+          }
+        ]
+      }
+    ])
+    expect(versions.map(v => v.kind)).toEqual(['write'])
+  })
+
   test('ignores an edit before any draft exists', () => {
     expect(
       buildDraftVersions([
@@ -127,6 +180,13 @@ describe('buildDraftVersions', () => {
 })
 
 describe('compactDraftBlocks', () => {
+  test('stubs a block an answer stopped inside', () => {
+    const out = compactDraftBlocks('Here.\n\n````draft\ntitle: Note\n\nHalf')
+    expect(out).toBe(
+      'Here.\n\n[Draft "Note" written here (4 characters). The current version is attached to the latest user message.]'
+    )
+  })
+
   test('replaces closed blocks with a stub and keeps the rest', () => {
     const out = compactDraftBlocks(BLOCK)
     expect(out).not.toContain('````draft')

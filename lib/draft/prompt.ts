@@ -34,7 +34,8 @@ DRAFT RULES (these override the output format rules for draft answers):
 3. One draft per chat. The latest message carries the current version in <current_draft>.
 4. For a local change (a sentence, a paragraph, the title, one section, a passage the user quoted), call editDraft with
    exact find/replace pairs copied from <current_draft>. Each find must appear exactly once; include enough surrounding
-   text to make it unique. If edits are reported as failed, retry only those with corrected find text.
+   text to make it unique. If edits are reported as failed, retry only those with corrected find text. Never call editDraft in
+   the same answer that writes a draft block: the tool only sees the draft from before this answer.
 5. When the user's message quotes text from the draft (a quoted-context block), that exact text is what "this" refers
    to: change only it, and make sure each edit's find contains the quoted text.
 6. For a change across the whole draft (shorten or lengthen it, change the tone, restructure, translate it), write a

@@ -97,9 +97,11 @@ export function DraftPanel() {
 
   const status = live
     ? `Writing… ${content.length.toLocaleString()} characters`
-    : shown!.kind === 'edit'
-      ? `Edited · ${shown!.applied} change${shown!.applied === 1 ? '' : 's'}`
-      : `${content.length.toLocaleString()} characters`
+    : shown!.interrupted
+      ? `Interrupted · ${content.length.toLocaleString()} characters`
+      : shown!.kind === 'edit'
+        ? `Edited · ${shown!.applied} change${shown!.applied === 1 ? '' : 's'}`
+        : `${content.length.toLocaleString()} characters`
 
   return (
     <div className="flex flex-col">
