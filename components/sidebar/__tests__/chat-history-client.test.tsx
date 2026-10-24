@@ -317,6 +317,46 @@ describe('ChatHistoryClient search mode', () => {
     expect(input).not.toHaveAttribute('aria-activedescendant')
   })
 
+  it('drops the mirrored active option when the query changes', async () => {
+    mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+    const input = screen.getByLabelText('Search history')
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'ArrowDown' })
+    })
+    expect(input.getAttribute('aria-activedescendant')).toBeTruthy()
+
+    // Editing to a new query unmounts the options; the removed option must
+    // not stay referenced during the debounce window (or indefinitely if
+    // the new search returns nothing).
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'mat2' } })
+    })
+    await flush(50) // still inside the debounce window: no new options yet
+    expect(input).not.toHaveAttribute('aria-activedescendant')
+  })
+
+  it('bounds a pasted query before putting it in the search URL', async () => {
+    const fetchMock = mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    // 204 characters: the URL must carry the same bounded query the backend
+    // would apply, so oversized pastes cannot exceed the request-target limit
+    await typeInSearch('note '.repeat(40) + 'kiwi')
+
+    const url = fetchMock.mock.calls
+      .map(([u]) => String(u))
+      .find(u => u.startsWith('/api/search'))
+    expect(url).toBeTruthy()
+    expect(
+      new URL(url as string, 'http://localhost').searchParams.get('q')
+    ).toBe('note '.repeat(40).trim())
+  })
+
   it('does not forward Enter or Escape while an IME composition is active', async () => {
     mockFetch()
     render(<ChatHistoryClient />)

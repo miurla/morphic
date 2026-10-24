@@ -23,6 +23,7 @@ import {
 } from '@/lib/utils/message-mapping'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
+import { normalizeSearchQuery } from '@/lib/utils/search-query'
 
 import type {
   Chat,
@@ -379,31 +380,6 @@ export async function getChatsPage(
     console.error('Error fetching chat page:', error)
     return { chats: [], nextOffset: null }
   }
-}
-
-/**
- * Shared query bound applied to every history search so all result groups
- * match the same effective query. Content/reasoning tokens expand into an
- * OR group of their proper prefixes, so the generated tsquery grows
- * quadratically with token length; bounding the query keeps it (and
- * Postgres' parse of it) small no matter the input. Truncation happens at
- * the last whitespace before the cap so a partially sliced token cannot act
- * as a broad prefix match.
- */
-const MAX_QUERY_LENGTH = 200
-
-function normalizeSearchQuery(query: string): string {
-  const trimmed = query.trim()
-  if (trimmed.length <= MAX_QUERY_LENGTH) {
-    return trimmed
-  }
-  const capped = trimmed.slice(0, MAX_QUERY_LENGTH)
-  // Drop everything from the last whitespace run on, so a token sliced by
-  // the cap cannot act as a broad prefix match. Whitespace-aware (not just
-  // ' '): pasted queries may separate words with newlines or tabs, which
-  // Postgres' parser also treats as word boundaries.
-  const boundary = capped.match(/\s\S*$/)
-  return (boundary ? capped.slice(0, boundary.index) : capped).trim()
 }
 
 /**

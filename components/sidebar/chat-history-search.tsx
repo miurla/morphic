@@ -10,6 +10,7 @@ import {
 import { toast } from 'sonner'
 
 import { HL_START, HL_STOP } from '@/lib/render/highlight-markers'
+import { normalizeSearchQuery } from '@/lib/utils/search-query'
 
 import {
   Command,
@@ -99,6 +100,10 @@ export function ChatHistorySearch({
     setThinkingRequested(false)
     setResults(null)
     setActiveValue('')
+    // The options unmount with the query change; notify the parent too or
+    // its aria-activedescendant keeps pointing at a removed option (its
+    // mirror effect only reruns when the reported value changes).
+    onActiveValueChange?.('')
     // An aborted thinking request can no longer update state (its sequence is
     // stale), so the button state must be reset here or it stays stuck.
     setIsSearchingThinking(false)
@@ -106,10 +111,15 @@ export function ChatHistorySearch({
       thinkingAbortRef.current?.abort()
       thinkingAbortRef.current = null
     }
-  }, [query])
+    // The parent passes a stable state setter, so this dependency never
+    // re-triggers the reset.
+  }, [query, onActiveValueChange])
 
   useEffect(() => {
-    const trimmed = query.trim()
+    // Bounded client-side so a pasted passage cannot exceed the request
+    // target limit before the server bound takes effect (same normalization
+    // as the backend, so results match the same effective query).
+    const trimmed = normalizeSearchQuery(query)
     if (trimmed.length < MIN_QUERY_LENGTH) {
       return
     }
@@ -124,10 +134,9 @@ export function ChatHistorySearch({
       // The options are about to unmount; drop the mirrored active option so
       // the parent's aria-activedescendant cannot keep pointing at a removed
       // element (indefinitely if the refetch fails or returns nothing).
-      if (activeValue) {
-        setActiveValue('')
-        onActiveValueChange?.('')
-      }
+      // Notifying with '' when nothing is active is a no-op for the parent.
+      setActiveValue('')
+      onActiveValueChange?.('')
     }
     lastQueryRef.current = query
 
@@ -173,10 +182,10 @@ export function ChatHistorySearch({
       clearTimeout(timer)
       controller.abort()
     }
-  }, [query, refreshKey])
+  }, [query, refreshKey, onActiveValueChange])
 
   const handleSearchThinking = useCallback(async () => {
-    const trimmed = query.trim()
+    const trimmed = normalizeSearchQuery(query)
     if (trimmed.length < MIN_QUERY_LENGTH) {
       return
     }
