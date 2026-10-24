@@ -383,6 +383,70 @@ describe('ChatHistoryClient search mode', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
+  it('surfaces a visible-mode failure that supersedes a pending hidden refresh', async () => {
+    const fetchMock = mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+    fetchMock.mockClear()
+
+    // The hidden refresh and the exit retry are both slow and still
+    // pending when a chat finishes in normal mode; that third request
+    // supersedes both and fails. The failure must surface as the retry
+    // error state, not leave an endless skeleton.
+    let chatsCalls = 0
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      if (String(input).startsWith('/api/chats')) {
+        chatsCalls++
+        if (chatsCalls <= 2) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+          return {
+            ok: true,
+            json: async () => ({ chats: [chat], nextOffset: null })
+          }
+        }
+        if (chatsCalls === 3) {
+          return {
+            ok: false,
+            json: async () => ({ chats: [], nextOffset: null })
+          }
+        }
+        return {
+          ok: true,
+          json: async () => ({ chats: [chat], nextOffset: null })
+        }
+      }
+      return { ok: true, json: async () => ({ title: [], content: [] }) }
+    })
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    // Leaving search starts the exit retry (still pending)...
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Clear search'))
+    })
+    // ...and a chat finishing in normal mode supersedes both, then fails.
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    await flush(50)
+    expect(screen.queryByText('Existing chat')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+
+    // The two superseded successes land; they must not clear the error.
+    await flush(100)
+    expect(screen.queryByText('Existing chat')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+
+    // The manual retry recovers.
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    })
+    await flush(50)
+    expect(screen.getByText('Existing chat')).toBeInTheDocument()
+  })
+
   it('refetches search results when chat data changes during search', async () => {
     const fetchMock = mockFetch()
     render(<ChatHistoryClient />)

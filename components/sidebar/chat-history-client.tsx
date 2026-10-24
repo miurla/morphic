@@ -56,6 +56,9 @@ export function ChatHistoryClient() {
   // the change lands, before the refetch settles - and cleared only by a
   // successful fetch.
   const [staleHiddenRefresh, setStaleHiddenRefresh] = useState(false)
+  // Mirror for the event handler, which must read the flag without
+  // re-subscribing on every change.
+  const staleHiddenRefreshRef = useRef(false)
   // The exit-from-search retry also failed: show an actionable error
   // instead of an endless skeleton or the stale items.
   const [listRetryFailed, setListRetryFailed] = useState(false)
@@ -95,6 +98,10 @@ export function ChatHistoryClient() {
   useEffect(() => {
     searchModeRef.current = searchMode
   }, [searchMode])
+
+  useEffect(() => {
+    staleHiddenRefreshRef.current = staleHiddenRefresh
+  }, [staleHiddenRefresh])
 
   const fetchInitialChats = useCallback(async (): Promise<
     'ok' | 'failed' | 'superseded'
@@ -155,7 +162,14 @@ export function ChatHistoryClient() {
         if (result === 'ok') {
           setStaleHiddenRefresh(false)
           setListRetryFailed(false)
-        } else if (result === 'failed' && startedHidden) {
+        } else if (
+          result === 'failed' &&
+          (startedHidden || staleHiddenRefreshRef.current)
+        ) {
+          // Any latest failure while the stale suppression is active is a
+          // retry failure: a visible-mode refresh that superseded the
+          // hidden one must surface the error, or the suppressed branch
+          // would render an endless skeleton with no Retry action.
           setListRetryFailed(true)
         }
       })
