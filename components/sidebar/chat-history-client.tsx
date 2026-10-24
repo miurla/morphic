@@ -45,9 +45,11 @@ export function ChatHistoryClient() {
   // list instead of mounting a search view that can never produce results.
   const searchMode = normalizeSearchQuery(query).length >= MIN_QUERY_LENGTH
   const searchModeRef = useRef(searchMode)
-  // A list refresh that failed while search mode hid the list: the stale
-  // items (possibly deleted chats) must not be revealed until a refresh
-  // succeeds. Cleared only by a successful fetch.
+  // A list refresh that started while search mode hid the list: the items
+  // (possibly deleted chats) must not be revealed until a refresh
+  // succeeds. Set at request start - the list is already stale the moment
+  // the change lands, before the refetch settles - and cleared only by a
+  // successful fetch.
   const [staleHiddenRefresh, setStaleHiddenRefresh] = useState(false)
   // The exit-from-search retry also failed: show an actionable error
   // instead of an endless skeleton or the stale items.
@@ -125,16 +127,21 @@ export function ChatHistoryClient() {
       const startedHidden = searchModeRef.current
       if (startedHidden) {
         setSearchEpoch(epoch => epoch + 1)
+        // Suppress from the start: the list is stale the moment the data
+        // changed, not only once the refetch proves it by failing.
+        setStaleHiddenRefresh(true)
+        setListRetryFailed(false)
       }
       startTransition(async () => {
         const ok = await fetchInitialChats()
         // A refresh that failed while the list was hidden must not leave
-        // deleted chats to be revealed later: mark the list stale and
+        // deleted chats to be revealed later: keep the suppression and
         // retry when search mode ends. The marker clears only on success.
         if (ok) {
           setStaleHiddenRefresh(false)
+          setListRetryFailed(false)
         } else if (startedHidden) {
-          setStaleHiddenRefresh(true)
+          setListRetryFailed(true)
         }
       })
     }

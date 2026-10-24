@@ -242,6 +242,41 @@ describe('ChatHistoryClient search mode', () => {
     expect(screen.getByText('Existing chat')).toBeInTheDocument()
   })
 
+  it('keeps the list suppressed while a hidden refresh is still pending on exit', async () => {
+    const fetchMock = mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+    fetchMock.mockClear()
+
+    // Clear History while searching; the hidden refresh stays pending
+    // (slow response) and the user exits search before it settles. The
+    // list is already stale from the deletion, so the old links must not
+    // be clickable until a refresh succeeds.
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      if (String(input).startsWith('/api/chats')) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+        return {
+          ok: true,
+          json: async () => ({ chats: [chat], nextOffset: null })
+        }
+      }
+      return { ok: true, json: async () => ({ title: [], content: [] }) }
+    })
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Clear search'))
+    })
+    await flush(50) // still pending
+    expect(screen.queryByText('Existing chat')).not.toBeInTheDocument()
+
+    await flush(150)
+    expect(screen.getByText('Existing chat')).toBeInTheDocument()
+  })
+
   it('offers a retry instead of stale chats when the exit retry also fails', async () => {
     const fetchMock = mockFetch()
     render(<ChatHistoryClient />)
