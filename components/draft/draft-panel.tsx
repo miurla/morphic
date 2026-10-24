@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
+  IconBookmark as Bookmark,
   IconChevronLeft as ChevronLeft,
   IconChevronRight as ChevronRight,
   IconCopy as Copy,
@@ -10,11 +11,15 @@ import {
 } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
+import { saveNote } from '@/lib/actions/notes'
+import { captureClient } from '@/lib/analytics/posthog-client'
 import { buildDraftVersions, draftDisplayTitle } from '@/lib/draft/draft'
 
 import { Button } from '@/components/ui/button'
 
 import { useArtifact } from '../artifact/artifact-context'
+import { useLibrary } from '../library/library-context'
+import { SaveNoteAuthDialog } from '../library/save-note-auth-dialog'
 import { MarkdownMessage } from '../message'
 
 import { useDraftStore, useLiveDraftBlock } from './draft-store'
@@ -22,8 +27,18 @@ import { useDraftStore, useLiveDraftBlock } from './draft-store'
 type SelectionAnchor = { text: string; top: number; left: number }
 
 export function DraftPanel() {
-  const { messages, quote } = useDraftStore()
+  const {
+    messages,
+    quote,
+    chatId,
+    isGuest = false,
+    isCloudDeployment = false,
+    libraryAvailable = false
+  } = useDraftStore()
   const { close } = useArtifact()
+  const { openLibrary, upsertCachedNote } = useLibrary()
+  const [isSaving, setIsSaving] = useState(false)
+  const [authPromptOpen, setAuthPromptOpen] = useState(false)
   const versions = useMemo(() => buildDraftVersions(messages), [messages])
 
   // A draft block still streaming in the latest answer, shown live.
@@ -105,6 +120,79 @@ export function DraftPanel() {
     }
   }
 
+  const showSaveButton = libraryAvailable && (!isGuest || isCloudDeployment)
+
+  // Mirrors the answer Save button in message-actions.tsx, saving the
+  // version shown in the panel.
+  const save = async () => {
+    if (isSaving || live || !shown) return
+
+    captureClient('note_save_clicked', {
+      source: 'draft_panel',
+      chatId,
+      chars: content.length,
+      isGuest,
+      isCloudDeployment
+    })
+
+    if (isGuest) {
+      setAuthPromptOpen(true)
+      captureClient('library_auth_prompt_opened', {
+        source: 'draft_panel',
+        chatId
+      })
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const result = await saveNote({
+        title,
+        content,
+        chatId,
+        sourceMessageId: shown.messageId
+      })
+
+      if (!result.success) {
+        captureClient('note_save_failed', {
+          source: 'draft_panel',
+          chatId,
+          reason: result.error ?? 'unknown'
+        })
+        toast.error(result.error ?? 'Failed to save note')
+        return
+      }
+
+      if (result.note) {
+        upsertCachedNote(result.note)
+      }
+      captureClient('note_saved', {
+        source: 'draft_panel',
+        chatId,
+        chars: content.length
+      })
+      toast.success('Saved to library', {
+        action: {
+          label: 'Open',
+          onClick: () => {
+            openLibrary()
+            captureClient('library_opened', { source: 'toast' })
+          }
+        }
+      })
+    } catch (error) {
+      console.error('Error saving note:', error)
+      captureClient('note_save_failed', {
+        source: 'draft_panel',
+        chatId,
+        reason: 'exception'
+      })
+      toast.error('Failed to save note')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const status = live
     ? `Writing… ${content.length.toLocaleString()} characters`
     : shown!.interrupted
@@ -133,6 +221,18 @@ export function DraftPanel() {
           >
             <Copy className="size-4" />
           </Button>
+          {showSaveButton && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="-my-2"
+              aria-label="Save to library"
+              disabled={!!live || isSaving}
+              onClick={save}
+            >
+              <Bookmark className="size-4" />
+            </Button>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           {!live && versions.length > 1 && (
@@ -200,6 +300,13 @@ export function DraftPanel() {
         )}
         <MarkdownMessage message={content} drafts={false} />
       </div>
+
+      <SaveNoteAuthDialog
+        open={authPromptOpen}
+        onOpenChange={setAuthPromptOpen}
+        source="draft_panel"
+        chatId={chatId}
+      />
     </div>
   )
 }

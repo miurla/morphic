@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import Link from 'next/link'
 
 import { UseChatHelpers } from '@ai-sdk/react'
 import {
@@ -22,15 +21,8 @@ import { cn } from '@/lib/utils'
 import { processCitations } from '@/lib/utils/citation'
 
 import { useLibrary } from './library/library-context'
+import { SaveNoteAuthDialog } from './library/save-note-auth-dialog'
 import { Button } from './ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from './ui/dialog'
 import {
   Tooltip,
   TooltipContent,
@@ -299,52 +291,12 @@ export function MessageActions({
         </div>
       </div>
 
-      <Dialog open={authPromptOpen} onOpenChange={setAuthPromptOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
-              <Bookmark className="size-6 text-muted-foreground" />
-            </div>
-            <DialogTitle className="text-center text-xl font-semibold">
-              Save notes to your library
-            </DialogTitle>
-            <DialogDescription className="text-center text-muted-foreground">
-              Sign in or create an account to save answers and selected text to
-              your Library.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col gap-2">
-            <Button asChild className="w-full">
-              <Link
-                href="/auth/sign-up"
-                onClick={() =>
-                  captureClient('library_auth_prompt_cta_clicked', {
-                    source: 'save_button',
-                    target: 'sign_up',
-                    chatId
-                  })
-                }
-              >
-                Sign Up
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full">
-              <Link
-                href="/auth/login"
-                onClick={() =>
-                  captureClient('library_auth_prompt_cta_clicked', {
-                    source: 'save_button',
-                    target: 'sign_in',
-                    chatId
-                  })
-                }
-              >
-                Sign In
-              </Link>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SaveNoteAuthDialog
+        open={authPromptOpen}
+        onOpenChange={setAuthPromptOpen}
+        source="save_button"
+        chatId={chatId}
+      />
     </>
   )
 }
