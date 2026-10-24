@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { deleteAccount } from '@/lib/actions/account'
 import { signOut } from '@/lib/actions/auth'
 import type { AppUser } from '@/lib/auth/types'
+import { chatStore } from '@/lib/chat-store'
 import { AppUserProvider } from '@/lib/contexts/app-user-context'
 
 import { AccountSettingsDialog } from '@/components/account-settings-dialog'
@@ -79,6 +80,8 @@ describe('AccountSettingsDialog', () => {
     vi.mocked(signOut).mockResolvedValue({ success: true })
     renderDialog()
 
+    chatStore.getOrCreate('cached', { messages: [] })
+
     fireEvent.click(screen.getByRole('button', { name: 'Delete account' }))
     fireEvent.click(
       screen.getAllByRole('button', { name: 'Delete account' }).at(-1)!
@@ -87,6 +90,7 @@ describe('AccountSettingsDialog', () => {
     await waitFor(() => {
       expect(deleteAccount).toHaveBeenCalledTimes(1)
       expect(signOut).toHaveBeenCalledTimes(1)
+      expect(chatStore.get('cached')).toBeUndefined()
       expect(mockPush).toHaveBeenCalledWith('/')
       expect(mockRefresh).toHaveBeenCalled()
     })

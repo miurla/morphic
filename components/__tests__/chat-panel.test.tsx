@@ -4,6 +4,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react'
 import { toast } from 'sonner'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
+import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
 import type { UploadedFile } from '@/lib/types'
 import { deleteCookie, getCookie, setCookie } from '@/lib/utils/cookies'
 
@@ -110,6 +111,36 @@ describe('ChatPanel', () => {
       })
     })
     expect(onAdaptiveModeAuthRequired).not.toHaveBeenCalled()
+  })
+
+  test('starts a new chat without clearing the cached conversation', () => {
+    const setMessages = vi.fn()
+    const onNewChat = vi.fn()
+    render(
+      <ChatPanel
+        chatId="chat"
+        input=""
+        handleInputChange={vi.fn()}
+        handleSubmit={vi.fn()}
+        status="ready"
+        messages={[]}
+        setMessages={setMessages}
+        stop={vi.fn()}
+        append={vi.fn()}
+        showScrollToBottomButton={false}
+        scrollContainerRef={React.createRef<HTMLDivElement>()}
+        uploadedFiles={[]}
+        setUploadedFiles={vi.fn()}
+        quotedContexts={[]}
+        setQuotedContexts={vi.fn()}
+        noteContexts={[]}
+        setNoteContexts={vi.fn()}
+        onNewChat={onNewChat}
+      />
+    )
+    fireEvent(window, new Event(SHORTCUT_EVENTS.newChat))
+    expect(onNewChat).toHaveBeenCalledOnce()
+    expect(setMessages).not.toHaveBeenCalled()
   })
 
   describe('attachment limit', () => {

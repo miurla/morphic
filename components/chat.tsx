@@ -1,14 +1,23 @@
 'use client'
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react'
 import { useRouter } from 'next/navigation'
 
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 
 import { summarizeGenui } from '@/lib/analytics/genui-summary'
-import { captureClient, getDistinctId } from '@/lib/analytics/posthog-client'
+import { captureClient } from '@/lib/analytics/posthog-client'
+import { type ChatHandlers, ChatStore, chatStore } from '@/lib/chat-store'
+import { useAppUser } from '@/lib/contexts/app-user-context'
 import { ChatProvider } from '@/lib/contexts/chat-context'
 import { generateId } from '@/lib/db/schema'
 import {
@@ -37,8 +46,11 @@ import { getTextFromParts } from '@/lib/utils/message-utils'
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
 
 import { registerDraftSource, unregisterDraftSource } from './draft/draft-store'
+import { Button } from './ui/button'
+import { Card, CardDescription, CardFooter, CardHeader } from './ui/card'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
+import { DefaultSkeleton } from './default-skeleton'
 import { DragOverlay } from './drag-overlay'
 import { ErrorModal } from './error-modal'
 import { UsageBudgetWarning, useUsageBudget } from './usage-budget-provider'
@@ -52,7 +64,7 @@ interface ChatSection {
 
 export function Chat({
   id: providedId,
-  savedMessages = [],
+  savedMessages,
   query,
   isGuest = false,
   isCloudDeployment = false,
@@ -80,6 +92,12 @@ export function Chat({
   // - If providedId exists (e.g., /search/[id]), use it for existing chats
   // - Otherwise, generate a new ID (e.g., / homepage for new chats)
   const [chatId, setChatId] = useState(() => providedId || generateId())
+
+  const [previousId, setPreviousId] = useState(providedId)
+  if (previousId !== providedId) {
+    setPreviousId(providedId)
+    if (providedId) setChatId(providedId)
+  }
 
   // Callback to reset chat state when user clicks "New" button
   const handleNewChat = () => {
@@ -139,112 +157,125 @@ export function Chat({
     [isGuest, isCloudDeployment]
   )
 
+  const user = useAppUser()
+  const store = useMemo(
+    () =>
+      isGuest || typeof window === 'undefined' ? new ChatStore() : chatStore,
+    [isGuest]
+  )
+  const entry = useMemo(() => {
+    store.setUser(user?.id ?? null)
+    return store.getOrCreate(chatId, {
+      messages: chatId === providedId ? savedMessages : undefined,
+      isNew: chatId !== providedId,
+      isGuest
+    })
+  }, [store, chatId, providedId, user?.id, savedMessages, isGuest])
+  useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot)
+  const handlersRef = useRef<ChatHandlers>({})
+  useEffect(() => {
+    handlersRef.current = {
+      onFinish: ({ message }) => {
+        isStreamingRef.current = false
+        if (usageBudgetEnabled) void refreshUsage()
+
+        const summary = summarizeGenui(getTextFromParts(message.parts))
+        if (summary) {
+          captureClient('genui_component_shown', { chatId, ...summary })
+        }
+      },
+      onError: error => {
+        isStreamingRef.current = false
+        const publicError = toPublicErrorPayload(error)
+
+        if (
+          usageBudgetEnabled &&
+          publicError.code === 'usage_limit' &&
+          publicError.reason !== 'hourly'
+        ) {
+          const resetAt = publicError.resetAt
+            ? new Date(publicError.resetAt).toISOString()
+            : undefined
+          void refreshUsage().then(usage => {
+            showUsageLimit(usage?.resetAt ?? resetAt)
+          })
+        } else if (publicError.type === 'rate-limit') {
+          if (usageBudgetEnabled) void refreshUsage()
+          setErrorModal({
+            open: true,
+            type: 'rate-limit',
+            message: publicError.error,
+            details: getPublicRateLimitDetails(publicError)
+          })
+        } else if (publicError.type === 'auth') {
+          if (usageBudgetEnabled) void refreshUsage()
+          setErrorModal({
+            open: true,
+            type: 'auth',
+            message: publicError.error
+          })
+        } else if (publicError.type === 'forbidden') {
+          if (usageBudgetEnabled) void refreshUsage()
+          setErrorModal({
+            open: true,
+            type: 'forbidden',
+            message: publicError.error
+          })
+        } else {
+          if (usageBudgetEnabled) void refreshUsage()
+          toast.error(publicError.error)
+        }
+      }
+    }
+  })
+  useEffect(() => {
+    const handlers: ChatHandlers = {
+      onFinish: event => handlersRef.current.onFinish?.(event),
+      onError: error => handlersRef.current.onError?.(error)
+    }
+    const detach = store.attachHandlers(entry, handlers)
+    return () => {
+      detach()
+      if (isGuest) store.remove(entry.chat.id)
+    }
+  }, [store, entry, isGuest])
+  useEffect(() => {
+    if (!isGuest) void store.revalidate(chatId)
+  }, [store, entry, chatId, isGuest])
   const {
     messages,
     status,
     setMessages,
-    stop,
     sendMessage,
     regenerate,
     addToolResult,
     error
-  } = useChat({
-    id: chatId, // use the client-generated or provided chatId
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-      prepareSendMessagesRequest: ({ messages, trigger, messageId, body }) => {
-        // Simplify by passing AI SDK's default trigger values directly
-        const lastMessage = messages[messages.length - 1]
-        const messageToRegenerate =
-          trigger === 'regenerate-message'
-            ? messages.find(m => m.id === messageId)
-            : undefined
-
-        return {
-          body: {
-            ...body,
-            trigger, // Use AI SDK's default trigger value directly
-            chatId: chatId,
-            messageId,
-            clientSource: 'web',
-            analyticsId: getDistinctId(),
-            ...(isGuest ? { messages } : {}),
-            message:
-              trigger === 'regenerate-message' &&
-              messageToRegenerate?.role === 'user'
-                ? messageToRegenerate
-                : trigger === 'submit-message'
-                  ? lastMessage
-                  : undefined,
-            isNewChat:
-              trigger === 'submit-message' &&
-              messages.length === 1 &&
-              savedMessages.length === 0
-          }
-        }
-      }
-    }),
-    messages: savedMessages,
-    onFinish: ({ message }) => {
-      isStreamingRef.current = false
-      if (usageBudgetEnabled) void refreshUsage()
-      window.dispatchEvent(new CustomEvent('chat-history-updated'))
-
-      const summary = summarizeGenui(getTextFromParts(message.parts))
-      if (summary) {
-        captureClient('genui_component_shown', { chatId, ...summary })
-      }
-    },
-    onError: error => {
-      isStreamingRef.current = false
-      const publicError = toPublicErrorPayload(error)
-
-      if (
-        usageBudgetEnabled &&
-        publicError.code === 'usage_limit' &&
-        publicError.reason !== 'hourly'
-      ) {
-        const resetAt = publicError.resetAt
-          ? new Date(publicError.resetAt).toISOString()
-          : undefined
-        void refreshUsage().then(usage => {
-          showUsageLimit(usage?.resetAt ?? resetAt)
-        })
-      } else if (publicError.type === 'rate-limit') {
-        if (usageBudgetEnabled) void refreshUsage()
-        setErrorModal({
-          open: true,
-          type: 'rate-limit',
-          message: publicError.error,
-          details: getPublicRateLimitDetails(publicError)
-        })
-      } else if (publicError.type === 'auth') {
-        if (usageBudgetEnabled) void refreshUsage()
-        setErrorModal({
-          open: true,
-          type: 'auth',
-          message: publicError.error
-        })
-      } else if (publicError.type === 'forbidden') {
-        if (usageBudgetEnabled) void refreshUsage()
-        setErrorModal({
-          open: true,
-          type: 'forbidden',
-          message: publicError.error
-        })
-      } else {
-        if (usageBudgetEnabled) void refreshUsage()
-        toast.error(publicError.error)
-      }
-    },
-    throttle: 100,
-    generateId
-  })
+  } = useChat({ chat: entry.chat, throttle: 100 })
+  const stop = useCallback(() => {
+    store.invalidate(chatId)
+    return entry.chat.stop()
+  }, [store, chatId, entry])
+  const sendingBlocked =
+    !isGuest &&
+    ((entry.verifiedAt === 0 && (!!entry.fetching || !!entry.error)) ||
+      (entry.verifiedAt === 0 &&
+        !entry.hasServerHistory &&
+        messages.length === 0 &&
+        chatId === providedId))
+  const canSend = useCallback(
+    () =>
+      !(entry.verifiedAt === 0 && (entry.fetching || entry.error)) &&
+      !sendingBlocked &&
+      entry.chat.status !== 'submitted' &&
+      entry.chat.status !== 'streaming',
+    [entry, sendingBlocked]
+  )
 
   // Keep all request entry points reflected in isStreamingRef so downstream
   // action handlers can reliably reject overlapping sends.
   const safeSendMessage = useCallback<typeof sendMessage>(
     (message, options) => {
+      if (!canSend()) return Promise.resolve()
       if (isCurrentAdaptiveModeAuthBlocked()) {
         showAdaptiveModeAuthModal()
         return Promise.resolve()
@@ -281,6 +312,7 @@ export function Chat({
       }
     },
     [
+      canSend,
       consumeUsage,
       isCloudDeployment,
       isCurrentAdaptiveModeAuthBlocked,
@@ -294,6 +326,7 @@ export function Chat({
 
   const safeRegenerate = useCallback(
     async (options?: Parameters<typeof regenerate>[0]) => {
+      if (!canSend()) return Promise.resolve()
       if (isCurrentAdaptiveModeAuthBlocked()) {
         showAdaptiveModeAuthModal()
         return
@@ -329,6 +362,7 @@ export function Chat({
       }
     },
     [
+      canSend,
       consumeUsage,
       isCloudDeployment,
       isCurrentAdaptiveModeAuthBlocked,
@@ -521,6 +555,7 @@ export function Chat({
     editedMessageId: string,
     newContentText: string
   ) => {
+    if (!canSend()) return
     if (!chatId) {
       toast.error('Chat ID is missing.')
       console.error('handleUpdateAndReloadMessage: chatId is undefined.')
@@ -581,6 +616,7 @@ export function Chat({
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!canSend()) return
 
     const uploaded = uploadedFiles.filter(f => f.status === 'uploaded')
 
@@ -696,9 +732,37 @@ export function Chat({
           error={error}
           onQuoteContext={handleQuoteContext}
         />
+        {!isGuest && entry.fetching && !entry.hasServerHistory && (
+          <div
+            role="status"
+            aria-label="Loading chat"
+            className="mx-auto w-full max-w-3xl px-4 pt-12"
+          >
+            <DefaultSkeleton />
+          </div>
+        )}
+        {entry.error && !isGuest && (
+          <div className="mx-auto w-full max-w-3xl px-4 pt-12">
+            <Card role="alert">
+              <CardHeader>
+                <CardDescription>{entry.error.message}</CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void store.revalidate(chatId)}
+                >
+                  Retry
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        )}
         <UsageBudgetWarning />
         <ChatPanel
           chatId={chatId}
+          disabled={sendingBlocked}
           input={input}
           handleInputChange={handleInputChange}
           handleSubmit={onSubmit}

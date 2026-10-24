@@ -1,8 +1,9 @@
 'use client'
 
-import { createContext, useContext } from 'react'
+import { createContext, useContext, useEffect } from 'react'
 
 import type { AppUser, AuthCapabilities } from '@/lib/auth/types'
+import { chatStore } from '@/lib/chat-store'
 
 interface AppUserContextValue {
   user: AppUser | null
@@ -36,6 +37,9 @@ export function AppUserProvider({
   capabilities: AuthCapabilities
   children: React.ReactNode
 }) {
+  useEffect(() => {
+    chatStore.setUser(user?.id ?? null)
+  }, [user?.id])
   return (
     <AppUserContext.Provider value={{ user, capabilities }}>
       {children}
