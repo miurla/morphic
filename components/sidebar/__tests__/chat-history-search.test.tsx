@@ -395,6 +395,41 @@ describe('ChatHistorySearch', () => {
     expect(screen.getByText(/use <b>bold<\/b>/)).toBeInTheDocument()
   })
 
+  it('does not rerun the thinking search when the epoch bump lands with a query change', async () => {
+    const fetchMock = vi.fn().mockReturnValue(
+      jsonResponse({
+        title: [{ chatId: 'c1', title: 'Chat A' }],
+        content: []
+      })
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const ui = render(<ChatHistorySearch query="quasars" refreshKey={0} />)
+    await flush(300)
+
+    // Opt in to thinking search for the current query.
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Search thinking/ }))
+    })
+    await flush(50)
+    const thinkingCalls = () =>
+      fetchMock.mock.calls.filter(([url]) =>
+        String(url).includes('include=reasoning')
+      ).length
+    expect(thinkingCalls()).toBe(1)
+
+    // The epoch bump lands in the same render as a query change. The opt-in
+    // belongs to the previous query (its reset has not applied yet), so the
+    // refresh must not carry it over to the new query.
+    await act(async () => {
+      ui.rerender(<ChatHistorySearch query="quasars!" refreshKey={1} />)
+    })
+    await flush(300)
+
+    expect(thinkingCalls()).toBe(1)
+    expect(screen.queryByText('In thinking')).not.toBeInTheDocument()
+  })
+
   it('invalidates stale results on refresh and does not restore them on failure', async () => {
     const fetchMock = vi.fn().mockReturnValue(
       jsonResponse({

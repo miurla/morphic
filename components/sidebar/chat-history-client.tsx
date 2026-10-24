@@ -35,6 +35,7 @@ export function ChatHistoryClient() {
   const [query, setQuery] = useState('')
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const [isPending, startTransition] = useTransition()
   const searchMode = query.trim().length >= MIN_SEARCH_LENGTH
   const searchModeRef = useRef(searchMode)
@@ -43,6 +44,34 @@ export function ChatHistoryClient() {
   // view to refetch so stale matches (e.g. after Clear History) cannot be
   // opened.
   const [searchEpoch, setSearchEpoch] = useState(0)
+  // cmdk's active option; only used as a change signal for the ARIA mirror.
+  const [activeResult, setActiveResult] = useState<string | undefined>()
+
+  // Mirror cmdk's listbox state onto the search input for assistive tech:
+  // the input sits outside the Command scope and cmdk generates the list and
+  // option ids internally, so the combobox relationships (aria-controls,
+  // aria-activedescendant) are resolved from the rendered cmdk DOM.
+  useEffect(() => {
+    const input = inputRef.current
+    if (!input) return
+    const list = searchMode
+      ? resultsRef.current?.querySelector<HTMLElement>('[cmdk-list]')
+      : undefined
+    if (!list) {
+      input.removeAttribute('aria-controls')
+      input.removeAttribute('aria-activedescendant')
+      return
+    }
+    input.setAttribute('aria-controls', list.id)
+    const active = list.querySelector<HTMLElement>(
+      '[cmdk-item][data-selected="true"]'
+    )
+    if (active?.id) {
+      input.setAttribute('aria-activedescendant', active.id)
+    } else {
+      input.removeAttribute('aria-activedescendant')
+    }
+  }, [activeResult, searchMode])
 
   useEffect(() => {
     searchModeRef.current = searchMode
@@ -162,8 +191,12 @@ export function ChatHistoryClient() {
         </div>
         <div className="relative mt-1.5">
           <Input
+            ref={inputRef}
             value={query}
             onChange={event => setQuery(event.target.value)}
+            role="combobox"
+            aria-expanded={searchMode}
+            aria-autocomplete="list"
             onKeyDown={event => {
               // While an IME composition is active, Enter confirms a
               // candidate and Escape cancels it; those keystrokes belong to
@@ -215,7 +248,11 @@ export function ChatHistoryClient() {
       </SidebarGroup>
       <div ref={resultsRef} className="flex-1 overflow-y-auto mb-2 relative">
         {searchMode ? (
-          <ChatHistorySearch refreshKey={searchEpoch} query={query} />
+          <ChatHistorySearch
+            refreshKey={searchEpoch}
+            query={query}
+            onActiveValueChange={setActiveResult}
+          />
         ) : isHistoryEmpty && !isPending ? (
           <div className="px-2 text-foreground/30 text-sm text-center py-4">
             No chats yet

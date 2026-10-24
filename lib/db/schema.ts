@@ -207,12 +207,16 @@ export const parts = pgTable(
     // Provider metadata
     providerMetadata: json('provider_metadata').$type<Record<string, any>>(),
 
-    // Full-text search columns (maintained by Postgres, used by history search)
+    // Full-text search columns (maintained by Postgres, used by history
+    // search). Input is capped at 100k characters: Postgres errors on any
+    // tsvector over 1MB ("string is too long for tsvector"), which would
+    // otherwise abort migration 0020 on existing rows and fail inserts of
+    // oversized parts. Worst-case vector size at this cap is ~220KB.
     search: tsvector('search').generatedAlwaysAs(
-      sql`to_tsvector('simple', coalesce(text_text, ''))`
+      sql`to_tsvector('simple', left(coalesce(text_text, ''), 100000))`
     ),
     searchReasoning: tsvector('search_reasoning').generatedAlwaysAs(
-      sql`to_tsvector('simple', coalesce(reasoning_text, ''))`
+      sql`to_tsvector('simple', left(coalesce(reasoning_text, ''), 100000))`
     ),
 
     createdAt: timestamp('created_at').notNull().defaultNow()

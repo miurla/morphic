@@ -214,6 +214,42 @@ describe('ChatHistoryClient search mode', () => {
     expect(pushMock).toHaveBeenCalledWith('/search/chat-9')
   })
 
+  it('mirrors the result list onto the input with combobox ARIA', async () => {
+    mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    const input = screen.getByLabelText('Search history')
+    // Outside search mode there is no popup list to point at.
+    expect(input).toHaveAttribute('role', 'combobox')
+    expect(input).toHaveAttribute('aria-expanded', 'false')
+    expect(input).not.toHaveAttribute('aria-controls')
+
+    await typeInSearch('mat')
+    expect(input).toHaveAttribute('aria-expanded', 'true')
+    const list = document.querySelector('[cmdk-list]') as HTMLElement
+    expect(list).toBeTruthy()
+    expect(input.getAttribute('aria-controls')).toBe(list.id)
+
+    // After keyboard navigation the active option is referenced so screen
+    // readers announce it while DOM focus stays on the input.
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'ArrowDown' })
+    })
+    const active = document.querySelector(
+      '[cmdk-item][data-selected="true"]'
+    ) as HTMLElement
+    expect(active).toBeTruthy()
+    expect(input.getAttribute('aria-activedescendant')).toBe(active.id)
+
+    // Leaving search mode removes the relationships again.
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'Escape' })
+    })
+    expect(input).not.toHaveAttribute('aria-controls')
+    expect(input).not.toHaveAttribute('aria-activedescendant')
+  })
+
   it('does not forward Enter or Escape while an IME composition is active', async () => {
     mockFetch()
     render(<ChatHistoryClient />)

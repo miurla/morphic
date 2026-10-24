@@ -66,17 +66,25 @@ interface ChatHistorySearchProps {
   // results referencing deleted chats are refetched. Unlike remounting, this
   // preserves the thinking opt-in and refreshes thinking matches as well.
   refreshKey?: number
+  // Reports cmdk's active option so the parent can mirror the combobox
+  // ARIA (aria-activedescendant) onto the search input, which lives outside
+  // the Command scope and therefore cannot use cmdk's own CommandInput.
+  onActiveValueChange?: (value: string) => void
 }
 
 export function ChatHistorySearch({
   query,
-  refreshKey
+  refreshKey,
+  onActiveValueChange
 }: ChatHistorySearchProps) {
   const router = useRouter()
   const [results, setResults] = useState<SearchResponse | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [thinkingRequested, setThinkingRequested] = useState(false)
   const [isSearchingThinking, setIsSearchingThinking] = useState(false)
+  // cmdk only reports value changes in controlled mode, so the active option
+  // is held here and mirrored to the parent for its combobox ARIA.
+  const [activeValue, setActiveValue] = useState('')
   // Monotonic request sequence: responses from superseded queries are dropped
   // so stale results never overwrite the current query's results.
   const requestSeqRef = useRef(0)
@@ -90,6 +98,7 @@ export function ChatHistorySearch({
   useEffect(() => {
     setThinkingRequested(false)
     setResults(null)
+    setActiveValue('')
     // An aborted thinking request can no longer update state (its sequence is
     // stale), so the button state must be reset here or it stays stuck.
     setIsSearchingThinking(false)
@@ -204,18 +213,21 @@ export function ChatHistorySearch({
 
   // When the parent signals that chat data changed, refresh thinking matches
   // too if the opt-in is active (the main fetch effect refreshes title and
-  // content and merges the thinking section in). The ref guard keeps a query
-  // change - which resets the opt-in in a separate effect - from re-triggering
-  // the thinking search.
-  const lastRefreshKeyRef = useRef(refreshKey)
+  // content and merges the thinking section in). The refs keep a query change
+  // - which resets the opt-in in a separate effect - from re-triggering the
+  // thinking search: when the epoch bump lands in the same render as a query
+  // edit, `thinkingRequested` still holds the previous query's value here
+  // (the reset effect's state update has not applied yet), so the query is
+  // compared against the one this refresh was last run for.
+  const lastRefreshRef = useRef({ key: refreshKey, query })
   useEffect(() => {
-    if (refreshKey !== lastRefreshKeyRef.current) {
-      lastRefreshKeyRef.current = refreshKey
-      if (thinkingRequested) {
-        void handleSearchThinking()
-      }
+    const prev = lastRefreshRef.current
+    const sameQuery = prev.query === query
+    lastRefreshRef.current = { key: refreshKey, query }
+    if (refreshKey !== prev.key && sameQuery && thinkingRequested) {
+      void handleSearchThinking()
     }
-  }, [refreshKey, thinkingRequested, handleSearchThinking])
+  }, [refreshKey, thinkingRequested, handleSearchThinking, query])
 
   const openChat = useCallback(
     (chatId: string) => {
@@ -234,7 +246,15 @@ export function ChatHistorySearch({
   const showThinkingSection = thinkingRequested && thinkingItems !== undefined
 
   return (
-    <Command shouldFilter={false} className="bg-transparent p-0">
+    <Command
+      shouldFilter={false}
+      value={activeValue}
+      onValueChange={value => {
+        setActiveValue(value)
+        onActiveValueChange?.(value)
+      }}
+      className="bg-transparent p-0"
+    >
       <CommandList className="max-h-full">
         {isSearching && !results && (
           <div className="py-2">
