@@ -212,7 +212,11 @@ export class ChatStore {
   revalidate(id: string): Promise<void> {
     const entry = this.entries.get(id)
     if (!entry) return Promise.resolve()
-    if (entry.createdLocally && !entry.hasServerHistory)
+    if (
+      entry.createdLocally &&
+      !entry.hasServerHistory &&
+      entry.chat.messages.length === 0
+    )
       return Promise.resolve()
     if (entry.fetching) return entry.fetching
     const now = Date.now()
@@ -248,6 +252,7 @@ export class ChatStore {
       } catch (error) {
         if (this.entries.get(id) === entry && entry.revision === revision) {
           if (notFound) {
+            if (entry.createdLocally && !entry.hasServerHistory) return
             entry.chat.messages = []
             entry.verifiedAt = 0
             entry.error = new Error('Chat not found')

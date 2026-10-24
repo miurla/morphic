@@ -173,30 +173,98 @@ describe('ChatStore', () => {
   })
 
   it.each([undefined, [] as UIMessage[]])(
-    'skips revalidation for a never-saved local chat with messages %s',
+    'skips revalidation for an untouched local chat initialized with %s',
     async initialMessages => {
       const store = new ChatStore()
       const entry = store.getOrCreate('a', {
         isNew: true,
         messages: initialMessages
       })
-      entry.chat.messages = messages('local')
       vi.advanceTimersByTime(30_000)
       expect(store.getOrCreate('a')).toBe(entry)
       await store.revalidate('a')
       store.invalidate('a')
       await store.revalidate('a')
       expect(fetch).not.toHaveBeenCalled()
-      expect(entry.chat.messages).toEqual(messages('local'))
+      expect(entry.chat.messages).toEqual([])
       expect(entry.error).toBeUndefined()
-
-      store.markVerified('a')
-      vi.advanceTimersByTime(30_000)
-      await store.revalidate('a')
-      expect(fetch).toHaveBeenCalledOnce()
-      expect(entry.chat.messages).toEqual(messages('server'))
     }
   )
+
+  it('refreshes an aborted first local turn and adopts server messages', async () => {
+    const events = [
+      { type: 'start', messageId: 'answer' },
+      { type: 'text-start', id: 'text' },
+      { type: 'text-delta', id: 'text', delta: 'partial answer' }
+    ]
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(
+        new ReadableStream({
+          pull(controller) {
+            const event = events.shift()
+            if (event) {
+              controller.enqueue(
+                new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`)
+              )
+            } else {
+              controller.error(new DOMException('Aborted', 'AbortError'))
+            }
+          }
+        }),
+        {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'x-vercel-ai-ui-message-stream': 'v1'
+          }
+        }
+      )
+    )
+    const store = new ChatStore()
+    const entry = store.getOrCreate('a', { isNew: true })
+    const onFinish = vi.fn()
+    store.attachHandlers(entry, { onFinish })
+
+    await entry.chat.sendMessage({ text: 'first' })
+
+    expect(onFinish).toHaveBeenCalledWith(
+      expect.objectContaining({ isAbort: true })
+    )
+    expect(entry.chat.messages).toHaveLength(2)
+    expect(entry.chat.messages[1].parts).toContainEqual(
+      expect.objectContaining({ type: 'text', text: 'partial answer' })
+    )
+    expect(entry.hasServerHistory).toBe(false)
+    expect(entry.verifiedAt).toBe(0)
+    vi.advanceTimersByTime(30_000)
+
+    await store.revalidate('a')
+
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(entry.chat.messages).toEqual(messages('server'))
+    expect(entry.hasServerHistory).toBe(true)
+    expect(entry.verifiedAt).toBe(Date.now())
+  })
+
+  it('keeps an unsaved first local message sendable after a 404', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(null, { status: 429 }))
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+    const store = new ChatStore()
+    const entry = store.getOrCreate('a', { isNew: true })
+    await entry.chat.sendMessage({ text: 'first' })
+    const localMessages = entry.chat.messages
+    vi.advanceTimersByTime(30_000)
+
+    await store.revalidate('a')
+
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(entry.chat.messages).toBe(localMessages)
+    expect(entry.chat.messages).toHaveLength(1)
+    expect(entry.error).toBeUndefined()
+    expect(entry.hasServerHistory).toBe(false)
+    expect(entry.fetching).toBeUndefined()
+    expect(entry.verifiedAt).toBe(0)
+  })
 
   it('clears on user changes and prevents old fetches from restoring data', async () => {
     const pending = deferred()
@@ -269,7 +337,7 @@ describe('ChatStore', () => {
     expect(entry.verifiedAt).toBe(Date.now())
   })
 
-  it.each(['seeded', 'local', 'empty server history'] as const)(
+  it.each(['seeded', 'local', 'empty server history', 'saved local'] as const)(
     'clears %s and blocks the entry after a 404',
     async source => {
       const logError = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -278,6 +346,7 @@ describe('ChatStore', () => {
       )
       const store = new ChatStore()
       const entry = store.getOrCreate('a', {
+        isNew: source === 'saved local',
         messages:
           source === 'seeded'
             ? messages('cached')
@@ -286,6 +355,10 @@ describe('ChatStore', () => {
               : undefined
       })
       if (source === 'local') entry.chat.messages = messages('local')
+      if (source === 'saved local') {
+        entry.chat.messages = messages('saved')
+        store.markVerified('a')
+      }
       vi.advanceTimersByTime(30_000)
 
       await store.revalidate('a')
