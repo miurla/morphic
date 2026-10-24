@@ -382,6 +382,27 @@ export async function getChatsPage(
 }
 
 /**
+ * Shared query bound applied to every history search so all result groups
+ * match the same effective query. Content/reasoning tokens expand into an
+ * OR group of their proper prefixes, so the generated tsquery grows
+ * quadratically with token length; bounding the query keeps it (and
+ * Postgres' parse of it) small no matter the input. Truncation happens at
+ * the last whitespace before the cap so a partially sliced token cannot act
+ * as a broad prefix match.
+ */
+const MAX_QUERY_LENGTH = 200
+
+function normalizeSearchQuery(query: string): string {
+  const trimmed = query.trim()
+  if (trimmed.length <= MAX_QUERY_LENGTH) {
+    return trimmed
+  }
+  const capped = trimmed.slice(0, MAX_QUERY_LENGTH)
+  const lastSpace = capped.lastIndexOf(' ')
+  return (lastSpace > 0 ? capped.slice(0, lastSpace) : capped).trim()
+}
+
+/**
  * Search chat titles for a user (case-insensitive substring match), newest first.
  */
 export async function searchChatTitles(
@@ -389,7 +410,7 @@ export async function searchChatTitles(
   query: string,
   limit = 20
 ): Promise<Chat[]> {
-  const trimmed = query.trim()
+  const trimmed = normalizeSearchQuery(query)
   if (!trimmed) {
     return []
   }
@@ -423,11 +444,6 @@ const FTS_SCOPES = {
 
 type FtsSearchScope = keyof typeof FTS_SCOPES
 
-// Each query token expands into an OR group of its prefixes, so the tsquery
-// grows quadratically with token length; bounding the query keeps the
-// generated tsquery (and Postgres' parse of it) small no matter the input.
-const MAX_QUERY_LENGTH = 200
-
 /**
  * Full-text search over message parts of the user's chats.
  * The tsquery is built from the FTS parser's own lexemes (language-neutral
@@ -443,7 +459,7 @@ async function searchChatParts(
   limit: number,
   scope: FtsSearchScope
 ): Promise<ChatContentSearchResult[]> {
-  const trimmed = query.trim().slice(0, MAX_QUERY_LENGTH)
+  const trimmed = normalizeSearchQuery(query)
   if (!trimmed) {
     return []
   }

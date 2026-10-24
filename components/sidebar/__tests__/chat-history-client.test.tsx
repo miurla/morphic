@@ -251,7 +251,7 @@ describe('ChatHistoryClient search mode', () => {
   })
 
   it('lets Enter activate the thinking button instead of the selected result', async () => {
-    mockFetch()
+    const fetchMock = mockFetch()
     render(<ChatHistoryClient />)
     await flush(50)
 
@@ -266,15 +266,33 @@ describe('ChatHistoryClient search mode', () => {
     )
 
     // The button lives inside the cmdk root; its Enter must press the button,
-    // not activate the selected result through cmdk's root handler.
+    // not activate the selected result through cmdk's root handler. cmdk's
+    // handler cancels the keydown (preventDefault) to suppress the native
+    // click, so a non-cancelled event proves a real browser would press the
+    // button instead of opening the selected result.
+    let notCancelled = false
     await act(async () => {
-      fireEvent.keyDown(
+      notCancelled = fireEvent.keyDown(
         screen.getByRole('button', { name: /Search thinking/ }),
         {
           key: 'Enter'
         }
       )
     })
+    expect(notCancelled).toBe(true)
+    expect(pushMock).not.toHaveBeenCalled()
+
+    // jsdom does not run the keydown's default action, so fire the click a
+    // real browser would produce and assert the thinking search starts.
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Search thinking/ }))
+    })
+    await flush(50)
+    expect(
+      fetchMock.mock.calls.some(([url]) =>
+        String(url).includes('include=reasoning')
+      )
+    ).toBe(true)
     expect(pushMock).not.toHaveBeenCalled()
   })
 

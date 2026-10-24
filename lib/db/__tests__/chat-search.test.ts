@@ -91,6 +91,17 @@ describe('searchChatTitles', () => {
     // "%" is backslash-escaped, so it cannot act as a wildcard
     expect(rendered.params).toContain('%100\\%%')
   })
+
+  it('caps the query at the shared bound on a word boundary', async () => {
+    const { where } = mockTitleQuery([])
+
+    await searchChatTitles('user-1', 'note '.repeat(40) + 'kiwi')
+
+    // 204 characters: the bound keeps the first 40 whole tokens and drops
+    // 'kiwi', so title and content groups match the same effective query
+    const rendered = dialect.sqlToQuery(where.mock.calls[0][0])
+    expect(rendered.params).toContain(`%${'note '.repeat(40).trim()}%`)
+  })
 })
 
 describe('searchChatContent', () => {
@@ -214,6 +225,20 @@ describe('searchChatContent', () => {
       p => typeof p === 'string' && p.includes('x')
     )
     expect(queryParam).toHaveLength(200)
+  })
+
+  it('truncates at a word boundary so no partial token broadens the match', async () => {
+    const execute = mockExecute([])
+
+    await searchChatContent('user-1', 'note '.repeat(40) + 'kiwi')
+
+    // 'kiwi' falls past the cap and is dropped whole; the retained tokens are
+    // all complete, so none acts as a broad prefix match
+    const rendered = dialect.sqlToQuery(execute.mock.calls[0][0])
+    const queryParam = rendered.params.find(
+      p => typeof p === 'string' && p.includes('note')
+    )
+    expect(queryParam).toBe('note '.repeat(40).trim())
   })
 })
 
