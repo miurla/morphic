@@ -306,6 +306,33 @@ describe('three-backtick close', () => {
     expect(compactDraftBlocks(text)).toContain('```spec')
   })
 
+  test('keeps an unlabeled code block inside the draft', () => {
+    const text = [
+      '````draft',
+      'title: Readme',
+      '',
+      'Run:',
+      '```',
+      'npm start',
+      '```',
+      'Done.',
+      '```',
+      '',
+      'Related:',
+      '```spec',
+      '{"op":"add"}',
+      '```'
+    ].join('\n')
+    const [block] = parseDraftBlocks(text)
+    expect(block.closed).toBe(true)
+    expect(block.content).toBe('Run:\n```\nnpm start\n```\nDone.')
+  })
+
+  test('leaves a block open while its unlabeled code block streams', () => {
+    const text = '````draft\ntitle: Readme\n\nRun:\n```\nnpm start\n```'
+    expect(parseDraftBlocks(text)[0].closed).toBe(false)
+  })
+
   test('does not take the next draft opener as a close', () => {
     const text =
       '````draft\ntitle: A\n\nOne.\n```\n\n````draft\ntitle: B\n\nTwo.\n````'

@@ -62,12 +62,29 @@ const STRICT_CLOSE = /\n````[ \t]*(?=\n|$)/g
 const FENCE_LINE = /^`{3,}/
 const BARE_THREE = /^```[ \t]*$/
 
+/** Whether text after a draft close opens no unlabeled fence, as answers do. */
+function opensNoBareFence(lines: string[]) {
+  let inFence = false
+  for (const line of lines) {
+    if (!FENCE_LINE.test(line)) continue
+    if (inFence) {
+      if (BARE_THREE.test(line)) inFence = false
+    } else if (BARE_THREE.test(line)) {
+      return false
+    } else {
+      inFence = true
+    }
+  }
+  return true
+}
+
 /**
  * Where a block closes, searched only up to the next draft opener. Models
- * sometimes close a ````draft block with three backticks. Inner code fences
- * come in pairs, so then the close is the first bare ``` line with every fence
- * before it paired, and later fences such as a spec block never pull the close
- * past the draft.
+ * sometimes close a ````draft block with three backticks, which reads the same
+ * as an unlabeled code fence opening inside the draft. A bare ``` line outside
+ * any inner fence is taken as the close only when the text after it opens no
+ * unlabeled fence: what follows a draft is prose and labeled blocks such as
+ * spec, while the rest of an inner code block would open one.
  */
 function findClose(text: string, bodyStart: number) {
   const next = text.indexOf(`\n${FENCE_OPEN}`, bodyStart - 1)
@@ -79,15 +96,18 @@ function findClose(text: string, bodyStart: number) {
     return { bodyEnd: strict.index, end: strict.index + strict[0].length }
   }
 
-  let fenceLines = 0
+  const lines = text.slice(bodyStart, limit).split('\n')
+  let inFence = false
   let offset = bodyStart
-  for (const line of text.slice(bodyStart, limit).split('\n')) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
     if (FENCE_LINE.test(line)) {
-      if (BARE_THREE.test(line) && fenceLines % 2 === 0) {
+      const bare = BARE_THREE.test(line)
+      if (!inFence && bare && opensNoBareFence(lines.slice(i + 1))) {
         const bodyEnd = Math.max(bodyStart, offset - 1)
         return { bodyEnd, end: offset + line.length }
       }
-      fenceLines++
+      inFence = inFence ? !bare : true
     }
     offset += line.length + 1
   }
