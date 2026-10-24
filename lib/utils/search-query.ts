@@ -40,8 +40,11 @@ function stripLoneSurrogates(value: string): string {
 // character after the cap could continue a compound token, the whole
 // trailing fragment is dropped. Over-dropping a complete token is a minor
 // precision loss; keeping a fragment changes the query, which is the bug.
+// The fragment matcher also includes '_': although an underscore splits
+// tokens (so a cap before one keeps a complete word), a capped word left
+// ending in '_' reads as unfinished text and goes with the fragment.
 const TOKEN_CONT = /[\p{L}\p{N}.\-/@:]/u
-const TRAILING_FRAGMENT = /[\p{L}\p{N}.\-/@:]+$/u
+const TRAILING_FRAGMENT = /[\p{L}\p{N}.\-/@:_]+$/u
 
 export function normalizeSearchQuery(query: string): string {
   const trimmed = query.trim()

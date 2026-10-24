@@ -63,6 +63,18 @@ describe('normalizeSearchQuery', () => {
     )
   })
 
+  it('drops the trailing word when the cap lands on an underscore', () => {
+    const prefix = 'note '.repeat(39) // 195 characters
+    // cap immediately after '_': the unfinished word goes with the fragment
+    expect(normalizeSearchQuery(prefix + 'foob_bar')).toBe(prefix.trim())
+    // cap inside the segment following '_': 'xfo_o' + 'bar' would leave a
+    // capped word ending in the underscore
+    expect(normalizeSearchQuery(prefix + 'xfo_obar')).toBe(prefix.trim())
+    // cap immediately before '_': the underscore splits tokens, so the
+    // preceding word is complete and stays
+    expect(normalizeSearchQuery(prefix + 'foobx_bar')).toBe(prefix + 'foobx')
+  })
+
   it('treats punctuation after the cap as a token boundary, like the parser', () => {
     // Postgres ends a word token at '!' just as it does at a space, so the
     // 198-character token is complete at the cap and must survive; only a
