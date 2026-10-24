@@ -27,8 +27,8 @@
     "@ai-sdk/react": "^4.0.69",
     "@aws-sdk/client-s3": "3.859.0",
     "@aws-sdk/s3-request-presigner": "3.859.0",
-    "@json-render/core": "^0.16.0",
-    "@json-render/react": "^0.16.0",
+    "@json-render/core": "0.21.2",
+    "@json-render/react": "0.21.2",
     "@langfuse/client": "^5.10.1",
     "@langfuse/otel": "^5.10.1",
     "@langfuse/tracing": "^5.10.1",
@@ -88,8 +88,8 @@
     "postgres": "^3.4.5",
     "posthog-js": "^1.382.0",
     "posthog-node": "^5.36.4",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-textarea-autosize": "^8.5.3",
     "redis": "^4.7.0",
     "sonner": "^1.4.41",
@@ -98,7 +98,7 @@
     "tailwindcss-animate": "^1.0.7",
     "undici": "^7",
     "vaul": "^1.1.2",
-    "zod": "^4.3.6"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",
