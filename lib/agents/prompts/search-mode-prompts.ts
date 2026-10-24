@@ -173,11 +173,11 @@ Example approach:
 
 End with a synthesizing conclusion that ties the main points together into a clear overall picture.
 
+${getDraftPrompt()}
+
 ${getImageSpecPrompt()}
 
 ${getSourceCardsSpecPrompt()}
-
-${getDraftPrompt()}
 
 ${getRelatedQuestionsSpecPrompt()}
 `
@@ -352,11 +352,11 @@ Flexible example:
 
 Conclude with a brief synthesis that ties together the main insights into a clear overall understanding.
 
+${getDraftPrompt()}
+
 ${getImageSpecPrompt()}
 
 ${getSourceCardsSpecPrompt()}
-
-${getDraftPrompt()}
 
 ${getRelatedQuestionsSpecPrompt()}
 `

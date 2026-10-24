@@ -33,8 +33,12 @@ export function createDraftTools(currentDraft: DraftVersion | null) {
   let current = currentDraft
 
   const editDraft = tool({
-    description:
-      'Make local changes to the current draft with exact find/replace edits. For a full rewrite, write a new draft block instead.',
+    description: `Make local changes to the current draft (a sentence, a paragraph, the title, one section, a passage the user quoted) with exact find/replace edits.
+- Copy each find exactly from <current_draft>. It must appear exactly once; include enough surrounding text to make it unique. If edits are reported as failed, retry only those with corrected find text.
+- When the user's message quotes text from the draft (a quoted-context block), that text is what "this" refers to: change only it, and make sure each find contains it.
+- For a change across the whole draft, or more than about five places, write a new complete draft block instead.
+- Never call this in the same answer that writes a draft block: it only sees the draft from before this answer.
+- To rename a draft without a top-level heading, pass the new title; otherwise edit the heading.`,
     inputSchema: editDraftInputSchema,
     execute: async ({ title, edits }) => {
       if (!current) {

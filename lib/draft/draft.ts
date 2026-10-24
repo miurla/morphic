@@ -8,6 +8,9 @@
  */
 
 const FENCE_OPEN = '````draft\n'
+// Models sometimes open with three backticks; that block ends at the first
+// bare fence, as markdown reads it.
+const OPENER = /(?:^|\n)(`{3,4})draft[ \t]*\n/g
 const FENCE_CLOSE = '\n````'
 const TITLE_LINE = /^title:[ \t]*(.*)\n?/
 
@@ -62,6 +65,18 @@ const STRICT_CLOSE = /\n````[ \t]*(?=\n|$)/g
 const FENCE_LINE = /^`{3,}/
 const BARE_THREE = /^```[ \t]*$/
 
+/**
+ * Whether a line can follow a draft close: nothing yet, a blank line, or a
+ * labeled block. Code right after a bare fence is an inner block's content.
+ */
+function followsLikeClose(line: string | undefined) {
+  return (
+    line === undefined ||
+    !line.trim() ||
+    (FENCE_LINE.test(line) && !BARE_THREE.test(line))
+  )
+}
+
 /** Whether text after a draft close opens no unlabeled fence, as answers do. */
 function opensNoBareFence(lines: string[]) {
   let inFence = false
@@ -82,13 +97,26 @@ function opensNoBareFence(lines: string[]) {
  * Where a block closes, searched only up to the next draft opener. Models
  * sometimes close a ````draft block with three backticks, which reads the same
  * as an unlabeled code fence opening inside the draft. A bare ``` line outside
- * any inner fence is taken as the close only when the text after it opens no
- * unlabeled fence: what follows a draft is prose and labeled blocks such as
- * spec, while the rest of an inner code block would open one.
+ * any inner fence is taken as the close only when what follows it looks like
+ * the rest of an answer: a blank line or a labeled block such as spec next,
+ * and no unlabeled fence later, which the rest of an inner code block would
+ * open.
  */
-function findClose(text: string, bodyStart: number) {
-  const next = text.indexOf(`\n${FENCE_OPEN}`, bodyStart - 1)
-  const limit = next < 0 ? text.length : next
+function findClose(text: string, bodyStart: number, ticks: number) {
+  OPENER.lastIndex = bodyStart - 1
+  const next = OPENER.exec(text)
+  const limit = next ? next.index : text.length
+
+  if (ticks === 3) {
+    const bare = /(?:^|\n)```[ \t]*(?=\n|$)/g
+    bare.lastIndex = bodyStart - 1
+    const close = bare.exec(text)
+    if (!close || close.index >= limit) return null
+    return {
+      bodyEnd: Math.max(bodyStart, close.index),
+      end: close.index + close[0].length
+    }
+  }
 
   STRICT_CLOSE.lastIndex = bodyStart - 1
   const strict = STRICT_CLOSE.exec(text)
@@ -103,7 +131,12 @@ function findClose(text: string, bodyStart: number) {
     const line = lines[i]
     if (FENCE_LINE.test(line)) {
       const bare = BARE_THREE.test(line)
-      if (!inFence && bare && opensNoBareFence(lines.slice(i + 1))) {
+      if (
+        !inFence &&
+        bare &&
+        followsLikeClose(lines[i + 1]) &&
+        opensNoBareFence(lines.slice(i + 1))
+      ) {
         const bodyEnd = Math.max(bodyStart, offset - 1)
         return { bodyEnd, end: offset + line.length }
       }
@@ -118,10 +151,12 @@ function locateDraftBlocks(text: string): BlockLocation[] {
   const blocks: BlockLocation[] = []
   let from = 0
   while (true) {
-    const open = text.indexOf(FENCE_OPEN, from)
-    if (open < 0) break
-    const bodyStart = open + FENCE_OPEN.length
-    const close = findClose(text, bodyStart)
+    OPENER.lastIndex = from
+    const opener = OPENER.exec(text)
+    if (!opener) break
+    const open = opener.index + (opener[0].startsWith('\n') ? 1 : 0)
+    const bodyStart = opener.index + opener[0].length
+    const close = findClose(text, bodyStart, opener[1].length)
     if (!close) {
       blocks.push({
         open,
@@ -154,7 +189,7 @@ export function replaceDraftBlocks(
   text: string,
   replace: (draft: { title: string; content: string }) => string
 ): string {
-  if (!text.includes(FENCE_OPEN)) return text
+  if (!text.includes('```draft')) return text
   let out = ''
   let from = 0
   for (const block of locateDraftBlocks(text)) {

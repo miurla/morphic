@@ -287,6 +287,22 @@ describe('formatCurrentDraft', () => {
   })
 })
 
+describe('three-backtick opener', () => {
+  test('reads a block opened and closed with three backticks', () => {
+    const text = '```draft\ntitle: Post\n\nJoin us!\n```'
+    expect(parseDraftBlocks(text)).toEqual([
+      { title: 'Post', content: 'Join us!', closed: true }
+    ])
+    expect(compactDraftBlocks(text)).toContain('[Draft "Post" written here')
+  })
+
+  test('leaves it open until the bare fence arrives', () => {
+    expect(parseDraftBlocks('```draft\ntitle: Post\n\nJoin')[0].closed).toBe(
+      false
+    )
+  })
+})
+
 describe('three-backtick close', () => {
   test('stops at the draft close when a spec fence follows', () => {
     const text = [
@@ -326,6 +342,14 @@ describe('three-backtick close', () => {
     const [block] = parseDraftBlocks(text)
     expect(block.closed).toBe(true)
     expect(block.content).toBe('Run:\n```\nnpm start\n```\nDone.')
+  })
+
+  test('leaves a block open when it stopped inside an unlabeled code block', () => {
+    const text =
+      '````draft\ntitle: Setup\n\nRun this:\n```\nnpm install\nnpm start'
+    const [block] = parseDraftBlocks(text)
+    expect(block.closed).toBe(false)
+    expect(block.content).toContain('npm start')
   })
 
   test('leaves a block open while its unlabeled code block streams', () => {
