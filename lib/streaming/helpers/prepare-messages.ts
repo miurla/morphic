@@ -67,9 +67,7 @@ export async function prepareMessages(
     const targetMessageId = targetMessage.id
     if (targetMessage.role === 'assistant') {
       await deleteMessagesFromIndex(chatId, targetMessageId, userId)
-      // Use in-memory messages instead of re-fetching from cache
-      // loadChat uses unstable_cache which may return stale data
-      // even after revalidateTag within the same request
+      // Use in-memory messages instead of re-fetching
       return currentChat.messages.slice(0, messageIndex)
     } else {
       // User message edit
@@ -91,7 +89,7 @@ export async function prepareMessages(
       if (messagesToDelete.length > 0) {
         await deleteMessagesFromIndex(chatId, messagesToDelete[0].id, userId)
       }
-      // Use in-memory messages instead of re-fetching from cache
+      // Use in-memory messages instead of re-fetching
       const messagesBeforeTarget = currentChat.messages.slice(0, messageIndex)
       const editedMessage =
         message && message.id === messageId ? message : targetMessage

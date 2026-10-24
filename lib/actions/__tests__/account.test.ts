@@ -1,5 +1,3 @@
-import { revalidateTag } from 'next/cache'
-
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { trackAccountDeleted } from '@/lib/analytics'
@@ -109,7 +107,6 @@ describe('Account Actions', () => {
     expect(dbActions.anonymizeUserFeedback).toHaveBeenCalledWith(user.id)
     expect(deleteUserObjects).toHaveBeenCalledWith(user.id)
     expect(deleteUser).toHaveBeenCalledWith(user.id)
-    expect(revalidateTag).toHaveBeenCalledWith('chat', 'max')
     expect(trackAccountDeleted).toHaveBeenCalledTimes(1)
     // supabase has no in-database guard, so no transaction is opened:
     // an outer transaction would hold a pooled connection while the
