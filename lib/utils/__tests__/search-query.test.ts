@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { MAX_QUERY_LENGTH, normalizeSearchQuery } from '../search-query'
+import {
+  effectiveQueryLength,
+  MAX_QUERY_LENGTH,
+  normalizeSearchQuery
+} from '../search-query'
 
 describe('normalizeSearchQuery', () => {
   it('trims and passes short queries through unchanged', () => {
@@ -105,5 +109,21 @@ describe('normalizeSearchQuery', () => {
 
     expect(result).toBe('abc')
     expect(() => encodeURIComponent(result)).not.toThrow()
+  })
+})
+
+describe('effectiveQueryLength', () => {
+  it('counts characters, not UTF-16 code units', () => {
+    // a single non-BMP character is two code units but one character for
+    // the user and for Postgres' parser
+    expect(effectiveQueryLength('😀')).toBe(1)
+    expect(effectiveQueryLength('😀😀')).toBe(2)
+    expect(effectiveQueryLength('😀a')).toBe(2)
+  })
+
+  it('measures the normalized query', () => {
+    expect(effectiveQueryLength('  a  ')).toBe(1)
+    expect(effectiveQueryLength('   \n ')).toBe(0)
+    expect(effectiveQueryLength('ab')).toBe(2)
   })
 })

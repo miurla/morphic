@@ -8,6 +8,7 @@ import {
 } from '@/lib/db/actions'
 import { stripHighlightMarkers } from '@/lib/render/highlight-markers'
 import {
+  effectiveQueryLength,
   MIN_QUERY_LENGTH,
   normalizeSearchQuery
 } from '@/lib/utils/search-query'
@@ -58,7 +59,10 @@ export async function GET(request: NextRequest) {
   // plus a token crossing the cap), and the actions would then run a very
   // broad single-character search despite the advertised minimum.
   const query = normalizeSearchQuery(searchParams.get('q') ?? '')
-  if (query.length < MIN_QUERY_LENGTH) {
+  // Counted in code points: a single non-BMP character is one character
+  // for the user and for Postgres' parser, even though it is two UTF-16
+  // code units in JS.
+  if (effectiveQueryLength(query) < MIN_QUERY_LENGTH) {
     return NextResponse.json<SearchResponse>(emptyResponse)
   }
 

@@ -20,6 +20,15 @@ export const MAX_QUERY_LENGTH = 200
 // single-character lexeme whose prefix match would scan broadly).
 export const MIN_QUERY_LENGTH = 2
 
+// Length of the effective query in characters (code points), not UTF-16
+// code units: a single non-BMP character such as an emoji is two code
+// units but one character for the user and for Postgres' parser, so the
+// minimum must be checked in code points. Normalization is idempotent,
+// so callers may pass an already-normalized query.
+export function effectiveQueryLength(query: string): number {
+  return [...normalizeSearchQuery(query)].length
+}
+
 // Slicing can split a surrogate pair, and lone surrogates are rejected by
 // encodeURIComponent (URIError) and by Postgres' UTF-8 validation. Strip
 // them so the normalized query is always encodable.

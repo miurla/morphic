@@ -64,6 +64,20 @@ describe('Search API Route', () => {
     expect(dbActions.searchChatTitles).not.toHaveBeenCalled()
   })
 
+  it('counts code points, not UTF-16 code units, for the minimum', async () => {
+    // '😀' is two code units but one character: it must not smuggle a
+    // broad single-character search past the minimum
+    const response = await GET(makeRequest('😀'))
+
+    await expect(response.json()).resolves.toEqual({ title: [], content: [] })
+    expect(dbActions.searchChatTitles).not.toHaveBeenCalled()
+    expect(dbActions.searchChatContent).not.toHaveBeenCalled()
+
+    // two characters do run the search
+    await GET(makeRequest('😀a'))
+    expect(dbActions.searchChatTitles).toHaveBeenCalled()
+  })
+
   it('returns empty groups when the normalized query falls below the minimum', async () => {
     // 'a ' plus a token crossing the cap normalizes to a single character;
     // the raw length must not smuggle a broad one-character search through

@@ -7,8 +7,8 @@ import { toast } from 'sonner'
 
 import { Chat as DBChat } from '@/lib/db/schema'
 import {
-  MIN_QUERY_LENGTH,
-  normalizeSearchQuery
+  effectiveQueryLength,
+  MIN_QUERY_LENGTH
 } from '@/lib/utils/search-query'
 
 import { Input } from '@/components/ui/input'
@@ -28,8 +28,9 @@ interface ChatPageResponse {
   nextOffset: number | null
 }
 
-// The API's minimum query length (shared constant): a shorter query keeps
-// the chronological list visible instead of the results view.
+// The API's minimum query length (shared constant), counted in code
+// points: a shorter query keeps the chronological list visible instead of
+// the results view.
 
 export function ChatHistoryClient() {
   const [chats, setChats] = useState<DBChat[]>([])
@@ -39,11 +40,15 @@ export function ChatHistoryClient() {
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Incremented per list refresh; lets fetchInitialChats detect when a
+  // later request has superseded its in-flight response.
+  const listRequestSeqRef = useRef(0)
   const [isPending, startTransition] = useTransition()
-  // Based on the normalized query (what the search actually runs): a paste
-  // whose bounded form falls below the minimum keeps the chronological
-  // list instead of mounting a search view that can never produce results.
-  const searchMode = normalizeSearchQuery(query).length >= MIN_QUERY_LENGTH
+  // Based on the normalized query (what the search actually runs), counted
+  // in code points: a paste whose bounded form falls below the minimum
+  // keeps the chronological list, and a single non-BMP character (two code
+  // units, one character) does not trigger a broad single-character search.
+  const searchMode = effectiveQueryLength(query) >= MIN_QUERY_LENGTH
   const searchModeRef = useRef(searchMode)
   // A list refresh that started while search mode hid the list: the items
   // (possibly deleted chats) must not be revealed until a refresh
@@ -91,7 +96,14 @@ export function ChatHistoryClient() {
     searchModeRef.current = searchMode
   }, [searchMode])
 
-  const fetchInitialChats = useCallback(async (): Promise<boolean> => {
+  const fetchInitialChats = useCallback(async (): Promise<
+    'ok' | 'failed' | 'superseded'
+  > => {
+    // Generation guard (same pattern as the results view): overlapping
+    // refreshes must not interleave. A superseded response may predate the
+    // data change that started the newer request, so only the latest
+    // request may apply its data or move the suppression flags.
+    const seq = ++listRequestSeqRef.current
     setIsLoading(true)
     try {
       const response = await fetch(`/api/chats?offset=0&limit=20`)
@@ -101,16 +113,18 @@ export function ChatHistoryClient() {
       const { chats: dbChats, nextOffset: newNextOffset } =
         (await response.json()) as ChatPageResponse
 
+      if (seq !== listRequestSeqRef.current) return 'superseded'
       setChats(dbChats)
       setNextOffset(newNextOffset)
-      return true
+      return 'ok'
     } catch (error) {
+      if (seq !== listRequestSeqRef.current) return 'superseded'
       console.error('Failed to load initial chats:', error)
       toast.error('Failed to load chat history.')
       setNextOffset(null)
-      return false
+      return 'failed'
     } finally {
-      setIsLoading(false)
+      if (seq === listRequestSeqRef.current) setIsLoading(false)
     }
   }, [])
 
@@ -133,14 +147,15 @@ export function ChatHistoryClient() {
         setListRetryFailed(false)
       }
       startTransition(async () => {
-        const ok = await fetchInitialChats()
-        // A refresh that failed while the list was hidden must not leave
-        // deleted chats to be revealed later: keep the suppression and
-        // retry when search mode ends. The marker clears only on success.
-        if (ok) {
+        const result = await fetchInitialChats()
+        // A superseded request has no say: the newer request owns the
+        // suppression state, so an older success must not clear the marker
+        // a newer failure may still set (and an older failure must not
+        // mark a retry that a newer success has already resolved).
+        if (result === 'ok') {
           setStaleHiddenRefresh(false)
           setListRetryFailed(false)
-        } else if (startedHidden) {
+        } else if (result === 'failed' && startedHidden) {
           setListRetryFailed(true)
         }
       })
@@ -158,10 +173,10 @@ export function ChatHistoryClient() {
   const retryStaleList = useCallback(() => {
     setListRetryFailed(false)
     startTransition(async () => {
-      const ok = await fetchInitialChats()
-      if (ok) {
+      const result = await fetchInitialChats()
+      if (result === 'ok') {
         setStaleHiddenRefresh(false)
-      } else {
+      } else if (result === 'failed') {
         setListRetryFailed(true)
       }
     })

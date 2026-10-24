@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 
 import { HL_START, HL_STOP } from '@/lib/render/highlight-markers'
 import {
+  effectiveQueryLength,
   MIN_QUERY_LENGTH,
   normalizeSearchQuery
 } from '@/lib/utils/search-query'
@@ -122,7 +123,7 @@ export function ChatHistorySearch({
     // target limit before the server bound takes effect (same normalization
     // as the backend, so results match the same effective query).
     const trimmed = normalizeSearchQuery(query)
-    if (trimmed.length < MIN_QUERY_LENGTH) {
+    if (effectiveQueryLength(trimmed) < MIN_QUERY_LENGTH) {
       return
     }
 
@@ -188,7 +189,7 @@ export function ChatHistorySearch({
 
   const handleSearchThinking = useCallback(async () => {
     const trimmed = normalizeSearchQuery(query)
-    if (trimmed.length < MIN_QUERY_LENGTH) {
+    if (effectiveQueryLength(trimmed) < MIN_QUERY_LENGTH) {
       return
     }
 

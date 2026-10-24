@@ -148,6 +148,23 @@ describe('ChatHistoryClient search mode', () => {
     expect(calledWith(fetchMock, '/api/search')).toBe(false)
   })
 
+  it('counts code points, not UTF-16 code units, for the minimum', async () => {
+    const fetchMock = mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+    fetchMock.mockClear()
+
+    // '😀' is two code units but one character: like any single-character
+    // query it must keep the chronological list instead of a broad search.
+    await typeInSearch('😀')
+    expect(screen.getByText('Existing chat')).toBeInTheDocument()
+    expect(calledWith(fetchMock, '/api/search')).toBe(false)
+
+    // two characters (even both non-BMP) do enter search mode
+    await typeInSearch('😀😀')
+    expect(screen.getByText('Matched chat')).toBeInTheDocument()
+  })
+
   it('refreshes the hidden list immediately when chat data changes while searching', async () => {
     const fetchMock = mockFetch()
     render(<ChatHistoryClient />)
@@ -312,6 +329,58 @@ describe('ChatHistoryClient search mode', () => {
     })
     await flush(50)
     expect(screen.getByText('Existing chat')).toBeInTheDocument()
+  })
+
+  it('ignores a superseded refresh when a newer one fails', async () => {
+    const fetchMock = mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+    fetchMock.mockClear()
+
+    // Two data changes while the list is hidden. The first refresh is slow
+    // and would succeed with a response captured before the second change;
+    // the second refresh fails. Only the latest request may apply its data
+    // or move the suppression flags.
+    let chatsCalls = 0
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      if (String(input).startsWith('/api/chats')) {
+        chatsCalls++
+        if (chatsCalls === 1) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+          return {
+            ok: true,
+            json: async () => ({ chats: [chat], nextOffset: null })
+          }
+        }
+        return {
+          ok: false,
+          json: async () => ({ chats: [], nextOffset: null })
+        }
+      }
+      return { ok: true, json: async () => ({ title: [], content: [] }) }
+    })
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    await flush(50) // the newer refresh has failed; the older is pending
+
+    // Leaving search retries the failed refresh (which fails here too).
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Clear search'))
+    })
+    await flush(50)
+    expect(screen.queryByText('Existing chat')).not.toBeInTheDocument()
+
+    // The older response lands: it predates the second change, so it must
+    // not clear the suppression or reveal its (stale) items.
+    await flush(100)
+    expect(screen.queryByText('Existing chat')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
   it('refetches search results when chat data changes during search', async () => {
