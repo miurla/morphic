@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { GET, POST } from '../route'
 
@@ -21,12 +21,30 @@ describe('GET /api/auth/[...all]', () => {
     handler.mockClear()
   })
 
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   it('lets the identity provider callback through to the auth handler', async () => {
     const req = request('GET', 'callback/oidc')
     const response = await GET(req)
 
     expect(handler).toHaveBeenCalledWith(req)
     expect(response.status).toBe(200)
+  })
+
+  it('accepts the callback path of a custom OIDC_PROVIDER_ID', async () => {
+    vi.stubEnv('OIDC_PROVIDER_ID', 'corp-idp')
+    const response = await GET(request('GET', 'callback/corp-idp'))
+
+    expect(handler).toHaveBeenCalledTimes(1)
+    expect(response.status).toBe(200)
+
+    // Any other provider id is not mounted.
+    handler.mockClear()
+    const other = await GET(request('GET', 'callback/oidc'))
+    expect(other.status).toBe(404)
+    expect(handler).not.toHaveBeenCalled()
   })
 
   it('exposes the error endpoint the auth callback redirects to', async () => {

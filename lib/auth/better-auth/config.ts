@@ -8,6 +8,7 @@ import { asc, count, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 
 import {
+  getOidcProviderId,
   getOidcProviderName as getOidcProviderNameUtil,
   isOidcConfigured as isOidcConfiguredUtil
 } from '../oauth-config'
@@ -371,7 +372,9 @@ function createAuth() {
         genericOAuth({
           config: [
             {
-              providerId: 'oidc',
+              // The provider id the plugin registers and the IdP callback
+              // URL is derived from (OIDC_PROVIDER_ID, default 'oidc').
+              providerId: getOidcProviderId(),
               // Trailing slash is a common typo: without stripping, the
               // discovery URL becomes "...//.well-known/..." and most IdPs
               // answer 404, which better-auth reports as "discovery left no

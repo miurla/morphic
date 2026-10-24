@@ -1,5 +1,6 @@
 'use server'
 
+import { getOidcProviderId } from '@/lib/auth/oauth-config'
 import { getAuthProvider } from '@/lib/auth/provider'
 import type { AuthActionResult } from '@/lib/auth/types'
 
@@ -31,7 +32,9 @@ export async function signInWithOidc(): Promise<AuthActionResult> {
   if (!provider.signInWithOAuth) {
     return unavailable()
   }
-  return provider.signInWithOAuth('oidc')
+  // The provider id is resolved on the server (OIDC_PROVIDER_ID, default
+  // 'oidc'); the client only asks for the OIDC sign-in flow by name.
+  return provider.signInWithOAuth(getOidcProviderId())
 }
 
 export async function signUp(credentials: {

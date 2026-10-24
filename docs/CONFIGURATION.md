@@ -316,7 +316,7 @@ OIDC_CLIENT_SECRET=your-client-secret
 BETTER_AUTH_URL=https://your-morphic-url.com
 ```
 
-`BETTER_AUTH_URL` is required: it is the canonical origin the provider redirect URI (`<BETTER_AUTH_URL>/api/auth/callback/oidc`) and the post-SignIn redirect are derived from. Without it, OAuth sign-in is refused at click time even when OIDC is otherwise fully configured.
+`BETTER_AUTH_URL` is required: it is the canonical origin the provider redirect URI (`<BETTER_AUTH_URL>/api/auth/callback/<OIDC_PROVIDER_ID>`) and the post-SignIn redirect are derived from. Without it, OAuth sign-in is refused at click time even when OIDC is otherwise fully configured.
 
 **Optional customization:**
 
@@ -326,15 +326,21 @@ OIDC_SCOPE=openid profile email groups
 
 # Provider display name in login UI (defaults to 'OIDC')
 OIDC_PROVIDER_NAME=Keycloak
+
+# Provider id (defaults to 'oidc'). Becomes the plugin-registered identity
+# and the last segment of the callback URL below.
+OIDC_PROVIDER_ID=oidc
 ```
 
 **How it works:**
 
 - When OIDC environment variables are set, the login form replaces the Google OAuth button with your configured provider
+- The provider id defaults to `oidc` (`OIDC_PROVIDER_ID`); the callback URL is `/api/auth/callback/<OIDC_PROVIDER_ID>` and the provider id must match the client's registered redirect URI exactly
+- The OIDC `sub` claim is only unique per issuer: accounts are keyed by `(providerId, sub)`, so changing `OIDC_ISSUER` must come with a new `OIDC_PROVIDER_ID`; otherwise identities from the two issuers collide in the account table
 - Uses OpenID Connect Discovery to automatically fetch endpoints from `OIDC_ISSUER/.well-known/openid-configuration`
 - Implements PKCE (Proof Key for Code Exchange) for secure authorization flows
 - User accounts are stored in the same `users` and `accounts` tables as email/password users
-- The OIDC `sub` claim is stored as `accounts.accountId` with `accounts.providerId='oidc'`
+- The OIDC `sub` claim is stored as `accounts.accountId` with `accounts.providerId=<OIDC_PROVIDER_ID>`
 - A transient discovery outage does not permanently disable the provider: a failed discovery is retried on the next sign-in attempt
 
 **Sign-up policy:**
@@ -351,7 +357,7 @@ Better Auth's API is driven through server actions. Only the provider callback i
 **Identity provider setup:**
 
 1. Create a new OAuth/OIDC client in your identity provider
-2. Set the redirect/callback URL to: `https://your-morphic-url.com/api/auth/callback/oidc`
+2. Set the redirect/callback URL to: `https://your-morphic-url.com/api/auth/callback/<OIDC_PROVIDER_ID>` (default: `…/callback/oidc`)
 3. Enable authorization code flow with PKCE
 4. Request scopes: `openid`, `profile`, `email` (and any additional scopes like `groups`)
 5. Copy the client ID, client secret, and issuer URL to your environment variables

@@ -35,6 +35,8 @@ import type {
 } from '@/lib/auth/types'
 import { db } from '@/lib/db'
 
+import { getOidcProviderId } from '../oauth-config'
+
 /**
  * Whether an account already exists for the address. Used to decide whether
  * an uncertain sign-up failure (a throw after better-auth may have already
@@ -292,8 +294,8 @@ export const betterAuthProvider: AuthProvider = {
    * (app/api/auth/[...all]/route.ts) for the flow to complete.
    */
   async signInWithOAuth(provider: string): Promise<AuthActionResult> {
-    if (provider !== 'oidc') {
-      // better-auth's generic OAuth plugin only registers 'oidc' here.
+    if (provider !== getOidcProviderId()) {
+      // The generic OAuth plugin registers exactly one OIDC provider.
       return {
         success: false,
         error: `Provider "${provider}" is not configured.`
