@@ -7,6 +7,7 @@ import {
   searchChatTitles
 } from '@/lib/db/actions'
 import { stripHighlightMarkers } from '@/lib/render/highlight-markers'
+import { normalizeSearchQuery } from '@/lib/utils/search-query'
 
 const MIN_QUERY_LENGTH = 2
 const TITLE_LIMIT = 20
@@ -51,7 +52,11 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url)
-  const query = (searchParams.get('q') ?? '').trim()
+  // Normalize once here so the minimum applies to the query the search
+  // actually runs: a long paste can normalize below the minimum (e.g. 'a '
+  // plus a token crossing the cap), and the actions would then run a very
+  // broad single-character search despite the advertised minimum.
+  const query = normalizeSearchQuery(searchParams.get('q') ?? '')
   if (query.length < MIN_QUERY_LENGTH) {
     return NextResponse.json<SearchResponse>(emptyResponse)
   }

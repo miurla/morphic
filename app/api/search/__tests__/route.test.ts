@@ -64,6 +64,16 @@ describe('Search API Route', () => {
     expect(dbActions.searchChatTitles).not.toHaveBeenCalled()
   })
 
+  it('returns empty groups when the normalized query falls below the minimum', async () => {
+    // 'a ' plus a token crossing the cap normalizes to a single character;
+    // the raw length must not smuggle a broad one-character search through
+    const response = await GET(makeRequest('a ' + 'x'.repeat(300)))
+
+    await expect(response.json()).resolves.toEqual({ title: [], content: [] })
+    expect(dbActions.searchChatTitles).not.toHaveBeenCalled()
+    expect(dbActions.searchChatContent).not.toHaveBeenCalled()
+  })
+
   it('groups title and content matches with caps 20/20', async () => {
     vi.mocked(dbActions.searchChatTitles).mockResolvedValue([titleChat])
     vi.mocked(dbActions.searchChatContent).mockResolvedValue([contentMatch])
