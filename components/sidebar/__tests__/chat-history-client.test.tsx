@@ -509,6 +509,50 @@ describe('ChatHistoryClient search mode', () => {
     expect(screen.queryByText('Deleted chat')).not.toBeInTheDocument()
   })
 
+  it('does not let a queued load-more callback supersede a running refresh', async () => {
+    const deletedChat = {
+      id: 'chat-old',
+      title: 'Deleted chat',
+      userId: 'user-1',
+      visibility: 'private' as const,
+      createdAt: new Date('2026-01-01T00:00:00Z')
+    }
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.startsWith('/api/chats?offset=0')) {
+        return {
+          ok: true,
+          json: async () => ({ chats: [chat], nextOffset: 20 })
+        }
+      }
+      if (url.startsWith('/api/chats')) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+        return {
+          ok: true,
+          json: async () => ({ chats: [deletedChat], nextOffset: null })
+        }
+      }
+      return { ok: true, json: async () => ({ title: [], content: [] }) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    // The observer notification is queued just before the data change:
+    // the refresh starts first, but the callback still closes over the
+    // pre-refresh state (isLoading === false) and runs right after.
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+      lastObserver!.intersect()
+    })
+    await flush(200)
+
+    // The refresh owns the list: the stale offset page must not append
+    // to (or replace) its result.
+    expect(screen.getByText('Existing chat')).toBeInTheDocument()
+    expect(screen.queryByText('Deleted chat')).not.toBeInTheDocument()
+  })
+
   it('refetches search results when chat data changes during search', async () => {
     const fetchMock = mockFetch()
     render(<ChatHistoryClient />)

@@ -40,9 +40,13 @@ export function ChatHistoryClient() {
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  // Incremented per list refresh; lets fetchInitialChats detect when a
-  // later request has superseded its in-flight response.
+  // Incremented per list request; lets fetchInitialChats/fetchMoreChats
+  // detect when a later request has superseded their in-flight response.
   const listRequestSeqRef = useRef(0)
+  // Set synchronously while a full refresh is in flight. A queued
+  // IntersectionObserver callback closes over pre-refresh state, so
+  // pagination must not advance the generation past a running refresh.
+  const refreshInFlightRef = useRef(false)
   const [isPending, startTransition] = useTransition()
   // Based on the normalized query (what the search actually runs), counted
   // in code points: a paste whose bounded form falls below the minimum
@@ -111,6 +115,7 @@ export function ChatHistoryClient() {
     // data change that started the newer request, so only the latest
     // request may apply its data or move the suppression flags.
     const seq = ++listRequestSeqRef.current
+    refreshInFlightRef.current = true
     setIsLoading(true)
     try {
       const response = await fetch(`/api/chats?offset=0&limit=20`)
@@ -131,7 +136,10 @@ export function ChatHistoryClient() {
       setNextOffset(null)
       return 'failed'
     } finally {
-      if (seq === listRequestSeqRef.current) setIsLoading(false)
+      if (seq === listRequestSeqRef.current) {
+        refreshInFlightRef.current = false
+        setIsLoading(false)
+      }
     }
   }, [])
 
@@ -204,6 +212,9 @@ export function ChatHistoryClient() {
 
   const fetchMoreChats = useCallback(async () => {
     if (isLoading || nextOffset === null) return
+    // A full refresh in flight always wins: a queued observer callback
+    // sees stale closure state, so pagination must never supersede it.
+    if (refreshInFlightRef.current) return
 
     // Same generation guard as fetchInitialChats: a page fetched before a
     // data change (e.g. Clear History) must not append its pre-deletion
