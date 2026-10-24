@@ -16,7 +16,8 @@
     "test": "NODE_ENV=test vitest run",
     "test:watch": "vitest --watch",
     "chat": "bun run scripts/chat-cli.ts",
-    "eval:related-questions": "bun run evals/run-related-questions.ts"
+    "eval:related-questions": "bun run evals/run-related-questions.ts",
+    "eval:source-cards": "bun run evals/run-source-cards.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.87",

@@ -1,0 +1,72 @@
+import { describe, expect, test } from 'vitest'
+
+import { linkedCardsFenceToMarkdown } from '../linked-cards-markdown'
+import { parseSpecBlock } from '../parse-spec-block'
+import { stripSpecBlocks } from '../strip-spec-blocks'
+
+const CARDS_SOURCE = [
+  '{"op":"add","path":"/root","value":"cards"}',
+  '{"op":"add","path":"/elements/cards","value":{"type":"Grid","props":{"columns":2},"children":["c1","c2"]}}',
+  '{"op":"add","path":"/elements/c1","value":{"type":"Card","props":{"href":"https://sqlbolt.com/"},"children":["c1t","c1d","c1b"]}}',
+  '{"op":"add","path":"/elements/c1t","value":{"type":"Text","props":{"text":"SQLBolt","weight":"semibold"},"children":[]}}',
+  '{"op":"add","path":"/elements/c1d","value":{"type":"Text","props":{"text":"Interactive lessons.","tone":"muted"},"children":[]}}',
+  '{"op":"add","path":"/elements/c1b","value":{"type":"Badge","props":{"text":"Free"},"children":[]}}',
+  '{"op":"add","path":"/elements/c2","value":{"type":"Card","props":{"href":"https://mode.com/sql-tutorial/"},"children":["c2t"]}}',
+  '{"op":"add","path":"/elements/c2t","value":{"type":"Text","props":{"text":"Mode SQL Tutorial","weight":"semibold"},"children":[]}}'
+].join('\n')
+
+const CARDS_FENCE = ['```spec', CARDS_SOURCE, '```'].join('\n')
+
+describe('linked card spec', () => {
+  test('validates against the catalog', () => {
+    const spec = parseSpecBlock(CARDS_SOURCE)
+    expect(spec.elements.c1.type).toBe('Card')
+    expect(spec.elements.c1t.type).toBe('Text')
+    expect(spec.elements.c1b.type).toBe('Badge')
+  })
+})
+
+describe('linkedCardsFenceToMarkdown', () => {
+  test('renders each linked card as a markdown link', () => {
+    expect(linkedCardsFenceToMarkdown(CARDS_FENCE)).toBe(
+      [
+        '- [SQLBolt](https://sqlbolt.com/): Interactive lessons. (Free)',
+        '- [Mode SQL Tutorial](https://mode.com/sql-tutorial/)'
+      ].join('\n')
+    )
+  })
+
+  test('returns null for cards without href', () => {
+    const fence = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"c"}',
+      '{"op":"add","path":"/elements/c","value":{"type":"Card","props":{},"children":["t"]}}',
+      '{"op":"add","path":"/elements/t","value":{"type":"Text","props":{"text":"Note"},"children":[]}}',
+      '```'
+    ].join('\n')
+    expect(linkedCardsFenceToMarkdown(fence)).toBeNull()
+  })
+
+  test('returns null for a fence without cards', () => {
+    const fence = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"x"}',
+      '```'
+    ].join('\n')
+    expect(linkedCardsFenceToMarkdown(fence)).toBeNull()
+  })
+
+  test('returns null for an unparseable fence', () => {
+    const fence = ['```spec', '{"type":"Card" broken', '```'].join('\n')
+    expect(linkedCardsFenceToMarkdown(fence)).toBeNull()
+  })
+})
+
+describe('stripSpecBlocks with linked cards', () => {
+  test('keeps the cards as a list when copying', () => {
+    const result = stripSpecBlocks(`Lead-in.\n\n${CARDS_FENCE}\n\nClosing.`)
+    expect(result).not.toContain('```spec')
+    expect(result).toContain('- [SQLBolt](https://sqlbolt.com/)')
+    expect(result).toContain('Closing.')
+  })
+})

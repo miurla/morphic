@@ -1,5 +1,7 @@
 import { UIMessage } from 'ai'
 
+import { linkedCardsFenceToMarkdown } from '@/lib/render/linked-cards-markdown'
+
 const SPEC_FENCE = /```spec[\s\S]*?```/g
 
 // The related-questions block is the only spec block whose JSONL carries a
@@ -11,6 +13,8 @@ const RELATED_QUESTIONS_MARKER = '"icon":"related"'
  * related-questions block. Dropping the rest stops prior spec payloads from
  * spending context window budget on every later turn; keeping the related one
  * leaves the model an example of the format it is asked to keep producing.
+ * Linked Card blocks become a markdown list instead, because they replace the
+ * list the answer would otherwise contain and a follow-up may refer to it.
  *
  * The result must depend only on the text passed in, because this runs on the
  * prompt-cache prefix and a message has to replay identically on every turn.
@@ -25,7 +29,7 @@ function stripNonRelatedSpecBlocks(text: string): string {
       return block
     }
     removed = true
-    return ''
+    return linkedCardsFenceToMarkdown(block) ?? ''
   })
 
   if (!removed) {

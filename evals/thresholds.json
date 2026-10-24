@@ -20,5 +20,35 @@
       "value": 0.9,
       "minSamples": 50
     }
+  },
+  "source-cards": {
+    "completionRate": {
+      "direction": "min",
+      "value": 0.9
+    },
+    "emissionRate": {
+      "direction": "min",
+      "value": null
+    },
+    "misuseRate": {
+      "direction": "max",
+      "value": null
+    },
+    "wellFormedRate": {
+      "direction": "min",
+      "value": null
+    },
+    "groundedRate": {
+      "direction": "min",
+      "value": null
+    },
+    "misattributedRate": {
+      "direction": "max",
+      "value": null
+    },
+    "roundupMisuseRate": {
+      "direction": "max",
+      "value": null
+    }
   }
 }
