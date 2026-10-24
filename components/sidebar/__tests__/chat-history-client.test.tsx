@@ -148,7 +148,7 @@ describe('ChatHistoryClient search mode', () => {
     expect(calledWith(fetchMock, '/api/search')).toBe(false)
   })
 
-  it('defers chat-history-updated refreshes while searching and applies them on exit', async () => {
+  it('refreshes the hidden list immediately when chat data changes while searching', async () => {
     const fetchMock = mockFetch()
     render(<ChatHistoryClient />)
     await flush(50)
@@ -156,19 +156,20 @@ describe('ChatHistoryClient search mode', () => {
 
     await typeInSearch('mat')
 
-    // A chat completes while the user is searching: the list must not refetch.
+    // A chat completes (or Clear History) while the user is searching: the
+    // hidden list refetches right away, so deleted chats can never be
+    // revealed as clickable items when the user leaves search mode.
     await act(async () => {
       window.dispatchEvent(new CustomEvent('chat-history-updated'))
     })
     await flush(50)
-    expect(calledWith(fetchMock, '/api/chats')).toBe(false)
+    expect(calledWith(fetchMock, '/api/chats')).toBe(true)
 
-    // Clearing the search applies the deferred refresh.
+    // Leaving the search shows the refreshed list, not stale items.
     await act(async () => {
       fireEvent.click(screen.getByLabelText('Clear search'))
     })
     await flush(50)
-    expect(calledWith(fetchMock, '/api/chats')).toBe(true)
     expect(screen.getByText('Existing chat')).toBeInTheDocument()
   })
 
@@ -188,7 +189,8 @@ describe('ChatHistoryClient search mode', () => {
     await flush(300)
 
     expect(calledWith(fetchMock, '/api/search')).toBe(true)
-    expect(calledWith(fetchMock, '/api/chats')).toBe(false)
+    // the hidden chronological list refreshes alongside the results
+    expect(calledWith(fetchMock, '/api/chats')).toBe(true)
   })
 
   it('forwards ArrowDown and Enter from the input to the result list', async () => {

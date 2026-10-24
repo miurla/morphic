@@ -45,7 +45,6 @@ export function ChatHistoryClient() {
   // list instead of mounting a search view that can never produce results.
   const searchMode = normalizeSearchQuery(query).length >= MIN_QUERY_LENGTH
   const searchModeRef = useRef(searchMode)
-  const pendingListRefreshRef = useRef(false)
   // Bumped when chat data changes during search mode, telling the results
   // view to refetch so stale matches (e.g. after Clear History) cannot be
   // opened.
@@ -110,14 +109,15 @@ export function ChatHistoryClient() {
 
   useEffect(() => {
     const handleHistoryUpdate = () => {
-      // While searching, the list is hidden; defer the refresh until the
-      // user leaves search mode so the results view is not disturbed.
+      // Chat data changed (e.g. Clear History). Refresh the chronological
+      // list even while search mode hides it: deferring the refresh would
+      // reveal stale items when the user leaves search mode (deleted chats
+      // stay clickable for the whole deferred request, and indefinitely if
+      // that request fails). The hidden list renders nothing, so refreshing
+      // it cannot disturb the results view, which refetches via the epoch
+      // bump below.
       if (searchModeRef.current) {
-        pendingListRefreshRef.current = true
-        // Results may now reference deleted chats (Clear History), so the
-        // search view has to refetch even though the list refresh is deferred.
         setSearchEpoch(epoch => epoch + 1)
-        return
       }
       startTransition(async () => {
         await fetchInitialChats()
@@ -128,16 +128,6 @@ export function ChatHistoryClient() {
       window.removeEventListener('chat-history-updated', handleHistoryUpdate)
     }
   }, [fetchInitialChats, startTransition])
-
-  // Apply a list refresh that was deferred while search mode was active.
-  useEffect(() => {
-    if (!searchMode && pendingListRefreshRef.current) {
-      pendingListRefreshRef.current = false
-      startTransition(async () => {
-        await fetchInitialChats()
-      })
-    }
-  }, [searchMode, fetchInitialChats, startTransition])
 
   const fetchMoreChats = useCallback(async () => {
     if (isLoading || nextOffset === null) return
