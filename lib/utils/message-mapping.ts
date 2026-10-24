@@ -314,6 +314,25 @@ export function mapUIMessagePartsToDBParts(
         }
         return createToolPartMapping(basePart, part, 'todoRead')
 
+      // Stored in the dynamic tool columns, so drafts need no schema change.
+      // Read back as tool-editDraft by the 'draft' dynamic type.
+      case 'tool-editDraft':
+        if (!isExtendedToolPart(part)) {
+          console.error('Invalid extended tool part:', part)
+          return null
+        }
+        return {
+          ...basePart,
+          type: 'tool-dynamic',
+          tool_toolCallId: part.toolCallId || generateId(),
+          tool_state: part.state || ('input-available' as ToolState),
+          tool_dynamic_name: 'editDraft',
+          tool_dynamic_type: 'draft',
+          tool_dynamic_input: part.input,
+          tool_dynamic_output: part.output,
+          tool_errorText: part.errorText
+        }
+
       // Data parts
       default:
         if (part.type.startsWith('data-')) {
@@ -399,6 +418,16 @@ export function mapDBPartToUIMessagePart(
           `tool_${toolName}_output` as keyof DBMessagePartSelect
 
         // Special handling for dynamic tools
+        if (toolName === 'dynamic' && part.tool_dynamic_type === 'draft') {
+          return {
+            type: `tool-${part.tool_dynamic_name}`,
+            toolCallId: part.tool_toolCallId || '',
+            state: part.tool_state as any,
+            input: part.tool_dynamic_input,
+            output: part.tool_dynamic_output,
+            errorText: part.tool_errorText
+          } as any
+        }
         if (toolName === 'dynamic') {
           return {
             type: 'dynamic-tool',

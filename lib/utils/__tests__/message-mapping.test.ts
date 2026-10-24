@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest'
 import { DeterministicPreparationError } from '@/lib/errors/deterministic-preparation-error'
 import type { DBMessagePartSelect } from '@/lib/types/message-persistence'
 
-import { mapDBPartToUIMessagePart } from '../message-mapping'
+import {
+  mapDBPartToUIMessagePart,
+  mapUIMessagePartsToDBParts
+} from '../message-mapping'
 
 function persistedPart(
   values: Partial<DBMessagePartSelect>
@@ -24,5 +27,26 @@ describe('mapDBPartToUIMessagePart', () => {
         persistedPart({ type: 'tool-search', tool_state: null })
       )
     ).toThrow(DeterministicPreparationError)
+  })
+})
+
+describe('editDraft tool parts', () => {
+  it('round-trips through the dynamic tool columns', () => {
+    const uiPart = {
+      type: 'tool-editDraft',
+      toolCallId: 'call-1',
+      state: 'output-available',
+      input: { edits: [{ find: 'a', replace: 'b' }] },
+      output: { applied: 1, failed: [] }
+    }
+    const [dbPart] = mapUIMessagePartsToDBParts([uiPart] as never, 'msg-1')
+
+    expect(dbPart.type).toBe('tool-dynamic')
+    expect(dbPart.tool_dynamic_type).toBe('draft')
+
+    const restored = mapDBPartToUIMessagePart(
+      persistedPart(dbPart as Partial<DBMessagePartSelect>)
+    )
+    expect(restored).toMatchObject(uiPart)
   })
 })

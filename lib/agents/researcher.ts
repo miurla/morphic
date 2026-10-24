@@ -1,11 +1,13 @@
 import { isStepCount, tool, ToolLoopAgent } from 'ai'
 
+import type { DraftVersion } from '@/lib/draft/draft'
 import type {
   ResearcherRuntimeContext,
   ResearcherTools
 } from '@/lib/types/agent'
 import { type Model } from '@/lib/types/models'
 
+import { createDraftTools } from '../tools/draft'
 import { createFetchTool } from '../tools/fetch'
 import { createQuestionTool } from '../tools/question'
 import { createSearchTool } from '../tools/search'
@@ -76,13 +78,15 @@ export function createResearcher({
   modelConfig,
   chatId,
   searchMode = 'adaptive',
-  citationLabelSeed
+  citationLabelSeed,
+  currentDraft = null
 }: {
   model: string
   modelConfig?: Model
   chatId?: string
   searchMode?: SearchMode
   citationLabelSeed?: number
+  currentDraft?: DraftVersion | null
 }) {
   try {
     // Date only: a second-precision timestamp sits at the head of the prompt
@@ -97,6 +101,7 @@ export function createResearcher({
     const fetchTool = createFetchTool({ labelAllocator })
     const askQuestionTool = createQuestionTool(model)
     const todoTools = createTodoTools()
+    const draftTools = createDraftTools(currentDraft)
 
     let systemPrompt: string
     let activeToolsList: (keyof ResearcherTools)[] = []
@@ -107,10 +112,10 @@ export function createResearcher({
     switch (searchMode) {
       case 'quick':
         console.log(
-          '[Researcher] Quick mode: maxSteps=20, tools=[search, fetch]'
+          '[Researcher] Quick mode: maxSteps=20, tools=[search, fetch, editDraft]'
         )
         systemPrompt = QUICK_MODE_PROMPT
-        activeToolsList = ['search', 'fetch']
+        activeToolsList = ['search', 'fetch', 'editDraft']
         maxSteps = 20
         searchTool = wrapSearchToolForQuickMode(originalSearchTool)
         break
@@ -118,7 +123,7 @@ export function createResearcher({
       case 'adaptive':
       default:
         systemPrompt = getAdaptiveModePrompt()
-        activeToolsList = ['search', 'fetch', 'todoWrite']
+        activeToolsList = ['search', 'fetch', 'todoWrite', 'editDraft']
         console.log(
           `[Researcher] Adaptive mode: maxSteps=50, tools=[${activeToolsList.join(', ')}]`
         )
@@ -132,7 +137,8 @@ export function createResearcher({
       search: searchTool,
       fetch: fetchTool,
       askQuestion: askQuestionTool,
-      ...todoTools
+      ...todoTools,
+      ...draftTools
     } as ResearcherTools
 
     const providerOptions =

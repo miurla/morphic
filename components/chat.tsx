@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { useChat } from '@ai-sdk/react'
@@ -36,6 +36,7 @@ import { getTextFromParts } from '@/lib/utils/message-utils'
 
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
 
+import { registerDraftSource, unregisterDraftSource } from './draft/draft-store'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
 import { DragOverlay } from './drag-overlay'
@@ -396,6 +397,20 @@ export function Chat({
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
+
+  // The draft panel sits outside this component, so register what it reads.
+  // The layout mounts a desktop and a mobile Chat; the store hands the panel
+  // whichever one is visible.
+  const draftSourceId = useId()
+  useEffect(() => {
+    registerDraftSource(draftSourceId, {
+      messages,
+      isStreaming: status === 'streaming' || status === 'submitted',
+      quote: handleQuoteContext,
+      isVisible: () => Boolean(scrollContainerRef.current?.offsetParent)
+    })
+  }, [draftSourceId, messages, status, handleQuoteContext])
+  useEffect(() => () => unregisterDraftSource(draftSourceId), [draftSourceId])
 
   useEffect(() => {
     const handleCopyMessage = (e: Event) => {

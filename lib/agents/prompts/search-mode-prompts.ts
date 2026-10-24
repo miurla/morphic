@@ -1,3 +1,4 @@
+import { getDraftPrompt } from '@/lib/draft/prompt'
 import {
   getImageSpecPrompt,
   getRelatedQuestionsSpecPrompt,
@@ -176,6 +177,8 @@ ${getImageSpecPrompt()}
 
 ${getSourceCardsSpecPrompt()}
 
+${getDraftPrompt()}
+
 ${getRelatedQuestionsSpecPrompt()}
 `
 }
@@ -352,6 +355,8 @@ Conclude with a brief synthesis that ties together the main insights into a clea
 ${getImageSpecPrompt()}
 
 ${getSourceCardsSpecPrompt()}
+
+${getDraftPrompt()}
 
 ${getRelatedQuestionsSpecPrompt()}
 `
