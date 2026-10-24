@@ -7,6 +7,7 @@ import {
   compactDraftBlocks,
   currentDraftVersion,
   formatCurrentDraft,
+  normalizeDraftFences,
   parseDraftBlocks,
   parseDraftFenceBody
 } from '../draft'
@@ -287,6 +288,20 @@ describe('formatCurrentDraft', () => {
   })
 })
 
+describe('normalizeDraftFences', () => {
+  test('closes a short-closed draft with four backticks and keeps the rest', () => {
+    const text = '````draft\ntitle: A\n\nBody\n```\n\nWant changes?'
+    expect(normalizeDraftFences(text)).toBe(
+      '````draft\ntitle: A\n\nBody\n````\n\nWant changes?'
+    )
+  })
+
+  test('leaves a correctly closed draft alone', () => {
+    const text = '````draft\ntitle: A\n\nBody\n````\nAfter.'
+    expect(normalizeDraftFences(text)).toBe(text)
+  })
+})
+
 describe('three-backtick opener', () => {
   test('reads a block opened and closed with three backticks', () => {
     const text = '```draft\ntitle: Post\n\nJoin us!\n```'
@@ -294,6 +309,14 @@ describe('three-backtick opener', () => {
       { title: 'Post', content: 'Join us!', closed: true }
     ])
     expect(compactDraftBlocks(text)).toContain('[Draft "Post" written here')
+  })
+
+  test('accepts a longer close', () => {
+    expect(parseDraftBlocks('```draft\ntitle: Post\n\nHi\n````')[0]).toEqual({
+      title: 'Post',
+      content: 'Hi',
+      closed: true
+    })
   })
 
   test('leaves it open until the bare fence arrives', () => {

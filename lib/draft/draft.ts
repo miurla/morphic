@@ -59,6 +59,7 @@ type BlockLocation = {
   /** Offset just past the closing fence, or the text length while open. */
   end: number
   closed: boolean
+  ticks: number
 }
 
 const STRICT_CLOSE = /\n````[ \t]*(?=\n|$)/g
@@ -109,7 +110,7 @@ function findClose(text: string, bodyStart: number, ticks: number) {
   // A three-backtick block cannot hold fences, so it ends at the first bare
   // one; a ```draft line inside it is content, as markdown reads it.
   if (ticks === 3) {
-    const bare = /(?:^|\n)```[ \t]*(?=\n|$)/g
+    const bare = /(?:^|\n)`{3,}[ \t]*(?=\n|$)/g
     bare.lastIndex = bodyStart - 1
     const close = bare.exec(text)
     if (!close) return null
@@ -169,11 +170,18 @@ function locateDraftBlocks(text: string): BlockLocation[] {
         bodyStart,
         bodyEnd: text.length,
         end: text.length,
-        closed: false
+        closed: false,
+        ticks: opener[1].length
       })
       break
     }
-    blocks.push({ open, bodyStart, ...close, closed: true })
+    blocks.push({
+      open,
+      bodyStart,
+      ...close,
+      closed: true,
+      ticks: opener[1].length
+    })
     from = close.end
   }
   return blocks
@@ -202,6 +210,24 @@ export function replaceDraftBlocks(
     out +=
       text.slice(from, block.open) +
       replace(parseBody(text.slice(block.bodyStart, block.bodyEnd)))
+    from = block.end
+  }
+  return out + text.slice(from)
+}
+
+/**
+ * Rewrite a ````draft block closed with three backticks to close with four, so
+ * markdown ends the fence where the draft ends and renders the rest of the
+ * answer after it instead of inside the fence.
+ */
+export function normalizeDraftFences(text: string): string {
+  if (!text.includes('````draft')) return text
+  let out = ''
+  let from = 0
+  for (const block of locateDraftBlocks(text)) {
+    if (!block.closed || block.ticks !== 4) continue
+    if (text.startsWith(FENCE_CLOSE, block.bodyEnd)) continue
+    out += text.slice(from, block.bodyEnd) + FENCE_CLOSE
     from = block.end
   }
   return out + text.slice(from)

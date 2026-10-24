@@ -9,6 +9,7 @@ import {
   type StreamdownProps
 } from 'streamdown'
 
+import { normalizeDraftFences } from '@/lib/draft/draft'
 import { mergeStreamdownSpecRenderer } from '@/lib/render/streamdown-spec'
 import type { SearchResultItem } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -35,7 +36,10 @@ export function MarkdownMessage({
   citationMaps?: Record<string, Record<number, SearchResultItem>>
 }) {
   // Process citations to replace [number](#toolCallId) with [number](actual-url)
-  const processedMessage = processCitations(message || '', citationMaps || {})
+  const processedMessage = processCitations(
+    normalizeDraftFences(message || ''),
+    citationMaps || {}
+  )
 
   const streamdownProps = useMemo<Partial<StreamdownProps>>(
     () => ({
