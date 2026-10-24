@@ -64,16 +64,19 @@ type BlockLocation = {
 const STRICT_CLOSE = /\n````[ \t]*(?=\n|$)/g
 const FENCE_LINE = /^`{3,}/
 const BARE_THREE = /^```[ \t]*$/
+const SENTENCE = /^\p{L}.*[.?!。？！]$/u
 
 /**
- * Whether a line can follow a draft close: nothing yet, a blank line, or a
- * labeled block. Code right after a bare fence is an inner block's content.
+ * Whether a line can follow a draft close: nothing yet, a blank line, a
+ * labeled block, or a sentence. Code right after a bare fence, which rarely
+ * ends like a sentence, is an inner block's content.
  */
 function followsLikeClose(line: string | undefined) {
   return (
     line === undefined ||
     !line.trim() ||
-    (FENCE_LINE.test(line) && !BARE_THREE.test(line))
+    (FENCE_LINE.test(line) && !BARE_THREE.test(line)) ||
+    SENTENCE.test(line.trim())
   )
 }
 
@@ -103,20 +106,23 @@ function opensNoBareFence(lines: string[]) {
  * open.
  */
 function findClose(text: string, bodyStart: number, ticks: number) {
-  OPENER.lastIndex = bodyStart - 1
-  const next = OPENER.exec(text)
-  const limit = next ? next.index : text.length
-
+  // A three-backtick block cannot hold fences, so it ends at the first bare
+  // one; a ```draft line inside it is content, as markdown reads it.
   if (ticks === 3) {
     const bare = /(?:^|\n)```[ \t]*(?=\n|$)/g
     bare.lastIndex = bodyStart - 1
     const close = bare.exec(text)
-    if (!close || close.index >= limit) return null
+    if (!close) return null
     return {
       bodyEnd: Math.max(bodyStart, close.index),
       end: close.index + close[0].length
     }
   }
+
+  // Only a four-backtick opener starts the next draft. A ```draft fence inside
+  // this one is an example in its content.
+  const next = text.indexOf(`\n${FENCE_OPEN}`, bodyStart - 1)
+  const limit = next < 0 ? text.length : next
 
   STRICT_CLOSE.lastIndex = bodyStart - 1
   const strict = STRICT_CLOSE.exec(text)

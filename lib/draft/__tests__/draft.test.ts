@@ -304,6 +304,31 @@ describe('three-backtick opener', () => {
 })
 
 describe('three-backtick close', () => {
+  test('closes when a sentence follows on the next line', () => {
+    const [block] = parseDraftBlocks(
+      '````draft\ntitle: Note\n\nHello\n```\nWant changes?'
+    )
+    expect(block).toMatchObject({ content: 'Hello', closed: true })
+  })
+
+  test('keeps a three-backtick draft example inside a draft', () => {
+    const text = [
+      '````draft',
+      'title: Guide',
+      '',
+      'Example:',
+      '```draft',
+      'title: Inner',
+      '```',
+      'End.',
+      '````'
+    ].join('\n')
+    const blocks = parseDraftBlocks(text)
+    expect(blocks).toHaveLength(1)
+    expect(blocks[0].closed).toBe(true)
+    expect(blocks[0].content).toContain('End.')
+  })
+
   test('stops at the draft close when a spec fence follows', () => {
     const text = [
       '````draft',
