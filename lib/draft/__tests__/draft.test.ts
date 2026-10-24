@@ -334,6 +334,15 @@ describe('three-backtick close', () => {
     expect(block).toMatchObject({ content: 'Hello', closed: true })
   })
 
+  test('stops at a next opener with trailing spaces', () => {
+    const text =
+      '````draft\ntitle: A\n\nOne\n```\n\n````draft \ntitle: B\n\nTwo\n````'
+    expect(parseDraftBlocks(text).map(b => [b.title, b.content])).toEqual([
+      ['A', 'One'],
+      ['B', 'Two']
+    ])
+  })
+
   test('keeps a three-backtick draft example inside a draft', () => {
     const text = [
       '````draft',

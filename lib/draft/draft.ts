@@ -11,6 +11,7 @@ const FENCE_OPEN = '````draft\n'
 // Models sometimes open with three backticks; that block ends at the first
 // bare fence, as markdown reads it.
 const OPENER = /(?:^|\n)(`{3,4})draft[ \t]*\n/g
+const NEXT_DRAFT = /\n````draft[ \t]*\n/g
 const FENCE_CLOSE = '\n````'
 const TITLE_LINE = /^title:[ \t]*(.*)\n?/
 
@@ -122,8 +123,9 @@ function findClose(text: string, bodyStart: number, ticks: number) {
 
   // Only a four-backtick opener starts the next draft. A ```draft fence inside
   // this one is an example in its content.
-  const next = text.indexOf(`\n${FENCE_OPEN}`, bodyStart - 1)
-  const limit = next < 0 ? text.length : next
+  NEXT_DRAFT.lastIndex = bodyStart - 1
+  const next = NEXT_DRAFT.exec(text)
+  const limit = next ? next.index : text.length
 
   STRICT_CLOSE.lastIndex = bodyStart - 1
   const strict = STRICT_CLOSE.exec(text)
