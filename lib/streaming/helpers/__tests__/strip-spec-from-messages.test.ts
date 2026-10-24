@@ -41,6 +41,23 @@ describe('stripSpecFromMessages', () => {
     expect(textOf(result)).toBe(input)
   })
 
+  it('replaces a linked card block with a markdown list', () => {
+    const cards = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"g"}',
+      '{"op":"add","path":"/elements/g","value":{"type":"Grid","props":{"columns":2},"children":["c"]}}',
+      '{"op":"add","path":"/elements/c","value":{"type":"Card","props":{"href":"https://sqlbolt.com/"},"children":["t"]}}',
+      '{"op":"add","path":"/elements/t","value":{"type":"Text","props":{"text":"SQLBolt","weight":"semibold"},"children":[]}}',
+      '```'
+    ].join('\n')
+    const input = `Lead-in.\n\n${cards}\n\nClosing.`
+    const [result] = stripSpecFromMessages([assistant(input)])
+
+    expect(textOf(result)).toBe(
+      'Lead-in.\n\n- [SQLBolt](https://sqlbolt.com/)\n\nClosing.'
+    )
+  })
+
   it('strips a spec block that is not the related-questions block', () => {
     const input = `Here is the answer.\n\n${IMAGE_BLOCK}`
     const [result] = stripSpecFromMessages([assistant(input)])

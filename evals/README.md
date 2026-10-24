@@ -82,6 +82,29 @@ question draws out a structured answer, and the block that follows it is
 arguably correct, which inflates `falsePositiveRate` with disagreement rather
 than defects. Questions whose answers expand belong in the substantive set.
 
+## source-cards
+
+```bash
+bun run eval:source-cards                       # adaptive, 1 trial per item
+bun run eval:source-cards -- --mode quick --trials 3
+```
+
+Answers 16 fixed queries (8 listing, 8 other) and reports:
+
+- `emissionRate`: listing answers ("find", "recommend", "where can I get")
+  that presented the items as linked cards (`Card` with `href` inside a
+  `Grid`)
+- `misuseRate`: other answers (explanation, steps, comparison, single fact,
+  writing) that carried cards anyway
+- `wellFormedRate`: emitted blocks with 2 to 8 cards, each with a title `Text`
+  and a unique web `href`
+- `groundedRate`: cards whose URL is a fixture search result URL, verbatim
+- `duplicatedRate`: answers that also repeated the cards as a markdown list
+
+Fixture URLs use real-looking hosts. With `.example` hosts the adaptive model
+correctly judged the results to be placeholders and declined to present them,
+which measured the fixture instead of the prompt.
+
 ## Thresholds
 
 `thresholds.json` gates CI. A `null` value means the metric is reported but not
