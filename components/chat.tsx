@@ -573,7 +573,7 @@ export function Chat({
   useLayoutEffect(() => {
     if (openedChatIdRef.current === chatId || messages.length === 0) return
     openedChatIdRef.current = chatId
-    if (entry.createdLocally) return
+    if (entry.createdLocally && !entry.hasServerHistory) return
     const container = scrollContainerRef.current
     if (container) container.scrollTop = container.scrollHeight
   }, [chatId, messages.length, entry])
