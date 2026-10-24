@@ -173,8 +173,9 @@ export function Chat({
   const handlersRef = useRef<ChatHandlers>({})
   useEffect(() => {
     handlersRef.current = {
-      onFinish: ({ message }) => {
+      onFinish: ({ message, isError }) => {
         isStreamingRef.current = false
+        if (isError) return
         if (usageBudgetEnabled) void refreshUsage()
 
         const summary = summarizeGenui(getTextFromParts(message.parts))
@@ -226,17 +227,19 @@ export function Chat({
       }
     }
   })
-  useEffect(() => {
-    const handlers: ChatHandlers = {
+  const handlers = useMemo<ChatHandlers>(
+    () => ({
       onFinish: event => handlersRef.current.onFinish?.(event),
       onError: error => handlersRef.current.onError?.(error)
-    }
-    const detach = store.attachHandlers(entry, handlers)
+    }),
+    []
+  )
+  useEffect(() => {
     return () => {
-      detach()
+      if (entry.handlers.current === handlers) entry.handlers.current = {}
       if (isGuest) void entry.chat.stop()
     }
-  }, [store, entry, isGuest])
+  }, [entry, handlers, isGuest])
   useEffect(() => {
     void store.revalidate(chatId)
   }, [store, entry, chatId])
@@ -249,6 +252,11 @@ export function Chat({
     addToolResult,
     error
   } = useChat({ chat: entry.chat, throttle: 100 })
+  useEffect(() => {
+    if (status === 'ready' || status === 'error') {
+      isStreamingRef.current = false
+    }
+  }, [status])
   const stop = useCallback(() => {
     store.invalidate(chatId)
     return entry.chat.stop()
@@ -283,6 +291,7 @@ export function Chat({
       isStreamingRef.current = true
       try {
         const tracksUsage = isCloudDeployment && !isGuest
+        store.attachHandlers(entry, handlers)
         const request = sendMessage(
           message,
           tracksUsage
@@ -313,11 +322,14 @@ export function Chat({
     [
       canSend,
       consumeUsage,
+      entry,
+      handlers,
       isCloudDeployment,
       isCurrentAdaptiveModeAuthBlocked,
       isGuest,
       sendMessage,
       showAdaptiveModeAuthModal,
+      store,
       usageBudgetEnabled,
       usageCosts
     ]
@@ -334,6 +346,7 @@ export function Chat({
       isStreamingRef.current = true
       try {
         const tracksUsage = isCloudDeployment && !isGuest
+        store.attachHandlers(entry, handlers)
         const request = regenerate(
           tracksUsage
             ? {
@@ -363,11 +376,14 @@ export function Chat({
     [
       canSend,
       consumeUsage,
+      entry,
+      handlers,
       isCloudDeployment,
       isCurrentAdaptiveModeAuthBlocked,
       isGuest,
       regenerate,
       showAdaptiveModeAuthModal,
+      store,
       usageBudgetEnabled,
       usageCosts
     ]
