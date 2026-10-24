@@ -32,6 +32,37 @@ describe('normalizeSearchQuery', () => {
     )
   })
 
+  it('drops the whole fragment when the cap splits a hyphenated token', () => {
+    const prefix = 'note '.repeat(39) // 195 characters
+    // cut immediately after the hyphen: the retained 'foo-' parses to the
+    // 'foo' component and would match chats without foo-bar
+    expect(normalizeSearchQuery(prefix + 'xfoo-bar')).toBe(prefix.trim())
+    // cut immediately before the hyphen: the hyphen continues the hword,
+    // but the complete 'x' before the compound token is kept
+    expect(normalizeSearchQuery(prefix + 'x foo-bar')).toBe(
+      (prefix + 'x').trim()
+    )
+  })
+
+  it('drops the whole fragment when the cap splits a numeric token', () => {
+    const prefix = 'note '.repeat(39) // 195 characters
+    // cap lands between '1' and '.': 'wxyz1' is a numword the parser could
+    // continue into a compound token, so the whole fragment goes
+    expect(normalizeSearchQuery(prefix + 'wxyz1.23')).toBe(prefix.trim())
+    // cap lands between 'z' and '1': 'vwxyz1' would parse as one numword
+    expect(normalizeSearchQuery(prefix + 'vwxyz1.23')).toBe(prefix.trim())
+    // Codex's example shape: the cap cuts 'x1.23' after the digit, leaving
+    // a retained '1' that would suppress otherwise-matching histories
+    expect(normalizeSearchQuery(prefix + 'w x1.23')).toBe(prefix + 'w')
+  })
+
+  it('drops the whole fragment when the cap splits an email token', () => {
+    const prefix = 'note '.repeat(39) // 195 characters
+    expect(normalizeSearchQuery(prefix + 'user@example.com')).toBe(
+      prefix.trim()
+    )
+  })
+
   it('treats punctuation after the cap as a token boundary, like the parser', () => {
     // Postgres ends a word token at '!' just as it does at a space, so the
     // 198-character token is complete at the cap and must survive; only a

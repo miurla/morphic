@@ -30,10 +30,18 @@ function stripLoneSurrogates(value: string): string {
   )
 }
 
-// Postgres' default text-search parser ends a word token at whitespace or
-// punctuation; only letters, digits and underscores continue one. The cap
-// therefore split a token only when the character after it is one of those.
-const WORD_CHAR = /[\p{L}\p{N}_]/u
+// Which characters can continue the token a cap landed inside, verified
+// against Postgres 17's default text-search parser: hyphens (foo-bar ->
+// {foo, bar, foo-bar}), dots (a.b, 1.23, 192.168.1.1), slashes (a/b/c.d),
+// @ (user@example.com), and colons (example.com:80) all produce compound
+// tokens; underscores (x1_2 -> {x1, 2}), apostrophes (don't -> {don, t}),
+// and other punctuation split tokens instead. Reimplementing every token
+// rule in JS is a rabbit hole, so the cap is conservative: when the
+// character after the cap could continue a compound token, the whole
+// trailing fragment is dropped. Over-dropping a complete token is a minor
+// precision loss; keeping a fragment changes the query, which is the bug.
+const TOKEN_CONT = /[\p{L}\p{N}.\-/@:]/u
+const TRAILING_FRAGMENT = /[\p{L}\p{N}.\-/@:]+$/u
 
 export function normalizeSearchQuery(query: string): string {
   const trimmed = query.trim()
@@ -41,17 +49,19 @@ export function normalizeSearchQuery(query: string): string {
     return stripLoneSurrogates(trimmed)
   }
   const capped = trimmed.slice(0, MAX_QUERY_LENGTH)
-  // The retained text is complete unless the cap landed inside a word
-  // token: whitespace and punctuation ('!' as much as ' ') both end one,
-  // so only a word character after the cap means a token was split.
+  // The retained text is complete unless the cap landed inside a token the
+  // parser could continue: whitespace and plain punctuation ('!' as much as
+  // ' ') both end every token type, so only a continuation character after
+  // the cap means a token was split.
   const next = trimmed[MAX_QUERY_LENGTH]
-  if (next === undefined || !WORD_CHAR.test(next)) {
+  if (next === undefined || !TOKEN_CONT.test(next)) {
     return stripLoneSurrogates(capped.trim())
   }
-  // Drop the trailing partial token so it cannot act as a broad prefix
-  // match. When the whole capped range is a single token there is nothing
-  // to drop, and a long specific prefix is not broad, so keep it.
-  const partial = capped.match(/[\p{L}\p{N}_]+$/u)
-  const cut = partial ? capped.slice(0, partial.index) : capped
+  // Drop the trailing fragment (everything since the last whitespace) so a
+  // partial token cannot act as a broad prefix match. When the whole capped
+  // range is a single fragment there is nothing to drop, and a long
+  // specific prefix is not broad, so keep it.
+  const fragment = capped.match(TRAILING_FRAGMENT)
+  const cut = fragment ? capped.slice(0, fragment.index) : capped
   return stripLoneSurrogates((cut.trim() || capped).trim())
 }
