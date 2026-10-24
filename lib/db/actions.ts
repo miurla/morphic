@@ -425,6 +425,13 @@ const FTS_SCOPES = {
   }
 } as const
 
+// Keep in sync with the generated tsvector columns in lib/db/schema.ts:
+// only the first 100k characters of a part are indexed, so matches can
+// only exist inside that prefix. ts_headline must tokenize the same
+// bounded document, or oversized parts make every search pay CPU and
+// memory in proportion to text that can never match.
+const FTS_TEXT_CAP = 100_000
+
 type FtsSearchScope = keyof typeof FTS_SCOPES
 
 /**
@@ -479,7 +486,7 @@ async function searchChatParts(
           ts_rank(p.${tsvectorCol}, fts_query.q) AS match_rank,
           ts_headline(
             'simple',
-            coalesce(p.${textCol}, ''),
+            left(coalesce(p.${textCol}, ''), ${FTS_TEXT_CAP}),
             fts_query.q,
             ${`MaxWords=14, MinWords=7, StartSel=${HL_START}, StopSel=${HL_STOP}`}
           ) AS snippet

@@ -147,6 +147,11 @@ describe('searchChatContent', () => {
     expect(rendered.sql).toContain('"search" @@')
     expect(rendered.sql).toContain('ts_rank')
     expect(rendered.sql).toContain('ts_headline')
+    // the headline is generated from the same bounded document the
+    // generated tsvector column indexes, so oversized parts cannot make
+    // ts_headline tokenize text that can never match
+    expect(rendered.sql).toMatch(/ts_headline\(\s*'simple',\s*left\(coalesce\(/)
+    expect(rendered.params).toContain(100000)
     // highlight delimiters are control characters, not HTML
     expect(rendered.params).toEqual(
       expect.arrayContaining([
