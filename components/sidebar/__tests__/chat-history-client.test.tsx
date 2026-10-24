@@ -3,8 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ChatHistoryClient } from '../chat-history-client'
 
+const pushMock = vi.hoisted(() => vi.fn())
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() })
+  useRouter: () => ({ push: pushMock })
 }))
 
 vi.mock('../chat-menu-item', () => ({
@@ -151,5 +153,47 @@ describe('ChatHistoryClient search mode', () => {
     await flush(50)
     expect(calledWith(fetchMock, '/api/chats')).toBe(true)
     expect(screen.getByText('Existing chat')).toBeInTheDocument()
+  })
+
+  it('refetches search results when chat data changes during search', async () => {
+    const fetchMock = mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+    fetchMock.mockClear()
+
+    // Clear History (or any chat-data change) while searching: stale results
+    // must not remain, so the search view refetches immediately.
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    await flush(300)
+
+    expect(calledWith(fetchMock, '/api/search')).toBe(true)
+    expect(calledWith(fetchMock, '/api/chats')).toBe(false)
+  })
+
+  it('forwards ArrowDown and Enter from the input to the result list', async () => {
+    mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+
+    const input = screen.getByLabelText('Search history')
+    // cmdk tracks the active item via aria-selected instead of DOM focus
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'ArrowDown' })
+    })
+    expect(screen.getAllByRole('option')[0]).toHaveAttribute(
+      'aria-selected',
+      'true'
+    )
+
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'Enter' })
+    })
+    expect(pushMock).toHaveBeenCalledWith('/search/chat-9')
   })
 })

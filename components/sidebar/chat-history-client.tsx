@@ -34,10 +34,14 @@ export function ChatHistoryClient() {
   const [isLoading, setIsLoading] = useState(true)
   const [query, setQuery] = useState('')
   const loadMoreRef = useRef<HTMLDivElement>(null)
+  const resultsRef = useRef<HTMLDivElement>(null)
   const [isPending, startTransition] = useTransition()
   const searchMode = query.trim().length >= MIN_SEARCH_LENGTH
   const searchModeRef = useRef(searchMode)
   const pendingListRefreshRef = useRef(false)
+  // Bumped when chat data changes during search mode, remounting the results
+  // view so stale matches (e.g. after Clear History) cannot be opened.
+  const [searchEpoch, setSearchEpoch] = useState(0)
 
   useEffect(() => {
     searchModeRef.current = searchMode
@@ -74,6 +78,9 @@ export function ChatHistoryClient() {
       // user leaves search mode so the results view is not disturbed.
       if (searchModeRef.current) {
         pendingListRefreshRef.current = true
+        // Results may now reference deleted chats (Clear History), so the
+        // search view has to refetch even though the list refresh is deferred.
+        setSearchEpoch(epoch => epoch + 1)
         return
       }
       startTransition(async () => {
@@ -159,6 +166,28 @@ export function ChatHistoryClient() {
             onKeyDown={event => {
               if (event.key === 'Escape') {
                 setQuery('')
+                return
+              }
+              if (!searchMode) return
+              // The input lives outside the Command scope, so cmdk never sees
+              // these keys. Re-dispatch them on the cmdk root so its own
+              // navigation (ArrowUp/ArrowDown) and activation (Enter) apply.
+              if (
+                event.key === 'ArrowDown' ||
+                event.key === 'ArrowUp' ||
+                event.key === 'Enter'
+              ) {
+                const commandRoot =
+                  resultsRef.current?.querySelector<HTMLElement>('[cmdk-root]')
+                if (!commandRoot) return
+                event.preventDefault()
+                commandRoot.dispatchEvent(
+                  new KeyboardEvent('keydown', {
+                    key: event.key,
+                    bubbles: true,
+                    cancelable: true
+                  })
+                )
               }
             }}
             placeholder="Search history"
@@ -177,9 +206,9 @@ export function ChatHistoryClient() {
           )}
         </div>
       </SidebarGroup>
-      <div className="flex-1 overflow-y-auto mb-2 relative">
+      <div ref={resultsRef} className="flex-1 overflow-y-auto mb-2 relative">
         {searchMode ? (
-          <ChatHistorySearch query={query} />
+          <ChatHistorySearch key={searchEpoch} query={query} />
         ) : isHistoryEmpty && !isPending ? (
           <div className="px-2 text-foreground/30 text-sm text-center py-4">
             No chats yet

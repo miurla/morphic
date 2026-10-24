@@ -384,7 +384,7 @@ export async function searchChatTitles(
     return []
   }
   // Escape ILIKE wildcards so user input matches literally
-  const pattern = `%${trimmed.replace(/[\\%_]/g, '\\$&')}%`
+  const pattern = `%${escapeLikePattern(trimmed)}%`
 
   return withRLS(userId, async tx => {
     return tx
