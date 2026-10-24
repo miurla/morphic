@@ -81,6 +81,19 @@ describe('linkedCardsFenceToMarkdown', () => {
     )
   })
 
+  test('returns null instead of throwing for malformed children', () => {
+    const fence = [
+      '```spec',
+      '{"op":"add","path":"/root","value":"g"}',
+      '{"op":"add","path":"/elements/g","value":{"type":"Grid","props":{"columns":2},"children":"c1"}}',
+      '{"op":"add","path":"/elements/c1","value":{"type":"Card","props":{"href":"https://one.example/"},"children":"t1"}}',
+      '```'
+    ].join('\n')
+    expect(() => linkedCardsFenceToMarkdown(fence)).not.toThrow()
+    expect(linkedCardsFenceToMarkdown(fence)).toBeNull()
+    expect(() => stripSpecBlocks(`Answer.\n\n${fence}`)).not.toThrow()
+  })
+
   test('returns null for cards without href', () => {
     const fence = [
       '```spec',

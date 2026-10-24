@@ -24,7 +24,9 @@ export function reachableElements(
     const element = elements[key]
     if (!element) return
     ordered.push(element)
-    for (const child of element.children ?? []) walk(child)
+    // Generated specs can carry a malformed children value.
+    if (!Array.isArray(element.children)) return
+    for (const child of element.children) walk(child)
   }
   walk(root)
   return ordered
@@ -43,6 +45,16 @@ export function linkedCardsFenceToMarkdown(fence: string): string | null {
   const body = FENCE_BODY.exec(fence.trim())?.[1]
   if (!body) return null
 
+  // This runs on every later turn's history, so a malformed generated block
+  // must fall back to being dropped rather than fail the request.
+  try {
+    return cardsToMarkdown(body)
+  } catch {
+    return null
+  }
+}
+
+function cardsToMarkdown(body: string): string | null {
   // The same lenient parser the renderer uses, so a block that renders some
   // cards despite a malformed line keeps those cards here too.
   const spec = createPartialSpecParser().parse(body)
@@ -56,7 +68,7 @@ export function linkedCardsFenceToMarkdown(fence: string): string | null {
     const href = element.props?.href
     if (element.type !== 'Card' || typeof href !== 'string') continue
 
-    const children = (element.children ?? [])
+    const children = (Array.isArray(element.children) ? element.children : [])
       .map(key => elements[key])
       .filter(Boolean)
     const texts = children
