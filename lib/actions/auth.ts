@@ -26,6 +26,14 @@ export async function signInWithGoogle(): Promise<AuthActionResult> {
   return provider.signInWithOAuth('google')
 }
 
+export async function signInWithOidc(): Promise<AuthActionResult> {
+  const provider = getAuthProvider()
+  if (!provider.signInWithOAuth) {
+    return unavailable()
+  }
+  return provider.signInWithOAuth('oidc')
+}
+
 export async function signUp(credentials: {
   email: string
   password: string

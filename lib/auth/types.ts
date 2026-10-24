@@ -28,6 +28,12 @@ export interface AuthCapabilities {
   deleteUser: boolean
   /** Provider implements `signInWithOAuth` (e.g. a Google button can work). */
   oauth: boolean
+  /**
+   * Display name of the configured generic OIDC provider; null when the
+   * provider's social login is something else (e.g. Google). Resolved on
+   * the server: the client bundle cannot see OIDC_* environment variables.
+   */
+  oauthProvider?: string | null
   /** Sign-up requires confirming the email address before signing in. */
   emailVerification: boolean
   /** Sharing a chat records it under a real user (false in anonymous mode). */

@@ -303,6 +303,78 @@ In production builds (Docker), session cookies carry the `__Secure-` prefix, so 
 
 With Better Auth, sharing chats is off until you set `ENABLE_SHARE=true`. See [Chat Sharing](#chat-sharing).
 
+#### OIDC / OAuth Integration
+
+Better Auth supports generic OIDC authentication for corporate identity providers like Keycloak, Authentik, Okta, Azure AD, and others.
+
+**Required environment variables:**
+
+```bash
+OIDC_ISSUER=https://keycloak.example.com/realms/your-realm
+OIDC_CLIENT_ID=morphic-client
+OIDC_CLIENT_SECRET=your-client-secret
+BETTER_AUTH_URL=https://your-morphic-url.com
+```
+
+`BETTER_AUTH_URL` is required: it is the canonical origin the provider redirect URI (`<BETTER_AUTH_URL>/api/auth/callback/oidc`) and the post-SignIn redirect are derived from. Without it, OAuth sign-in is refused at click time even when OIDC is otherwise fully configured.
+
+**Optional customization:**
+
+```bash
+# OAuth scopes (defaults to 'openid profile email')
+OIDC_SCOPE=openid profile email groups
+
+# Provider display name in login UI (defaults to 'OIDC')
+OIDC_PROVIDER_NAME=Keycloak
+```
+
+**How it works:**
+
+- When OIDC environment variables are set, the login form replaces the Google OAuth button with your configured provider
+- Uses OpenID Connect Discovery to automatically fetch endpoints from `OIDC_ISSUER/.well-known/openid-configuration`
+- Implements PKCE (Proof Key for Code Exchange) for secure authorization flows
+- User accounts are stored in the same `users` and `accounts` tables as email/password users
+- The OIDC `sub` claim is stored as `accounts.accountId` with `accounts.providerId='oidc'`
+- A transient discovery outage does not permanently disable the provider: a failed discovery is retried on the next sign-in attempt
+
+**Sign-up policy:**
+
+- `AUTH_SIGNUP_MODE=open`: any identity accepted by your IdP can create a local account on first sign-in
+- `AUTH_SIGNUP_MODE=invite` (or an invalid mode): implicit sign-up through OIDC is disabled. An IdP user must already have a local account — e.g. one created through an invitation — otherwise sign-in is rejected; invited members therefore register once with the credential flow and use OIDC afterwards. Members of your IdP tenant are never handed an account implicitly.
+- The bootstrap window (`BOOTSTRAP_ADMIN_EMAIL`, empty user table) applies to OIDC account creation as well. With SMTP configured, the first account is created only through the emailed bootstrap link (proof of mailbox ownership of its address); an OIDC callback cannot account-create until that first sign-in closes the window. Without SMTP, the address gate is the accepted proof, as for credential sign-up.
+
+**HTTP surface:**
+
+Better Auth's API is driven through server actions. Only the provider callback is mounted as an HTTP route (`GET /api/auth/callback/<providerId>`); other endpoints (credential sign-up, sign-in, password reset) are reachable only inside the server actions, which enforce the sign-up policy — a direct `POST /api/auth/sign-up/email` on a mounted catch-all would otherwise bypass invitations.
+
+**Identity provider setup:**
+
+1. Create a new OAuth/OIDC client in your identity provider
+2. Set the redirect/callback URL to: `https://your-morphic-url.com/api/auth/callback/oidc`
+3. Enable authorization code flow with PKCE
+4. Request scopes: `openid`, `profile`, `email` (and any additional scopes like `groups`)
+5. Copy the client ID, client secret, and issuer URL to your environment variables
+
+**Keycloak example:**
+
+```bash
+OIDC_ISSUER=https://keycloak.example.com/realms/company
+OIDC_CLIENT_ID=morphic
+OIDC_CLIENT_SECRET=abc123...
+OIDC_PROVIDER_NAME=Company Login
+```
+
+**Authentik example:**
+
+```bash
+OIDC_ISSUER=https://authentik.example.com/application/o/morphic/
+OIDC_CLIENT_ID=morphic-client
+OIDC_CLIENT_SECRET=xyz789...
+OIDC_PROVIDER_NAME=Authentik
+```
+
+When OIDC is configured, users can sign in with their corporate accounts. Email/password registration and login remain available for admin bootstrap and local accounts.
+
 ### Supabase
 
 For deployments that already use Supabase, or that prefer a hosted auth service.
