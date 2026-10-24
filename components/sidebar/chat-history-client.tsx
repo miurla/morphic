@@ -6,7 +6,10 @@ import { IconX as X } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { Chat as DBChat } from '@/lib/db/schema'
-import { normalizeSearchQuery } from '@/lib/utils/search-query'
+import {
+  MIN_QUERY_LENGTH,
+  normalizeSearchQuery
+} from '@/lib/utils/search-query'
 
 import { Input } from '@/components/ui/input'
 import {
@@ -25,9 +28,8 @@ interface ChatPageResponse {
   nextOffset: number | null
 }
 
-// Keep in sync with the API's minimum query length: a shorter query keeps
+// The API's minimum query length (shared constant): a shorter query keeps
 // the chronological list visible instead of the results view.
-const MIN_SEARCH_LENGTH = 2
 
 export function ChatHistoryClient() {
   const [chats, setChats] = useState<DBChat[]>([])
@@ -41,7 +43,7 @@ export function ChatHistoryClient() {
   // Based on the normalized query (what the search actually runs): a paste
   // whose bounded form falls below the minimum keeps the chronological
   // list instead of mounting a search view that can never produce results.
-  const searchMode = normalizeSearchQuery(query).length >= MIN_SEARCH_LENGTH
+  const searchMode = normalizeSearchQuery(query).length >= MIN_QUERY_LENGTH
   const searchModeRef = useRef(searchMode)
   const pendingListRefreshRef = useRef(false)
   // Bumped when chat data changes during search mode, telling the results

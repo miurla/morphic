@@ -23,7 +23,10 @@ import {
 } from '@/lib/utils/message-mapping'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
-import { normalizeSearchQuery } from '@/lib/utils/search-query'
+import {
+  MIN_QUERY_LENGTH,
+  normalizeSearchQuery
+} from '@/lib/utils/search-query'
 
 import type {
   Chat,
@@ -462,6 +465,11 @@ async function searchChatParts(
                     FROM generate_series(3, length(l) - 1) g), '') || ')',
           ' & ') || ')')::tsquery AS q
         FROM unnest(tsvector_to_array(to_tsvector('simple', ${trimmed}))) l
+        -- The parser can drop punctuation, so the raw-length minimum does
+        -- not bound the parsed lexemes: require at least one lexeme of the
+        -- minimum length or the query becomes a broad single-character
+        -- prefix scan (empty lexeme set yields NULL q via the aggregate).
+        HAVING bool_or(length(l) >= ${MIN_QUERY_LENGTH})
       ),
       ranked AS (
         SELECT DISTINCT ON (c.id)

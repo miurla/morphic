@@ -10,7 +10,10 @@ import {
 import { toast } from 'sonner'
 
 import { HL_START, HL_STOP } from '@/lib/render/highlight-markers'
-import { normalizeSearchQuery } from '@/lib/utils/search-query'
+import {
+  MIN_QUERY_LENGTH,
+  normalizeSearchQuery
+} from '@/lib/utils/search-query'
 
 import {
   Command,
@@ -23,7 +26,6 @@ import {
 import { ChatHistorySkeleton } from './chat-history-skeleton'
 
 const DEBOUNCE_MS = 250
-const MIN_QUERY_LENGTH = 2
 
 export interface SearchResultItem {
   chatId: string

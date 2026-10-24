@@ -7,9 +7,10 @@ import {
   searchChatTitles
 } from '@/lib/db/actions'
 import { stripHighlightMarkers } from '@/lib/render/highlight-markers'
-import { normalizeSearchQuery } from '@/lib/utils/search-query'
-
-const MIN_QUERY_LENGTH = 2
+import {
+  MIN_QUERY_LENGTH,
+  normalizeSearchQuery
+} from '@/lib/utils/search-query'
 const TITLE_LIMIT = 20
 const CONTENT_LIMIT = 20
 const REASONING_LIMIT = 10

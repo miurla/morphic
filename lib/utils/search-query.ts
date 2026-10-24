@@ -13,6 +13,12 @@
  */
 export const MAX_QUERY_LENGTH = 200
 
+// Minimum length of the effective query. Enforced on the normalized query
+// in the route and client, and on the lexemes the FTS parser produces in
+// searchChatParts (punctuation can be dropped by the parser, leaving a
+// single-character lexeme whose prefix match would scan broadly).
+export const MIN_QUERY_LENGTH = 2
+
 // Slicing can split a surrogate pair, and lone surrogates are rejected by
 // encodeURIComponent (URIError) and by Postgres' UTF-8 validation. Strip
 // them so the normalized query is always encodable.

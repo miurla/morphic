@@ -227,6 +227,18 @@ describe('searchChatContent', () => {
     expect(queryParam).toHaveLength(200)
   })
 
+  it('requires a parsed lexeme of the minimum length before scanning', async () => {
+    const execute = mockExecute([])
+
+    await searchChatContent('user-1', 'a!')
+
+    // the parser drops '!', leaving only the 'a' lexeme; the HAVING guard
+    // must null the tsquery instead of running a broad 'a:*' prefix scan
+    const rendered = dialect.sqlToQuery(execute.mock.calls[0][0])
+    expect(rendered.sql).toContain('HAVING bool_or(length(l) >=')
+    expect(rendered.params).toContain(2)
+  })
+
   it('truncates at a word boundary so no partial token broadens the match', async () => {
     const execute = mockExecute([])
 
