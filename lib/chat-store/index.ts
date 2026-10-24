@@ -168,7 +168,7 @@ export class ChatStore {
     let size = [...this.entries.values()].reduce((sum, e) => sum + e.size, 0)
     for (const [id, entry] of this.entries) {
       if (this.entries.size <= this.maxEntries && size <= this.maxSize) break
-      if (entry === protectedEntry || busy(entry)) continue
+      if (entry === protectedEntry || busy(entry) || entry.fetching) continue
       size -= entry.size
       entry.dispose()
       this.entries.delete(id)

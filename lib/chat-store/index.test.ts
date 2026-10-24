@@ -164,6 +164,24 @@ describe('ChatStore', () => {
     }
   )
 
+  it('keeps an entry whose history load is pending when another settles', async () => {
+    const store = new ChatStore(1)
+    const a = store.getOrCreate('a')
+    setStatus(a, 'streaming')
+    const pending = deferred()
+    vi.mocked(fetch).mockReturnValueOnce(pending.promise)
+    const b = store.getOrCreate('b')
+    const load = store.revalidate('b')
+
+    setStatus(a, 'ready')
+    expect(store.get('b')).toBe(b)
+
+    pending.resolve(response('server'))
+    await load
+    expect(b.chat.messages).toEqual(messages('server'))
+    expect(b.verifiedAt).toBe(Date.now())
+  })
+
   it('keeps a touched entry even when it alone exceeds the size cap', () => {
     const store = new ChatStore(20, 2)
     const entry = store.getOrCreate('a')
