@@ -272,7 +272,10 @@ export async function createChatStreamResponse(
       // Convert to model messages and apply context window management
       streamErrorStage = 'convert-messages'
       let modelMessages = await convertToModelMessages(
-        attachCurrentDraft(messagesToConvert, currentDraft),
+        attachCurrentDraft(messagesToConvert, currentDraft, {
+          maxTokens: getMaxAllowedTokens(model),
+          modelId: model.id
+        }),
         { convertDataPart }
       )
 

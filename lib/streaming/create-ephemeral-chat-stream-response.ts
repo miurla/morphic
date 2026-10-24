@@ -157,7 +157,10 @@ export async function createEphemeralChatStreamResponse(
 
       streamErrorStage = 'convert-messages'
       let modelMessages = await convertToModelMessages(
-        attachCurrentDraft(messagesToConvert, currentDraft),
+        attachCurrentDraft(messagesToConvert, currentDraft, {
+          maxTokens: getMaxAllowedTokens(model),
+          modelId: model.id
+        }),
         { convertDataPart }
       )
 
