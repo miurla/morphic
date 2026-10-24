@@ -201,6 +201,20 @@ describe('searchChatContent', () => {
     expect(result).toEqual([])
     expect(execute).toHaveBeenCalledTimes(1)
   })
+
+  it('caps the query length before the prefix expansion', async () => {
+    const execute = mockExecute([])
+
+    await searchChatContent('user-1', 'x'.repeat(500))
+
+    // a long single token would expand into hundreds of prefix alternatives;
+    // the bound query keeps the generated tsquery small
+    const rendered = dialect.sqlToQuery(execute.mock.calls[0][0])
+    const queryParam = rendered.params.find(
+      p => typeof p === 'string' && p.includes('x')
+    )
+    expect(queryParam).toHaveLength(200)
+  })
 })
 
 describe('searchChatReasoning', () => {

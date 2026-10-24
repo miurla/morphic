@@ -250,6 +250,55 @@ describe('ChatHistoryClient search mode', () => {
     expect(input).not.toHaveAttribute('aria-activedescendant')
   })
 
+  it('lets Enter activate the thinking button instead of the selected result', async () => {
+    mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+    const input = screen.getByLabelText('Search history')
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'ArrowDown' })
+    })
+    expect(screen.getAllByRole('option')[0]).toHaveAttribute(
+      'aria-selected',
+      'true'
+    )
+
+    // The button lives inside the cmdk root; its Enter must press the button,
+    // not activate the selected result through cmdk's root handler.
+    await act(async () => {
+      fireEvent.keyDown(
+        screen.getByRole('button', { name: /Search thinking/ }),
+        {
+          key: 'Enter'
+        }
+      )
+    })
+    expect(pushMock).not.toHaveBeenCalled()
+  })
+
+  it('drops the mirrored active option when results are invalidated', async () => {
+    mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+    const input = screen.getByLabelText('Search history')
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'ArrowDown' })
+    })
+    expect(input.getAttribute('aria-activedescendant')).toBeTruthy()
+
+    // Clear History invalidates the results; the removed option must not
+    // stay referenced by the input, even if the refetch fails or is empty.
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    await flush(50) // still inside the debounce window: options are gone
+    expect(input).not.toHaveAttribute('aria-activedescendant')
+  })
+
   it('does not forward Enter or Escape while an IME composition is active', async () => {
     mockFetch()
     render(<ChatHistoryClient />)

@@ -121,6 +121,13 @@ export function ChatHistorySearch({
     // effect above.
     if (query === lastQueryRef.current) {
       setResults(null)
+      // The options are about to unmount; drop the mirrored active option so
+      // the parent's aria-activedescendant cannot keep pointing at a removed
+      // element (indefinitely if the refetch fails or returns nothing).
+      if (activeValue) {
+        setActiveValue('')
+        onActiveValueChange?.('')
+      }
     }
     lastQueryRef.current = query
 
@@ -324,6 +331,12 @@ export function ChatHistorySearch({
         <button
           type="button"
           onClick={handleSearchThinking}
+          onKeyDown={event => {
+            // cmdk's root Enter handler would activate the selected result
+            // instead of pressing this button; keep the keydown out of the
+            // command scope so native button activation applies.
+            if (event.key === 'Enter') event.stopPropagation()
+          }}
           disabled={isSearchingThinking}
           className="text-muted-foreground hover:text-foreground hover:bg-accent flex items-center gap-2 rounded-sm px-2 py-1.5 text-xs transition-colors disabled:opacity-60"
         >

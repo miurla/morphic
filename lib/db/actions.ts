@@ -423,6 +423,11 @@ const FTS_SCOPES = {
 
 type FtsSearchScope = keyof typeof FTS_SCOPES
 
+// Each query token expands into an OR group of its prefixes, so the tsquery
+// grows quadratically with token length; bounding the query keeps the
+// generated tsquery (and Postgres' parse of it) small no matter the input.
+const MAX_QUERY_LENGTH = 200
+
 /**
  * Full-text search over message parts of the user's chats.
  * The tsquery is built from the FTS parser's own lexemes (language-neutral
@@ -438,7 +443,7 @@ async function searchChatParts(
   limit: number,
   scope: FtsSearchScope
 ): Promise<ChatContentSearchResult[]> {
-  const trimmed = query.trim()
+  const trimmed = query.trim().slice(0, MAX_QUERY_LENGTH)
   if (!trimmed) {
     return []
   }
