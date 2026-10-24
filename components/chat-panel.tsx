@@ -83,6 +83,7 @@ function getSearchModeSnapshot(): SearchMode {
 
 interface ChatPanelProps {
   disabled?: boolean
+  isHistoryPending?: boolean
   chatId: string
   input: string
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
@@ -117,6 +118,7 @@ interface ChatPanelProps {
 
 export function ChatPanel({
   disabled = false,
+  isHistoryPending = false,
   chatId,
   input,
   handleInputChange,
@@ -449,6 +451,8 @@ export function ChatPanel({
       })
     }
   }
+
+  if (isHistoryPending) return null
 
   return (
     <div

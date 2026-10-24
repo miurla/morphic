@@ -158,19 +158,17 @@ export function Chat({
   )
 
   const user = useAppUser()
-  const store = useMemo(
-    () =>
-      isGuest || typeof window === 'undefined' ? new ChatStore() : chatStore,
-    [isGuest]
-  )
-  const entry = useMemo(() => {
+  const { store, entry } = useMemo(() => {
+    const store =
+      isGuest || typeof window === 'undefined' ? new ChatStore() : chatStore
     store.setUser(user?.id ?? null)
-    return store.getOrCreate(chatId, {
+    const entry = store.getOrCreate(chatId, {
       messages: chatId === providedId ? savedMessages : undefined,
-      isNew: chatId !== providedId,
+      isNew: chatId !== providedId || !!query,
       isGuest
     })
-  }, [store, chatId, providedId, user?.id, savedMessages, isGuest])
+    return { store, entry }
+  }, [chatId, providedId, user?.id, savedMessages, isGuest, query])
   useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot)
   const handlersRef = useRef<ChatHandlers>({})
   useEffect(() => {
@@ -236,12 +234,12 @@ export function Chat({
     const detach = store.attachHandlers(entry, handlers)
     return () => {
       detach()
-      if (isGuest) store.remove(entry.chat.id)
+      if (isGuest) void entry.chat.stop()
     }
   }, [store, entry, isGuest])
   useEffect(() => {
-    if (!isGuest) void store.revalidate(chatId)
-  }, [store, entry, chatId, isGuest])
+    void store.revalidate(chatId)
+  }, [store, entry, chatId])
   const {
     messages,
     status,
@@ -255,13 +253,14 @@ export function Chat({
     store.invalidate(chatId)
     return entry.chat.stop()
   }, [store, chatId, entry])
+  const isHistoryPending =
+    entry.verifiedAt === 0 && !entry.hasServerHistory && messages.length === 0
   const sendingBlocked =
-    !isGuest &&
-    ((entry.verifiedAt === 0 && (!!entry.fetching || !!entry.error)) ||
-      (entry.verifiedAt === 0 &&
-        !entry.hasServerHistory &&
-        messages.length === 0 &&
-        chatId === providedId))
+    (entry.verifiedAt === 0 && (!!entry.fetching || !!entry.error)) ||
+    (entry.verifiedAt === 0 &&
+      !entry.hasServerHistory &&
+      messages.length === 0 &&
+      chatId === providedId)
   const canSend = useCallback(
     () =>
       !(entry.verifiedAt === 0 && (entry.fetching || entry.error)) &&
@@ -676,7 +675,9 @@ export function Chat({
       <div
         className={cn(
           'relative flex h-full min-w-0 flex-1 flex-col',
-          messages.length === 0 ? 'items-center justify-center' : ''
+          messages.length === 0 && !isHistoryPending
+            ? 'items-center justify-center'
+            : ''
         )}
         data-testid="full-chat"
         onDragOver={dragHandlers.handleDragOver}
@@ -732,7 +733,7 @@ export function Chat({
           error={error}
           onQuoteContext={handleQuoteContext}
         />
-        {!isGuest && entry.fetching && !entry.hasServerHistory && (
+        {isHistoryPending && !entry.error && (
           <div
             role="status"
             aria-label="Loading chat"
@@ -741,7 +742,7 @@ export function Chat({
             <DefaultSkeleton />
           </div>
         )}
-        {entry.error && !isGuest && (
+        {entry.error && (
           <div className="mx-auto w-full max-w-3xl px-4 pt-12">
             <Card role="alert">
               <CardHeader>
@@ -763,6 +764,7 @@ export function Chat({
         <ChatPanel
           chatId={chatId}
           disabled={sendingBlocked}
+          isHistoryPending={isHistoryPending}
           input={input}
           handleInputChange={handleInputChange}
           handleSubmit={onSubmit}

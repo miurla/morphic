@@ -50,9 +50,36 @@ describe('GET /api/chats/[id]', () => {
     expect(result.status).toBe(404)
     expect(await result.json()).toEqual({ error: 'Chat not found' })
   })
-  it('rejects guests before loading a chat', async () => {
+  it('serves public history without a session', async () => {
     vi.mocked(getCurrentUserId).mockResolvedValue(undefined)
-    expect((await request()).status).toBe(401)
-    expect(loadChat).not.toHaveBeenCalled()
+    const chat = {
+      id: 'chat',
+      title: 'Public',
+      visibility: 'public' as const,
+      userId: 'owner',
+      messages: [
+        {
+          id: 'message',
+          role: 'user' as const,
+          parts: [{ type: 'text' as const, text: 'Shared history' }]
+        }
+      ],
+      createdAt: new Date()
+    }
+    vi.mocked(loadChat).mockResolvedValue(chat)
+    const result = await request()
+    expect(result.status).toBe(200)
+    expect(result.headers.get('Cache-Control')).toBe('private, no-store')
+    expect((await result.json()).messages).toEqual(chat.messages)
+    expect(loadChat).toHaveBeenCalledWith('chat', undefined)
+  })
+
+  it('returns 404 for private history without a session', async () => {
+    vi.mocked(getCurrentUserId).mockResolvedValue(undefined)
+    vi.mocked(loadChat).mockResolvedValue(null)
+    const result = await request()
+    expect(result.status).toBe(404)
+    expect(await result.json()).toEqual({ error: 'Chat not found' })
+    expect(loadChat).toHaveBeenCalledWith('chat', undefined)
   })
 })

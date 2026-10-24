@@ -19,6 +19,7 @@ import {
   deleteChat,
   deleteMessagesAfter,
   deleteMessagesFromIndex,
+  getChatMeta,
   getChats,
   getChatsPage,
   loadChat,
@@ -48,6 +49,31 @@ vi.mock('@/lib/storage/r2-client', () => ({
 describe('Chat Actions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  describe('getChatMeta', () => {
+    it.each(['owner', undefined])(
+      'reads only the chat row for %s',
+      async userId => {
+        const chat: Chat = {
+          id: 'chat',
+          title: 'Title',
+          userId: 'owner',
+          visibility: 'public',
+          createdAt: new Date()
+        }
+        vi.mocked(dbActions.getChat).mockResolvedValue(chat)
+        expect(await getChatMeta('chat', userId)).toEqual(chat)
+        expect(dbActions.getChat).toHaveBeenCalledWith('chat', userId)
+        expect(dbActions.loadChatWithMessages).not.toHaveBeenCalled()
+        expect(signFilePartUrlsInMessages).not.toHaveBeenCalled()
+      }
+    )
+
+    it('preserves null from the visibility check', async () => {
+      vi.mocked(dbActions.getChat).mockResolvedValue(null)
+      expect(await getChatMeta('private')).toBeNull()
+    })
   })
 
   describe('getChats', () => {

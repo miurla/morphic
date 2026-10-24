@@ -9,15 +9,9 @@ export async function GET(
 ) {
   const headers = { 'Cache-Control': 'private, no-store' }
   const userId = await getCurrentUserId()
-  if (!userId) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401, headers }
-    )
-  }
   try {
     const { id } = await params
-    const chat = await loadChat(id, userId)
+    const chat = await loadChat(id, userId ?? undefined)
     if (!chat) {
       return NextResponse.json(
         { error: 'Chat not found' },

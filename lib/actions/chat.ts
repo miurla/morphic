@@ -51,6 +51,13 @@ export async function getChatsPage(limit = 20, offset = 0) {
   return dbActions.getChatsPage(userId, limit, offset)
 }
 
+export async function getChatMeta(
+  chatId: string,
+  requestingUserId?: string
+): Promise<Chat | null> {
+  return dbActions.getChat(chatId, requestingUserId)
+}
+
 /**
  * Load a chat with messages
  * If requestingUserId is provided, it will be used for authorization

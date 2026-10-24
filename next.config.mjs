@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   skipTrailingSlashRedirect: true,
+  experimental: {
+    staleTimes: { dynamic: 300 }
+  },
   async headers() {
     return [
       {

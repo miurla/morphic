@@ -1,3 +1,7 @@
+import { StrictMode } from 'react'
+import { hydrateRoot } from 'react-dom/client'
+import { renderToString } from 'react-dom/server'
+
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -25,6 +29,8 @@ vi.mock('../chat-messages', () => ({
 vi.mock('../chat-panel', () => ({
   ChatPanel: ({
     disabled,
+    isHistoryPending,
+    messages,
     append,
     onNewChat,
     stop,
@@ -33,6 +39,9 @@ vi.mock('../chat-panel', () => ({
     handleSubmit
   }: any) => (
     <div>
+      {!isHistoryPending && messages.length === 0 && (
+        <h1>What would you like to know?</h1>
+      )}
       <button disabled={disabled} onClick={() => append({ text: 'hello' })}>
         Send
       </button>
@@ -71,6 +80,167 @@ describe('Chat client cache', () => {
     chatStore.clear()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+  })
+
+  it.each([false, true])(
+    'renders a skeleton before effects for guest=%s',
+    isGuest => {
+      const html = renderToString(<Chat id="initial" isGuest={isGuest} />)
+      expect(html).toContain('Loading chat')
+      expect(fetch).not.toHaveBeenCalled()
+    }
+  )
+
+  it.each([false, true])(
+    'hydrates unloaded history for guest=%s without a mismatch',
+    async isGuest => {
+      const host = document.createElement('div')
+      const element = <Chat id="hydrate" isGuest={isGuest} />
+      host.innerHTML = renderToString(element)
+      const serverHtml = host.innerHTML
+      document.body.appendChild(host)
+      const onRecoverableError = vi.fn()
+      let resolve!: (response: Response) => void
+      vi.mocked(fetch).mockReturnValueOnce(
+        new Promise(r => {
+          resolve = r
+        })
+      )
+      let root!: ReturnType<typeof hydrateRoot>
+      try {
+        await act(async () => {
+          root = hydrateRoot(host, element, { onRecoverableError })
+        })
+        expect(host.innerHTML).toBe(serverHtml)
+        expect(onRecoverableError).not.toHaveBeenCalled()
+        expect(fetch).toHaveBeenCalledOnce()
+        await act(async () => {
+          resolve(reply('hydrated history'))
+        })
+        expect(host).toHaveTextContent('hydrated history')
+      } finally {
+        act(() => root.unmount())
+        host.remove()
+      }
+    }
+  )
+
+  it('hides the home state while history loads and after a load error', async () => {
+    let reject!: (error: Error) => void
+    vi.mocked(fetch).mockReturnValueOnce(
+      new Promise((_, r) => {
+        reject = r
+      })
+    )
+    render(<Chat id="existing" />)
+    expect(
+      screen.getByRole('status', { name: 'Loading chat' })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'What would you like to know?' })
+    ).not.toBeInTheDocument()
+    expect(screen.getByTestId('full-chat')).not.toHaveClass('justify-center')
+    await act(async () => {
+      reject(new Error('Failed to load chat'))
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent('Failed to load chat')
+    expect(
+      screen.queryByRole('heading', { name: 'What would you like to know?' })
+    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText('New'))
+    expect(
+      screen.getByRole('heading', { name: 'What would you like to know?' })
+    ).toBeInTheDocument()
+  })
+
+  it.each([{}, { id: 'query', query: 'hello' }])(
+    'keeps the home state for a new chat %s',
+    props => {
+      render(<Chat {...props} />)
+      expect(
+        screen.getByRole('heading', { name: 'What would you like to know?' })
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByRole('status', { name: 'Loading chat' })
+      ).not.toBeInTheDocument()
+      expect(fetch).not.toHaveBeenCalled()
+    }
+  )
+
+  it('fetches an owner history once and reuses it on reopening', async () => {
+    const first = render(<Chat id="a" />)
+    expect(await screen.findByText(/server/)).toBeInTheDocument()
+    first.unmount()
+    render(<Chat id="a" />)
+    expect(screen.getByText(/server/)).toBeInTheDocument()
+    expect(fetch).toHaveBeenCalledOnce()
+  })
+
+  it('loads guest history under Strict Mode', async () => {
+    render(
+      <StrictMode>
+        <Chat id="public" isGuest />
+      </StrictMode>
+    )
+    expect(await screen.findByText(/server/)).toBeInTheDocument()
+    expect(screen.getByText('Send')).toBeEnabled()
+    expect(fetch).toHaveBeenCalledOnce()
+  })
+
+  it('loads public guest history and fetches again on a new mount', async () => {
+    let resolve!: (response: Response) => void
+    vi.mocked(fetch).mockReturnValueOnce(
+      new Promise(r => {
+        resolve = r
+      })
+    )
+    const first = render(<Chat id="public" isGuest />)
+    expect(
+      screen.getByRole('status', { name: 'Loading chat' })
+    ).toBeInTheDocument()
+    expect(screen.getByText('Send')).toBeDisabled()
+    expect(fetch).toHaveBeenCalledWith('/api/chats/public', {
+      cache: 'no-store'
+    })
+    await act(async () => {
+      resolve(reply('public history'))
+    })
+    expect(screen.getByText(/public history/)).toBeInTheDocument()
+    expect(screen.getByText('Send')).toBeEnabled()
+    expect(chatStore.get('public')).toBeUndefined()
+    first.unmount()
+    render(<Chat id="public" isGuest />)
+    expect(await screen.findByText(/server/)).toBeInTheDocument()
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('sends the full fetched history for a guest follow-up', async () => {
+    render(<Chat id="public" isGuest />)
+    expect(await screen.findByText(/server/)).toBeInTheDocument()
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(
+        'data: {"type":"start","messageId":"answer"}\n\ndata: {"type":"finish","finishReason":"stop"}\n\ndata: [DONE]\n\n',
+        {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'x-vercel-ai-ui-message-stream': 'v1'
+          }
+        }
+      )
+    )
+    fireEvent.click(screen.getByText('Send'))
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
+    const body = JSON.parse(vi.mocked(fetch).mock.calls[1][1]!.body as string)
+    expect(body.messages).toHaveLength(2)
+    expect(body.messages[0]).toEqual(messages('server')[0])
+    expect(body.isNewChat).toBe(false)
+    await waitFor(() => expect(screen.getByText('Send')).toBeEnabled())
+  })
+
+  it('does not fetch history for a new query chat', () => {
+    render(<Chat id="query-chat" query="hello" />)
+    expect(screen.getByText('Send')).toBeEnabled()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('reopens the same live Chat without fetching within the verified window', () => {
