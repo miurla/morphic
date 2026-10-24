@@ -1,5 +1,3 @@
-import { revalidateTag } from 'next/cache'
-
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { generateChatTitle } from '@/lib/agents/title-generator'
@@ -21,6 +19,7 @@ import {
   deleteChat,
   deleteMessagesAfter,
   deleteMessagesFromIndex,
+  getChatMeta,
   getChats,
   getChatsPage,
   loadChat,
@@ -50,6 +49,31 @@ vi.mock('@/lib/storage/r2-client', () => ({
 describe('Chat Actions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  describe('getChatMeta', () => {
+    it.each(['owner', undefined])(
+      'reads only the chat row for %s',
+      async userId => {
+        const chat: Chat = {
+          id: 'chat',
+          title: 'Title',
+          userId: 'owner',
+          visibility: 'public',
+          createdAt: new Date()
+        }
+        vi.mocked(dbActions.getChat).mockResolvedValue(chat)
+        expect(await getChatMeta('chat', userId)).toEqual(chat)
+        expect(dbActions.getChat).toHaveBeenCalledWith('chat', userId)
+        expect(dbActions.loadChatWithMessages).not.toHaveBeenCalled()
+        expect(signFilePartUrlsInMessages).not.toHaveBeenCalled()
+      }
+    )
+
+    it('preserves null from the visibility check', async () => {
+      vi.mocked(dbActions.getChat).mockResolvedValue(null)
+      expect(await getChatMeta('private')).toBeNull()
+    })
   })
 
   describe('getChats', () => {
@@ -192,7 +216,6 @@ describe('Chat Actions', () => {
       }
 
       vi.mocked(dbActions.createChat).mockResolvedValue(mockChat)
-      vi.mocked(revalidateTag).mockReturnValue(undefined)
 
       const result = await createChat(chatId, title, userId)
 
@@ -203,7 +226,6 @@ describe('Chat Actions', () => {
         userId,
         visibility: 'private'
       })
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should generate ID and use default title when not provided', async () => {
@@ -333,7 +355,6 @@ describe('Chat Actions', () => {
           parts: [{ type: 'text', text: 'Hello' }]
         }
       })
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
   })
 
@@ -368,7 +389,6 @@ describe('Chat Actions', () => {
         },
         userId
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should generate message ID if not provided', async () => {
@@ -415,7 +435,6 @@ describe('Chat Actions', () => {
 
       expect(result).toEqual({ success: true })
       expect(dbActions.deleteChat).toHaveBeenCalledWith(chatId, userId)
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should return error for unauthenticated user', async () => {
@@ -461,7 +480,6 @@ describe('Chat Actions', () => {
       expect(dbActions.deleteChat).toHaveBeenCalledTimes(2)
       expect(dbActions.deleteChat).toHaveBeenCalledWith('chat-1', userId)
       expect(dbActions.deleteChat).toHaveBeenCalledWith('chat-2', userId)
-      expect(revalidateTag).toHaveBeenCalledWith('chat', 'max')
     })
   })
 
@@ -489,7 +507,6 @@ describe('Chat Actions', () => {
         chatId,
         messageId
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should return error for unauthorized access', async () => {
@@ -555,7 +572,6 @@ describe('Chat Actions', () => {
         userId,
         'public'
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should return null for unauthenticated user', async () => {
@@ -664,7 +680,6 @@ describe('Chat Actions', () => {
         messageId,
         userId
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
   })
 
@@ -698,7 +713,6 @@ describe('Chat Actions', () => {
         chatId,
         generatedTitle
       )
-      expect(revalidateTag).toHaveBeenCalledWith(`chat-${chatId}`, 'max')
     })
 
     it('should not generate title for existing chat', async () => {

@@ -16,7 +16,7 @@ import {
 import { nextCitationLabelNumber } from '@/lib/utils/citation'
 import { isTracingEnabled } from '@/lib/utils/telemetry'
 
-import { loadChatUncached } from '../actions/chat'
+import { loadChat } from '../actions/chat'
 import { generateChatTitle } from '../agents/title-generator'
 import {
   getMaxAllowedTokens,
@@ -97,9 +97,7 @@ export async function createChatStreamResponse(
   if (!isNewChat) {
     try {
       const loadChatStart = performance.now()
-      // Read uncached: the prompt must not be built from a snapshot that
-      // predates the previous turn's answer
-      initialChat = await loadChatUncached(chatId, userId)
+      initialChat = await loadChat(chatId, userId)
       perfTime('loadChat completed', loadChatStart)
     } catch (error) {
       logAPICallErrorDiagnostics(error)

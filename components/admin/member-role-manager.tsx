@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 import { promoteMemberAction } from '@/lib/actions/admin'
 import type { MemberSummary } from '@/lib/auth/better-auth/members'
@@ -8,6 +9,7 @@ import type { MemberSummary } from '@/lib/auth/better-auth/members'
 import { Button } from '@/components/ui/button'
 
 export function MemberRoleManager({ members }: { members: MemberSummary[] }) {
+  const router = useRouter()
   const [promotedIds, setPromotedIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -19,6 +21,7 @@ export function MemberRoleManager({ members }: { members: MemberSummary[] }) {
       const result = await promoteMemberAction({ userId })
       if (result.success) {
         setPromotedIds(prev => new Set(prev).add(userId))
+        router.refresh()
       } else {
         setError(result.error ?? 'Failed to promote member')
       }

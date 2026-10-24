@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { signOut } from '@/lib/actions/auth'
 import type { AppUser } from '@/lib/auth/types'
+import { chatStore } from '@/lib/chat-store'
 import { AppUserProvider } from '@/lib/contexts/app-user-context'
 
 import UserMenu from '@/components/user-menu'
@@ -102,10 +103,13 @@ describe('UserMenu', () => {
       </AppUserProvider>
     )
 
+    chatStore.getOrCreate('cached', { messages: [] })
+
     fireEvent.click(screen.getByRole('menuitem', { name: /Logout/ }))
 
     await waitFor(() => {
       expect(signOut).toHaveBeenCalledTimes(1)
+      expect(chatStore.get('cached')).toBeUndefined()
       expect(mockPush).toHaveBeenCalledWith('/')
       expect(mockRefresh).toHaveBeenCalled()
     })

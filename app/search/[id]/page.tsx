@@ -1,8 +1,7 @@
+import { cache } from 'react'
 import { notFound, redirect } from 'next/navigation'
 
-import { UIMessage } from 'ai'
-
-import { loadChat } from '@/lib/actions/chat'
+import { getChatMeta } from '@/lib/actions/chat'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { isAnonymousMode } from '@/lib/auth/provider'
 import { getModelSelectorData } from '@/lib/model-selector/get-model-selector-data'
@@ -11,13 +10,16 @@ import { Chat } from '@/components/chat'
 
 export const maxDuration = 60
 
+// Dedupe the read shared by generateMetadata and the page within one request
+const getChat = cache(getChatMeta)
+
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>
 }) {
   const { id } = await props.params
   const userId = await getCurrentUserId()
 
-  const chat = await loadChat(id, userId)
+  const chat = await getChat(id, userId)
 
   if (!chat) {
     return { title: 'Search' }
@@ -34,7 +36,7 @@ export default async function SearchPage(props: {
   const { id } = await props.params
   const userId = await getCurrentUserId()
 
-  const chat = await loadChat(id, userId)
+  const chat = await getChat(id, userId)
 
   if (!chat) {
     // A logged-out visitor cannot tell a private chat from a missing one:
@@ -52,7 +54,6 @@ export default async function SearchPage(props: {
     redirect(`/auth/login?next=${encodeURIComponent(`/search/${id}`)}`)
   }
 
-  const messages: UIMessage[] = chat.messages
   const isCloudDeployment = process.env.MORPHIC_CLOUD_DEPLOYMENT === 'true'
   const libraryAvailable = !isAnonymousMode()
   const modelSelectorData = await getModelSelectorData()
@@ -60,7 +61,6 @@ export default async function SearchPage(props: {
   return (
     <Chat
       id={id}
-      savedMessages={messages}
       isGuest={!userId}
       isCloudDeployment={isCloudDeployment}
       libraryAvailable={libraryAvailable}

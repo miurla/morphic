@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 
 import {
   IconCheck as Check,
@@ -63,6 +64,7 @@ interface ModelSelectorClientProps {
 }
 
 export function ModelSelectorClient({ data }: ModelSelectorClientProps) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [selectedModelKey, setSelectedModelKey] = useState<string>(
     data.selectedModelKey
@@ -164,6 +166,7 @@ export function ModelSelectorClient({ data }: ModelSelectorClientProps) {
                           })
                         )
                         setOpen(false)
+                        router.refresh()
                       }}
                       className="cursor-pointer"
                     >

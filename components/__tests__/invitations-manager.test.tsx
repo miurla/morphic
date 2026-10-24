@@ -9,6 +9,9 @@ import {
 
 import { InvitationsManager } from '@/components/admin/invitations-manager'
 
+const { refresh } = vi.hoisted(() => ({ refresh: vi.fn() }))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }))
+
 vi.mock('@/lib/actions/admin', () => ({
   createInvitationAction: vi.fn(),
   revokeInvitationAction: vi.fn()
@@ -99,6 +102,7 @@ describe('InvitationsManager', () => {
         email: 'new@example.com'
       })
       expect(screen.getByText('new@example.com')).toBeInTheDocument()
+      expect(refresh).toHaveBeenCalledOnce()
       expect(
         screen.getByDisplayValue(
           'http://localhost:3000/auth/sign-up?token=tok3'
@@ -134,6 +138,7 @@ describe('InvitationsManager', () => {
 
     await waitFor(() => {
       expect(revokeInvitationAction).toHaveBeenCalledWith('inv-1')
+      expect(refresh).toHaveBeenCalledOnce()
       expect(screen.getAllByText('Revoked')).toHaveLength(2)
     })
   })

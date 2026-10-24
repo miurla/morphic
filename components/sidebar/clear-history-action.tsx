@@ -10,6 +10,7 @@ import {
 import { toast } from 'sonner'
 
 import { clearChats } from '@/lib/actions/chat'
+import { chatStore } from '@/lib/chat-store'
 
 import {
   AlertDialog,
@@ -45,6 +46,7 @@ export function ClearHistoryAction({ empty }: ClearHistoryActionProps) {
     startTransition(async () => {
       const res = await clearChats()
       if (res?.success) {
+        chatStore.clear()
         toast.success('History cleared')
         router.push('/')
       } else if (res?.error) {
