@@ -173,6 +173,45 @@ describe('ChatHistoryClient search mode', () => {
     expect(screen.getByText('Existing chat')).toBeInTheDocument()
   })
 
+  it('retries a failed hidden refresh when search mode ends', async () => {
+    const fetchMock = mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+    fetchMock.mockClear()
+
+    // Clear History while searching, but the hidden list refresh fails:
+    // the deleted chats must not simply be revealed when the user exits.
+    fetchMock.mockImplementationOnce(async (input: RequestInfo | URL) => {
+      if (String(input).startsWith('/api/chats')) {
+        return {
+          ok: false,
+          json: async () => ({ chats: [], nextOffset: null })
+        }
+      }
+      return { ok: true, json: async () => ({ title: [], content: [] }) }
+    })
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    await flush(50)
+    const chatsCalls = () =>
+      fetchMock.mock.calls.filter(([url]) =>
+        String(url).startsWith('/api/chats')
+      ).length
+    expect(chatsCalls()).toBe(1)
+
+    // Exiting search retries the failed refresh; the retry succeeds here,
+    // so the fresh list replaces the stale (deleted) items.
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Clear search'))
+    })
+    await flush(50)
+    expect(chatsCalls()).toBe(2)
+    expect(screen.getByText('Existing chat')).toBeInTheDocument()
+  })
+
   it('refetches search results when chat data changes during search', async () => {
     const fetchMock = mockFetch()
     render(<ChatHistoryClient />)

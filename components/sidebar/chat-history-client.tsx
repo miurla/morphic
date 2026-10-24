@@ -45,6 +45,8 @@ export function ChatHistoryClient() {
   // list instead of mounting a search view that can never produce results.
   const searchMode = normalizeSearchQuery(query).length >= MIN_QUERY_LENGTH
   const searchModeRef = useRef(searchMode)
+  const [staleHiddenRefresh, setStaleHiddenRefresh] = useState(false)
+  const [isRetryingList, setIsRetryingList] = useState(false)
   // Bumped when chat data changes during search mode, telling the results
   // view to refetch so stale matches (e.g. after Clear History) cannot be
   // opened.
@@ -82,7 +84,7 @@ export function ChatHistoryClient() {
     searchModeRef.current = searchMode
   }, [searchMode])
 
-  const fetchInitialChats = useCallback(async () => {
+  const fetchInitialChats = useCallback(async (): Promise<boolean> => {
     setIsLoading(true)
     try {
       const response = await fetch(`/api/chats?offset=0&limit=20`)
@@ -94,10 +96,12 @@ export function ChatHistoryClient() {
 
       setChats(dbChats)
       setNextOffset(newNextOffset)
+      return true
     } catch (error) {
       console.error('Failed to load initial chats:', error)
       toast.error('Failed to load chat history.')
       setNextOffset(null)
+      return false
     } finally {
       setIsLoading(false)
     }
@@ -112,15 +116,22 @@ export function ChatHistoryClient() {
       // Chat data changed (e.g. Clear History). Refresh the chronological
       // list even while search mode hides it: deferring the refresh would
       // reveal stale items when the user leaves search mode (deleted chats
-      // stay clickable for the whole deferred request, and indefinitely if
-      // that request fails). The hidden list renders nothing, so refreshing
-      // it cannot disturb the results view, which refetches via the epoch
-      // bump below.
+      // stay clickable for the whole deferred request). The hidden list
+      // renders nothing, so refreshing it cannot disturb the results view,
+      // which refetches via the epoch bump below.
       if (searchModeRef.current) {
         setSearchEpoch(epoch => epoch + 1)
       }
       startTransition(async () => {
-        await fetchInitialChats()
+        const ok = await fetchInitialChats()
+        // A refresh that failed while the list was hidden must not leave
+        // deleted chats to be revealed later: mark the list stale and
+        // retry when search mode ends. The marker clears only on success.
+        if (ok) {
+          setStaleHiddenRefresh(false)
+        } else if (searchModeRef.current) {
+          setStaleHiddenRefresh(true)
+        }
       })
     }
     window.addEventListener('chat-history-updated', handleHistoryUpdate)
@@ -128,6 +139,23 @@ export function ChatHistoryClient() {
       window.removeEventListener('chat-history-updated', handleHistoryUpdate)
     }
   }, [fetchInitialChats, startTransition])
+
+  // Retry a refresh that failed while the list was hidden. Stale items
+  // (possibly deleted chats) stay suppressed while the retry is in flight;
+  // a failed retry keeps the marker so the next exit from search mode
+  // tries again.
+  useEffect(() => {
+    if (!searchMode && staleHiddenRefresh) {
+      setIsRetryingList(true)
+      startTransition(async () => {
+        const ok = await fetchInitialChats()
+        setIsRetryingList(false)
+        if (ok) {
+          setStaleHiddenRefresh(false)
+        }
+      })
+    }
+  }, [searchMode, staleHiddenRefresh, fetchInitialChats, startTransition])
 
   const fetchMoreChats = useCallback(async () => {
     if (isLoading || nextOffset === null) return
@@ -249,6 +277,10 @@ export function ChatHistoryClient() {
             query={query}
             onActiveValueChange={setActiveResult}
           />
+        ) : isRetryingList ? (
+          <div className="py-2">
+            <ChatHistorySkeleton />
+          </div>
         ) : isHistoryEmpty && !isPending ? (
           <div className="px-2 text-foreground/30 text-sm text-center py-4">
             No chats yet
@@ -262,7 +294,7 @@ export function ChatHistoryClient() {
           </SidebarMenu>
         )}
         {!searchMode && <div ref={loadMoreRef} style={{ height: '1px' }} />}
-        {!searchMode && (isLoading || isPending) && (
+        {!searchMode && !isRetryingList && (isLoading || isPending) && (
           <div className="py-2">
             <ChatHistorySkeleton />
           </div>
