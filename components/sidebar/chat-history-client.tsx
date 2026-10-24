@@ -205,6 +205,11 @@ export function ChatHistoryClient() {
   const fetchMoreChats = useCallback(async () => {
     if (isLoading || nextOffset === null) return
 
+    // Same generation guard as fetchInitialChats: a page fetched before a
+    // data change (e.g. Clear History) must not append its pre-deletion
+    // chats after the refresh that superseded this request replaced the
+    // list.
+    const seq = ++listRequestSeqRef.current
     setIsLoading(true)
     try {
       const response = await fetch(`/api/chats?offset=${nextOffset}&limit=20`)
@@ -214,14 +219,16 @@ export function ChatHistoryClient() {
       const { chats: dbChats, nextOffset: newNextOffset } =
         (await response.json()) as ChatPageResponse
 
+      if (seq !== listRequestSeqRef.current) return
       setChats(prevChats => [...prevChats, ...dbChats])
       setNextOffset(newNextOffset)
     } catch (error) {
+      if (seq !== listRequestSeqRef.current) return
       console.error('Failed to load more chats:', error)
       toast.error('Failed to load more chat history.')
       setNextOffset(null)
     } finally {
-      setIsLoading(false)
+      if (seq === listRequestSeqRef.current) setIsLoading(false)
     }
   }, [nextOffset, isLoading])
 

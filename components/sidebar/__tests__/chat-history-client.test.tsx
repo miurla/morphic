@@ -19,10 +19,21 @@ vi.mock('../clear-history-action', () => ({
   ClearHistoryAction: () => <button type="button">Clear history</button>
 }))
 
+let lastObserver: IntersectionObserverStub | null = null
 class IntersectionObserverStub {
+  constructor(private callback: IntersectionObserverCallback) {
+    lastObserver = this
+  }
   observe() {}
   unobserve() {}
   disconnect() {}
+  // Simulate the sentinel entering the viewport
+  intersect() {
+    this.callback(
+      [{ isIntersecting: true } as IntersectionObserverEntry],
+      this as unknown as IntersectionObserver
+    )
+  }
 }
 globalThis.IntersectionObserver =
   IntersectionObserverStub as unknown as typeof IntersectionObserver
@@ -445,6 +456,57 @@ describe('ChatHistoryClient search mode', () => {
     })
     await flush(50)
     expect(screen.getByText('Existing chat')).toBeInTheDocument()
+  })
+
+  it('discards a load-more page superseded by a refresh', async () => {
+    const deletedChat = {
+      id: 'chat-old',
+      title: 'Deleted chat',
+      userId: 'user-1',
+      visibility: 'private' as const,
+      createdAt: new Date('2026-01-01T00:00:00Z')
+    }
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.startsWith('/api/chats?offset=0')) {
+        return {
+          ok: true,
+          json: async () => ({ chats: [chat], nextOffset: 20 })
+        }
+      }
+      if (url.startsWith('/api/chats')) {
+        await new Promise(resolve => setTimeout(resolve, 400))
+        return {
+          ok: true,
+          json: async () => ({ chats: [deletedChat], nextOffset: null })
+        }
+      }
+      return { ok: true, json: async () => ({ title: [], content: [] }) }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<ChatHistoryClient />)
+    await flush(50)
+    expect(screen.getByText('Existing chat')).toBeInTheDocument()
+
+    // Start infinite scroll (its page is slow), then enter search mode:
+    // the observer disconnects but the request stays in flight.
+    lastObserver!.intersect()
+    await typeInSearch('mat')
+
+    // Clear History while hidden: the refresh succeeds and replaces the
+    // list; the stale load-more page must not append to it afterwards.
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    await flush(50)
+    await flush(400) // the stale page lands while the list is hidden
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Clear search'))
+    })
+    await flush(50)
+    expect(screen.getByText('Existing chat')).toBeInTheDocument()
+    expect(screen.queryByText('Deleted chat')).not.toBeInTheDocument()
   })
 
   it('refetches search results when chat data changes during search', async () => {
