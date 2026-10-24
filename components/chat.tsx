@@ -235,11 +235,19 @@ export function Chat({
     []
   )
   useEffect(() => {
+    if (
+      (entry.chat.status === 'submitted' ||
+        entry.chat.status === 'streaming') &&
+      !entry.handlers.current.onFinish &&
+      !entry.handlers.current.onError
+    ) {
+      store.attachHandlers(entry, handlers)
+    }
     return () => {
       if (entry.handlers.current === handlers) entry.handlers.current = {}
       if (isGuest) void entry.chat.stop()
     }
-  }, [entry, handlers, isGuest])
+  }, [store, entry, handlers, isGuest])
   useEffect(() => {
     void store.revalidate(chatId)
   }, [store, entry, chatId])

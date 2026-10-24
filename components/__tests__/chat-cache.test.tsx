@@ -203,6 +203,70 @@ describe('Chat client cache', () => {
     expect(chatStore.get('shared')!.handlers.current).toEqual({})
   })
 
+  it.each(['finish', 'error'] as const)(
+    'hands off the %s callback after the sender unmounts while streaming',
+    async outcome => {
+      let controller!: ReadableStreamDefaultController<Uint8Array>
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream<Uint8Array>({
+        start(value) {
+          controller = value
+          controller.enqueue(
+            encoder.encode(
+              'data: {"type":"start","messageId":"answer"}\n\ndata: {"type":"text-start","id":"text"}\n\ndata: {"type":"text-delta","id":"text","delta":"hello"}\n\n'
+            )
+          )
+        }
+      })
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response(stream, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'x-vercel-ai-ui-message-stream': 'v1'
+          }
+        })
+      )
+      const first = mountSharedChat()
+      fireEvent.click(within(first.container).getByText('Send'))
+      const entry = chatStore.get('shared')!
+      await waitFor(() => expect(entry.chat.status).toBe('streaming'))
+      first.unmount()
+      expect(entry.handlers.current).toEqual({})
+
+      const second = mountSharedChat()
+      const callback = vi.spyOn(
+        entry.handlers.current,
+        outcome === 'finish' ? 'onFinish' : 'onError'
+      )
+      await act(async () => {
+        const chunk =
+          outcome === 'finish'
+            ? { type: 'finish', finishReason: 'stop' }
+            : {
+                type: 'error',
+                errorText: JSON.stringify({
+                  error: 'Request failed',
+                  type: 'auth',
+                  code: 'auth_required'
+                })
+              }
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(chunk)}\n\ndata: [DONE]\n\n`)
+        )
+        controller.close()
+      })
+
+      await waitFor(() => expect(callback).toHaveBeenCalledOnce())
+      expect(second.refreshUsage).toHaveBeenCalledOnce()
+      expect(first.refreshUsage).not.toHaveBeenCalled()
+      if (outcome === 'error') {
+        expect(within(second.container).getByRole('dialog')).toHaveTextContent(
+          'auth'
+        )
+      }
+    }
+  )
+
   it.each([
     ['rate-limit', 'rate_limit', 429],
     ['auth', 'auth_required', 401],
