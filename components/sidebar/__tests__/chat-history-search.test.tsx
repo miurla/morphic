@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { toast } from 'sonner'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { HL_START, HL_STOP } from '@/lib/render/highlight-markers'
+
 import { ChatHistorySearch } from '../chat-history-search'
 
 const pushMock = vi.hoisted(() => vi.fn())
@@ -111,7 +113,7 @@ describe('ChatHistorySearch', () => {
               chatId: 'c2',
               title: 'Robert Frost',
               snippet: 'robert',
-              highlight: '<b>robert</b>'
+              highlight: `${HL_START}robert${HL_STOP}`
             }
           ]
         })
@@ -131,7 +133,7 @@ describe('ChatHistorySearch', () => {
               chatId: 'c1',
               title: 'Rob Reiner',
               snippet: 'rob',
-              highlight: '<b>rob</b>'
+              highlight: `${HL_START}rob${HL_STOP}`
             }
           ]
         })
@@ -151,7 +153,7 @@ describe('ChatHistorySearch', () => {
             chatId: 'c2',
             title: 'Poetry class',
             snippet: 'Stopping by woods',
-            highlight: 'Stopping by <b>woods</b>'
+            highlight: `Stopping by ${HL_START}woods${HL_STOP}`
           }
         ]
       })
@@ -228,7 +230,7 @@ describe('ChatHistorySearch', () => {
               chatId: 'c9',
               title: 'Deep chat',
               snippet: 'pondering quasars',
-              highlight: 'pondering <b>quasars</b>'
+              highlight: `pondering ${HL_START}quasars${HL_STOP}`
             }
           ]
         })
@@ -289,7 +291,7 @@ describe('ChatHistorySearch', () => {
               chatId: 'c9',
               title: 'Deep chat',
               snippet: 'pondering quasars',
-              highlight: 'pondering <b>quasars</b>'
+              highlight: `pondering ${HL_START}quasars${HL_STOP}`
             }
           ]
         })
@@ -338,5 +340,58 @@ describe('ChatHistorySearch', () => {
     ui.unmount()
 
     expect(thinkingSignal.aborted).toBe(true)
+  })
+
+  it('re-enables the thinking button when the query changes mid-request', async () => {
+    const thinkingResponse = deferred<unknown>()
+    const fetchMock = vi
+      .fn()
+      .mockReturnValueOnce(jsonResponse(emptyResponse))
+      .mockReturnValueOnce(thinkingResponse.promise)
+      .mockReturnValue(jsonResponse(emptyResponse))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const ui = render(<ChatHistorySearch query="quasars" />)
+    await flush(300)
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Search thinking/ }))
+    })
+    expect(
+      screen.getByRole('button', { name: /Search thinking/ })
+    ).toBeDisabled()
+
+    // Changing the query aborts the thinking request; the stale response
+    // must not leave the button stuck in the loading state.
+    await typeQuery(ui, 'quasars again')
+
+    expect(
+      screen.getByRole('button', { name: /Search thinking/ })
+    ).toBeEnabled()
+  })
+
+  it('renders literal HTML in snippets as plain text', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockReturnValue(
+        jsonResponse({
+          title: [],
+          content: [
+            {
+              chatId: 'c1',
+              title: 'HTML chat',
+              snippet: 'use <b>bold</b> tags',
+              highlight: `use <b>bold</b> ${HL_START}tags${HL_STOP}`
+            }
+          ]
+        })
+      )
+    )
+
+    render(<ChatHistorySearch query="tags" />)
+    await flush(300)
+
+    expect(screen.getByText('tags').tagName).toBe('B')
+    expect(screen.getByText(/use <b>bold<\/b>/)).toBeInTheDocument()
   })
 })

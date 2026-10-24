@@ -13,6 +13,7 @@ import {
   sql
 } from 'drizzle-orm'
 
+import { HL_START, HL_STOP } from '@/lib/render/highlight-markers'
 import type { UIMessage } from '@/lib/types/ai'
 import type { PersistableUIMessage } from '@/lib/types/message-persistence'
 import {
@@ -453,7 +454,7 @@ async function searchChatParts(
             'english',
             coalesce(p.${textCol}, ''),
             fts_query.q,
-            'MaxWords=14, MinWords=7'
+            ${`MaxWords=14, MinWords=7, StartSel=${HL_START}, StopSel=${HL_STOP}`}
           ) AS snippet
         FROM fts_query
         CROSS JOIN ${parts} p

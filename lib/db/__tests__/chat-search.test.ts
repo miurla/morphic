@@ -2,6 +2,7 @@ import { PgDialect } from 'drizzle-orm/pg-core'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { withRLS } from '@/lib/db/with-rls'
+import { HL_START, HL_STOP } from '@/lib/render/highlight-markers'
 
 import {
   searchChatContent,
@@ -109,7 +110,7 @@ describe('searchChatContent', () => {
       {
         chat_id: 'chat-2',
         title: 'Poetry',
-        snippet: 'Stopping by <b>woods</b> on a snowy evening'
+        snippet: `Stopping by ${HL_START}woods${HL_STOP} on a snowy evening`
       }
     ])
 
@@ -119,7 +120,7 @@ describe('searchChatContent', () => {
       {
         chatId: 'chat-2',
         title: 'Poetry',
-        snippet: 'Stopping by <b>woods</b> on a snowy evening'
+        snippet: `Stopping by ${HL_START}woods${HL_STOP} on a snowy evening`
       }
     ])
     expect(withRLS).toHaveBeenCalledWith('user-1', expect.any(Function))
@@ -130,6 +131,12 @@ describe('searchChatContent', () => {
     expect(rendered.sql).toContain('"search" @@')
     expect(rendered.sql).toContain('ts_rank')
     expect(rendered.sql).toContain('ts_headline')
+    // highlight delimiters are control characters, not HTML
+    expect(rendered.params).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(`StartSel=${HL_START}, StopSel=${HL_STOP}`)
+      ])
+    )
     expect(rendered.sql).toContain('"text_text"')
     expect(rendered.sql).not.toContain('"search_reasoning"')
     // user scoping: excludes other users' chats even when public
@@ -173,7 +180,7 @@ describe('searchChatReasoning', () => {
       {
         chat_id: 'chat-3',
         title: 'Thinking chat',
-        snippet: 'reasoning about <b>quasars</b>'
+        snippet: `reasoning about ${HL_START}quasars${HL_STOP}`
       }
     ])
 
@@ -183,7 +190,7 @@ describe('searchChatReasoning', () => {
       {
         chatId: 'chat-3',
         title: 'Thinking chat',
-        snippet: 'reasoning about <b>quasars</b>'
+        snippet: `reasoning about ${HL_START}quasars${HL_STOP}`
       }
     ])
 

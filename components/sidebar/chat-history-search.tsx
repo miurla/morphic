@@ -9,6 +9,8 @@ import {
 } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
+import { HL_START, HL_STOP } from '@/lib/render/highlight-markers'
+
 import {
   Command,
   CommandEmpty,
@@ -35,16 +37,20 @@ interface SearchResponse {
   thinking?: SearchResultItem[]
 }
 
-// Renders a ts_headline snippet, emphasizing the <b></b>-marked match terms.
-// The markers are parsed into elements (never injected as HTML).
+// Renders a ts_headline snippet, emphasizing the terms delimited by
+// HL_START/HL_STOP control characters. The delimiters are parsed into
+// elements (never injected as HTML), so literal HTML in message text stays
+// plain text.
 function HighlightedSnippet({ highlight }: { highlight: string }) {
-  const segments = highlight.split(/(<b>[\s\S]*?<\/b>)/g)
+  const segments = highlight.split(
+    new RegExp(`(${HL_START}[\\s\\S]*?${HL_STOP})`, 'g')
+  )
   return (
     <p className="text-muted-foreground text-xs leading-snug break-words line-clamp-2 w-full">
       {segments.map((segment, index) =>
-        segment.startsWith('<b>') && segment.endsWith('</b>') ? (
+        segment.startsWith(HL_START) && segment.endsWith(HL_STOP) ? (
           <b key={index} className="font-semibold text-foreground">
-            {segment.slice(3, -4)}
+            {segment.slice(HL_START.length, -HL_STOP.length)}
           </b>
         ) : (
           <span key={index}>{segment}</span>
@@ -74,6 +80,9 @@ export function ChatHistorySearch({ query }: ChatHistorySearchProps) {
   useEffect(() => {
     setThinkingRequested(false)
     setResults(null)
+    // An aborted thinking request can no longer update state (its sequence is
+    // stale), so the button state must be reset here or it stays stuck.
+    setIsSearchingThinking(false)
     return () => {
       thinkingAbortRef.current?.abort()
       thinkingAbortRef.current = null

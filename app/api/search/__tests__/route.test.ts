@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import * as dbActions from '@/lib/db/actions'
+import { HL_START, HL_STOP } from '@/lib/render/highlight-markers'
 
 import { GET } from '../route'
 
@@ -30,7 +31,7 @@ const titleChat = {
 const contentMatch = {
   chatId: 'chat-2',
   title: 'Poetry class',
-  snippet: 'Stopping by <b>woods</b>'
+  snippet: `Stopping by ${HL_START}woods${HL_STOP}`
 }
 
 describe('Search API Route', () => {
@@ -86,7 +87,7 @@ describe('Search API Route', () => {
           chatId: 'chat-2',
           title: 'Poetry class',
           snippet: 'Stopping by woods',
-          highlight: 'Stopping by <b>woods</b>'
+          highlight: `Stopping by ${HL_START}woods${HL_STOP}`
         }
       ]
     })
@@ -102,7 +103,11 @@ describe('Search API Route', () => {
 
   it('adds thinking results when include=reasoning with cap 10', async () => {
     vi.mocked(dbActions.searchChatReasoning).mockResolvedValue([
-      { chatId: 'chat-3', title: 'Deep chat', snippet: 'about <b>frost</b>' }
+      {
+        chatId: 'chat-3',
+        title: 'Deep chat',
+        snippet: `about ${HL_START}frost${HL_STOP}`
+      }
     ])
 
     const response = await GET(makeRequest('frost', 'reasoning'))
@@ -118,7 +123,7 @@ describe('Search API Route', () => {
         chatId: 'chat-3',
         title: 'Deep chat',
         snippet: 'about frost',
-        highlight: 'about <b>frost</b>'
+        highlight: `about ${HL_START}frost${HL_STOP}`
       }
     ])
   })

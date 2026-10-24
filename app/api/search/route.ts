@@ -6,6 +6,7 @@ import {
   searchChatReasoning,
   searchChatTitles
 } from '@/lib/db/actions'
+import { stripHighlightMarkers } from '@/lib/render/highlight-markers'
 
 const MIN_QUERY_LENGTH = 2
 const TITLE_LIMIT = 20
@@ -25,8 +26,9 @@ interface SearchResponse {
   thinking?: ContentSearchItem[]
 }
 
-// ts_headline wraps matched terms in <b></b> markers; keep them for the
-// `highlight` field and strip them for the plain `snippet` field.
+// ts_headline wraps matched terms in HL_START/HL_STOP control characters;
+// keep them for the `highlight` field and strip them for the plain `snippet`
+// field. Literal HTML in message text is therefore never altered or emphasized.
 function toContentItem(result: {
   chatId: string
   title: string
@@ -35,7 +37,7 @@ function toContentItem(result: {
   return {
     chatId: result.chatId,
     title: result.title,
-    snippet: result.snippet.replace(/<\/?b>/g, ''),
+    snippet: stripHighlightMarkers(result.snippet),
     highlight: result.snippet
   }
 }
