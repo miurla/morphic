@@ -4,7 +4,7 @@ import type { StreamTextOnErrorCallback, UIMessage } from 'ai'
 import { consumeStream, convertToModelMessages, smoothStream } from 'ai'
 
 import { researcher } from '@/lib/agents/researcher'
-import { buildDraftVersions } from '@/lib/draft/draft'
+import { buildDraftVersions, currentDraftVersion } from '@/lib/draft/draft'
 import {
   createPublicErrorResponse,
   serializePublicError
@@ -139,7 +139,7 @@ export async function createEphemeralChatStreamResponse(
 
     try {
       // The chat's draft as of this turn, rebuilt from history
-      const currentDraft = buildDraftVersions(messages).at(-1) ?? null
+      const currentDraft = currentDraftVersion(buildDraftVersions(messages))
       const messagesWithNonces = assignDataPartNonces(messages)
       const messagesWithoutSpec = compactDraftsInMessages(
         stripSpecFromMessages(messagesWithNonces)

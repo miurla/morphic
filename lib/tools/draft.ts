@@ -1,9 +1,15 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 
-import { applyDraftEdits, type DraftVersion } from '@/lib/draft/draft'
+import { applyDraftChange, type DraftVersion } from '@/lib/draft/draft'
 
 export const editDraftInputSchema = z.object({
+  title: z
+    .string()
+    .optional()
+    .describe(
+      'A new title, only for a draft without a top-level heading. When the draft has one, edit the heading instead.'
+    ),
   edits: z
     .array(
       z.object({
@@ -15,7 +21,7 @@ export const editDraftInputSchema = z.object({
         replace: z.string().describe('The text that replaces it')
       })
     )
-    .min(1)
+    .optional()
     .describe('Edits applied in order')
 })
 
@@ -30,7 +36,7 @@ export function createDraftTools(currentDraft: DraftVersion | null) {
     description:
       'Make local changes to the current draft with exact find/replace edits. For a full rewrite, write a new draft block instead.',
     inputSchema: editDraftInputSchema,
-    execute: async ({ edits }) => {
+    execute: async ({ title, edits }) => {
       if (!current) {
         return {
           applied: 0,
@@ -40,11 +46,12 @@ export function createDraftTools(currentDraft: DraftVersion | null) {
         }
       }
 
-      const result = applyDraftEdits(current.content, edits)
+      const result = applyDraftChange(current, { title, edits })
       if (result.applied > 0) {
         current = {
           ...current,
           version: current.version + 1,
+          title: result.title,
           content: result.content,
           kind: 'edit'
         }

@@ -36,6 +36,7 @@ DRAFT RULES (these override the output format rules for draft answers):
    exact find/replace pairs copied from <current_draft>. Each find must appear exactly once; include enough surrounding
    text to make it unique. If edits are reported as failed, retry only those with corrected find text. Never call editDraft in
    the same answer that writes a draft block: the tool only sees the draft from before this answer.
+   To rename a draft that has no top-level heading, pass the new title to editDraft; otherwise edit the heading.
 5. When the user's message quotes text from the draft (a quoted-context block), that exact text is what "this" refers
    to: change only it, and make sure each edit's find contains the quoted text.
 6. For a change across the whole draft (shorten or lengthen it, change the tone, restructure, translate it), write a

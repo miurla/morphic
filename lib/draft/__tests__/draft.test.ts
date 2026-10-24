@@ -1,9 +1,11 @@
 import { describe, expect, test } from 'vitest'
 
 import {
+  applyDraftChange,
   applyDraftEdits,
   buildDraftVersions,
   compactDraftBlocks,
+  currentDraftVersion,
   formatCurrentDraft,
   parseDraftBlocks,
   parseDraftFenceBody
@@ -122,6 +124,67 @@ describe('buildDraftVersions', () => {
     })
   })
 
+  test('drops an interrupted block with no text', () => {
+    const versions = buildDraftVersions([
+      { id: 'a1', role: 'assistant', parts: [{ type: 'text', text: BLOCK }] },
+      {
+        id: 'a2',
+        role: 'assistant',
+        parts: [{ type: 'text', text: '````draft\ntitle: Revision\n\n' }]
+      }
+    ])
+    expect(versions).toHaveLength(1)
+  })
+
+  test('edits the last completed version, not an interrupted one', () => {
+    const versions = buildDraftVersions([
+      { id: 'a1', role: 'assistant', parts: [{ type: 'text', text: BLOCK }] },
+      {
+        id: 'a2',
+        role: 'assistant',
+        parts: [{ type: 'text', text: '````draft\ntitle: Revision\n\nPart' }]
+      },
+      {
+        id: 'a3',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-editDraft',
+            state: 'output-available',
+            input: { edits: [{ find: 'End.', replace: 'The end.' }] },
+            output: { applied: 1, failed: [] }
+          }
+        ]
+      }
+    ])
+    expect(versions.map(v => v.kind)).toEqual(['write', 'write', 'edit'])
+    expect(versions[2].title).toBe('Cutting boards')
+    expect(currentDraftVersion(versions.slice(0, 2))?.version).toBe(1)
+  })
+
+  test('replays a title change', () => {
+    const versions = buildDraftVersions([
+      {
+        id: 'a1',
+        role: 'assistant',
+        parts: [{ type: 'text', text: '````draft\ntitle: Old\n\nHi.\n````' }]
+      },
+      {
+        id: 'a2',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-editDraft',
+            state: 'output-available',
+            input: { title: 'New' },
+            output: { applied: 1, failed: [] }
+          }
+        ]
+      }
+    ])
+    expect(versions.at(-1)).toMatchObject({ title: 'New', content: 'Hi.' })
+  })
+
   test('skips an edit the tool rejected', () => {
     const versions = buildDraftVersions([
       { id: 'a1', role: 'assistant', parts: [{ type: 'text', text: BLOCK }] },
@@ -179,6 +242,14 @@ describe('buildDraftVersions', () => {
   })
 })
 
+describe('applyDraftChange', () => {
+  test('counts a new title as one change and ignores the same title', () => {
+    const draft = { title: 'Old', content: 'Hi.' }
+    expect(applyDraftChange(draft, { title: 'New' }).applied).toBe(1)
+    expect(applyDraftChange(draft, { title: 'Old' }).applied).toBe(0)
+  })
+})
+
 describe('compactDraftBlocks', () => {
   test('stubs a block an answer stopped inside', () => {
     const out = compactDraftBlocks('Here.\n\n````draft\ntitle: Note\n\nHalf')
@@ -217,6 +288,33 @@ describe('formatCurrentDraft', () => {
 })
 
 describe('three-backtick close', () => {
+  test('stops at the draft close when a spec fence follows', () => {
+    const text = [
+      '````draft',
+      'title: Note',
+      '',
+      'Body.',
+      '```',
+      '',
+      'Related:',
+      '```spec',
+      '{"op":"add"}',
+      '```'
+    ].join('\n')
+    const [block] = parseDraftBlocks(text)
+    expect(block).toMatchObject({ content: 'Body.', closed: true })
+    expect(compactDraftBlocks(text)).toContain('```spec')
+  })
+
+  test('does not take the next draft opener as a close', () => {
+    const text =
+      '````draft\ntitle: A\n\nOne.\n```\n\n````draft\ntitle: B\n\nTwo.\n````'
+    expect(parseDraftBlocks(text).map(b => [b.title, b.content])).toEqual([
+      ['A', 'One.'],
+      ['B', 'Two.']
+    ])
+  })
+
   test('closes a block whose close has three backticks', () => {
     const text = '````draft\ntitle: T\n\nBody\n```\n\nAfter.'
     const [block] = parseDraftBlocks(text)

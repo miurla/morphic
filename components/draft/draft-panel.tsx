@@ -29,13 +29,23 @@ export function DraftPanel() {
   // A draft block still streaming in the latest answer, shown live.
   const live = useLiveDraftBlock()
 
-  // A picked version is remembered with the count it was picked at, so a new
-  // version arriving switches the panel back to the latest.
-  const [picked, setPicked] = useState<{ index: number; total: number }>()
-  const index = picked && picked.total === versions.length ? picked.index : null
+  // A picked version is remembered with the chat and the count it was picked
+  // at, so a new version or another chat switches the panel back to the latest.
+  const chatKey = versions[0]?.messageId
+  const [picked, setPicked] = useState<{
+    index: number
+    total: number
+    chatKey?: string
+  }>()
+  const index =
+    picked && picked.total === versions.length && picked.chatKey === chatKey
+      ? picked.index
+      : null
   const setIndex = (next: number | null) =>
     setPicked(
-      next === null ? undefined : { index: next, total: versions.length }
+      next === null
+        ? undefined
+        : { index: next, total: versions.length, chatKey }
     )
 
   const shown = index === null ? versions.at(-1) : versions[index]

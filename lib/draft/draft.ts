@@ -58,36 +58,40 @@ type BlockLocation = {
   closed: boolean
 }
 
+const STRICT_CLOSE = /\n````[ \t]*(?=\n|$)/g
 const FENCE_LINE = /^`{3,}/
 const BARE_THREE = /^```[ \t]*$/
 
 /**
- * Where a block closes. Models sometimes close a ````draft block with three
- * backticks. Inner code fences come in pairs, so when the body has an odd
- * number of fence lines the last bare ``` line is taken as the close.
+ * Where a block closes, searched only up to the next draft opener. Models
+ * sometimes close a ````draft block with three backticks. Inner code fences
+ * come in pairs, so then the close is the first bare ``` line with every fence
+ * before it paired, and later fences such as a spec block never pull the close
+ * past the draft.
  */
 function findClose(text: string, bodyStart: number) {
-  const strict = text.indexOf(FENCE_CLOSE, bodyStart - 1)
-  if (strict >= 0) {
-    return { bodyEnd: strict, end: strict + FENCE_CLOSE.length }
+  const next = text.indexOf(`\n${FENCE_OPEN}`, bodyStart - 1)
+  const limit = next < 0 ? text.length : next
+
+  STRICT_CLOSE.lastIndex = bodyStart - 1
+  const strict = STRICT_CLOSE.exec(text)
+  if (strict && strict.index < limit) {
+    return { bodyEnd: strict.index, end: strict.index + strict[0].length }
   }
 
-  const lines = text.slice(bodyStart).split('\n')
   let fenceLines = 0
-  let lastBare = -1
-  for (let i = 0; i < lines.length; i++) {
-    if (!FENCE_LINE.test(lines[i])) continue
-    fenceLines++
-    if (BARE_THREE.test(lines[i])) lastBare = i
+  let offset = bodyStart
+  for (const line of text.slice(bodyStart, limit).split('\n')) {
+    if (FENCE_LINE.test(line)) {
+      if (BARE_THREE.test(line) && fenceLines % 2 === 0) {
+        const bodyEnd = Math.max(bodyStart, offset - 1)
+        return { bodyEnd, end: offset + line.length }
+      }
+      fenceLines++
+    }
+    offset += line.length + 1
   }
-  if (fenceLines % 2 === 0 || lastBare < 0) return null
-
-  const before = lines.slice(0, lastBare).join('\n')
-  const bodyEnd = bodyStart + before.length
-  return {
-    bodyEnd,
-    end: bodyEnd + (lastBare > 0 ? 1 : 0) + lines[lastBare].length
-  }
+  return null
 }
 
 function locateDraftBlocks(text: string): BlockLocation[] {
@@ -197,6 +201,45 @@ export function applyDraftEdits(
   return { content: out, applied, failed }
 }
 
+export type DraftChange = { title?: string; edits?: DraftEdit[] }
+
+/**
+ * Apply an editDraft call to a draft. A new title counts as one change; it is
+ * for drafts without a top-level heading, whose title lives outside the text.
+ */
+export function applyDraftChange(
+  draft: { title: string; content: string },
+  change: DraftChange
+): {
+  title: string
+  content: string
+  applied: number
+  failed: DraftEditFailure[]
+} {
+  const result = applyDraftEdits(
+    draft.content,
+    Array.isArray(change.edits) ? change.edits : []
+  )
+  const title = change.title?.trim()
+  const renamed = Boolean(title) && title !== draft.title
+  return {
+    title: renamed ? title! : draft.title,
+    content: result.content,
+    applied: result.applied + (renamed ? 1 : 0),
+    failed: result.failed
+  }
+}
+
+/** The version later turns edit: the latest one whose block was completed. */
+export function currentDraftVersion(
+  versions: DraftVersion[]
+): DraftVersion | null {
+  for (let i = versions.length - 1; i >= 0; i--) {
+    if (!versions[i].interrupted) return versions[i]
+  }
+  return null
+}
+
 type MessageLike = {
   id: string
   role: string
@@ -205,13 +248,14 @@ type MessageLike = {
 
 /**
  * Rebuild every version of the chat's draft from its messages. A draft block
- * starts a new version; a completed editDraft call edits the latest.
+ * starts a new version; a completed editDraft call edits the current one.
  * One draft per chat: a new block replaces the previous draft.
  *
- * An unclosed block is kept as an interrupted version, so a stopped or failed
- * answer leaves its partial draft readable. An edit replays only when the tool
- * saw the same draft: the tool holds the turn-start version, so an edit after a
- * block written in the same answer, or one the tool rejected, is skipped.
+ * A block an answer stopped inside is kept as an interrupted version, so its
+ * partial text stays readable, but it never becomes the draft later turns
+ * edit. An edit replays only when the tool saw the same draft: the tool holds
+ * the turn-start version, so an edit after a block written in the same answer,
+ * or one the tool rejected, is skipped.
  */
 export function buildDraftVersions(messages: MessageLike[]): DraftVersion[] {
   const versions: DraftVersion[] = []
@@ -222,6 +266,7 @@ export function buildDraftVersions(messages: MessageLike[]): DraftVersion[] {
       if (part.type === 'text' && typeof part.text === 'string') {
         for (const block of parseDraftBlocks(part.text)) {
           wroteHere = true
+          if (!block.closed && !block.content.trim()) continue
           versions.push({
             version: versions.length + 1,
             title: block.title,
@@ -235,16 +280,16 @@ export function buildDraftVersions(messages: MessageLike[]): DraftVersion[] {
         part.type === `tool-${EDIT_DRAFT_TOOL}` &&
         part.state === 'output-available'
       ) {
-        const latest = versions.at(-1)
-        const edits = (part.input as { edits?: DraftEdit[] } | undefined)?.edits
+        const current = currentDraftVersion(versions)
+        const input = part.input as DraftChange | undefined
         const output = part.output as { applied?: unknown } | undefined
-        if (!latest || wroteHere || !Array.isArray(edits)) continue
+        if (!current || wroteHere || !input) continue
         if (output?.applied === 0) continue
-        const result = applyDraftEdits(latest.content, edits)
+        const result = applyDraftChange(current, input)
         if (result.applied === 0) continue
         versions.push({
           version: versions.length + 1,
-          title: latest.title,
+          title: result.title,
           content: result.content,
           kind: 'edit',
           messageId: message.id,
