@@ -240,6 +240,20 @@ describe('searchChatContent', () => {
     )
     expect(queryParam).toBe('note '.repeat(40).trim())
   })
+
+  it('treats newlines and tabs as word boundaries when truncating', async () => {
+    const execute = mockExecute([])
+
+    // pasted multiline query: 39 whole 'note' lines plus 'golden' crossing
+    // the cap; 'golden' must be dropped whole, not sliced into 'golde'
+    await searchChatContent('user-1', 'note\n'.repeat(39) + 'golden')
+
+    const rendered = dialect.sqlToQuery(execute.mock.calls[0][0])
+    const queryParam = rendered.params.find(
+      p => typeof p === 'string' && p.includes('note')
+    )
+    expect(queryParam).toBe('note\n'.repeat(38) + 'note')
+  })
 })
 
 describe('searchChatReasoning', () => {

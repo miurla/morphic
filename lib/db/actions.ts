@@ -398,8 +398,12 @@ function normalizeSearchQuery(query: string): string {
     return trimmed
   }
   const capped = trimmed.slice(0, MAX_QUERY_LENGTH)
-  const lastSpace = capped.lastIndexOf(' ')
-  return (lastSpace > 0 ? capped.slice(0, lastSpace) : capped).trim()
+  // Drop everything from the last whitespace run on, so a token sliced by
+  // the cap cannot act as a broad prefix match. Whitespace-aware (not just
+  // ' '): pasted queries may separate words with newlines or tabs, which
+  // Postgres' parser also treats as word boundaries.
+  const boundary = capped.match(/\s\S*$/)
+  return (boundary ? capped.slice(0, boundary.index) : capped).trim()
 }
 
 /**
