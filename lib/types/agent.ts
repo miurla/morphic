@@ -6,6 +6,7 @@ import type {
   UIToolInvocation
 } from 'ai'
 
+import type { createDraftTools } from '../tools/draft'
 import type { fetchTool } from '../tools/fetch'
 import type { createQuestionTool } from '../tools/question'
 import type { createSearchTool } from '../tools/search'
@@ -18,7 +19,8 @@ export type ResearcherTools = {
   search: ReturnType<typeof createSearchTool>
   fetch: typeof fetchTool
   askQuestion: ReturnType<typeof createQuestionTool>
-} & ReturnType<typeof createTodoTools>
+} & ReturnType<typeof createTodoTools> &
+  ReturnType<typeof createDraftTools>
 
 // Runtime context carried through the generation lifecycle. Included in
 // telemetry so each observation keeps the metadata v6 attached via

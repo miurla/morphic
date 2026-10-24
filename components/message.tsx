@@ -9,6 +9,7 @@ import {
   type StreamdownProps
 } from 'streamdown'
 
+import { normalizeDraftFences } from '@/lib/draft/draft'
 import { mergeStreamdownSpecRenderer } from '@/lib/render/streamdown-spec'
 import type { SearchResultItem } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -28,21 +29,27 @@ const customComponents = {
 export function MarkdownMessage({
   message,
   className,
-  citationMaps
+  citationMaps,
+  drafts = true
 }: {
   message: string
   className?: string
   citationMaps?: Record<string, Record<number, SearchResultItem>>
+  /** False inside the draft panel, where a draft fence is an example to show. */
+  drafts?: boolean
 }) {
   // Process citations to replace [number](#toolCallId) with [number](actual-url)
-  const processedMessage = processCitations(message || '', citationMaps || {})
+  const processedMessage = processCitations(
+    drafts ? normalizeDraftFences(message || '') : message || '',
+    citationMaps || {}
+  )
 
   const streamdownProps = useMemo<Partial<StreamdownProps>>(
     () => ({
       mode: 'streaming' as const,
-      plugins: mergeStreamdownSpecRenderer({ math })
+      plugins: mergeStreamdownSpecRenderer({ math }, { drafts })
     }),
-    []
+    [drafts]
   )
 
   return (

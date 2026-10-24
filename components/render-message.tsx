@@ -2,6 +2,7 @@ import { UseChatHelpers } from '@ai-sdk/react'
 
 import type { SearchResultItem } from '@/lib/types'
 import type {
+  ToolPart,
   UIDataTypes,
   UIMessage,
   UIMessageMetadata,
@@ -9,6 +10,7 @@ import type {
 } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 
+import { DraftEditNotice } from './draft/draft-card'
 import { AnswerSection } from './answer-section'
 import { DynamicToolDisplay } from './dynamic-tool-display'
 import ResearchProcessSection from './research-process-section'
@@ -186,6 +188,14 @@ export function RenderMessage({
           status={status}
           citationMaps={citationMaps}
           onQuoteContext={onQuoteContext}
+        />
+      )
+    } else if (part.type === 'tool-editDraft') {
+      flushBuffer(`seg-${index}`)
+      elements.push(
+        <DraftEditNotice
+          key={`${messageId}-draft-edit-${index}`}
+          part={part as ToolPart}
         />
       )
     } else if (part.type === 'reasoning' || part.type?.startsWith?.('tool-')) {

@@ -4,6 +4,7 @@ import type { StreamTextOnErrorCallback } from 'ai'
 import { consumeStream, convertToModelMessages, smoothStream } from 'ai'
 
 import { researcher } from '@/lib/agents/researcher'
+import { buildDraftVersions, currentDraftVersion } from '@/lib/draft/draft'
 import {
   createPublicErrorResponse,
   serializePublicError
@@ -35,6 +36,10 @@ import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { dedupeAttachments } from './helpers/dedupe-attachments'
 import { describeTurnInput } from './helpers/describe-turn-input'
+import {
+  attachCurrentDraft,
+  compactDraftsInMessages
+} from './helpers/draft-context'
 import { hasAnswerAfterToolFailure } from './helpers/has-answer-after-tool-failure'
 import { hasResponseContentPart } from './helpers/has-response-content'
 import {
@@ -216,6 +221,11 @@ export async function createChatStreamResponse(
         )
       }
 
+      // The chat's draft as of this turn, rebuilt from history
+      const currentDraft = currentDraftVersion(
+        buildDraftVersions(messagesToModel)
+      )
+
       // Get the researcher agent with search mode
       streamErrorStage = 'build-agent'
       const researchAgent = researcher({
@@ -223,12 +233,15 @@ export async function createChatStreamResponse(
         modelConfig: model,
         chatId,
         searchMode,
-        citationLabelSeed: nextCitationLabelNumber(messagesToModel)
+        citationLabelSeed: nextCitationLabelNumber(messagesToModel),
+        currentDraft
       })
 
       streamErrorStage = 'transform-messages'
       const messagesWithNonces = assignDataPartNonces(messagesToModel)
-      const messagesWithoutSpec = stripSpecFromMessages(messagesWithNonces)
+      const messagesWithoutSpec = compactDraftsInMessages(
+        stripSpecFromMessages(messagesWithNonces)
+      )
       const messagesWithAttachmentSizes = await resolveAttachmentSizes(
         messagesWithoutSpec,
         userId
@@ -258,9 +271,10 @@ export async function createChatStreamResponse(
 
       // Convert to model messages and apply context window management
       streamErrorStage = 'convert-messages'
-      let modelMessages = await convertToModelMessages(messagesToConvert, {
-        convertDataPart
-      })
+      let modelMessages = await convertToModelMessages(
+        attachCurrentDraft(messagesToConvert, currentDraft),
+        { convertDataPart }
+      )
 
       streamErrorStage = 'truncate-messages'
       if (

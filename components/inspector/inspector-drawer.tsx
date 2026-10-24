@@ -34,6 +34,8 @@ export function InspectorDrawer() {
         return 'Thoughts'
       case 'text':
         return 'Text'
+      case 'draft':
+        return 'Draft'
       default:
         return 'Content'
     }

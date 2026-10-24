@@ -1,3 +1,4 @@
+import { getDraftPrompt } from '@/lib/draft/prompt'
 import {
   getImageSpecPrompt,
   getRelatedQuestionsSpecPrompt,
@@ -171,6 +172,8 @@ Example approach:
 - **Consideration:** Practical implications with real-world context
 
 End with a synthesizing conclusion that ties the main points together into a clear overall picture.
+
+${getDraftPrompt()}
 
 ${getImageSpecPrompt()}
 
@@ -348,6 +351,8 @@ Flexible example:
 - **Context:** Relevant supporting details
 
 Conclude with a brief synthesis that ties together the main insights into a clear overall understanding.
+
+${getDraftPrompt()}
 
 ${getImageSpecPrompt()}
 

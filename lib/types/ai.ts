@@ -61,4 +61,7 @@ export type ToolPart<T extends keyof UITools = keyof UITools> = {
   errorText?: string
 }
 
-export type Part = TextPart | ReasoningPart | ToolPart
+// Opens the chat's draft in the inspector panel; not a message part.
+export type DraftPanelPart = { type: 'draft' }
+
+export type Part = TextPart | ReasoningPart | ToolPart | DraftPanelPart

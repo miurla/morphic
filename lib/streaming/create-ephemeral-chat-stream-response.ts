@@ -4,6 +4,7 @@ import type { StreamTextOnErrorCallback, UIMessage } from 'ai'
 import { consumeStream, convertToModelMessages, smoothStream } from 'ai'
 
 import { researcher } from '@/lib/agents/researcher'
+import { buildDraftVersions, currentDraftVersion } from '@/lib/draft/draft'
 import {
   createPublicErrorResponse,
   serializePublicError
@@ -31,6 +32,10 @@ import { convertDataPart } from './helpers/convert-data-part'
 import { assignDataPartNonces } from './helpers/data-part-nonce'
 import { dedupeAttachments } from './helpers/dedupe-attachments'
 import { describeTurnInput } from './helpers/describe-turn-input'
+import {
+  attachCurrentDraft,
+  compactDraftsInMessages
+} from './helpers/draft-context'
 import {
   EMPTY_RESPONSE_STATUS_MESSAGE,
   isEmptyResponse
@@ -133,8 +138,12 @@ export async function createEphemeralChatStreamResponse(
     }
 
     try {
+      // The chat's draft as of this turn, rebuilt from history
+      const currentDraft = currentDraftVersion(buildDraftVersions(messages))
       const messagesWithNonces = assignDataPartNonces(messages)
-      const messagesWithoutSpec = stripSpecFromMessages(messagesWithNonces)
+      const messagesWithoutSpec = compactDraftsInMessages(
+        stripSpecFromMessages(messagesWithNonces)
+      )
       const messagesToConvert = dedupeAttachments(
         capHistoricalPastedContent(
           capHistoricalAttachments(
@@ -147,9 +156,10 @@ export async function createEphemeralChatStreamResponse(
         buildAttachmentTokenEstimates(messagesToConvert)
 
       streamErrorStage = 'convert-messages'
-      let modelMessages = await convertToModelMessages(messagesToConvert, {
-        convertDataPart
-      })
+      let modelMessages = await convertToModelMessages(
+        attachCurrentDraft(messagesToConvert, currentDraft),
+        { convertDataPart }
+      )
 
       streamErrorStage = 'truncate-messages'
       if (
@@ -171,7 +181,8 @@ export async function createEphemeralChatStreamResponse(
         modelConfig: model,
         chatId,
         searchMode,
-        citationLabelSeed: nextCitationLabelNumber(messages)
+        citationLabelSeed: nextCitationLabelNumber(messages),
+        currentDraft
       })
 
       const modelId = `${model.providerId}:${model.id}`

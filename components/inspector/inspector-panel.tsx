@@ -2,6 +2,7 @@
 
 import {
   IconBulb as LightbulbIcon,
+  IconFileText as FileText,
   IconListCheck as ListTodo,
   IconMessage as MessageSquare,
   IconSearch as Search,
@@ -39,6 +40,11 @@ export function InspectorPanel() {
         return {
           icon: <LightbulbIcon size={18} />,
           title: 'Thoughts'
+        }
+      case 'draft':
+        return {
+          icon: <FileText size={18} />,
+          title: 'Draft'
         }
       case 'text':
         return {

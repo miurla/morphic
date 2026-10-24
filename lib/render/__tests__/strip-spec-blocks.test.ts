@@ -68,3 +68,27 @@ describe('stripSpecBlocks', () => {
     expect(result).not.toContain('```spec')
   })
 })
+
+describe('stripSpecBlocks with drafts', () => {
+  test('unwraps a draft block to its content', () => {
+    const input = [
+      'Here is the draft.',
+      '',
+      '````draft',
+      'title: Note',
+      '',
+      '# Note',
+      '',
+      '```ts',
+      'const x = 1',
+      '```',
+      '````'
+    ].join('\n')
+
+    const result = stripSpecBlocks(input)
+    expect(result).not.toContain('````')
+    expect(result).not.toContain('title: Note')
+    expect(result).toContain('# Note')
+    expect(result).toContain('```ts\nconst x = 1\n```')
+  })
+})
