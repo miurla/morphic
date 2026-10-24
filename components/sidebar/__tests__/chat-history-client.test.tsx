@@ -237,6 +237,12 @@ describe('ChatHistoryClient search mode', () => {
     })
     expect(pushMock).not.toHaveBeenCalled()
 
+    // Some browser/IME combinations only signal composition via keyCode 229.
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'Enter', keyCode: 229 })
+    })
+    expect(pushMock).not.toHaveBeenCalled()
+
     await act(async () => {
       fireEvent.keyDown(input, { key: 'Escape', isComposing: true })
     })

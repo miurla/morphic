@@ -167,8 +167,10 @@ export function ChatHistoryClient() {
             onKeyDown={event => {
               // While an IME composition is active, Enter confirms a
               // candidate and Escape cancels it; those keystrokes belong to
-              // the IME, not to the search field or the result list.
-              if (event.nativeEvent.isComposing) return
+              // the IME, not to the search field or the result list. Some
+              // browser/IME combinations signal composition via keyCode 229
+              // without setting isComposing (same guard cmdk applies).
+              if (event.nativeEvent.isComposing || event.keyCode === 229) return
               if (event.key === 'Escape') {
                 setQuery('')
                 return
