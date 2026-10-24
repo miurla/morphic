@@ -54,6 +54,23 @@ function mockFetch() {
       }
     }
     if (url.startsWith('/api/search')) {
+      if (url.includes('include=reasoning')) {
+        return {
+          ok: true,
+          json: async () => ({
+            title: [],
+            content: [],
+            thinking: [
+              {
+                chatId: 'chat-9',
+                title: 'Thinking match',
+                snippet: 'pondering',
+                highlight: 'pondering'
+              }
+            ]
+          })
+        }
+      }
       return {
         ok: true,
         json: async () => ({
@@ -195,5 +212,61 @@ describe('ChatHistoryClient search mode', () => {
       fireEvent.keyDown(input, { key: 'Enter' })
     })
     expect(pushMock).toHaveBeenCalledWith('/search/chat-9')
+  })
+
+  it('does not forward Enter or Escape while an IME composition is active', async () => {
+    mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+
+    const input = screen.getByLabelText('Search history')
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'ArrowDown' })
+    })
+    expect(screen.getAllByRole('option')[0]).toHaveAttribute(
+      'aria-selected',
+      'true'
+    )
+
+    // Enter confirms an IME candidate and Escape cancels it; neither may
+    // reach the result list or clear the query while composing.
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'Enter', isComposing: true })
+    })
+    expect(pushMock).not.toHaveBeenCalled()
+
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'Escape', isComposing: true })
+    })
+    expect(screen.getByLabelText('Search history')).toHaveValue('mat')
+  })
+
+  it('keeps thinking results when chat data changes during search', async () => {
+    const fetchMock = mockFetch()
+    render(<ChatHistoryClient />)
+    await flush(50)
+
+    await typeInSearch('mat')
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Search thinking/ }))
+    })
+    await flush(50)
+    expect(screen.getByText('Thinking match')).toBeInTheDocument()
+
+    // A chat finishing (or Clear History) must not drop the thinking
+    // section: both result sets are refetched in place.
+    fetchMock.mockClear()
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('chat-history-updated'))
+    })
+    await flush(300)
+
+    expect(screen.getByText('Thinking match')).toBeInTheDocument()
+    expect(calledWith(fetchMock, '/api/search?q=mat&include=reasoning')).toBe(
+      true
+    )
   })
 })

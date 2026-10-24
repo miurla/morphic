@@ -160,11 +160,17 @@ export async function loadChat(
   userId?: string
 ): Promise<UIMessage[]> {
   return withOptionalRLS(userId || null, async tx => {
-    // Use Drizzle's query API with relations
+    // Use Drizzle's query API with relations. The tsvector columns are
+    // projected out: they are only used by the search SQL and would
+    // otherwise be transported on every chat open.
     const result = await tx.query.messages.findMany({
       where: eq(messages.chatId, chatId),
       with: {
         parts: {
+          columns: {
+            search: false,
+            searchReasoning: false
+          },
           orderBy: [asc(parts.order)]
         }
       },
@@ -194,6 +200,10 @@ export async function loadChatWithMessages(
         where: eq(messages.chatId, chatId),
         with: {
           parts: {
+            columns: {
+              search: false,
+              searchReasoning: false
+            },
             orderBy: [asc(parts.order)]
           }
         },

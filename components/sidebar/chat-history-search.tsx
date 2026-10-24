@@ -62,9 +62,16 @@ function HighlightedSnippet({ highlight }: { highlight: string }) {
 
 interface ChatHistorySearchProps {
   query: string
+  // Bumped by the parent when chat data changes (e.g. Clear History) so
+  // results referencing deleted chats are refetched. Unlike remounting, this
+  // preserves the thinking opt-in and refreshes thinking matches as well.
+  refreshKey?: number
 }
 
-export function ChatHistorySearch({ query }: ChatHistorySearchProps) {
+export function ChatHistorySearch({
+  query,
+  refreshKey
+}: ChatHistorySearchProps) {
   const router = useRouter()
   const [results, setResults] = useState<SearchResponse | null>(null)
   const [isSearching, setIsSearching] = useState(false)
@@ -137,7 +144,7 @@ export function ChatHistorySearch({ query }: ChatHistorySearchProps) {
       clearTimeout(timer)
       controller.abort()
     }
-  }, [query])
+  }, [query, refreshKey])
 
   const handleSearchThinking = useCallback(async () => {
     const trimmed = query.trim()
@@ -181,6 +188,21 @@ export function ChatHistorySearch({ query }: ChatHistorySearchProps) {
       }
     }
   }, [query])
+
+  // When the parent signals that chat data changed, refresh thinking matches
+  // too if the opt-in is active (the main fetch effect refreshes title and
+  // content and merges the thinking section in). The ref guard keeps a query
+  // change - which resets the opt-in in a separate effect - from re-triggering
+  // the thinking search.
+  const lastRefreshKeyRef = useRef(refreshKey)
+  useEffect(() => {
+    if (refreshKey !== lastRefreshKeyRef.current) {
+      lastRefreshKeyRef.current = refreshKey
+      if (thinkingRequested) {
+        void handleSearchThinking()
+      }
+    }
+  }, [refreshKey, thinkingRequested, handleSearchThinking])
 
   const openChat = useCallback(
     (chatId: string) => {

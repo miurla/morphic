@@ -39,8 +39,9 @@ export function ChatHistoryClient() {
   const searchMode = query.trim().length >= MIN_SEARCH_LENGTH
   const searchModeRef = useRef(searchMode)
   const pendingListRefreshRef = useRef(false)
-  // Bumped when chat data changes during search mode, remounting the results
-  // view so stale matches (e.g. after Clear History) cannot be opened.
+  // Bumped when chat data changes during search mode, telling the results
+  // view to refetch so stale matches (e.g. after Clear History) cannot be
+  // opened.
   const [searchEpoch, setSearchEpoch] = useState(0)
 
   useEffect(() => {
@@ -164,6 +165,10 @@ export function ChatHistoryClient() {
             value={query}
             onChange={event => setQuery(event.target.value)}
             onKeyDown={event => {
+              // While an IME composition is active, Enter confirms a
+              // candidate and Escape cancels it; those keystrokes belong to
+              // the IME, not to the search field or the result list.
+              if (event.nativeEvent.isComposing) return
               if (event.key === 'Escape') {
                 setQuery('')
                 return
@@ -208,7 +213,7 @@ export function ChatHistoryClient() {
       </SidebarGroup>
       <div ref={resultsRef} className="flex-1 overflow-y-auto mb-2 relative">
         {searchMode ? (
-          <ChatHistorySearch key={searchEpoch} query={query} />
+          <ChatHistorySearch refreshKey={searchEpoch} query={query} />
         ) : isHistoryEmpty && !isPending ? (
           <div className="px-2 text-foreground/30 text-sm text-center py-4">
             No chats yet

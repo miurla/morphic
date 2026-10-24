@@ -13,6 +13,14 @@ import type {
   ToolState
 } from '@/lib/types/message-persistence'
 
+// The tsvector search columns are projected out of normal chat loads
+// (loadChat / loadChatWithMessages) so stored vectors are not transported on
+// every chat open. Mapping only needs the remaining columns.
+export type DBMessagePartWithoutVectors = Omit<
+  DBMessagePartSelect,
+  'search' | 'searchReasoning'
+>
+
 // Define local types for message parts that are compatible with the AI SDK
 type TextUIPart = { type: 'text'; text: string; providerMetadata?: any }
 type ReasoningUIPart = {
@@ -345,7 +353,7 @@ export function mapUIMessagePartsToDBParts(
  * Convert DB message parts to UI format
  */
 export function mapDBPartToUIMessagePart(
-  part: DBMessagePartSelect
+  part: DBMessagePartWithoutVectors
 ): UIMessagePart {
   switch (part.type) {
     case 'text':
@@ -394,9 +402,9 @@ export function mapDBPartToUIMessagePart(
       if (part.type.startsWith('tool-')) {
         const toolName = part.type.substring(5) // Remove 'tool-' prefix
         const inputColumn =
-          `tool_${toolName}_input` as keyof DBMessagePartSelect
+          `tool_${toolName}_input` as keyof DBMessagePartWithoutVectors
         const outputColumn =
-          `tool_${toolName}_output` as keyof DBMessagePartSelect
+          `tool_${toolName}_output` as keyof DBMessagePartWithoutVectors
 
         // Special handling for dynamic tools
         if (toolName === 'dynamic') {
@@ -776,7 +784,7 @@ export function buildUIMessageFromDB(
     metadata?: UIMessageMetadata | null
     createdAt?: Date | string
   },
-  dbParts: DBMessagePartSelect[]
+  dbParts: DBMessagePartWithoutVectors[]
 ): UIMessage {
   // Merge metadata from DB with createdAt
   const metadata: UIMessageMetadata = {
