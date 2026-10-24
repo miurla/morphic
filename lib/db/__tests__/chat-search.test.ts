@@ -127,7 +127,12 @@ describe('searchChatContent', () => {
 
     const rendered = dialect.sqlToQuery(execute.mock.calls[0][0])
     // full-text match on the message-text column only (not reasoning)
-    expect(rendered.sql).toContain('plainto_tsquery')
+    expect(rendered.sql).toContain("to_tsvector('simple'")
+    expect(rendered.sql).toContain('::tsquery')
+    expect(rendered.sql).toContain('quote_nullable')
+    expect(rendered.sql).not.toContain('plainto_tsquery')
+    expect(rendered.sql).not.toContain("'english'")
+    expect(rendered.sql).toMatch(/ts_headline\(\s*'simple'/)
     expect(rendered.sql).toContain('"search" @@')
     expect(rendered.sql).toContain('ts_rank')
     expect(rendered.sql).toContain('ts_headline')
@@ -160,6 +165,41 @@ describe('searchChatContent', () => {
       'ORDER BY match_rank DESC, chat_created_at DESC'
     )
     expect(rendered.params).toContain(20)
+  })
+
+  it('builds per-word groups with forward prefix and reverse prefixes', async () => {
+    const execute = mockExecute([])
+
+    await searchChatContent('user-1', 'chats')
+
+    const rendered = dialect.sqlToQuery(execute.mock.calls[0][0])
+    // forward prefix (word:*) plus exact proper prefixes of >= 3 chars,
+    // AND-joined across words, so "chats" also finds "chat"
+    expect(rendered.sql).toContain("quote_nullable(l) || ':*'")
+    expect(rendered.sql).toContain('generate_series(3, length(l) - 1)')
+    expect(rendered.sql).toContain("' & '")
+  })
+
+  it('passes operator characters through as bound parameters, never SQL', async () => {
+    const execute = mockExecute([])
+
+    await searchChatContent('user-1', 'Rust & Go | notes!')
+
+    const rendered = dialect.sqlToQuery(execute.mock.calls[0][0])
+    // the raw query reaches Postgres only as a parameter; the FTS parser
+    // quotes it into inert lexemes (verified against PG 17)
+    expect(rendered.params).toContain('Rust & Go | notes!')
+    expect(rendered.sql).not.toContain('Rust')
+  })
+
+  it('returns empty for a punctuation-only query without erroring', async () => {
+    const execute = mockExecute([])
+
+    const result = await searchChatContent('user-1', '!!! ???')
+
+    // the NULL-tsquery path is handled in SQL; no special case in TS
+    expect(result).toEqual([])
+    expect(execute).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -198,6 +238,9 @@ describe('searchChatReasoning', () => {
     expect(rendered.sql).toContain('"search_reasoning" @@')
     expect(rendered.sql).toContain('"reasoning_text"')
     expect(rendered.sql).not.toMatch(/"text_text"/)
+    expect(rendered.sql).toContain("to_tsvector('simple'")
+    expect(rendered.sql).toContain('::tsquery')
+    expect(rendered.sql).not.toContain("'english'")
     expect(rendered.sql).toContain('c.user_id')
     expect(rendered.params).toContain('user-1')
   })

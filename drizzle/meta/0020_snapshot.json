@@ -1,5 +1,5 @@
 {
-  "id": "2cd2552d-c141-49bc-94b5-4c0a1a3d4c2f",
+  "id": "bb1bc922-c40a-4fc1-a130-ac3dd9c6c8d7",
   "prevId": "6d6db4de-99ff-4a6b-8657-4ab00ce53c3b",
   "version": "7",
   "dialect": "postgresql",
@@ -979,7 +979,7 @@
           "primaryKey": false,
           "notNull": false,
           "generated": {
-            "as": "to_tsvector('english', coalesce(text_text, ''))",
+            "as": "to_tsvector('simple', coalesce(text_text, ''))",
             "type": "stored"
           }
         },
@@ -989,7 +989,7 @@
           "primaryKey": false,
           "notNull": false,
           "generated": {
-            "as": "to_tsvector('english', coalesce(reasoning_text, ''))",
+            "as": "to_tsvector('simple', coalesce(reasoning_text, ''))",
             "type": "stored"
           }
         },

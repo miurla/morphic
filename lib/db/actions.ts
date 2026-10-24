@@ -425,9 +425,12 @@ type FtsSearchScope = keyof typeof FTS_SCOPES
 
 /**
  * Full-text search over message parts of the user's chats.
- * Keeps the best-scoring part per chat (DISTINCT ON + ts_rank), with a
- * ts_headline snippet containing <b></b> highlight markers. Ties on rank
- * are broken by newest chat first.
+ * The tsquery is built from the FTS parser's own lexemes (language-neutral
+ * `simple` config): each query word becomes an OR group of a forward prefix
+ * (`word:*`) plus its exact proper prefixes of at least 3 characters, so
+ * "chats" also finds "chat". Keeps the best-scoring part per chat (DISTINCT ON
+ * + ts_rank), with a ts_headline snippet containing <b></b> highlight markers.
+ * Ties on rank are broken by newest chat first.
  */
 async function searchChatParts(
   userId: string,
@@ -452,7 +455,12 @@ async function searchChatParts(
       snippet: string
     }>(sql`
       WITH fts_query AS (
-        SELECT plainto_tsquery('english', ${trimmed}) AS q
+        SELECT ('(' || string_agg(
+          '(' || quote_nullable(l) || ':*' ||
+          coalesce((SELECT string_agg(' | ' || quote_nullable(left(l, g)), '' ORDER BY g)
+                    FROM generate_series(3, length(l) - 1) g), '') || ')',
+          ' & ') || ')')::tsquery AS q
+        FROM unnest(tsvector_to_array(to_tsvector('simple', ${trimmed}))) l
       ),
       ranked AS (
         SELECT DISTINCT ON (c.id)
@@ -461,7 +469,7 @@ async function searchChatParts(
           c.created_at AS chat_created_at,
           ts_rank(p.${tsvectorCol}, fts_query.q) AS match_rank,
           ts_headline(
-            'english',
+            'simple',
             coalesce(p.${textCol}, ''),
             fts_query.q,
             ${`MaxWords=14, MinWords=7, StartSel=${HL_START}, StopSel=${HL_STOP}`}

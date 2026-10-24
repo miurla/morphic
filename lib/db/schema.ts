@@ -209,10 +209,10 @@ export const parts = pgTable(
 
     // Full-text search columns (maintained by Postgres, used by history search)
     search: tsvector('search').generatedAlwaysAs(
-      sql`to_tsvector('english', coalesce(text_text, ''))`
+      sql`to_tsvector('simple', coalesce(text_text, ''))`
     ),
     searchReasoning: tsvector('search_reasoning').generatedAlwaysAs(
-      sql`to_tsvector('english', coalesce(reasoning_text, ''))`
+      sql`to_tsvector('simple', coalesce(reasoning_text, ''))`
     ),
 
     createdAt: timestamp('created_at').notNull().defaultNow()
