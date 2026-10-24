@@ -35,6 +35,13 @@ export function normalizeSearchQuery(query: string): string {
     return stripLoneSurrogates(trimmed)
   }
   const capped = trimmed.slice(0, MAX_QUERY_LENGTH)
+  // Only drop a trailing partial token when the cap actually split one:
+  // if the next character in the original is whitespace (or nothing), the
+  // last retained token is complete and must be kept.
+  const next = trimmed[MAX_QUERY_LENGTH]
+  if (next === undefined || /\s/.test(next)) {
+    return stripLoneSurrogates(capped.trim())
+  }
   // Drop everything from the last whitespace run on, so a token sliced by
   // the cap cannot act as a broad prefix match. Whitespace-aware (not just
   // ' '): pasted queries may separate words with newlines or tabs, which

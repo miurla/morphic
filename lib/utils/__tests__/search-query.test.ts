@@ -24,6 +24,14 @@ describe('normalizeSearchQuery', () => {
     )
   })
 
+  it('keeps a token that ends exactly at the cap', () => {
+    // the 200th code unit is the last 'x' and the original continues with
+    // whitespace: the token is complete and must survive
+    expect(normalizeSearchQuery('a ' + 'x'.repeat(198) + ' y')).toBe(
+      'a ' + 'x'.repeat(198)
+    )
+  })
+
   it('never leaves a lone surrogate behind when the cap splits a pair', () => {
     const result = normalizeSearchQuery('a' + '😀'.repeat(100))
 
