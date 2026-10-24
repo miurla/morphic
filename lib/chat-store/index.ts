@@ -14,6 +14,7 @@ export type ChatEntry = {
   verifiedAt: number
   loadedAt: number
   hasServerHistory: boolean
+  createdLocally: boolean
   fetching?: Promise<void>
   error?: Error
   revision: number
@@ -73,6 +74,7 @@ export class ChatStore {
     if (existing) {
       this.entries.delete(id)
       this.entries.set(id, existing)
+      this.prune(existing)
       return existing
     }
     const now = Date.now()
@@ -137,6 +139,7 @@ export class ChatStore {
       verifiedAt: options.messages !== undefined || options.isNew ? now : 0,
       loadedAt: now,
       hasServerHistory: options.messages !== undefined && !options.isNew,
+      createdLocally: !!options.isNew,
       revision: 0,
       size: 0,
       dispose: () => {}
@@ -144,7 +147,7 @@ export class ChatStore {
     const updateSize = () => {
       if (!busy(entry)) {
         entry.size = JSON.stringify(entry.chat.messages).length
-        this.prune()
+        this.prune(entry)
       }
     }
     const unsubscribes = [
@@ -157,15 +160,15 @@ export class ChatStore {
     entry.dispose = () => unsubscribes.forEach(unsubscribe => unsubscribe())
     entry.size = JSON.stringify(entry.chat.messages).length
     this.entries.set(id, entry)
-    this.prune()
+    this.prune(entry)
     return entry
   }
 
-  private prune() {
+  private prune(protectedEntry: ChatEntry) {
     let size = [...this.entries.values()].reduce((sum, e) => sum + e.size, 0)
     for (const [id, entry] of this.entries) {
       if (this.entries.size <= this.maxEntries && size <= this.maxSize) break
-      if (busy(entry)) continue
+      if (entry === protectedEntry || busy(entry)) continue
       size -= entry.size
       entry.dispose()
       this.entries.delete(id)
@@ -209,6 +212,8 @@ export class ChatStore {
   revalidate(id: string): Promise<void> {
     const entry = this.entries.get(id)
     if (!entry) return Promise.resolve()
+    if (entry.createdLocally && !entry.hasServerHistory)
+      return Promise.resolve()
     if (entry.fetching) return entry.fetching
     const now = Date.now()
     if (
@@ -220,14 +225,15 @@ export class ChatStore {
     const revision = entry.revision
     entry.error = undefined
     entry.fetching = (async () => {
+      let notFound = false
       try {
         const response = await fetch(`/api/chats/${encodeURIComponent(id)}`, {
           cache: 'no-store'
         })
-        if (!response.ok)
-          throw new Error(
-            response.status === 404 ? 'Chat not found' : 'Failed to load chat'
-          )
+        if (!response.ok) {
+          notFound = response.status === 404
+          throw new Error(notFound ? 'Chat not found' : 'Failed to load chat')
+        }
         const data = (await response.json()) as { messages: UIMessage[] }
         // A local turn or account change makes this response obsolete.
         if (
@@ -241,7 +247,11 @@ export class ChatStore {
         this.markVerified(id)
       } catch (error) {
         if (this.entries.get(id) === entry && entry.revision === revision) {
-          if (entry.hasServerHistory || entry.chat.messages.length > 0) {
+          if (notFound) {
+            entry.chat.messages = []
+            entry.verifiedAt = 0
+            entry.error = new Error('Chat not found')
+          } else if (entry.hasServerHistory || entry.chat.messages.length > 0) {
             console.error('Failed to revalidate chat:', error)
           } else {
             entry.verifiedAt = 0

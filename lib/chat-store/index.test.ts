@@ -139,17 +139,64 @@ describe('ChatStore', () => {
     expect(store.get('b')).toBe(b)
   })
 
-  it('never evicts active streams and prunes when they become idle', () => {
-    const store = new ChatStore(1, 40)
+  it.each([
+    [1, Infinity, 'submitted'],
+    [1, Infinity, 'streaming'],
+    [20, 2, 'submitted'],
+    [20, 2, 'streaming']
+  ] as const)(
+    'keeps a newly opened entry with limits %s/%s while another is %s',
+    async (maxEntries, maxSize, status) => {
+      const store = new ChatStore(maxEntries, maxSize)
+      const a = store.getOrCreate('a')
+      setStatus(a, status)
+      const b = store.getOrCreate('b')
+      expect(store.get('a')).toBe(a)
+      expect(store.get('b')).toBe(b)
+      await store.revalidate('b')
+      expect(b.chat.messages).toEqual(messages('server'))
+      expect(b.verifiedAt).toBe(Date.now())
+      expect(store.get('b')).toBe(b)
+
+      setStatus(a, 'ready')
+      expect(store.get('a')).toBe(a)
+      expect(store.get('b')).toBeUndefined()
+    }
+  )
+
+  it('keeps a touched entry even when it alone exceeds the size cap', () => {
+    const store = new ChatStore(20, 2)
     const entry = store.getOrCreate('a')
-    setStatus(entry, 'streaming')
-    store.getOrCreate('b')
-    expect(store.get('a')).toBe(entry)
-    expect(store.get('b')).toBeUndefined()
     entry.chat.messages = messages('large')
-    setStatus(entry, 'ready')
-    expect(store.get('a')).toBeUndefined()
+    expect(store.get('a')).toBe(entry)
+    expect(store.getOrCreate('a')).toBe(entry)
   })
+
+  it.each([undefined, [] as UIMessage[]])(
+    'skips revalidation for a never-saved local chat with messages %s',
+    async initialMessages => {
+      const store = new ChatStore()
+      const entry = store.getOrCreate('a', {
+        isNew: true,
+        messages: initialMessages
+      })
+      entry.chat.messages = messages('local')
+      vi.advanceTimersByTime(30_000)
+      expect(store.getOrCreate('a')).toBe(entry)
+      await store.revalidate('a')
+      store.invalidate('a')
+      await store.revalidate('a')
+      expect(fetch).not.toHaveBeenCalled()
+      expect(entry.chat.messages).toEqual(messages('local'))
+      expect(entry.error).toBeUndefined()
+
+      store.markVerified('a')
+      vi.advanceTimersByTime(30_000)
+      await store.revalidate('a')
+      expect(fetch).toHaveBeenCalledOnce()
+      expect(entry.chat.messages).toEqual(messages('server'))
+    }
+  )
 
   it('clears on user changes and prevents old fetches from restoring data', async () => {
     const pending = deferred()
@@ -221,6 +268,35 @@ describe('ChatStore', () => {
     expect(entry.error).toBeUndefined()
     expect(entry.verifiedAt).toBe(Date.now())
   })
+
+  it.each(['seeded', 'local', 'empty server history'] as const)(
+    'clears %s and blocks the entry after a 404',
+    async source => {
+      const logError = vi.spyOn(console, 'error').mockImplementation(() => {})
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response(null, { status: 404 })
+      )
+      const store = new ChatStore()
+      const entry = store.getOrCreate('a', {
+        messages:
+          source === 'seeded'
+            ? messages('cached')
+            : source === 'empty server history'
+              ? []
+              : undefined
+      })
+      if (source === 'local') entry.chat.messages = messages('local')
+      vi.advanceTimersByTime(30_000)
+
+      await store.revalidate('a')
+
+      expect(entry.chat.messages).toEqual([])
+      expect(entry.error?.message).toBe('Chat not found')
+      expect(entry.verifiedAt).toBe(0)
+      expect(entry.fetching).toBeUndefined()
+      expect(logError).not.toHaveBeenCalled()
+    }
+  )
 
   it.each([false, true])(
     'sends the expected history for guest=%s and verifies on finish',
