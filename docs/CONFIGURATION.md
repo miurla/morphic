@@ -340,8 +340,9 @@ OIDC_PROVIDER_NAME=Keycloak
 **Sign-up policy:**
 
 - `AUTH_SIGNUP_MODE=open`: any identity accepted by your IdP can create a local account on first sign-in
-- `AUTH_SIGNUP_MODE=invite` (or an invalid mode): implicit sign-up through OIDC is disabled. An IdP user must already have a local account — e.g. one created through an invitation — otherwise sign-in is rejected; invited members therefore register once with the credential flow and use OIDC afterwards. Members of your IdP tenant are never handed an account implicitly.
-- The bootstrap window (`BOOTSTRAP_ADMIN_EMAIL`, empty user table) applies to OIDC account creation as well. With SMTP configured, the first account is created only through the emailed bootstrap link (proof of mailbox ownership of its address); an OIDC callback cannot account-create until that first sign-in closes the window. Without SMTP, the address gate is the accepted proof, as for credential sign-up.
+- `AUTH_SIGNUP_MODE=invite` (or an invalid mode): implicit sign-up through OIDC is rejected. An IdP user must already have a local account — e.g. one created through an invitation — otherwise sign-in is rejected; invited members therefore register once with the credential flow and use OIDC afterwards. Members of your IdP tenant are never handed an account implicitly.
+- The bootstrap window applies to OIDC account creation: while the user table is still empty, OIDC cannot create the first account. The first account of a deployment must be created through the credential/bootstrap path — with SMTP configured that is the emailed bootstrap link (proof of mailbox ownership of `BOOTSTRAP_ADMIN_EMAIL`); without SMTP the address gate is the accepted proof, as for credential sign-up. Once the first account exists, OIDC sign-up follows the sign-up mode policy alone — the gate reads the live user table at creation time (Better Auth's `user.validateUserInfo` callback), so no restart is needed for it to lift, and it re-closes automatically if every account is deleted.
+- The gate runs on every account creation and fails closed: if the user-table state cannot be read, OIDC registration is rejected rather than silently allowed.
 
 **HTTP surface:**
 

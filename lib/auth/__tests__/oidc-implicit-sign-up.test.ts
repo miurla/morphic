@@ -1,125 +1,125 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
-  BOOTSTRAP_CALIBRATION_RETRY_MS,
-  isBootstrapCalibrationRetryDue,
-  isOidcImplicitSignUpBlocked} from '@/lib/auth/better-auth/config'
+  resetAuthInstance,
+  validateOidcUserCreation
+} from '@/lib/auth/better-auth/config'
 
 /**
- * The gate has two lifetimes that must behave independently:
+ * The generic-OAuth/OIDC sign-up policy runs inside better-auth's
+ * `user.validateUserInfo` seam, at user-creation time, against the live
+ * user table:
  *
- * - the permanent one: sign-up mode (invite/invalid blocks always, and the
- *   block must never lift with an account event), and
- * - the bootstrap window: with SMTP + BOOTSTRAP_ADMIN_EMAIL and open mode,
- *   the first account requires mailbox proof through the emailed bootstrap
- *   link — an OAuth callback cannot prove ownership — so implicit OIDC
- *   sign-up stays blocked while the window is open, and the state measured
- *   after the first account closes the window (and all cases in between).
+ * - invite/invalid sign-up mode blocks implicit account creation;
+ * - open mode blocks it while the bootstrap window is open (empty user
+ *   table — the first account needs the emailed bootstrap link, which
+ *   proves mailbox ownership an OAuth callback cannot provide);
+ * - open mode with existing accounts allows it;
+ * - credential sign-ups (invitation/bootstrap policy) and an existing
+ *   identity signing in or linking are not affected;
+ * - an unreadable user table fails closed.
  */
-describe('isOidcImplicitSignUpBlocked', () => {
-  const base = {
-    signUpModeAllowsImplicit: true,
-    smtpConfigured: false,
-    bootstrapAddressConfigured: false,
-    userTableEmpty: null
-  }
+const oauthCreateUserSource = {
+  action: 'create-user',
+  method: 'oauth',
+  oauth: { providerId: 'oidc' }
+}
 
-  it('blocks advance-of-measurement when the user table state is unknown', () => {
-    // The window cannot be ruled out yet: err on the safe side, and let the
-    // one-shot calibration or the first sign-up settle the state.
-    const gate = isOidcImplicitSignUpBlocked({
-      ...base,
-      smtpConfigured: true,
-      bootstrapAddressConfigured: true
-    })
-    expect(gate.blocked).toBe(true)
-    expect(gate.liftsWithFirstAccount).toBe(true)
+function validate(
+  source: NonNullable<Parameters<typeof validateOidcUserCreation>[0]>['source'],
+  countUsers: () => Promise<number>
+) {
+  return validateOidcUserCreation({ source }, countUsers)
+}
+
+beforeEach(() => {
+  resetAuthInstance()
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
+describe('validateOidcUserCreation (sign-up mode)', () => {
+  it('rejects implicit creation in invite mode', async () => {
+    vi.stubEnv('AUTH_SIGNUP_MODE', 'invite')
+    const result = await validate(oauthCreateUserSource, async () => 5)
+
+    expect(result?.error).toBe('sign_up_not_allowed')
   })
 
-  it('keeps the gate while the bootstrap window is open (table still empty)', () => {
-    const gate = isOidcImplicitSignUpBlocked({
-      ...base,
-      smtpConfigured: true,
-      bootstrapAddressConfigured: true,
-      userTableEmpty: true
-    })
-    expect(gate.blocked).toBe(true)
-    expect(gate.liftsWithFirstAccount).toBe(true)
+  it('rejects implicit creation when AUTH_SIGNUP_MODE is invalid', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.stubEnv('AUTH_SIGNUP_MODE', 'invite-only')
+    const result = await validate(oauthCreateUserSource, async () => 5)
+
+    expect(result?.error).toBe('sign_up_unavailable')
+    expect(warn).toHaveBeenCalled()
   })
 
-  it('lifts the gate once an account closed the bootstrap window', () => {
-    // The regression both reviewers flagged: the gate used to test only
-    // env vars and never cleared after the first account existed.
-    const gate = isOidcImplicitSignUpBlocked({
-      ...base,
-      smtpConfigured: true,
-      bootstrapAddressConfigured: true,
-      userTableEmpty: false
-    })
-    expect(gate.blocked).toBe(false)
-    expect(gate.liftsWithFirstAccount).toBe(false)
+  it('allows universal sign-up in open mode', async () => {
+    vi.stubEnv('AUTH_SIGNUP_MODE', 'open')
+    const result = await validate(oauthCreateUserSource, async () => 5)
+
+    expect(result).toBeUndefined()
   })
 
-  it('does not gate at all without SMTP or without a bootstrap address', () => {
-    for (const env of [
-      { smtpConfigured: false, bootstrapAddressConfigured: false },
-      { smtpConfigured: true, bootstrapAddressConfigured: false },
-      { smtpConfigured: false, bootstrapAddressConfigured: true }
-    ]) {
-      const gate = isOidcImplicitSignUpBlocked({
-        ...base,
-        ...env,
-        userTableEmpty: true
-      })
-      expect(gate.blocked).toBe(false)
-      expect(gate.liftsWithFirstAccount).toBe(false)
-    }
-  })
+  it('defaults to open mode when AUTH_SIGNUP_MODE is unset', async () => {
+    const result = await validate(oauthCreateUserSource, async () => 5)
 
-  it('blocks permanently in invite-only mode, regardless of the window', () => {
-    for (const userTableEmpty of [null, true, false] as const) {
-      const gate = isOidcImplicitSignUpBlocked({
-        ...base,
-        signUpModeAllowsImplicit: false,
-        smtpConfigured: true,
-        bootstrapAddressConfigured: true,
-        userTableEmpty
-      })
-      expect(gate.blocked).toBe(true)
-      // A first-account event must never widen an invite-only instance.
-      expect(gate.liftsWithFirstAccount).toBe(false)
-    }
-  })
-
-  it('allows implicit sign-up in open mode without the window env', () => {
-    const gate = isOidcImplicitSignUpBlocked({ ...base, userTableEmpty: false })
-    expect(gate.blocked).toBe(false)
-    expect(gate.liftsWithFirstAccount).toBe(false)
+    expect(result).toBeUndefined()
   })
 })
 
-describe('isBootstrapCalibrationRetryDue', () => {
-  it('never retries without a failed attempt', () => {
-    expect(isBootstrapCalibrationRetryDue(0, Date.now())).toBe(false)
+describe('validateOidcUserCreation (bootstrap window)', () => {
+  it('rejects the first account through OAuth (empty user table)', async () => {
+    vi.stubEnv('AUTH_SIGNUP_MODE', 'open')
+    const result = await validate(oauthCreateUserSource, async () => 0)
+
+    expect(result?.error).toBe('bootstrap_window_open')
   })
 
-  it('stays throttled inside the retry interval', () => {
-    const failedAt = 1_000
-    expect(
-      isBootstrapCalibrationRetryDue(
-        failedAt,
-        failedAt + BOOTSTRAP_CALIBRATION_RETRY_MS - 1
-      )
-    ).toBe(false)
+  it('allows implicit creation once an account exists', async () => {
+    vi.stubEnv('AUTH_SIGNUP_MODE', 'open')
+    const result = await validate(oauthCreateUserSource, async () => 1)
+
+    expect(result).toBeUndefined()
   })
 
-  it('re-arms the measurement once the interval elapsed', () => {
-    const failedAt = 1_000
-    expect(
-      isBootstrapCalibrationRetryDue(
-        failedAt,
-        failedAt + BOOTSTRAP_CALIBRATION_RETRY_MS
-      )
-    ).toBe(true)
+  it('fails closed when the user table cannot be read', async () => {
+    vi.stubEnv('AUTH_SIGNUP_MODE', 'open')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const result = await validate(oauthCreateUserSource, async () => {
+      throw new Error('db unreachable')
+    })
+
+    expect(result?.error).toBe('sign_up_unavailable')
+    expect(warn).toHaveBeenCalled()
+  })
+})
+
+describe('validateOidcUserCreation (unrelated provisioning)', () => {
+  it.each([
+    // Credential sign-ups carry their own invitation/bootstrap policy.
+    { action: 'create-user', method: 'email-password' },
+    // An existing identity is never subject to the sign-up gate again.
+    { action: 'sign-in', method: 'oauth', oauth: { providerId: 'oidc' } },
+    { action: 'link-account', method: 'oauth', oauth: { providerId: 'oidc' } }
+  ] as const)('does not gate %#', async sourceTest => {
+    const result = await validate(
+      sourceTest as typeof oauthCreateUserSource,
+      async () => 0
+    )
+
+    expect(result).toBeUndefined()
+  })
+
+  it('does not gate a missing source', async () => {
+    const result = await validateOidcUserCreation(
+      { source: undefined },
+      async () => 0
+    )
+
+    expect(result).toBeUndefined()
   })
 })
