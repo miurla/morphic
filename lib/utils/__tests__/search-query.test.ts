@@ -32,6 +32,22 @@ describe('normalizeSearchQuery', () => {
     )
   })
 
+  it('treats punctuation after the cap as a token boundary, like the parser', () => {
+    // Postgres ends a word token at '!' just as it does at a space, so the
+    // 198-character token is complete at the cap and must survive; only a
+    // word character after the cap means the cap split a token.
+    expect(normalizeSearchQuery('a ' + 'x'.repeat(198) + '! y')).toBe(
+      'a ' + 'x'.repeat(198)
+    )
+  })
+
+  it('drops a token sliced by the cap at a punctuation boundary', () => {
+    // no whitespace anywhere, but '!' ends the first token; the second
+    // token is sliced by the cap and must be dropped rather than act as a
+    // broad prefix match
+    expect(normalizeSearchQuery('aaa!' + 'b'.repeat(200))).toBe('aaa!')
+  })
+
   it('never leaves a lone surrogate behind when the cap splits a pair', () => {
     const result = normalizeSearchQuery('a' + '😀'.repeat(100))
 

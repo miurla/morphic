@@ -8,8 +8,9 @@
  * length; bounding the query keeps it (and Postgres' parse of it) small no
  * matter the input. Client-side bounding also keeps a pasted passage from
  * exceeding the deployment's request-target limit before the server bound
- * can take effect. Truncation happens at the last whitespace before the
- * cap so a partially sliced token cannot act as a broad prefix match.
+ * can take effect. Truncation happens at the last parser-token boundary
+ * before the cap so a partially sliced token cannot act as a broad prefix
+ * match.
  */
 export const MAX_QUERY_LENGTH = 200
 
@@ -29,25 +30,28 @@ function stripLoneSurrogates(value: string): string {
   )
 }
 
+// Postgres' default text-search parser ends a word token at whitespace or
+// punctuation; only letters, digits and underscores continue one. The cap
+// therefore split a token only when the character after it is one of those.
+const WORD_CHAR = /[\p{L}\p{N}_]/u
+
 export function normalizeSearchQuery(query: string): string {
   const trimmed = query.trim()
   if (trimmed.length <= MAX_QUERY_LENGTH) {
     return stripLoneSurrogates(trimmed)
   }
   const capped = trimmed.slice(0, MAX_QUERY_LENGTH)
-  // Only drop a trailing partial token when the cap actually split one:
-  // if the next character in the original is whitespace (or nothing), the
-  // last retained token is complete and must be kept.
+  // The retained text is complete unless the cap landed inside a word
+  // token: whitespace and punctuation ('!' as much as ' ') both end one,
+  // so only a word character after the cap means a token was split.
   const next = trimmed[MAX_QUERY_LENGTH]
-  if (next === undefined || /\s/.test(next)) {
+  if (next === undefined || !WORD_CHAR.test(next)) {
     return stripLoneSurrogates(capped.trim())
   }
-  // Drop everything from the last whitespace run on, so a token sliced by
-  // the cap cannot act as a broad prefix match. Whitespace-aware (not just
-  // ' '): pasted queries may separate words with newlines or tabs, which
-  // Postgres' parser also treats as word boundaries.
-  const boundary = capped.match(/\s\S*$/)
-  return stripLoneSurrogates(
-    (boundary ? capped.slice(0, boundary.index) : capped).trim()
-  )
+  // Drop the trailing partial token so it cannot act as a broad prefix
+  // match. When the whole capped range is a single token there is nothing
+  // to drop, and a long specific prefix is not broad, so keep it.
+  const partial = capped.match(/[\p{L}\p{N}_]+$/u)
+  const cut = partial ? capped.slice(0, partial.index) : capped
+  return stripLoneSurrogates((cut.trim() || capped).trim())
 }
