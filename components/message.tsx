@@ -29,24 +29,27 @@ const customComponents = {
 export function MarkdownMessage({
   message,
   className,
-  citationMaps
+  citationMaps,
+  drafts = true
 }: {
   message: string
   className?: string
   citationMaps?: Record<string, Record<number, SearchResultItem>>
+  /** False inside the draft panel, where a draft fence is an example to show. */
+  drafts?: boolean
 }) {
   // Process citations to replace [number](#toolCallId) with [number](actual-url)
   const processedMessage = processCitations(
-    normalizeDraftFences(message || ''),
+    drafts ? normalizeDraftFences(message || '') : message || '',
     citationMaps || {}
   )
 
   const streamdownProps = useMemo<Partial<StreamdownProps>>(
     () => ({
       mode: 'streaming' as const,
-      plugins: mergeStreamdownSpecRenderer({ math })
+      plugins: mergeStreamdownSpecRenderer({ math }, { drafts })
     }),
-    []
+    [drafts]
   )
 
   return (

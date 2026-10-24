@@ -198,7 +198,7 @@ export function DraftPanel() {
             Edit this
           </Button>
         )}
-        <MarkdownMessage message={content} />
+        <MarkdownMessage message={content} drafts={false} />
       </div>
     </div>
   )

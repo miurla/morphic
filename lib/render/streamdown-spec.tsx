@@ -25,7 +25,8 @@ export function createStreamdownDraftRenderer(): CustomRenderer {
 }
 
 export function mergeStreamdownSpecRenderer(
-  plugins?: PluginConfig
+  plugins?: PluginConfig,
+  { drafts = true }: { drafts?: boolean } = {}
 ): PluginConfig {
   const userRenderers = plugins?.renderers ?? []
   const filteredRenderers = userRenderers.filter(renderer => {
@@ -39,7 +40,7 @@ export function mergeStreamdownSpecRenderer(
     ...plugins,
     renderers: [
       createStreamdownSpecRenderer(),
-      createStreamdownDraftRenderer(),
+      ...(drafts ? [createStreamdownDraftRenderer()] : []),
       ...filteredRenderers
     ]
   }
