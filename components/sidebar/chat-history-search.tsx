@@ -81,6 +81,9 @@ export function ChatHistorySearch({
   // so stale results never overwrite the current query's results.
   const requestSeqRef = useRef(0)
   const thinkingAbortRef = useRef<AbortController | null>(null)
+  // Distinguishes a refreshKey bump (same query) from a query change, so
+  // only refreshes invalidate the currently displayed results.
+  const lastQueryRef = useRef(query)
 
   // The thinking opt-in is scoped to a single search: it resets whenever the
   // query changes, and unmounting discards it entirely (no persistence).
@@ -101,6 +104,16 @@ export function ChatHistorySearch({
     if (trimmed.length < MIN_QUERY_LENGTH) {
       return
     }
+
+    // A refreshKey bump (chat data changed, e.g. Clear History) must not
+    // leave stale matches clickable while the refetch is in flight, and a
+    // failed refetch must not restore them: invalidate up front and let the
+    // refetch repopulate. A query change is already cleared by the reset
+    // effect above.
+    if (query === lastQueryRef.current) {
+      setResults(null)
+    }
+    lastQueryRef.current = query
 
     const seq = ++requestSeqRef.current
     const controller = new AbortController()

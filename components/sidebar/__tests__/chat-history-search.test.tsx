@@ -394,4 +394,43 @@ describe('ChatHistorySearch', () => {
     expect(screen.getByText('tags').tagName).toBe('B')
     expect(screen.getByText(/use <b>bold<\/b>/)).toBeInTheDocument()
   })
+
+  it('invalidates stale results on refresh and does not restore them on failure', async () => {
+    const fetchMock = vi.fn().mockReturnValue(
+      jsonResponse({
+        title: [{ chatId: 'c1', title: 'Budget chat' }],
+        content: []
+      })
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const ui = render(<ChatHistorySearch query="budget" refreshKey={0} />)
+    await flush(300)
+    expect(screen.getByText('Budget chat')).toBeInTheDocument()
+
+    // A refreshKey bump (e.g. Clear History) must invalidate the displayed
+    // matches immediately; a failed refetch must not bring them back.
+    fetchMock.mockReturnValue(jsonResponse({}, false, 500))
+    await act(async () => {
+      ui.rerender(<ChatHistorySearch query="budget" refreshKey={1} />)
+    })
+    await flush(50) // still inside the debounce window
+    expect(screen.queryByText('Budget chat')).not.toBeInTheDocument()
+
+    await flush(300) // debounce fires and the fetch fails
+    expect(screen.queryByText('Budget chat')).not.toBeInTheDocument()
+
+    // A later successful refresh repopulates the results.
+    fetchMock.mockReturnValue(
+      jsonResponse({
+        title: [{ chatId: 'c2', title: 'Fresh chat' }],
+        content: []
+      })
+    )
+    await act(async () => {
+      ui.rerender(<ChatHistorySearch query="budget" refreshKey={2} />)
+    })
+    await flush(300)
+    expect(screen.getByText('Fresh chat')).toBeInTheDocument()
+  })
 })
