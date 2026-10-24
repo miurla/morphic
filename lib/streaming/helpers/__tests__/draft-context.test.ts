@@ -53,17 +53,6 @@ describe('attachCurrentDraft', () => {
     expect(textOf(result[2], 1)).toContain('<current_draft title="T"')
   })
 
-  it('replaces a draft too large for the budget with a note', () => {
-    const big = { ...draft, content: 'word '.repeat(2000) }
-    const result = attachCurrentDraft([message('user', 'shorten it')], big, {
-      maxTokens: 1000
-    })
-    const parts = result[0].parts as Array<{ type: string; text: string }>
-    expect(parts[0].text).toBe('shorten it')
-    expect(parts[1].text).toContain('omitted="true"')
-    expect(parts[1].text.length).toBeLessThan(500)
-  })
-
   it('leaves messages alone without a draft', () => {
     const messages = [message('user', 'one')]
     expect(attachCurrentDraft(messages, null)).toBe(messages)
