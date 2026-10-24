@@ -1,10 +1,24 @@
 'use client'
 
+import { useLayoutEffect, useRef } from 'react'
+
 import { Skeleton } from './ui/skeleton'
 
+// Matches Tailwind's animate-pulse duration
+const PULSE_MS = 2000
+
 export const DefaultSkeleton = () => {
+  // The route loading skeleton is replaced by the chat's own skeleton while
+  // history loads; a wall-clock phase keeps the pulse from restarting.
+  const ref = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    ref.current?.getAnimations?.({ subtree: true }).forEach(animation => {
+      animation.currentTime = Date.now() % PULSE_MS
+    })
+  }, [])
+
   return (
-    <div className="flex flex-col gap-2 pb-4 pt-2">
+    <div ref={ref} className="flex flex-col gap-2 pb-4 pt-2">
       {[...Array(2)].map((_, index) => (
         <Skeleton key={index} className="h-6 w-full" />
       ))}

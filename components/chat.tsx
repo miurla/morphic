@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -566,6 +567,16 @@ export function Chat({
 
     return () => cancelAnimationFrame(frame)
   }, [messages])
+
+  // History can arrive after mount, so open each saved chat at its end once
+  const openedChatIdRef = useRef<string | null>(null)
+  useLayoutEffect(() => {
+    if (openedChatIdRef.current === chatId || messages.length === 0) return
+    openedChatIdRef.current = chatId
+    if (entry.createdLocally) return
+    const container = scrollContainerRef.current
+    if (container) container.scrollTop = container.scrollHeight
+  }, [chatId, messages.length, entry])
 
   // Scroll to the section when a new user message is sent
   useEffect(() => {
