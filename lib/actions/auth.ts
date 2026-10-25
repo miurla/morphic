@@ -1,5 +1,6 @@
 'use server'
 
+import { getOidcProviderId } from '@/lib/auth/oauth-config'
 import { getAuthProvider } from '@/lib/auth/provider'
 import type { AuthActionResult } from '@/lib/auth/types'
 
@@ -24,6 +25,16 @@ export async function signInWithGoogle(): Promise<AuthActionResult> {
     return unavailable()
   }
   return provider.signInWithOAuth('google')
+}
+
+export async function signInWithOidc(): Promise<AuthActionResult> {
+  const provider = getAuthProvider()
+  if (!provider.signInWithOAuth) {
+    return unavailable()
+  }
+  // The provider id is resolved on the server (OIDC_PROVIDER_ID, default
+  // 'oidc'); the client only asks for the OIDC sign-in flow by name.
+  return provider.signInWithOAuth(getOidcProviderId())
 }
 
 export async function signUp(credentials: {

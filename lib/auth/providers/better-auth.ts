@@ -1,4 +1,4 @@
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { count, eq } from 'drizzle-orm'
@@ -6,9 +6,11 @@ import { count, eq } from 'drizzle-orm'
 import {
   getAuth,
   getEmailLinkOrigin,
+  getOidcProviderName,
   getSignUpMode,
   isBetterAuthSmtpConfigured,
   isBootstrapAccount,
+  isOidcConfigured,
   reElectBootstrapAdmin
 } from '@/lib/auth/better-auth/config'
 import {
@@ -22,6 +24,7 @@ import {
 import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
 import { user as authUser } from '@/lib/auth/better-auth/schema'
 import { checkRateLimit } from '@/lib/auth/rate-limit'
+import { safeRedirectPath } from '@/lib/auth/redirect-target'
 import { getRequestOrigin } from '@/lib/auth/request'
 import type {
   AppUser,
@@ -31,6 +34,8 @@ import type {
   DeletionGuardResult
 } from '@/lib/auth/types'
 import { db } from '@/lib/db'
+
+import { getOidcProviderId } from '../oauth-config'
 
 /**
  * Whether an account already exists for the address. Used to decide whether
@@ -209,15 +214,21 @@ export const betterAuthProvider: AuthProvider = {
   name: 'better-auth',
 
   get capabilities() {
+    // Every OAuth sign-in routes through the canonical origin: the IdP's
+    // redirect_uri and the post-sign-in redirect derive from
+    // BETTER_AUTH_URL (see signInWithOAuth), so OIDC credentials alone do
+    // not make the button work — mirror the passwordReset gate.
+    const canonicalOrigin = getEmailLinkOrigin() !== ''
+    const oidcConfigured = canonicalOrigin ? isOidcConfigured() : false
     return {
       signUp: true,
-      passwordReset:
-        isBetterAuthSmtpConfigured() && getEmailLinkOrigin() !== '',
+      passwordReset: isBetterAuthSmtpConfigured() && canonicalOrigin,
       deleteUser: true,
-      // Email/password only: no OAuth provider is wired into the local
-      // instance, and accounts are usable immediately without email
-      // confirmation.
-      oauth: false,
+      // OAuth available when OIDC is configured or other OAuth providers are enabled
+      oauth: oidcConfigured,
+      // The button label and readiness come from the server: OIDC_* env vars
+      // are invisible to the client bundle, so the form cannot decide itself.
+      oauthProvider: oidcConfigured ? getOidcProviderName() : null,
       emailVerification: false,
       share: true
     }
@@ -274,6 +285,67 @@ export const betterAuthProvider: AuthProvider = {
       }
     }
     return response
+  },
+
+  /**
+   * Start the generic-OIDC sign-in: better-auth builds the authorization
+   * URL (PKCE + nonce/state cookies) and returns it for a browser
+   * redirect. Its callback endpoint must be mounted at /api/auth/*
+   * (app/api/auth/[...all]/route.ts) for the flow to complete.
+   */
+  async signInWithOAuth(provider: string): Promise<AuthActionResult> {
+    if (provider !== getOidcProviderId()) {
+      // The generic OAuth plugin registers exactly one OIDC provider.
+      return {
+        success: false,
+        error: `Provider "${provider}" is not configured.`
+      }
+    }
+    if (!isOidcConfigured()) {
+      return { success: false, error: 'OAuth sign-in is not configured.' }
+    }
+    // The IdP's redirect_uri is derived from better-auth's baseURL; the
+    // canonical origin must exist for the flow to round-trip.
+    if (getEmailLinkOrigin() === '') {
+      return {
+        success: false,
+        error: 'BETTER_AUTH_URL must be set for OAuth sign-in.'
+      }
+    }
+
+    // The login form carries the post-login destination in the short-lived
+    // auth_next cookie. Consume it here as better-auth's callbackURL: after
+    // the callback better-auth redirects the browser straight to that page.
+    const headerStore = await headers()
+    const cookieStore = await cookies()
+    const nextPath =
+      safeRedirectPath(cookieStore.get('auth_next')?.value ?? '') ?? '/'
+    if (cookieStore.get('auth_next')) {
+      cookieStore.delete('auth_next')
+    }
+
+    try {
+      const result = await getAuth().api.signInSocial({
+        body: {
+          provider,
+          callbackURL: `${getEmailLinkOrigin()}${nextPath}`
+        },
+        headers: headerStore
+      })
+      if (!result.redirect || !result.url) {
+        return {
+          success: false,
+          error: 'The identity provider did not return an authorization URL.'
+        }
+      }
+      return { success: true, redirectTo: result.url }
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'An OAuth error occurred'
+      }
+    }
   },
 
   async signIn({

@@ -1,14 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { signIn, signInWithGoogle } from '@/lib/actions/auth'
+import { signIn, signInWithGoogle, signInWithOidc } from '@/lib/actions/auth'
 import { AppUserProvider } from '@/lib/contexts/app-user-context'
 
 import { LoginForm } from '@/components/login-form'
 
 vi.mock('@/lib/actions/auth', () => ({
   signIn: vi.fn(),
-  signInWithGoogle: vi.fn()
+  signInWithGoogle: vi.fn(),
+  signInWithOidc: vi.fn()
 }))
 
 const { mockPush, mockRefresh } = vi.hoisted(() => ({
@@ -25,6 +26,7 @@ const capabilities = {
   passwordReset: true,
   deleteUser: true,
   oauth: true,
+  oauthProvider: null as string | null,
   emailVerification: true,
   share: true
 }
@@ -246,6 +248,82 @@ describe('LoginForm', () => {
     expect(
       screen.queryByRole('button', { name: 'Sign In with Google' })
     ).not.toBeInTheDocument()
+  })
+
+  it('labels the OAuth button with the server-reported OIDC provider and signs in through it', async () => {
+    // The form itself cannot see OIDC_* environment variables (non-public
+    // vars are stripped from the client bundle); the provider name arrives
+    // through AuthCapabilities instead.
+    const originalLocation = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { href: '' }
+    })
+    vi.mocked(signInWithOidc).mockResolvedValue({
+      success: true,
+      redirectTo: 'https://idp.example.com/authorize'
+    })
+    renderForm({ oauthProvider: 'Keycloak' })
+
+    const button = screen.getByRole('button', { name: 'Sign In with Keycloak' })
+    fireEvent.click(button)
+
+    await waitFor(() => {
+      expect(signInWithOidc).toHaveBeenCalled()
+      expect(signInWithGoogle).not.toHaveBeenCalled()
+      expect(window.location.href).toBe('https://idp.example.com/authorize')
+    })
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: originalLocation
+    })
+  })
+
+  it('falls back to Google when the capabilities carry no OIDC provider', async () => {
+    vi.mocked(signInWithGoogle).mockResolvedValue({
+      success: true,
+      redirectTo: 'https://accounts.google.com/authorize'
+    })
+    renderForm({ oauthProvider: null })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign In with Google' }))
+
+    await waitFor(() => {
+      expect(signInWithGoogle).toHaveBeenCalled()
+      expect(signInWithOidc).not.toHaveBeenCalled()
+    })
+  })
+
+  it('passes the next target into the OIDC flow via the cookie', async () => {
+    const originalLocation = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { href: '' }
+    })
+    vi.mocked(signInWithOidc).mockResolvedValue({
+      success: true,
+      redirectTo: 'https://idp.example.com/authorize'
+    })
+    renderForm({ oauthProvider: 'Keycloak' }, null, '/search/abc123')
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Sign In with Keycloak' })
+    )
+
+    await waitFor(() => {
+      expect(signInWithOidc).toHaveBeenCalled()
+    })
+    expect(document.cookie).toContain('auth_next=%2Fsearch%2Fabc123')
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: originalLocation
+    })
   })
 
   it('offers password recovery when the provider supports it', () => {

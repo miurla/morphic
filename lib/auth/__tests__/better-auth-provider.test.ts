@@ -158,7 +158,11 @@ describe('better-auth provider', () => {
       'SMTP_PASSWORD',
       'AUTH_SIGNUP_MODE',
       'BOOTSTRAP_ADMIN_EMAIL',
-      'BETTER_AUTH_URL'
+      'BETTER_AUTH_URL',
+      'OIDC_ISSUER',
+      'OIDC_CLIENT_ID',
+      'OIDC_CLIENT_SECRET',
+      'OIDC_PROVIDER_NAME'
     ]) {
       originalEnv[key] = process.env[key]
       delete process.env[key]
@@ -192,6 +196,22 @@ describe('better-auth provider', () => {
       expect(betterAuthProvider.capabilities.signUp).toBe(true)
       expect(betterAuthProvider.capabilities.deleteUser).toBe(true)
       expect(betterAuthProvider.capabilities.share).toBe(true)
+    })
+
+    it('hides the OAuth button until BETTER_AUTH_URL provides the callback origin', () => {
+      process.env.OIDC_ISSUER = 'https://idp.example.com'
+      process.env.OIDC_CLIENT_ID = 'morphic-client'
+      process.env.OIDC_CLIENT_SECRET = 'secret'
+
+      // The IdP redirect URI and the post-sign-in redirect derive from the
+      // canonical origin: with OIDC credentials alone, rendering the button
+      // would only ever produce "BETTER_AUTH_URL must be set" on click.
+      expect(betterAuthProvider.capabilities.oauth).toBe(false)
+      expect(betterAuthProvider.capabilities.oauthProvider).toBeNull()
+
+      process.env.BETTER_AUTH_URL = 'http://localhost:3000'
+      expect(betterAuthProvider.capabilities.oauth).toBe(true)
+      expect(betterAuthProvider.capabilities.oauthProvider).toBe('OIDC')
     })
   })
 

@@ -2,10 +2,16 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError } from 'better-auth/api'
 import { nextCookies } from 'better-auth/next-js'
-import { admin } from 'better-auth/plugins'
+import { admin, genericOAuth } from 'better-auth/plugins'
 import { asc, count, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/lib/db'
+
+import {
+  getOidcProviderId,
+  getOidcProviderName as getOidcProviderNameUtil,
+  isOidcConfigured as isOidcConfiguredUtil
+} from '../oauth-config'
 
 import { isSmtpConfigured, sendSmtpMail } from './mailer'
 import * as authSchema from './schema'
@@ -18,6 +24,18 @@ export type SignUpMode = 'open' | 'invite'
  */
 export function isBetterAuthSmtpConfigured(): boolean {
   return isSmtpConfigured()
+}
+
+/**
+ * True when OIDC is configured: all required environment variables are set.
+ * OIDC_SCOPE is optional and defaults to 'openid profile email'.
+ */
+export function isOidcConfigured(): boolean {
+  return isOidcConfiguredUtil()
+}
+
+export function getOidcProviderName(): string {
+  return getOidcProviderNameUtil()
 }
 
 /**
@@ -252,8 +270,144 @@ export async function reElectBootstrapAdmin(): Promise<void> {
   )
 }
 
+/**
+ * Count the rows of the auth user table (live read, no caching).
+ */
+export async function countAuthUsers(): Promise<number> {
+  const [row] = await db.select({ total: count() }).from(authSchema.user)
+  return row?.total ?? 0
+}
+
+/**
+ * Policy gate for implicit account creation through the generic OAuth/OIDC
+ * provider, run by Better Auth's `user.validateUserInfo` seam whenever a
+ * brand-new user record is about to be created. It resolves the live
+ * user-table state on every call, so no gate state needs to be cached,
+ * calibrated or reset across requests: the first account closing the
+ * bootstrap window ends the restriction on the spot, in every process.
+ *
+ * Rules for `oauth`-source `create-user` actions:
+ *
+ * - `AUTH_SIGNUP_MODE=invite` (or an invalid mode): reject — members of
+ *   your IdP tenant are never handed an account implicitly. OIDC sign-in
+ *   works only for an identity already linked to a local account; an
+ *   account created through the credential flow (invitation token) is not
+ *   linked automatically, so invited members sign in with email and
+ *   password.
+ * - Open mode with an empty user table: reject — the first account can
+ *   only come through the credential/bootstrap path, where the emailed
+ *   bootstrap link proves ownership of `BOOTSTRAP_ADMIN_EMAIL`; an OAuth
+ *   callback cannot prove mailbox ownership.
+ * - Open mode otherwise: allow.
+ *
+ * Unaffected: credential sign-ups (invitation and bootstrap-address
+ * policy live in their own flow) and an existing identity signing in
+ * again or linking its account — those passed this gate when their
+ * account was created.
+ *
+ * Fails closed: if the user count cannot be read, the sign-up is
+ * rejected rather than silently allowed (Better Auth surfaces the
+ * returned `error` as a 403 and redirects the callback to its error
+ * endpoint).
+ */
+export async function validateOidcUserCreation(
+  data: {
+    source?: { action?: string; method?: string } | null | undefined
+  },
+  countUsers: () => Promise<number>
+): Promise<{ error: string; errorDescription?: string } | undefined> {
+  const source = data?.source
+  if (!source || source.action !== 'create-user' || source.method !== 'oauth') {
+    return // The gate applies only to new accounts arriving through OAuth.
+  }
+
+  try {
+    if (getSignUpMode() !== 'open') {
+      return {
+        error: 'sign_up_not_allowed',
+        errorDescription:
+          'Registration is by invitation. Sign in if you already have an account.'
+      }
+    }
+  } catch (error) {
+    console.warn('AUTH_SIGNUP_MODE is invalid — OIDC sign-up rejected.', error)
+    return {
+      error: 'sign_up_unavailable',
+      errorDescription: 'User registration is not available.'
+    }
+  }
+
+  try {
+    if ((await countUsers()) === 0) {
+      return {
+        error: 'bootstrap_window_open',
+        errorDescription:
+          'The first account of this deployment must be created through its emailed bootstrap link.'
+      }
+    }
+  } catch (error) {
+    console.warn(
+      'Could not read the user table to validate OIDC sign-up ' +
+        '(bootstrap window unknown) — rejecting the registration.',
+      error
+    )
+    return {
+      error: 'sign_up_unavailable',
+      errorDescription:
+        'Registration cannot be validated right now, please try again.'
+    }
+  }
+
+  return undefined
+}
+
 function createAuth() {
   const smtpConfigured = isBetterAuthSmtpConfigured()
+  const oidcConfigured = isOidcConfigured()
+
+  // Conditionally spread the OIDC plugin inline so the concrete plugin
+  // types reach betterAuth(): a `plugins: any[]` assertion would strip
+  // every declared endpoint (e.g. admin's setRole/setUserPassword) from
+  // the inferred auth.api type.
+  const oidcPlugins = oidcConfigured
+    ? [
+        genericOAuth({
+          config: [
+            {
+              // The provider id the plugin registers and the IdP callback
+              // URL is derived from (OIDC_PROVIDER_ID, default 'oidc').
+              providerId: getOidcProviderId(),
+              // Trailing slash is a common typo: without stripping, the
+              // discovery URL becomes "...//.well-known/..." and most IdPs
+              // answer 404, which better-auth reports as "discovery left no
+              // usable authorization endpoint or token exchange".
+              discoveryUrl: `${process.env.OIDC_ISSUER?.trim().replace(/\/+$/, '')}/.well-known/openid-configuration`,
+              clientId: process.env.OIDC_CLIENT_ID?.trim() ?? '',
+              clientSecret: process.env.OIDC_CLIENT_SECRET?.trim() ?? '',
+              scopes: (
+                process.env.OIDC_SCOPE?.trim() || 'openid profile email'
+              ).split(' '),
+              pkce: true,
+              // Map OIDC claims to Better Auth user fields
+              // Note: Do not map 'id' here - Better Auth gets user identity from
+              // the accountSubject (OIDC 'sub' claim) automatically
+              mapProfileToUser: profile => ({
+                email: profile.email as string,
+                emailVerified: (profile.email_verified ?? false) as boolean,
+                name: (profile.name ||
+                  profile.preferred_username ||
+                  profile.email) as string,
+                image: profile.picture as string | undefined
+              })
+            }
+          ]
+        })
+      ]
+    : []
+
+  // nextCookies must stay last: it re-applies the session cookie
+  // through next/headers so server actions (signIn/signUp/signOut)
+  // deliver it to the browser without a hand-written header copy.
 
   return betterAuth({
     appName: 'Morphic',
@@ -270,7 +424,8 @@ function createAuth() {
         ? async ({ user, token }) => {
             // better-auth's generated url targets its own
             // /api/auth/reset-password/:token endpoint, which this app does
-            // not expose (the API handler is not mounted), so it would 404.
+            // not expose (the mounted HTTP surface is restricted to provider
+            // callbacks, see app/api/auth/[...all]/route.ts), so it would 404.
             // Link the in-app page directly with the raw token instead; it
             // resets the password through the provider's server action.
             const origin = getEmailLinkOrigin()
@@ -292,10 +447,15 @@ function createAuth() {
           }
         : undefined
     },
-    // nextCookies must stay last: it re-applies the session cookie
-    // through next/headers so server actions (signIn/signUp/signOut)
-    // deliver it to the browser without a hand-written header copy.
-    plugins: [admin({ defaultRole: 'user' }), nextCookies()],
+    plugins: [admin({ defaultRole: 'user' }), ...oidcPlugins, nextCookies()],
+    user: {
+      // Policy gate for implicit account creation through the generic
+      // OAuth/OIDC provider (sign-up mode + bootstrap window). Runs at
+      // user-creation time against the live user table (see
+      // validateOidcUserCreation), so no cached gate state is needed.
+      validateUserInfo: (data, context) =>
+        validateOidcUserCreation(data, countAuthUsers)
+    },
     databaseHooks: {
       user: {
         create: {
@@ -313,6 +473,7 @@ export type BetterAuth = ReturnType<typeof createAuth>
 
 let authInstance: BetterAuth | null = null
 
+/** Lazily create the shared Better Auth instance. */
 /** Lazily create the shared Better Auth instance. */
 export function getAuth(): BetterAuth {
   if (!authInstance) {
