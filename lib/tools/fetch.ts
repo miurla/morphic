@@ -379,7 +379,10 @@ export function createFetchTool(options?: {
           // crawler's to guard.
           await assertResolvedPublicUrl(url)
           results = await fetchCrawl4aiData(url)
-        } else if (type === 'regular') {
+        } else if (
+          type === 'regular' &&
+          process.env.FETCH_REGULAR_VIA_API !== 'true'
+        ) {
           // Use regular fetch for direct HTML retrieval
           results = await fetchRegularData(url)
         } else {
