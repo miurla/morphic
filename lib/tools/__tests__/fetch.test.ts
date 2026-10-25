@@ -424,6 +424,33 @@ describe('crawl4ai extraction', () => {
     })
   })
 
+  it('sends regular fetches to Tavily Extract with FETCH_REGULAR_VIA_API', async () => {
+    type FetchLike = (url: string | URL | Request) => Promise<Response>
+    const fetchMock = vi.fn<FetchLike>(
+      async () =>
+        new Response(
+          JSON.stringify({ results: [{ url, raw_content: 'Extracted' }] })
+        )
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    vi.stubEnv('TAVILY_API_KEY', 'test-tavily-key')
+    vi.stubEnv('FETCH_REGULAR_VIA_API', 'true')
+
+    const result = fetchTool.execute?.(
+      { url, type: 'regular' },
+      { toolCallId: 'fetch', messages: [], context: {} }
+    )
+    const iterator = (result as AsyncIterable<unknown>)[Symbol.asyncIterator]()
+    await iterator.next()
+    const complete = await iterator.next()
+
+    expect(fetchMock.mock.calls).toHaveLength(1)
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://api.tavily.com/extract')
+    expect(complete.value).toMatchObject({
+      results: [{ content: 'Extracted', url }]
+    })
+  })
+
   it('rejects an unsuccessful crawl4ai response', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     fetchCrawl4ai(
