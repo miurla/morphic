@@ -506,6 +506,16 @@ To keep the server from requesting pages itself, send the `regular` fetch type t
 FETCH_REGULAR_VIA_API=true
 ```
 
+### Maintenance Mode
+
+To take the instance offline while running a long database migration:
+
+```bash
+MAINTENANCE_MODE=true
+```
+
+Every page then returns a static maintenance page and every API route returns `503` JSON. Paths the proxy matcher skips (static assets, image-extension paths and `/api/favicon`) are still served. The value is read at request time, but most hosts (including Vercel) apply an environment change only on the next deployment.
+
 ### Source Favicons
 
 Favicons for cited sources are fetched by the server and served from your own origin at `/api/favicon`, so a visitor's browser never tells the icon provider which sources a result cites. Responses are cached in memory and at the edge.
