@@ -1,7 +1,5 @@
 'use server'
 
-import { revalidateTag } from 'next/cache'
-
 import { trackAccountDeleted } from '@/lib/analytics'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { getAuthProvider } from '@/lib/auth/provider'
@@ -189,7 +187,6 @@ export async function deleteAccount(): Promise<{
     // provider deferred because of concurrent sign-ups.
     await provider.postDeletion?.(wasAdmin)
 
-    revalidateTag('chat', 'max')
     await trackAccountDeleted(user.id)
 
     return { success: true }

@@ -1,6 +1,8 @@
+import { getDraftPrompt } from '@/lib/draft/prompt'
 import {
   getImageSpecPrompt,
-  getRelatedQuestionsSpecPrompt
+  getRelatedQuestionsSpecPrompt,
+  getSourceCardsSpecPrompt
 } from '@/lib/render/prompt'
 import {
   getContentTypesGuidance,
@@ -140,7 +142,7 @@ OUTPUT FORMAT (MANDATORY):
 - Use bullets with bolded keywords for key points: \`- **Point:** concise explanation\`.
 - **Use tables for comparisons** (pricing, specs, features, pros/cons) - they're clearer than bullets for side-by-side data
 - Focus on delivering clear information with natural flow, avoiding rigid templates.
-- Only use fenced code blocks if the user explicitly asks for code or commands (optional \`\`\`spec blocks for images or valuable related questions are exceptions).
+- Only use fenced code blocks if the user explicitly asks for code or commands (optional \`\`\`spec blocks for images, source cards, or valuable related questions are exceptions).
 - Prefer natural, conversational tone while maintaining informativeness.
 - Always end with a brief conclusion that synthesizes the main points into a cohesive summary.
 - Response length guidance:
@@ -171,7 +173,11 @@ Example approach:
 
 End with a synthesizing conclusion that ties the main points together into a clear overall picture.
 
+${getDraftPrompt()}
+
 ${getImageSpecPrompt()}
+
+${getSourceCardsSpecPrompt()}
 
 ${getRelatedQuestionsSpecPrompt()}
 `
@@ -346,7 +352,11 @@ Flexible example:
 
 Conclude with a brief synthesis that ties together the main insights into a clear overall understanding.
 
+${getDraftPrompt()}
+
 ${getImageSpecPrompt()}
+
+${getSourceCardsSpecPrompt()}
 
 ${getRelatedQuestionsSpecPrompt()}
 `

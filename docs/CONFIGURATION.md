@@ -500,6 +500,12 @@ FETCH_ALLOW_PRIVATE_NETWORK=true
 
 Leave this off on any instance others can reach. With it on, whoever can send a prompt can read whatever the host can reach.
 
+To keep the server from requesting pages itself, send the `regular` fetch type through the extraction service (Jina Reader if `JINA_API_KEY` is set, otherwise Tavily Extract):
+
+```bash
+FETCH_REGULAR_VIA_API=true
+```
+
 ### Source Favicons
 
 Favicons for cited sources are fetched by the server and served from your own origin at `/api/favicon`, so a visitor's browser never tells the icon provider which sources a result cites. Responses are cached in memory and at the edge.

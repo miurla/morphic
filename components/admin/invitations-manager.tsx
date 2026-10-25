@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 import {
   createInvitationAction,
@@ -17,6 +18,7 @@ export function InvitationsManager({
 }: {
   invitations: InvitationView[]
 }) {
+  const router = useRouter()
   const [invitations, setInvitations] = useState(initialInvitations)
   // Expiration is computed server-side when the list is rendered, and
   // each row shows its exact expiry time. The server rejects expired
@@ -42,6 +44,7 @@ export function InvitationsManager({
         setInvitations(current => [result.invitation!, ...current])
         setNewLink(result.link ?? null)
         setEmail('')
+        router.refresh()
       } else {
         setError(result.error ?? 'Failed to create invitation')
       }
@@ -65,6 +68,7 @@ export function InvitationsManager({
       return
     }
     if (result.success) {
+      router.refresh()
       setInvitations(current =>
         current.map(invitation =>
           invitation.id === id ? { ...invitation, revoked: true } : invitation

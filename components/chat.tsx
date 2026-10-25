@@ -1,14 +1,24 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react'
 import { useRouter } from 'next/navigation'
 
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
 import { toast } from 'sonner'
 
 import { summarizeGenui } from '@/lib/analytics/genui-summary'
-import { captureClient, getDistinctId } from '@/lib/analytics/posthog-client'
+import { captureClient } from '@/lib/analytics/posthog-client'
+import { type ChatHandlers, ChatStore, chatStore } from '@/lib/chat-store'
+import { useAppUser } from '@/lib/contexts/app-user-context'
 import { ChatProvider } from '@/lib/contexts/chat-context'
 import { generateId } from '@/lib/db/schema'
 import {
@@ -36,8 +46,12 @@ import { getTextFromParts } from '@/lib/utils/message-utils'
 
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
 
+import { registerDraftSource, unregisterDraftSource } from './draft/draft-store'
+import { Button } from './ui/button'
+import { Card, CardDescription, CardFooter, CardHeader } from './ui/card'
 import { ChatMessages } from './chat-messages'
 import { ChatPanel } from './chat-panel'
+import { DefaultSkeleton } from './default-skeleton'
 import { DragOverlay } from './drag-overlay'
 import { ErrorModal } from './error-modal'
 import { UsageBudgetWarning, useUsageBudget } from './usage-budget-provider'
@@ -51,7 +65,7 @@ interface ChatSection {
 
 export function Chat({
   id: providedId,
-  savedMessages = [],
+  savedMessages,
   query,
   isGuest = false,
   isCloudDeployment = false,
@@ -79,6 +93,12 @@ export function Chat({
   // - If providedId exists (e.g., /search/[id]), use it for existing chats
   // - Otherwise, generate a new ID (e.g., / homepage for new chats)
   const [chatId, setChatId] = useState(() => providedId || generateId())
+
+  const [previousId, setPreviousId] = useState(providedId)
+  if (previousId !== providedId) {
+    setPreviousId(providedId)
+    if (providedId) setChatId(providedId)
+  }
 
   // Callback to reset chat state when user clicks "New" button
   const handleNewChat = () => {
@@ -138,112 +158,140 @@ export function Chat({
     [isGuest, isCloudDeployment]
   )
 
+  const user = useAppUser()
+  const { store, entry } = useMemo(() => {
+    const store =
+      isGuest || typeof window === 'undefined' ? new ChatStore() : chatStore
+    store.setUser(user?.id ?? null)
+    const entry = store.getOrCreate(chatId, {
+      messages: chatId === providedId ? savedMessages : undefined,
+      isNew: chatId !== providedId || !!query,
+      isGuest
+    })
+    return { store, entry }
+  }, [chatId, providedId, user?.id, savedMessages, isGuest, query])
+  useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot)
+  const handlersRef = useRef<ChatHandlers>({})
+  useEffect(() => {
+    handlersRef.current = {
+      onFinish: ({ message, isError }) => {
+        isStreamingRef.current = false
+        if (isError) return
+        if (usageBudgetEnabled) void refreshUsage()
+
+        const summary = summarizeGenui(getTextFromParts(message.parts))
+        if (summary) {
+          captureClient('genui_component_shown', { chatId, ...summary })
+        }
+      },
+      onError: error => {
+        isStreamingRef.current = false
+        const publicError = toPublicErrorPayload(error)
+
+        if (
+          usageBudgetEnabled &&
+          publicError.code === 'usage_limit' &&
+          publicError.reason !== 'hourly'
+        ) {
+          const resetAt = publicError.resetAt
+            ? new Date(publicError.resetAt).toISOString()
+            : undefined
+          void refreshUsage().then(usage => {
+            showUsageLimit(usage?.resetAt ?? resetAt)
+          })
+        } else if (publicError.type === 'rate-limit') {
+          if (usageBudgetEnabled) void refreshUsage()
+          setErrorModal({
+            open: true,
+            type: 'rate-limit',
+            message: publicError.error,
+            details: getPublicRateLimitDetails(publicError)
+          })
+        } else if (publicError.type === 'auth') {
+          if (usageBudgetEnabled) void refreshUsage()
+          setErrorModal({
+            open: true,
+            type: 'auth',
+            message: publicError.error
+          })
+        } else if (publicError.type === 'forbidden') {
+          if (usageBudgetEnabled) void refreshUsage()
+          setErrorModal({
+            open: true,
+            type: 'forbidden',
+            message: publicError.error
+          })
+        } else {
+          if (usageBudgetEnabled) void refreshUsage()
+          toast.error(publicError.error)
+        }
+      }
+    }
+  })
+  const handlers = useMemo<ChatHandlers>(
+    () => ({
+      onFinish: event => handlersRef.current.onFinish?.(event),
+      onError: error => handlersRef.current.onError?.(error)
+    }),
+    []
+  )
+  useEffect(() => {
+    if (
+      (entry.chat.status === 'submitted' ||
+        entry.chat.status === 'streaming') &&
+      !entry.handlers.current.onFinish &&
+      !entry.handlers.current.onError
+    ) {
+      store.attachHandlers(entry, handlers)
+    }
+    return () => {
+      if (entry.handlers.current === handlers) entry.handlers.current = {}
+      if (isGuest) void entry.chat.stop()
+    }
+  }, [store, entry, handlers, isGuest])
+  useEffect(() => {
+    void store.revalidate(chatId)
+  }, [store, entry, chatId])
   const {
     messages,
     status,
     setMessages,
-    stop,
     sendMessage,
     regenerate,
     addToolResult,
     error
-  } = useChat({
-    id: chatId, // use the client-generated or provided chatId
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-      prepareSendMessagesRequest: ({ messages, trigger, messageId, body }) => {
-        // Simplify by passing AI SDK's default trigger values directly
-        const lastMessage = messages[messages.length - 1]
-        const messageToRegenerate =
-          trigger === 'regenerate-message'
-            ? messages.find(m => m.id === messageId)
-            : undefined
-
-        return {
-          body: {
-            ...body,
-            trigger, // Use AI SDK's default trigger value directly
-            chatId: chatId,
-            messageId,
-            clientSource: 'web',
-            analyticsId: getDistinctId(),
-            ...(isGuest ? { messages } : {}),
-            message:
-              trigger === 'regenerate-message' &&
-              messageToRegenerate?.role === 'user'
-                ? messageToRegenerate
-                : trigger === 'submit-message'
-                  ? lastMessage
-                  : undefined,
-            isNewChat:
-              trigger === 'submit-message' &&
-              messages.length === 1 &&
-              savedMessages.length === 0
-          }
-        }
-      }
-    }),
-    messages: savedMessages,
-    onFinish: ({ message }) => {
+  } = useChat({ chat: entry.chat, throttle: 100 })
+  useEffect(() => {
+    if (status === 'ready' || status === 'error') {
       isStreamingRef.current = false
-      if (usageBudgetEnabled) void refreshUsage()
-      window.dispatchEvent(new CustomEvent('chat-history-updated'))
-
-      const summary = summarizeGenui(getTextFromParts(message.parts))
-      if (summary) {
-        captureClient('genui_component_shown', { chatId, ...summary })
-      }
-    },
-    onError: error => {
-      isStreamingRef.current = false
-      const publicError = toPublicErrorPayload(error)
-
-      if (
-        usageBudgetEnabled &&
-        publicError.code === 'usage_limit' &&
-        publicError.reason !== 'hourly'
-      ) {
-        const resetAt = publicError.resetAt
-          ? new Date(publicError.resetAt).toISOString()
-          : undefined
-        void refreshUsage().then(usage => {
-          showUsageLimit(usage?.resetAt ?? resetAt)
-        })
-      } else if (publicError.type === 'rate-limit') {
-        if (usageBudgetEnabled) void refreshUsage()
-        setErrorModal({
-          open: true,
-          type: 'rate-limit',
-          message: publicError.error,
-          details: getPublicRateLimitDetails(publicError)
-        })
-      } else if (publicError.type === 'auth') {
-        if (usageBudgetEnabled) void refreshUsage()
-        setErrorModal({
-          open: true,
-          type: 'auth',
-          message: publicError.error
-        })
-      } else if (publicError.type === 'forbidden') {
-        if (usageBudgetEnabled) void refreshUsage()
-        setErrorModal({
-          open: true,
-          type: 'forbidden',
-          message: publicError.error
-        })
-      } else {
-        if (usageBudgetEnabled) void refreshUsage()
-        toast.error(publicError.error)
-      }
-    },
-    throttle: 100,
-    generateId
-  })
+    }
+  }, [status])
+  const stop = useCallback(() => {
+    store.invalidate(chatId)
+    return entry.chat.stop()
+  }, [store, chatId, entry])
+  const isHistoryPending =
+    entry.verifiedAt === 0 && !entry.hasServerHistory && messages.length === 0
+  const sendingBlocked =
+    (entry.verifiedAt === 0 && (!!entry.fetching || !!entry.error)) ||
+    (entry.verifiedAt === 0 &&
+      !entry.hasServerHistory &&
+      messages.length === 0 &&
+      chatId === providedId)
+  const canSend = useCallback(
+    () =>
+      !(entry.verifiedAt === 0 && (entry.fetching || entry.error)) &&
+      !sendingBlocked &&
+      entry.chat.status !== 'submitted' &&
+      entry.chat.status !== 'streaming',
+    [entry, sendingBlocked]
+  )
 
   // Keep all request entry points reflected in isStreamingRef so downstream
   // action handlers can reliably reject overlapping sends.
   const safeSendMessage = useCallback<typeof sendMessage>(
     (message, options) => {
+      if (!canSend()) return Promise.resolve()
       if (isCurrentAdaptiveModeAuthBlocked()) {
         showAdaptiveModeAuthModal()
         return Promise.resolve()
@@ -252,6 +300,7 @@ export function Chat({
       isStreamingRef.current = true
       try {
         const tracksUsage = isCloudDeployment && !isGuest
+        store.attachHandlers(entry, handlers)
         const request = sendMessage(
           message,
           tracksUsage
@@ -280,12 +329,16 @@ export function Chat({
       }
     },
     [
+      canSend,
       consumeUsage,
+      entry,
+      handlers,
       isCloudDeployment,
       isCurrentAdaptiveModeAuthBlocked,
       isGuest,
       sendMessage,
       showAdaptiveModeAuthModal,
+      store,
       usageBudgetEnabled,
       usageCosts
     ]
@@ -293,6 +346,7 @@ export function Chat({
 
   const safeRegenerate = useCallback(
     async (options?: Parameters<typeof regenerate>[0]) => {
+      if (!canSend()) return Promise.resolve()
       if (isCurrentAdaptiveModeAuthBlocked()) {
         showAdaptiveModeAuthModal()
         return
@@ -301,6 +355,7 @@ export function Chat({
       isStreamingRef.current = true
       try {
         const tracksUsage = isCloudDeployment && !isGuest
+        store.attachHandlers(entry, handlers)
         const request = regenerate(
           tracksUsage
             ? {
@@ -328,12 +383,16 @@ export function Chat({
       }
     },
     [
+      canSend,
       consumeUsage,
+      entry,
+      handlers,
       isCloudDeployment,
       isCurrentAdaptiveModeAuthBlocked,
       isGuest,
       regenerate,
       showAdaptiveModeAuthModal,
+      store,
       usageBudgetEnabled,
       usageCosts
     ]
@@ -396,6 +455,33 @@ export function Chat({
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
+
+  // The draft panel sits outside this component, so register what it reads.
+  // The layout mounts a desktop and a mobile Chat; the store hands the panel
+  // whichever one is visible.
+  const draftSourceId = useId()
+  useEffect(() => {
+    registerDraftSource(draftSourceId, {
+      messages,
+      isStreaming: status === 'streaming' || status === 'submitted',
+      quote: handleQuoteContext,
+      chatId,
+      isGuest,
+      isCloudDeployment,
+      libraryAvailable,
+      isVisible: () => Boolean(scrollContainerRef.current?.offsetParent)
+    })
+  }, [
+    draftSourceId,
+    messages,
+    status,
+    handleQuoteContext,
+    chatId,
+    isGuest,
+    isCloudDeployment,
+    libraryAvailable
+  ])
+  useEffect(() => () => unregisterDraftSource(draftSourceId), [draftSourceId])
 
   useEffect(() => {
     const handleCopyMessage = (e: Event) => {
@@ -482,6 +568,16 @@ export function Chat({
     return () => cancelAnimationFrame(frame)
   }, [messages])
 
+  // History can arrive after mount, so open each saved chat at its end once
+  const openedChatIdRef = useRef<string | null>(null)
+  useLayoutEffect(() => {
+    if (openedChatIdRef.current === chatId || messages.length === 0) return
+    openedChatIdRef.current = chatId
+    if (entry.createdLocally && !entry.hasServerHistory) return
+    const container = scrollContainerRef.current
+    if (container) container.scrollTop = container.scrollHeight
+  }, [chatId, messages.length, entry])
+
   // Scroll to the section when a new user message is sent
   useEffect(() => {
     // Only scroll if this chat is currently visible in the URL
@@ -506,6 +602,7 @@ export function Chat({
     editedMessageId: string,
     newContentText: string
   ) => {
+    if (!canSend()) return
     if (!chatId) {
       toast.error('Chat ID is missing.')
       console.error('handleUpdateAndReloadMessage: chatId is undefined.')
@@ -566,6 +663,7 @@ export function Chat({
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!canSend()) return
 
     const uploaded = uploadedFiles.filter(f => f.status === 'uploaded')
 
@@ -625,7 +723,9 @@ export function Chat({
       <div
         className={cn(
           'relative flex h-full min-w-0 flex-1 flex-col',
-          messages.length === 0 ? 'items-center justify-center' : ''
+          messages.length === 0 && !isHistoryPending
+            ? 'items-center justify-center'
+            : ''
         )}
         data-testid="full-chat"
         onDragOver={dragHandlers.handleDragOver}
@@ -681,9 +781,38 @@ export function Chat({
           error={error}
           onQuoteContext={handleQuoteContext}
         />
+        {isHistoryPending && !entry.error && (
+          <div
+            role="status"
+            aria-label="Loading chat"
+            className="mx-auto w-full max-w-3xl px-4 pt-12"
+          >
+            <DefaultSkeleton />
+          </div>
+        )}
+        {entry.error && (
+          <div className="mx-auto w-full max-w-3xl px-4 pt-12">
+            <Card role="alert">
+              <CardHeader>
+                <CardDescription>{entry.error.message}</CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void store.revalidate(chatId)}
+                >
+                  Retry
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        )}
         <UsageBudgetWarning />
         <ChatPanel
           chatId={chatId}
+          disabled={sendingBlocked}
+          isHistoryPending={isHistoryPending}
           input={input}
           handleInputChange={handleInputChange}
           handleSubmit={onSubmit}

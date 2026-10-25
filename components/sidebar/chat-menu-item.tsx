@@ -11,6 +11,7 @@ import {
 import { toast } from 'sonner'
 
 import { deleteChat } from '@/lib/actions/chat'
+import { chatStore } from '@/lib/chat-store'
 import { Chat as DBChat } from '@/lib/db/schema'
 
 import {
@@ -98,6 +99,7 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
       const result = await deleteChat(chat.id)
 
       if (result?.success) {
+        chatStore.remove(chat.id)
         toast.success('Chat deleted')
         if (isActive) {
           router.push('/')

@@ -15,9 +15,10 @@ export function getCookie(name: string): string | null {
 
   const cookies = document.cookie.split(';')
   for (const cookie of cookies) {
-    const [cookieName, cookieValue] = cookie.trim().split('=')
-    if (cookieName === name) {
-      return cookieValue
+    const entry = cookie.trim()
+    const separator = entry.indexOf('=')
+    if (separator !== -1 && entry.slice(0, separator) === name) {
+      return entry.slice(separator + 1)
     }
   }
   return null

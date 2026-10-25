@@ -1,7 +1,5 @@
 'use server'
 
-import { revalidateTag, unstable_cache } from 'next/cache'
-
 import { generateChatTitle } from '@/lib/agents/title-generator'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { getAuthProvider, isShareEnabled } from '@/lib/auth/provider'
@@ -17,26 +15,6 @@ import { getTextFromParts } from '@/lib/utils/message-utils'
 
 // Constants
 const DEFAULT_CHAT_TITLE = 'Untitled'
-
-// Create cached version of loadChatWithMessages with dynamic tags per chat
-const getCachedChatWithMessages = (
-  chatId: string,
-  requestingUserId?: string
-) => {
-  // Create a unique cache instance for each chat
-  const cachedFunction = unstable_cache(
-    async () => {
-      return dbActions.loadChatWithMessages(chatId, requestingUserId)
-    },
-    ['chat-with-messages', chatId, requestingUserId || 'anonymous'], // cache key
-    {
-      tags: [`chat-${chatId}`, 'chat'], // both specific and general tags
-      revalidate: 60 // revalidate after 60 seconds
-    }
-  )
-
-  return cachedFunction()
-}
 
 async function signChatFilePartUrls(
   chat: (Chat & { messages: UIMessage[] }) | null
@@ -73,28 +51,19 @@ export async function getChatsPage(limit = 20, offset = 0) {
   return dbActions.getChatsPage(userId, limit, offset)
 }
 
+export async function getChatMeta(
+  chatId: string,
+  requestingUserId?: string
+): Promise<Chat | null> {
+  return dbActions.getChat(chatId, requestingUserId)
+}
+
 /**
  * Load a chat with messages
  * If requestingUserId is provided, it will be used for authorization
  * Otherwise, no authorization check is performed (assumes already authorized)
  */
 export async function loadChat(
-  chatId: string,
-  requestingUserId?: string
-): Promise<(Chat & { messages: UIMessage[] }) | null> {
-  // Use cached version for individual chat loading
-  const chat = await getCachedChatWithMessages(chatId, requestingUserId)
-
-  return signChatFilePartUrls(chat)
-}
-
-/**
- * Load a chat bypassing the request cache.
- * The assistant answer is persisted after the streaming response has been
- * returned, so its revalidateTag never reaches the cache and a cached read
- * can miss the previous turn's answer.
- */
-export async function loadChatUncached(
   chatId: string,
   requestingUserId?: string
 ): Promise<(Chat & { messages: UIMessage[] }) | null> {
@@ -122,9 +91,6 @@ export async function createChat(
     userId,
     visibility: 'private'
   })
-
-  // Revalidate cache
-  revalidateTag(`chat-${chatId}`, 'max')
 
   return chat
 }
@@ -163,9 +129,6 @@ export async function createChatAndSaveMessage(
     chatId
   })
 
-  // Revalidate cache
-  revalidateTag(`chat-${chatId}`, 'max')
-
   return { chat, message: dbMessage }
 }
 
@@ -192,9 +155,6 @@ export async function createChatWithFirstMessage(
       id: messageId
     }
   })
-
-  // Revalidate cache
-  revalidateTag(`chat-${chatId}`, 'max')
 
   return result
 }
@@ -228,9 +188,6 @@ export async function upsertMessage(
     userId
   )
 
-  // Revalidate cache
-  revalidateTag(`chat-${chatId}`, 'max')
-
   return dbMessage
 }
 
@@ -244,10 +201,6 @@ export async function deleteChat(chatId: string) {
   }
 
   const result = await dbActions.deleteChat(chatId, userId)
-
-  if (result.success) {
-    revalidateTag(`chat-${chatId}`, 'max')
-  }
 
   return result
 }
@@ -267,8 +220,6 @@ export async function clearChats() {
     await dbActions.deleteChat(chat.id, userId)
   }
 
-  // Clear all chat caches since we deleted all chats
-  revalidateTag('chat', 'max')
   return { success: true }
 }
 
@@ -288,8 +239,6 @@ export async function deleteMessagesAfter(chatId: string, messageId: string) {
   }
 
   const result = await dbActions.deleteMessagesAfter(chatId, messageId)
-
-  revalidateTag(`chat-${chatId}`, 'max')
 
   return { success: true, count: result.count }
 }
@@ -324,10 +273,6 @@ export async function shareChat(chatId: string) {
     'public'
   )
 
-  if (updatedChat) {
-    revalidateTag(`chat-${chatId}`, 'max')
-  }
-
   return updatedChat
 }
 
@@ -356,8 +301,6 @@ export async function deleteMessagesFromIndex(
     userId
   )
 
-  revalidateTag(`chat-${chatId}`, 'max')
-
   return { success: true, count: result.count }
 }
 
@@ -381,6 +324,5 @@ export async function saveChatTitle(
       modelId
     })
     await dbActions.updateChatTitle(chatId, title)
-    revalidateTag(`chat-${chatId}`, 'max')
   }
 }

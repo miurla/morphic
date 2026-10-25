@@ -35,8 +35,7 @@ vi.mock('@/instrumentation', () => ({
 }))
 
 vi.mock('@/lib/actions/chat', () => ({
-  loadChat: vi.fn(),
-  loadChatUncached: vi.fn()
+  loadChat: vi.fn()
 }))
 
 vi.mock('@/lib/agents/researcher', () => ({
@@ -73,7 +72,7 @@ vi.mock('@/lib/utils/usage-logging', () => ({
   logUsage: vi.fn()
 }))
 
-import { loadChat, loadChatUncached } from '@/lib/actions/chat'
+import { loadChat } from '@/lib/actions/chat'
 import { researcher } from '@/lib/agents/researcher'
 import { DeterministicPreparationError } from '@/lib/errors/deterministic-preparation-error'
 import { serializeToolFailure, ToolFailureError } from '@/lib/errors/tool-error'
@@ -222,14 +221,13 @@ describe('createChatStreamResponse', () => {
     )
   })
 
-  it('loads an existing chat without the cache', async () => {
+  it('loads an existing chat', async () => {
     mocks.stream.mockResolvedValue(createFakeResult())
 
     await createChatStreamResponse({ ...createConfig(), isNewChat: false })
     await mocks.finishPromise
 
-    expect(loadChatUncached).toHaveBeenCalledWith('chat-id', 'user-id')
-    expect(loadChat).not.toHaveBeenCalled()
+    expect(loadChat).toHaveBeenCalledWith('chat-id', 'user-id')
   })
 
   it('does not mark the span as failed for an aborted stream error', async () => {
@@ -294,7 +292,7 @@ describe('createChatStreamResponse', () => {
   })
 
   it('maps deterministic initial chat load failures to public errors', async () => {
-    vi.mocked(loadChatUncached).mockRejectedValueOnce(
+    vi.mocked(loadChat).mockRejectedValueOnce(
       new DeterministicPreparationError(
         'Unknown part type: private-user-content'
       )

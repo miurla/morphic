@@ -25,7 +25,11 @@ export function setupTracing(): Tracing {
   const processor = new LangfuseSpanProcessor()
   registerOTel({
     serviceName: 'morphic-evals',
-    spanProcessors: [processor]
+    spanProcessors: [processor],
+    // The default fetch instrumentation corrupts non-streaming provider
+    // responses outside Next.js ("Invalid JSON response" on most multi-step
+    // generations). The AI SDK emits its own spans, so evals do not need it.
+    instrumentations: []
   })
   registerTelemetry(new LangfuseVercelAiSdkIntegration())
 

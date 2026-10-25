@@ -5,6 +5,9 @@ import { promoteMemberAction } from '@/lib/actions/admin'
 
 import { MemberRoleManager } from '@/components/admin/member-role-manager'
 
+const { refresh } = vi.hoisted(() => ({ refresh: vi.fn() }))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }))
+
 vi.mock('@/lib/actions/admin', () => ({
   promoteMemberAction: vi.fn()
 }))
@@ -29,6 +32,7 @@ describe('MemberRoleManager', () => {
     await waitFor(() => {
       expect(promoteMemberAction).toHaveBeenCalledWith({ userId: 'user-1' })
       expect(screen.getByText('Promoted')).toBeInTheDocument()
+      expect(refresh).toHaveBeenCalledOnce()
     })
     expect(
       screen.queryByRole('button', { name: 'Promote to admin' })

@@ -14,6 +14,7 @@ import {
 
 import { signOut } from '@/lib/actions/auth'
 import type { AppUser } from '@/lib/auth/types'
+import { chatStore } from '@/lib/chat-store'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -64,6 +65,7 @@ export default function UserMenu({ user }: UserMenuProps) {
 
   const handleLogout = async () => {
     await signOut()
+    chatStore.setUser(null)
     router.push('/')
     router.refresh()
   }

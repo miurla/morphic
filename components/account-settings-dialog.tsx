@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import { deleteAccount } from '@/lib/actions/account'
 import { signOut } from '@/lib/actions/auth'
 import type { AppUser } from '@/lib/auth/types'
+import { chatStore } from '@/lib/chat-store'
 import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
 
 import {
@@ -71,6 +72,7 @@ export function AccountSettingsDialog({
       const result = await deleteAccount()
 
       if (result.success) {
+        chatStore.setUser(null)
         try {
           await signOut()
         } catch (error) {

@@ -2,6 +2,8 @@
 
 import { Part, ToolPart } from '@/lib/types/ai'
 
+import { DraftPanel } from '../draft/draft-panel'
+
 import { ReasoningContent } from './reasoning-content'
 import { TodoInvocationContent } from './todo-invocation-content'
 import { ToolInvocationContent } from './tool-invocation-content'
@@ -26,6 +28,8 @@ export function ArtifactContent({ part }: { part: Part | null }) {
       return null
     case 'reasoning':
       return <ReasoningContent reasoning={part.text} />
+    case 'draft':
+      return <DraftPanel />
     default:
       return (
         <div className="p-4">Details for this part type are not available</div>

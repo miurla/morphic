@@ -1,0 +1,512 @@
+{
+  "name": "source-cards",
+  "description": "Does the answer present a set of real, linkable items as a SourceCards spec block when the user asks to find or collect them, and skip it otherwise? Search results are fixed. A listing item asks for several real things that each have their own page in the fixture. An other item asks for an explanation, steps, a comparison, a single fact, or writing, where cards would be misuse. Fixture URLs use real-looking hosts because a model reasonably refuses to present placeholder .example links as genuine items; job and clinic entries use fictional organizations. Queries are written for the eval in the shape of common production requests, not copied from user data. A roundup item has only articles that mention items, never an item's own page, so cards would link to articles: the expected answer has none. nonItemUrls lists every result that is not an item's own page; it is used for scoring and never shown to the model.",
+  "fixtures": {
+    "sql-courses": [
+      {
+        "title": "SQLBolt - Learn SQL with simple, interactive exercises",
+        "url": "https://sqlbolt.com/",
+        "content": "SQLBolt is a free series of interactive lessons and exercises that teach SQL directly in the browser, from basic SELECT queries to joins and aggregates. No account is required."
+      },
+      {
+        "title": "SQL Tutorial | Mode Analytics",
+        "url": "https://mode.com/sql-tutorial/",
+        "content": "Mode's free SQL tutorial is aimed at data analysts. Lessons use real datasets and progress from basic to advanced SQL, including window functions. Practice runs in a hosted editor."
+      },
+      {
+        "title": "Khan Academy: Intro to SQL - Querying and managing data",
+        "url": "https://www.khanacademy.org/computing/sql",
+        "content": "A free beginner course with short video talk-throughs and coding challenges covering tables, queries, joins, and modifying databases."
+      },
+      {
+        "title": "Introduction to Databases (Stanford Online)",
+        "url": "https://online.stanford.edu/courses/databases",
+        "content": "A self-paced university course on relational databases, SQL, and database design. Free to audit; a certificate costs extra."
+      },
+      {
+        "title": "Why learning SQL still matters in 2026",
+        "url": "https://www.dataweekly.com/why-sql-matters",
+        "content": "An opinion piece arguing that SQL remains the most transferable data skill, with survey figures on employer demand."
+      }
+    ],
+    "orthodontists-shibuya": [
+      {
+        "title": "Shibuya Smile Orthodontics | English-speaking orthodontist",
+        "url": "https://shibuya-smile-ortho.jp/en/",
+        "content": "Orthodontic clinic a 3-minute walk from Shibuya Station. Offers clear aligners and ceramic braces. English-speaking staff. Open Saturdays."
+      },
+      {
+        "title": "Aoyama Orthodontic Clinic - Omotesando",
+        "url": "https://aoyama-ortho.jp/",
+        "content": "Specialist orthodontic practice near Omotesando Station, between Shibuya and Aoyama. Treats children and adults; initial consultation 3,300 yen."
+      },
+      {
+        "title": "Ebisu Dental & Orthodontics",
+        "url": "https://ebisu-dental-clinic.jp/orthodontics",
+        "content": "General dentistry clinic in Ebisu, one stop from Shibuya, with an orthodontics department offering lingual braces and invisible aligners."
+      },
+      {
+        "title": "How much do braces cost in Japan?",
+        "url": "https://japanhealthguide.org/braces-cost",
+        "content": "Orthodontic treatment in Japan is usually not covered by national health insurance for adults. Total costs range from about 600,000 to 1,200,000 yen."
+      }
+    ],
+    "tunnel-spalling-papers": [
+      {
+        "title": "Spalling failure around deep tunnels in brittle rock: a field and numerical study",
+        "url": "https://www.sciencedirect.com/tunnelling/2025/spalling-deep-tunnels",
+        "content": "Tunnelling and Underground Space Technology, 2025. Combines field observations from a 1,500 m deep tunnel with discrete element modelling to predict spalling depth in granite."
+      },
+      {
+        "title": "Stress-driven spalling in hard rock: a review of prediction criteria",
+        "url": "https://www.sciencedirect.com/rmre/2024/spalling-review",
+        "content": "Rock Mechanics and Rock Engineering, 2024. Reviews empirical and numerical criteria for spalling onset and compares their accuracy across 40 case histories."
+      },
+      {
+        "title": "Acoustic emission monitoring of spalling in a brittle rock excavation",
+        "url": "https://link.springer.com/ijrmms/2026/acoustic-emission-spalling",
+        "content": "International Journal of Rock Mechanics and Mining Sciences, 2026. Uses acoustic emission sensors to detect micro-cracking before visible spalling."
+      },
+      {
+        "title": "What is rock spalling?",
+        "url": "https://en.wikipedia.org/rock-spalling",
+        "content": "Spalling is the breaking off of rock slabs from an excavation surface under high stress, common in hard, brittle rocks such as granite."
+      }
+    ],
+    "canon-drivers": [
+      {
+        "title": "Canon Support - imageCLASS MF5650 drivers and downloads",
+        "url": "https://www.usa.canon.com/mf5650/drivers",
+        "content": "Official Canon support page for the imageCLASS MF5650 with printer and scanner drivers for Windows and macOS, plus firmware updates."
+      },
+      {
+        "title": "Canon Europe: i-SENSYS MF5650 software",
+        "url": "https://www.canon-europe.com/support/mf5650",
+        "content": "Official Canon Europe download centre listing the UFRII printer driver, MF scan utility, and user manuals for the MF5650."
+      },
+      {
+        "title": "Windows Update Catalog: Canon MF5600 series driver",
+        "url": "https://www.catalog.update.microsoft.com/canon-mf5600",
+        "content": "Microsoft's update catalog hosts a signed Canon MF5600 series driver package that also covers the MF5650."
+      },
+      {
+        "title": "Fix: Canon printer offline on Windows 11",
+        "url": "https://www.techfixes.net/canon-printer-offline",
+        "content": "Troubleshooting steps for a Canon printer that shows as offline, including restarting the print spooler."
+      }
+    ],
+    "ecommerce-cms": [
+      {
+        "title": "GitHub - opencart/opencart: A free shopping cart system",
+        "url": "https://github.com/opencart/opencart",
+        "content": "OpenCart is a free, open-source PHP e-commerce platform. Runs on standard PHP/MySQL shared hosting. GPLv3. 7k stars."
+      },
+      {
+        "title": "GitHub - PrestaShop/PrestaShop: open source e-commerce",
+        "url": "https://github.com/PrestaShop/PrestaShop",
+        "content": "PrestaShop is an open-source e-commerce application written in PHP and Symfony. Works on shared hosting with PHP 8.1 and MySQL. OSL-3.0."
+      },
+      {
+        "title": "GitHub - woocommerce/woocommerce: A customizable eCommerce platform for WordPress",
+        "url": "https://github.com/woocommerce/woocommerce",
+        "content": "WooCommerce turns a WordPress site into an online store. Installs on any host that runs WordPress. GPLv3."
+      },
+      {
+        "title": "GitHub - medusajs/medusa: headless commerce engine",
+        "url": "https://github.com/medusajs/medusa",
+        "content": "Medusa is a Node.js headless commerce platform. Requires a Node server and PostgreSQL, so it does not run on typical PHP shared hosting."
+      }
+    ],
+    "remote-frontend-jobs": [
+      {
+        "title": "Senior Frontend Engineer (React) - Remote, Africa - Lumora Pay",
+        "url": "https://careers.lumorapay.com/frontend-engineer",
+        "content": "Fully remote role open to candidates in Nigeria, Ghana, and Kenya. React and TypeScript. Posted 3 days ago."
+      },
+      {
+        "title": "Frontend Developer - Remote (EMEA) | Talentbridge Africa",
+        "url": "https://talentbridge.africa/careers/frontend-developer",
+        "content": "Remote frontend developer position for engineers based in Africa, including Nigeria. Vue or React experience required. Posted 1 week ago."
+      },
+      {
+        "title": "Remote React Developer jobs in Nigeria | We Work Remotely",
+        "url": "https://weworkremotely.com/remote-react-jobs-nigeria",
+        "content": "Job board listing 24 remote React developer roles that accept applicants from Nigeria, updated daily."
+      },
+      {
+        "title": "How to land a remote tech job from Nigeria",
+        "url": "https://techcabal.com/remote-jobs-guide",
+        "content": "Advice article on building a portfolio and preparing for interviews with international remote employers."
+      }
+    ],
+    "books-like-science-of-evil": [
+      {
+        "title": "Zero Degrees of Empathy by Simon Baron-Cohen",
+        "url": "https://bookshop.org/zero-degrees-of-empathy",
+        "content": "The UK edition of The Science of Evil, arguing that cruelty is best explained by low empathy rather than evil."
+      },
+      {
+        "title": "The Psychopath Test by Jon Ronson",
+        "url": "https://bookshop.org/the-psychopath-test",
+        "content": "A journalistic exploration of psychopathy and how it is diagnosed, often recommended to readers of Baron-Cohen."
+      },
+      {
+        "title": "Behave: The Biology of Humans at Our Best and Worst by Robert Sapolsky",
+        "url": "https://bookshop.org/behave",
+        "content": "A neuroscientist explains the biological roots of violence, empathy, and cooperation across timescales."
+      },
+      {
+        "title": "Against Empathy by Paul Bloom",
+        "url": "https://bookshop.org/against-empathy",
+        "content": "A psychologist argues that empathy is a poor moral guide and makes the case for rational compassion."
+      }
+    ],
+    "poster-tools": [
+      {
+        "title": "Canva Free - Poster maker",
+        "url": "https://www.canva.com/create/posters/",
+        "content": "Free browser-based poster maker with thousands of templates. Exports high-resolution PDF for print. Some elements require a paid plan."
+      },
+      {
+        "title": "Adobe Express - Free online poster maker",
+        "url": "https://www.adobe.com/create/poster",
+        "content": "Adobe's free design tool with poster templates, stock photos, and print-quality PDF download."
+      },
+      {
+        "title": "PosterMyWall - Free poster maker",
+        "url": "https://www.postermywall.com/",
+        "content": "Template-based poster maker. Free downloads are limited to standard resolution; high-resolution print files cost a small fee."
+      },
+      {
+        "title": "Inkscape - Free and open source vector graphics editor",
+        "url": "https://inkscape.org/",
+        "content": "Desktop vector editor for Windows, macOS, and Linux. Free and open source. Produces print-ready posters at any size."
+      }
+    ],
+    "sky-blue": [
+      {
+        "title": "Why is the sky blue? | NASA Space Place",
+        "url": "https://spaceplace.nasa.gov/blue-sky",
+        "content": "Sunlight is made of many colours. Gas molecules scatter shorter blue wavelengths much more than red ones, a process called Rayleigh scattering, so blue light reaches our eyes from all directions."
+      },
+      {
+        "title": "Rayleigh scattering - Physics explained",
+        "url": "https://www.physicsclassroom.com/rayleigh-scattering",
+        "content": "Scattering intensity is inversely proportional to the fourth power of wavelength, so blue light at 450 nm scatters about 5.5 times more than red light at 700 nm."
+      },
+      {
+        "title": "Why sunsets are red",
+        "url": "https://www.weather.gov/why-sunsets-are-red",
+        "content": "At sunset light travels through more atmosphere, so most blue is scattered away and reds and oranges remain."
+      }
+    ],
+    "python-venv-macos": [
+      {
+        "title": "venv - Creation of virtual environments | Python docs",
+        "url": "https://docs.python.org/3/library/venv.html",
+        "content": "Create a virtual environment with python3 -m venv .venv, then activate it on macOS with source .venv/bin/activate. Run deactivate to leave it."
+      },
+      {
+        "title": "Installing packages using pip and virtual environments",
+        "url": "https://packaging.python.org/guides/venv",
+        "content": "After activating the environment, install packages with python -m pip install requests. Use pip freeze > requirements.txt to record dependencies."
+      },
+      {
+        "title": "Install Python on macOS with Homebrew",
+        "url": "https://formulae.brew.sh/formula/python",
+        "content": "brew install python installs the latest Python 3, which includes the venv module."
+      }
+    ],
+    "phone-cameras": [
+      {
+        "title": "iPhone 17 Pro review: camera and battery",
+        "url": "https://www.gsmarena.com/iphone-17-pro",
+        "content": "The iPhone 17 Pro has a 48 MP main camera, a 5x telephoto, and lasted 14 hours in our video playback battery test."
+      },
+      {
+        "title": "Pixel 11 Pro review",
+        "url": "https://www.gsmarena.com/pixel-11-pro",
+        "content": "Google's Pixel 11 Pro uses a 50 MP main sensor with strong night mode processing and a 5x telephoto. Battery lasted 12.5 hours in the same test."
+      },
+      {
+        "title": "Best camera phones 2026",
+        "url": "https://www.phonearena.com/best-camera-phones",
+        "content": "Our camera ranking puts the Pixel 11 Pro first for low light and the iPhone 17 Pro first for video."
+      }
+    ],
+    "berlin-wall": [
+      {
+        "title": "Fall of the Berlin Wall | History",
+        "url": "https://www.history.com/berlin-wall-falls",
+        "content": "The Berlin Wall fell on 9 November 1989, when East German authorities opened the border crossings."
+      },
+      {
+        "title": "Berlin Wall - Encyclopedia",
+        "url": "https://www.britannica.com/berlin-wall",
+        "content": "Built in 1961, the Berlin Wall divided East and West Berlin until 9 November 1989. Formal demolition began in 1990."
+      }
+    ],
+    "autumn-coffee-caption": [
+      {
+        "title": "50 fall coffee captions for Instagram",
+        "url": "https://www.shutterfly.com/fall-coffee",
+        "content": "Ideas like 'Leaves are falling, autumn is calling' and 'Pumpkin spice and everything nice' are popular for autumn coffee posts."
+      },
+      {
+        "title": "How to write Instagram captions that get engagement",
+        "url": "https://blog.hootsuite.com/instagram-captions",
+        "content": "Short captions with a question or call to action and two to five relevant hashtags tend to perform best."
+      }
+    ],
+    "mrna-vaccines": [
+      {
+        "title": "How mRNA vaccines work | CDC",
+        "url": "https://www.cdc.gov/vaccines/mrna",
+        "content": "mRNA vaccines deliver instructions that teach cells to make a harmless piece of a viral protein. The immune system recognizes the protein and builds antibodies. The mRNA breaks down within days and never enters the cell nucleus."
+      },
+      {
+        "title": "Lipid nanoparticles in mRNA delivery",
+        "url": "https://www.nature.com/lipid-nanoparticles",
+        "content": "Lipid nanoparticles protect fragile mRNA and help it enter cells, where ribosomes translate it into protein."
+      },
+      {
+        "title": "mRNA vaccine history",
+        "url": "https://www.science.org/mrna-history",
+        "content": "Decades of research on modified nucleosides made mRNA vaccines stable enough for clinical use."
+      }
+    ],
+    "fridge-mold": [
+      {
+        "title": "How to clean mold from a refrigerator gasket",
+        "url": "https://www.thespruce.com/fridge-gasket-mold",
+        "content": "Use a solution of one part white vinegar to one part water or diluted dish soap. Avoid undiluted bleach on rubber seals because it can dry and crack them."
+      },
+      {
+        "title": "Mold cleanup in your home | EPA",
+        "url": "https://www.epa.gov/mold-cleanup",
+        "content": "Scrub mold off hard surfaces with detergent and water and dry completely. Never mix bleach with ammonia or other cleaners."
+      },
+      {
+        "title": "Is 70% isopropyl alcohol effective against mold?",
+        "url": "https://www.cleaninginstitute.org/alcohol-mold",
+        "content": "70% isopropyl alcohol kills surface mold on non-porous materials but does not remove stains."
+      }
+    ],
+    "ai-news-explainer": [
+      {
+        "title": "What is retrieval-augmented generation?",
+        "url": "https://www.ibm.com/rag",
+        "content": "Retrieval-augmented generation (RAG) retrieves relevant documents at query time and passes them to a language model, so answers can cite current sources instead of relying only on training data."
+      },
+      {
+        "title": "RAG vs fine-tuning",
+        "url": "https://huggingface.co/rag-vs-fine-tuning",
+        "content": "RAG updates knowledge without retraining; fine-tuning changes model behaviour and style. Many systems combine both."
+      },
+      {
+        "title": "Vector databases explained",
+        "url": "https://www.ibm.com/vector-databases",
+        "content": "Vector databases store embeddings so a RAG system can find passages similar in meaning to the query."
+      }
+    ],
+    "budget-keyboards": [
+      {
+        "title": "The 5 Best Budget Mechanical Keyboards of 2026 - RTINGS.com",
+        "url": "https://www.rtings.com/keyboard/reviews/best/budget-mechanical",
+        "content": "Our picks under $60: the Keychron C3 Pro is the best overall budget board, the Redragon K552 is the best value tenkeyless, and the Royal Kludge RK61 is the best compact wireless option."
+      },
+      {
+        "title": "Best cheap mechanical keyboards in 2026 | Tom's Guide",
+        "url": "https://www.tomsguide.com/best-picks/best-cheap-mechanical-keyboards",
+        "content": "We tested a dozen boards under $60. Standouts include the Keychron C3 Pro, the Royal Kludge RK61, and the Akko 5075B Plus for typing feel."
+      },
+      {
+        "title": "Keychron C3 Pro QMK/VIA Wired Mechanical Keyboard",
+        "url": "https://www.keychron.com/products/keychron-c3-pro-qmk-via-wired-mechanical-keyboard",
+        "content": "Official product page. Tenkeyless wired mechanical keyboard with hot-swappable switches and QMK/VIA support. $39.99."
+      },
+      {
+        "title": "Redragon K552 KUMARA Mechanical Gaming Keyboard",
+        "url": "https://www.redragonshop.com/products/redragon-k552-kumara",
+        "content": "Official store page. 87-key tenkeyless mechanical keyboard with red LED backlight and metal frame. $34.99."
+      }
+    ],
+    "free-vpns": [
+      {
+        "title": "Free VPN - Proton VPN",
+        "url": "https://protonvpn.com/free-vpn",
+        "content": "Proton VPN's free plan has no data limit, no ads, and a strict no-logs policy. Free users can connect one device to servers in several countries."
+      },
+      {
+        "title": "Windscribe - Free VPN and Ad Block",
+        "url": "https://windscribe.com/features/free",
+        "content": "Windscribe's free plan includes 10 GB of data per month with a confirmed email and access to servers in 10 countries."
+      },
+      {
+        "title": "The best free VPNs in 2026 | CNET",
+        "url": "https://www.cnet.com/tech/services-and-software/best-free-vpn/",
+        "content": "Our ranking puts Proton VPN first for its unlimited free data. TunnelBear's free tier gives 2 GB a month, and hide.me offers 10 GB free with servers in a few locations."
+      }
+    ],
+    "roman-history-podcasts": [
+      {
+        "title": "15 Best Roman History Podcasts You Should Listen To in 2026",
+        "url": "https://www.historyhit.com/best-roman-history-podcasts/",
+        "content": "Our favourites include The History of Rome by Mike Duncan, Emperors of Rome from La Trobe University, and The Rest Is History's Roman episodes."
+      },
+      {
+        "title": "Podcasts for ancient history fans - The Guardian",
+        "url": "https://www.theguardian.com/culture/2026/mar/ancient-history-podcasts",
+        "content": "Mike Duncan's The History of Rome remains the gateway series, while Fall of Rome by Patrick Wyman covers the late empire in depth."
+      }
+    ],
+    "hike-planning-apps": [
+      {
+        "title": "The best hiking apps of 2026 | Outdoor Gear Lab",
+        "url": "https://www.outdoorgearlab.com/topics/camping-and-hiking/best-hiking-apps",
+        "content": "AllTrails is our top pick for trail discovery, Gaia GPS for offline topographic maps, and FarOut for long-distance trails like the Appalachian Trail."
+      },
+      {
+        "title": "9 apps every hiker should download - REI Co-op Journal",
+        "url": "https://www.rei.com/blog/hike/hiking-apps",
+        "content": "Download AllTrails for reviews, Gaia GPS or CalTopo for route planning, and PeakVisor to identify mountains."
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "sql-courses",
+      "category": "listing",
+      "fixture": "sql-courses",
+      "query": "Recommend some free online courses to learn SQL."
+    },
+    {
+      "id": "orthodontists",
+      "category": "listing",
+      "fixture": "orthodontists-shibuya",
+      "query": "Find orthodontic clinics near Shibuya that speak English."
+    },
+    {
+      "id": "spalling-papers",
+      "category": "listing",
+      "fixture": "tunnel-spalling-papers",
+      "query": "Find recent research papers on spalling around tunnels in brittle rock."
+    },
+    {
+      "id": "canon-drivers",
+      "category": "listing",
+      "fixture": "canon-drivers",
+      "query": "Where can I download drivers for the Canon MF5650?"
+    },
+    {
+      "id": "ecommerce-cms",
+      "category": "listing",
+      "fixture": "ecommerce-cms",
+      "query": "Find open-source e-commerce CMS projects on GitHub that run on ordinary shared hosting."
+    },
+    {
+      "id": "remote-jobs",
+      "category": "listing",
+      "fixture": "remote-frontend-jobs",
+      "query": "Find remote frontend developer jobs open to applicants in Nigeria."
+    },
+    {
+      "id": "similar-books",
+      "category": "listing",
+      "fixture": "books-like-science-of-evil",
+      "query": "Suggest books similar to The Science of Evil by Simon Baron-Cohen."
+    },
+    {
+      "id": "poster-tools",
+      "category": "listing",
+      "fixture": "poster-tools",
+      "query": "Find me free tools to make high-quality posters."
+    },
+    {
+      "id": "sky-blue",
+      "category": "other",
+      "fixture": "sky-blue",
+      "query": "Why is the sky blue?"
+    },
+    {
+      "id": "python-venv",
+      "category": "other",
+      "fixture": "python-venv-macos",
+      "query": "How do I set up a Python virtual environment on macOS?"
+    },
+    {
+      "id": "phone-compare",
+      "category": "other",
+      "fixture": "phone-cameras",
+      "query": "Compare the iPhone 17 Pro and Pixel 11 Pro cameras and battery life."
+    },
+    {
+      "id": "berlin-wall",
+      "category": "other",
+      "fixture": "berlin-wall",
+      "query": "What year did the Berlin Wall fall?"
+    },
+    {
+      "id": "coffee-caption",
+      "category": "other",
+      "fixture": "autumn-coffee-caption",
+      "query": "Write a short Instagram caption for an autumn coffee photo."
+    },
+    {
+      "id": "mrna",
+      "category": "other",
+      "fixture": "mrna-vaccines",
+      "query": "Explain how mRNA vaccines work."
+    },
+    {
+      "id": "fridge-mold",
+      "category": "other",
+      "fixture": "fridge-mold",
+      "query": "There is mold on my fridge door seal. Should I use bleach, 70% alcohol, or soap?"
+    },
+    {
+      "id": "rag-explainer",
+      "category": "other",
+      "fixture": "ai-news-explainer",
+      "query": "What is retrieval-augmented generation and how is it different from fine-tuning?"
+    },
+    {
+      "id": "budget-keyboards",
+      "category": "listing",
+      "fixture": "budget-keyboards",
+      "query": "Find good budget mechanical keyboards under $60."
+    },
+    {
+      "id": "free-vpns",
+      "category": "listing",
+      "fixture": "free-vpns",
+      "query": "Find VPNs that have a genuinely free plan."
+    },
+    {
+      "id": "roman-podcasts",
+      "category": "roundup",
+      "fixture": "roman-history-podcasts",
+      "query": "Recommend some podcasts about Roman history."
+    },
+    {
+      "id": "hiking-apps",
+      "category": "roundup",
+      "fixture": "hike-planning-apps",
+      "query": "Suggest apps for planning hikes."
+    }
+  ],
+  "nonItemUrls": [
+    "https://www.dataweekly.com/why-sql-matters",
+    "https://japanhealthguide.org/braces-cost",
+    "https://en.wikipedia.org/rock-spalling",
+    "https://www.techfixes.net/canon-printer-offline",
+    "https://techcabal.com/remote-jobs-guide",
+    "https://www.rtings.com/keyboard/reviews/best/budget-mechanical",
+    "https://www.tomsguide.com/best-picks/best-cheap-mechanical-keyboards",
+    "https://www.cnet.com/tech/services-and-software/best-free-vpn/",
+    "https://www.historyhit.com/best-roman-history-podcasts/",
+    "https://www.theguardian.com/culture/2026/mar/ancient-history-podcasts",
+    "https://www.outdoorgearlab.com/topics/camping-and-hiking/best-hiking-apps",
+    "https://www.rei.com/blog/hike/hiking-apps"
+  ]
+}

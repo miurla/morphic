@@ -82,6 +82,8 @@ function getSearchModeSnapshot(): SearchMode {
 }
 
 interface ChatPanelProps {
+  disabled?: boolean
+  isHistoryPending?: boolean
   chatId: string
   input: string
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
@@ -115,6 +117,8 @@ interface ChatPanelProps {
 }
 
 export function ChatPanel({
+  disabled = false,
+  isHistoryPending = false,
   chatId,
   input,
   handleInputChange,
@@ -207,7 +211,7 @@ export function ChatPanel({
   }, [uploadedFiles])
 
   const handleNewChat = useCallback(() => {
-    setMessages([])
+    if (!onNewChat) setMessages([])
     closeArtifact()
     // Reset focus state when clearing chat
     setIsInputFocused(false)
@@ -447,6 +451,8 @@ export function ChatPanel({
       })
     }
   }
+
+  if (isHistoryPending) return null
 
   return (
     <div
@@ -784,7 +790,7 @@ export function ChatPanel({
             placeholder={messages.length > 0 ? 'Reply...' : 'Ask anything...'}
             spellCheck={false}
             value={input}
-            disabled={isLoading || isToolInvocationInProgress()}
+            disabled={disabled || isLoading || isToolInvocationInProgress()}
             className="resize-none w-full min-h-12 bg-transparent border-0 p-3 md:p-4 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
             onChange={handleInputChange}
             onPaste={e => {
@@ -946,7 +952,9 @@ export function ChatPanel({
                   'size-8 md:size-10 rounded-full'
                 )}
                 disabled={
-                  (!hasPendingInput && !isLoading) || !hasAvailableModels
+                  disabled ||
+                  (!hasPendingInput && !isLoading) ||
+                  !hasAvailableModels
                 }
                 onClick={isLoading ? stop : undefined}
                 title={

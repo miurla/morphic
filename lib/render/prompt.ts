@@ -59,6 +59,67 @@ SPEC RULES:
 `
 }
 
+export const EXAMPLE_SOURCE_CARDS_SPEC_BLOCK = `\`\`\`spec
+{"op":"add","path":"/root","value":"cards"}
+{"op":"add","path":"/elements/cards","value":{"type":"Grid","props":{"columns":2,"gap":"sm","responsive":true},"children":["c1","c2"]}}
+{"op":"add","path":"/elements/c1","value":{"type":"Card","props":{"href":"EXAMPLE_URL_1"},"children":["c1t","c1d","c1b"]}}
+{"op":"add","path":"/elements/c1t","value":{"type":"Text","props":{"text":"SQLBolt","weight":"semibold"},"children":[]}}
+{"op":"add","path":"/elements/c1d","value":{"type":"Text","props":{"text":"Free interactive lessons that run SQL in the browser.","tone":"muted"},"children":[]}}
+{"op":"add","path":"/elements/c1b","value":{"type":"Badge","props":{"text":"Free"},"children":[]}}
+{"op":"add","path":"/elements/c2","value":{"type":"Card","props":{"href":"EXAMPLE_URL_2"},"children":["c2t","c2d"]}}
+{"op":"add","path":"/elements/c2t","value":{"type":"Text","props":{"text":"Mode SQL Tutorial","weight":"semibold"},"children":[]}}
+{"op":"add","path":"/elements/c2d","value":{"type":"Text","props":{"text":"Analytics-focused tutorial using real datasets.","tone":"muted"},"children":[]}}
+\`\`\``
+
+/**
+ * Returns the prompt section that instructs the LLM to present a set of real,
+ * linkable items found in search results as linked cards in a ```spec block.
+ */
+export function getSourceCardsSpecPrompt(): string {
+  return `
+SOURCE CARDS:
+When the user asks you to find, recommend, or collect a set of real things that each have their own web page
+(resources, websites, tools, apps, courses, papers, books, clinics, shops, places, jobs, articles), and the search
+results contain the item's own page for at least 2 of them, present those items as linked cards in a \`\`\`spec block
+instead of a bullet list.
+
+Do NOT use source cards for explanations, single facts, how-to steps, side-by-side comparisons of attributes (use a
+table), writing, translation, or code tasks. Also do NOT use them when the search results are only roundups, reviews,
+or articles that mention the items: answer with a bullet list citing those articles instead.
+
+AVAILABLE COMPONENTS FOR SOURCE CARDS:
+- Grid: { columns: 1 | 2 | 3 | 4, gap?: "xs" | "sm" | "md" | "lg", responsive?: boolean } - responsive collapses to one column on narrow screens.
+- Card: { href?: string } - A bordered container; with href the whole card links to that page and shows its domain.
+- Text: { text: string, tone?: "default" | "muted", weight?: "normal" | "semibold" }
+- Badge: { text: string } - A small label.
+
+SOURCE CARDS RULES:
+1. Wrap the cards in a Grid with columns=2 and responsive=true. Each item is one Card whose children are, in order:
+   a Text with the item's name (weight "semibold"), an optional Text with one short sentence from that result on why it
+   fits the request (tone "muted"), and an optional Badge with a short tag such as a price, location, date, or type,
+   only when the result states it.
+2. "href" is the item's OWN page: its official site, product or store page, listing, or paper page, copied verbatim
+   from the "url" field of a search result. NEVER fabricate, guess, or shorten URLs, and never add an item's page from
+   memory when it is not in the search results.
+3. A roundup, review, listicle, or news article that only mentions an item is NOT that item's page. Make a card only
+   for items whose own page is in the results; mention the others in prose without a card. If fewer than 2 items have
+   their own page, use no cards at all.
+4. Include 2–8 cards, most relevant first. Do not repeat the same items as a bullet list.
+5. Write a short lead-in sentence before the block and your analysis or recommendation after it.
+6. Place the block where the list belongs in the answer. The block must contain ONLY JSONL patches.
+
+Example:
+
+## Free ways to learn SQL
+
+These free courses let you practice queries as you go.
+
+${EXAMPLE_SOURCE_CARDS_SPEC_BLOCK}
+
+Start with SQLBolt for the basics, then move to Mode for analysis practice.
+`
+}
+
 export const EXAMPLE_IMAGE_SPEC_BLOCK = `\`\`\`spec
 {"op":"add","path":"/root","value":"grid"}
 {"op":"add","path":"/elements/grid","value":{"type":"Grid","props":{"columns":2,"gap":"sm"},"children":["img1","img2"]}}
@@ -85,7 +146,7 @@ Skip images only for genuinely abstract or text-only topics where no picture hel
 Never include irrelevant or decorative images, and never fabricate URLs.
 
 AVAILABLE COMPONENTS FOR IMAGES:
-- Grid: { columns: 1 | 2 | 3 | 4, gap?: "xs" | "sm" | "md" | "lg" } - A fixed-column container that reserves cell widths upfront so streaming images don't reflow.
+- Grid: { columns: 1 | 2 | 3 | 4, gap?: "xs" | "sm" | "md" | "lg", responsive?: boolean } - responsive collapses to one column on narrow screens. - A fixed-column container that reserves cell widths upfront so streaming images don't reflow.
 - Image: { src: string, sourceUrl?: string, title?: string, description?: string, aspectRatio?: "1:1" | "16:9" | "4:3" }
 
 IMAGE SPEC RULES:
