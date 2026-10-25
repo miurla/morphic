@@ -289,9 +289,11 @@ export async function countAuthUsers(): Promise<number> {
  * Rules for `oauth`-source `create-user` actions:
  *
  * - `AUTH_SIGNUP_MODE=invite` (or an invalid mode): reject — members of
- *   your IdP tenant are never handed an account implicitly. Invited
- *   members register through the credential flow (invitation token) and
- *   use OIDC afterwards.
+ *   your IdP tenant are never handed an account implicitly. OIDC sign-in
+ *   works only for an identity already linked to a local account; an
+ *   account created through the credential flow (invitation token) is not
+ *   linked automatically, so invited members sign in with email and
+ *   password.
  * - Open mode with an empty user table: reject — the first account can
  *   only come through the credential/bootstrap path, where the emailed
  *   bootstrap link proves ownership of `BOOTSTRAP_ADMIN_EMAIL`; an OAuth
