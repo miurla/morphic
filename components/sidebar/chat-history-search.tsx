@@ -263,6 +263,8 @@ export function ChatHistorySearch({
   const showEmpty = !isSearching && !!results && !hasAnyResults
   const thinkingItems = results?.thinking
   const showThinkingSection = thinkingRequested && thinkingItems !== undefined
+  // Offer the opt-in only once the main results have arrived
+  const showThinkingButton = !!results && !isSearching && !showThinkingSection
 
   return (
     <Command
@@ -339,7 +341,7 @@ export function ChatHistorySearch({
           </CommandGroup>
         )}
       </CommandList>
-      {!showThinkingSection && (
+      {showThinkingButton && (
         <button
           type="button"
           onClick={handleSearchThinking}
