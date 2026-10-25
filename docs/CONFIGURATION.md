@@ -514,7 +514,7 @@ To take the instance offline while running a long database migration:
 MAINTENANCE_MODE=true
 ```
 
-Every page then returns a static maintenance page and every API route returns `503` JSON. Nothing reaches the database. The value is read at request time, but most hosts (including Vercel) apply an environment change only on the next deployment.
+Every page then returns a static maintenance page and every API route returns `503` JSON. Paths the proxy matcher skips (static assets, image-extension paths and `/api/favicon`) are still served. The value is read at request time, but most hosts (including Vercel) apply an environment change only on the next deployment.
 
 ### Source Favicons
 
