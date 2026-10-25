@@ -13,6 +13,7 @@ import {
   sql
 } from 'drizzle-orm'
 
+import { HL_START, HL_STOP } from '@/lib/render/highlight-markers'
 import type { UIMessage } from '@/lib/types/ai'
 import type { PersistableUIMessage } from '@/lib/types/message-persistence'
 import {
@@ -22,6 +23,10 @@ import {
 } from '@/lib/utils/message-mapping'
 import { perfLog, perfTime } from '@/lib/utils/perf-logging'
 import { incrementDbOperationCount } from '@/lib/utils/perf-tracking'
+import {
+  MIN_QUERY_LENGTH,
+  normalizeSearchQuery
+} from '@/lib/utils/search-query'
 
 import type {
   Chat,
@@ -159,11 +164,17 @@ export async function loadChat(
   userId?: string
 ): Promise<UIMessage[]> {
   return withOptionalRLS(userId || null, async tx => {
-    // Use Drizzle's query API with relations
+    // Use Drizzle's query API with relations. The tsvector columns are
+    // projected out: they are only used by the search SQL and would
+    // otherwise be transported on every chat open.
     const result = await tx.query.messages.findMany({
       where: eq(messages.chatId, chatId),
       with: {
         parts: {
+          columns: {
+            search: false,
+            searchReasoning: false
+          },
           orderBy: [asc(parts.order)]
         }
       },
@@ -193,6 +204,10 @@ export async function loadChatWithMessages(
         where: eq(messages.chatId, chatId),
         with: {
           parts: {
+            columns: {
+              search: false,
+              searchReasoning: false
+            },
             orderBy: [asc(parts.order)]
           }
         },
@@ -368,6 +383,155 @@ export async function getChatsPage(
     console.error('Error fetching chat page:', error)
     return { chats: [], nextOffset: null }
   }
+}
+
+/**
+ * Search chat titles for a user (case-insensitive substring match), newest first.
+ */
+export async function searchChatTitles(
+  userId: string,
+  query: string,
+  limit = 20
+): Promise<Chat[]> {
+  const trimmed = normalizeSearchQuery(query)
+  if (!trimmed) {
+    return []
+  }
+  // Escape ILIKE wildcards so user input matches literally
+  const pattern = `%${escapeLikePattern(trimmed)}%`
+
+  return withRLS(userId, async tx => {
+    return tx
+      .select()
+      .from(chats)
+      .where(and(eq(chats.userId, userId), ilike(chats.title, pattern)))
+      .orderBy(desc(chats.createdAt))
+      .limit(Math.max(1, Math.min(limit, 50)))
+  })
+}
+
+export type ChatContentSearchResult = {
+  chatId: string
+  title: string
+  snippet: string
+}
+
+// Whitelisted column pairs for the full-text search scopes (never user input)
+const FTS_SCOPES = {
+  content: { tsvectorColumn: 'search', textColumn: 'text_text' },
+  reasoning: {
+    tsvectorColumn: 'search_reasoning',
+    textColumn: 'reasoning_text'
+  }
+} as const
+
+// Keep in sync with the generated tsvector columns in lib/db/schema.ts:
+// only the first 100k characters of a part are indexed, so matches can
+// only exist inside that prefix. ts_headline must tokenize the same
+// bounded document, or oversized parts make every search pay CPU and
+// memory in proportion to text that can never match.
+const FTS_TEXT_CAP = 100_000
+
+type FtsSearchScope = keyof typeof FTS_SCOPES
+
+/**
+ * Full-text search over message parts of the user's chats.
+ * The tsquery is built from the FTS parser's own lexemes (language-neutral
+ * `simple` config): each query word becomes an OR group of a forward prefix
+ * (`word:*`) plus its exact proper prefixes of at least 3 characters, so
+ * "chats" also finds "chat". Keeps the best-scoring part per chat (DISTINCT ON
+ * + ts_rank), with a ts_headline snippet containing <b></b> highlight markers.
+ * Ties on rank are broken by newest chat first.
+ */
+async function searchChatParts(
+  userId: string,
+  query: string,
+  limit: number,
+  scope: FtsSearchScope
+): Promise<ChatContentSearchResult[]> {
+  const trimmed = normalizeSearchQuery(query)
+  if (!trimmed) {
+    return []
+  }
+
+  const { tsvectorColumn, textColumn } = FTS_SCOPES[scope]
+  const tsvectorCol = sql.identifier(tsvectorColumn)
+  const textCol = sql.identifier(textColumn)
+  const pageLimit = Math.max(1, Math.min(limit, 50))
+
+  return withRLS(userId, async tx => {
+    const rows = await tx.execute<{
+      chat_id: string
+      title: string
+      snippet: string
+    }>(sql`
+      WITH fts_query AS (
+        SELECT ('(' || string_agg(
+          '(' || quote_nullable(l) || ':*' ||
+          coalesce((SELECT string_agg(' | ' || quote_nullable(left(l, g)), '' ORDER BY g)
+                    FROM generate_series(3, length(l) - 1) g), '') || ')',
+          ' & ') || ')')::tsquery AS q
+        FROM unnest(tsvector_to_array(to_tsvector('simple', ${trimmed}))) l
+        -- The parser can drop punctuation, so the raw-length minimum does
+        -- not bound the parsed lexemes: require at least one lexeme of the
+        -- minimum length or the query becomes a broad single-character
+        -- prefix scan (empty lexeme set yields NULL q via the aggregate).
+        HAVING bool_or(length(l) >= ${MIN_QUERY_LENGTH})
+      ),
+      ranked AS (
+        SELECT DISTINCT ON (c.id)
+          c.id AS chat_id,
+          c.title AS title,
+          c.created_at AS chat_created_at,
+          ts_rank(p.${tsvectorCol}, fts_query.q) AS match_rank,
+          ts_headline(
+            'simple',
+            left(coalesce(p.${textCol}, ''), ${FTS_TEXT_CAP}),
+            fts_query.q,
+            ${`MaxWords=14, MinWords=7, StartSel=${HL_START}, StopSel=${HL_STOP}`}
+          ) AS snippet
+        FROM fts_query
+        CROSS JOIN ${parts} p
+        JOIN ${messages} msg ON msg.id = p.message_id
+        JOIN ${chats} c ON c.id = msg.chat_id
+        WHERE c.user_id = ${userId}
+          AND p.${tsvectorCol} @@ fts_query.q
+        ORDER BY c.id, match_rank DESC, p.id
+      )
+      SELECT chat_id, title, snippet
+      FROM ranked
+      ORDER BY match_rank DESC, chat_created_at DESC
+      LIMIT ${pageLimit}
+    `)
+
+    return (rows as unknown as Array<Record<string, string>>).map(row => ({
+      chatId: row.chat_id,
+      title: row.title,
+      snippet: row.snippet
+    }))
+  })
+}
+
+/**
+ * Full-text search over user/assistant message text of the user's chats.
+ */
+export async function searchChatContent(
+  userId: string,
+  query: string,
+  limit = 20
+): Promise<ChatContentSearchResult[]> {
+  return searchChatParts(userId, query, limit, 'content')
+}
+
+/**
+ * Full-text search over stored reasoning output of the user's chats.
+ */
+export async function searchChatReasoning(
+  userId: string,
+  query: string,
+  limit = 10
+): Promise<ChatContentSearchResult[]> {
+  return searchChatParts(userId, query, limit, 'reasoning')
 }
 
 /**

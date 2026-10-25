@@ -2,6 +2,7 @@ import { createId } from '@paralleldrive/cuid2'
 import { InferSelectModel, sql } from 'drizzle-orm'
 import {
   check,
+  customType,
   index,
   integer,
   json,
@@ -19,6 +20,13 @@ const ID_LENGTH = 191
 const USER_ID_LENGTH = 255
 const VARCHAR_LENGTH = 256
 const FILENAME_LENGTH = 1024
+
+// Postgres tsvector type (no built-in drizzle type)
+const tsvector = customType<{ data: string }>({
+  dataType() {
+    return 'tsvector'
+  }
+})
 
 // ID generation function
 export const generateId = () => createId()
@@ -199,12 +207,26 @@ export const parts = pgTable(
     // Provider metadata
     providerMetadata: json('provider_metadata').$type<Record<string, any>>(),
 
+    // Full-text search columns (maintained by Postgres, used by history
+    // search). Input is capped at 100k characters: Postgres errors on any
+    // tsvector over 1MB ("string is too long for tsvector"), which would
+    // otherwise abort migration 0020 on existing rows and fail inserts of
+    // oversized parts. Worst-case vector size at this cap is ~220KB.
+    search: tsvector('search').generatedAlwaysAs(
+      sql`to_tsvector('simple', left(coalesce(text_text, ''), 100000))`
+    ),
+    searchReasoning: tsvector('search_reasoning').generatedAlwaysAs(
+      sql`to_tsvector('simple', left(coalesce(reasoning_text, ''), 100000))`
+    ),
+
     createdAt: timestamp('created_at').notNull().defaultNow()
   },
   table => [
     // Indexes
     index('parts_message_id_idx').on(table.messageId),
     index('parts_message_id_order_idx').on(table.messageId, table.order),
+    index('parts_search_idx').using('gin', table.search),
+    index('parts_search_reasoning_idx').using('gin', table.searchReasoning),
 
     // Constraints
     check('text_text_required', sql`(type != 'text' OR text_text IS NOT NULL)`),
