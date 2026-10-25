@@ -7,6 +7,7 @@ import {
   relayTarget
 } from '@/lib/analytics/relay-target'
 import { getAuthProvider, resolveAuthProviderName } from '@/lib/auth/provider'
+import { isMaintenanceMode, maintenanceResponse } from '@/lib/maintenance'
 
 // Better Auth sends /relay through the route handler. Other providers
 // proxy straight to PostHog so analytics requests cost no function
@@ -32,6 +33,10 @@ function relayRewrite(request: NextRequest): NextResponse | null {
 }
 
 export async function proxy(request: NextRequest) {
+  if (isMaintenanceMode()) {
+    return maintenanceResponse(request.nextUrl.pathname)
+  }
+
   const relay = relayRewrite(request)
   if (relay) {
     return relay
