@@ -235,6 +235,7 @@ describe('ChatHistorySearch', () => {
           ]
         })
       )
+      .mockReturnValueOnce(jsonResponse(emptyResponse))
     vi.stubGlobal('fetch', fetchMock)
 
     const ui = render(<ChatHistorySearch query="quasars" />)
@@ -254,7 +255,8 @@ describe('ChatHistorySearch', () => {
     expect(screen.getByText('In thinking')).toBeInTheDocument()
     expect(screen.getByText('Deep chat')).toBeInTheDocument()
 
-    // A new query resets the thinking scope: section gone, button back.
+    // A new query resets the thinking scope: section gone, button back once
+    // the new results arrive.
     await typeQuery(ui, 'quasars again')
     expect(screen.queryByText('In thinking')).not.toBeInTheDocument()
     expect(
@@ -262,44 +264,17 @@ describe('ChatHistorySearch', () => {
     ).toBeInTheDocument()
   })
 
-  it('keeps thinking results when the main response resolves after them', async () => {
+  it('offers the thinking opt-in only after the main results arrive', async () => {
     const mainResponse = deferred<unknown>()
-    const thinkingResponse = deferred<unknown>()
-    const fetchMock = vi
-      .fn()
-      .mockReturnValueOnce(mainResponse.promise)
-      .mockReturnValueOnce(thinkingResponse.promise)
-    vi.stubGlobal('fetch', fetchMock)
+    vi.stubGlobal('fetch', vi.fn().mockReturnValueOnce(mainResponse.promise))
 
     render(<ChatHistorySearch query="quasars" />)
     await flush(300)
 
-    // The user opts in before the main response has resolved.
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Search thinking/ }))
-    })
+    expect(
+      screen.queryByRole('button', { name: /Search thinking/ })
+    ).not.toBeInTheDocument()
 
-    await act(async () => {
-      thinkingResponse.resolve({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          title: [],
-          content: [],
-          thinking: [
-            {
-              chatId: 'c9',
-              title: 'Deep chat',
-              snippet: 'pondering quasars',
-              highlight: `pondering ${HL_START}quasars${HL_STOP}`
-            }
-          ]
-        })
-      })
-    })
-    expect(screen.getByText('In thinking')).toBeInTheDocument()
-
-    // The main response arrives late and must not drop the thinking section.
     await act(async () => {
       mainResponse.resolve({
         ok: true,
@@ -314,8 +289,9 @@ describe('ChatHistorySearch', () => {
     })
 
     expect(screen.getByText('Chat A')).toBeInTheDocument()
-    expect(screen.getByText('In thinking')).toBeInTheDocument()
-    expect(screen.getByText('Deep chat')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Search thinking/ })
+    ).toBeInTheDocument()
   })
 
   it('aborts an in-flight thinking request on unmount', async () => {
