@@ -105,6 +105,33 @@ Fixture URLs use real-looking hosts. With `.example` hosts the adaptive model
 correctly judged the results to be placeholders and declined to present them,
 which measured the fixture instead of the prompt.
 
+## draft-edits
+
+```bash
+bun run eval:draft-edits                     # synthetic chats, plus local production seeds if present
+bun run eval:draft-edits -- --trials 3
+bun run eval:draft-edits -- --no-synthetic   # production seeds only
+```
+
+Replays one turn in a chat that already holds a draft. Each item carries the
+chat so far and goes through the same history preparation as the chat route
+(draft compaction, then `<current_draft>` attached to the latest user message),
+with its own mode's prompt, tools, and `providerOptions`. The real `editDraft`
+tool runs against the rebuilt draft, so a call is recorded exactly as
+production would apply it. Reports:
+
+- `hijackRate`: unrelated requests (a question, a keyword list) where
+  `editDraft` was called at all
+- `newBlockRate`: requests for a new piece on another topic answered with a new
+  complete draft block and no `editDraft` call
+- `editSuccessRate`: requests to change the draft that changed it, either
+  through an applied edit or a new complete block
+
+The committed dataset is synthetic. Production turns, where the hijack was
+first observed, hold users' own text, so they are built into
+`evals/_local/draft-edits-seeds.json`, which is gitignored and loaded only when
+present. Output for production items is never printed, only ids and verdicts.
+
 ## Thresholds
 
 `thresholds.json` gates CI. A `null` value means the metric is reported but not

@@ -283,7 +283,7 @@ describe('formatCurrentDraft', () => {
       messageId: 'a1'
     })
     expect(text).toBe(
-      `<current_draft title="A 'quoted' title" version="2">\nBody\n</current_draft>`
+      `The chat draft below is attached by the app, not written by the user. Change it only if the user asks to.\n<current_draft title="A 'quoted' title" version="2">\nBody\n</current_draft>`
     )
   })
 })

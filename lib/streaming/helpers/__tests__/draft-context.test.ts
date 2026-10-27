@@ -51,6 +51,9 @@ describe('attachCurrentDraft', () => {
     expect(result[0]).toBe(first)
     expect(result[2].parts).toHaveLength(2)
     expect(textOf(result[2], 1)).toContain('<current_draft title="T"')
+    expect(textOf(result[2], 1)).toMatch(
+      /^The chat draft below is attached by the app/
+    )
   })
 
   it('leaves messages alone without a draft', () => {

@@ -50,5 +50,23 @@
       "direction": "max",
       "value": null
     }
+  },
+  "draft-edits": {
+    "completionRate": {
+      "direction": "min",
+      "value": 0.9
+    },
+    "hijackRate": {
+      "direction": "max",
+      "value": null
+    },
+    "newBlockRate": {
+      "direction": "min",
+      "value": null
+    },
+    "editSuccessRate": {
+      "direction": "min",
+      "value": null
+    }
   }
 }
