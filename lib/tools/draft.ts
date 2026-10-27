@@ -8,7 +8,7 @@ export const editDraftInputSchema = z.object({
     .string()
     .optional()
     .describe(
-      'A new title, only for a draft without a top-level heading. When the draft has one, edit the heading instead.'
+      'A new title, only for a draft without a top-level heading. When the draft has one, edit the heading instead. Never use it to relabel the draft for a new topic.'
     ),
   edits: z
     .array(
@@ -33,7 +33,8 @@ export function createDraftTools(currentDraft: DraftVersion | null) {
   let current = currentDraft
 
   const editDraft = tool({
-    description: `Make local changes to the current draft (a sentence, a paragraph, the title, one section, a passage the user quoted) with exact find/replace edits.
+    description: `Use only when the user asks to change the current draft. Never use it to answer an unrelated request or to turn the draft into a different piece.
+Make local changes to the current draft (a sentence, a paragraph, the title, one section, a passage the user quoted) with exact find/replace edits.
 - Copy each find exactly from <current_draft>. It must appear exactly once; include enough surrounding text to make it unique. If edits are reported as failed, retry only those with corrected find text.
 - When the user's message quotes text from the draft (a quoted-context block), that text is what "this" refers to: change only it, and make sure each find contains it.
 - For a change across the whole draft, or more than about five places, write a new complete draft block instead.

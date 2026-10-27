@@ -407,6 +407,7 @@ export function compactDraftBlocks(text: string): string {
 /** The current draft, as attached to the latest user message for the model. */
 export function formatCurrentDraft(version: DraftVersion): string {
   return [
+    'The chat draft below is attached by the app, not written by the user. Change it only if the user asks to.',
     `<current_draft title="${version.title.replace(/"/g, "'")}" version="${version.version}">`,
     version.content,
     '</current_draft>'

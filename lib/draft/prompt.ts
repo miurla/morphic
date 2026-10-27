@@ -31,8 +31,11 @@ DRAFT RULES:
    repeat the draft's content outside the block.
 2. Do not put citation markers inside the draft. If the draft relies on search results, cite them in the sentence
    outside the block.
-3. One draft per chat. When a draft exists, the latest message carries it in <current_draft>; change it with editDraft,
-   or for a change across the whole draft (shorten, change the tone, restructure, translate), write a new complete
-   draft block.
+3. When a draft exists, the app attaches it to the latest message in <current_draft> for reference; the user did not
+   write it there. Use editDraft only when the user asks to change that draft; for a change across the whole draft
+   (shorten, change the tone, restructure, translate), write a new complete draft block instead.
+4. Answer questions, lists, explanations, and any other unrelated request normally, and leave the draft unchanged.
+   When the user asks for a new piece on another topic, write a new complete draft block. Never rename or rewrite the
+   current draft into a different piece.
 `
 }

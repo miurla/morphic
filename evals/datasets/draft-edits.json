@@ -1,0 +1,93 @@
+{
+  "description": "Turns in a chat that already holds a draft. Unrelated requests must leave the draft alone, requests for a new piece must write a new draft block, and requests to change the draft must change it.",
+  "chats": {
+    "welcome-email": {
+      "mode": "quick",
+      "messages": [
+        {
+          "role": "user",
+          "text": "Write a 120-word welcome email for new members of our running club, Riverside Striders. Don't search."
+        },
+        {
+          "role": "assistant",
+          "text": "Here is a welcome email for your new members.\n\n````draft\ntitle: Welcome email for new members\n\nSubject: Welcome to Riverside Striders!\n\nHi {name},\n\nWelcome to Riverside Striders! We're thrilled to have you join our community of runners of every pace and experience level.\n\nWe meet every Saturday at 8:00 a.m. at the boathouse for a group run along the river, with routes from 5 km to 15 km. Wednesday evenings are for easy social runs followed by coffee nearby.\n\nBefore your first run, join our members' group chat, where we post route maps, weather updates, and race plans. Bring water, comfortable shoes, and your best attitude.\n\nIf you have questions, reply to this email anytime. We can't wait to hit the trail with you.\n\nSee you Saturday,\nThe Riverside Striders Team\n````"
+        }
+      ]
+    },
+    "skillet-article": {
+      "mode": "adaptive",
+      "messages": [
+        {
+          "role": "user",
+          "text": "Write an article titled \"How to Care for a Cast Iron Skillet\" with H2 headings."
+        },
+        {
+          "role": "assistant",
+          "text": "I wrote the article with H2 sections on cleaning, drying, seasoning, and storage.\n\n````draft\ntitle: How to Care for a Cast Iron Skillet\n\n# How to Care for a Cast Iron Skillet\n\nA cast iron skillet can last for generations. It heats evenly, moves from stovetop to oven, and gets better with use. The catch is that it needs a little care that stainless steel pans do not.\n\n## Clean It While It Is Warm\n\nRinse the skillet with hot water right after cooking and scrub off food with a brush or a chain-mail scrubber. A small drop of mild dish soap is fine on a well-seasoned pan. Avoid soaking it in the sink, which invites rust.\n\n## Dry It Completely\n\nWater is the main enemy of cast iron. Towel the skillet dry, then set it over low heat for a minute or two until every trace of moisture is gone.\n\n## Season It Regularly\n\nSeasoning is a thin layer of polymerized oil that protects the iron and keeps food from sticking. Rub a very thin coat of neutral oil over the warm pan, wipe off the excess, and heat it until it just starts to smoke. Repeat whenever the surface looks dull or dry.\n\n## Store It Dry\n\nKeep the skillet in a dry cupboard. If you stack pans, put a paper towel inside to absorb moisture and protect the surface.\n\n## Fixing Rust\n\nIf rust appears, scrub it off with steel wool, wash and dry the pan, and season it two or three times. The skillet will be as good as new.\n````"
+        }
+      ]
+    }
+  },
+  "items": [
+    {
+      "id": "email-half-marathon",
+      "chat": "welcome-email",
+      "category": "unrelated",
+      "query": "How long is a half marathon in miles?"
+    },
+    {
+      "id": "email-stretches",
+      "chat": "welcome-email",
+      "category": "unrelated",
+      "query": "List 5 stretches to do before a run."
+    },
+    {
+      "id": "email-instagram-post",
+      "chat": "welcome-email",
+      "category": "new",
+      "query": "Now write a short Instagram post announcing our Saturday trail run on November 8."
+    },
+    {
+      "id": "email-warmer",
+      "chat": "welcome-email",
+      "category": "edit",
+      "query": "Make the email warmer and mention our Tuesday track sessions."
+    },
+    {
+      "id": "email-sign-off",
+      "chat": "welcome-email",
+      "category": "edit",
+      "query": "Sign it from Dana, the club captain, instead of the team."
+    },
+    {
+      "id": "skillet-smoke-point",
+      "chat": "skillet-article",
+      "category": "unrelated",
+      "query": "What is the smoke point of flaxseed oil?"
+    },
+    {
+      "id": "skillet-keywords",
+      "chat": "skillet-article",
+      "category": "unrelated",
+      "query": "Give me 9 related keywords for \"cast iron skillet\", each word capitalized."
+    },
+    {
+      "id": "skillet-new-article",
+      "chat": "skillet-article",
+      "category": "new",
+      "query": "Write a 600-word article titled \"Carbon Steel vs. Cast Iron Pans\" with H2 headings."
+    },
+    {
+      "id": "skillet-catchier-title",
+      "chat": "skillet-article",
+      "category": "edit",
+      "query": "Change the title to something catchier."
+    },
+    {
+      "id": "skillet-faq",
+      "chat": "skillet-article",
+      "category": "edit",
+      "query": "Add a FAQ section at the end with 3 questions and answers."
+    }
+  ]
+}
