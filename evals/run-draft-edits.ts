@@ -120,6 +120,15 @@ async function main() {
   )
   const thresholds = (await import('./thresholds.json')).default
 
+  // Outputs can quote production drafts, so they only go to the gitignored
+  // folder that holds the seeds.
+  const outPath =
+    args.out &&
+    path.join(path.dirname(LOCAL_SEEDS_PATH), path.basename(args.out))
+  if (outPath === LOCAL_SEEDS_PATH) {
+    throw new Error('--out must not overwrite the production seeds')
+  }
+
   const data = loadDraftEditsDataset({
     trials: args.trials,
     ids: args.ids,
@@ -165,13 +174,7 @@ async function main() {
     )
   }
 
-  // Outputs can quote production drafts, so they only go to the gitignored
-  // folder that holds the seeds.
-  if (args.out) {
-    const outPath = path.join(
-      path.dirname(LOCAL_SEEDS_PATH),
-      path.basename(args.out)
-    )
+  if (outPath) {
     mkdirSync(path.dirname(outPath), { recursive: true })
     writeFileSync(
       outPath,
