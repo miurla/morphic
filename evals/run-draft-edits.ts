@@ -76,7 +76,7 @@ function parseArgs(argv: string[]): Args {
             '  --run-name <name>     exact Langfuse run name (default: name + timestamp)',
             '  --items <a,b>         run only these item ids',
             '  --no-synthetic        run only the local production seeds',
-            '  --out <file>          write per-item results as JSON',
+            '  --out <name>          write per-item results as JSON to evals/_local/<name>',
             '  --no-gate             report metrics without failing on threshold violations'
           ].join('\n')
         )
@@ -101,7 +101,8 @@ async function main() {
   const args = parseArgs(process.argv.slice(2))
 
   // Imported after dotenv: the provider registry reads API keys at module load.
-  const { writeFileSync } = await import('fs')
+  const { mkdirSync, writeFileSync } = await import('fs')
+  const path = await import('path')
   const { LangfuseClient } = await import('@langfuse/client')
   const {
     analyzeDraftTurn,
@@ -164,9 +165,16 @@ async function main() {
     )
   }
 
+  // Outputs can quote production drafts, so they only go to the gitignored
+  // folder that holds the seeds.
   if (args.out) {
+    const outPath = path.join(
+      path.dirname(LOCAL_SEEDS_PATH),
+      path.basename(args.out)
+    )
+    mkdirSync(path.dirname(outPath), { recursive: true })
     writeFileSync(
-      args.out,
+      outPath,
       JSON.stringify(
         result.itemResults.map(itemResult => ({
           metadata: itemResult.item.metadata,
