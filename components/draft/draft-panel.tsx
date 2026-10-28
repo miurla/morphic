@@ -277,28 +277,12 @@ export function DraftPanel() {
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-1 border-t px-4 py-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Copy draft"
-          disabled={!!live}
-          onClick={copy}
-        >
-          <Copy className="size-4" />
-        </Button>
-        {showSaveButton && (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Save to library"
-            disabled={!!live || isSaving}
-            onClick={save}
-          >
-            <Bookmark className="size-4" />
-          </Button>
-        )}
-      </div>
+      <DraftFooter
+        onCopy={copy}
+        onSave={showSaveButton ? save : undefined}
+        copyDisabled={!!live}
+        saveDisabled={!!live || isSaving}
+      />
 
       <SaveNoteAuthDialog
         open={authPromptOpen}
@@ -345,5 +329,42 @@ function DraftHeader({
       </div>
       <Separator className="my-1 bg-border/50" />
     </TooltipProvider>
+  )
+}
+
+function DraftFooter({
+  onCopy,
+  onSave,
+  copyDisabled,
+  saveDisabled
+}: {
+  onCopy: () => void
+  onSave?: () => void
+  copyDisabled: boolean
+  saveDisabled: boolean
+}) {
+  return (
+    <div className="flex items-center justify-end gap-1 border-t px-4 py-2">
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Copy draft"
+        disabled={copyDisabled}
+        onClick={onCopy}
+      >
+        <Copy className="size-4" />
+      </Button>
+      {onSave && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Save to library"
+          disabled={saveDisabled}
+          onClick={onSave}
+        >
+          <Bookmark className="size-4" />
+        </Button>
+      )}
+    </div>
   )
 }
