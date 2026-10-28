@@ -7,7 +7,9 @@ import {
   IconChevronLeft as ChevronLeft,
   IconChevronRight as ChevronRight,
   IconCopy as Copy,
-  IconPencil as Pencil
+  IconFileText as FileText,
+  IconPencil as Pencil,
+  IconX as X
 } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
@@ -16,6 +18,9 @@ import { captureClient } from '@/lib/analytics/posthog-client'
 import { buildDraftVersions, draftDisplayTitle } from '@/lib/draft/draft'
 
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { TooltipButton } from '@/components/ui/tooltip-button'
 
 import { useArtifact } from '../artifact/artifact-context'
 import { useLibrary } from '../library/library-context'
@@ -102,9 +107,12 @@ export function DraftPanel() {
 
   if (!live && !shown) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No draft in this chat yet.
-      </p>
+      <>
+        <DraftHeader title="Draft" onClose={close} />
+        <p className="p-4 text-sm text-muted-foreground">
+          No draft in this chat yet.
+        </p>
+      </>
     )
   }
 
@@ -202,104 +210,79 @@ export function DraftPanel() {
         : `${content.length.toLocaleString()} characters`
 
   return (
-    <div className="flex flex-col">
-      {/* Panel chrome, kept visually apart from the document below it. */}
-      <div className="sticky -top-4 z-20 -mx-4 -mt-4 mb-4 flex flex-col gap-1.5 border-b bg-muted px-4 py-2">
-        <div className="flex items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">
-            {title || 'Draft'}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            // Same size as the panel's close button so the two icons line
-            // up; the negative margin keeps the row compact.
-            className="-my-2"
-            aria-label="Copy draft"
-            disabled={!!live}
-            onClick={copy}
-          >
-            <Copy className="size-4" />
-          </Button>
-          {showSaveButton && (
+    <>
+      <DraftHeader title={title || 'Draft'} onClose={close}>
+        {!live && versions.length > 1 && (
+          <span className="flex items-center gap-0.5">
             <Button
               variant="ghost"
               size="icon"
-              className="-my-2"
-              aria-label="Save to library"
-              disabled={!!live || isSaving}
-              onClick={save}
+              className="size-5"
+              aria-label="Previous version"
+              disabled={position <= 0}
+              onClick={() => setIndex(Math.max(0, position - 1))}
             >
-              <Bookmark className="size-4" />
+              <ChevronLeft className="size-3.5" />
+            </Button>
+            <span className="tabular-nums">
+              v{position + 1} / {versions.length}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-5"
+              aria-label="Next version"
+              disabled={position >= versions.length - 1}
+              onClick={() =>
+                setIndex(
+                  position + 1 >= versions.length - 1 ? null : position + 1
+                )
+              }
+            >
+              <ChevronRight className="size-3.5" />
+            </Button>
+          </span>
+        )}
+        <span className="tabular-nums">{status}</span>
+        {!live && (
+          <span className="flex items-center gap-1">
+            <Pencil className="size-3" />
+            Select text to edit it
+          </span>
+        )}
+      </DraftHeader>
+
+      <div data-vaul-no-drag className="flex-1 overflow-y-auto p-4">
+        <div ref={bodyRef} className="relative">
+          {anchor && quote && !live && (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="absolute z-10 h-7 gap-1 shadow-sm"
+              style={{ top: anchor.top, left: anchor.left }}
+              onMouseDown={event => event.preventDefault()}
+              onClick={() => {
+                quote(anchor.text)
+                window.getSelection()?.removeAllRanges()
+                setAnchor(null)
+                // The mobile drawer covers the composer the quote went to.
+                if (window.matchMedia('(max-width: 767px)').matches) close()
+              }}
+            >
+              <Pencil className="size-3.5" />
+              Edit this
             </Button>
           )}
-        </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          {!live && versions.length > 1 && (
-            <span className="flex items-center gap-0.5">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-5"
-                aria-label="Previous version"
-                disabled={position <= 0}
-                onClick={() => setIndex(Math.max(0, position - 1))}
-              >
-                <ChevronLeft className="size-3.5" />
-              </Button>
-              <span className="tabular-nums">
-                v{position + 1} / {versions.length}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-5"
-                aria-label="Next version"
-                disabled={position >= versions.length - 1}
-                onClick={() =>
-                  setIndex(
-                    position + 1 >= versions.length - 1 ? null : position + 1
-                  )
-                }
-              >
-                <ChevronRight className="size-3.5" />
-              </Button>
-            </span>
-          )}
-          <span className="rounded bg-background px-1.5 py-0.5 tabular-nums">
-            {status}
-          </span>
-          {!live && (
-            <span className="flex items-center gap-1">
-              <Pencil className="size-3" />
-              Select text to edit it
-            </span>
-          )}
+          <MarkdownMessage message={content} drafts={false} />
         </div>
       </div>
 
-      <div ref={bodyRef} className="relative">
-        {anchor && quote && !live && (
-          <Button
-            size="sm"
-            variant="secondary"
-            className="absolute z-10 h-7 gap-1 shadow-sm"
-            style={{ top: anchor.top, left: anchor.left }}
-            onMouseDown={event => event.preventDefault()}
-            onClick={() => {
-              quote(anchor.text)
-              window.getSelection()?.removeAllRanges()
-              setAnchor(null)
-              // The mobile drawer covers the composer the quote went to.
-              if (window.matchMedia('(max-width: 767px)').matches) close()
-            }}
-          >
-            <Pencil className="size-3.5" />
-            Edit this
-          </Button>
-        )}
-        <MarkdownMessage message={content} drafts={false} />
-      </div>
+      <DraftFooter
+        onCopy={copy}
+        onSave={showSaveButton ? save : undefined}
+        copyDisabled={!!live}
+        saveDisabled={!!live || isSaving}
+      />
 
       <SaveNoteAuthDialog
         open={authPromptOpen}
@@ -307,6 +290,81 @@ export function DraftPanel() {
         source="draft_panel"
         chatId={chatId}
       />
+    </>
+  )
+}
+
+function DraftHeader({
+  title,
+  onClose,
+  children
+}: {
+  title: string
+  onClose: () => void
+  children?: React.ReactNode
+}) {
+  return (
+    <TooltipProvider>
+      <div className="flex items-start gap-2 px-4 py-2">
+        <div className="p-2">
+          <FileText size={18} />
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-1.5">
+          <h3 className="truncate text-sm font-medium">{title}</h3>
+          {children && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              {children}
+            </div>
+          )}
+        </div>
+        <TooltipButton
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          aria-label="Close panel"
+          tooltipContent="Close"
+        >
+          <X className="size-4" />
+        </TooltipButton>
+      </div>
+      <Separator className="my-1 bg-border/50" />
+    </TooltipProvider>
+  )
+}
+
+function DraftFooter({
+  onCopy,
+  onSave,
+  copyDisabled,
+  saveDisabled
+}: {
+  onCopy: () => void
+  onSave?: () => void
+  copyDisabled: boolean
+  saveDisabled: boolean
+}) {
+  return (
+    <div className="flex items-center justify-end gap-1 border-t px-4 py-2">
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Copy draft"
+        disabled={copyDisabled}
+        onClick={onCopy}
+      >
+        <Copy className="size-4" />
+      </Button>
+      {onSave && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Save to library"
+          disabled={saveDisabled}
+          onClick={onSave}
+        >
+          <Bookmark className="size-4" />
+        </Button>
+      )}
     </div>
   )
 }
