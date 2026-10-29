@@ -139,6 +139,31 @@ Morphic's research agents rely on tool calling, so make sure any model you selec
 
 ## Search Providers
 
+### Desearch
+
+Set `SEARCH_API=desearch` and supply `DESEARCH_API_KEY` in the server environment.
+Keep the key out of client code and version control.
+
+```bash
+SEARCH_API=desearch
+DESEARCH_API_KEY=
+```
+
+The provider sends one GET request to `https://api.desearch.ai/web` with
+`query` and `num` parameters and a Bearer authorization header. It maps each
+result's `title`, `link`, and `snippet` to `title`, `url`, and `content`.
+It returns web results with an empty images array. Search depth and domain
+filters are not supported by this endpoint and are ignored.
+
+Use `type="optimized"` to select this provider through `SEARCH_API`.
+General searches use the primary provider when no dedicated general provider
+is configured.
+
+Run the mocked provider tests with
+`bun run test lib/tools/search/providers/__tests__/desearch.test.ts`.
+With the key already exported, run `bun run scripts/desearch-live_check.ts`
+for one search for `bittensor`. It prints only the result count and first title.
+
 ### SearXNG Configuration
 
 SearXNG can be used as an alternative search backend with advanced search capabilities. Docker Compose includes SearXNG automatically.
