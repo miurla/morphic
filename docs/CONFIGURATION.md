@@ -180,6 +180,17 @@ SEARXNG_LIMITER=false
 
 Modify `searxng-settings.yml` to enable/disable specific search engines, change UI settings, or adjust server options. See the [SearXNG documentation](https://docs.searxng.org/admin/settings/settings.html#settings-yml) for details.
 
+### Outcrawl
+
+[Outcrawl](https://outcrawl.ai/docs/search/overview) can be used as the search backend:
+
+```bash
+SEARCH_API=outcrawl
+OUTCRAWL_API_KEY=[YOUR_OUTCRAWL_API_KEY]
+```
+
+Basic searches return each hit's snippet. Advanced searches ask Outcrawl to render every hit and pass the first 1,000 characters of its Markdown to the model.
+
 ### Brave Search (Optional)
 
 Brave Search provides enhanced support for video and image searches:
