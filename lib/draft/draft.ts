@@ -400,11 +400,11 @@ export function compactDraftBlocks(text: string): string {
   return replaceDraftBlocks(
     text,
     ({ title, content }) =>
-      `[Draft "${title}" written here (${content.length} characters). The current version is attached to the latest user message.]`
+      `[Draft "${title}" written here (${content.length} characters). The current version is attached to a later user message.]`
   )
 }
 
-/** The current draft, as attached to the latest user message for the model. */
+/** The current draft, as attached to a user message for the model. */
 export function formatCurrentDraft(version: DraftVersion): string {
   return [
     'The chat draft below is attached by the app, not written by the user. Change it only if the user asks to.',

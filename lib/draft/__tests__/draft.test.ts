@@ -255,7 +255,7 @@ describe('compactDraftBlocks', () => {
   test('stubs a block an answer stopped inside', () => {
     const out = compactDraftBlocks('Here.\n\n````draft\ntitle: Note\n\nHalf')
     expect(out).toBe(
-      'Here.\n\n[Draft "Note" written here (4 characters). The current version is attached to the latest user message.]'
+      'Here.\n\n[Draft "Note" written here (4 characters). The current version is attached to a later user message.]'
     )
   })
 
@@ -454,7 +454,7 @@ describe('three-backtick close', () => {
   test('compacts and versions a block closed with three backticks', () => {
     const text = 'Here.\n\n````draft\ntitle: T\n\nBody\n```'
     expect(compactDraftBlocks(text)).toBe(
-      'Here.\n\n[Draft "T" written here (4 characters). The current version is attached to the latest user message.]'
+      'Here.\n\n[Draft "T" written here (4 characters). The current version is attached to a later user message.]'
     )
     expect(
       buildDraftVersions([
