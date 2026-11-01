@@ -165,6 +165,16 @@ export async function createEphemeralChatStreamResponse(
       if (
         shouldTruncateMessages(modelMessages, model, attachmentTokenEstimates)
       ) {
+        // Truncation drops old messages, and the draft must survive it
+        if (currentDraft) {
+          modelMessages = await convertToModelMessages(
+            attachCurrentDraft(messagesToConvert, currentDraft, {
+              atLatest: true
+            }),
+            { convertDataPart }
+          )
+        }
+
         const maxTokens = getMaxAllowedTokens(model)
         modelMessages = truncateMessages(
           modelMessages,
