@@ -29,6 +29,16 @@ By participating in this project, you are expected to uphold our [Code of Conduc
 5. Push to your fork
 6. Open a Pull Request
 
+### Provider and Vendor Integrations
+
+We intentionally keep the set of built-in providers small, and we do not accept PRs that:
+
+- add a new search or AI provider
+- add vendor-specific setup examples to the docs
+- add vendor-specific model IDs, ordering, or filtering to the core
+
+These PRs will be closed, and PRs that add a search provider are closed automatically. This is about maintenance surface, not any specific vendor.
+
 ### Commit Convention
 
 We use conventional commits. Examples:

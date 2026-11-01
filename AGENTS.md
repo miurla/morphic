@@ -138,6 +138,10 @@ DATABASE_URL=        # PostgreSQL connection string
 - Run `bun run test:watch` for development with watch mode
 - CI automatically runs `bun run test` to ensure all tests pass
 
+## Provider and Vendor Integrations
+
+Do not open PRs that add search or AI providers or vendor-specific integrations. See [CONTRIBUTING.md](CONTRIBUTING.md#provider-and-vendor-integrations).
+
 ## Pre-PR Requirements
 
 Before creating a pull request, you MUST ensure all of the following checks pass:
