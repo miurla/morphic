@@ -1,0 +1,31 @@
+name: Close Search Provider PRs
+
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+    branches: [main]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    name: Close PRs that add a search provider
+    if: ${{ !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association) }}
+
+    steps:
+      - name: Close if a provider class is added
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          added=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" \
+            --jq '.[] | select(.status == "added" and (.filename | test("^lib/tools/search/providers/[^/]+$")) and ((.patch // "") | test("class \\w+ (extends BaseSearchProvider|implements SearchProvider)"))) | .filename')
+
+          if [ -z "$added" ]; then
+            exit 0
+          fi
+
+          gh pr close "$PR_NUMBER" --repo "$REPO" --comment "Thanks for the PR. We intentionally keep the set of built-in search providers small and don't accept new provider implementations, so this was closed automatically. See [Provider and Vendor Integrations](https://github.com/$REPO/blob/main/CONTRIBUTING.md#provider-and-vendor-integrations). If you think this was closed by mistake, please open an issue."
