@@ -8,7 +8,7 @@ import { rejectIfBot } from '@/lib/bot-protection'
 describe('rejectIfBot', () => {
   beforeEach(() => {
     checkBotId.mockReset()
-    vi.stubEnv('NEXT_PUBLIC_ENABLE_BOTID', 'true')
+    vi.stubEnv('BOTID_ENABLED', 'true')
   })
 
   afterEach(() => {
@@ -16,7 +16,7 @@ describe('rejectIfBot', () => {
   })
 
   it('skips the check when BotID is not enabled', async () => {
-    vi.stubEnv('NEXT_PUBLIC_ENABLE_BOTID', '')
+    vi.stubEnv('BOTID_ENABLED', 'false')
 
     expect(await rejectIfBot()).toBeNull()
     expect(checkBotId).not.toHaveBeenCalled()

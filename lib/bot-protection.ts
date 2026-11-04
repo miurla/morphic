@@ -1,7 +1,6 @@
-// Vercel BotID only works on Vercel (checkBotId throws without an OIDC
-// token), so it stays off unless the deployment opts in at build time.
+// Set by next.config.mjs on Vercel builds.
 export function isBotProtectionEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_ENABLE_BOTID === 'true'
+  return process.env.BOTID_ENABLED === 'true'
 }
 
 export const BOT_PROTECTED_ROUTES = [{ path: '/api/chat', method: 'POST' }]

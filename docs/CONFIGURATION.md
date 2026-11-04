@@ -518,13 +518,7 @@ Every page then returns a static maintenance page and every API route returns `5
 
 ### Bot Protection (Vercel only)
 
-On a Vercel deployment, [Vercel BotID](https://vercel.com/docs/botid) can reject scripted requests to `POST /api/chat`:
-
-```bash
-NEXT_PUBLIC_ENABLE_BOTID=true
-```
-
-The value is read at build time. Rejected requests get `403` before any model call. If the check itself fails, the request is allowed and the error is logged. Leave it unset on other hosts, where BotID cannot run.
+Builds on Vercel enable [Vercel BotID](https://vercel.com/docs/botid) for `POST /api/chat`, so scripted requests get `403` before any model call. If the check itself fails, the request is allowed and the error is logged. Other hosts skip BotID, since it needs Vercel's OIDC token.
 
 ### Source Favicons
 
