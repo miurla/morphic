@@ -83,7 +83,7 @@
     "exa-js": "^1.0.12",
     "js-tiktoken": "^1.0.20",
     "jsdom": "^26.1.0",
-    "katex": "^0.16.10",
+    "katex": "^0.18.2",
     "next": "^16.2.6",
     "node-html-parser": "^6.1.13",
     "nodemailer": "^10.0.15",
@@ -124,6 +124,7 @@
     "node": "22.x"
   },
   "overrides": {
-    "@ai-sdk/otel": "^1.0.152"
+    "@ai-sdk/otel": "^1.0.152",
+    "katex": "^0.18.2"
   }
 }
