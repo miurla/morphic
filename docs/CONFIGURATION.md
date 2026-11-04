@@ -516,6 +516,10 @@ MAINTENANCE_MODE=true
 
 Every page then returns a static maintenance page and every API route returns `503` JSON. Paths the proxy matcher skips (static assets, image-extension paths and `/api/favicon`) are still served. The value is read at request time, but most hosts (including Vercel) apply an environment change only on the next deployment.
 
+### Bot Protection (Vercel only)
+
+Builds on Vercel enable [Vercel BotID](https://vercel.com/docs/botid) for `POST /api/chat`, so scripted requests get `403` before any model call. If the check itself fails, the request is allowed and the error is logged. Other hosts skip BotID, since it needs Vercel's OIDC token.
+
 ### Source Favicons
 
 Favicons for cited sources are fetched by the server and served from your own origin at `/api/favicon`, so a visitor's browser never tells the icon provider which sources a result cites. Responses are cached in memory and at the edge.

@@ -1,5 +1,12 @@
+import { withBotId } from 'botid/next/config'
+
+// BotID needs Vercel's OIDC token, so it only runs on Vercel. VERCEL is set
+// at build time there; env inlines the result into the client bundle too.
+const botIdEnabled = process.env.VERCEL === '1'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: { BOTID_ENABLED: botIdEnabled ? 'true' : 'false' },
   skipTrailingSlashRedirect: true,
   experimental: {
     staleTimes: { dynamic: 300 }
@@ -47,4 +54,4 @@ const nextConfig = {
   }
 }
 
-export default nextConfig
+export default botIdEnabled ? withBotId(nextConfig) : nextConfig
