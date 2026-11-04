@@ -1,3 +1,5 @@
+import { withBotId } from 'botid/next/config'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   skipTrailingSlashRedirect: true,
@@ -47,4 +49,6 @@ const nextConfig = {
   }
 }
 
-export default nextConfig
+export default process.env.NEXT_PUBLIC_ENABLE_BOTID === 'true'
+  ? withBotId(nextConfig)
+  : nextConfig

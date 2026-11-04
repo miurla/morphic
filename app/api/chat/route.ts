@@ -9,6 +9,7 @@ import {
 } from '@/lib/analytics'
 import { getCurrentUser, getCurrentUserId } from '@/lib/auth/get-current-user'
 import { isAnonymousMode } from '@/lib/auth/provider'
+import { rejectIfBot } from '@/lib/bot-protection'
 import { getUserMessageIds } from '@/lib/db/actions'
 import { generateId } from '@/lib/db/schema'
 import { checkAndEnforceAdaptiveLimit } from '@/lib/rate-limit/adaptive-limit'
@@ -66,6 +67,9 @@ export async function POST(req: Request) {
   }
 
   try {
+    const botRejection = await rejectIfBot()
+    if (botRejection) return botRejection
+
     const body = await req.json()
     const { message, messages, chatId, trigger, messageId, isNewChat } = body
     const analyticsId: unknown = body.analyticsId
