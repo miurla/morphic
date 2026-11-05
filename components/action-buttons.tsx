@@ -56,8 +56,9 @@ const actionCategories: ActionCategory[] = [
 
 // Onboarding examples are tuned to showcase grounded, GenUI-rich answers
 // (images, comparison tables, structured depth) for concrete, self-contained
-// tasks — the patterns that correlate with follow-up in real usage. Keep each
-// example self-contained (no "my notes"/"this file" referencing absent context).
+// tasks — the patterns that correlate with follow-up in real usage. Create
+// mirrors what people write in drafts. Keep each example self-contained (no
+// "my notes"/"this file" referencing absent context).
 const promptSamples: Record<string, string[]> = {
   troubleshoot: [
     'My car starts then immediately stalls, but the electronics still work',
@@ -81,14 +82,13 @@ const promptSamples: Record<string, string[]> = {
     'What causes the northern lights?',
     'Why did the dinosaurs really go extinct?',
     'How does a nuclear reactor actually generate electricity?',
-    // Timely slot — refresh seasonally (currently WWDC 2026).
-    'What did Apple announce at WWDC 2026?'
+    'How do noise-cancelling headphones actually work?'
   ],
   create: [
-    'Draft a 5-question Ancient Rome quiz with A–D answers',
-    'Outline a peer-support group for a prison setting',
-    'Create a high-protein meal plan for a week on a budget',
-    'Draft a beginner 3-day-per-week workout split'
+    'Write a polite email asking my landlord to fix the broken heater this week',
+    'Write an Instagram post announcing a bakery’s new autumn menu',
+    'Write a short cover letter for a part-time barista job at a local café',
+    'Write a text-to-video prompt for a 10-second clip of a cat surfing at sunset'
   ]
 }
 
