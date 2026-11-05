@@ -7,13 +7,13 @@ import {
 
 import {
   EXAMPLE_IMAGE_SPEC_BLOCK,
-  getImageSpecPrompt,
-  getRelatedQuestionsSpecPrompt
+  getFollowUpSuggestionsSpecPrompt,
+  getImageSpecPrompt
 } from '../prompt'
 
 describe('render prompts', () => {
   test('includes related questions by default for substantive answers', () => {
-    const prompt = getRelatedQuestionsSpecPrompt()
+    const prompt = getFollowUpSuggestionsSpecPrompt()
 
     expect(prompt).toContain('expected on every substantive answer')
     expect(prompt).toContain('Decide from the answer you just wrote')

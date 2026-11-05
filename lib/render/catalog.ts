@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import { schema } from './schema'
 
-const iconName = z.enum(['related', 'arrow-right']).optional()
+const iconName = z.enum(['related', 'edit', 'arrow-right']).optional()
 
 export const catalog = schema.createCatalog({
   components: {

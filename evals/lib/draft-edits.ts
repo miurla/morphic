@@ -7,6 +7,7 @@ import { parseDraftBlocks } from '@/lib/draft/draft'
 import datasetJson from '../datasets/draft-edits.json'
 
 import type { SearchFixture } from './dataset'
+import { analyzeRelatedQuestions } from './related-questions'
 
 export type DraftEditsMode = 'quick' | 'adaptive'
 
@@ -208,6 +209,12 @@ export type DraftTurnAnalysis = {
   wroteBlock: boolean
   /** The turn did what its category asks for. */
   correct: boolean
+  /** The answer ends with follow-up suggestions. */
+  suggested: boolean
+  /** Those suggestions sit under a "Revise" heading. */
+  suggestedRevisions: boolean
+  /** The suggestions block satisfies the spec contract. */
+  suggestionsWellFormed: boolean
 }
 
 export function analyzeDraftTurn(
@@ -226,6 +233,15 @@ export function analyzeDraftTurn(
       : category === 'new'
         ? wroteBlock && !calledEdit
         : changedDraft || wroteBlock
+  const suggestions = analyzeRelatedQuestions(output.text)
 
-  return { calledEdit, changedDraft, wroteBlock, correct }
+  return {
+    calledEdit,
+    changedDraft,
+    wroteBlock,
+    correct,
+    suggested: suggestions.emitted,
+    suggestedRevisions: suggestions.emitted && suggestions.title === 'Revise',
+    suggestionsWellFormed: suggestions.wellFormed
+  }
 }

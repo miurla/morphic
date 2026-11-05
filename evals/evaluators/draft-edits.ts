@@ -28,6 +28,16 @@ export type DraftEditsSummary = {
   newBlockRate: number
   /** Share of change requests that changed the draft or rewrote it. */
   editSuccessRate: number
+  /** Answers that wrote or changed the draft. */
+  draftAnswerCount: number
+  /** Share of those answers that ended with follow-up suggestions. */
+  draftSuggestionRate: number
+  /** Share of those answers whose suggestions are titled "Revise". */
+  revisionSuggestionRate: number
+  /** Share of emitted suggestion blocks that are well formed. */
+  suggestionWellFormedRate: number
+  /** Share of unrelated requests answered with revision suggestions. */
+  unrelatedRevisionRate: number
 }
 
 function turnOutput(output: unknown): DraftTurnOutput {
@@ -72,6 +82,11 @@ export const draftEditsEvaluator: Evaluator<
       name: 'draft_block_written',
       value: analysis.wroteBlock ? 1 : 0,
       dataType: 'BOOLEAN'
+    },
+    {
+      name: 'draft_revisions_suggested',
+      value: analysis.suggestedRevisions ? 1 : 0,
+      dataType: 'BOOLEAN'
     }
   ]
   return evaluations
@@ -89,19 +104,34 @@ export function summarizeDraftEdits(
   let unrelatedBlocks = 0
   let newBlocks = 0
   let edited = 0
+  let draftAnswers = 0
+  let suggested = 0
+  let revisions = 0
+  let emitted = 0
+  let wellFormed = 0
+  let unrelatedSuggested = 0
 
   for (const result of itemResults) {
     const category = itemCategory(result)
     if (!category) continue
     const analysis = analyzeDraftTurn(turnOutput(result.output), category)
     counts[category]++
+    if (analysis.suggested) {
+      emitted++
+      if (analysis.suggestionsWellFormed) wellFormed++
+    }
     if (category === 'unrelated') {
       if (analysis.calledEdit) hijacked++
       if (analysis.wroteBlock) unrelatedBlocks++
-    } else if (category === 'new') {
-      if (analysis.correct) newBlocks++
-    } else if (analysis.correct) {
-      edited++
+      if (analysis.suggestedRevisions) unrelatedSuggested++
+    } else {
+      if (category === 'new' && analysis.correct) newBlocks++
+      if (category === 'edit' && analysis.correct) edited++
+      if (analysis.wroteBlock || analysis.changedDraft) {
+        draftAnswers++
+        if (analysis.suggested) suggested++
+        if (analysis.suggestedRevisions) revisions++
+      }
     }
   }
 
@@ -112,7 +142,12 @@ export function summarizeDraftEdits(
     hijackRate: rate(hijacked, counts.unrelated),
     unrelatedBlockRate: rate(unrelatedBlocks, counts.unrelated),
     newBlockRate: rate(newBlocks, counts.new),
-    editSuccessRate: rate(edited, counts.edit)
+    editSuccessRate: rate(edited, counts.edit),
+    draftAnswerCount: draftAnswers,
+    draftSuggestionRate: rate(suggested, draftAnswers),
+    revisionSuggestionRate: rate(revisions, draftAnswers),
+    suggestionWellFormedRate: rate(wellFormed, emitted),
+    unrelatedRevisionRate: rate(unrelatedSuggested, counts.unrelated)
   }
 }
 
@@ -142,6 +177,25 @@ export const draftEditsRunEvaluator: RunEvaluator<
       name: 'editSuccessRate',
       value: summary.editSuccessRate,
       comment: `n=${summary.editCount}`
+    },
+    {
+      name: 'draftSuggestionRate',
+      value: summary.draftSuggestionRate,
+      comment: `n=${summary.draftAnswerCount}`
+    },
+    {
+      name: 'revisionSuggestionRate',
+      value: summary.revisionSuggestionRate,
+      comment: `n=${summary.draftAnswerCount}`
+    },
+    {
+      name: 'suggestionWellFormedRate',
+      value: summary.suggestionWellFormedRate
+    },
+    {
+      name: 'unrelatedRevisionRate',
+      value: summary.unrelatedRevisionRate,
+      comment: `n=${summary.unrelatedCount}`
     }
   ]
 }

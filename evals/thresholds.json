@@ -67,6 +67,14 @@
     "editSuccessRate": {
       "direction": "min",
       "value": null
+    },
+    "revisionSuggestionRate": {
+      "direction": "min",
+      "value": null
+    },
+    "unrelatedRevisionRate": {
+      "direction": "max",
+      "value": null
     }
   }
 }

@@ -23,8 +23,10 @@ type CompiledSpec = {
 }
 
 export type RelatedQuestionsAnalysis = {
-  /** A spec block carrying a "Related" heading was present. */
+  /** A follow-up suggestions spec block was present. */
   emitted: boolean
+  /** Title of that block's heading, e.g. "Related" or "Revise". */
+  title?: string
   /** Question text of every Button in the first related block, in order. */
   questions: string[]
   /** The block satisfies the contract the prompt asks for. */
@@ -89,14 +91,13 @@ function compileElements(source: string): CompiledSpec | null {
   return { rendered, topLevel }
 }
 
+// The heading's title and icon vary with the answer ("Related", "Revise"), so
+// the block is recognised by buttons that send the next message.
 function isRelatedBlock(spec: CompiledSpec): boolean {
   return spec.rendered.some(
-    element => element.type === 'Heading' && element.props?.title === 'Related'
+    element =>
+      element.type === 'Button' && element.on?.press?.action === 'submitQuery'
   )
-}
-
-function isRelatedHeading(element: SpecElement | undefined): boolean {
-  return element?.type === 'Heading' && element.props?.title === 'Related'
 }
 
 // A block that fails to compile has no elements to inspect, so its raw source is
@@ -167,8 +168,24 @@ export function analyzeRelatedQuestions(
 
   // "Always include a Heading with title Related as the first child element."
   const block = relatedBlocks[0].spec
-  if (!isRelatedHeading(block.topLevel[0])) {
-    issues.push('the Related heading is not the first child of the root')
+  const heading = block.topLevel[0]
+  if (heading?.type !== 'Heading') {
+    issues.push('the heading is not the first child of the root')
+  }
+  const title =
+    heading?.type === 'Heading' && typeof heading.props?.title === 'string'
+      ? heading.props.title
+      : undefined
+
+  // The block renders its own heading, so the same title written as markdown
+  // just above it shows twice.
+  if (title) {
+    const start = markdown.lastIndexOf('```spec', relatedBlocks[0].end - 1)
+    const before = markdown.slice(0, start).trimEnd()
+    const lastLine = before.slice(before.lastIndexOf('\n') + 1)
+    if (lastLine.replace(/^#+\s*|\*/g, '').trim() === title) {
+      issues.push(`the ${title} heading is repeated in the markdown text`)
+    }
   }
 
   const buttons = block.rendered.filter(element => element.type === 'Button')
@@ -207,6 +224,7 @@ export function analyzeRelatedQuestions(
 
   return {
     emitted: true,
+    title,
     questions,
     wellFormed: issues.length === 0,
     issues

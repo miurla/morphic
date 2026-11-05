@@ -1,61 +1,65 @@
 /**
- * Returns the prompt section that instructs the LLM to output
- * related questions as a ```spec fenced block at the end of its response,
- * but only when follow-ups add value (skipped for greetings, single-fact
- * lookups, and non-answers).
+ * Returns the prompt section that instructs the LLM to end an answer with
+ * follow-up suggestions as a ```spec fenced block: buttons that send the
+ * user's likely next message, under a heading that names what they offer.
+ * What the suggestions are depends on the answer (follow-up questions for a
+ * researched answer, changes for a draft), and they are skipped when nothing
+ * useful would come next (greetings, single-fact lookups, non-answers).
  */
-export function getRelatedQuestionsSpecPrompt(): string {
+export function getFollowUpSuggestionsSpecPrompt(): string {
   return `
-RELATED QUESTIONS:
-After your conclusion, generate exactly 3 follow-up questions in a \`\`\`spec fenced code block. This is expected on every substantive answer; only the narrow skip cases below are exempt.
+FOLLOW-UP SUGGESTIONS:
+After your conclusion, suggest exactly 3 next messages the user is likely to send, as buttons in a \`\`\`spec fenced code block. This is expected on every substantive answer; only the narrow skip cases below are exempt.
 
-Decide from the answer you just wrote, not from what the reader might go on to wonder. Include the spec block whenever that answer compares options, recommends or advises, explains a cause or a mechanism, lays out several distinct points, or walks through steps. Anchor each follow-up to concrete details from THIS answer.
+Decide from the answer you just wrote, not from what the reader might go on to wonder. Include the spec block whenever that answer compares options, recommends or advises, explains a cause or a mechanism, lays out several distinct points, walks through steps, or writes or changes a draft. Anchor each suggestion to concrete details from THIS answer.
 
 SKIP the spec block entirely (output nothing) only in these cases:
 - Greetings, small talk, or thanks ("hi", "thanks", "how are you").
 - The answer delivers a single fact, value, date, quantity, or yes/no, even when interesting follow-ups do exist. A lookup does not stop being a lookup because the topic is rich.
-- Meta/operational replies, acknowledgements, or task-completion notices.
+- Meta/operational replies, acknowledgements, or task-completion notices. A draft answer is not one of these.
 - Cases where you could not answer (refusal, clarification request, or empty result).
 - Short answers where suggested next questions would be generic or forced.
 These skip cases are the exception. When the answer is substantive, include the spec block.
 
-When you do include them, write the three questions a genuinely curious reader would tap next — not a checklist of "other aspects". Anchor each to THIS answer (use concrete names, options, or numbers from it), and make the three intents distinct:
-- Deepen: go further on the single most interesting or surprising point.
-- Act/decide: the practical next step (e.g. "How do I…", "Which … for …?").
-- Broaden: a useful comparison, trade-off, or related angle.
-Avoid three near-duplicate "what are the differences / what about X" questions.
-Questions must be concise (max 10-12 words), self-contained, and in the user's language.
+Suggest what this user needs next from this answer. Which kind of answer to write is decided before this step: a request to write a piece (an article, even an informative one, a post, an email) is a draft answer and its content goes in the draft block.
+- For an answer that informs, write the three questions a genuinely curious reader would tap next, not a checklist of "other aspects". Make the three intents distinct:
+  - Deepen: go further on the single most interesting or surprising point.
+  - Act/decide: the practical next step (e.g. "How do I…", "Which … for …?").
+  - Broaden: a useful comparison, trade-off, or related angle.
+  Avoid three near-duplicate "what are the differences / what about X" questions. Set the Heading title to "Related" and its icon to "related".
+- For a draft answer (you wrote a draft block or changed the draft), write three changes the user could ask for next, phrased as their own instruction rather than a question and anchored to this draft's purpose, audience, or named parts: one on length or format (a shorter version, a 300-character summary), one on tone or audience (more formal for the hiring manager, warmer for a friend), and one on content (add a detail the piece is missing, rework a named paragraph). Do not suggest something the draft already does. Set the Heading title to "Revise" and its icon to "edit".
+Suggestions must be concise (max 10-12 words), self-contained, and in the user's language.
 
 The spec block uses JSONL (one JSON object per line) with RFC 6902 JSON Patch operations.
-Always include a Heading with title "Related" as the first child element.
+Always include a Heading as the first child element, with the title and icon named above.
 
-Example output (only when related questions are valuable; place it at the very end of your response):
+Example output (only when suggestions are valuable; place it at the very end of your response):
 
 \`\`\`spec
 {"op":"add","path":"/root","value":"main"}
-{"op":"add","path":"/elements/main","value":{"type":"Stack","props":{"direction":"vertical","gap":"sm"},"children":["header","questions"]}}
+{"op":"add","path":"/elements/main","value":{"type":"Stack","props":{"direction":"vertical","gap":"sm"},"children":["header","suggestions"]}}
 {"op":"add","path":"/elements/header","value":{"type":"Heading","props":{"title":"Related","icon":"related"},"children":[]}}
-{"op":"add","path":"/elements/questions","value":{"type":"Stack","props":{"direction":"vertical","gap":"xs"},"children":["q1","q2","q3"]}}
-{"op":"add","path":"/elements/q1","value":{"type":"Button","props":{"text":"First follow-up question here","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"First follow-up question here"}}},"children":[]}}
-{"op":"add","path":"/elements/q2","value":{"type":"Button","props":{"text":"Second follow-up question here","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"Second follow-up question here"}}},"children":[]}}
-{"op":"add","path":"/elements/q3","value":{"type":"Button","props":{"text":"Third follow-up question here","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"Third follow-up question here"}}},"children":[]}}
+{"op":"add","path":"/elements/suggestions","value":{"type":"Stack","props":{"direction":"vertical","gap":"xs"},"children":["q1","q2","q3"]}}
+{"op":"add","path":"/elements/q1","value":{"type":"Button","props":{"text":"First suggestion here","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"First suggestion here"}}},"children":[]}}
+{"op":"add","path":"/elements/q2","value":{"type":"Button","props":{"text":"Second suggestion here","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"Second suggestion here"}}},"children":[]}}
+{"op":"add","path":"/elements/q3","value":{"type":"Button","props":{"text":"Third suggestion here","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"Third suggestion here"}}},"children":[]}}
 \`\`\`
 
 AVAILABLE COMPONENTS:
-- Heading: { title: string, icon?: "related" | "arrow-right" } - A heading label with optional icon
+- Heading: { title: string, icon?: "related" | "edit" | "arrow-right" } - A heading label with optional icon
 - Stack: { direction?: "vertical" | "horizontal", gap?: "xs" | "sm" | "md" | "lg" } - Layout container
-- Button: { text: string, icon?: "related" | "arrow-right", variant?: "default" | "outline" | "ghost" | "link" | "secondary" } - A clickable button that emits a press action. Use variant="link" with icon="arrow-right" for inline follow-up suggestions.
+- Button: { text: string, icon?: "related" | "edit" | "arrow-right", variant?: "default" | "outline" | "ghost" | "link" | "secondary" } - A clickable button that emits a press action. Use variant="link" with icon="arrow-right" for inline follow-up suggestions.
 
 AVAILABLE ACTIONS:
-- submitQuery: { query: string } - Submit a follow-up query
+- submitQuery: { query: string } - Send the suggestion as the user's next message
 
 SPEC RULES:
-1. If included, the related questions \`\`\`spec fence must appear at the END of your response.
+1. If included, the follow-up suggestions \`\`\`spec fence must appear at the END of your response.
 2. Every \`\`\`spec block must contain ONLY JSONL patches — no commentary inside.
 3. Keep each JSON object on a single line.
-4. The "text" prop and "query" param must be identical for each question.
-5. Emit at most ONE related questions spec block per answer, and none at all when the skip criteria above apply (image spec blocks are separate and may appear inline).
-6. Do NOT include follow-up suggestions or questions in your markdown text. Only use the spec block for them.
+4. The "text" prop and "query" param must be identical for each suggestion.
+5. Emit at most ONE follow-up suggestions spec block per answer, and none at all when the skip criteria above apply (image spec blocks are separate and may appear inline).
+6. Do NOT include follow-up suggestions or questions in your markdown text. Only use the spec block for them. The heading belongs only to the spec block's Heading element: never write "Related", "Revise", or any heading for the suggestions as markdown text before the block.
 `
 }
 
@@ -159,7 +163,7 @@ IMAGE SPEC RULES:
 3. The "aspectRatio" field SHOULD reflect the natural orientation of the subject: "1:1" for square (logos, portraits), "16:9" for wide (landscapes, scenes), "4:3" for standard photos. Images within the same Grid should generally use the SAME aspectRatio so they render at identical heights.
 4. Always wrap image groups in a Grid. Set "columns" to the exact number of Image children (1–4). For 1 image use columns=1, for 2 use columns=2, etc. Choose the number of images based on the situation — the variety and relevance of available images and how much visual context genuinely helps the answer.
 5. You MAY emit multiple \`\`\`spec image blocks, each placed at the position in the markdown where they are contextually relevant (e.g. right after the heading or paragraph they illustrate).
-6. Image spec blocks are separate from the related-questions spec block at the end (which is itself optional — see RELATED QUESTIONS).
+6. Image spec blocks are separate from the follow-up suggestions spec block at the end (which is itself optional — see FOLLOW-UP SUGGESTIONS).
 7. Each image spec block must contain ONLY JSONL patches — no commentary inside.
 
 Example (inline image group embedded in markdown body):

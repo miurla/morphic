@@ -1,5 +1,6 @@
 import {
   IconArrowRight as ArrowRight,
+  IconPencil as Pencil,
   IconRepeat as Repeat2
 } from '@tabler/icons-react'
 
@@ -20,6 +21,7 @@ export const stackGap = {
  */
 export const iconMap = {
   related: Repeat2,
+  edit: Pencil,
   'arrow-right': ArrowRight
 } as const
 
