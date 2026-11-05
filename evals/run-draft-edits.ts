@@ -170,7 +170,7 @@ async function main() {
       metadata.category
     )
     console.log(
-      `${analysis.correct ? 'ok  ' : 'FAIL'} ${metadata.category.padEnd(9)} ${metadata.itemId}#${metadata.trial} edit=${analysis.calledEdit} block=${analysis.wroteBlock}`
+      `${analysis.correct ? 'ok  ' : 'FAIL'} ${metadata.category.padEnd(9)} ${metadata.itemId}#${metadata.trial} edit=${analysis.calledEdit} block=${analysis.wroteBlock} suggest=${analysis.suggested} revise=${analysis.suggestedRevisions}`
     )
   }
 
@@ -222,6 +222,18 @@ async function main() {
           value: summary.editSuccessRate,
           samples: summary.editCount,
           threshold: config.editSuccessRate
+        },
+        {
+          metric: 'revisionSuggestionRate',
+          value: summary.revisionSuggestionRate,
+          samples: summary.draftAnswerCount,
+          threshold: config.revisionSuggestionRate
+        },
+        {
+          metric: 'unrelatedRevisionRate',
+          value: summary.unrelatedRevisionRate,
+          samples: summary.unrelatedCount,
+          threshold: config.unrelatedRevisionRate
         }
       ])
     }

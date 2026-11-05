@@ -54,6 +54,30 @@ describe('analyzeRelatedQuestions', () => {
     expect(result.questions).toHaveLength(3)
   })
 
+  test('recognises a block with another heading and reports its title', () => {
+    const block = relatedBlock(THREE_QUESTIONS).replace(
+      '"title":"Related"',
+      '"title":"Revise"'
+    )
+    const result = analyzeRelatedQuestions(ANSWER + block)
+
+    expect(result.emitted).toBe(true)
+    expect(result.wellFormed).toBe(true)
+    expect(result.title).toBe('Revise')
+  })
+
+  test('flags the heading repeated as markdown above the block', () => {
+    const result = analyzeRelatedQuestions(
+      ANSWER + '### Related\n\n' + relatedBlock(THREE_QUESTIONS)
+    )
+
+    expect(result.emitted).toBe(true)
+    expect(result.wellFormed).toBe(false)
+    expect(result.issues).toContain(
+      'the Related heading is repeated in the markdown text'
+    )
+  })
+
   test('reports no emission for a plain answer', () => {
     const result = analyzeRelatedQuestions(ANSWER)
 
@@ -182,7 +206,7 @@ describe('analyzeRelatedQuestions', () => {
     expect(result.emitted).toBe(true)
     expect(result.wellFormed).toBe(false)
     expect(result.issues).toContain(
-      'the Related heading is not the first child of the root'
+      'the heading is not the first child of the root'
     )
   })
 

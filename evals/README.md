@@ -126,6 +126,11 @@ production would apply it. Reports:
   complete draft block and no `editDraft` call
 - `editSuccessRate`: requests to change the draft that changed it, either
   through an applied edit or a new complete block
+- `draftSuggestionRate` / `revisionSuggestionRate`: answers that wrote or
+  changed the draft and ended with follow-up suggestions, and with suggestions
+  under the "Revise" heading the prompt asks for on a draft answer
+- `unrelatedRevisionRate`: unrelated requests answered with "Revise"
+  suggestions, which belong only to draft answers
 
 The committed dataset is synthetic. Production turns, where the hijack was
 first observed, hold users' own text, so they are built into

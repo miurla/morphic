@@ -4,14 +4,14 @@ import { linkedCardsFenceToMarkdown } from '@/lib/render/linked-cards-markdown'
 
 const SPEC_FENCE = /```spec[\s\S]*?```/g
 
-// The related-questions block is the only spec block whose JSONL carries a
-// heading with this icon.
-const RELATED_QUESTIONS_MARKER = '"icon":"related"'
+// The follow-up suggestions block is the only spec block whose buttons send
+// the user's next message.
+const SUGGESTIONS_MARKER = '"action":"submitQuery"'
 
 /**
  * Removes ```spec fenced blocks from assistant message text, keeping the
- * related-questions block. Dropping the rest stops prior spec payloads from
- * spending context window budget on every later turn; keeping the related one
+ * follow-up suggestions block. Dropping the rest stops prior spec payloads from
+ * spending context window budget on every later turn; keeping the suggestions
  * leaves the model an example of the format it is asked to keep producing.
  * Linked Card blocks become a markdown list instead, because they replace the
  * list the answer would otherwise contain and a follow-up may refer to it.
@@ -25,7 +25,7 @@ function stripNonRelatedSpecBlocks(text: string): string {
   let removed = false
 
   const stripped = text.replace(SPEC_FENCE, block => {
-    if (block.includes(RELATED_QUESTIONS_MARKER)) {
+    if (block.includes(SUGGESTIONS_MARKER)) {
       return block
     }
     removed = true

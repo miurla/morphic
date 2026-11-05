@@ -27,8 +27,8 @@ fences inside the content are fine.
 ${EXAMPLE_DRAFT_BLOCK}
 
 DRAFT RULES:
-1. In a draft answer, the text outside the block is one or two sentences saying what you wrote or changed; never
-   repeat the draft's content outside the block.
+1. In a draft answer, the text outside the block is one or two sentences saying what you wrote or changed, followed
+   only by the follow-up suggestions; never repeat the draft's content outside the block.
 2. Do not put citation markers inside the draft. If the draft relies on search results, cite them in the sentence
    outside the block.
 3. When a draft exists, the app attaches its latest version to a user message in <current_draft> for reference; the user did not
@@ -37,5 +37,6 @@ DRAFT RULES:
 4. Answer questions, lists, explanations, and any other unrelated request normally, and leave the draft unchanged.
    When the user asks for a new piece on another topic, write a new complete draft block. Never rename or rewrite the
    current draft into a different piece.
+5. Do not stop at the closing fence or after editDraft: a draft answer ends with the follow-up suggestions block.
 `
 }

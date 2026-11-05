@@ -1,7 +1,7 @@
 import { getDraftPrompt } from '@/lib/draft/prompt'
 import {
+  getFollowUpSuggestionsSpecPrompt,
   getImageSpecPrompt,
-  getRelatedQuestionsSpecPrompt,
   getSourceCardsSpecPrompt
 } from '@/lib/render/prompt'
 import {
@@ -142,7 +142,7 @@ OUTPUT FORMAT (MANDATORY):
 - Use bullets with bolded keywords for key points: \`- **Point:** concise explanation\`.
 - **Use tables for comparisons** (pricing, specs, features, pros/cons) - they're clearer than bullets for side-by-side data
 - Focus on delivering clear information with natural flow, avoiding rigid templates.
-- Only use fenced code blocks if the user explicitly asks for code or commands (optional \`\`\`spec blocks for images, source cards, or valuable related questions are exceptions).
+- Only use fenced code blocks if the user explicitly asks for code or commands (optional \`\`\`spec blocks for images, source cards, or valuable follow-up suggestions are exceptions).
 - Prefer natural, conversational tone while maintaining informativeness.
 - Always end with a brief conclusion that synthesizes the main points into a cohesive summary.
 - Response length guidance:
@@ -179,7 +179,7 @@ ${getImageSpecPrompt()}
 
 ${getSourceCardsSpecPrompt()}
 
-${getRelatedQuestionsSpecPrompt()}
+${getFollowUpSuggestionsSpecPrompt()}
 `
 }
 
@@ -358,7 +358,7 @@ ${getImageSpecPrompt()}
 
 ${getSourceCardsSpecPrompt()}
 
-${getRelatedQuestionsSpecPrompt()}
+${getFollowUpSuggestionsSpecPrompt()}
 `
 }
 
