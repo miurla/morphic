@@ -78,52 +78,63 @@ describe('ChatPanel', () => {
     deleteCookie('searchMode')
   })
 
-  test('the sidebar resets only the visible chat when a cached panel is still mounted', () => {
-    const hiddenReset = vi.fn()
-    const visibleReset = vi.fn()
-    const hiddenRef = { current: document.createElement('div') }
-    const visibleRef = { current: document.createElement('div') }
-    Object.defineProperty(visibleRef.current, 'offsetParent', {
-      value: document.body
-    })
-    const props = {
-      input: '',
-      handleInputChange: vi.fn(),
-      handleSubmit: vi.fn(),
-      status: 'ready' as const,
-      messages: [],
-      setMessages: vi.fn(),
-      stop: vi.fn(),
-      append: vi.fn(),
-      showScrollToBottomButton: false,
-      uploadedFiles: [],
-      setUploadedFiles: vi.fn(),
-      quotedContexts: [],
-      setQuotedContexts: vi.fn(),
-      noteContexts: [],
-      setNoteContexts: vi.fn()
+  test.each(['sidebar', 'shortcut'])(
+    'the %s resets an empty homepage draft and leaves a hidden cached panel alone',
+    action => {
+      const hiddenReset = vi.fn()
+      const visibleReset = vi.fn()
+      const props = {
+        input: 'draft question',
+        handleInputChange: vi.fn(),
+        handleSubmit: vi.fn(),
+        status: 'ready' as const,
+        messages: [],
+        setMessages: vi.fn(),
+        stop: vi.fn(),
+        append: vi.fn(),
+        showScrollToBottomButton: false,
+        uploadedFiles: [],
+        setUploadedFiles: vi.fn(),
+        quotedContexts: [],
+        setQuotedContexts: vi.fn(),
+        noteContexts: [],
+        setNoteContexts: vi.fn()
+      }
+      const view = render(
+        <>
+          <ChatPanel
+            {...props}
+            chatId="hidden"
+            scrollContainerRef={React.createRef<HTMLDivElement>()}
+            onNewChat={hiddenReset}
+          />
+          <ChatPanel
+            {...props}
+            chatId="visible"
+            scrollContainerRef={React.createRef<HTMLDivElement>()}
+            onNewChat={visibleReset}
+          />
+          <NewChatMenuItem />
+        </>
+      )
+      const visiblePanel = screen
+        .getAllByRole('textbox')[1]
+        .parentElement!.closest('[class*="group/form-container"]')!
+      Object.defineProperty(visiblePanel, 'offsetParent', {
+        value: document.body
+      })
+      const event = new Event(SHORTCUT_EVENTS.newChat, { cancelable: true })
+      if (action === 'sidebar') {
+        fireEvent.click(screen.getByRole('link', { name: 'New' }))
+      } else {
+        window.dispatchEvent(event)
+        expect(event.defaultPrevented).toBe(true)
+      }
+      expect(visibleReset).toHaveBeenCalledOnce()
+      expect(hiddenReset).not.toHaveBeenCalled()
+      view.unmount()
     }
-    render(
-      <>
-        <ChatPanel
-          {...props}
-          chatId="hidden"
-          scrollContainerRef={hiddenRef}
-          onNewChat={hiddenReset}
-        />
-        <ChatPanel
-          {...props}
-          chatId="visible"
-          scrollContainerRef={visibleRef}
-          onNewChat={visibleReset}
-        />
-        <NewChatMenuItem />
-      </>
-    )
-    fireEvent.click(screen.getByRole('link', { name: 'New' }))
-    expect(visibleReset).toHaveBeenCalledOnce()
-    expect(hiddenReset).not.toHaveBeenCalled()
-  })
+  )
 
   test('hides the home panel while history is unresolved and shows it for a new chat', () => {
     const props = {
@@ -204,9 +215,6 @@ describe('ChatPanel', () => {
 
   test('starts a new chat without clearing the cached conversation', () => {
     const scrollRef = { current: document.createElement('div') }
-    Object.defineProperty(scrollRef.current, 'offsetParent', {
-      value: document.body
-    })
     const setMessages = vi.fn()
     const onNewChat = vi.fn()
     render(
@@ -231,7 +239,12 @@ describe('ChatPanel', () => {
         onNewChat={onNewChat}
       />
     )
-    fireEvent(window, new Event(SHORTCUT_EVENTS.newChat))
+    Object.defineProperty(
+      screen.getByRole('textbox').closest('[class*="group/form-container"]')!,
+      'offsetParent',
+      { value: document.body }
+    )
+    fireEvent(window, new Event(SHORTCUT_EVENTS.newChat, { cancelable: true }))
     expect(onNewChat).toHaveBeenCalledOnce()
     expect(setMessages).not.toHaveBeenCalled()
   })

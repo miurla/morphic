@@ -145,6 +145,7 @@ export function ChatPanel({
   sections = []
 }: ChatPanelProps) {
   const router = useRouter()
+  const panelRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const attachmentMenuRef = useRef<HTMLDivElement>(null)
@@ -232,7 +233,7 @@ export function ChatPanel({
   useEffect(() => {
     const handleNewChatShortcut = (e: Event) => {
       if (e.defaultPrevented) return
-      if (!scrollContainerRef.current?.offsetParent) return
+      if (!panelRef.current?.offsetParent) return
       e.preventDefault()
       handleNewChatRef.current()
     }
@@ -241,7 +242,7 @@ export function ChatPanel({
     return () => {
       window.removeEventListener(SHORTCUT_EVENTS.newChat, handleNewChatShortcut)
     }
-  }, [scrollContainerRef])
+  }, [])
 
   const isToolInvocationInProgress = () => {
     if (!messages.length) return false
@@ -457,6 +458,7 @@ export function ChatPanel({
 
   return (
     <div
+      ref={panelRef}
       className={cn(
         'w-full bg-background group/form-container shrink-0',
         messages.length > 0
