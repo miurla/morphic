@@ -232,6 +232,7 @@ export function ChatPanel({
   useEffect(() => {
     const handleNewChatShortcut = (e: Event) => {
       if (e.defaultPrevented) return
+      if (!scrollContainerRef.current?.offsetParent) return
       e.preventDefault()
       handleNewChatRef.current()
     }
@@ -240,7 +241,7 @@ export function ChatPanel({
     return () => {
       window.removeEventListener(SHORTCUT_EVENTS.newChat, handleNewChatShortcut)
     }
-  }, [])
+  }, [scrollContainerRef])
 
   const isToolInvocationInProgress = () => {
     if (!messages.length) return false

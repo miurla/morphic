@@ -9,6 +9,14 @@ import type { UploadedFile } from '@/lib/types'
 import { deleteCookie, getCookie, setCookie } from '@/lib/utils/cookies'
 
 import { ChatPanel } from '../chat-panel'
+import { NewChatMenuItem } from '../sidebar/new-chat-menu-item'
+
+vi.mock('../ui/sidebar', () => ({
+  SidebarMenuItem: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SidebarMenuButton: ({ children }: { children: React.ReactNode }) => children
+}))
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() })
@@ -68,6 +76,53 @@ describe('ChatPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     deleteCookie('searchMode')
+  })
+
+  test('the sidebar resets only the visible chat when a cached panel is still mounted', () => {
+    const hiddenReset = vi.fn()
+    const visibleReset = vi.fn()
+    const hiddenRef = { current: document.createElement('div') }
+    const visibleRef = { current: document.createElement('div') }
+    Object.defineProperty(visibleRef.current, 'offsetParent', {
+      value: document.body
+    })
+    const props = {
+      input: '',
+      handleInputChange: vi.fn(),
+      handleSubmit: vi.fn(),
+      status: 'ready' as const,
+      messages: [],
+      setMessages: vi.fn(),
+      stop: vi.fn(),
+      append: vi.fn(),
+      showScrollToBottomButton: false,
+      uploadedFiles: [],
+      setUploadedFiles: vi.fn(),
+      quotedContexts: [],
+      setQuotedContexts: vi.fn(),
+      noteContexts: [],
+      setNoteContexts: vi.fn()
+    }
+    render(
+      <>
+        <ChatPanel
+          {...props}
+          chatId="hidden"
+          scrollContainerRef={hiddenRef}
+          onNewChat={hiddenReset}
+        />
+        <ChatPanel
+          {...props}
+          chatId="visible"
+          scrollContainerRef={visibleRef}
+          onNewChat={visibleReset}
+        />
+        <NewChatMenuItem />
+      </>
+    )
+    fireEvent.click(screen.getByRole('link', { name: 'New' }))
+    expect(visibleReset).toHaveBeenCalledOnce()
+    expect(hiddenReset).not.toHaveBeenCalled()
   })
 
   test('hides the home panel while history is unresolved and shows it for a new chat', () => {
@@ -148,6 +203,10 @@ describe('ChatPanel', () => {
   })
 
   test('starts a new chat without clearing the cached conversation', () => {
+    const scrollRef = { current: document.createElement('div') }
+    Object.defineProperty(scrollRef.current, 'offsetParent', {
+      value: document.body
+    })
     const setMessages = vi.fn()
     const onNewChat = vi.fn()
     render(
@@ -162,7 +221,7 @@ describe('ChatPanel', () => {
         stop={vi.fn()}
         append={vi.fn()}
         showScrollToBottomButton={false}
-        scrollContainerRef={React.createRef<HTMLDivElement>()}
+        scrollContainerRef={scrollRef}
         uploadedFiles={[]}
         setUploadedFiles={vi.fn()}
         quotedContexts={[]}
