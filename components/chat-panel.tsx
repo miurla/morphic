@@ -212,6 +212,8 @@ export function ChatPanel({
   }, [uploadedFiles])
 
   const handleNewChat = useCallback(() => {
+    setContentCards([])
+    setUrlCards([])
     if (!onNewChat) setMessages([])
     closeArtifact()
     // Reset focus state when clearing chat
@@ -454,7 +456,8 @@ export function ChatPanel({
     }
   }
 
-  if (isHistoryPending) return null
+  // Keep the shortcut visibility target mounted while history loads.
+  if (isHistoryPending) return <div ref={panelRef} />
 
   return (
     <div

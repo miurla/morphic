@@ -84,7 +84,7 @@ describe('ChatPanel', () => {
       const hiddenReset = vi.fn()
       const visibleReset = vi.fn()
       const props = {
-        input: 'draft question',
+        input: '',
         handleInputChange: vi.fn(),
         handleSubmit: vi.fn(),
         status: 'ready' as const,
@@ -123,20 +123,37 @@ describe('ChatPanel', () => {
       Object.defineProperty(visiblePanel, 'offsetParent', {
         value: document.body
       })
+      const hiddenContent = 'hidden pasted context '.repeat(30)
+      const visibleContent = 'visible pasted context '.repeat(30)
+      const inputs = screen.getAllByRole('textbox')
+      for (const [input, content, url] of [
+        [inputs[0], hiddenContent, 'https://hidden.example'],
+        [inputs[1], visibleContent, 'https://visible.example']
+      ] as const) {
+        fireEvent.paste(input, { clipboardData: { getData: () => content } })
+        fireEvent.paste(input, { clipboardData: { getData: () => url } })
+      }
+      expect(screen.getByText(visibleContent.trim())).toBeInTheDocument()
+      expect(screen.getByText('visible.example')).toBeInTheDocument()
       const event = new Event(SHORTCUT_EVENTS.newChat, { cancelable: true })
       if (action === 'sidebar') {
         fireEvent.click(screen.getByRole('link', { name: 'New' }))
       } else {
-        window.dispatchEvent(event)
+        fireEvent(window, event)
         expect(event.defaultPrevented).toBe(true)
       }
       expect(visibleReset).toHaveBeenCalledOnce()
       expect(hiddenReset).not.toHaveBeenCalled()
+      expect(screen.queryByText(visibleContent.trim())).not.toBeInTheDocument()
+      expect(screen.queryByText('visible.example')).not.toBeInTheDocument()
+      expect(screen.getByText(hiddenContent.trim())).toBeInTheDocument()
+      expect(screen.getByText('hidden.example')).toBeInTheDocument()
       view.unmount()
     }
   )
 
-  test('hides the home panel while history is unresolved and shows it for a new chat', () => {
+  test('keeps the new-chat shortcut active while hiding the unresolved history panel', () => {
+    const onNewChat = vi.fn()
     const props = {
       chatId: 'chat',
       input: '',
@@ -156,7 +173,16 @@ describe('ChatPanel', () => {
       noteContexts: [],
       setNoteContexts: vi.fn()
     }
-    const view = render(<ChatPanel {...props} isHistoryPending />)
+    const view = render(
+      <ChatPanel {...props} onNewChat={onNewChat} isHistoryPending />
+    )
+    const panel = view.container.firstElementChild
+    if (panel)
+      Object.defineProperty(panel, 'offsetParent', { value: document.body })
+    const event = new Event(SHORTCUT_EVENTS.newChat, { cancelable: true })
+    fireEvent(window, event)
+    expect(event.defaultPrevented).toBe(true)
+    expect(onNewChat).toHaveBeenCalledOnce()
     expect(
       screen.queryByRole('heading', { name: 'What would you like to know?' })
     ).not.toBeInTheDocument()
