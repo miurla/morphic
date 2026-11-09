@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import Link from 'next/link'
 
 import { isAnonymousMode } from '@/lib/auth/provider'
 import type { AppUser } from '@/lib/auth/types'
@@ -17,6 +16,7 @@ import {
 
 import { ChatHistorySection } from './sidebar/chat-history-section'
 import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
+import { HomeLink } from './sidebar/home-link'
 import { LibraryMenuItem } from './sidebar/library-menu-item'
 import { NewChatMenuItem } from './sidebar/new-chat-menu-item'
 import { VersionFooter } from './sidebar/version-footer'
@@ -32,10 +32,10 @@ export default function AppSidebar({ user }: { user?: AppUser | null }) {
   return (
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
       <SidebarHeader className="flex flex-row justify-between items-center">
-        <Link href="/" className="flex items-center gap-2 px-2 py-3">
+        <HomeLink className="flex items-center gap-2 px-2 py-3">
           <IconLogo className={cn('size-5')} />
           <span className="font-semibold text-sm">Morphic</span>
-        </Link>
+        </HomeLink>
         <SidebarTrigger />
       </SidebarHeader>
       <SidebarContent className="flex flex-col px-2 py-4 h-full">

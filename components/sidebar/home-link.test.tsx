@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
 
+import { HomeLink } from './home-link'
 import { NewChatMenuItem } from './new-chat-menu-item'
 
 vi.mock('@/components/ui/sidebar', () => ({
@@ -18,7 +19,7 @@ vi.mock('next/link', () => ({
   )
 }))
 
-describe('NewChatMenuItem', () => {
+describe('HomeLink', () => {
   afterEach(() => vi.restoreAllMocks())
 
   test('resets the active chat before navigating home', () => {
@@ -60,4 +61,17 @@ describe('NewChatMenuItem', () => {
       }
     }
   )
+
+  test('resets the active chat from the sidebar logo too', () => {
+    const reset = vi.fn((event: Event) => event.preventDefault())
+    window.addEventListener(SHORTCUT_EVENTS.newChat, reset, { once: true })
+    render(<HomeLink>Morphic</HomeLink>)
+
+    const navigate = fireEvent.click(
+      screen.getByRole('link', { name: 'Morphic' })
+    )
+
+    expect(reset).toHaveBeenCalledOnce()
+    expect(navigate).toBe(false)
+  })
 })
