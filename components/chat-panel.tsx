@@ -151,6 +151,7 @@ export function ChatPanel({
   sections = []
 }: ChatPanelProps) {
   const router = useRouter()
+  const panelRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const noteContextsRef = useRef(noteContexts)
@@ -215,6 +216,8 @@ export function ChatPanel({
   }, [uploadedFiles])
 
   const handleNewChat = useCallback(() => {
+    setContentCards([])
+    setUrlCards([])
     if (!onNewChat) setMessages([])
     closeArtifact()
     // Reset focus state when clearing chat
@@ -236,6 +239,7 @@ export function ChatPanel({
   useEffect(() => {
     const handleNewChatShortcut = (e: Event) => {
       if (e.defaultPrevented) return
+      if (!panelRef.current?.offsetParent) return
       e.preventDefault()
       handleNewChatRef.current()
     }
@@ -431,10 +435,12 @@ export function ChatPanel({
     }
   }
 
-  if (isHistoryPending) return null
+  // Keep the shortcut visibility target mounted while history loads.
+  if (isHistoryPending) return <div ref={panelRef} />
 
   return (
     <div
+      ref={panelRef}
       className={cn(
         'w-full bg-background group/form-container shrink-0',
         messages.length > 0

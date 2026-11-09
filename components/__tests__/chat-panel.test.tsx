@@ -9,6 +9,14 @@ import type { UploadedFile } from '@/lib/types'
 import { deleteCookie, getCookie, setCookie } from '@/lib/utils/cookies'
 
 import { ChatPanel } from '../chat-panel'
+import { NewChatMenuItem } from '../sidebar/new-chat-menu-item'
+
+vi.mock('../ui/sidebar', () => ({
+  SidebarMenuItem: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SidebarMenuButton: ({ children }: { children: React.ReactNode }) => children
+}))
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() })
@@ -70,7 +78,82 @@ describe('ChatPanel', () => {
     deleteCookie('searchMode')
   })
 
-  test('hides the home panel while history is unresolved and shows it for a new chat', () => {
+  test.each(['sidebar', 'shortcut'])(
+    'the %s resets an empty homepage draft and leaves a hidden cached panel alone',
+    action => {
+      const hiddenReset = vi.fn()
+      const visibleReset = vi.fn()
+      const props = {
+        input: '',
+        handleInputChange: vi.fn(),
+        handleSubmit: vi.fn(),
+        status: 'ready' as const,
+        messages: [],
+        setMessages: vi.fn(),
+        stop: vi.fn(),
+        append: vi.fn(),
+        showScrollToBottomButton: false,
+        uploadedFiles: [],
+        setUploadedFiles: vi.fn(),
+        quotedContexts: [],
+        setQuotedContexts: vi.fn(),
+        noteContexts: [],
+        setNoteContexts: vi.fn()
+      }
+      const view = render(
+        <>
+          <ChatPanel
+            {...props}
+            chatId="hidden"
+            scrollContainerRef={React.createRef<HTMLDivElement>()}
+            onNewChat={hiddenReset}
+          />
+          <ChatPanel
+            {...props}
+            chatId="visible"
+            scrollContainerRef={React.createRef<HTMLDivElement>()}
+            onNewChat={visibleReset}
+          />
+          <NewChatMenuItem />
+        </>
+      )
+      const visiblePanel = screen
+        .getAllByRole('textbox')[1]
+        .parentElement!.closest('[class*="group/form-container"]')!
+      Object.defineProperty(visiblePanel, 'offsetParent', {
+        value: document.body
+      })
+      const hiddenContent = 'hidden pasted context '.repeat(30)
+      const visibleContent = 'visible pasted context '.repeat(30)
+      const inputs = screen.getAllByRole('textbox')
+      for (const [input, content, url] of [
+        [inputs[0], hiddenContent, 'https://hidden.example'],
+        [inputs[1], visibleContent, 'https://visible.example']
+      ] as const) {
+        fireEvent.paste(input, { clipboardData: { getData: () => content } })
+        fireEvent.paste(input, { clipboardData: { getData: () => url } })
+      }
+      expect(screen.getByText(visibleContent.trim())).toBeInTheDocument()
+      expect(screen.getByText('visible.example')).toBeInTheDocument()
+      const event = new Event(SHORTCUT_EVENTS.newChat, { cancelable: true })
+      if (action === 'sidebar') {
+        fireEvent.click(screen.getByRole('link', { name: 'New' }))
+      } else {
+        fireEvent(window, event)
+        expect(event.defaultPrevented).toBe(true)
+      }
+      expect(visibleReset).toHaveBeenCalledOnce()
+      expect(hiddenReset).not.toHaveBeenCalled()
+      expect(screen.queryByText(visibleContent.trim())).not.toBeInTheDocument()
+      expect(screen.queryByText('visible.example')).not.toBeInTheDocument()
+      expect(screen.getByText(hiddenContent.trim())).toBeInTheDocument()
+      expect(screen.getByText('hidden.example')).toBeInTheDocument()
+      view.unmount()
+    }
+  )
+
+  test('keeps the new-chat shortcut active while hiding the unresolved history panel', () => {
+    const onNewChat = vi.fn()
     const props = {
       chatId: 'chat',
       input: '',
@@ -90,7 +173,16 @@ describe('ChatPanel', () => {
       noteContexts: [],
       setNoteContexts: vi.fn()
     }
-    const view = render(<ChatPanel {...props} isHistoryPending />)
+    const view = render(
+      <ChatPanel {...props} onNewChat={onNewChat} isHistoryPending />
+    )
+    const panel = view.container.firstElementChild
+    if (panel)
+      Object.defineProperty(panel, 'offsetParent', { value: document.body })
+    const event = new Event(SHORTCUT_EVENTS.newChat, { cancelable: true })
+    fireEvent(window, event)
+    expect(event.defaultPrevented).toBe(true)
+    expect(onNewChat).toHaveBeenCalledOnce()
     expect(
       screen.queryByRole('heading', { name: 'What would you like to know?' })
     ).not.toBeInTheDocument()
@@ -148,6 +240,7 @@ describe('ChatPanel', () => {
   })
 
   test('starts a new chat without clearing the cached conversation', () => {
+    const scrollRef = { current: document.createElement('div') }
     const setMessages = vi.fn()
     const onNewChat = vi.fn()
     render(
@@ -162,7 +255,7 @@ describe('ChatPanel', () => {
         stop={vi.fn()}
         append={vi.fn()}
         showScrollToBottomButton={false}
-        scrollContainerRef={React.createRef<HTMLDivElement>()}
+        scrollContainerRef={scrollRef}
         uploadedFiles={[]}
         setUploadedFiles={vi.fn()}
         quotedContexts={[]}
@@ -172,7 +265,12 @@ describe('ChatPanel', () => {
         onNewChat={onNewChat}
       />
     )
-    fireEvent(window, new Event(SHORTCUT_EVENTS.newChat))
+    Object.defineProperty(
+      screen.getByRole('textbox').closest('[class*="group/form-container"]')!,
+      'offsetParent',
+      { value: document.body }
+    )
+    fireEvent(window, new Event(SHORTCUT_EVENTS.newChat, { cancelable: true }))
     expect(onNewChat).toHaveBeenCalledOnce()
     expect(setMessages).not.toHaveBeenCalled()
   })
