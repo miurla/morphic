@@ -177,28 +177,17 @@ describe('ChatPanel', () => {
     expect(setMessages).not.toHaveBeenCalled()
   })
 
-  test.each([
-    { label: 'below the button on the home page', hasMessages: false },
-    { label: 'above the button in a chat with messages', hasMessages: true }
-  ])('opens the attachment menu $label', ({ hasMessages }) => {
-    render(
+  test('opens the attachment menu as a collision-aware dropdown', () => {
+    const { container } = render(
       <ChatPanel
         chatId="chat"
         input=""
         handleInputChange={vi.fn()}
         handleSubmit={vi.fn()}
         status="ready"
-        messages={
-          hasMessages
-            ? [
-                {
-                  id: 'm1',
-                  role: 'user',
-                  parts: [{ type: 'text', text: 'hi' }]
-                }
-              ]
-            : []
-        }
+        messages={[
+          { id: 'm1', role: 'user', parts: [{ type: 'text', text: 'hi' }] }
+        ]}
         setMessages={vi.fn()}
         stop={vi.fn()}
         append={vi.fn()}
@@ -212,16 +201,22 @@ describe('ChatPanel', () => {
         setNoteContexts={vi.fn()}
       />
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Add' }))
-    const menu = screen.getByRole('button', { name: /Upload file/ })
-      .parentElement as HTMLElement
-    if (hasMessages) {
-      expect(menu).toHaveClass('bottom-full')
-      expect(menu).not.toHaveClass('top-full')
-    } else {
-      expect(menu).toHaveClass('top-full')
-      expect(menu).not.toHaveClass('bottom-full')
-    }
+    const fileInput = container.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement
+    const clickFileInput = vi.spyOn(fileInput, 'click')
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Add' }), {
+      key: 'Enter'
+    })
+    expect(screen.getByRole('menu')).toHaveAttribute('data-side', 'bottom')
+    expect(
+      screen.getByRole('menuitem', { name: 'Add from library' })
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Upload file' }))
+    expect(clickFileInput).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   })
 
   describe('attachment limit', () => {
