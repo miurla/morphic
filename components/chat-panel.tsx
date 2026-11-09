@@ -413,7 +413,10 @@ export function ChatPanel({
     [setUploadedFiles]
   )
 
+  // Keeps the dropdown from pulling focus back from the picker's search input
+  const skipMenuCloseFocusRef = useRef(false)
   const openLibraryPicker = useCallback(() => {
+    skipMenuCloseFocusRef.current = true
     setIsLibraryPickerOpen(true)
   }, [])
 
@@ -878,6 +881,12 @@ export function ChatPanel({
                       align="start"
                       sideOffset={8}
                       className="w-52"
+                      onCloseAutoFocus={event => {
+                        if (skipMenuCloseFocusRef.current) {
+                          skipMenuCloseFocusRef.current = false
+                          event.preventDefault()
+                        }
+                      }}
                     >
                       <DropdownMenuItem
                         onSelect={() => fileInputRef.current?.click()}
