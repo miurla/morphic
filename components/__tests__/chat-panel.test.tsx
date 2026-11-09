@@ -177,6 +177,53 @@ describe('ChatPanel', () => {
     expect(setMessages).not.toHaveBeenCalled()
   })
 
+  test.each([
+    { label: 'below the button on the home page', hasMessages: false },
+    { label: 'above the button in a chat with messages', hasMessages: true }
+  ])('opens the attachment menu $label', ({ hasMessages }) => {
+    render(
+      <ChatPanel
+        chatId="chat"
+        input=""
+        handleInputChange={vi.fn()}
+        handleSubmit={vi.fn()}
+        status="ready"
+        messages={
+          hasMessages
+            ? [
+                {
+                  id: 'm1',
+                  role: 'user',
+                  parts: [{ type: 'text', text: 'hi' }]
+                }
+              ]
+            : []
+        }
+        setMessages={vi.fn()}
+        stop={vi.fn()}
+        append={vi.fn()}
+        showScrollToBottomButton={false}
+        scrollContainerRef={React.createRef<HTMLDivElement>()}
+        uploadedFiles={[]}
+        setUploadedFiles={vi.fn()}
+        quotedContexts={[]}
+        setQuotedContexts={vi.fn()}
+        noteContexts={[]}
+        setNoteContexts={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+    const menu = screen.getByRole('button', { name: /Upload file/ })
+      .parentElement as HTMLElement
+    if (hasMessages) {
+      expect(menu).toHaveClass('bottom-full')
+      expect(menu).not.toHaveClass('top-full')
+    } else {
+      expect(menu).toHaveClass('top-full')
+      expect(menu).not.toHaveClass('bottom-full')
+    }
+  })
+
   describe('attachment limit', () => {
     const existing = (count: number): UploadedFile[] =>
       Array.from({ length: count }, (_, i) => ({
