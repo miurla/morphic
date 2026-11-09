@@ -177,6 +177,84 @@ describe('ChatPanel', () => {
     expect(setMessages).not.toHaveBeenCalled()
   })
 
+  test('opens the attachment menu as a collision-aware dropdown', () => {
+    const { container } = render(
+      <ChatPanel
+        chatId="chat"
+        input=""
+        handleInputChange={vi.fn()}
+        handleSubmit={vi.fn()}
+        status="ready"
+        messages={[
+          { id: 'm1', role: 'user', parts: [{ type: 'text', text: 'hi' }] }
+        ]}
+        setMessages={vi.fn()}
+        stop={vi.fn()}
+        append={vi.fn()}
+        showScrollToBottomButton={false}
+        scrollContainerRef={React.createRef<HTMLDivElement>()}
+        uploadedFiles={[]}
+        setUploadedFiles={vi.fn()}
+        quotedContexts={[]}
+        setQuotedContexts={vi.fn()}
+        noteContexts={[]}
+        setNoteContexts={vi.fn()}
+      />
+    )
+    const fileInput = container.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement
+    const clickFileInput = vi.spyOn(fileInput, 'click')
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Add' }), {
+      key: 'Enter'
+    })
+    expect(screen.getByRole('menu')).toHaveAttribute('data-side', 'bottom')
+    expect(
+      screen.getByRole('menuitem', { name: 'Add from library' })
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Upload file' }))
+    expect(clickFileInput).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
+  test('leaves focus to the library picker instead of the Add button', async () => {
+    render(
+      <ChatPanel
+        chatId="chat"
+        input=""
+        handleInputChange={vi.fn()}
+        handleSubmit={vi.fn()}
+        status="ready"
+        messages={[]}
+        setMessages={vi.fn()}
+        stop={vi.fn()}
+        append={vi.fn()}
+        showScrollToBottomButton={false}
+        scrollContainerRef={React.createRef<HTMLDivElement>()}
+        uploadedFiles={[]}
+        setUploadedFiles={vi.fn()}
+        quotedContexts={[]}
+        setQuotedContexts={vi.fn()}
+        noteContexts={[]}
+        setNoteContexts={vi.fn()}
+      />
+    )
+    const addButton = screen.getByRole('button', { name: 'Add' })
+
+    fireEvent.keyDown(addButton, { key: 'Enter' })
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Upload file' }))
+    await waitFor(() => expect(addButton).toHaveFocus())
+    addButton.blur()
+
+    fireEvent.keyDown(addButton, { key: 'Enter' })
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add from library' }))
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(addButton).not.toHaveFocus()
+  })
+
   describe('attachment limit', () => {
     const existing = (count: number): UploadedFile[] =>
       Array.from({ length: count }, (_, i) => ({

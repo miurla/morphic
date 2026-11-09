@@ -52,6 +52,12 @@ import { useArtifact } from './artifact/artifact-context'
 import { useLibrary } from './library/library-context'
 import { LibraryPickerDialog } from './library/library-picker-dialog'
 import { Button } from './ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from './ui/dropdown-menu'
 import { IconBlinkingLogo } from './ui/icons'
 import {
   Tooltip,
@@ -147,7 +153,6 @@ export function ChatPanel({
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const attachmentMenuRef = useRef<HTMLDivElement>(null)
   const noteContextsRef = useRef(noteContexts)
   const uploadedFilesRef = useRef(uploadedFiles)
   const isFirstRender = useRef(true)
@@ -159,7 +164,6 @@ export function ChatPanel({
   const [contentCards, setContentCards] = useState<string[]>([])
   // A single pasted URL becomes a lightweight favicon chip (see BARE_URL_RE).
   const [urlCards, setUrlCards] = useState<string[]>([])
-  const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false)
   const [isLibraryPickerOpen, setIsLibraryPickerOpen] = useState(false)
   const { close: closeArtifact } = useArtifact()
   const { upsertCachedFile } = useLibrary()
@@ -409,37 +413,12 @@ export function ChatPanel({
     [setUploadedFiles]
   )
 
+  // Keeps the dropdown from pulling focus back from the picker's search input
+  const skipMenuCloseFocusRef = useRef(false)
   const openLibraryPicker = useCallback(() => {
-    setIsAttachmentMenuOpen(false)
+    skipMenuCloseFocusRef.current = true
     setIsLibraryPickerOpen(true)
   }, [])
-
-  useEffect(() => {
-    if (!isAttachmentMenuOpen) return
-
-    function handlePointerDown(event: PointerEvent) {
-      if (
-        attachmentMenuRef.current &&
-        !attachmentMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsAttachmentMenuOpen(false)
-      }
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsAttachmentMenuOpen(false)
-      }
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown)
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isAttachmentMenuOpen])
 
   // Scroll to the bottom of the container
   const handleScrollToBottom = () => {
@@ -863,7 +842,7 @@ export function ChatPanel({
           <div className="flex items-center justify-between p-2 md:p-3">
             <div className="flex items-center gap-2">
               {!isGuest && (
-                <div ref={attachmentMenuRef} className="relative">
+                <div>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -873,54 +852,54 @@ export function ChatPanel({
                     onChange={event => {
                       const files = Array.from(event.target.files ?? [])
                       event.target.value = ''
-                      setIsAttachmentMenuOpen(false)
                       void uploadSelectedFiles(files)
                     }}
                   />
-                  <TooltipProvider delayDuration={200}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="size-8 rounded-full"
-                          aria-label="Add"
-                          aria-expanded={isAttachmentMenuOpen}
-                          onClick={() => setIsAttachmentMenuOpen(open => !open)}
-                        >
-                          <Plus className="size-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs">
-                        Add
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  {isAttachmentMenuOpen && (
-                    <div className="absolute left-0 top-full z-50 mt-2 w-52 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
-                        onClick={() => {
-                          setIsAttachmentMenuOpen(false)
-                          fileInputRef.current?.click()
-                        }}
+                  <DropdownMenu modal={false}>
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="size-8 rounded-full"
+                              aria-label="Add"
+                            >
+                              <Plus className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs">
+                          Add
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <DropdownMenuContent
+                      side="bottom"
+                      align="start"
+                      sideOffset={8}
+                      className="w-52"
+                      onCloseAutoFocus={event => {
+                        if (skipMenuCloseFocusRef.current) {
+                          skipMenuCloseFocusRef.current = false
+                          event.preventDefault()
+                        }
+                      }}
+                    >
+                      <DropdownMenuItem
+                        onSelect={() => fileInputRef.current?.click()}
                       >
                         <Paperclip className="size-4" />
                         Upload file
-                      </button>
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
-                        onClick={openLibraryPicker}
-                      >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={openLibraryPicker}>
                         <LibraryIcon className="size-4" />
                         Add from library
-                      </button>
-                    </div>
-                  )}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               )}
               <SearchModeSelector
