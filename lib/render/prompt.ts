@@ -1,3 +1,5 @@
+import { REVISE_QUERY_PREFIXES } from '@/lib/draft/revise'
+
 /**
  * Returns the prompt section that instructs the LLM to end an answer with
  * follow-up suggestions as a ```spec fenced block: buttons that send the
@@ -29,9 +31,9 @@ Suggest what this user needs next from this answer. Which kind of answer to writ
   Avoid three near-duplicate "what are the differences / what about X" questions. Set the Heading title to "Related" and its icon to "related". Use submitQuery for every Related button. Write each complete, self-contained question once in props.text, then copy that exact string into params.query, character for character, including punctuation. Never shorten the label or expand the query with extra context; if context is needed, put it in BOTH identical strings.
 - For a draft answer (you wrote or changed a draft, or showed draft alternatives), set Heading title to "Revise" and icon to "edit". Follow the user's latest editing intent, including earlier constraints still in force. Carry forward the exact target and protected passages; preserve word count, structure, FAQ, and other requirements. Never force a length/tone/content checklist. Avoid unrelated generic suggestions and edits already completed.
   Example: after "change only the ending; keep the opening paragraph", offer "末尾だけ別案を3つ見る", not hashtags, a shorter whole draft, or another opening rewrite.
-  Distinguish two intents in BOTH label and action:
-  - alternatives: label explicitly says "see alternatives" (e.g. "末尾だけ別案を3つ見る"); use submitRevision with intent="alternatives". The query specifies the target, protected text and active constraints, asks for candidates in chat, and says not to change the draft or call editDraft. Only apply after the user selects and requests application.
-  - edit: label explicitly says "rewrite" (e.g. "末尾だけ柔らかく書き換える"); use submitRevision with intent="edit". The query explicitly requests editing only that range, retaining protected text and active constraints.
+  Use the existing submitQuery action for every button. Distinguish two intents in BOTH label and query:
+  - alternatives: label explicitly says "see alternatives" (e.g. "末尾だけ別案を3つ見る"); start params.query with the literal prefix "${REVISE_QUERY_PREFIXES.alternatives}" followed by a newline. The query specifies the target, protected text and active constraints, asks for candidates in chat, and says not to change the draft or call editDraft. Only apply after the user selects and requests application.
+  - edit: label explicitly says "rewrite" (e.g. "末尾だけ柔らかく書き換える"); start params.query with the literal prefix "${REVISE_QUERY_PREFIXES.edit}" followed by a newline. The query explicitly requests editing only that range, retaining protected text and active constraints.
   Offer three distinct useful next steps within that scope, including alternatives when useful. Do not silently broaden the scope.
 Suggestions must be concise (max 10-12 words), self-contained, and in the user's language.
 
@@ -56,14 +58,13 @@ AVAILABLE COMPONENTS:
 - Button: { text: string, icon?: "related" | "edit" | "arrow-right", variant?: "default" | "outline" | "ghost" | "link" | "secondary" } - A clickable button that emits a press action. Use variant="link" with icon="arrow-right" for inline follow-up suggestions.
 
 AVAILABLE ACTIONS:
-- submitQuery: { query: string } - Send a Related question as the user's next message
-- submitRevision: { query: string, intent: "alternatives" | "edit" } - Send a Revise request. Use only under Revise. Example press: {"action":"submitRevision","params":{"query":"Show three alternative endings in chat only; keep the opening, word count and FAQ unchanged. Do not edit the draft.","intent":"alternatives"}}
+- submitQuery: { query: string } - Send the user's next message. Related uses the exact visible question. Revise uses a fixed prefix and a self-contained editing instruction; no additional action or params.
 
 SPEC RULES:
 1. If included, the follow-up suggestions \`\`\`spec fence must appear at the END of your response. Stop immediately after its closing fence; append no punctuation or commentary.
 2. Every \`\`\`spec block must contain ONLY JSONL patches — no commentary inside.
 3. Keep each JSON object on a single line.
-4. For Related, "text" and "query" must be identical. Before closing the block, verify all three submitQuery queries exactly equal their button text; the longer-query exception applies ONLY to submitRevision. For Revise, keep the label concise and make the query self-contained with the exact scope, protected passages, and existing constraints.
+4. For Related, "text" and "query" must be identical. Before closing the block, verify all three Related queries exactly equal their button text; the longer-query exception applies ONLY to queries starting with a fixed Revise prefix. For Revise, encode the newline after the prefix as \\n in the JSON string. Example params: {"query":"${REVISE_QUERY_PREFIXES.alternatives}\\nShow three endings in chat only; keep the opening, word count and FAQ unchanged."}. Keep the label concise and make the query self-contained with the exact scope, protected passages, and existing constraints.
 5. Emit at most ONE follow-up suggestions spec block per answer, and none at all when the skip criteria above apply (image spec blocks are separate and may appear inline).
 6. Do NOT include follow-up suggestions or questions in your markdown text. Only use the spec block for them. The heading belongs only to the spec block's Heading element: never write "Related", "Revise", or any heading for the suggestions as markdown text before the block.
 `

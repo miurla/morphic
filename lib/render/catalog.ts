@@ -84,14 +84,6 @@ export const catalog = schema.createCatalog({
     }
   },
   actions: {
-    submitRevision: {
-      params: z.object({
-        query: z.string(),
-        intent: z.enum(['alternatives', 'edit'])
-      }),
-      description:
-        'Preview alternatives in chat or edit only the requested draft range'
-    },
     submitQuery: {
       params: z.object({
         query: z.string()

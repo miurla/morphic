@@ -43,8 +43,8 @@ describe('stripSpecFromMessages', () => {
 
   it('keeps Revise actions in history so their scope survives a follow-up', () => {
     const input = RELATED_BLOCK.replace('"Related"', '"Revise"').replace(
-      '"action":"submitQuery"',
-      '"action": "submitRevision"'
+      '"query":"A follow-up question"',
+      '"query":"[revise:alternatives]\\nShow endings only"'
     )
     expect(textOf(stripSpecFromMessages([assistant(input)])[0])).toBe(input)
   })

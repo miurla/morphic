@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { captureClient } from '@/lib/analytics/posthog-client'
 import { ChatProvider } from '@/lib/contexts/chat-context'
+import { markRevisionQuery } from '@/lib/draft/revise'
 
 import { SpecBlock, SpecMessageContext } from '../spec-block'
 
@@ -27,10 +28,14 @@ function spec(revise = true): Spec {
         props: { text: '末尾だけ別案を3つ見る', variant: 'link' },
         on: {
           press: {
-            action: revise ? 'submitRevision' : 'submitQuery',
+            action: 'submitQuery',
             params: {
-              query: '末尾だけ3案。冒頭とFAQと500語の条件は維持。',
-              intent: 'alternatives'
+              query: revise
+                ? markRevisionQuery(
+                    '末尾だけ3案。冒頭とFAQと500語の条件は維持。',
+                    'alternatives'
+                  )
+                : '末尾だけ3案。冒頭とFAQと500語の条件は維持。'
             }
           }
         }
@@ -40,10 +45,14 @@ function spec(revise = true): Spec {
         props: { text: '末尾だけ書き換える', variant: 'link' },
         on: {
           press: {
-            action: revise ? 'submitRevision' : 'submitQuery',
+            action: 'submitQuery',
             params: {
-              query: '末尾だけ柔らかく。冒頭とFAQと500語は維持。',
-              intent: 'edit'
+              query: revise
+                ? markRevisionQuery(
+                    '末尾だけ柔らかく。冒頭とFAQと500語は維持。',
+                    'edit'
+                  )
+                : '末尾だけ柔らかく。冒頭とFAQと500語は維持。'
             }
           }
         }
@@ -109,8 +118,10 @@ describe('Revise actions and analytics', () => {
     const { rerender } = render(view())
     const updated = spec()
     updated.elements.q1.on!.press = {
-      action: 'submitRevision',
-      params: { query: 'Updated ending request', intent: 'alternatives' }
+      action: 'submitQuery',
+      params: {
+        query: markRevisionQuery('Updated ending request', 'alternatives')
+      }
     }
     rerender(view(updated, 'answer-2'))
     fireEvent.click(screen.getByText('末尾だけ別案を3つ見る'))
@@ -163,6 +174,7 @@ describe('Revise actions and analytics', () => {
     expect(text).toContain('Do not call editDraft or write a draft block')
     expect(text).toContain('select and explicitly request application')
     expect(text).toContain('冒頭とFAQと500語')
+    expect(text).not.toContain('[revise:')
     expect(captureClient).toHaveBeenLastCalledWith(
       'revise_suggestion_clicked',
       {
@@ -249,7 +261,7 @@ describe('Revise actions and analytics', () => {
     expect(captureClient).not.toHaveBeenCalled()
   })
 
-  test('keeps the legacy Related event and query', async () => {
+  test('keeps the existing Related event and query', async () => {
     render(view(spec(false)))
     expect(captureClient).not.toHaveBeenCalled()
     fireEvent.click(screen.getByText('末尾だけ別案を3つ見る'))
@@ -263,21 +275,19 @@ describe('Revise actions and analytics', () => {
     )
   })
 
-  test('classifies saved Revise submitQuery buttons as legacy without guessing intent', async () => {
-    const saved = spec()
-    saved.elements.q1.on!.press = {
-      action: 'submitQuery',
-      params: { query: 'Original saved query' }
-    }
-    render(view(saved))
+  test('does not infer revision intent from a heading or natural-language wording', async () => {
+    const value = spec(false)
+    value.elements.h.props.title = 'Revise'
+    render(view(value))
+    expect(captureClient).not.toHaveBeenCalled()
     fireEvent.click(screen.getByText('末尾だけ別案を3つ見る'))
     await waitFor(() => expect(sendMessage).toHaveBeenCalledOnce())
     expect(sendMessage.mock.calls[0][0].parts[0].text).toBe(
-      'Original saved query'
+      '末尾だけ3案。冒頭とFAQと500語の条件は維持。'
     )
-    expect(captureClient).toHaveBeenLastCalledWith(
-      'revise_suggestion_clicked',
-      expect.objectContaining({ intent: 'legacy' })
+    expect(captureClient).toHaveBeenCalledExactlyOnceWith(
+      'related_question_clicked',
+      { chatId: 'chat-1' }
     )
   })
 })

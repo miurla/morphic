@@ -1,9 +1,11 @@
 import type { Spec } from '@json-render/core'
 
+import { type ReviseIntent, revisionIntentFromQuery } from '@/lib/draft/revise'
+
 export type RevisionSuggestion = {
   suggestionId: string
   position: number
-  intent: 'alternatives' | 'edit' | 'legacy'
+  intent: ReviseIntent
   query: string
 }
 
@@ -22,11 +24,6 @@ export function prepareRevisionSuggestions(spec: Spec): {
     for (const child of spec.elements[id].children ?? []) visit(child)
   }
   visit(spec.root)
-  const legacyRevise = visible.some(id => {
-    const element = spec.elements[id]
-    return element.type === 'Heading' && element.props.title === 'Revise'
-  })
-
   const elements = { ...spec.elements }
   const suggestions: RevisionSuggestion[] = []
   for (const id of visible) {
@@ -35,16 +32,10 @@ export function prepareRevisionSuggestions(spec: Spec): {
     const press = element.on?.press
     if (!press || Array.isArray(press)) continue
     const { action, params } = press
-    if (
-      action !== 'submitRevision' &&
-      !(legacyRevise && action === 'submitQuery')
-    )
-      continue
+    if (action !== 'submitQuery') continue
     if (typeof params?.query !== 'string' || !params.query.trim()) continue
-    const intent = action === 'submitQuery' ? 'legacy' : params.intent
-    if (intent !== 'legacy' && intent !== 'alternatives' && intent !== 'edit') {
-      continue
-    }
+    const intent = revisionIntentFromQuery(params.query)
+    if (!intent) continue
     const position = suggestions.length
     suggestions.push({
       suggestionId: `revise-${position + 1}`,
@@ -56,7 +47,10 @@ export function prepareRevisionSuggestions(spec: Spec): {
       ...element,
       on: {
         ...element.on,
-        press: { action: 'submitRevision', params: { position } }
+        press: {
+          action: 'submitQuery',
+          params: { query: params.query, position }
+        }
       }
     }
   }

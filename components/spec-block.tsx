@@ -78,31 +78,39 @@ export function SpecBlock({ result }: SpecBlockProps) {
 
   const handlers = useMemo(
     () => ({
-      submitRevision: (params: Record<string, unknown>) => {
+      submitQuery: (params: Record<string, unknown>) => {
         const { prepared, messageId, chatContext } = latest.current
+        const query = params.query
+        if (typeof query !== 'string' || !query.trim()) return
         const position = params.position
-        if (typeof position !== 'number') return
-        const suggestion = prepared?.suggestions[position]
-        if (!suggestion) return
+        const suggestion =
+          typeof position === 'number'
+            ? prepared?.suggestions[position]
+            : undefined
+        // Ignore an obsolete prepared button instead of submitting a different slot.
+        if (
+          position !== undefined &&
+          (!suggestion || suggestion.query !== query)
+        )
+          return
         if (chatContext.isStreamingRef.current) {
           toast.info('Please wait for the current response to finish.')
           return
         }
+        if (!suggestion)
+          captureClient('related_question_clicked', { chatId: currentChatId() })
         chatContext.sendMessage(
           {
             role: 'user',
             parts: [
               {
                 type: 'text',
-                text:
-                  suggestion.intent === 'legacy'
-                    ? suggestion.query
-                    : reviseQuery(suggestion.query, suggestion.intent)
+                text: suggestion ? reviseQuery(query, suggestion.intent) : query
               }
             ]
           },
           () => {
-            if (messageId)
+            if (suggestion && messageId)
               captureClient('revise_suggestion_clicked', {
                 chatId: currentChatId(),
                 messageId,
@@ -112,30 +120,9 @@ export function SpecBlock({ result }: SpecBlockProps) {
               })
           }
         )
-      },
-      submitQuery: (params: Record<string, unknown>) => {
-        const query = (params as { query?: string }).query
-        if (typeof query !== 'string' || !query.trim()) return
-
-        // Reject clicks while a response is in flight. Firing a second
-        // sendMessage mid-stream corrupts useChat's internal state and
-        // leaves the input box stuck disabled. Read via the ref so the
-        // frozen closure (ActionProvider stores handlers as
-        // useState(initialHandlers)) still sees the latest value.
-        if (chatContext.isStreamingRef.current) {
-          toast.info('Please wait for the current response to finish.')
-          return
-        }
-
-        captureClient('related_question_clicked', { chatId: currentChatId() })
-
-        chatContext.sendMessage({
-          role: 'user',
-          parts: [{ type: 'text', text: query }]
-        })
       }
     }),
-    [chatContext]
+    []
   )
 
   const content = useMemo(() => {
