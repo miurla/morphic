@@ -23,10 +23,12 @@ import { captureClient } from '@/lib/analytics/posthog-client'
 import { chatStore } from '@/lib/chat-store'
 import { useChatContext } from '@/lib/contexts/chat-context'
 import type { UIMessage } from '@/lib/types/ai'
+import { deleteCookie, setCookie } from '@/lib/utils/cookies'
 
 import { Chat } from '../chat'
 
 const RefreshContext = createContext<(() => Promise<void>) | null>(null)
+const onFollowUpAccepted = vi.fn()
 const streamingRefs: MutableRefObject<boolean>[] = []
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
@@ -65,7 +67,7 @@ vi.mock('../chat-panel', () => ({
     handleInputChange,
     handleSubmit
   }: any) => {
-    const { isStreamingRef } = useChatContext()
+    const { isStreamingRef, sendMessage } = useChatContext()
     if (!streamingRefs.includes(isStreamingRef))
       streamingRefs.push(isStreamingRef)
     return (
@@ -75,6 +77,16 @@ vi.mock('../chat-panel', () => ({
         )}
         <button disabled={disabled} onClick={() => append({ text: 'hello' })}>
           Send
+        </button>
+        <button
+          onClick={() =>
+            sendMessage(
+              { role: 'user', parts: [{ type: 'text', text: 'Follow-up' }] },
+              onFollowUpAccepted
+            )
+          }
+        >
+          Attempt follow-up
         </button>
         <button onClick={onNewChat}>New</button>
         <button onClick={stop}>Stop</button>
@@ -112,6 +124,7 @@ const reply = (text: string) =>
 describe('Chat client cache', () => {
   beforeEach(() => {
     chatStore.clear()
+    deleteCookie('searchMode')
     streamingRefs.length = 0
     vi.clearAllMocks()
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply('server')))
@@ -120,6 +133,7 @@ describe('Chat client cache', () => {
     chatStore.clear()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+    deleteCookie('searchMode')
   })
 
   const finishResponse = () =>
@@ -545,6 +559,33 @@ describe('Chat client cache', () => {
     expect(screen.getByText(/fresh/)).toBeInTheDocument()
   })
 
+  it('does not acknowledge an Adaptive guest follow-up rejected for authentication', () => {
+    setCookie('searchMode', 'adaptive')
+    render(
+      <Chat
+        id="guest"
+        savedMessages={messages('seed')}
+        isGuest
+        isCloudDeployment
+      />
+    )
+    fireEvent.click(screen.getByText('Attempt follow-up'))
+    expect(screen.getByRole('dialog')).toHaveTextContent('auth')
+    expect(onFollowUpAccepted).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
+    expect(streamingRefs[0].current).toBe(false)
+  })
+
+  it('acknowledges an accepted follow-up before generation completes, but not a blocked overlapping send', async () => {
+    vi.mocked(fetch).mockReturnValue(new Promise(() => {}))
+    render(<Chat id="accepted" savedMessages={messages('seed')} />)
+    fireEvent.click(screen.getByText('Attempt follow-up'))
+    expect(onFollowUpAccepted).toHaveBeenCalledOnce()
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce())
+    fireEvent.click(screen.getByText('Attempt follow-up'))
+    expect(onFollowUpAccepted).toHaveBeenCalledOnce()
+  })
+
   it('blocks sending while unverified history loads', async () => {
     let resolve!: (response: Response) => void
     vi.mocked(fetch).mockReturnValue(
@@ -554,6 +595,9 @@ describe('Chat client cache', () => {
     )
     render(<Chat id="a" />)
     expect(screen.getByText('Send')).toBeDisabled()
+    fireEvent.click(screen.getByText('Attempt follow-up'))
+    expect(onFollowUpAccepted).not.toHaveBeenCalled()
+    expect(streamingRefs[0].current).toBe(false)
     await act(async () => {
       resolve(reply('loaded'))
     })

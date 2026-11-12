@@ -1,13 +1,22 @@
 'use client'
 
-import { useMemo } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef
+} from 'react'
 
 import { ActionProvider, JSONUIProvider, Renderer } from '@json-render/react'
 import { toast } from 'sonner'
 
 import { captureClient, chatIdFromPath } from '@/lib/analytics/posthog-client'
 import { useChatContext } from '@/lib/contexts/chat-context'
+import { reviseQuery } from '@/lib/draft/revise'
 import { registry } from '@/lib/render/registry'
+import { prepareRevisionSuggestions } from '@/lib/render/revise-suggestions'
 import type { SpecFenceResult } from '@/lib/render/spec-fence'
 
 function currentChatId(): string | undefined {
@@ -15,15 +24,95 @@ function currentChatId(): string | undefined {
   return chatIdFromPath(window.location.pathname)
 }
 
+export const SpecMessageContext = createContext<string | undefined>(undefined)
+
 type SpecBlockProps = {
   result: SpecFenceResult
 }
 
 export function SpecBlock({ result }: SpecBlockProps) {
   const chatContext = useChatContext()
+  const messageId = useContext(SpecMessageContext)
+  const prepared = useMemo(
+    () =>
+      result.status === 'ready'
+        ? prepareRevisionSuggestions(result.spec)
+        : null,
+    [result]
+  )
+  const latest = useRef({ prepared, messageId, chatContext })
+  useLayoutEffect(() => {
+    latest.current = { prepared, messageId, chatContext }
+  }, [prepared, messageId, chatContext])
+  const shown = useRef(new Set<string>())
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!messageId || !prepared?.suggestions.length) return
+    const recordShown = () => {
+      for (const suggestion of prepared?.suggestions ?? []) {
+        const key = `${messageId}:${suggestion.suggestionId}:${suggestion.intent}`
+        if (shown.current.has(key)) continue
+        shown.current.add(key)
+        captureClient('revise_suggestion_shown', {
+          chatId: currentChatId(),
+          messageId,
+          suggestionId: suggestion.suggestionId,
+          position: suggestion.position,
+          intent: suggestion.intent
+        })
+      }
+    }
+    const container = containerRef.current
+    if (!container) return
+    if (typeof IntersectionObserver === 'undefined') {
+      recordShown()
+      return
+    }
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) recordShown()
+    })
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [prepared, messageId])
 
   const handlers = useMemo(
     () => ({
+      submitRevision: (params: Record<string, unknown>) => {
+        const { prepared, messageId, chatContext } = latest.current
+        const position = params.position
+        if (typeof position !== 'number') return
+        const suggestion = prepared?.suggestions[position]
+        if (!suggestion) return
+        if (chatContext.isStreamingRef.current) {
+          toast.info('Please wait for the current response to finish.')
+          return
+        }
+        chatContext.sendMessage(
+          {
+            role: 'user',
+            parts: [
+              {
+                type: 'text',
+                text:
+                  suggestion.intent === 'legacy'
+                    ? suggestion.query
+                    : reviseQuery(suggestion.query, suggestion.intent)
+              }
+            ]
+          },
+          () => {
+            if (messageId)
+              captureClient('revise_suggestion_clicked', {
+                chatId: currentChatId(),
+                messageId,
+                suggestionId: suggestion.suggestionId,
+                position: suggestion.position,
+                intent: suggestion.intent
+              })
+          }
+        )
+      },
       submitQuery: (params: Record<string, unknown>) => {
         const query = (params as { query?: string }).query
         if (typeof query !== 'string' || !query.trim()) return
@@ -59,15 +148,18 @@ export function SpecBlock({ result }: SpecBlockProps) {
     }
 
     return (
-      <div className="pt-2 pb-4">
+      <div ref={containerRef} className="pt-2 pb-4">
         <JSONUIProvider registry={registry} initialState={result.spec.state}>
           <ActionProvider handlers={handlers}>
-            <Renderer spec={result.spec} registry={registry} />
+            <Renderer
+              spec={prepared?.spec ?? result.spec}
+              registry={registry}
+            />
           </ActionProvider>
         </JSONUIProvider>
       </div>
     )
-  }, [result, handlers])
+  }, [result, handlers, prepared])
 
   return content
 }

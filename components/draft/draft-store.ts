@@ -3,6 +3,7 @@
 import { useMemo, useSyncExternalStore } from 'react'
 
 import { type DraftBlock, parseDraftBlocks } from '@/lib/draft/draft'
+import { isReviseAlternativesTurn } from '@/lib/draft/revise'
 import type { UIMessage } from '@/lib/types/ai'
 
 // The draft panel lives in the layout-level inspector, outside the chat that
@@ -76,6 +77,8 @@ export function useLiveDraftBlock(): DraftBlock | null {
   return useMemo(() => {
     const last = messages.at(-1)
     if (!isStreaming || last?.role !== 'assistant') return null
+    const user = messages.findLast(message => message.role === 'user')
+    if (user && isReviseAlternativesTurn(user)) return null
     for (const part of [...(last.parts ?? [])].reverse()) {
       if (part.type !== 'text') continue
       const block = parseDraftBlocks(part.text).at(-1)

@@ -1,3 +1,5 @@
+import { isReviseAlternativesTurn } from './revise'
+
 /**
  * Drafts are written as a ````draft fenced block in the answer text and edited
  * with the editDraft tool. Four backticks let the content hold ordinary code
@@ -348,7 +350,12 @@ type MessageLike = {
  */
 export function buildDraftVersions(messages: MessageLike[]): DraftVersion[] {
   const versions: DraftVersion[] = []
+  let alternativesOnly = false
   for (const message of messages) {
+    if (message.role === 'user') {
+      alternativesOnly = isReviseAlternativesTurn(message)
+    }
+    if (alternativesOnly) continue
     if (message.role !== 'assistant') continue
     let wroteHere = false
     for (const part of message.parts ?? []) {

@@ -5,6 +5,7 @@ import { consumeStream, convertToModelMessages, smoothStream } from 'ai'
 
 import { researcher } from '@/lib/agents/researcher'
 import { buildDraftVersions, currentDraftVersion } from '@/lib/draft/draft'
+import { isReviseAlternativesTurn } from '@/lib/draft/revise'
 import {
   createPublicErrorResponse,
   serializePublicError
@@ -232,7 +233,10 @@ export async function createChatStreamResponse(
         chatId,
         searchMode,
         citationLabelSeed: nextCitationLabelNumber(messagesToModel),
-        currentDraft
+        currentDraft,
+        alternativesOnly: isReviseAlternativesTurn(
+          messagesToModel.findLast(m => m.role === 'user') ?? { role: '' }
+        )
       })
 
       streamErrorStage = 'transform-messages'

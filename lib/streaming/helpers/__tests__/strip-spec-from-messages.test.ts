@@ -41,6 +41,14 @@ describe('stripSpecFromMessages', () => {
     expect(textOf(result)).toBe(input)
   })
 
+  it('keeps Revise actions in history so their scope survives a follow-up', () => {
+    const input = RELATED_BLOCK.replace('"Related"', '"Revise"').replace(
+      '"action":"submitQuery"',
+      '"action": "submitRevision"'
+    )
+    expect(textOf(stripSpecFromMessages([assistant(input)])[0])).toBe(input)
+  })
+
   it('replaces a linked card block with a markdown list', () => {
     const cards = [
       '```spec',

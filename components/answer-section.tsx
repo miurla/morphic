@@ -36,6 +36,7 @@ import {
 import { CollapsibleMessage } from './collapsible-message'
 import { MarkdownMessage } from './message'
 import { MessageActions } from './message-actions'
+import { SpecMessageContext } from './spec-block'
 
 export type AnswerSectionProps = {
   content: string
@@ -281,10 +282,12 @@ export function AnswerSection({
             onMouseUp={updateSelection}
             onKeyUp={updateSelection}
           >
-            <MarkdownMessage
-              message={displayContent}
-              citationMaps={citationMaps}
-            />
+            <SpecMessageContext.Provider value={messageId}>
+              <MarkdownMessage
+                message={displayContent}
+                citationMaps={citationMaps}
+              />
+            </SpecMessageContext.Provider>
           </div>
           {selection &&
             (showSelectionSaveButton || showSelectionDeepDiveButton) && (

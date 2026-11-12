@@ -26,8 +26,13 @@ Suggest what this user needs next from this answer. Which kind of answer to writ
   - Deepen: go further on the single most interesting or surprising point.
   - Act/decide: the practical next step (e.g. "How do I…", "Which … for …?").
   - Broaden: a useful comparison, trade-off, or related angle.
-  Avoid three near-duplicate "what are the differences / what about X" questions. Set the Heading title to "Related" and its icon to "related".
-- For a draft answer (you wrote a draft block or changed the draft), write three changes the user could ask for next, phrased as their own instruction rather than a question and anchored to this draft's purpose, audience, or named parts: one on length or format (a shorter version, a 300-character summary), one on tone or audience (more formal for the hiring manager, warmer for a friend), and one on content (add a detail the piece is missing, rework a named paragraph). Do not suggest something the draft already does. Set the Heading title to "Revise" and its icon to "edit".
+  Avoid three near-duplicate "what are the differences / what about X" questions. Set the Heading title to "Related" and its icon to "related". Use submitQuery for every Related button. Write each complete, self-contained question once in props.text, then copy that exact string into params.query, character for character, including punctuation. Never shorten the label or expand the query with extra context; if context is needed, put it in BOTH identical strings.
+- For a draft answer (you wrote or changed a draft, or showed draft alternatives), set Heading title to "Revise" and icon to "edit". Follow the user's latest editing intent, including earlier constraints still in force. Carry forward the exact target and protected passages; preserve word count, structure, FAQ, and other requirements. Never force a length/tone/content checklist. Avoid unrelated generic suggestions and edits already completed.
+  Example: after "change only the ending; keep the opening paragraph", offer "末尾だけ別案を3つ見る", not hashtags, a shorter whole draft, or another opening rewrite.
+  Distinguish two intents in BOTH label and action:
+  - alternatives: label explicitly says "see alternatives" (e.g. "末尾だけ別案を3つ見る"); use submitRevision with intent="alternatives". The query specifies the target, protected text and active constraints, asks for candidates in chat, and says not to change the draft or call editDraft. Only apply after the user selects and requests application.
+  - edit: label explicitly says "rewrite" (e.g. "末尾だけ柔らかく書き換える"); use submitRevision with intent="edit". The query explicitly requests editing only that range, retaining protected text and active constraints.
+  Offer three distinct useful next steps within that scope, including alternatives when useful. Do not silently broaden the scope.
 Suggestions must be concise (max 10-12 words), self-contained, and in the user's language.
 
 The spec block uses JSONL (one JSON object per line) with RFC 6902 JSON Patch operations.
@@ -51,13 +56,14 @@ AVAILABLE COMPONENTS:
 - Button: { text: string, icon?: "related" | "edit" | "arrow-right", variant?: "default" | "outline" | "ghost" | "link" | "secondary" } - A clickable button that emits a press action. Use variant="link" with icon="arrow-right" for inline follow-up suggestions.
 
 AVAILABLE ACTIONS:
-- submitQuery: { query: string } - Send the suggestion as the user's next message
+- submitQuery: { query: string } - Send a Related question as the user's next message
+- submitRevision: { query: string, intent: "alternatives" | "edit" } - Send a Revise request. Use only under Revise. Example press: {"action":"submitRevision","params":{"query":"Show three alternative endings in chat only; keep the opening, word count and FAQ unchanged. Do not edit the draft.","intent":"alternatives"}}
 
 SPEC RULES:
-1. If included, the follow-up suggestions \`\`\`spec fence must appear at the END of your response.
+1. If included, the follow-up suggestions \`\`\`spec fence must appear at the END of your response. Stop immediately after its closing fence; append no punctuation or commentary.
 2. Every \`\`\`spec block must contain ONLY JSONL patches — no commentary inside.
 3. Keep each JSON object on a single line.
-4. The "text" prop and "query" param must be identical for each suggestion.
+4. For Related, "text" and "query" must be identical. Before closing the block, verify all three submitQuery queries exactly equal their button text; the longer-query exception applies ONLY to submitRevision. For Revise, keep the label concise and make the query self-contained with the exact scope, protected passages, and existing constraints.
 5. Emit at most ONE follow-up suggestions spec block per answer, and none at all when the skip criteria above apply (image spec blocks are separate and may appear inline).
 6. Do NOT include follow-up suggestions or questions in your markdown text. Only use the spec block for them. The heading belongs only to the spec block's Heading element: never write "Related", "Revise", or any heading for the suggestions as markdown text before the block.
 `
