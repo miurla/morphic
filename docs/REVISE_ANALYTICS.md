@@ -2,7 +2,7 @@
 
 Revise follows the latest editing intent and all earlier constraints still in force: target passages, passages to keep, word count, structure, FAQ, audience, etc. Suggestions must stay within that scope and avoid completed changes. A fixed length/tone/content checklist is no longer required.
 
-New buttons use `submitRevision` with `query` and `intent` (`alternatives` or `edit`). Labels explicitly distinguish seeing alternatives from rewriting. Unlike Related, a short Revise label can have a longer, self-contained query carrying the scope and constraints.
+All buttons use the existing `submitQuery` action with only its existing `query` parameter. Revise queries start with the fixed marker `[revise:alternatives]` or `[revise:edit]`, followed by a newline. The app detects this exact prefix, removes it, and adds the appropriate editing instructions before sending; labels and natural-language wording are not used to infer intent. No catalog action or parameter is added. Labels explicitly distinguish seeing alternatives from rewriting. Unlike Related, a short Revise label can have a longer, self-contained query carrying the scope and constraints.
 
 - **Alternatives** sends a chat-only request. The draft tool rejects edits for that turn, draft history ignores any unexpected draft blocks or tool writes, and live draft preview stays unchanged. Candidates require a later user selection and explicit application request.
 - **Edit** sends a request to change only the specified passage, retaining all other text and active constraints. Exact find/replace edits preserve surrounding text. Scope selection and compliance with linguistic requirements still depend on the model.
@@ -25,15 +25,15 @@ Both Revise events have only these application properties:
 | `messageId`    | Assistant message containing the suggestions                                              |
 | `suggestionId` | App-generated positional ID, `revise-1`, `revise-2`, etc.; never the generated element ID |
 | `position`     | Zero-based order among reachable valid Revise buttons                                     |
-| `intent`       | `alternatives`, `edit`, or `legacy` for saved Revise buttons using `submitQuery`          |
+| `intent`       | `alternatives` or `edit`, determined by the exact query prefix                            |
 
 No draft text, button label, prompt, query, generated element ID, or candidate content is included in these events. PostHog retains its existing SDK/session properties and configuration. This feature adds no autocapture or session recording.
 
-Requests rejected by streaming, history/send availability, or Adaptive guest authentication guards emit no Revise click event. The send wrapper invokes an acceptance callback synchronously after dispatch; this measures local acceptance, not network or model success. A Set prevents duplicate impressions during rerenders, incremental spec updates, and React Strict Mode effect replay. IntersectionObserver avoids counting the hidden responsive chat; environments without it fall back to mounted-block impressions. Missing message context suppresses Revise telemetry. Reachable `submitRevision` buttons are classified by their explicit action and intent, regardless of heading text or whether a heading exists. Legacy `submitQuery` buttons are classified as Revise only under a reachable `Revise` heading. Saved Revise buttons retain their original query and are marked `legacy`; their old events cannot be retroactively separated from Related.
+Requests rejected by streaming, history/send availability, or Adaptive guest authentication guards emit no Revise click event. The send wrapper invokes an acceptance callback synchronously after dispatch; this measures local acceptance, not network or model success. A Set prevents duplicate impressions during rerenders, incremental spec updates, and React Strict Mode effect replay. IntersectionObserver avoids counting the hidden responsive chat; environments without it fall back to mounted-block impressions. Missing message context suppresses Revise telemetry. Reachable `submitQuery` buttons with an exact Revise prefix are classified by that prefix, regardless of heading text or whether a heading exists. Unprefixed queries retain the existing Related behavior. The removed `submitRevision` format is not migrated or supported.
 
 ## Usage calculations
 
-Use the same time range and exclude `legacy` when comparing the two new intents. Define a suggestion key as `(chatId, messageId, suggestionId, intent)`; use PostHog person/session identity as appropriate for your report, especially if `chatId` is missing.
+Use the same time range when comparing the two intents. Define a suggestion key as `(chatId, messageId, suggestionId, intent)`; use PostHog person/session identity as appropriate for your report, especially if `chatId` is missing.
 
 - **Suggestion click-through rate:** distinct shown suggestion keys with an accepted click / distinct shown suggestion keys. Join clicks to impressions, rather than dividing raw event counts.
 - **Message usage rate:** distinct shown assistant messages with at least one accepted Revise click / distinct assistant messages with a Revise impression.
@@ -45,4 +45,4 @@ Impressions mean the block entered the viewport, not that every button was read.
 
 Clicks measure accepted requests, not successful generation, candidate selection, application, saved drafts, satisfaction, or task completion. No candidate-application conversion is inferred. The model still determines proposal relevance and edit scope, and context truncation can remove earlier constraints; automated prompt tests do not establish real-model compliance.
 
-Regression coverage includes separate action instructions, protected text after a scoped edit, preview tool rejection and history immutability, explicit later application, impression deduplication and content-free properties, streaming click rejection, legacy Related/Revise behavior, and retaining Revise specs in model history. Live model evaluation and production PostHog delivery require separate verification.
+Regression coverage includes separate action instructions, protected text after a scoped edit, preview tool rejection and history immutability, explicit later application, impression deduplication and content-free properties, streaming click rejection, existing Related behavior, and retaining Revise specs in model history. Live model evaluation and production PostHog delivery require separate verification.

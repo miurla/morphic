@@ -1,6 +1,8 @@
 import type { Spec } from '@json-render/core'
 import { describe, expect, test } from 'vitest'
 
+import { markRevisionQuery } from '@/lib/draft/revise'
+
 import { prepareRevisionSuggestions } from '../revise-suggestions'
 
 const button = {
@@ -8,8 +10,8 @@ const button = {
   props: { text: 'PRIVATE LABEL' },
   on: {
     press: {
-      action: 'submitRevision',
-      params: { query: 'PRIVATE QUERY', intent: 'alternatives' }
+      action: 'submitQuery',
+      params: { query: markRevisionQuery('PRIVATE QUERY', 'alternatives') }
     }
   }
 }
@@ -36,17 +38,20 @@ describe('revision spec preparation', () => {
         suggestionId: 'revise-1',
         position: 0,
         intent: 'alternatives',
-        query: 'PRIVATE QUERY'
+        query: markRevisionQuery('PRIVATE QUERY', 'alternatives')
       }
     ])
     expect(result.spec.elements['PRIVATE ELEMENT ID'].on?.press).toEqual({
-      action: 'submitRevision',
-      params: { position: 0 }
+      action: 'submitQuery',
+      params: {
+        query: markRevisionQuery('PRIVATE QUERY', 'alternatives'),
+        position: 0
+      }
     })
     expect(JSON.stringify(spec)).toBe(original)
   })
 
-  test('does not classify legacy Related or invalid revision intents as Revise', () => {
+  test('does not classify unprefixed queries or invalid revision intents as Revise', () => {
     const spec: Spec = {
       root: 'root',
       elements: {
@@ -62,12 +67,13 @@ describe('revision spec preparation', () => {
     }
     expect(prepareRevisionSuggestions(spec).suggestions).toEqual([])
     spec.elements.heading.props.title = 'Revise'
+    expect(prepareRevisionSuggestions(spec).suggestions).toEqual([])
     spec.elements.button = {
       ...button,
       on: {
         press: {
-          action: 'submitRevision',
-          params: { query: 'x', intent: 'invalid' }
+          action: 'submitQuery',
+          params: { query: '[revise:invalid]\nx' }
         }
       }
     }

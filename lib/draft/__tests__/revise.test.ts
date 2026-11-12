@@ -4,7 +4,12 @@ import { createDraftTools } from '@/lib/tools/draft'
 
 import { buildDraftVersions, currentDraftVersion } from '../draft'
 import { getDraftPrompt } from '../prompt'
-import { isReviseAlternativesTurn, reviseQuery } from '../revise'
+import {
+  isReviseAlternativesTurn,
+  markRevisionQuery,
+  reviseQuery,
+  revisionIntentFromQuery
+} from '../revise'
 
 const initial = {
   id: 'a1',
@@ -98,6 +103,29 @@ describe('revision draft safety', () => {
       { toolCallId: 'call', messages: [], context: {} }
     )
     expect(output).toMatchObject({ applied: 0 })
+  })
+
+  test('detects only exact query prefixes and strips transport markers before sending', () => {
+    for (const intent of ['alternatives', 'edit'] as const) {
+      const query = markRevisionQuery('Ending only', intent)
+      expect(revisionIntentFromQuery(query)).toBe(intent)
+      const sent = reviseQuery(query, intent)
+      expect(sent).not.toContain('[revise:')
+      expect(sent).toContain('Ending only')
+      expect(
+        isReviseAlternativesTurn({
+          role: 'user',
+          parts: [{ type: 'text', text: sent }]
+        })
+      ).toBe(intent === 'alternatives')
+    }
+    expect(revisionIntentFromQuery('Show alternatives in chat')).toBeUndefined()
+    expect(
+      revisionIntentFromQuery('[revise:alternatives] no newline')
+    ).toBeUndefined()
+    expect(
+      revisionIntentFromQuery('Quoted: [revise:edit]\nEnding')
+    ).toBeUndefined()
   })
 
   test('recognizes only preview requests, retaining draft and prompt constraints', () => {

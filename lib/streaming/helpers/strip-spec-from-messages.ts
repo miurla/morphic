@@ -6,7 +6,7 @@ const SPEC_FENCE = /```spec[\s\S]*?```/g
 
 // The follow-up suggestions block is the only spec block whose buttons send
 // the user's next message.
-const SUGGESTIONS_MARKER = /"action"\s*:\s*"(?:submitQuery|submitRevision)"/
+const SUGGESTIONS_MARKER = /"action"\s*:\s*"submitQuery"/
 
 /**
  * Removes ```spec fenced blocks from assistant message text, keeping the

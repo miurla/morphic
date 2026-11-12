@@ -48,8 +48,8 @@ describe('render prompts', () => {
     expect(prompt).toContain('Never force a length/tone/content checklist')
     expect(prompt).toContain('edits already completed')
     expect(prompt).toContain('末尾だけ別案を3つ見る')
-    expect(prompt).toContain('intent="alternatives"')
-    expect(prompt).toContain('intent="edit"')
+    expect(prompt).toContain('[revise:alternatives]')
+    expect(prompt).toContain('[revise:edit]')
     expect(prompt).toContain(
       'Only apply after the user selects and requests application'
     )
@@ -64,9 +64,11 @@ describe('render prompts', () => {
       'copy that exact string into params.query, character for character'
     )
     expect(prompt).toContain(
-      'the longer-query exception applies ONLY to submitRevision'
+      'the longer-query exception applies ONLY to queries starting with a fixed Revise prefix'
     )
     expect(prompt).toContain('Stop immediately after its closing fence')
+    expect(prompt).not.toContain('submitRevision')
+    expect(prompt).toContain('no additional action or params')
   })
 
   test('describes the related block as optional alongside image specs', () => {
