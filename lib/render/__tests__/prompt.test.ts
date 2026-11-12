@@ -58,6 +58,17 @@ describe('render prompts', () => {
     )
   })
 
+  test('keeps Related labels and queries identical despite the Revise exception', () => {
+    const prompt = getFollowUpSuggestionsSpecPrompt()
+    expect(prompt).toContain(
+      'copy that exact string into params.query, character for character'
+    )
+    expect(prompt).toContain(
+      'the longer-query exception applies ONLY to submitRevision'
+    )
+    expect(prompt).toContain('Stop immediately after its closing fence')
+  })
+
   test('describes the related block as optional alongside image specs', () => {
     expect(getImageSpecPrompt()).toContain('which is itself optional')
   })

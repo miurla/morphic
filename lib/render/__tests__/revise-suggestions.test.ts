@@ -46,13 +46,18 @@ describe('revision spec preparation', () => {
     expect(JSON.stringify(spec)).toBe(original)
   })
 
-  test('does not classify Related or invalid revision intents as Revise', () => {
+  test('does not classify legacy Related or invalid revision intents as Revise', () => {
     const spec: Spec = {
       root: 'root',
       elements: {
         root: { type: 'Stack', props: {}, children: ['heading', 'button'] },
         heading: { type: 'Heading', props: { title: 'Related' } },
-        button
+        button: {
+          ...button,
+          on: {
+            press: { action: 'submitQuery', params: { query: 'Related query' } }
+          }
+        }
       }
     }
     expect(prepareRevisionSuggestions(spec).suggestions).toEqual([])

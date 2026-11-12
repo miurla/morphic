@@ -29,7 +29,7 @@ Both Revise events have only these application properties:
 
 No draft text, button label, prompt, query, generated element ID, or candidate content is included in these events. PostHog retains its existing SDK/session properties and configuration. This feature adds no autocapture or session recording.
 
-Streaming-rejected clicks emit no click event. A Set prevents duplicate impressions during rerenders, incremental spec updates, and React Strict Mode effect replay. IntersectionObserver avoids counting the hidden responsive chat; environments without it fall back to mounted-block impressions. Missing message context suppresses Revise telemetry. Only reachable buttons under a Revise heading are classified. Saved Revise buttons retain their original query and are marked `legacy`; their old events cannot be retroactively separated from Related.
+Streaming-rejected clicks emit no click event. A Set prevents duplicate impressions during rerenders, incremental spec updates, and React Strict Mode effect replay. IntersectionObserver avoids counting the hidden responsive chat; environments without it fall back to mounted-block impressions. Missing message context suppresses Revise telemetry. Reachable `submitRevision` buttons are classified by their explicit action and intent, regardless of heading text or whether a heading exists. Legacy `submitQuery` buttons are classified as Revise only under a reachable `Revise` heading. Saved Revise buttons retain their original query and are marked `legacy`; their old events cannot be retroactively separated from Related.
 
 ## Usage calculations
 

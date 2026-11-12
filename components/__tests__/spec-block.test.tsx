@@ -40,7 +40,7 @@ function spec(revise = true): Spec {
         props: { text: '末尾だけ書き換える', variant: 'link' },
         on: {
           press: {
-            action: 'submitRevision',
+            action: revise ? 'submitRevision' : 'submitQuery',
             params: {
               query: '末尾だけ柔らかく。冒頭とFAQと500語は維持。',
               intent: 'edit'
@@ -198,6 +198,44 @@ describe('Revise actions and analytics', () => {
     expect(sendMessage).not.toHaveBeenCalled()
     expect(captureClient).not.toHaveBeenCalled()
   })
+
+  test.each(['修正', 'Related', undefined])(
+    'handles revision actions under heading %s with both intents and streaming protection',
+    async heading => {
+      const value = spec()
+      if (heading === undefined) {
+        value.elements.main.children = ['q1', 'q2']
+      } else {
+        value.elements.h.props.title = heading
+      }
+      render(view(value))
+      expect(captureClient).toHaveBeenCalledTimes(2)
+      fireEvent.click(screen.getByText('末尾だけ別案を3つ見る'))
+      await waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(1))
+      expect(sendMessage.mock.calls[0][0].parts[0].text).toContain(
+        'Do not call editDraft or write a draft block'
+      )
+      expect(captureClient).toHaveBeenLastCalledWith(
+        'revise_suggestion_clicked',
+        expect.objectContaining({ intent: 'alternatives' })
+      )
+      fireEvent.click(screen.getByText('末尾だけ書き換える'))
+      await waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(2))
+      expect(sendMessage.mock.calls[1][0].parts[0].text).toContain(
+        'Leave all other text unchanged'
+      )
+      expect(captureClient).toHaveBeenLastCalledWith(
+        'revise_suggestion_clicked',
+        expect.objectContaining({ intent: 'edit' })
+      )
+      isStreamingRef.current = true
+      vi.mocked(captureClient).mockClear()
+      fireEvent.click(screen.getByText('末尾だけ別案を3つ見る'))
+      await Promise.resolve()
+      expect(sendMessage).toHaveBeenCalledTimes(2)
+      expect(captureClient).not.toHaveBeenCalled()
+    }
+  )
 
   test('keeps the legacy Related event and query', async () => {
     render(view(spec(false)))

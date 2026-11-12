@@ -22,11 +22,10 @@ export function prepareRevisionSuggestions(spec: Spec): {
     for (const child of spec.elements[id].children ?? []) visit(child)
   }
   visit(spec.root)
-  const revise = visible.some(id => {
+  const legacyRevise = visible.some(id => {
     const element = spec.elements[id]
     return element.type === 'Heading' && element.props.title === 'Revise'
   })
-  if (!revise) return { spec, suggestions: [] }
 
   const elements = { ...spec.elements }
   const suggestions: RevisionSuggestion[] = []
@@ -36,7 +35,11 @@ export function prepareRevisionSuggestions(spec: Spec): {
     const press = element.on?.press
     if (!press || Array.isArray(press)) continue
     const { action, params } = press
-    if (action !== 'submitQuery' && action !== 'submitRevision') continue
+    if (
+      action !== 'submitRevision' &&
+      !(legacyRevise && action === 'submitQuery')
+    )
+      continue
     if (typeof params?.query !== 'string' || !params.query.trim()) continue
     const intent = action === 'submitQuery' ? 'legacy' : params.intent
     if (intent !== 'legacy' && intent !== 'alternatives' && intent !== 'edit') {
