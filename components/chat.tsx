@@ -289,8 +289,12 @@ export function Chat({
 
   // Keep all request entry points reflected in isStreamingRef so downstream
   // action handlers can reliably reject overlapping sends.
-  const safeSendMessage = useCallback<typeof sendMessage>(
-    (message, options) => {
+  const safeSendMessage = useCallback(
+    (
+      message: Parameters<typeof sendMessage>[0],
+      options?: Parameters<typeof sendMessage>[1],
+      onAccepted?: () => void
+    ) => {
       if (!canSend()) return Promise.resolve()
       if (isCurrentAdaptiveModeAuthBlocked()) {
         showAdaptiveModeAuthModal()
@@ -322,6 +326,7 @@ export function Chat({
           )
         }
 
+        onAccepted?.()
         return request
       } catch (error) {
         isStreamingRef.current = false
@@ -719,7 +724,12 @@ export function Chat({
     : { isDragging, handleDragOver, handleDragLeave, handleDrop }
 
   return (
-    <ChatProvider sendMessage={safeSendMessage} isStreamingRef={isStreamingRef}>
+    <ChatProvider
+      sendMessage={(message, onAccepted) =>
+        safeSendMessage(message, undefined, onAccepted)
+      }
+      isStreamingRef={isStreamingRef}
+    >
       <div
         className={cn(
           'relative flex h-full min-w-0 flex-1 flex-col',

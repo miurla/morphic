@@ -11,11 +11,11 @@ The app adds a fixed instruction prefix to preview requests. The same shared hel
 
 ## Events
 
-| Event                       | Trigger                                                                                        |
-| --------------------------- | ---------------------------------------------------------------------------------------------- |
-| `revise_suggestion_shown`   | A ready Revise suggestion block intersects the viewport, once per suggestion per mounted block |
-| `revise_suggestion_clicked` | A valid Revise click is accepted while no answer is generating                                 |
-| `related_question_clicked`  | Existing Related action; existing payload `{ chatId }` is retained                             |
+| Event                       | Trigger                                                                                                  |
+| --------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `revise_suggestion_shown`   | A ready Revise suggestion block intersects the viewport, once per suggestion per mounted block           |
+| `revise_suggestion_clicked` | The send wrapper accepts a valid Revise request after local streaming, history and authentication guards |
+| `related_question_clicked`  | Existing Related action; existing payload `{ chatId }` is retained                                       |
 
 Both Revise events have only these application properties:
 
@@ -29,7 +29,7 @@ Both Revise events have only these application properties:
 
 No draft text, button label, prompt, query, generated element ID, or candidate content is included in these events. PostHog retains its existing SDK/session properties and configuration. This feature adds no autocapture or session recording.
 
-Streaming-rejected clicks emit no click event. A Set prevents duplicate impressions during rerenders, incremental spec updates, and React Strict Mode effect replay. IntersectionObserver avoids counting the hidden responsive chat; environments without it fall back to mounted-block impressions. Missing message context suppresses Revise telemetry. Reachable `submitRevision` buttons are classified by their explicit action and intent, regardless of heading text or whether a heading exists. Legacy `submitQuery` buttons are classified as Revise only under a reachable `Revise` heading. Saved Revise buttons retain their original query and are marked `legacy`; their old events cannot be retroactively separated from Related.
+Requests rejected by streaming, history/send availability, or Adaptive guest authentication guards emit no Revise click event. The send wrapper invokes an acceptance callback synchronously after dispatch; this measures local acceptance, not network or model success. A Set prevents duplicate impressions during rerenders, incremental spec updates, and React Strict Mode effect replay. IntersectionObserver avoids counting the hidden responsive chat; environments without it fall back to mounted-block impressions. Missing message context suppresses Revise telemetry. Reachable `submitRevision` buttons are classified by their explicit action and intent, regardless of heading text or whether a heading exists. Legacy `submitQuery` buttons are classified as Revise only under a reachable `Revise` heading. Saved Revise buttons retain their original query and are marked `legacy`; their old events cannot be retroactively separated from Related.
 
 ## Usage calculations
 

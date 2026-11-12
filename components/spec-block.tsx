@@ -88,26 +88,30 @@ export function SpecBlock({ result }: SpecBlockProps) {
           toast.info('Please wait for the current response to finish.')
           return
         }
-        if (messageId)
-          captureClient('revise_suggestion_clicked', {
-            chatId: currentChatId(),
-            messageId,
-            suggestionId: suggestion.suggestionId,
-            position: suggestion.position,
-            intent: suggestion.intent
-          })
-        chatContext.sendMessage({
-          role: 'user',
-          parts: [
-            {
-              type: 'text',
-              text:
-                suggestion.intent === 'legacy'
-                  ? suggestion.query
-                  : reviseQuery(suggestion.query, suggestion.intent)
-            }
-          ]
-        })
+        chatContext.sendMessage(
+          {
+            role: 'user',
+            parts: [
+              {
+                type: 'text',
+                text:
+                  suggestion.intent === 'legacy'
+                    ? suggestion.query
+                    : reviseQuery(suggestion.query, suggestion.intent)
+              }
+            ]
+          },
+          () => {
+            if (messageId)
+              captureClient('revise_suggestion_clicked', {
+                chatId: currentChatId(),
+                messageId,
+                suggestionId: suggestion.suggestionId,
+                position: suggestion.position,
+                intent: suggestion.intent
+              })
+          }
+        )
       },
       submitQuery: (params: Record<string, unknown>) => {
         const query = (params as { query?: string }).query

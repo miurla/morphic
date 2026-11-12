@@ -65,6 +65,9 @@ function view(value = spec(), messageId = 'answer-1') {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  sendMessage.mockImplementation((_message, onAccepted?: () => void) =>
+    onAccepted?.()
+  )
   isStreamingRef.current = false
 })
 
@@ -236,6 +239,15 @@ describe('Revise actions and analytics', () => {
       expect(captureClient).not.toHaveBeenCalled()
     }
   )
+
+  test('does not count a request rejected by the send wrapper', async () => {
+    sendMessage.mockImplementationOnce(() => undefined)
+    render(view())
+    vi.mocked(captureClient).mockClear()
+    fireEvent.click(screen.getByText('末尾だけ別案を3つ見る'))
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledOnce())
+    expect(captureClient).not.toHaveBeenCalled()
+  })
 
   test('keeps the legacy Related event and query', async () => {
     render(view(spec(false)))

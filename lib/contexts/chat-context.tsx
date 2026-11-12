@@ -4,10 +4,14 @@ import type { MutableRefObject } from 'react'
 import { createContext, useContext } from 'react'
 
 type ChatContextValue = {
-  sendMessage: (message: {
-    role: 'user'
-    parts: Array<{ type: 'text'; text: string }>
-  }) => void
+  sendMessage: (
+    message: {
+      role: 'user'
+      parts: Array<{ type: 'text'; text: string }>
+    },
+    // Called synchronously only after local send guards accept the request.
+    onAccepted?: () => void
+  ) => void
   // Ref (not state) so reads via `.current` always see the freshest
   // value, even when the consumer is downstream of
   // @json-render/react's ActionProvider — which captures its handlers
