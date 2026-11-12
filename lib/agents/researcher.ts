@@ -79,7 +79,8 @@ export function createResearcher({
   chatId,
   searchMode = 'adaptive',
   citationLabelSeed,
-  currentDraft = null
+  currentDraft = null,
+  alternativesOnly = false
 }: {
   model: string
   modelConfig?: Model
@@ -87,6 +88,7 @@ export function createResearcher({
   searchMode?: SearchMode
   citationLabelSeed?: number
   currentDraft?: DraftVersion | null
+  alternativesOnly?: boolean
 }) {
   try {
     // Date only: a second-precision timestamp sits at the head of the prompt
@@ -101,7 +103,7 @@ export function createResearcher({
     const fetchTool = createFetchTool({ labelAllocator })
     const askQuestionTool = createQuestionTool(model)
     const todoTools = createTodoTools()
-    const draftTools = createDraftTools(currentDraft)
+    const draftTools = createDraftTools(currentDraft, alternativesOnly)
 
     let systemPrompt: string
     let activeToolsList: (keyof ResearcherTools)[] = []

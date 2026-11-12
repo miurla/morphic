@@ -5,6 +5,7 @@ import { consumeStream, convertToModelMessages, smoothStream } from 'ai'
 
 import { researcher } from '@/lib/agents/researcher'
 import { buildDraftVersions, currentDraftVersion } from '@/lib/draft/draft'
+import { isReviseAlternativesTurn } from '@/lib/draft/revise'
 import {
   createPublicErrorResponse,
   serializePublicError
@@ -192,7 +193,10 @@ export async function createEphemeralChatStreamResponse(
         chatId,
         searchMode,
         citationLabelSeed: nextCitationLabelNumber(messages),
-        currentDraft
+        currentDraft,
+        alternativesOnly: isReviseAlternativesTurn(
+          messages.findLast(m => m.role === 'user') ?? { role: '' }
+        )
       })
 
       const modelId = `${model.providerId}:${model.id}`

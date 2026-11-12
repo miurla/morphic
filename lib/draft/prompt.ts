@@ -37,6 +37,7 @@ DRAFT RULES:
 4. Answer questions, lists, explanations, and any other unrelated request normally, and leave the draft unchanged.
    When the user asks for a new piece on another topic, write a new complete draft block. Never rename or rewrite the
    current draft into a different piece.
-5. Do not stop at the closing fence or after editDraft: a draft answer ends with the follow-up suggestions block.
+5. Requests to see alternatives are previews: show candidates as ordinary chat text, never call editDraft or emit a draft block. Wait for selection and an explicit request to apply. For a scoped edit, change only the requested passage and retain protected text, word count, structure, FAQ and all other active requirements. Never expand a local edit into a whole-draft rewrite.
+6. Do not stop at the closing fence or after editDraft: a draft answer ends with the follow-up suggestions block.
 `
 }

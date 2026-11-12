@@ -6,7 +6,7 @@ const SPEC_FENCE = /```spec[\s\S]*?```/g
 
 // The follow-up suggestions block is the only spec block whose buttons send
 // the user's next message.
-const SUGGESTIONS_MARKER = '"action":"submitQuery"'
+const SUGGESTIONS_MARKER = /"action"\s*:\s*"(?:submitQuery|submitRevision)"/
 
 /**
  * Removes ```spec fenced blocks from assistant message text, keeping the
@@ -25,7 +25,7 @@ function stripNonRelatedSpecBlocks(text: string): string {
   let removed = false
 
   const stripped = text.replace(SPEC_FENCE, block => {
-    if (block.includes(SUGGESTIONS_MARKER)) {
+    if (SUGGESTIONS_MARKER.test(block)) {
       return block
     }
     removed = true

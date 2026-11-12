@@ -24,6 +24,7 @@ export const { registry } = defineRegistry(catalog, {
     Badge
   },
   actions: {
+    submitRevision: async () => {},
     submitQuery: async () => {
       // Handled by ActionProvider at runtime
     }

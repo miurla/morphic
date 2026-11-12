@@ -38,6 +38,26 @@ describe('render prompts', () => {
     expect(prompt).not.toContain('Emit exactly ONE related questions')
   })
 
+  test('anchors revisions to active editing scope and separates previews from edits', () => {
+    const prompt = getFollowUpSuggestionsSpecPrompt()
+    expect(prompt).toContain("Follow the user's latest editing intent")
+    expect(prompt).toContain(
+      'Carry forward the exact target and protected passages'
+    )
+    expect(prompt).toContain('preserve word count, structure, FAQ')
+    expect(prompt).toContain('Never force a length/tone/content checklist')
+    expect(prompt).toContain('edits already completed')
+    expect(prompt).toContain('末尾だけ別案を3つ見る')
+    expect(prompt).toContain('intent="alternatives"')
+    expect(prompt).toContain('intent="edit"')
+    expect(prompt).toContain(
+      'Only apply after the user selects and requests application'
+    )
+    expect(prompt).toContain(
+      'For Related, "text" and "query" must be identical'
+    )
+  })
+
   test('describes the related block as optional alongside image specs', () => {
     expect(getImageSpecPrompt()).toContain('which is itself optional')
   })

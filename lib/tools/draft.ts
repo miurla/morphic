@@ -29,7 +29,10 @@ export const editDraftInputSchema = z.object({
  * Edit the chat's current draft in place. The draft is rebuilt from history
  * before the turn, so this only ever sees the version the model was shown.
  */
-export function createDraftTools(currentDraft: DraftVersion | null) {
+export function createDraftTools(
+  currentDraft: DraftVersion | null,
+  alternativesOnly = false
+) {
   let current = currentDraft
 
   const editDraft = tool({
@@ -42,6 +45,14 @@ Make local changes to the current draft (a sentence, a paragraph, the title, one
 - To rename a draft without a top-level heading, pass the new title; otherwise edit the heading.`,
     inputSchema: editDraftInputSchema,
     execute: async ({ title, edits }) => {
+      if (alternativesOnly) {
+        return {
+          applied: 0,
+          failed: [],
+          message:
+            'Show candidates in chat only; wait for explicit application.'
+        }
+      }
       if (!current) {
         return {
           applied: 0,
