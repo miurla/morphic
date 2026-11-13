@@ -25,7 +25,8 @@ const titleChat = {
   createdAt: new Date(),
   title: 'Robert Frost Readings',
   userId: 'user-1',
-  visibility: 'private' as const
+  visibility: 'private' as const,
+  spaceId: null
 }
 
 const contentMatch = {

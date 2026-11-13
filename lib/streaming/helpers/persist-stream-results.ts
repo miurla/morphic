@@ -19,7 +19,8 @@ export async function persistStreamResults(
   initialSavePromise?: Promise<
     Awaited<ReturnType<typeof createChatWithFirstMessage>>
   >,
-  initialUserMessage?: UIMessage
+  initialUserMessage?: UIMessage,
+  spaceId: string | null = null
 ) {
   // Attach metadata to the response message
   responseMessage.metadata = {
@@ -47,7 +48,8 @@ export async function persistStreamResults(
             chatId,
             initialUserMessage,
             userId,
-            DEFAULT_CHAT_TITLE
+            DEFAULT_CHAT_TITLE,
+            spaceId
           )
           perfTime('initial chat persistence fallback completed', fallbackStart)
         } catch (fallbackError) {

@@ -46,6 +46,9 @@ function getSourceDirectionGuidance(allowFallback = true): string {
   }.`
 }
 
+export const LANGUAGE_RULE = `- Respond in the user's language by default.
+- Exception: if the Space instructions at the end of this prompt name an output language, write the whole answer in that language, even when the user writes in a different one.`
+
 export function getQuickModePrompt(): string {
   const hasGeneralProvider = isGeneralSearchProviderAvailable()
 
@@ -67,7 +70,7 @@ You are a fast, efficient AI assistant optimized for quick responses. You have a
 2. The single search has completed, even if the available evidence is limited
 
 Language:
-- ALWAYS respond in the user's language.
+${LANGUAGE_RULE}
 
 Your approach:
 1. Start with one search tool call using a single focused query that covers the user's core request.
@@ -251,7 +254,7 @@ You are a helpful AI assistant with access to real-time web search, content retr
 5. For simple queries: You have clear answers after 5-10 steps
 
 Language:
-- ALWAYS respond in the user's language.
+${LANGUAGE_RULE}
 
 ${getApproachStrategy()}
 

@@ -34,7 +34,9 @@ import type {
   Message,
   NewLibraryFile,
   NewNote,
-  Note
+  Note,
+  Space,
+  SpaceColor
 } from './schema'
 import {
   chats,
@@ -43,7 +45,8 @@ import {
   libraryFiles,
   messages,
   notes,
-  parts
+  parts,
+  spaces
 } from './schema'
 import { withOptionalRLS, withRLS } from './with-rls'
 import { db } from '.'
@@ -55,12 +58,14 @@ export async function createChat({
   id = generateId(),
   title,
   userId,
-  visibility = 'private'
+  visibility = 'private',
+  spaceId = null
 }: {
   id?: string
   title: string
   userId: string
   visibility?: 'public' | 'private'
+  spaceId?: string | null
 }): Promise<Chat> {
   return withRLS(userId, async tx => {
     const [chat] = await tx
@@ -69,7 +74,8 @@ export async function createChat({
         id,
         title,
         userId,
-        visibility
+        visibility,
+        spaceId
       })
       .returning()
 
@@ -724,6 +730,123 @@ export async function deleteUserNotes(
   }
 }
 
+export async function getSpaces(userId: string): Promise<Space[]> {
+  return withRLS(userId, async tx =>
+    tx
+      .select()
+      .from(spaces)
+      .where(eq(spaces.userId, userId))
+      .orderBy(asc(spaces.createdAt))
+  )
+}
+
+export async function getSpacesByColors(
+  userId: string,
+  colors: SpaceColor[]
+): Promise<Space[]> {
+  if (colors.length === 0) return []
+  return withRLS(userId, async tx =>
+    tx
+      .select()
+      .from(spaces)
+      .where(and(eq(spaces.userId, userId), inArray(spaces.color, colors)))
+  )
+}
+
+export async function getSpaceById(
+  userId: string,
+  spaceId: string
+): Promise<Space | null> {
+  return withRLS(userId, async tx => {
+    const [space] = await tx
+      .select()
+      .from(spaces)
+      .where(and(eq(spaces.id, spaceId), eq(spaces.userId, userId)))
+      .limit(1)
+    return space ?? null
+  })
+}
+
+/**
+ * Create the space for this color on first write, then update it in place.
+ * Fields left undefined keep their stored value.
+ */
+export async function upsertSpace({
+  userId,
+  color,
+  name,
+  about,
+  style
+}: {
+  userId: string
+  color: SpaceColor
+  name?: string
+  about?: string
+  style?: string
+}): Promise<Space> {
+  return withRLS(userId, async tx => {
+    const updates = {
+      ...(name !== undefined && { name }),
+      ...(about !== undefined && { about }),
+      ...(style !== undefined && { style }),
+      updatedAt: new Date()
+    }
+    const [space] = await tx
+      .insert(spaces)
+      .values({
+        userId,
+        color,
+        name: name ?? '',
+        about: about ?? '',
+        style: style ?? ''
+      })
+      .onConflictDoUpdate({
+        target: [spaces.userId, spaces.color],
+        set: updates
+      })
+      .returning()
+
+    return space
+  })
+}
+
+export async function deleteSpace(
+  userId: string,
+  color: SpaceColor
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    return await withRLS(userId, async tx => {
+      const [deleted] = await tx
+        .delete(spaces)
+        .where(and(eq(spaces.userId, userId), eq(spaces.color, color)))
+        .returning({ id: spaces.id })
+
+      if (!deleted) {
+        return { success: false, error: 'Space not found' }
+      }
+
+      return { success: true }
+    })
+  } catch (error) {
+    console.error('Error deleting space:', error)
+    return { success: false, error: 'Failed to delete space' }
+  }
+}
+
+export async function deleteUserSpaces(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    return await withRLS(userId, async tx => {
+      await tx.delete(spaces).where(eq(spaces.userId, userId))
+      return { success: true }
+    })
+  } catch (error) {
+    console.error('Error deleting user spaces:', error)
+    return { success: false, error: 'Failed to delete user spaces' }
+  }
+}
+
 const CHAT_FILE_CANDIDATE_LIMIT = 5
 const ATTACHMENT_SIZE_LOOKUP_LIMIT = 100
 
@@ -1030,12 +1153,14 @@ export async function createChatWithFirstMessageTransaction({
   chatId,
   chatTitle,
   userId,
-  message
+  message,
+  spaceId = null
 }: {
   chatId: string
   chatTitle: string
   userId: string
   message: PersistableUIMessage
+  spaceId?: string | null
 }): Promise<{ chat: Chat; message: Message }> {
   perfLog(`DB - createChatWithFirstMessageTransaction start`)
   const dbStart = performance.now()
@@ -1048,6 +1173,7 @@ export async function createChatWithFirstMessageTransaction({
         title: chatTitle.substring(0, 255),
         userId,
         visibility: 'private',
+        spaceId,
         createdAt: new Date()
       })
       .returning()

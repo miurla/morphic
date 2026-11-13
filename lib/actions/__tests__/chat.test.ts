@@ -60,6 +60,7 @@ describe('Chat Actions', () => {
           title: 'Title',
           userId: 'owner',
           visibility: 'public',
+          spaceId: null,
           createdAt: new Date()
         }
         vi.mocked(dbActions.getChat).mockResolvedValue(chat)
@@ -85,6 +86,7 @@ describe('Chat Actions', () => {
           title: 'Chat 1',
           userId,
           visibility: 'private',
+          spaceId: null,
           createdAt: new Date()
         }
       ]
@@ -118,6 +120,7 @@ describe('Chat Actions', () => {
             title: 'Chat 1',
             userId,
             visibility: 'private' as const,
+            spaceId: null,
             createdAt: new Date()
           }
         ],
@@ -152,6 +155,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private' as const,
+        spaceId: null,
         createdAt: new Date(),
         messages: [
           {
@@ -186,6 +190,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId: 'user-123',
         visibility: 'public' as const,
+        spaceId: null,
         createdAt: new Date(),
         messages: []
       }
@@ -212,6 +217,7 @@ describe('Chat Actions', () => {
         title,
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date()
       }
 
@@ -224,7 +230,8 @@ describe('Chat Actions', () => {
         id: chatId,
         title,
         userId,
-        visibility: 'private'
+        visibility: 'private',
+        spaceId: null
       })
     })
 
@@ -236,6 +243,7 @@ describe('Chat Actions', () => {
         title: 'Untitled',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date()
       }
 
@@ -248,7 +256,8 @@ describe('Chat Actions', () => {
         id: expect.any(String),
         title: 'Untitled',
         userId,
-        visibility: 'private'
+        visibility: 'private',
+        spaceId: null
       })
     })
   })
@@ -266,6 +275,7 @@ describe('Chat Actions', () => {
         title: 'Hello',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date()
       }
       const mockMessage: Message = {
@@ -319,6 +329,7 @@ describe('Chat Actions', () => {
           title,
           userId,
           visibility: 'private' as const,
+          spaceId: null,
           createdAt: new Date()
         },
         message: {
@@ -353,8 +364,27 @@ describe('Chat Actions', () => {
           id: 'msg-1',
           role: 'user',
           parts: [{ type: 'text', text: 'Hello' }]
-        }
+        },
+        spaceId: null
       })
+    })
+
+    it('stores the space on the new chat', async () => {
+      vi.mocked(
+        dbActions.createChatWithFirstMessageTransaction
+      ).mockResolvedValue({} as any)
+
+      await createChatWithFirstMessage(
+        'chat-1',
+        { id: 'msg-1', role: 'user', parts: [] },
+        'user-123',
+        'Title',
+        'space-1'
+      )
+
+      expect(
+        dbActions.createChatWithFirstMessageTransaction
+      ).toHaveBeenCalledWith(expect.objectContaining({ spaceId: 'space-1' }))
     })
   })
 
@@ -459,6 +489,7 @@ describe('Chat Actions', () => {
           title: 'Chat 1',
           userId,
           visibility: 'private',
+          spaceId: null,
           createdAt: new Date()
         },
         {
@@ -466,6 +497,7 @@ describe('Chat Actions', () => {
           title: 'Chat 2',
           userId,
           visibility: 'private',
+          spaceId: null,
           createdAt: new Date()
         }
       ]
@@ -493,6 +525,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date()
       }
 
@@ -518,6 +551,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId: 'other-user',
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date()
       }
 
@@ -558,6 +592,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId,
         visibility: 'public',
+        spaceId: null,
         createdAt: new Date()
       }
 
@@ -592,7 +627,8 @@ describe('Chat Actions', () => {
       vi.mocked(dbActions.updateChatVisibility).mockResolvedValue({
         id: 'chat-123',
         userId: 'user-123',
-        visibility: 'public'
+        visibility: 'public',
+        spaceId: null
       } as Chat)
 
       const result = await shareChat('chat-123')
@@ -626,7 +662,8 @@ describe('Chat Actions', () => {
       vi.mocked(dbActions.updateChatVisibility).mockResolvedValue({
         id: 'chat-123',
         userId: 'user-123',
-        visibility: 'public'
+        visibility: 'public',
+        spaceId: null
       } as Chat)
 
       const result = await shareChat('chat-123')
@@ -663,6 +700,7 @@ describe('Chat Actions', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date()
       }
 
@@ -700,6 +738,7 @@ describe('Chat Actions', () => {
         title: generatedTitle,
         userId: 'user-123',
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date()
       })
 
@@ -721,6 +760,7 @@ describe('Chat Actions', () => {
         title: 'Existing Chat',
         userId: 'user-123',
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date()
       }
       const message: UIMessage = {

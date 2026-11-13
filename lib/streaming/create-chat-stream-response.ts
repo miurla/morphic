@@ -3,6 +3,7 @@ import { propagateAttributes, startActiveObservation } from '@langfuse/tracing'
 import type { StreamTextOnErrorCallback } from 'ai'
 import { consumeStream, convertToModelMessages, smoothStream } from 'ai'
 
+import { buildSpaceInstructions } from '@/lib/agents/prompts/space-instructions'
 import { researcher } from '@/lib/agents/researcher'
 import { buildDraftVersions, currentDraftVersion } from '@/lib/draft/draft'
 import { isReviseAlternativesTurn } from '@/lib/draft/revise'
@@ -51,6 +52,10 @@ import { logAPICallErrorDiagnostics } from './helpers/log-api-call-error'
 import { persistStreamResults } from './helpers/persist-stream-results'
 import { prepareMessages } from './helpers/prepare-messages'
 import {
+  resolveChatSpace,
+  type ResolvedChatSpace
+} from './helpers/resolve-chat-space'
+import {
   buildStreamErrorSpanUpdate,
   type StreamErrorPhase,
   type StreamErrorStage
@@ -82,6 +87,7 @@ export async function createChatStreamResponse(
     abortSignal,
     isNewChat,
     searchMode,
+    spaceColor,
     onZeroPartError
   } = config
 
@@ -118,6 +124,18 @@ export async function createChatStreamResponse(
     }
   } else {
     perfLog('loadChat skipped for new chat')
+  }
+
+  let chatSpace: ResolvedChatSpace = { spaceId: null, space: null }
+  try {
+    chatSpace = await resolveChatSpace({
+      userId,
+      isNewChat: !!isNewChat,
+      requestedColor: spaceColor,
+      chatSpaceId: initialChat?.spaceId
+    })
+  } catch (error) {
+    console.error('Space lookup failed, continuing without one:', error)
   }
 
   const executeStream = async (rootSpan?: LangfuseSpan): Promise<Response> => {
@@ -199,7 +217,8 @@ export async function createChatStreamResponse(
       initialChat,
       abortSignal,
       parentTraceId,
-      isNewChat
+      isNewChat,
+      spaceId: isNewChat ? chatSpace.spaceId : undefined
     }
 
     // Declare titlePromise in outer scope for onFinish access
@@ -234,6 +253,7 @@ export async function createChatStreamResponse(
         searchMode,
         citationLabelSeed: nextCitationLabelNumber(messagesToModel),
         currentDraft,
+        spaceInstructions: buildSpaceInstructions(chatSpace.space),
         alternativesOnly: isReviseAlternativesTurn(
           messagesToModel.findLast(m => m.role === 'user') ?? { role: '' }
         )
@@ -417,7 +437,8 @@ export async function createChatStreamResponse(
               searchMode,
               context.modelId,
               context.pendingInitialSave,
-              context.pendingInitialUserMessage
+              context.pendingInitialUserMessage,
+              context.spaceId ?? null
             )
           } finally {
             await endTracing()

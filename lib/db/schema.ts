@@ -31,6 +31,49 @@ const tsvector = customType<{ data: string }>({
 // ID generation function
 export const generateId = () => createId()
 
+export const SPACE_COLORS = [
+  'black',
+  'green',
+  'blue',
+  'purple',
+  'yellow',
+  'pink',
+  'red',
+  'orange'
+] as const
+
+export type SpaceColor = (typeof SPACE_COLORS)[number]
+
+// Spaces table
+export const spaces = pgTable(
+  'spaces',
+  {
+    id: varchar('id', { length: ID_LENGTH })
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: varchar('user_id', { length: USER_ID_LENGTH }).notNull(),
+    color: varchar('color', { length: 16, enum: SPACE_COLORS }).notNull(),
+    name: text('name').notNull().default(''),
+    about: text('about').notNull().default(''),
+    style: text('style').notNull().default(''),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => [
+    uniqueIndex('spaces_user_id_color_idx').on(table.userId, table.color),
+
+    pgPolicy('users_manage_own_spaces', {
+      as: 'permissive',
+      for: 'all',
+      to: 'public',
+      using: sql`user_id = (select current_setting('app.current_user_id', true))`,
+      withCheck: sql`user_id = (select current_setting('app.current_user_id', true))`
+    })
+  ]
+).enableRLS()
+
+export type Space = InferSelectModel<typeof spaces>
+
 // Chats table
 export const chats = pgTable(
   'chats',
@@ -46,11 +89,16 @@ export const chats = pgTable(
       enum: ['public', 'private']
     })
       .notNull()
-      .default('private')
+      .default('private'),
+    spaceId: varchar('space_id', { length: ID_LENGTH }).references(
+      () => spaces.id,
+      { onDelete: 'set null' }
+    )
   },
   table => [
     // Indexes
     index('chats_user_id_idx').on(table.userId),
+    index('chats_space_id_idx').on(table.spaceId),
     index('chats_user_id_created_at_idx').on(
       table.userId,
       table.createdAt.desc()
