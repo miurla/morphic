@@ -1,4 +1,4 @@
-import { generateText, isStepCount } from 'ai'
+import { generateText, isStepCount, type ModelMessage } from 'ai'
 
 import { createSearchTool } from '@/lib/tools/search'
 import { createTodoTools } from '@/lib/tools/todo'
@@ -33,6 +33,8 @@ export type AnswerTaskOptions = {
   getPrompt: () => string
   includeTodoWrite: boolean
   telemetryFunctionId: string
+  // Shapes the user turn the way production does before it reaches the model
+  buildMessages?: (query: string) => ModelMessage[]
 }
 
 export function runAnswerTask({
@@ -43,7 +45,8 @@ export function runAnswerTask({
   maxSteps,
   getPrompt,
   includeTodoWrite,
-  telemetryFunctionId
+  telemetryFunctionId,
+  buildMessages
 }: AnswerTaskOptions) {
   // Built once: it reaches out to the search provider config, not the network.
   const toModelOutput = createSearchTool(model).toModelOutput
@@ -93,7 +96,9 @@ export function runAnswerTask({
       tools,
       stopWhen: isStepCount(maxSteps),
       providerOptions,
-      prompt: input.query,
+      ...(buildMessages
+        ? { messages: buildMessages(input.query) }
+        : { prompt: input.query }),
       telemetry: {
         isEnabled: tracingEnabled,
         functionId: telemetryFunctionId

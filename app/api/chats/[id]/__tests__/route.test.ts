@@ -25,6 +25,7 @@ describe('GET /api/chats/[id]', () => {
       id: 'chat',
       title: 'Title',
       visibility: 'private',
+      spaceId: null,
       userId: 'owner',
       messages: [],
       createdAt: new Date()
@@ -56,6 +57,7 @@ describe('GET /api/chats/[id]', () => {
       id: 'chat',
       title: 'Public',
       visibility: 'public' as const,
+      spaceId: null,
       userId: 'owner',
       messages: [
         {

@@ -93,6 +93,14 @@ export async function deleteAccount(): Promise<{
         )
       }
 
+      const deleteSpacesResult = await dbActions.deleteUserSpaces(user.id)
+      if (!deleteSpacesResult.success) {
+        return cleanupFailed(
+          'spaces',
+          deleteSpacesResult.error ?? 'Failed to delete account data'
+        )
+      }
+
       const deleteFilesResult = await dbActions.deleteUserLibraryFiles(user.id)
       if (!deleteFilesResult.success) {
         return cleanupFailed(

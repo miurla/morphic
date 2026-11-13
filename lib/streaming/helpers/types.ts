@@ -11,6 +11,8 @@ export interface StreamContext {
   abortSignal?: AbortSignal
   parentTraceId?: string
   isNewChat?: boolean
+  // Space stored on a new chat
+  spaceId?: string | null
   pendingInitialSave?: Promise<{ chat: Chat; message: Message }>
   pendingInitialUserMessage?: UIMessage
 }

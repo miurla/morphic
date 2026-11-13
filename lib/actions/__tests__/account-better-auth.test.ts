@@ -67,6 +67,7 @@ describe('deleteAccount with the better-auth provider', () => {
     })
     vi.mocked(dbActions.deleteUserChats).mockResolvedValue({ success: true })
     vi.mocked(dbActions.deleteUserNotes).mockResolvedValue({ success: true })
+    vi.mocked(dbActions.deleteUserSpaces).mockResolvedValue({ success: true })
     vi.mocked(dbActions.deleteUserLibraryFiles).mockResolvedValue({
       success: true
     })
@@ -94,6 +95,7 @@ describe('deleteAccount with the better-auth provider', () => {
     expect(result).toEqual({ success: true })
     expect(dbActions.deleteUserChats).toHaveBeenCalledWith('user-1')
     expect(dbActions.deleteUserNotes).toHaveBeenCalledWith('user-1')
+    expect(dbActions.deleteUserSpaces).toHaveBeenCalledWith('user-1')
     expect(dbActions.deleteUserLibraryFiles).toHaveBeenCalledWith('user-1')
     expect(dbActions.anonymizeUserFeedback).toHaveBeenCalledWith('user-1')
     expect(deleteUserObjects).toHaveBeenCalledWith('user-1')

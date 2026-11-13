@@ -36,6 +36,7 @@ describe('Account Actions', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(user as any)
     vi.mocked(dbActions.deleteUserChats).mockResolvedValue({ success: true })
     vi.mocked(dbActions.deleteUserNotes).mockResolvedValue({ success: true })
+    vi.mocked(dbActions.deleteUserSpaces).mockResolvedValue({ success: true })
     vi.mocked(dbActions.deleteUserLibraryFiles).mockResolvedValue({
       success: true
     })
@@ -103,6 +104,7 @@ describe('Account Actions', () => {
     expect(result).toEqual({ success: true })
     expect(dbActions.deleteUserChats).toHaveBeenCalledWith(user.id)
     expect(dbActions.deleteUserNotes).toHaveBeenCalledWith(user.id)
+    expect(dbActions.deleteUserSpaces).toHaveBeenCalledWith(user.id)
     expect(dbActions.deleteUserLibraryFiles).toHaveBeenCalledWith(user.id)
     expect(dbActions.anonymizeUserFeedback).toHaveBeenCalledWith(user.id)
     expect(deleteUserObjects).toHaveBeenCalledWith(user.id)

@@ -13,5 +13,6 @@ export interface BaseStreamConfig {
   abortSignal?: AbortSignal
   isNewChat?: boolean
   searchMode?: SearchMode
+  spaceColor?: string
   onZeroPartError?: () => Promise<void>
 }

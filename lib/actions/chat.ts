@@ -79,7 +79,8 @@ export async function loadChat(
 export async function createChat(
   id: string | undefined,
   title: string | undefined,
-  userId: string
+  userId: string,
+  spaceId: string | null = null
 ): Promise<Chat> {
   const chatId = id || generateId()
   const chatTitle = title || DEFAULT_CHAT_TITLE
@@ -89,7 +90,8 @@ export async function createChat(
     id: chatId,
     title: chatTitle.substring(0, 255),
     userId,
-    visibility: 'private'
+    visibility: 'private',
+    spaceId
   })
 
   return chat
@@ -140,7 +142,8 @@ export async function createChatWithFirstMessage(
   chatId: string,
   message: UIMessage,
   userId: string,
-  title?: string
+  title?: string,
+  spaceId: string | null = null
 ): Promise<{ chat: Chat; message: Message }> {
   const messageId = message.id || generateId()
   const chatTitle = title || DEFAULT_CHAT_TITLE
@@ -153,7 +156,8 @@ export async function createChatWithFirstMessage(
     message: {
       ...message,
       id: messageId
-    }
+    },
+    spaceId
   })
 
   return result

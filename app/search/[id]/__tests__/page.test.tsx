@@ -34,6 +34,7 @@ const row: ChatRow = {
   id: 'chat',
   title: 'Title',
   visibility: 'private',
+  spaceId: null,
   userId: 'owner',
   createdAt: new Date()
 }

@@ -44,6 +44,7 @@ describe('prepareMessages', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date(),
         messages: [
           {
@@ -108,6 +109,7 @@ describe('prepareMessages', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date(),
         messages: [
           {
@@ -184,6 +186,7 @@ describe('prepareMessages', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date(),
         messages: [
           {
@@ -276,6 +279,7 @@ describe('prepareMessages', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date(),
         messages: [
           { id: 'msg-1', role: 'user', parts: files(count) },
@@ -333,6 +337,7 @@ describe('prepareMessages', () => {
         title: 'Empty Chat',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date(),
         messages: []
       }
@@ -359,6 +364,7 @@ describe('prepareMessages', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date(),
         messages: [
           {
@@ -407,6 +413,7 @@ describe('prepareMessages', () => {
         title: 'Test Chat',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date(),
         messages: [
           {
@@ -461,6 +468,7 @@ describe('prepareMessages', () => {
           title: 'Untitled',
           userId,
           visibility: 'private',
+          spaceId: null,
           createdAt: new Date()
         },
         message: {
@@ -506,6 +514,7 @@ describe('prepareMessages', () => {
         title: 'Existing Chat',
         userId,
         visibility: 'private',
+        spaceId: null,
         createdAt: new Date(),
         messages: [
           {

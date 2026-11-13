@@ -59,6 +59,10 @@ vi.mock('@/lib/streaming/helpers/persist-stream-results', () => ({
   persistStreamResults: vi.fn(async () => undefined)
 }))
 
+vi.mock('@/lib/streaming/helpers/resolve-chat-space', () => ({
+  resolveChatSpace: vi.fn(async () => ({ spaceId: null, space: null }))
+}))
+
 vi.mock('@/lib/streaming/helpers/prepare-messages', () => ({
   prepareMessages: vi.fn(async () => [])
 }))
@@ -72,14 +76,19 @@ vi.mock('@/lib/utils/usage-logging', () => ({
   logUsage: vi.fn()
 }))
 
+import { convertToModelMessages } from 'ai'
+
 import { loadChat } from '@/lib/actions/chat'
+import { SPACE_NOTE } from '@/lib/agents/prompts/space-instructions'
 import { researcher } from '@/lib/agents/researcher'
 import { DeterministicPreparationError } from '@/lib/errors/deterministic-preparation-error'
 import { serializeToolFailure, ToolFailureError } from '@/lib/errors/tool-error'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
 import { EMPTY_RESPONSE_STATUS_MESSAGE } from '@/lib/streaming/helpers/is-empty-response'
+import { persistStreamResults } from '@/lib/streaming/helpers/persist-stream-results'
 import { prepareMessages } from '@/lib/streaming/helpers/prepare-messages'
+import { resolveChatSpace } from '@/lib/streaming/helpers/resolve-chat-space'
 import { getMaxAllowedTokens } from '@/lib/utils/context-window'
 
 type StreamOptions = {
@@ -219,6 +228,123 @@ describe('createChatStreamResponse', () => {
     expect(researcher).toHaveBeenCalledWith(
       expect.objectContaining({ citationLabelSeed: 7 })
     )
+  })
+
+  it('stores the requested space on a new chat and injects its instructions', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+    vi.mocked(resolveChatSpace).mockResolvedValueOnce({
+      spaceId: 'space-1',
+      space: {
+        id: 'space-1',
+        userId: 'user-id',
+        color: 'green',
+        name: 'Blog',
+        about: 'Writing for my blog',
+        style: 'Write in English.',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    })
+
+    await createChatStreamResponse({ ...createConfig(), spaceColor: 'green' })
+    await mocks.finishPromise
+
+    expect(resolveChatSpace).toHaveBeenCalledWith({
+      userId: 'user-id',
+      isNewChat: true,
+      requestedColor: 'green',
+      chatSpaceId: undefined
+    })
+    expect(vi.mocked(prepareMessages).mock.calls[0][0].spaceId).toBe('space-1')
+    const { spaceInstructions } = vi.mocked(researcher).mock.calls[0][0]
+    expect(spaceInstructions).toContain('<space_instructions>')
+    expect(spaceInstructions).toContain('Write in English.')
+  })
+
+  it('adds the space note to user messages sent to the model only', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+    const modelMessages = [
+      { role: 'user', content: 'first' },
+      { role: 'assistant', content: 'answer' },
+      { role: 'user', content: 'second' }
+    ]
+    vi.mocked(convertToModelMessages).mockResolvedValueOnce(
+      modelMessages as any
+    )
+    vi.mocked(resolveChatSpace).mockResolvedValueOnce({
+      spaceId: null,
+      space: {
+        id: 'space-1',
+        userId: 'user-id',
+        color: 'black',
+        name: 'Default',
+        about: '',
+        style: 'Be brief.',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    })
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    const sent = mocks.stream.mock.calls[0][0].messages
+    expect(sent[0].content.at(-1)).toEqual({ type: 'text', text: SPACE_NOTE })
+    expect(sent[1].content).toBe('answer')
+    expect(sent[2].content.at(-1)).toEqual({ type: 'text', text: SPACE_NOTE })
+    expect(modelMessages[0].content).toBe('first')
+    expect(
+      JSON.stringify(vi.mocked(persistStreamResults).mock.calls)
+    ).not.toContain(SPACE_NOTE)
+  })
+
+  it('sends user messages unchanged without space instructions', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+    const modelMessages = [{ role: 'user', content: 'first' }]
+    vi.mocked(convertToModelMessages).mockResolvedValueOnce(
+      modelMessages as any
+    )
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(mocks.stream.mock.calls[0][0].messages).toBe(modelMessages)
+  })
+
+  it('reads the stored space of an existing chat', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+    vi.mocked(loadChat).mockResolvedValueOnce({
+      id: 'chat-id',
+      userId: 'user-id',
+      title: 'Chat',
+      visibility: 'private',
+      spaceId: 'space-1',
+      createdAt: new Date(),
+      messages: []
+    })
+
+    await createChatStreamResponse({
+      ...createConfig(),
+      isNewChat: false,
+      spaceColor: 'red'
+    })
+    await mocks.finishPromise
+
+    expect(resolveChatSpace).toHaveBeenCalledWith(
+      expect.objectContaining({ isNewChat: false, chatSpaceId: 'space-1' })
+    )
+    expect(vi.mocked(prepareMessages).mock.calls[0][0].spaceId).toBeUndefined()
+  })
+
+  it('answers without space instructions when the space lookup fails', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+    vi.mocked(resolveChatSpace).mockRejectedValueOnce(new Error('db down'))
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(vi.mocked(researcher).mock.calls[0][0].spaceInstructions).toBe('')
+    expect(vi.mocked(prepareMessages).mock.calls[0][0].spaceId).toBeNull()
   })
 
   it('loads an existing chat', async () => {

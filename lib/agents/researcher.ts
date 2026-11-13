@@ -80,7 +80,8 @@ export function createResearcher({
   searchMode = 'adaptive',
   citationLabelSeed,
   currentDraft = null,
-  alternativesOnly = false
+  alternativesOnly = false,
+  spaceInstructions = ''
 }: {
   model: string
   modelConfig?: Model
@@ -89,6 +90,7 @@ export function createResearcher({
   citationLabelSeed?: number
   currentDraft?: DraftVersion | null
   alternativesOnly?: boolean
+  spaceInstructions?: string
 }) {
   try {
     // Date only: a second-precision timestamp sits at the head of the prompt
@@ -157,7 +159,7 @@ export function createResearcher({
     // Create ToolLoopAgent with all configuration
     const agent = new ToolLoopAgent({
       model: getModel(model),
-      instructions: `${systemPrompt}\nCurrent date: ${currentDate}`,
+      instructions: `${systemPrompt}${spaceInstructions ? `\n\n${spaceInstructions}` : ''}\nCurrent date: ${currentDate}`,
       tools,
       activeTools: activeToolsList,
       stopWhen: isStepCount(maxSteps),

@@ -117,7 +117,8 @@ export async function prepareMessages(
         chatId,
         messageWithId,
         userId,
-        DEFAULT_CHAT_TITLE
+        DEFAULT_CHAT_TITLE,
+        context.spaceId ?? null
       )
         .then(result => {
           perfTime('createChatWithFirstMessage completed', createStart)

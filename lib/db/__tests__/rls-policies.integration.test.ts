@@ -20,6 +20,7 @@ const fixtures = {
       title: 'User 1 Private Chat',
       userId: 'user-123',
       visibility: 'private' as const,
+      spaceId: null,
       createdAt: new Date()
     },
     privateChat2: {
@@ -27,6 +28,7 @@ const fixtures = {
       title: 'User 2 Private Chat',
       userId: 'user-456',
       visibility: 'private' as const,
+      spaceId: null,
       createdAt: new Date()
     },
     publicChat: {
@@ -34,6 +36,7 @@ const fixtures = {
       title: 'Public Chat',
       userId: 'user-123',
       visibility: 'public' as const,
+      spaceId: null,
       createdAt: new Date()
     }
   },
@@ -243,7 +246,8 @@ describe('RLS Policies Integration Tests', () => {
         id: 'new-chat-1',
         title: 'New Chat',
         userId,
-        visibility: 'private' as const
+        visibility: 'private' as const,
+        spaceId: null
       }
 
       const mockCreateChat = vi.spyOn(dbActions, 'createChat')
@@ -280,7 +284,8 @@ describe('RLS Policies Integration Tests', () => {
           id: 'bad-chat',
           title: 'Bad Chat',
           userId: wrongUserId, // Wrong user ID
-          visibility: 'private'
+          visibility: 'private',
+          spaceId: null
         })
       ).rejects.toThrow('row-level security policy')
     })

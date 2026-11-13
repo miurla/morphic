@@ -74,6 +74,8 @@ export async function POST(req: Request) {
     const { message, messages, chatId, trigger, messageId, isNewChat } = body
     const analyticsId: unknown = body.analyticsId
     const usageAttemptId: unknown = body.usageAttemptId
+    const spaceColor =
+      typeof body.spaceColor === 'string' ? body.spaceColor : undefined
 
     // Normalize the message id up front so persistence and analytics agree on it.
     if (message && !message.id) {
@@ -456,6 +458,7 @@ export async function POST(req: Request) {
           abortSignal,
           isNewChat,
           searchMode,
+          spaceColor,
           onZeroPartError: refundUsageOnce
         })
       } catch (error) {

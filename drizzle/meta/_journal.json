@@ -148,6 +148,13 @@
       "when": 1792863042496,
       "tag": "0020_add_parts_search_fts",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794539550444,
+      "tag": "0021_add_spaces",
+      "breakpoints": true
     }
   ]
 }

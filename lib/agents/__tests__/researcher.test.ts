@@ -129,4 +129,23 @@ describe('createResearcher', () => {
     expect(searchOptions?.labelAllocator).toBe(fetchOptions?.labelAllocator)
     expect(searchOptions?.labelAllocator?.reserve(1)).toBe(9)
   })
+  it('places space instructions between the system prompt and the date', () => {
+    createResearcher({
+      model: 'openai:model-id',
+      searchMode: 'quick',
+      spaceInstructions: '## Space instructions\nBe brief.'
+    })
+
+    expect(mocks.agentOptions?.instructions).toMatch(
+      /^Quick prompt\n\n## Space instructions\nBe brief\.\nCurrent date: /
+    )
+  })
+
+  it('leaves the system prompt unchanged without space instructions', () => {
+    createResearcher({ model: 'openai:model-id', searchMode: 'quick' })
+
+    expect(mocks.agentOptions?.instructions).toMatch(
+      /^Quick prompt\nCurrent date: /
+    )
+  })
 })
