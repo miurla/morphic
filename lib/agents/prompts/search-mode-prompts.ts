@@ -47,7 +47,7 @@ function getSourceDirectionGuidance(allowFallback = true): string {
 }
 
 export const LANGUAGE_RULE = `- Respond in the user's language by default.
-- Exception: if the Space instructions at the end of this prompt name an output language, write the whole answer in that language, even when the user writes in a different one.`
+- Exception: if the Space instructions at the end of this prompt set a language for content you write (articles, reports, drafts), write that content in that language and keep the rest of the reply in the user's language, unless they clearly ask for the whole conversation in that language.`
 
 export function getQuickModePrompt(): string {
   const hasGeneralProvider = isGeneralSearchProviderAvailable()

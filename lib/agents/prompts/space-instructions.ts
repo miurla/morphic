@@ -22,7 +22,7 @@ ${body}
 }
 
 export const SPACE_NOTE =
-  '(Follow the Space instructions in the system prompt. If they set an output language, answer in it even though this message may be in another language. They also set tone, structure, length, formatting, and whether to search. If this message asks you to look something up, search anyway. Citation rules still apply.)'
+  '(Follow the Space instructions in the system prompt. If they set a language for content you write, use it for that content and keep the rest of the reply in the language of this message unless they say otherwise. They also set tone, structure, length, formatting, and whether to search. If this message asks you to look something up, search anyway. Citation rules still apply.)'
 
 /**
  * The model weighs the user's own message over the system prompt for things

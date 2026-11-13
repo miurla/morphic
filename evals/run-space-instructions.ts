@@ -3,12 +3,18 @@
  * Check that space instructions take effect without weakening search.
  *
  *   bun run eval:space-instructions
- *   bun run eval:space-instructions -- --trials 2 --mode quick --checks language
+ *   bun run eval:space-instructions -- --trials 2 --mode quick --checks language-chat
  *
  * Checks, each with pinned search results:
- * - language: Japanese queries, a space asking for English. Rate = English.
- *   The control arm is the prompt before the language rule became
- *   conditional, with no space; "none" is the current prompt with no space.
+ * - language-draft: Japanese writing requests in a space whose (Japanese)
+ *   instructions ask for articles in English and chat in Japanese.
+ *   Rate = an English draft block with Japanese text around it. Missing draft
+ *   blocks are counted apart from language errors.
+ * - language-chat: ordinary Japanese questions in the same space.
+ *   Rate = Japanese answers. The control arm is the prompt before the language
+ *   rule became conditional, with no space; "none" is the current prompt.
+ * - language-always: ordinary Japanese questions in a space that asks for
+ *   English replies, explanations included. Rate = English answers.
  * - structure: English queries, a space asking for H2 headings and a closing
  *   3-bullet summary. Rate = answers with that structure.
  * - search: informational queries, a space saying not to search the web.
@@ -18,7 +24,8 @@
  *   so it should stay near the "none" arm.
  *
  * Space arms run with the per-turn note off and on, so the note's effect is
- * measured on its own.
+ * measured on its own. Answers expected in Japanese that mix in a Chinese
+ * clause count as misses and are reported in the "zh" column.
  */
 import { config as dotenvConfig } from 'dotenv'
 
@@ -28,10 +35,22 @@ process.env.BRAVE_SEARCH_API_KEY ||= 'eval-pinned-general-provider'
 
 import datasetJson from './datasets/related-questions.json'
 import { type SearchFixture } from './lib/dataset'
-import { classifyLanguage, followsStructure } from './lib/space-instructions'
+import {
+  classifyLanguage,
+  classifyShortLanguage,
+  followsStructure,
+  hasChineseClause,
+  splitDraft
+} from './lib/space-instructions'
 
 type Mode = 'quick' | 'adaptive'
-type Check = 'language' | 'structure' | 'search' | 'search-explicit'
+type Check =
+  | 'language-draft'
+  | 'language-chat'
+  | 'language-always'
+  | 'structure'
+  | 'search'
+  | 'search-explicit'
 type Arm = 'control' | 'none' | 'space' | 'space+note'
 
 type Item = { fixture: string; query: string }
@@ -66,6 +85,35 @@ const JAPANESE_ITEMS: Item[] = [
   { fixture: 'coffee', query: 'コーヒーを淹れるお湯の温度は何度がいい？' }
 ]
 
+const WRITING_ITEMS: Item[] = [
+  {
+    fixture: 'ev-batteries',
+    query: '電気自動車のバッテリーの種類について記事を書いて'
+  },
+  {
+    fixture: 'mount-fuji',
+    query: '富士山の登山ルートを紹介するブログ記事を書いて'
+  },
+  {
+    fixture: 'coffee',
+    query: 'コーヒーの淹れ方を比較する記事を書いてください'
+  },
+  { fixture: 'sleep', query: '睡眠を改善する夜の習慣についての記事を作って' }
+]
+
+const ARTICLES_SPACE = {
+  about: 'Researching and writing articles for my blog',
+  style: '記事の本文と見出しは英語で書く。会話や説明は日本語でよい。'
+}
+
+const ALWAYS_ENGLISH_SPACE = {
+  about: 'Researching and writing articles for my blog',
+  style:
+    'このスペースでは、日本語で話しかけても、説明も含めて常に英語で返答する。'
+}
+
+type Score = { hit: boolean; flag?: 'zh' | 'no-draft' }
+
 const datasetItems = datasetJson.items as {
   category: string
   fixture: string
@@ -90,17 +138,38 @@ const CHECKS: Record<
     items: Item[]
     arms: Arm[]
     space: { about: string; style: string }
-    score: (output: { text: string; searchQueries: string[] }) => boolean
+    score: (output: { text: string; searchQueries: string[] }) => Score
   }
 > = {
-  language: {
+  'language-draft': {
+    items: WRITING_ITEMS,
+    arms: ['space', 'space+note'],
+    space: ARTICLES_SPACE,
+    score: ({ text }) => {
+      const { draft, outside } = splitDraft(text)
+      if (draft === null) return { hit: false, flag: 'no-draft' }
+      if (hasChineseClause(outside)) return { hit: false, flag: 'zh' }
+      return {
+        hit:
+          classifyShortLanguage(draft) === 'en' &&
+          classifyShortLanguage(outside) === 'ja'
+      }
+    }
+  },
+  'language-chat': {
     items: JAPANESE_ITEMS,
     arms: ['control', 'none', 'space', 'space+note'],
-    space: {
-      about: 'Researching and writing articles for my English-language blog.',
-      style: 'Write in English. Lead with the key point. Short paragraphs.'
-    },
-    score: output => classifyLanguage(output.text) === 'en'
+    space: ARTICLES_SPACE,
+    score: ({ text }) =>
+      hasChineseClause(text)
+        ? { hit: false, flag: 'zh' }
+        : { hit: classifyLanguage(text) === 'ja' }
+  },
+  'language-always': {
+    items: JAPANESE_ITEMS,
+    arms: ['none', 'space', 'space+note'],
+    space: ALWAYS_ENGLISH_SPACE,
+    score: ({ text }) => ({ hit: classifyLanguage(text) === 'en' })
   },
   structure: {
     items: SUBSTANTIVE_ITEMS,
@@ -109,13 +178,13 @@ const CHECKS: Record<
       about: 'Researching topics for internal briefings.',
       style: 'Use H2 headings and end with a 3-bullet summary.'
     },
-    score: output => followsStructure(output.text)
+    score: output => ({ hit: followsStructure(output.text) })
   },
   search: {
     items: INFORMATIONAL_ITEMS,
     arms: ['none', 'space', 'space+note'],
     space: NO_SEARCH_SPACE,
-    score: output => output.searchQueries.length > 0
+    score: output => ({ hit: output.searchQueries.length > 0 })
   },
   'search-explicit': {
     items: INFORMATIONAL_ITEMS.map(item => ({
@@ -124,7 +193,7 @@ const CHECKS: Record<
     })),
     arms: ['none', 'space', 'space+note'],
     space: NO_SEARCH_SPACE,
-    score: output => output.searchQueries.length > 0
+    score: output => ({ hit: output.searchQueries.length > 0 })
   }
 }
 
@@ -133,7 +202,14 @@ const OLD_LANGUAGE_RULE = "- ALWAYS respond in the user's language."
 function parseArgs(argv: string[]) {
   const args = {
     modes: ['quick', 'adaptive'] as Mode[],
-    checks: ['language', 'structure', 'search', 'search-explicit'] as Check[],
+    checks: [
+      'language-draft',
+      'language-chat',
+      'language-always',
+      'structure',
+      'search',
+      'search-explicit'
+    ] as Check[],
     trials: 1,
     concurrency: 6
   }
@@ -229,7 +305,7 @@ async function main() {
     }
   }
 
-  const results: { job: Job; hit?: boolean; error?: string }[] = []
+  const results: { job: Job; score?: Score; error?: string }[] = []
   let cursor = 0
   async function worker() {
     while (cursor < jobs.length) {
@@ -239,7 +315,7 @@ async function main() {
         const output = await task({
           input: { query: job.item.query, results: fixtures[job.item.fixture] }
         })
-        results.push({ job, hit: CHECKS[job.check].score(output) })
+        results.push({ job, score: CHECKS[job.check].score(output) })
       } catch (error) {
         results.push({
           job,
@@ -251,7 +327,7 @@ async function main() {
   await Promise.all(Array.from({ length: args.concurrency }, worker))
 
   console.log(
-    '\ncheck            mode      arm          rate   hits/scored  errors'
+    '\ncheck            mode      arm          rate   hits/scored  no-draft  zh  errors'
   )
   for (const check of args.checks) {
     for (const mode of args.modes) {
@@ -259,11 +335,13 @@ async function main() {
         const rows = results.filter(
           r => r.job.check === check && r.job.mode === mode && r.job.arm === arm
         )
-        const scored = rows.filter(r => r.hit !== undefined)
-        const hits = scored.filter(r => r.hit).length
+        const scored = rows.filter(r => r.score !== undefined)
+        const hits = scored.filter(r => r.score?.hit).length
+        const flagged = (flag: Score['flag']) =>
+          String(scored.filter(r => r.score?.flag === flag).length)
         const rate = scored.length ? (hits / scored.length).toFixed(2) : '-'
         console.log(
-          `${check.padEnd(16)} ${mode.padEnd(9)} ${arm.padEnd(12)} ${rate.padStart(4)}   ${`${hits}/${scored.length}`.padStart(11)}  ${String(rows.length - scored.length).padStart(6)}`
+          `${check.padEnd(16)} ${mode.padEnd(9)} ${arm.padEnd(12)} ${rate.padStart(4)}   ${`${hits}/${scored.length}`.padStart(11)}  ${flagged('no-draft').padStart(8)}  ${flagged('zh').padStart(2)}  ${String(rows.length - scored.length).padStart(6)}`
         )
       }
     }
