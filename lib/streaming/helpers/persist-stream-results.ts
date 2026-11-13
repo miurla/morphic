@@ -44,12 +44,13 @@ export async function persistStreamResults(
       if (initialUserMessage) {
         const fallbackStart = performance.now()
         try {
+          // The space can be deleted mid-turn; the chat then falls back to the default space
           await createChatWithFirstMessage(
             chatId,
             initialUserMessage,
             userId,
             DEFAULT_CHAT_TITLE,
-            spaceId
+            isMissingSpaceError(error) ? null : spaceId
           )
           perfTime('initial chat persistence fallback completed', fallbackStart)
         } catch (fallbackError) {
@@ -108,4 +109,24 @@ export async function persistStreamResults(
       // Don't throw here as title update is not critical
     }
   }
+}
+
+const SPACE_FOREIGN_KEY = 'chats_space_id_spaces_id_fk'
+
+function isMissingSpaceError(error: unknown): boolean {
+  let current: unknown = error
+  for (let depth = 0; current && depth < 3; depth++) {
+    const { message, constraint_name } = current as {
+      message?: unknown
+      constraint_name?: unknown
+    }
+    if (
+      constraint_name === SPACE_FOREIGN_KEY ||
+      (typeof message === 'string' && message.includes(SPACE_FOREIGN_KEY))
+    ) {
+      return true
+    }
+    current = (current as { cause?: unknown }).cause
+  }
+  return false
 }
