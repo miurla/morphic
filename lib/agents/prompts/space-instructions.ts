@@ -12,15 +12,17 @@ export function buildSpaceInstructions(
   return `## Space instructions
 The user groups their work into spaces; these instructions apply to every
 chat in this space. They override the defaults above for output language,
-tone, structure, length, and formatting. They do not change the search,
-fetch, and citation rules above.
+tone, structure, length, and formatting. They may limit or turn off
+searching; when you do search or fetch, the citation rules above still
+apply. A direct request in the user's message takes precedence over these
+instructions.
 <space_instructions>
 ${body}
 </space_instructions>`
 }
 
 export const SPACE_NOTE =
-  '(Follow the Space instructions in the system prompt: output language, tone, structure, length, and formatting. Search and citation rules still apply.)'
+  '(Follow the Space instructions in the system prompt. If they set an output language, answer in it even though this message may be in another language. They also set tone, structure, length, formatting, and whether to search. If this message asks you to look something up, search anyway. Citation rules still apply.)'
 
 /**
  * The model weighs the user's own message over the system prompt for things
@@ -30,19 +32,20 @@ export const SPACE_NOTE =
  */
 export function attachSpaceNote(
   messages: ModelMessage[],
-  spaceInstructions: string
+  spaceInstructions: string,
+  note: string = SPACE_NOTE
 ): ModelMessage[] {
   if (!spaceInstructions) return messages
 
   return messages.map(message => {
     if (message.role !== 'user') return message
-    const note = { type: 'text' as const, text: SPACE_NOTE }
+    const notePart = { type: 'text' as const, text: note }
     return {
       ...message,
       content:
         typeof message.content === 'string'
-          ? [{ type: 'text' as const, text: message.content }, note]
-          : [...message.content, note]
+          ? [{ type: 'text' as const, text: message.content }, notePart]
+          : [...message.content, notePart]
     }
   })
 }

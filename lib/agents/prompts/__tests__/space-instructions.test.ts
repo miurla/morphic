@@ -25,7 +25,7 @@ describe('buildSpaceInstructions', () => {
 
     expect(result.startsWith('## Space instructions\n')).toBe(true)
     expect(result).toContain(
-      'They do not change the search,\nfetch, and citation rules above.'
+      "A direct request in the user's message takes precedence over these\ninstructions."
     )
     expect(result).toContain(
       '<space_instructions>\nWriting for my blog\nWrite in English.\n</space_instructions>'

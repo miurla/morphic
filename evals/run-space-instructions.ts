@@ -12,7 +12,10 @@
  * - structure: English queries, a space asking for H2 headings and a closing
  *   3-bullet summary. Rate = answers with that structure.
  * - search: informational queries, a space saying not to search the web.
- *   Rate = answers that called search. It should stay near the "none" arm.
+ *   Rate = answers that called search. It should drop below the "none" arm.
+ * - search-explicit: the same space, but each message asks to search.
+ *   Rate = answers that called search. The user's request beats the space,
+ *   so it should stay near the "none" arm.
  *
  * Space arms run with the per-turn note off and on, so the note's effect is
  * measured on its own.
@@ -28,7 +31,7 @@ import { type SearchFixture } from './lib/dataset'
 import { classifyLanguage, followsStructure } from './lib/space-instructions'
 
 type Mode = 'quick' | 'adaptive'
-type Check = 'language' | 'structure' | 'search'
+type Check = 'language' | 'structure' | 'search' | 'search-explicit'
 type Arm = 'control' | 'none' | 'space' | 'space+note'
 
 type Item = { fixture: string; query: string }
@@ -76,6 +79,11 @@ const INFORMATIONAL_ITEMS: Item[] = [
   ...datasetItems.filter(item => item.category === 'trivial').slice(0, 4)
 ]
 
+const NO_SEARCH_SPACE = {
+  about: 'Quick questions while I work.',
+  style: 'Do not search the web. Answer from what you already know.'
+}
+
 const CHECKS: Record<
   Check,
   {
@@ -106,10 +114,16 @@ const CHECKS: Record<
   search: {
     items: INFORMATIONAL_ITEMS,
     arms: ['none', 'space', 'space+note'],
-    space: {
-      about: 'Quick questions while I work.',
-      style: 'Do not search the web. Answer from what you already know.'
-    },
+    space: NO_SEARCH_SPACE,
+    score: output => output.searchQueries.length > 0
+  },
+  'search-explicit': {
+    items: INFORMATIONAL_ITEMS.map(item => ({
+      ...item,
+      query: `Look this up on the web: ${item.query}`
+    })),
+    arms: ['none', 'space', 'space+note'],
+    space: NO_SEARCH_SPACE,
     score: output => output.searchQueries.length > 0
   }
 }
@@ -119,7 +133,7 @@ const OLD_LANGUAGE_RULE = "- ALWAYS respond in the user's language."
 function parseArgs(argv: string[]) {
   const args = {
     modes: ['quick', 'adaptive'] as Mode[],
-    checks: ['language', 'structure', 'search'] as Check[],
+    checks: ['language', 'structure', 'search', 'search-explicit'] as Check[],
     trials: 1,
     concurrency: 6
   }
@@ -193,7 +207,8 @@ async function main() {
       buildMessages: query =>
         attachSpaceNote(
           [{ role: 'user', content: query }],
-          arm === 'space+note' ? space : ''
+          arm === 'space+note' ? space : '',
+          process.env.EVAL_SPACE_NOTE || undefined
         )
     })
   }
@@ -235,7 +250,9 @@ async function main() {
   }
   await Promise.all(Array.from({ length: args.concurrency }, worker))
 
-  console.log('\ncheck      mode      arm          rate   hits/scored  errors')
+  console.log(
+    '\ncheck            mode      arm          rate   hits/scored  errors'
+  )
   for (const check of args.checks) {
     for (const mode of args.modes) {
       for (const arm of CHECKS[check].arms) {
@@ -246,7 +263,7 @@ async function main() {
         const hits = scored.filter(r => r.hit).length
         const rate = scored.length ? (hits / scored.length).toFixed(2) : '-'
         console.log(
-          `${check.padEnd(10)} ${mode.padEnd(9)} ${arm.padEnd(12)} ${rate.padStart(4)}   ${`${hits}/${scored.length}`.padStart(11)}  ${String(rows.length - scored.length).padStart(6)}`
+          `${check.padEnd(16)} ${mode.padEnd(9)} ${arm.padEnd(12)} ${rate.padStart(4)}   ${`${hits}/${scored.length}`.padStart(11)}  ${String(rows.length - scored.length).padStart(6)}`
         )
       }
     }

@@ -137,6 +137,28 @@ first observed, hold users' own text, so they are built into
 `evals/_local/draft-edits-seeds.json`, which is gitignored and loaded only when
 present. Output for production items is never printed, only ids and verdicts.
 
+## space-instructions
+
+```bash
+bun run eval:space-instructions                                  # all checks, both modes
+bun run eval:space-instructions -- --checks language --mode quick
+bun run eval:space-instructions -- --trials 3
+```
+
+Replays pinned search results with a space's instructions in the system prompt,
+with the per-turn note on user messages off (`space`) and on (`space+note`):
+
+- `language`: Japanese queries in a space that asks for English. Rate = English
+  answers. `control` and `none` show that a chat without a space still answers
+  in the user's language.
+- `structure`: a space that asks for H2 headings and a closing 3-bullet summary.
+- `search`: a space that says not to search. The search rate should drop.
+- `search-explicit`: the same space, with each message asking to look it up. The
+  user's request wins, so the search rate should stay high.
+
+`EVAL_SPACE_NOTE` replaces the note text for a run, to compare wordings. It
+reports rates only and has no gate.
+
 ## Thresholds
 
 `thresholds.json` gates CI. A `null` value means the metric is reported but not
