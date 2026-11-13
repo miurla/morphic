@@ -3,7 +3,10 @@ import { propagateAttributes, startActiveObservation } from '@langfuse/tracing'
 import type { StreamTextOnErrorCallback } from 'ai'
 import { consumeStream, convertToModelMessages, smoothStream } from 'ai'
 
-import { buildSpaceInstructions } from '@/lib/agents/prompts/space-instructions'
+import {
+  attachSpaceNote,
+  buildSpaceInstructions
+} from '@/lib/agents/prompts/space-instructions'
 import { researcher } from '@/lib/agents/researcher'
 import { buildDraftVersions, currentDraftVersion } from '@/lib/draft/draft'
 import { isReviseAlternativesTurn } from '@/lib/draft/revise'
@@ -244,6 +247,8 @@ export async function createChatStreamResponse(
         buildDraftVersions(messagesToModel)
       )
 
+      const spaceInstructions = buildSpaceInstructions(chatSpace.space)
+
       // Get the researcher agent with search mode
       streamErrorStage = 'build-agent'
       const researchAgent = researcher({
@@ -253,7 +258,7 @@ export async function createChatStreamResponse(
         searchMode,
         citationLabelSeed: nextCitationLabelNumber(messagesToModel),
         currentDraft,
-        spaceInstructions: buildSpaceInstructions(chatSpace.space),
+        spaceInstructions,
         alternativesOnly: isReviseAlternativesTurn(
           messagesToModel.findLast(m => m.role === 'user') ?? { role: '' }
         )
@@ -352,7 +357,7 @@ export async function createChatStreamResponse(
       // failure is classified here too rather than assumed away: the same error
       // is recoverable whichever handler it arrives at.
       const result = await researchAgent.stream({
-        messages: modelMessages,
+        messages: attachSpaceNote(modelMessages, spaceInstructions),
         abortSignal,
         onError: ({ error }) => {
           if (isToolFailureError(error)) {

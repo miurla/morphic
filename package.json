@@ -19,7 +19,7 @@
     "eval:draft-edits": "bun run evals/run-draft-edits.ts",
     "eval:related-questions": "bun run evals/run-related-questions.ts",
     "eval:source-cards": "bun run evals/run-source-cards.ts",
-    "eval:space-language": "bun run evals/run-space-language.ts"
+    "eval:space-instructions": "bun run evals/run-space-instructions.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.87",

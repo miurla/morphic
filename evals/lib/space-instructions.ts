@@ -22,3 +22,23 @@ export function classifyLanguage(text: string): 'ja' | 'en' | 'mixed' {
   if (kana <= 5 && latinWords >= 20) return 'en'
   return 'mixed'
 }
+
+const BULLET = /^\s*(?:[-*+]|\d+[.)])\s+\S/
+
+/**
+ * At least one H2 heading, and the answer ends with exactly three bullets.
+ */
+export function followsStructure(text: string): boolean {
+  const lines = text
+    .replace(/```[\s\S]*?```/g, '')
+    .split('\n')
+    .map(line => line.trimEnd())
+    .filter(line => line.trim() !== '')
+  if (!lines.some(line => /^##\s+\S/.test(line))) return false
+
+  let bullets = 0
+  for (let i = lines.length - 1; i >= 0 && BULLET.test(lines[i]); i--) {
+    bullets++
+  }
+  return bullets === 3
+}

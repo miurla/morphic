@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { classifyLanguage } from '../space-language'
+import { classifyLanguage, followsStructure } from '../space-instructions'
 
 describe('classifyLanguage', () => {
   it('reads a Japanese answer with English terms as Japanese', () => {
@@ -18,5 +18,29 @@ describe('classifyLanguage', () => {
   it('ignores links and markup', () => {
     const text = `${'Short answer in English with enough words here. '.repeat(3)}<spec>ないよう</spec> [1](https://example.com/日本語のページ)`
     expect(classifyLanguage(text)).toBe('en')
+  })
+})
+
+describe('followsStructure', () => {
+  const summary = '- one\n- two\n- three'
+
+  it('accepts H2 headings ending in three bullets, ignoring the spec block', () => {
+    const text = `## Overview\n\nBody text.\n\n## Summary\n${summary}\n\n\`\`\`spec\n{"op":"add"}\n\`\`\``
+    expect(followsStructure(text)).toBe(true)
+  })
+
+  it('rejects an answer without H2 headings', () => {
+    expect(followsStructure(`Body text.\n\n${summary}`)).toBe(false)
+  })
+
+  it('rejects a summary with another bullet count', () => {
+    expect(followsStructure(`## Summary\n${summary}\n- four`)).toBe(false)
+    expect(followsStructure('## Summary\n- one\n- two')).toBe(false)
+  })
+
+  it('rejects text after the bullets', () => {
+    expect(followsStructure(`## Summary\n${summary}\n\nHope this helps.`)).toBe(
+      false
+    )
   })
 })

@@ -76,13 +76,17 @@ vi.mock('@/lib/utils/usage-logging', () => ({
   logUsage: vi.fn()
 }))
 
+import { convertToModelMessages } from 'ai'
+
 import { loadChat } from '@/lib/actions/chat'
+import { SPACE_NOTE } from '@/lib/agents/prompts/space-instructions'
 import { researcher } from '@/lib/agents/researcher'
 import { DeterministicPreparationError } from '@/lib/errors/deterministic-preparation-error'
 import { serializeToolFailure, ToolFailureError } from '@/lib/errors/tool-error'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
 import { EMPTY_RESPONSE_STATUS_MESSAGE } from '@/lib/streaming/helpers/is-empty-response'
+import { persistStreamResults } from '@/lib/streaming/helpers/persist-stream-results'
 import { prepareMessages } from '@/lib/streaming/helpers/prepare-messages'
 import { resolveChatSpace } from '@/lib/streaming/helpers/resolve-chat-space'
 import { getMaxAllowedTokens } from '@/lib/utils/context-window'
@@ -255,6 +259,56 @@ describe('createChatStreamResponse', () => {
     const { spaceInstructions } = vi.mocked(researcher).mock.calls[0][0]
     expect(spaceInstructions).toContain('<space_instructions>')
     expect(spaceInstructions).toContain('Write in English.')
+  })
+
+  it('adds the space note to user messages sent to the model only', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+    const modelMessages = [
+      { role: 'user', content: 'first' },
+      { role: 'assistant', content: 'answer' },
+      { role: 'user', content: 'second' }
+    ]
+    vi.mocked(convertToModelMessages).mockResolvedValueOnce(
+      modelMessages as any
+    )
+    vi.mocked(resolveChatSpace).mockResolvedValueOnce({
+      spaceId: null,
+      space: {
+        id: 'space-1',
+        userId: 'user-id',
+        color: 'black',
+        name: 'Default',
+        about: '',
+        style: 'Be brief.',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    })
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    const sent = mocks.stream.mock.calls[0][0].messages
+    expect(sent[0].content.at(-1)).toEqual({ type: 'text', text: SPACE_NOTE })
+    expect(sent[1].content).toBe('answer')
+    expect(sent[2].content.at(-1)).toEqual({ type: 'text', text: SPACE_NOTE })
+    expect(modelMessages[0].content).toBe('first')
+    expect(
+      JSON.stringify(vi.mocked(persistStreamResults).mock.calls)
+    ).not.toContain(SPACE_NOTE)
+  })
+
+  it('sends user messages unchanged without space instructions', async () => {
+    mocks.stream.mockResolvedValue(createFakeResult())
+    const modelMessages = [{ role: 'user', content: 'first' }]
+    vi.mocked(convertToModelMessages).mockResolvedValueOnce(
+      modelMessages as any
+    )
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(mocks.stream.mock.calls[0][0].messages).toBe(modelMessages)
   })
 
   it('reads the stored space of an existing chat', async () => {
