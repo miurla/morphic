@@ -23,3 +23,10 @@ export function getSpaceDisplayName(space: {
   if (name) return name
   return space.color.charAt(0).toUpperCase() + space.color.slice(1)
 }
+
+/** The space a chat belongs to, as shown to whoever is viewing it. */
+export type ChatSpace = {
+  color: SpaceColor
+  // Only the owner sees the name.
+  name?: string
+}

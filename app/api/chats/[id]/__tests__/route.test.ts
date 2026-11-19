@@ -4,11 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { loadChat } from '@/lib/actions/chat'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getChatSpaceForViewer } from '@/lib/spaces/chat-space'
 
 import { GET } from '../route'
 
 vi.mock('@/lib/actions/chat', () => ({ loadChat: vi.fn() }))
 vi.mock('@/lib/auth/get-current-user', () => ({ getCurrentUserId: vi.fn() }))
+vi.mock('@/lib/spaces/chat-space', () => ({
+  getChatSpaceForViewer: vi.fn()
+}))
 
 const request = () =>
   GET(new NextRequest('http://localhost/api/chats/chat'), {
@@ -19,6 +23,7 @@ describe('GET /api/chats/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getCurrentUserId).mockResolvedValue('owner')
+    vi.mocked(getChatSpaceForViewer).mockResolvedValue(null)
   })
   it('returns the owner history without caching', async () => {
     const chat = {
@@ -41,7 +46,8 @@ describe('GET /api/chats/[id]', () => {
       title: 'Title',
       visibility: 'private',
       userId: 'owner',
-      messages: []
+      messages: [],
+      space: null
     })
     expect(loadChat).toHaveBeenCalledWith('chat', 'owner')
   })
@@ -74,6 +80,24 @@ describe('GET /api/chats/[id]', () => {
     expect(result.headers.get('Cache-Control')).toBe('private, no-store')
     expect((await result.json()).messages).toEqual(chat.messages)
     expect(loadChat).toHaveBeenCalledWith('chat', undefined)
+  })
+
+  it('returns the space the viewer may see', async () => {
+    vi.mocked(getCurrentUserId).mockResolvedValue('viewer')
+    const chat = {
+      id: 'chat',
+      title: 'Public',
+      visibility: 'public' as const,
+      spaceId: 'space',
+      userId: 'owner',
+      messages: [],
+      createdAt: new Date()
+    }
+    vi.mocked(loadChat).mockResolvedValue(chat)
+    vi.mocked(getChatSpaceForViewer).mockResolvedValue({ color: 'green' })
+    const result = await request()
+    expect((await result.json()).space).toEqual({ color: 'green' })
+    expect(getChatSpaceForViewer).toHaveBeenCalledWith(chat, 'viewer')
   })
 
   it('returns 404 for private history without a session', async () => {

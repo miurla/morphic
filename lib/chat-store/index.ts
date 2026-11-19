@@ -5,6 +5,7 @@ import { ChatInit, DefaultChatTransport } from 'ai'
 
 import { getDistinctId } from '@/lib/analytics/posthog-client'
 import { generateId } from '@/lib/db/schema'
+import type { ChatSpace } from '@/lib/spaces/space'
 import type { UIMessage } from '@/lib/types/ai'
 
 export type ChatHandlers = Pick<ChatInit<UIMessage>, 'onFinish' | 'onError'>
@@ -15,6 +16,8 @@ export type ChatEntry = {
   loadedAt: number
   hasServerHistory: boolean
   createdLocally: boolean
+  // Null for the default space.
+  space: ChatSpace | null
   fetching?: Promise<void>
   error?: Error
   revision: number
@@ -140,6 +143,7 @@ export class ChatStore {
       loadedAt: now,
       hasServerHistory: options.messages !== undefined && !options.isNew,
       createdLocally: !!options.isNew,
+      space: null,
       revision: 0,
       size: 0,
       dispose: () => {}
@@ -175,6 +179,10 @@ export class ChatStore {
     }
   }
 
+  setSpace(id: string, space: ChatSpace | null) {
+    const entry = this.entries.get(id)
+    if (entry) entry.space = space
+  }
   markVerified(id: string) {
     const entry = this.entries.get(id)
     if (!entry) return
@@ -238,7 +246,10 @@ export class ChatStore {
           notFound = response.status === 404
           throw new Error(notFound ? 'Chat not found' : 'Failed to load chat')
         }
-        const data = (await response.json()) as { messages: UIMessage[] }
+        const data = (await response.json()) as {
+          messages: UIMessage[]
+          space?: ChatSpace | null
+        }
         // A local turn or account change makes this response obsolete.
         if (
           this.entries.get(id) !== entry ||
@@ -247,6 +258,7 @@ export class ChatStore {
         )
           return
         entry.chat.messages = data.messages
+        entry.space = data.space ?? null
         entry.loadedAt = Date.now()
         this.markVerified(id)
       } catch (error) {

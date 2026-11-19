@@ -11,6 +11,7 @@ import { InspectorDrawer } from '@/components/inspector/inspector-drawer'
 import { InspectorPanel } from '@/components/inspector/inspector-panel'
 import { useLibrary } from '@/components/library/library-context'
 import { LibraryPanel } from '@/components/library/library-panel'
+import { SpaceSurface } from '@/components/spaces/space-surface'
 
 import { useArtifact } from './artifact-context'
 
@@ -149,7 +150,9 @@ export function ChatArtifactContainer({
         className="hidden md:flex flex-1 min-w-0 overflow-hidden"
       >
         {/* Chat Panel - Independent container */}
-        <div className="flex-1 min-w-0 flex flex-col">{children}</div>
+        <div className="flex-1 min-w-0 flex flex-col">
+          <SpaceSurface surface="desktop">{children}</SpaceSurface>
+        </div>
 
         {/* Resize Handle */}
         {panelOpen && (
@@ -196,7 +199,7 @@ export function ChatArtifactContainer({
 
       {/* Mobile: full-width chat + drawer */}
       <div className="md:hidden flex-1 h-full min-w-0">
-        {children}
+        <SpaceSurface surface="mobile">{children}</SpaceSurface>
         <InspectorDrawer />
       </div>
     </div>

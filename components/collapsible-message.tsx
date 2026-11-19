@@ -2,6 +2,7 @@ import { IconChevronDown as ChevronDown } from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
 
+import { ChatSpaceIcon } from './spaces/chat-space-icon'
 import {
   Collapsible,
   CollapsibleContent,
@@ -52,7 +53,11 @@ export function CollapsibleMessage({
         <div className="relative flex flex-col items-center">
           <div className="w-5">
             {role === 'assistant' ? (
-              <IconLogo className="size-5" />
+              <ChatSpaceIcon>
+                {bodyColor => (
+                  <IconLogo className="size-5" bodyColor={bodyColor} />
+                )}
+              </ChatSpaceIcon>
             ) : (
               <CurrentUserAvatar />
             )}

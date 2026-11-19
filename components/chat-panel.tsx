@@ -51,6 +51,9 @@ import { stripMarkdownText } from '@/lib/utils/markdown'
 import { useArtifact } from './artifact/artifact-context'
 import { useLibrary } from './library/library-context'
 import { LibraryPickerDialog } from './library/library-picker-dialog'
+import { SpaceHomeLogo } from './spaces/space-home-logo'
+import { SpaceSettings } from './spaces/space-settings'
+import { useSpaces } from './spaces/spaces-provider'
 import { Button } from './ui/button'
 import {
   DropdownMenu,
@@ -58,7 +61,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from './ui/dropdown-menu'
-import { IconBlinkingLogo } from './ui/icons'
 import {
   Tooltip,
   TooltipContent,
@@ -151,6 +153,11 @@ export function ChatPanel({
   sections = []
 }: ChatPanelProps) {
   const router = useRouter()
+  const { editor: spaceEditor } = useSpaces()
+  // Space settings cover the home; keep what is underneath out of reach.
+  const hiddenBySettings = (
+    messages.length === 0 && spaceEditor ? { inert: true } : {}
+  ) as React.HTMLAttributes<HTMLElement>
   const panelRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -449,17 +456,22 @@ export function ChatPanel({
       )}
     >
       {messages.length === 0 && (
-        <div className="mb-6 md:mb-10 flex flex-col items-center gap-2 md:gap-4">
-          <IconBlinkingLogo className="size-12" />
+        <div
+          className="mb-6 md:mb-10 flex flex-col items-center gap-2 md:gap-4"
+          {...hiddenBySettings}
+        >
+          <SpaceHomeLogo />
           <h1 className="text-xl md:text-2xl font-medium text-foreground">
             What would you like to know?
           </h1>
         </div>
       )}
+      {messages.length === 0 && <SpaceSettings />}
       {uploadedFiles.length > 0 && (
         <UploadedFileList files={uploadedFiles} onRemove={handleFileRemove} />
       )}
       <form
+        {...hiddenBySettings}
         onSubmit={e => {
           // Pasted attachments (content cards / URL chips) are sent as
           // structured data parts alongside the instruction text part — no

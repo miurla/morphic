@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { loadChat } from '@/lib/actions/chat'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
+import { getChatSpaceForViewer } from '@/lib/spaces/chat-space'
 
 export async function GET(
   _request: NextRequest,
@@ -18,13 +19,15 @@ export async function GET(
         { status: 404, headers }
       )
     }
+    const space = await getChatSpaceForViewer(chat, userId)
     return NextResponse.json(
       {
         id: chat.id,
         title: chat.title,
         visibility: chat.visibility,
         userId: chat.userId,
-        messages: chat.messages
+        messages: chat.messages,
+        space
       },
       { headers }
     )

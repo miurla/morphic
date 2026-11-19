@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter as FontSans } from 'next/font/google'
+import { cookies } from 'next/headers'
 
 import { Analytics } from '@vercel/analytics/next'
 
@@ -24,6 +25,8 @@ import Header from '@/components/header'
 import { KeyboardShortcutHandler } from '@/components/keyboard-shortcut-handler'
 import { LibraryProvider } from '@/components/library/library-context'
 import { PostHogProvider } from '@/components/posthog-provider'
+import { SPACE_COLOR_COOKIE } from '@/components/spaces/space-colors'
+import { SpacesProvider } from '@/components/spaces/spaces-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { UsageBudgetProvider } from '@/components/usage-budget-provider'
 
@@ -105,6 +108,11 @@ export default async function RootLayout({
       }
     : null
 
+  // Read on the server so the home logo renders in the selected color.
+  const initialSpaceColor = userId
+    ? (await cookies()).get(SPACE_COLOR_COOKIE)?.value
+    : undefined
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -134,7 +142,13 @@ export default async function RootLayout({
                       <div className="flex flex-col flex-1 min-w-0">
                         <Header user={user} />
                         <main className="flex flex-1 min-h-0 min-w-0 overflow-hidden">
-                          <ArtifactRoot>{children}</ArtifactRoot>
+                          <SpacesProvider
+                            key={userId ?? 'guest'}
+                            enabled={!!userId}
+                            initialColor={initialSpaceColor}
+                          >
+                            <ArtifactRoot>{children}</ArtifactRoot>
+                          </SpacesProvider>
                         </main>
                       </div>
                     </UsageBudgetProvider>

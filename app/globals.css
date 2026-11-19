@@ -4,6 +4,14 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --space-black: var(--foreground);
+  --space-green: #14a37f;
+  --space-blue: #1185c9;
+  --space-purple: #6c5fb3;
+  --space-yellow: #e6a817;
+  --space-pink: #e27a98;
+  --space-red: #d4484f;
+  --space-orange: #ec6f35;
   --background: oklch(0.99 0 0);
   --foreground: oklch(0 0 0);
   --card: oklch(1 0 0);
@@ -501,5 +509,21 @@
   button:not(:disabled),
   [role='button']:not(:disabled) {
     cursor: pointer;
+  }
+}
+
+/* Space switcher and settings (components/spaces) */
+html:active-view-transition-type(space)::view-transition-group(*),
+html:active-view-transition-type(space)::view-transition-old(*),
+html:active-view-transition-type(space)::view-transition-new(*) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:active-view-transition-type(space)::view-transition-group(*),
+  html:active-view-transition-type(space)::view-transition-old(*),
+  html:active-view-transition-type(space)::view-transition-new(*) {
+    animation: none;
   }
 }
