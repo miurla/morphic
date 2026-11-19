@@ -413,14 +413,18 @@ export function SpacesProvider({
 
   useEffect(() => {
     if (!enabled) return
+    // React runs updates inside popstate synchronously, which skips the
+    // view transition, so handle the change after the event.
     const onPopState = () => {
-      const wantsEditor = urlHasEditParam()
-      if (!wantsEditor && stateRef.current.editor) {
-        pushedHistory.current = false
-        finishClose()
-      } else if (wantsEditor && !stateRef.current.editor) {
-        openEditor()
-      }
+      setTimeout(() => {
+        const wantsEditor = urlHasEditParam()
+        if (!wantsEditor && stateRef.current.editor) {
+          pushedHistory.current = false
+          finishClose()
+        } else if (wantsEditor && !stateRef.current.editor) {
+          openEditor()
+        }
+      }, 0)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)

@@ -138,12 +138,6 @@ export function ChatArtifactContainer({
 
   return (
     <div className="flex-1 min-h-0 min-w-0 h-full flex">
-      <div className="absolute z-50 p-4 transition-opacity duration-[180ms] ease-[var(--motion-ease-out)]">
-        {hasUser && (!open || isMobileSidebar) && (
-          <SidebarTrigger className="animate-fade-in" />
-        )}
-      </div>
-
       {/* Desktop: Independent panels like morphic-studio */}
       <div
         ref={setContainerRef}
@@ -201,6 +195,17 @@ export function ChatArtifactContainer({
       <div className="md:hidden flex-1 h-full min-w-0">
         <SpaceSurface surface="mobile">{children}</SpaceSurface>
         <InspectorDrawer />
+      </div>
+
+      {/* Last in the tree so it stays above the space settings while they
+          animate in or out. */}
+      <div
+        data-space-transition-keep
+        className="absolute top-0 left-0 z-50 p-4 transition-opacity duration-[180ms] ease-[var(--motion-ease-out)]"
+      >
+        {hasUser && (!open || isMobileSidebar) && (
+          <SidebarTrigger className="animate-fade-in" />
+        )}
       </div>
     </div>
   )

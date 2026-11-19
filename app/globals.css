@@ -520,6 +520,28 @@ html:active-view-transition-type(space)::view-transition-new(*) {
   animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* Only the logo, dots, and settings panel move; a page cross-fade would
+   dim everything that stays put. */
+html:active-view-transition-type(space)::view-transition-old(root) {
+  animation: none;
+  opacity: 0;
+}
+html:active-view-transition-type(space)::view-transition-new(root) {
+  animation: none;
+}
+/* Controls that stay above the settings panel would otherwise sit under
+   its fade for the length of the transition. */
+html:active-view-transition-type(space) [data-space-transition-keep] {
+  view-transition-name: space-keep;
+}
+html:active-view-transition-type(space)::view-transition-group(space-keep),
+html:active-view-transition-type(space)::view-transition-new(space-keep) {
+  animation: none;
+}
+html:active-view-transition-type(space)::view-transition-old(space-keep) {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:active-view-transition-type(space)::view-transition-group(*),
   html:active-view-transition-type(space)::view-transition-old(*),
