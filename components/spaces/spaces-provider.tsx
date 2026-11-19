@@ -180,6 +180,11 @@ export function SpacesProvider({
   )
 
   const animate = useCallback((update: (prev: SpacesState) => SpacesState) => {
+    // A hidden page aborts view transitions with an uncaught error.
+    if (document.hidden) {
+      setState(update)
+      return
+    }
     startTransition(() => {
       addTransitionType('space')
       setState(update)
