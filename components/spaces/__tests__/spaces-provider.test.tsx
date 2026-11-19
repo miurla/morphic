@@ -166,4 +166,29 @@ describe('SpacesProvider', () => {
     })
     expect(document.cookie).toContain('spaceColor=green')
   })
+
+  it('keeps the editor closed until saved spaces load', async () => {
+    let resolve: (value: Awaited<ReturnType<typeof listSpaces>>) => void
+    vi.mocked(listSpaces).mockReturnValue(
+      new Promise(done => {
+        resolve = done
+      })
+    )
+    renderProvider('green')
+
+    act(() => api().openEditor())
+    expect(state().editing).toBeNull()
+    // A query sent on mount keeps the selected space; the server checks it.
+    expect(api().colorForNewChat()).toBe('green')
+
+    await act(async () => {
+      resolve({
+        success: true,
+        spaces: [row('green', { style: 'Short paragraphs' })]
+      })
+    })
+    act(() => api().openEditor())
+    expect(state().editing).toBe('green')
+    expect(api().fieldsOf('green').style).toBe('Short paragraphs')
+  })
 })

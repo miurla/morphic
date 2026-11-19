@@ -366,9 +366,10 @@ export function SpacesProvider({
 
   const openEditor = useCallback(
     (color?: SpaceColor) => {
-      if (!enabled) return
       const current = stateRef.current
-      if (current.editor) return
+      // Before saved spaces load, a draft would start empty and its first
+      // save would overwrite the stored instructions.
+      if (!enabled || !current.loaded || current.editor) return
       const target = color ?? current.active
       animate(prev => ({
         ...prev,
@@ -603,10 +604,12 @@ export function SpacesProvider({
         getSpaceDisplayName({ color, name: fieldsOf(color).name }),
       isSaved: color => !!state.saved[color],
       colorForNewChat: () => {
-        const { active } = stateRef.current
-        return active !== DEFAULT_SPACE_COLOR && savedRef.current[active]
-          ? active
-          : DEFAULT_SPACE_COLOR
+        const { active, loaded } = stateRef.current
+        if (active === DEFAULT_SPACE_COLOR) return DEFAULT_SPACE_COLOR
+        // A query sent on mount can beat the load; the server checks that
+        // the user owns the space and falls back to the default otherwise.
+        if (!loaded) return active
+        return savedRef.current[active] ? active : DEFAULT_SPACE_COLOR
       },
       switchTo,
       openEditor,
