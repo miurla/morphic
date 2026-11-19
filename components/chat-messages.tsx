@@ -9,6 +9,7 @@ import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 import { extractCitationMapsFromMessages } from '@/lib/utils/citation'
 
+import { ChatSpaceIcon } from './spaces/chat-space-icon'
 import { AnimatedLogo } from './ui/animated-logo'
 import { ChatError } from './chat-error'
 import { ChatFooterMessage } from './chat-footer-message'
@@ -35,6 +36,8 @@ interface ChatMessagesProps {
   reload?: (messageId: string) => Promise<void | string | null | undefined>
   error?: Error | string | null | undefined
   onQuoteContext?: (text: string) => void
+  /** A viewer other than the owner sees that custom instructions apply. */
+  ownerInstructions?: boolean
 }
 
 const DESKTOP_LATEST_SECTION_OFFSET = 196
@@ -53,7 +56,8 @@ export function ChatMessages({
   onUpdateMessage,
   reload,
   error,
-  onQuoteContext
+  onQuoteContext,
+  ownerInstructions = false
 }: ChatMessagesProps) {
   // Track user-modified states (when user explicitly opens/closes)
   const [userModifiedStates, setUserModifiedStates] = useState<
@@ -206,6 +210,11 @@ export function ChatMessages({
       )}
     >
       <div className="relative mx-auto w-full max-w-full md:max-w-3xl px-4">
+        {ownerInstructions && sections.length > 0 && (
+          <p className="mb-4 text-xs text-muted-foreground">
+            This chat follows custom instructions from its owner.
+          </p>
+        )}
         {sections.map((section, sectionIndex) => (
           <div
             key={section.id}
@@ -276,10 +285,15 @@ export function ChatMessages({
             {/* Show assistant logo and footer message after assistant messages */}
             {showAssistantLogo && sectionIndex === sections.length - 1 && (
               <div className="flex items-center gap-3 py-1 md:py-4">
-                <AnimatedLogo
-                  className="size-10 shrink-0"
-                  animate={isLoading}
-                />
+                <ChatSpaceIcon>
+                  {bodyColor => (
+                    <AnimatedLogo
+                      className="size-10 shrink-0"
+                      animate={isLoading}
+                      bodyColor={bodyColor}
+                    />
+                  )}
+                </ChatSpaceIcon>
                 <ChatFooterMessage isLoading={isLoading} />
               </div>
             )}

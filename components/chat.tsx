@@ -47,6 +47,9 @@ import { getTextFromParts } from '@/lib/utils/message-utils'
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
 
 import { registerDraftSource, unregisterDraftSource } from './draft/draft-store'
+import { ChatSpaceProvider } from './spaces/chat-space-context'
+import { DEFAULT_SPACE_COLOR } from './spaces/space-colors'
+import { useSpaces } from './spaces/spaces-provider'
 import { Button } from './ui/button'
 import { Card, CardDescription, CardFooter, CardHeader } from './ui/card'
 import { ChatMessages } from './chat-messages'
@@ -159,6 +162,7 @@ export function Chat({
   )
 
   const user = useAppUser()
+  const spaces = useSpaces()
   const { store, entry } = useMemo(() => {
     const store =
       isGuest || typeof window === 'undefined' ? new ChatStore() : chatStore
@@ -304,15 +308,34 @@ export function Chat({
       isStreamingRef.current = true
       try {
         const tracksUsage = isCloudDeployment && !isGuest
+        // A new chat joins the selected space for good.
+        const startsChat =
+          !isGuest &&
+          entry.chat.messages.length === 0 &&
+          !entry.hasServerHistory
+        const spaceColor = startsChat ? spaces.colorForNewChat() : undefined
+        if (spaceColor) {
+          const inSpace = spaceColor !== DEFAULT_SPACE_COLOR
+          store.setSpace(
+            chatId,
+            inSpace
+              ? { color: spaceColor, name: spaces.nameOf(spaceColor) }
+              : null
+          )
+          if (inSpace) {
+            captureClient('space_chat_started', { chatId, color: spaceColor })
+          }
+        }
         store.attachHandlers(entry, handlers)
         const request = sendMessage(
           message,
-          tracksUsage
+          tracksUsage || spaceColor
             ? {
                 ...options,
                 body: {
                   ...options?.body,
-                  usageAttemptId: generateId()
+                  ...(spaceColor && { spaceColor }),
+                  ...(tracksUsage && { usageAttemptId: generateId() })
                 }
               }
             : options
@@ -335,6 +358,7 @@ export function Chat({
     },
     [
       canSend,
+      chatId,
       consumeUsage,
       entry,
       handlers,
@@ -342,6 +366,7 @@ export function Chat({
       isCurrentAdaptiveModeAuthBlocked,
       isGuest,
       sendMessage,
+      spaces,
       showAdaptiveModeAuthModal,
       store,
       usageBudgetEnabled,
@@ -742,55 +767,58 @@ export function Chat({
         onDragLeave={dragHandlers.handleDragLeave}
         onDrop={dragHandlers.handleDrop}
       >
-        <ChatMessages
-          sections={sections}
-          status={status}
-          chatId={chatId}
-          isGuest={isGuest}
-          isCloudDeployment={isCloudDeployment}
-          libraryAvailable={libraryAvailable}
-          addToolResult={({
-            toolCallId,
-            result
-          }: {
-            toolCallId: string
-            result: any
-          }) => {
-            // Find the tool name from the message parts
-            let toolName = 'unknown'
+        <ChatSpaceProvider value={entry.space}>
+          <ChatMessages
+            sections={sections}
+            status={status}
+            chatId={chatId}
+            isGuest={isGuest}
+            isCloudDeployment={isCloudDeployment}
+            libraryAvailable={libraryAvailable}
+            addToolResult={({
+              toolCallId,
+              result
+            }: {
+              toolCallId: string
+              result: any
+            }) => {
+              // Find the tool name from the message parts
+              let toolName = 'unknown'
 
-            // Optimize by breaking early once found
-            outerLoop: for (const message of messages) {
-              if (!message.parts) continue
+              // Optimize by breaking early once found
+              outerLoop: for (const message of messages) {
+                if (!message.parts) continue
 
-              for (const part of message.parts) {
-                if (isToolCallPart(part) && part.toolCallId === toolCallId) {
-                  toolName = part.toolName
-                  break outerLoop
-                } else if (
-                  isToolTypePart(part) &&
-                  part.toolCallId === toolCallId
-                ) {
-                  toolName = part.type.substring(5) // Remove 'tool-' prefix
-                  break outerLoop
-                } else if (
-                  isDynamicToolPart(part) &&
-                  part.toolCallId === toolCallId
-                ) {
-                  toolName = part.toolName
-                  break outerLoop
+                for (const part of message.parts) {
+                  if (isToolCallPart(part) && part.toolCallId === toolCallId) {
+                    toolName = part.toolName
+                    break outerLoop
+                  } else if (
+                    isToolTypePart(part) &&
+                    part.toolCallId === toolCallId
+                  ) {
+                    toolName = part.type.substring(5) // Remove 'tool-' prefix
+                    break outerLoop
+                  } else if (
+                    isDynamicToolPart(part) &&
+                    part.toolCallId === toolCallId
+                  ) {
+                    toolName = part.toolName
+                    break outerLoop
+                  }
                 }
               }
-            }
 
-            addToolResult({ tool: toolName, toolCallId, output: result })
-          }}
-          scrollContainerRef={scrollContainerRef}
-          onUpdateMessage={handleUpdateAndReloadMessage}
-          reload={handleReloadFrom}
-          error={error}
-          onQuoteContext={handleQuoteContext}
-        />
+              addToolResult({ tool: toolName, toolCallId, output: result })
+            }}
+            scrollContainerRef={scrollContainerRef}
+            onUpdateMessage={handleUpdateAndReloadMessage}
+            reload={handleReloadFrom}
+            error={error}
+            onQuoteContext={handleQuoteContext}
+            ownerInstructions={entry.ownerInstructions}
+          />
+        </ChatSpaceProvider>
         {isHistoryPending && !entry.error && (
           <div
             role="status"

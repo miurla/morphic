@@ -4,7 +4,12 @@ import { useEffect, useRef } from 'react'
 
 import { cn } from '@/lib/utils'
 
-function IconLogo({ className, ...props }: React.ComponentProps<'svg'>) {
+type LogoProps = React.ComponentProps<'svg'> & {
+  /** Body color; the eyes stay white. */
+  bodyColor?: string
+}
+
+function IconLogo({ className, bodyColor, ...props }: LogoProps) {
   return (
     <svg
       fill="currentColor"
@@ -14,7 +19,7 @@ function IconLogo({ className, ...props }: React.ComponentProps<'svg'>) {
       className={cn('size-4', className)}
       {...props}
     >
-      <circle cx="128" cy="128" r="128" fill="black"></circle>
+      <circle cx="128" cy="128" r="128" fill={bodyColor ?? 'black'}></circle>
       <circle cx="102" cy="128" r="18" fill="white"></circle>
       <circle cx="154" cy="128" r="18" fill="white"></circle>
     </svg>
@@ -45,10 +50,7 @@ function IconLogoOutline({ className, ...props }: React.ComponentProps<'svg'>) {
   )
 }
 
-function IconBlinkingLogo({
-  className,
-  ...props
-}: React.ComponentProps<'svg'>) {
+function IconBlinkingLogo({ className, bodyColor, ...props }: LogoProps) {
   const svgRef = useRef<SVGSVGElement>(null)
 
   useEffect(() => {
@@ -147,7 +149,7 @@ function IconBlinkingLogo({
       className={cn('size-4', className)}
       {...props}
     >
-      <circle cx="128" cy="128" r="128" fill="#222"></circle>
+      <circle cx="128" cy="128" r="128" fill={bodyColor ?? '#222'}></circle>
       <ellipse
         cx="102"
         cy="128"

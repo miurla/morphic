@@ -7,9 +7,12 @@ import { cn } from '@/lib/utils'
 export function AnimatedLogo({
   animate = true,
   className,
+  bodyColor,
   ...props
 }: React.ComponentProps<'svg'> & {
   animate?: boolean
+  /** Body color; the eyes stay white. */
+  bodyColor?: string
 }) {
   const [isBlinking, setIsBlinking] = useState(false)
 
@@ -53,7 +56,7 @@ export function AnimatedLogo({
       className={cn('size-8', className)}
       {...props}
     >
-      <circle cx="128" cy="128" r="128" fill="black"></circle>
+      <circle cx="128" cy="128" r="128" fill={bodyColor ?? 'black'}></circle>
       <g
         className={cn(
           'origin-center',
