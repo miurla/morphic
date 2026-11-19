@@ -816,6 +816,7 @@ export function Chat({
             reload={handleReloadFrom}
             error={error}
             onQuoteContext={handleQuoteContext}
+            ownerInstructions={entry.ownerInstructions}
           />
         </ChatSpaceProvider>
         {isHistoryPending && !entry.error && (

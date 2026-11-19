@@ -18,6 +18,8 @@ export type ChatEntry = {
   createdLocally: boolean
   // Null for the default space.
   space: ChatSpace | null
+  // Shown to viewers other than the owner.
+  ownerInstructions: boolean
   fetching?: Promise<void>
   error?: Error
   revision: number
@@ -144,6 +146,7 @@ export class ChatStore {
       hasServerHistory: options.messages !== undefined && !options.isNew,
       createdLocally: !!options.isNew,
       space: null,
+      ownerInstructions: false,
       revision: 0,
       size: 0,
       dispose: () => {}
@@ -249,6 +252,7 @@ export class ChatStore {
         const data = (await response.json()) as {
           messages: UIMessage[]
           space?: ChatSpace | null
+          ownerInstructions?: boolean
         }
         // A local turn or account change makes this response obsolete.
         if (
@@ -259,6 +263,7 @@ export class ChatStore {
           return
         entry.chat.messages = data.messages
         entry.space = data.space ?? null
+        entry.ownerInstructions = data.ownerInstructions === true
         entry.loadedAt = Date.now()
         this.markVerified(id)
       } catch (error) {

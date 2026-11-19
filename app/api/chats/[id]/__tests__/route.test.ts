@@ -23,7 +23,10 @@ describe('GET /api/chats/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getCurrentUserId).mockResolvedValue('owner')
-    vi.mocked(getChatSpaceForViewer).mockResolvedValue(null)
+    vi.mocked(getChatSpaceForViewer).mockResolvedValue({
+      space: null,
+      ownerInstructions: false
+    })
   })
   it('returns the owner history without caching', async () => {
     const chat = {
@@ -47,7 +50,8 @@ describe('GET /api/chats/[id]', () => {
       visibility: 'private',
       userId: 'owner',
       messages: [],
-      space: null
+      space: null,
+      ownerInstructions: false
     })
     expect(loadChat).toHaveBeenCalledWith('chat', 'owner')
   })
@@ -94,9 +98,14 @@ describe('GET /api/chats/[id]', () => {
       createdAt: new Date()
     }
     vi.mocked(loadChat).mockResolvedValue(chat)
-    vi.mocked(getChatSpaceForViewer).mockResolvedValue({ color: 'green' })
+    vi.mocked(getChatSpaceForViewer).mockResolvedValue({
+      space: { color: 'green' },
+      ownerInstructions: true
+    })
     const result = await request()
-    expect((await result.json()).space).toEqual({ color: 'green' })
+    const body = await result.json()
+    expect(body.space).toEqual({ color: 'green' })
+    expect(body.ownerInstructions).toBe(true)
     expect(getChatSpaceForViewer).toHaveBeenCalledWith(chat, 'viewer')
   })
 

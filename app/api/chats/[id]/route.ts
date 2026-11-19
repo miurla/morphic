@@ -19,7 +19,10 @@ export async function GET(
         { status: 404, headers }
       )
     }
-    const space = await getChatSpaceForViewer(chat, userId)
+    const { space, ownerInstructions } = await getChatSpaceForViewer(
+      chat,
+      userId
+    )
     return NextResponse.json(
       {
         id: chat.id,
@@ -27,7 +30,8 @@ export async function GET(
         visibility: chat.visibility,
         userId: chat.userId,
         messages: chat.messages,
-        space
+        space,
+        ownerInstructions
       },
       { headers }
     )
