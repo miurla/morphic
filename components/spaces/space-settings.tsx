@@ -42,10 +42,18 @@ export function SpaceSettings() {
   const spaces = useSpaces()
   const visible = useIsVisibleSurface()
   if (!spaces.editor || !visible) return null
+  // The backdrop stays out of the view transition and fades on its own, so
+  // the moving logo and dots are never drawn under it.
   return (
-    <ViewTransition>
-      <SpaceSettingsView />
-    </ViewTransition>
+    <>
+      <div
+        aria-hidden
+        className="space-settings-backdrop absolute inset-0 z-20 bg-background"
+      />
+      <ViewTransition>
+        <SpaceSettingsView />
+      </ViewTransition>
+    </>
   )
 }
 
@@ -78,7 +86,7 @@ function SpaceSettingsView() {
     <div
       role="dialog"
       aria-label="Space settings"
-      className="absolute inset-0 z-20 overflow-y-auto bg-background"
+      className="absolute inset-0 z-20 overflow-y-auto"
     >
       <Button
         variant="ghost"
