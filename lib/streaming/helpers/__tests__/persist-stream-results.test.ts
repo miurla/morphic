@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createChatWithFirstMessage, upsertMessage } from '@/lib/actions/chat'
+import { updateChatTitle } from '@/lib/db/actions'
 
 import { persistStreamResults } from '../persist-stream-results'
 
@@ -90,5 +91,24 @@ describe('persistStreamResults initial save fallback', () => {
       'Untitled',
       'space-1'
     )
+  })
+
+  it('saves the chat and its title but no answer when there is none', async () => {
+    await persistStreamResults(
+      null,
+      'chat-1',
+      'user-1',
+      Promise.resolve('Title'),
+      undefined,
+      undefined,
+      undefined,
+      Promise.reject(new Error('connection reset')),
+      userMessage,
+      null
+    )
+
+    expect(createChatWithFirstMessage).toHaveBeenCalled()
+    expect(upsertMessage).not.toHaveBeenCalled()
+    expect(updateChatTitle).toHaveBeenCalledWith('chat-1', 'Title', 'user-1')
   })
 })
