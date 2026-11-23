@@ -9,7 +9,7 @@ import { retryDatabaseOperation } from '@/lib/utils/retry'
 const DEFAULT_CHAT_TITLE = 'Untitled'
 
 export async function persistStreamResults(
-  responseMessage: UIMessage,
+  responseMessage: UIMessage | null,
   chatId: string,
   userId: string,
   titlePromise?: Promise<string>,
@@ -22,14 +22,6 @@ export async function persistStreamResults(
   initialUserMessage?: UIMessage,
   spaceId: string | null = null
 ) {
-  // Attach metadata to the response message
-  responseMessage.metadata = {
-    ...(responseMessage.metadata || {}),
-    ...(parentTraceId && { traceId: parentTraceId }),
-    ...(searchMode && { searchMode }),
-    ...(modelId && { modelId })
-  }
-
   // Wait for title generation if it was started
   const chatTitle = titlePromise ? await titlePromise : undefined
 
@@ -81,7 +73,38 @@ export async function persistStreamResults(
     }
   }
 
-  // Save message with retry logic
+  if (responseMessage) {
+    await saveResponseMessage(
+      {
+        ...responseMessage,
+        metadata: {
+          ...(responseMessage.metadata || {}),
+          ...(parentTraceId && { traceId: parentTraceId }),
+          ...(searchMode && { searchMode }),
+          ...(modelId && { modelId })
+        }
+      },
+      chatId,
+      userId
+    )
+  }
+
+  // Update title after message is saved
+  if (chatTitle && chatTitle !== DEFAULT_CHAT_TITLE) {
+    try {
+      await updateChatTitle(chatId, chatTitle, userId)
+    } catch (error) {
+      console.error('Error updating title:', error)
+      // Don't throw here as title update is not critical
+    }
+  }
+}
+
+async function saveResponseMessage(
+  responseMessage: UIMessage,
+  chatId: string,
+  userId: string
+) {
   const saveStart = performance.now()
   try {
     await upsertMessage(chatId, responseMessage, userId)
@@ -97,16 +120,6 @@ export async function persistStreamResults(
     } catch (retryError) {
       console.error('Failed to save after retries:', retryError)
       // Don't throw here to avoid breaking the stream
-    }
-  }
-
-  // Update title after message is saved
-  if (chatTitle && chatTitle !== DEFAULT_CHAT_TITLE) {
-    try {
-      await updateChatTitle(chatId, chatTitle, userId)
-    } catch (error) {
-      console.error('Error updating title:', error)
-      // Don't throw here as title update is not critical
     }
   }
 }

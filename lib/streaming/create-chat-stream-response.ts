@@ -425,16 +425,16 @@ export async function createChatStreamResponse(
             if (hasToolFailure && !hasAnswerAfterToolFailure(responseMessage)) {
               hasStreamError = true
             }
-            if (
-              hasEmptyResponse ||
-              (hasStreamError && !hasResponseContentPart(responseMessage))
-            ) {
+            const failedWithoutContent =
+              hasStreamError && !hasResponseContentPart(responseMessage)
+            if (hasEmptyResponse || failedWithoutContent) {
               await onZeroPartError?.()
             }
 
-            // Persist stream results to database
+            // A failed turn with nothing streamed is not an answer, so it is
+            // not saved as one and the chat ends on the user's message.
             await persistStreamResults(
-              responseMessage,
+              failedWithoutContent ? null : responseMessage,
               chatId,
               userId,
               titlePromise,

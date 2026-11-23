@@ -548,6 +548,37 @@ describe('createChatStreamResponse', () => {
     expect(update).not.toHaveProperty('output')
   })
 
+  it('does not save an answer for a failed turn that streamed nothing', async () => {
+    const onZeroPartError = vi.fn(async () => undefined)
+    mocks.stream.mockImplementation(async (options: StreamOptions) => {
+      options.onError({ error: new Error('Service Unavailable') })
+      return createFakeResult(false, [{ type: 'step-start' }])
+    })
+
+    await createChatStreamResponse({ ...createConfig(), onZeroPartError })
+    await mocks.finishPromise
+
+    expect(onZeroPartError).toHaveBeenCalledOnce()
+    expect(vi.mocked(persistStreamResults).mock.calls[0]?.[0]).toBeNull()
+  })
+
+  it('still saves the partial answer of a turn that failed mid-answer', async () => {
+    mocks.stream.mockImplementation(async (options: StreamOptions) => {
+      options.onError({ error: new Error('Service Unavailable') })
+      return createFakeResult(false, [
+        { type: 'step-start' },
+        { type: 'text', text: 'Partial ans' }
+      ])
+    })
+
+    await createChatStreamResponse(createConfig())
+    await mocks.finishPromise
+
+    expect(vi.mocked(persistStreamResults).mock.calls[0]?.[0]).toMatchObject({
+      id: 'response-id'
+    })
+  })
+
   it('keeps the input and omits the output for an aborted turn', async () => {
     mocks.stream.mockResolvedValue(createFakeResult(true))
 
