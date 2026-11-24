@@ -60,13 +60,18 @@ export function normalizeSearchQuery(query: string): string {
   if (trimmed.length <= MAX_QUERY_LENGTH) {
     return stripLoneSurrogates(trimmed)
   }
-  const capped = trimmed.slice(0, MAX_QUERY_LENGTH)
+  // Keep the cap in UTF-16 units, but never split a valid surrogate pair.
+  // An astral code point starting at the last retained unit crosses the cap.
+  const splitsCodePoint =
+    (trimmed.codePointAt(MAX_QUERY_LENGTH - 1) ?? 0) > 0xffff
+  const boundary = splitsCodePoint ? MAX_QUERY_LENGTH - 1 : MAX_QUERY_LENGTH
+  const capped = trimmed.slice(0, boundary)
   // The retained text is complete unless the cap landed inside a token the
   // parser could continue: whitespace and plain punctuation ('!' as much as
   // ' ') both end every token type, so only a continuation character after
   // the cap means a token was split.
-  const next = trimmed[MAX_QUERY_LENGTH]
-  if (next === undefined || !TOKEN_CONT.test(next)) {
+  const next = trimmed.codePointAt(boundary)
+  if (next === undefined || !TOKEN_CONT.test(String.fromCodePoint(next))) {
     return stripLoneSurrogates(capped.trim())
   }
   // Drop the trailing fragment (everything since the last whitespace) so a
