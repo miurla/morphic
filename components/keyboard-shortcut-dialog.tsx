@@ -9,6 +9,8 @@ import {
   SHORTCUTS
 } from '@/lib/keyboard-shortcuts'
 
+import { useI18n } from '@/components/language-provider'
+
 import {
   Dialog,
   DialogContent,
@@ -30,6 +32,8 @@ function ShortcutKey({ children }: { children: string }) {
 }
 
 export function KeyboardShortcutDialog() {
+  const { t } = useI18n()
+
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -43,9 +47,9 @@ export function KeyboardShortcutDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Keyboard Shortcuts</DialogTitle>
+          <DialogTitle>{t('Keyboard Shortcuts')}</DialogTitle>
           <DialogDescription className="sr-only">
-            List of available keyboard shortcuts
+            {t('List of available keyboard shortcuts')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-1">
@@ -55,7 +59,7 @@ export function KeyboardShortcutDialog() {
               className="flex items-center justify-between rounded-md px-2 py-1.5"
             >
               <span className="text-sm text-foreground">
-                {shortcut.description}
+                {t(shortcut.description)}
               </span>
               <div className="flex items-center gap-1">
                 {formatShortcutKeys(shortcut).map((key, i) => (

@@ -2,6 +2,8 @@
 
 import { SerperSearchResultItem, SerperSearchResults } from '@/lib/types'
 
+import { useI18n } from '@/components/language-provider'
+
 import { VideoResultGrid } from './video-result-grid'
 
 export interface VideoSearchResultsProps {
@@ -29,6 +31,8 @@ export function VideoSearchResults({
   results,
   displayMode = 'chat'
 }: VideoSearchResultsProps) {
+  const { t } = useI18n()
+
   const videos = results.videos.filter((video: SerperSearchResultItem) => {
     try {
       return new URL(video.link).pathname === '/watch'
@@ -41,7 +45,7 @@ export function VideoSearchResults({
   const query = results.searchParameters?.q || ''
 
   if (!videos || videos.length === 0) {
-    return <div className="text-muted-foreground">No videos found</div>
+    return <div className="text-muted-foreground">{t('No videos found')}</div>
   }
 
   return (

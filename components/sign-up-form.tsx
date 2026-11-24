@@ -1,10 +1,12 @@
 'use client'
+
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { signUp } from '@/lib/actions/auth'
 import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 import { cn } from '@/lib/utils/index'
 
 import { Button } from '@/components/ui/button'
@@ -20,6 +22,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
 
+import { useI18n } from '@/components/language-provider'
+
 export function SignUpForm({
   className,
   token,
@@ -29,6 +33,7 @@ export function SignUpForm({
   token?: string
   inviteEmail?: string
 }) {
+  const { t, locale } = useI18n()
   const [email, setEmail] = useState(inviteEmail ?? '')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
@@ -74,6 +79,10 @@ export function SignUpForm({
     }
   }
 
+  const bootstrapEmail = notice?.match(
+    /^A bootstrap link was sent to (.+)\. Open it to finish creating the admin account\.$/
+  )?.[1]
+
   return (
     <div
       className={cn('flex flex-col items-center gap-6', className)}
@@ -83,17 +92,17 @@ export function SignUpForm({
         <CardHeader className="text-center">
           <CardTitle className="text-2xl flex flex-col items-center justify-center gap-4">
             <IconLogo className="size-12" />
-            Create an account
+            {t('Create an account')}
           </CardTitle>
           <CardDescription>
-            Enter your details below to get started
+            {t('Enter your details below to get started')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp}>
             <div className="flex flex-col gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('Email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -104,13 +113,15 @@ export function SignUpForm({
                 />
                 {inviteEmail && (
                   <p className="text-xs text-muted-foreground">
-                    This invitation is bound to {inviteEmail}.
+                    {t('This invitation is bound to {email}.', {
+                      email: inviteEmail
+                    })}
                   </p>
                 )}
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('Password')}</Label>
                 </div>
                 <PasswordInput
                   id="password"
@@ -123,7 +134,9 @@ export function SignUpForm({
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="repeat-password">Repeat Password</Label>
+                  <Label htmlFor="repeat-password">
+                    {t('Repeat Password')}
+                  </Label>
                 </div>
                 <PasswordInput
                   id="repeat-password"
@@ -134,16 +147,29 @@ export function SignUpForm({
                   onChange={e => setRepeatPassword(e.target.value)}
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              {notice && <p className="text-sm text-green-600">{notice}</p>}
+              {error && (
+                <p className="text-sm text-red-500">
+                  {localizeErrorMessage(locale, error)}
+                </p>
+              )}
+              {notice && (
+                <p className="text-sm text-green-600">
+                  {bootstrapEmail
+                    ? t(
+                        'A bootstrap link was sent to {email}. Open it to finish creating the admin account.',
+                        { email: bootstrapEmail }
+                      )
+                    : t(notice)}
+                </p>
+              )}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating account...' : 'Sign Up'}
+                {isLoading ? t('Creating account...') : t('Sign Up')}
               </Button>
             </div>
             <div className="mt-6 text-center text-sm">
-              Already have an account?{' '}
+              {t('Already have an account?')}{' '}
               <Link href="/auth/login" className="underline underline-offset-4">
-                Sign In
+                {t('Sign In')}
               </Link>
             </div>
           </form>
@@ -151,7 +177,7 @@ export function SignUpForm({
       </Card>
       <div className="text-center text-xs text-muted-foreground">
         <Link href="/" className="hover:underline">
-          &larr; Back to Home
+          {t('← Back to Home')}
         </Link>
       </div>
     </div>

@@ -24,6 +24,8 @@ import {
   CommandList
 } from '@/components/ui/command'
 
+import { useI18n } from '@/components/language-provider'
+
 import { ChatHistorySkeleton } from './chat-history-skeleton'
 
 const DEBOUNCE_MS = 250
@@ -81,6 +83,8 @@ export function ChatHistorySearch({
   refreshKey,
   onActiveValueChange
 }: ChatHistorySearchProps) {
+  const { t } = useI18n()
+
   const router = useRouter()
   const [results, setResults] = useState<SearchResponse | null>(null)
   const [isSearching, setIsSearching] = useState(false)
@@ -172,7 +176,7 @@ export function ChatHistorySearch({
         }
         console.error('History search failed:', error)
         if (seq === requestSeqRef.current) {
-          toast.error('Search failed. Please try again.')
+          toast.error(t('Search failed. Please try again.'))
         }
       } finally {
         if (seq === requestSeqRef.current) {
@@ -185,7 +189,7 @@ export function ChatHistorySearch({
       clearTimeout(timer)
       controller.abort()
     }
-  }, [query, refreshKey, onActiveValueChange])
+  }, [query, refreshKey, onActiveValueChange, t])
 
   const handleSearchThinking = useCallback(async () => {
     const trimmed = normalizeSearchQuery(query)
@@ -221,14 +225,14 @@ export function ChatHistorySearch({
       console.error('Thinking search failed:', error)
       if (seq === requestSeqRef.current) {
         setThinkingRequested(false)
-        toast.error('Thinking search failed. Please try again.')
+        toast.error(t('Thinking search failed. Please try again.'))
       }
     } finally {
       if (seq === requestSeqRef.current) {
         setIsSearchingThinking(false)
       }
     }
-  }, [query])
+  }, [query, t])
 
   // When the parent signals that chat data changed, refresh thinking matches
   // too if the opt-in is active (the main fetch effect refreshes title and
@@ -282,9 +286,9 @@ export function ChatHistorySearch({
             <ChatHistorySkeleton />
           </div>
         )}
-        {showEmpty && <CommandEmpty>No matches</CommandEmpty>}
+        {showEmpty && <CommandEmpty>{t('No matches')}</CommandEmpty>}
         {results && results.title.length > 0 && (
-          <CommandGroup heading="By title">
+          <CommandGroup heading={t('By title')}>
             {results.title.map(item => (
               <CommandItem
                 key={`title-${item.chatId}`}
@@ -297,7 +301,7 @@ export function ChatHistorySearch({
           </CommandGroup>
         )}
         {results && results.content.length > 0 && (
-          <CommandGroup heading="In chats">
+          <CommandGroup heading={t('In chats')}>
             {results.content.map(item => (
               <CommandItem
                 key={`content-${item.chatId}`}
@@ -316,10 +320,10 @@ export function ChatHistorySearch({
           </CommandGroup>
         )}
         {showThinkingSection && (
-          <CommandGroup heading="In thinking">
+          <CommandGroup heading={t('In thinking')}>
             {results!.thinking!.length === 0 ? (
               <div className="text-muted-foreground px-2 py-1.5 text-xs">
-                No thinking matches
+                {t('No thinking matches')}
               </div>
             ) : (
               results!.thinking!.map(item => (
@@ -359,7 +363,7 @@ export function ChatHistorySearch({
           ) : (
             <Sparkles size={14} />
           )}
-          Search thinking
+          {t('Search thinking')}
         </button>
       )}
     </Command>

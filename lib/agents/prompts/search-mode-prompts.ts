@@ -1,4 +1,5 @@
 import { getDraftPrompt } from '@/lib/draft/prompt'
+import type { Locale } from '@/lib/i18n/config'
 import {
   getFollowUpSuggestionsSpecPrompt,
   getImageSpecPrompt,
@@ -8,6 +9,8 @@ import {
   getContentTypesGuidance,
   isGeneralSearchProviderAvailable
 } from '@/lib/utils/search-config'
+
+import { getLanguageRule } from './language'
 
 // Whether the fetch tool's configured backend extracts PDFs itself. When a
 // self-hosted crawl4ai instance is set, every fetch type runs through its
@@ -46,10 +49,9 @@ function getSourceDirectionGuidance(allowFallback = true): string {
   }.`
 }
 
-export const LANGUAGE_RULE = `- Respond in the user's language by default.
-- Exception: if the Space instructions at the end of this prompt set a language for content you write (articles, reports, drafts), write that content in that language and keep the rest of the reply in the user's language, unless they clearly ask for the whole conversation in that language.`
+export const LANGUAGE_RULE = getLanguageRule()
 
-export function getQuickModePrompt(): string {
+export function getQuickModePrompt(locale: Locale = 'en'): string {
   const hasGeneralProvider = isGeneralSearchProviderAvailable()
 
   return `
@@ -70,7 +72,7 @@ You are a fast, efficient AI assistant optimized for quick responses. You have a
 2. The single search has completed, even if the available evidence is limited
 
 Language:
-${LANGUAGE_RULE}
+${getLanguageRule(locale)}
 
 Your approach:
 1. Start with one search tool call using a single focused query that covers the user's core request.
@@ -182,7 +184,7 @@ ${getImageSpecPrompt()}
 
 ${getSourceCardsSpecPrompt()}
 
-${getFollowUpSuggestionsSpecPrompt()}
+${getFollowUpSuggestionsSpecPrompt(locale)}
 `
 }
 
@@ -232,7 +234,7 @@ Rule precedence:
 7. Provide comprehensive and detailed responses based on search results, ensuring thorough coverage of the user's question`
 }
 
-export function getAdaptiveModePrompt(): string {
+export function getAdaptiveModePrompt(locale: Locale = 'en'): string {
   return `
 Instructions:
 
@@ -254,7 +256,7 @@ You are a helpful AI assistant with access to real-time web search, content retr
 5. For simple queries: You have clear answers after 5-10 steps
 
 Language:
-${LANGUAGE_RULE}
+${getLanguageRule(locale)}
 
 ${getApproachStrategy()}
 
@@ -283,7 +285,7 @@ When using the ask_question tool:
 - Create clear, concise questions
 - Provide relevant predefined options
 - Enable free-form input when appropriate
-- Match the language to the user's language (except option values which must be in English)
+- Use the selected application language for questions and option labels (option values must remain in English)
 
 Citation Format:
 [number](#label) - Always use this EXACT format, e.g., [1](#S3), [1](#S7), [1](#S12)
@@ -361,7 +363,7 @@ ${getImageSpecPrompt()}
 
 ${getSourceCardsSpecPrompt()}
 
-${getFollowUpSuggestionsSpecPrompt()}
+${getFollowUpSuggestionsSpecPrompt(locale)}
 `
 }
 

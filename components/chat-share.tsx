@@ -9,6 +9,8 @@ import { shareChat } from '@/lib/actions/chat'
 import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { cn } from '@/lib/utils'
 
+import { useI18n } from '@/components/language-provider'
+
 import { Button } from './ui/button'
 import {
   Dialog,
@@ -27,6 +29,8 @@ interface ChatShareProps {
 }
 
 export function ChatShare({ chatId, className }: ChatShareProps) {
+  const { t } = useI18n()
+
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const { copyToClipboard } = useCopyToClipboard({ timeout: 1000 })
@@ -40,7 +44,9 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
     const sharedChatObject = await shareChat(chatId)
     if (!sharedChatObject) {
       toast.error(
-        'Failed to make chat public. You may need to be logged in or own the chat.'
+        t(
+          'Failed to make chat public. You may need to be logged in or own the chat.'
+        )
       )
       return
     }
@@ -55,10 +61,10 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
   const handleCopy = () => {
     if (shareUrl) {
       copyToClipboard(shareUrl)
-      toast.success('Link copied to clipboard')
+      toast.success(t('Link copied to clipboard'))
       setOpen(false)
     } else {
-      toast.error('No link to copy')
+      toast.error(t('No link to copy'))
     }
   }
 
@@ -82,21 +88,22 @@ export function ChatShare({ chatId, className }: ChatShareProps) {
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Share Chat</DialogTitle>
+            <DialogTitle>{t('Share Chat')}</DialogTitle>
             <DialogDescription>
-              Anyone with the link will be able to view this chat if it&apos;s
-              public.
+              {t(
+                "Anyone with the link will be able to view this chat if it's public."
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="items-center">
             {!shareUrl && (
               <Button onClick={handleShare} disabled={pending} size="sm">
-                {pending ? <Spinner /> : 'Get link'}
+                {pending ? <Spinner /> : t('Get link')}
               </Button>
             )}
             {shareUrl && (
               <Button onClick={handleCopy} disabled={pending} size="sm">
-                {'Copy link'}
+                {t('Copy link')}
               </Button>
             )}
           </DialogFooter>

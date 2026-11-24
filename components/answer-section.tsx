@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import { saveNote } from '@/lib/actions/notes'
 import { captureClient } from '@/lib/analytics/posthog-client'
 import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 import { stripSourceContextBlocks } from '@/lib/render/strip-source-context-blocks'
 import type { SearchResultItem } from '@/lib/types'
 import type {
@@ -22,6 +23,8 @@ import type {
   UIMessageMetadata,
   UITools
 } from '@/lib/types/ai'
+
+import { useI18n } from '@/components/language-provider'
 
 import { useLibrary } from './library/library-context'
 import { Button } from './ui/button'
@@ -74,6 +77,8 @@ export function AnswerSection({
   libraryAvailable = true,
   onQuoteContext
 }: AnswerSectionProps) {
+  const { t, locale } = useI18n()
+
   const displayContent = stripSourceContextBlocks(content)
   const contentRef = useRef<HTMLDivElement>(null)
   const [selection, setSelection] = useState<{
@@ -218,7 +223,13 @@ export function AnswerSection({
           chatId,
           reason: result.error ?? 'unknown'
         })
-        toast.error(result.error ?? 'Failed to save note')
+        toast.error(
+          localizeErrorMessage(
+            locale,
+            result.error ?? 'Failed to save note',
+            'Failed to save note'
+          )
+        )
         return
       }
 
@@ -230,9 +241,9 @@ export function AnswerSection({
         chatId,
         chars: selection.text.length
       })
-      toast.success('Saved to library', {
+      toast.success(t('Saved to library'), {
         action: {
-          label: 'Open',
+          label: t('Open'),
           onClick: () => {
             openLibrary()
             captureClient('library_opened', { source: 'toast' })
@@ -248,7 +259,7 @@ export function AnswerSection({
         chatId,
         reason: 'exception'
       })
-      toast.error('Failed to save note')
+      toast.error(t('Failed to save note'))
     } finally {
       setIsSavingSelection(false)
     }
@@ -307,7 +318,7 @@ export function AnswerSection({
                     onClick={handleSaveSelection}
                   >
                     <Bookmark className="size-3.5" />
-                    Save
+                    {t('Save')}
                   </Button>
                 )}
                 {showSelectionDeepDiveButton && (
@@ -319,7 +330,7 @@ export function AnswerSection({
                     onClick={handleQuoteSelection}
                   >
                     <MessageCirclePlus className="size-3.5" />
-                    Deep dive
+                    {t('Deep dive')}
                   </Button>
                 )}
               </div>
@@ -348,11 +359,12 @@ export function AnswerSection({
               <Bookmark className="size-6 text-muted-foreground" />
             </div>
             <DialogTitle className="text-center text-xl font-semibold">
-              Save notes to your library
+              {t('Save notes to your library')}
             </DialogTitle>
             <DialogDescription className="text-center text-muted-foreground">
-              Sign in or create an account to save selected text to your
-              Library.
+              {t(
+                'Sign in or create an account to save selected text to your Library.'
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col gap-2">
@@ -367,7 +379,7 @@ export function AnswerSection({
                   })
                 }
               >
-                Sign Up
+                {t('Sign Up')}
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full">
@@ -381,7 +393,7 @@ export function AnswerSection({
                   })
                 }
               >
-                Sign In
+                {t('Sign In')}
               </Link>
             </Button>
           </DialogFooter>

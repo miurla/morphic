@@ -7,11 +7,13 @@ import {
 } from '@tabler/icons-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
+import { localizePublicError } from '@/lib/i18n/errors'
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
+import { useI18n } from '@/components/language-provider'
 
 import { StatusIndicator } from './ui/status-indicator'
 import { CollapsibleMessage } from './collapsible-message'
@@ -45,6 +47,8 @@ export function SearchSection({
   isFirst = false,
   isLast = false
 }: SearchSectionProps) {
+  const { t, locale } = useI18n()
+
   const isLoading = status === 'submitted' || status === 'streaming'
 
   const isToolLoading =
@@ -57,9 +61,12 @@ export function SearchSection({
     output?.state === 'complete' ? output : undefined
 
   const isError = tool.state === 'output-error'
-  const errorMessage = toPublicErrorPayload(tool.errorText, {
-    fallbackMessage: 'Search failed'
-  }).error
+  const errorMessage = localizePublicError(
+    toPublicErrorPayload(tool.errorText, {
+      fallbackMessage: 'Search failed'
+    }),
+    locale
+  ).error
   const query = tool.input?.query || output?.query || ''
   const includeDomains = tool.input?.include_domains
   const includeDomainsString =
@@ -89,7 +96,7 @@ export function SearchSection({
         searchResults && totalResults > 0 ? (
           <div className="flex items-center gap-2">
             <StatusIndicator icon={Check} iconClassName="text-green-500">
-              {totalResults} results
+              {t('{count} results', { count: totalResults })}
             </StatusIndicator>
             {searchResults.results && searchResults.results.length > 0 && (
               <SourceFavicons results={searchResults.results} maxDisplay={3} />

@@ -14,6 +14,8 @@ import {
 import { cn } from '@/lib/utils'
 import { stripMarkdownText } from '@/lib/utils/markdown'
 
+import { useI18n } from '@/components/language-provider'
+
 import { Button } from './ui/button'
 import { CollapsibleMessage } from './collapsible-message'
 import { PastedContentCard, UrlChip } from './pasted-parts'
@@ -57,6 +59,8 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
   messageId,
   onUpdateMessage
 }) => {
+  const { t } = useI18n()
+
   // Legacy cards live inside the text; new pasted texts arrive as props.
   const { cards: legacyCards, rest } = splitPastedContent(content)
   const cards = [...legacyCards, ...pastedTexts]
@@ -194,7 +198,7 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
         <PastedContentCard
           key={`quoted-context-${i}`}
           text={c}
-          label="Quoted context"
+          label={t('Quoted context')}
         />
       ))}
       {noteContexts.map((note, i) => (
@@ -203,8 +207,10 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
           text={stripMarkdownText(note.text)}
           label={
             note.title
-              ? `Note: ${stripMarkdownText(note.title) || 'Untitled note'}`
-              : 'Note'
+              ? t('Note: {title}', {
+                  title: stripMarkdownText(note.title) || t('Untitled note')
+                })
+              : t('Note')
           }
         />
       ))}
@@ -236,10 +242,10 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
             {attachments}
             <div className="flex justify-end gap-2">
               <Button variant="secondary" size="sm" onClick={handleCancelClick}>
-                Cancel
+                {t('Cancel')}
               </Button>
               <Button size="sm" onClick={handleSaveClick}>
-                Save
+                {t('Save')}
               </Button>
             </div>
           </div>
@@ -262,11 +268,13 @@ export const UserTextSection: React.FC<UserTextSectionProps> = ({
               >
                 {isExpanded ? (
                   <span className="inline-flex items-center gap-0.5">
-                    Show less <ChevronUp className="size-3" />
+                    {t('Show less')}
+                    <ChevronUp className="size-3" />
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-0.5">
-                    Show more <ChevronDown className="size-3" />
+                    {t('Show more')}
+                    <ChevronDown className="size-3" />
                   </span>
                 )}
               </button>

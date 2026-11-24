@@ -8,6 +8,8 @@ import {
   IconRefresh as RefreshCw
 } from '@tabler/icons-react'
 
+import { localizeErrorMessage } from '@/lib/i18n/errors'
+
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -17,6 +19,8 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+
+import { useI18n } from '@/components/language-provider'
 
 interface ErrorModalProps {
   open: boolean
@@ -37,6 +41,8 @@ export function ErrorModal({
   onRetry,
   onAuthClose
 }: ErrorModalProps) {
+  const { t, locale } = useI18n()
+
   const handleAuthClose = () => {
     onOpenChange(false)
     onAuthClose?.()
@@ -57,13 +63,13 @@ export function ErrorModal({
   const getErrorTitle = () => {
     switch (error.type) {
       case 'rate-limit':
-        return 'Rate Limit Exceeded'
+        return t('Rate Limit Exceeded')
       case 'auth':
-        return 'Continue with Morphic'
+        return t('Continue with Morphic')
       case 'forbidden':
-        return 'Access Denied'
+        return t('Access Denied')
       default:
-        return 'Error Occurred'
+        return t('Error Occurred')
     }
   }
 
@@ -71,28 +77,36 @@ export function ErrorModal({
     switch (error.type) {
       case 'rate-limit':
         return (
-          error.message ||
-          'You have made too many requests. Please wait a moment before trying again.'
+          (error.message ? localizeErrorMessage(locale, error.message) : '') ||
+          t(
+            'You have made too many requests. Please wait a moment before trying again.'
+          )
         )
       case 'auth':
         return (
-          error.message ||
-          'To use Morphic, sign in to your account or create a new one.'
+          (error.message ? localizeErrorMessage(locale, error.message) : '') ||
+          t('To use Morphic, sign in to your account or create a new one.')
         )
       case 'forbidden':
-        return 'You do not have permission to access this resource.'
+        return t('You do not have permission to access this resource.')
       default:
         return (
-          error.message || 'An unexpected error occurred. Please try again.'
+          (error.message ? localizeErrorMessage(locale, error.message) : '') ||
+          t('An unexpected error occurred. Please try again.')
         )
     }
   }
 
   const getErrorDetails = () => {
     if (error.type === 'rate-limit') {
-      return error.details || 'The limit resets at midnight UTC.'
+      return (
+        (error.details ? localizeErrorMessage(locale, error.details) : '') ||
+        t('The limit resets at midnight UTC.')
+      )
     }
     return error.details
+      ? localizeErrorMessage(locale, error.details)
+      : undefined
   }
 
   return (
@@ -127,10 +141,10 @@ export function ErrorModal({
           {error.type === 'auth' ? (
             <>
               <Button asChild className="w-full">
-                <Link href="/auth/sign-up">Sign Up</Link>
+                <Link href="/auth/sign-up">{t('Sign Up')}</Link>
               </Button>
               <Button asChild variant="outline" className="w-full">
-                <Link href="/auth/login">Sign In</Link>
+                <Link href="/auth/login">{t('Sign In')}</Link>
               </Button>
             </>
           ) : (
@@ -144,7 +158,7 @@ export function ErrorModal({
                   className="w-full"
                 >
                   <RefreshCw className="mr-2 size-4" />
-                  Try Again
+                  {t('Try Again')}
                 </Button>
               )}
               <Button
@@ -154,7 +168,7 @@ export function ErrorModal({
                 onClick={() => onOpenChange(false)}
                 className="w-full"
               >
-                {error.type === 'rate-limit' ? 'Understood' : 'Close'}
+                {error.type === 'rate-limit' ? t('Understood') : t('Close')}
               </Button>
             </>
           )}

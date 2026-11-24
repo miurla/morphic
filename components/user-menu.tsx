@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 import { AccountSettingsDialog } from '@/components/account-settings-dialog'
+import { useI18n } from '@/components/language-provider'
 import { useUsageBudget } from '@/components/usage-budget-provider'
 import { UsageDialog } from '@/components/usage-dialog'
 
@@ -41,16 +42,17 @@ interface UserMenuProps {
 }
 
 export default function UserMenu({ user }: UserMenuProps) {
+  const { t, locale } = useI18n()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [usageOpen, setUsageOpen] = useState(false)
   const { usage, isLow, isExhausted, refreshUsage } = useUsageBudget()
-  const userName = user.name || 'User'
+  const userName = user.name || t('User')
   const avatarUrl = user.image ?? undefined
 
   const getInitials = (name: string, email: string | null | undefined) => {
-    if (name && name !== 'User') {
+    if (user.name && name) {
       const names = name.split(' ')
       if (names.length > 1) {
         return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase()
@@ -96,7 +98,7 @@ export default function UserMenu({ user }: UserMenuProps) {
           <Button
             variant="ghost"
             className="relative size-6 rounded-full"
-            aria-label={accountMenuLabel}
+            aria-label={t(accountMenuLabel)}
           >
             <Avatar className="size-6">
               <AvatarImage src={avatarUrl} alt={userName} />
@@ -132,13 +134,13 @@ export default function UserMenu({ user }: UserMenuProps) {
             }}
           >
             <UserRound className="size-4" />
-            <span>Account</span>
+            <span>{t('Account')}</span>
           </DropdownMenuItem>
           {user.role === 'admin' && (
             <DropdownMenuItem asChild>
               <Link href="/auth/admin">
                 <IconShield className="size-4" />
-                <span>Admin</span>
+                <span>{t('Admin')}</span>
               </Link>
             </DropdownMenuItem>
           )}
@@ -150,16 +152,17 @@ export default function UserMenu({ user }: UserMenuProps) {
               }}
             >
               <ChartBar className="size-4" />
-              <span>Usage</span>
+              <span>{t('Usage')}</span>
               <span className="ml-auto text-xs text-muted-foreground tabular-nums">
-                {usage.remaining} / {usage.limit}
+                {usage.remaining.toLocaleString(locale)} /{' '}
+                {usage.limit.toLocaleString(locale)}
               </span>
             </DropdownMenuItem>
           )}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Link2 className="size-4" />
-              <span>Links</span>
+              <span>{t('Links')}</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
               <ExternalLinkItems />
@@ -168,7 +171,7 @@ export default function UserMenu({ user }: UserMenuProps) {
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="size-4" />
-            <span>Logout</span>
+            <span>{t('Logout')}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

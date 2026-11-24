@@ -9,6 +9,7 @@ import type { UploadedFile } from '@/lib/types'
 import { deleteCookie, getCookie, setCookie } from '@/lib/utils/cookies'
 
 import { ChatPanel } from '../chat-panel'
+import { LanguageProvider, useI18n } from '../language-provider'
 import { NewChatMenuItem } from '../sidebar/new-chat-menu-item'
 
 vi.mock('../ui/sidebar', () => ({
@@ -19,7 +20,7 @@ vi.mock('../ui/sidebar', () => ({
 }))
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() })
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() })
 }))
 
 vi.mock('../artifact/artifact-context', () => ({
@@ -76,6 +77,61 @@ describe('ChatPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     deleteCookie('searchMode')
+  })
+
+  test('keeps draft cards and submits a query only once when language changes', () => {
+    function LocaleControl() {
+      const { setPreference } = useI18n()
+      return (
+        <button onClick={() => setPreference('zh-CN')}>Change language</button>
+      )
+    }
+    const append = vi.fn()
+    const props = {
+      chatId: 'language-chat',
+      input: 'My unfinished draft',
+      query: 'Initial query',
+      handleInputChange: vi.fn(),
+      handleSubmit: vi.fn(),
+      status: 'ready' as const,
+      messages: [],
+      setMessages: vi.fn(),
+      stop: vi.fn(),
+      append,
+      showScrollToBottomButton: false,
+      scrollContainerRef: React.createRef<HTMLDivElement>(),
+      uploadedFiles: [],
+      setUploadedFiles: vi.fn(),
+      quotedContexts: [],
+      setQuotedContexts: vi.fn(),
+      noteContexts: [],
+      setNoteContexts: vi.fn()
+    }
+    const view = render(
+      <LanguageProvider initialLocale="en" initialPreference="en">
+        <LocaleControl />
+        <ChatPanel {...props} />
+      </LanguageProvider>
+    )
+    const pasted = 'User context stays unchanged. '.repeat(25)
+    fireEvent.paste(screen.getByRole('textbox'), {
+      clipboardData: { getData: () => pasted }
+    })
+    expect(append).toHaveBeenCalledOnce()
+    fireEvent.click(screen.getByRole('button', { name: 'Change language' }))
+    view.rerender(
+      <LanguageProvider initialLocale="zh-CN" initialPreference="zh-CN">
+        <LocaleControl />
+        <ChatPanel {...props} />
+      </LanguageProvider>
+    )
+    expect(screen.getByRole('textbox')).toHaveAttribute(
+      'placeholder',
+      '有什么想问的？'
+    )
+    expect(screen.getByRole('textbox')).toHaveValue('My unfinished draft')
+    expect(screen.getByText(pasted.trim())).toBeInTheDocument()
+    expect(append).toHaveBeenCalledOnce()
   })
 
   test.each(['sidebar', 'shortcut'])(

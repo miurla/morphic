@@ -5,10 +5,14 @@ import { useRouter } from 'next/navigation'
 
 import { promoteMemberAction } from '@/lib/actions/admin'
 import type { MemberSummary } from '@/lib/auth/better-auth/members'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 
 import { Button } from '@/components/ui/button'
 
+import { useI18n } from '@/components/language-provider'
+
 export function MemberRoleManager({ members }: { members: MemberSummary[] }) {
+  const { t, locale } = useI18n()
   const router = useRouter()
   const [promotedIds, setPromotedIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
@@ -43,12 +47,16 @@ export function MemberRoleManager({ members }: { members: MemberSummary[] }) {
           >
             <span className="truncate text-sm">
               {member.email}
-              {member.role === 'admin' ? ' (admin)' : ''}
+              {member.role === 'admin' ? t(' (admin)') : ''}
             </span>
             {member.role === 'admin' ? (
-              <span className="text-xs text-muted-foreground">Admin</span>
+              <span className="text-xs text-muted-foreground">
+                {t('Admin')}
+              </span>
             ) : promotedIds.has(member.id) ? (
-              <span className="text-xs text-muted-foreground">Promoted</span>
+              <span className="text-xs text-muted-foreground">
+                {t('Promoted')}
+              </span>
             ) : (
               <Button
                 size="sm"
@@ -56,13 +64,19 @@ export function MemberRoleManager({ members }: { members: MemberSummary[] }) {
                 disabled={busyId !== null}
                 onClick={() => promote(member.id)}
               >
-                {busyId === member.id ? 'Promoting...' : 'Promote to admin'}
+                {busyId === member.id
+                  ? t('Promoting...')
+                  : t('Promote to admin')}
               </Button>
             )}
           </li>
         ))}
       </ul>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-500">
+          {localizeErrorMessage(locale, error)}
+        </p>
+      )}
     </div>
   )
 }

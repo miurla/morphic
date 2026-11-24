@@ -2,6 +2,8 @@
 
 import { Part, ToolPart } from '@/lib/types/ai'
 
+import { useI18n } from '@/components/language-provider'
+
 import { DraftPanel } from '../draft/draft-panel'
 
 import { ReasoningContent } from './reasoning-content'
@@ -14,6 +16,8 @@ function isTodoToolPart(part: Part): part is ToolPart<'todoWrite'> {
 }
 
 export function ArtifactContent({ part }: { part: Part | null }) {
+  const { t } = useI18n()
+
   if (!part) return null
 
   switch (part.type) {
@@ -32,7 +36,9 @@ export function ArtifactContent({ part }: { part: Part | null }) {
       return <DraftPanel />
     default:
       return (
-        <div className="p-4">Details for this part type are not available</div>
+        <div className="p-4">
+          {t('Details for this part type are not available')}
+        </div>
       )
   }
 }

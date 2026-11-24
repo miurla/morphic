@@ -2,6 +2,8 @@
 
 import React from 'react'
 
+import { useI18n } from '@/components/language-provider'
+
 interface Attachment {
   name: string | undefined
   url?: string
@@ -15,6 +17,8 @@ interface AttachmentPreviewProps {
 export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
   attachments
 }) => {
+  const { t } = useI18n()
+
   if (!attachments?.length) return null
 
   return (
@@ -28,14 +32,14 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
           <div key={index} className="max-w-xs break-words">
             {!url ? (
               <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
-                {att.name ?? 'File'} unavailable
+                {t('{name} unavailable', { name: att.name ?? t('File') })}
               </div>
             ) : isImage ? (
               <div className="flex size-16 items-center justify-center overflow-hidden rounded-md border bg-muted/20">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={url}
-                  alt={att.name ?? 'Attachment'}
+                  alt={att.name ?? t('Attachment')}
                   className="size-full object-contain"
                 />
               </div>

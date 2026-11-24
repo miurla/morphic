@@ -16,6 +16,8 @@ import {
 
 import { cn } from '@/lib/utils'
 
+import { useI18n } from '@/components/language-provider'
+
 import { Badge } from './ui/badge'
 import { Separator } from './ui/separator'
 import { StatusIndicator } from './ui/status-indicator'
@@ -36,6 +38,8 @@ export const Section: React.FC<SectionProps> = ({
   title,
   separator = false
 }) => {
+  const { t } = useI18n()
+
   const iconSize = 16
   const iconClassName = 'mr-1.5 text-muted-foreground'
   let icon: React.ReactNode
@@ -82,13 +86,13 @@ export const Section: React.FC<SectionProps> = ({
         {title && type === 'text' && (
           <h2 className="flex items-center leading-none py-2">
             {icon}
-            {title}
+            {t(title)}
           </h2>
         )}
         {title && type === 'badge' && (
           <Badge variant="secondary" className="mb-2">
             {icon}
-            {title}
+            {t(title)}
           </Badge>
         )}
         {children}
@@ -108,6 +112,8 @@ export function ToolArgsSection({
   number?: number
   isLoading?: boolean
 }) {
+  const { t } = useI18n()
+
   return (
     <Section
       size="sm"
@@ -121,7 +127,7 @@ export function ToolArgsSection({
       {number && number > 0 && (
         <div className="shrink-0">
           <StatusIndicator icon={Check} iconClassName="text-green-500">
-            {number} results
+            {t('{count} results', { count: number })}
           </StatusIndicator>
         </div>
       )}

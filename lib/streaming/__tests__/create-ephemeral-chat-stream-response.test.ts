@@ -165,6 +165,20 @@ describe('createEphemeralChatStreamResponse', () => {
     )
   })
 
+  it('passes the interface language to guest generation without rewriting history', async () => {
+    const config = { ...createConfig(), locale: 'zh-CN' as const }
+    const originalMessages = structuredClone(config.messages)
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createEphemeralChatStreamResponse(config)
+    await mocks.finishPromise
+
+    expect(researcher).toHaveBeenCalledWith(
+      expect.objectContaining({ locale: 'zh-CN' })
+    )
+    expect(config.messages).toEqual(originalMessages)
+  })
+
   it('seeds citation labels from the submitted persisted history', async () => {
     mocks.stream.mockResolvedValue(createFakeResult())
     const config = createConfig()

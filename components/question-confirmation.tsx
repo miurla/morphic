@@ -15,6 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 
+import { useI18n } from '@/components/language-provider'
+
 interface QuestionConfirmationProps {
   toolInvocation: ToolPart<'askQuestion'>
   onConfirm: (toolCallId: string, approved: boolean, response?: any) => void
@@ -45,6 +47,8 @@ export function QuestionConfirmation({
   onConfirm,
   isCompleted = false
 }: QuestionConfirmationProps) {
+  const { t } = useI18n()
+
   const input = (toolInvocation.input || {}) as QuestionInput
   const {
     question = '',
@@ -131,17 +135,21 @@ export function QuestionConfirmation({
   const updatedQuery = () => {
     // If skipped, show skipped message
     if (wasSkipped()) {
-      return 'Question skipped'
+      return t('Question skipped')
     }
 
     const displayOptions = getDisplayedOptions()
     const displayInputText = getDisplayedInputText()
 
     const optionsText =
-      displayOptions.length > 0 ? `Selected: ${displayOptions.join(', ')}` : ''
+      displayOptions.length > 0
+        ? t('Selected: {options}', { options: displayOptions.join(', ') })
+        : ''
 
     const inputTextDisplay =
-      displayInputText.trim() !== '' ? `Input: ${displayInputText}` : ''
+      displayInputText.trim() !== ''
+        ? t('Input: {input}', { input: displayInputText })
+        : ''
 
     return [optionsText, inputTextDisplay].filter(Boolean).join(' | ')
   }
@@ -218,11 +226,11 @@ export function QuestionConfirmation({
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={handleSkip}>
               <SkipForward size={16} className="mr-1" />
-              Skip
+              {t('Skip')}
             </Button>
             <Button type="submit" disabled={isButtonDisabled}>
               <ArrowRight size={16} className="mr-1" />
-              Send
+              {t('Send')}
             </Button>
           </div>
         </form>

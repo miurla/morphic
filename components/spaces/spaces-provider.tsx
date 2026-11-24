@@ -19,8 +19,11 @@ import { toast } from 'sonner'
 import { deleteSpace, listSpaces, saveSpace } from '@/lib/actions/spaces'
 import { captureClient } from '@/lib/analytics/posthog-client'
 import type { Space } from '@/lib/db/schema'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 import { getSpaceDisplayName, isSpaceColor } from '@/lib/spaces/space'
 import { setCookie } from '@/lib/utils/cookies'
+
+import { useI18n } from '@/components/language-provider'
 
 import {
   DEFAULT_SPACE_COLOR,
@@ -138,6 +141,7 @@ export function SpacesProvider({
   initialColor?: string
   children: React.ReactNode
 }) {
+  const { t, locale } = useI18n()
   const [state, setState] = useState<SpacesState>(() => ({
     loaded: false,
     saved: {},
@@ -220,7 +224,13 @@ export function SpacesProvider({
 
         const result = await saveSpace({ color, ...fields })
         if (!result.success || !result.space) {
-          toast.error(result.error ?? 'Failed to save space.')
+          toast.error(
+            localizeErrorMessage(
+              locale,
+              result.error ?? 'Failed to save space.',
+              'Failed to save space.'
+            )
+          )
           return
         }
 
@@ -242,7 +252,7 @@ export function SpacesProvider({
           })
         }
       }),
-    [enqueue, setSaved]
+    [enqueue, setSaved, locale]
   )
 
   const flush = useCallback(
@@ -512,7 +522,13 @@ export function SpacesProvider({
         }
         const result = await deleteSpace(color)
         if (!result.success) {
-          toast.error(result.error ?? 'Failed to delete space.')
+          toast.error(
+            localizeErrorMessage(
+              locale,
+              result.error ?? 'Failed to delete space.',
+              'Failed to delete space.'
+            )
+          )
           return
         }
         ok = true
@@ -552,7 +568,7 @@ export function SpacesProvider({
       })
       return true
     },
-    [enqueue]
+    [enqueue, locale]
   )
 
   const existing = useMemo(
@@ -609,8 +625,14 @@ export function SpacesProvider({
           color => color !== state.active && !existing.includes(color)
         ) ?? null,
       fieldsOf,
-      nameOf: color =>
-        getSpaceDisplayName({ color, name: fieldsOf(color).name }),
+      nameOf: color => {
+        const name = fieldsOf(color).name
+        const displayName = getSpaceDisplayName({ color, name })
+        // Translate system names only; a user's chosen name is content.
+        return color === DEFAULT_SPACE_COLOR || !name.trim()
+          ? t(displayName)
+          : displayName
+      },
       isSaved: color => !!state.saved[color],
       colorForNewChat: () => {
         const { active, loaded } = stateRef.current
@@ -644,7 +666,8 @@ export function SpacesProvider({
     editColor,
     updateField,
     removeSpace,
-    markPeekSeen
+    markPeekSeen,
+    t
   ])
 
   return (
@@ -675,5 +698,11 @@ const DISABLED: SpacesContextValue = {
 }
 
 export function useSpaces(): SpacesContextValue {
-  return useContext(SpacesContext) ?? DISABLED
+  const context = useContext(SpacesContext)
+  const { t } = useI18n()
+  return useMemo(
+    () =>
+      context ?? { ...DISABLED, nameOf: color => t(DISABLED.nameOf(color)) },
+    [context, t]
+  )
 }

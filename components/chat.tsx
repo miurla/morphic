@@ -25,6 +25,7 @@ import {
   getPublicRateLimitDetails,
   toPublicErrorPayload
 } from '@/lib/errors/public-error'
+import { localizeErrorMessage, localizePublicError } from '@/lib/i18n/errors'
 import { SHORTCUT_EVENTS } from '@/lib/keyboard-shortcuts'
 import { stripSourceContextBlocks } from '@/lib/render/strip-source-context-blocks'
 import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
@@ -45,6 +46,8 @@ import { getCookie } from '@/lib/utils/cookies'
 import { getTextFromParts } from '@/lib/utils/message-utils'
 
 import { useFileDropzone } from '@/hooks/use-file-dropzone'
+
+import { useI18n } from '@/components/language-provider'
 
 import { registerDraftSource, unregisterDraftSource } from './draft/draft-store'
 import { ChatSpaceProvider } from './spaces/chat-space-context'
@@ -83,6 +86,8 @@ export function Chat({
   libraryAvailable?: boolean
   modelSelectorData?: ModelSelectorData
 }) {
+  const { t, locale } = useI18n()
+
   const router = useRouter()
   const {
     enabled: usageBudgetEnabled,
@@ -227,7 +232,7 @@ export function Chat({
           })
         } else {
           if (usageBudgetEnabled) void refreshUsage()
-          toast.error(publicError.error)
+          toast.error(localizePublicError(publicError, locale).error)
         }
       }
     }
@@ -540,8 +545,8 @@ export function Chat({
         navigator.clipboard
           .writeText(stripSpecBlocks(stripSourceContextBlocks(text)))
           .then(
-            () => toast.success('Message copied to clipboard'),
-            () => toast.error('Failed to copy message')
+            () => toast.success(t('Message copied to clipboard')),
+            () => toast.error(t('Failed to copy message'))
           )
       }
     }
@@ -549,7 +554,7 @@ export function Chat({
     window.addEventListener(SHORTCUT_EVENTS.copyMessage, handleCopyMessage)
     return () =>
       window.removeEventListener(SHORTCUT_EVENTS.copyMessage, handleCopyMessage)
-  }, [])
+  }, [t])
 
   // Dispatch custom event when messages change
   useEffect(() => {
@@ -634,7 +639,7 @@ export function Chat({
   ) => {
     if (!canSend()) return
     if (!chatId) {
-      toast.error('Chat ID is missing.')
+      toast.error(t('Chat ID is missing.'))
       console.error('handleUpdateAndReloadMessage: chatId is undefined.')
       return
     }
@@ -669,13 +674,15 @@ export function Chat({
       await safeRegenerate({ messageId: editedMessageId })
     } catch (error) {
       console.error('Error during message edit and reload process:', error)
-      toast.error(toPublicErrorPayload(error).error)
+      toast.error(
+        localizePublicError(toPublicErrorPayload(error), locale).error
+      )
     }
   }
 
   const handleReloadFrom = async (reloadFromFollowerMessageId: string) => {
     if (!chatId) {
-      toast.error('Chat ID is missing for reload.')
+      toast.error(t('Chat ID is missing for reload.'))
       return
     }
 
@@ -687,7 +694,9 @@ export function Chat({
         `Error during reload from message ${reloadFromFollowerMessageId}:`,
         error
       )
-      toast.error(toPublicErrorPayload(error).error)
+      toast.error(
+        localizePublicError(toPublicErrorPayload(error), locale).error
+      )
     }
   }
 
@@ -822,7 +831,7 @@ export function Chat({
         {isHistoryPending && !entry.error && (
           <div
             role="status"
-            aria-label="Loading chat"
+            aria-label={t('Loading chat')}
             className="mx-auto w-full max-w-3xl px-4 pt-12"
           >
             <DefaultSkeleton />
@@ -832,7 +841,9 @@ export function Chat({
           <div className="mx-auto w-full max-w-3xl px-4 pt-12">
             <Card role="alert">
               <CardHeader>
-                <CardDescription>{entry.error.message}</CardDescription>
+                <CardDescription>
+                  {localizeErrorMessage(locale, entry.error.message)}
+                </CardDescription>
               </CardHeader>
               <CardFooter>
                 <Button
@@ -840,7 +851,7 @@ export function Chat({
                   size="sm"
                   onClick={() => void store.revalidate(chatId)}
                 >
-                  Retry
+                  {t('Retry')}
                 </Button>
               </CardFooter>
             </Card>

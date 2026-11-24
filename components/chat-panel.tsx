@@ -48,6 +48,8 @@ import {
 import { faviconUrl } from '@/lib/utils/favicon'
 import { stripMarkdownText } from '@/lib/utils/markdown'
 
+import { useI18n } from '@/components/language-provider'
+
 import { useArtifact } from './artifact/artifact-context'
 import { useLibrary } from './library/library-context'
 import { LibraryPickerDialog } from './library/library-picker-dialog'
@@ -152,6 +154,8 @@ export function ChatPanel({
   modelSelectorData,
   sections = []
 }: ChatPanelProps) {
+  const { t, locale } = useI18n()
+
   const router = useRouter()
   const { editor: spaceEditor } = useSpaces()
   // Space settings cover the home; keep what is underneath out of reach.
@@ -309,15 +313,18 @@ export function ChatPanel({
 
       if (rejected.length > 0) {
         toast.error(
-          'Some files were not accepted: ' +
-            rejected.map(file => file.name).join(', ')
+          t('Some files were not accepted: {names}', {
+            names: rejected.map(file => file.name).join(', ')
+          })
         )
       }
 
       const slots = remainingAttachmentSlots(uploadedFilesRef.current.length)
       if (allowedFiles.length > slots) {
         toast.error(
-          `You can attach up to ${MAX_ATTACHMENTS_PER_MESSAGE} files per message.`
+          t('You can attach up to {count} files per message.', {
+            count: MAX_ATTACHMENTS_PER_MESSAGE
+          })
         )
       }
       const validFiles = allowedFiles.slice(0, slots)
@@ -344,7 +351,7 @@ export function ChatPanel({
             })
 
             if (!res.ok) {
-              throw new Error('Upload failed')
+              throw new Error(t('Upload failed'))
             }
 
             const { file: uploaded } = await res.json()
@@ -367,7 +374,7 @@ export function ChatPanel({
               )
             )
           } catch (e) {
-            toast.error(`Failed to upload ${uf.file.name}`)
+            toast.error(t('Failed to upload {name}', { name: uf.file.name }))
             setUploadedFiles(prev =>
               prev.map(f =>
                 f.file === uf.file ? { ...f, status: 'error' } : f
@@ -377,7 +384,7 @@ export function ChatPanel({
         })
       )
     },
-    [chatId, setUploadedFiles, upsertCachedFile]
+    [chatId, setUploadedFiles, upsertCachedFile, t]
   )
 
   const handleAttachNote = useCallback(
@@ -389,10 +396,10 @@ export function ChatPanel({
       setNoteContexts(prev =>
         prev.some(item => item.id === note.id) ? prev : [...prev, note]
       )
-      toast.success('Note attached')
+      toast.success(t('Note attached'))
       return true
     },
-    [setNoteContexts]
+    [setNoteContexts, t]
   )
 
   const handleAttachLibraryFile = useCallback(
@@ -407,7 +414,9 @@ export function ChatPanel({
       }
       if (remainingAttachmentSlots(uploadedFilesRef.current.length) === 0) {
         toast.error(
-          `You can attach up to ${MAX_ATTACHMENTS_PER_MESSAGE} files per message.`
+          t('You can attach up to {count} files per message.', {
+            count: MAX_ATTACHMENTS_PER_MESSAGE
+          })
         )
         return false
       }
@@ -418,10 +427,10 @@ export function ChatPanel({
           ? prev
           : [...prev, file]
       )
-      toast.success('File attached')
+      toast.success(t('File attached'))
       return true
     },
-    [setUploadedFiles]
+    [setUploadedFiles, t]
   )
 
   // Keeps the dropdown from pulling focus back from the picker's search input
@@ -462,7 +471,7 @@ export function ChatPanel({
         >
           <SpaceHomeLogo />
           <h1 className="text-xl md:text-2xl font-medium text-foreground">
-            What would you like to know?
+            {t('What would you like to know?')}
           </h1>
         </div>
       )}
@@ -489,7 +498,7 @@ export function ChatPanel({
               return
             }
             if (!hasAvailableModels) {
-              toast.error('No enabled model is available')
+              toast.error(t('No enabled model is available'))
               return
             }
             const uploaded = uploadedFiles.filter(f => f.status === 'uploaded')
@@ -513,7 +522,7 @@ export function ChatPanel({
               ...uploaded.map(f => ({
                 type: 'file',
                 url: f.url!,
-                filename: f.name ?? f.file?.name ?? 'Attached file',
+                filename: f.name ?? f.file?.name ?? t('Attached file'),
                 mediaType:
                   f.mediaType ?? f.file?.type ?? 'application/octet-stream',
                 key: f.key
@@ -567,7 +576,7 @@ export function ChatPanel({
 
           if (!hasAvailableModels) {
             e.preventDefault()
-            toast.error('No enabled model is available')
+            toast.error(t('No enabled model is available'))
             return
           }
           handleSubmit(e)
@@ -593,7 +602,7 @@ export function ChatPanel({
               size="icon"
               className="absolute -top-10 right-0 z-20 size-8 rounded-full shadow-md"
               onClick={handleScrollToBottom}
-              title="Scroll to bottom"
+              title={t('Scroll to bottom')}
             >
               <ChevronDown size={16} />
             </Button>
@@ -630,14 +639,17 @@ export function ChatPanel({
                   <div className="mb-1 flex items-center justify-between gap-2">
                     <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <FileText className="size-3.5 shrink-0" />
-                      Pasted content · {card.length.toLocaleString()} chars
+                      {t('{label} · {count} chars', {
+                        label: t('Pasted content'),
+                        count: card.length.toLocaleString(locale)
+                      })}
                     </span>
                     <TooltipProvider delayDuration={200}>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button
                             type="button"
-                            aria-label="Expand to text"
+                            aria-label={t('Expand to text')}
                             className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                             onClick={() => {
                               captureClient('content_card_expanded', {
@@ -658,7 +670,7 @@ export function ChatPanel({
                           </button>
                         </TooltipTrigger>
                         <TooltipContent className="text-xs">
-                          Expand to text
+                          {t('Expand to text')}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -680,11 +692,14 @@ export function ChatPanel({
                   <div className="mb-1 flex items-center justify-between gap-2">
                     <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <FileText className="size-3.5 shrink-0" />
-                      Quoted context · {card.length.toLocaleString()} chars
+                      {t('{label} · {count} chars', {
+                        label: t('Quoted context'),
+                        count: card.length.toLocaleString(locale)
+                      })}
                     </span>
                     <button
                       type="button"
-                      aria-label="Remove quoted context"
+                      aria-label={t('Remove quoted context')}
                       className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                       onClick={() => {
                         setQuotedContexts(prev =>
@@ -713,12 +728,15 @@ export function ChatPanel({
                     <span className="flex items-center gap-1.5 truncate text-xs font-medium text-muted-foreground">
                       <FileText className="size-3.5 shrink-0" />
                       <span className="truncate">
-                        Note: {stripMarkdownText(note.title) || 'Untitled note'}
+                        {t('Note: {title}', {
+                          title:
+                            stripMarkdownText(note.title) || t('Untitled note')
+                        })}
                       </span>
                     </span>
                     <button
                       type="button"
-                      aria-label="Remove note"
+                      aria-label={t('Remove note')}
                       className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                       onClick={() => {
                         setNoteContexts(prev => prev.filter((_, j) => j !== i))
@@ -760,7 +778,7 @@ export function ChatPanel({
                     <span className="max-w-[180px] truncate">{host}</span>
                     <button
                       type="button"
-                      aria-label="Remove URL"
+                      aria-label={t('Remove URL')}
                       className="shrink-0 rounded p-0.5 hover:bg-muted hover:text-foreground"
                       onClick={() => {
                         captureClient('url_card_removed')
@@ -784,7 +802,9 @@ export function ChatPanel({
             onCompositionEnd={handleCompositionEnd}
             onFocus={() => setIsInputFocused(true)}
             onBlur={() => setIsInputFocused(false)}
-            placeholder={messages.length > 0 ? 'Reply...' : 'Ask anything...'}
+            placeholder={
+              messages.length > 0 ? t('Reply...') : t('Ask anything...')
+            }
             spellCheck={false}
             value={input}
             disabled={disabled || isLoading || isToolInvocationInProgress()}
@@ -883,14 +903,14 @@ export function ChatPanel({
                               variant="outline"
                               size="icon"
                               className="size-8 rounded-full"
-                              aria-label="Add"
+                              aria-label={t('Add')}
                             >
                               <Plus className="size-4" />
                             </Button>
                           </DropdownMenuTrigger>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" className="text-xs">
-                          Add
+                          {t('Add')}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -910,11 +930,11 @@ export function ChatPanel({
                         onSelect={() => fileInputRef.current?.click()}
                       >
                         <Paperclip className="size-4" />
-                        Upload file
+                        {t('Upload file')}
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={openLibraryPicker}>
                         <LibraryIcon className="size-4" />
-                        Add from library
+                        {t('Add from library')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -933,6 +953,7 @@ export function ChatPanel({
                 <Button
                   variant="outline"
                   size="icon"
+                  aria-label={t('New chat')}
                   onClick={handleNewChat}
                   className="shrink-0 size-8 md:size-10 rounded-full group"
                   type="button"
@@ -942,6 +963,9 @@ export function ChatPanel({
                 </Button>
               )}
               <Button
+                aria-label={
+                  isLoading ? t('Stop generating') : t('Send message')
+                }
                 type={isLoading ? 'button' : 'submit'}
                 size={'icon'}
                 className={cn(
@@ -957,7 +981,7 @@ export function ChatPanel({
                 title={
                   hasAvailableModels
                     ? undefined
-                    : 'No enabled model is available'
+                    : t('No enabled model is available')
                 }
               >
                 {isLoading ? (

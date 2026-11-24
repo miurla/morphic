@@ -1,11 +1,16 @@
+'use client'
+
 import {
   IconCheck as Check,
   IconListCheck as ListTodo
 } from '@tabler/icons-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
+import { localizePublicError } from '@/lib/i18n/errors'
 import { Part, TodoItem } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
+
+import { useI18n } from '@/components/language-provider'
 
 import { useArtifact } from './artifact/artifact-context'
 import { CollapsibleMessage } from './collapsible-message'
@@ -49,6 +54,8 @@ export function ToolTodoDisplay({
   isFirst = false,
   isLast = false
 }: ToolTodoDisplayProps) {
+  const { t, locale } = useI18n()
+
   const { open: openArtifact } = useArtifact()
   // Calculate counts for display
   const completedCount =
@@ -60,9 +67,12 @@ export function ToolTodoDisplay({
     output?.totalCount ?? (output?.todos ? output.todos.length : 0)
   const errorMessage =
     state === 'output-error'
-      ? toPublicErrorPayload(errorText ?? output?.message, {
-          fallbackMessage: 'Todo tool failed'
-        }).error
+      ? localizePublicError(
+          toPublicErrorPayload(errorText ?? output?.message, {
+            fallbackMessage: 'Todo tool failed'
+          }),
+          locale
+        ).error
       : undefined
 
   const isLoading = state === 'input-streaming' || state === 'input-available'
@@ -88,8 +98,8 @@ export function ToolTodoDisplay({
           <ListTodo className="size-4 text-muted-foreground shrink-0" />
           <span className="truncate">
             {state === 'output-available' && output
-              ? output.message || 'Updated tasks'
-              : 'Updating tasks...'}
+              ? output.message || t('Updated tasks')
+              : t('Updating tasks...')}
           </span>
         </span>
       }

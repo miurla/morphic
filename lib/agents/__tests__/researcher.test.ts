@@ -4,6 +4,11 @@ import { createFetchTool } from '@/lib/tools/fetch'
 import { createSearchTool } from '@/lib/tools/search'
 import type { Model } from '@/lib/types/models'
 
+import {
+  getAdaptiveModePrompt,
+  getQuickModePrompt
+} from '../prompts/search-mode-prompts'
+
 const mocks = vi.hoisted(() => ({
   agentOptions: undefined as Record<string, any> | undefined
 }))
@@ -46,7 +51,7 @@ vi.mock('@/lib/utils/telemetry', () => ({
 
 vi.mock('../prompts/search-mode-prompts', () => ({
   getAdaptiveModePrompt: vi.fn(() => 'Adaptive prompt'),
-  QUICK_MODE_PROMPT: 'Quick prompt'
+  getQuickModePrompt: vi.fn(() => 'Quick prompt')
 }))
 
 import { createResearcher } from '../researcher'
@@ -148,4 +153,18 @@ describe('createResearcher', () => {
       /^Quick prompt\nCurrent date: /
     )
   })
+
+  it.each(['quick', 'adaptive'] as const)(
+    'passes the captured locale to the %s prompt',
+    searchMode => {
+      createResearcher({
+        model: 'openai:model-id',
+        searchMode,
+        locale: 'zh-CN'
+      })
+      const promptFactory =
+        searchMode === 'quick' ? getQuickModePrompt : getAdaptiveModePrompt
+      expect(promptFactory).toHaveBeenCalledWith('zh-CN')
+    }
+  )
 })

@@ -9,6 +9,8 @@ import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 import { extractCitationMapsFromMessages } from '@/lib/utils/citation'
 
+import { useI18n } from '@/components/language-provider'
+
 import { ChatSpaceIcon } from './spaces/chat-space-icon'
 import { AnimatedLogo } from './ui/animated-logo'
 import { ChatError } from './chat-error'
@@ -59,6 +61,8 @@ export function ChatMessages({
   onQuoteContext,
   ownerInstructions = false
 }: ChatMessagesProps) {
+  const { t } = useI18n()
+
   // Track user-modified states (when user explicitly opens/closes)
   const [userModifiedStates, setUserModifiedStates] = useState<
     Record<string, boolean>
@@ -212,7 +216,7 @@ export function ChatMessages({
       <div className="relative mx-auto w-full max-w-full md:max-w-3xl px-4">
         {ownerInstructions && sections.length > 0 && (
           <p className="mb-4 text-xs text-muted-foreground">
-            This chat follows custom instructions from its owner.
+            {t('This chat follows custom instructions from its owner.')}
           </p>
         )}
         {sections.map((section, sectionIndex) => (

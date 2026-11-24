@@ -10,6 +10,8 @@ import { faviconUrl } from '@/lib/utils/favicon'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 
+import { useI18n } from '@/components/language-provider'
+
 import { VideoCarouselDialog } from './video-carousel-dialog'
 
 interface VideoResultGridProps {
@@ -23,6 +25,8 @@ export function VideoResultGrid({
   query,
   displayMode
 }: VideoResultGridProps) {
+  const { t } = useI18n()
+
   const containerClasses =
     displayMode === 'chat'
       ? 'flex flex-wrap'
@@ -54,7 +58,7 @@ export function VideoResultGrid({
                     <div className="relative w-full aspect-video bg-muted">
                       <Image
                         src={baseUrl}
-                        alt={`Thumbnail for ${video.title}`}
+                        alt={t('Thumbnail for {title}', { title: video.title })}
                         fill
                         sizes={
                           displayMode === 'chat'

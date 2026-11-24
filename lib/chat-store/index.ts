@@ -5,6 +5,8 @@ import { ChatInit, DefaultChatTransport } from 'ai'
 
 import { getDistinctId } from '@/lib/analytics/posthog-client'
 import { generateId } from '@/lib/db/schema'
+import { getClientLocale } from '@/lib/i18n/client'
+import { LANGUAGE_HEADER } from '@/lib/i18n/config'
 import type { ChatSpace } from '@/lib/spaces/space'
 import type { UIMessage } from '@/lib/types/ai'
 
@@ -95,14 +97,18 @@ export class ChatStore {
             messages,
             trigger,
             messageId,
-            body
+            body,
+            headers
           }) => {
+            const requestHeaders = new Headers(headers)
+            requestHeaders.set(LANGUAGE_HEADER, getClientLocale())
             const lastMessage = messages[messages.length - 1]
             const original =
               trigger === 'regenerate-message'
                 ? messages.find(m => m.id === messageId)
                 : undefined
             return {
+              headers: requestHeaders,
               body: {
                 ...body,
                 trigger,

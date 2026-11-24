@@ -18,6 +18,8 @@ import { Model } from '@/lib/types/models'
 import { cn } from '@/lib/utils'
 import { setCookie } from '@/lib/utils/cookies'
 
+import { useI18n } from '@/components/language-provider'
+
 import { Button } from './ui/button'
 import {
   Command,
@@ -64,6 +66,8 @@ interface ModelSelectorClientProps {
 }
 
 export function ModelSelectorClient({ data }: ModelSelectorClientProps) {
+  const { t } = useI18n()
+
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [selectedModelKey, setSelectedModelKey] = useState<string>(
@@ -103,10 +107,10 @@ export function ModelSelectorClient({ data }: ModelSelectorClientProps) {
         variant="outline"
         className="h-auto gap-1 rounded-full border-none bg-muted px-3 py-2 text-sm shadow-none transition-[background-color,color,box-shadow,transform]"
         disabled
-        title="No enabled models are available"
+        title={t('No enabled models are available')}
       >
         <span className="truncate max-w-52 text-xs font-medium">
-          No enabled model available
+          {t('No enabled model available')}
         </span>
       </Button>
     )
@@ -139,9 +143,9 @@ export function ModelSelectorClient({ data }: ModelSelectorClientProps) {
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0" align="end" sideOffset={6}>
         <Command>
-          <CommandInput placeholder="Search models..." />
+          <CommandInput placeholder={t('Search models...')} />
           <CommandList>
-            <CommandEmpty>No model found.</CommandEmpty>
+            <CommandEmpty>{t('No model found.')}</CommandEmpty>
             {providerEntries.map(([provider, models]) => (
               <CommandGroup key={provider} heading={provider}>
                 {models.map(model => {

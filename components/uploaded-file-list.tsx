@@ -6,6 +6,8 @@ import { IconLoader2 as Loader2, IconX as X } from '@tabler/icons-react'
 
 import { UploadedFile } from '@/lib/types'
 
+import { useI18n } from '@/components/language-provider'
+
 interface UploadedFileListProps {
   files: UploadedFile[]
   onRemove: (index: number) => void
@@ -42,6 +44,8 @@ const UploadedFileListItem = React.memo(function UploadedFileListItem({
   index: number
   onRemove: (index: number) => void
 }) {
+  const { t } = useI18n()
+
   const [objectUrl, setObjectUrl] = React.useState<
     { file: File; url: string } | undefined
   >()
@@ -74,7 +78,7 @@ const UploadedFileListItem = React.memo(function UploadedFileListItem({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageSrc}
-            alt={`file-${index}`}
+            alt={filename}
             className="size-full object-cover"
           />
         ) : (
@@ -92,6 +96,7 @@ const UploadedFileListItem = React.memo(function UploadedFileListItem({
 
         <button
           type="button"
+          aria-label={t('Remove file {name}', { name: filename })}
           onClick={() => onRemove(index)}
           className="absolute top-1 right-1 bg-black/40 hover:bg-red-600 text-white rounded-full p-1 z-20"
         >

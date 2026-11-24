@@ -9,6 +9,8 @@ import { toPublicErrorPayload } from '@/lib/errors/public-error'
 import type { TodoItem } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 
+import { useI18n } from '@/components/language-provider'
+
 export type TodoListContentProps = {
   todos?: TodoItem[]
   message?: string
@@ -32,6 +34,8 @@ export function TodoListContent({
   itemVariant = 'bordered',
   className
 }: TodoListContentProps) {
+  const { t } = useI18n()
+
   const completed =
     completedCount ?? todos.filter(t => t.status === 'completed').length
   const total = totalCount ?? todos.length
@@ -64,7 +68,10 @@ export function TodoListContent({
     return (
       <div className="flex items-center gap-2 p-4 text-red-600">
         <AlertCircle className="size-4" />
-        <span>Error: {publicError.error}</span>
+        <span>
+          {t('Error:')}
+          {publicError.error}
+        </span>
       </div>
     )
   }
@@ -73,7 +80,7 @@ export function TodoListContent({
     <div className={cn('space-y-3', className)}>
       {showSummary && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>{message || summary || 'Todo List'}</span>
+          <span>{message || summary || t('Todo List')}</span>
           <span className="font-medium whitespace-nowrap">
             ({completed}/{total})
           </span>
@@ -107,7 +114,7 @@ export function TodoListContent({
 
       {todos.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          No todos available
+          {t('No todos available')}
         </div>
       )}
     </div>

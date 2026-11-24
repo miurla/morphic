@@ -1,6 +1,7 @@
 import { isStepCount, tool, ToolLoopAgent } from 'ai'
 
 import type { DraftVersion } from '@/lib/draft/draft'
+import type { Locale } from '@/lib/i18n/config'
 import type {
   ResearcherRuntimeContext,
   ResearcherTools
@@ -19,7 +20,7 @@ import { isTracingEnabled } from '../utils/telemetry'
 
 import {
   getAdaptiveModePrompt,
-  QUICK_MODE_PROMPT
+  getQuickModePrompt
 } from './prompts/search-mode-prompts'
 
 // Enhanced wrapper function with better type safety and streaming support
@@ -81,7 +82,8 @@ export function createResearcher({
   citationLabelSeed,
   currentDraft = null,
   alternativesOnly = false,
-  spaceInstructions = ''
+  spaceInstructions = '',
+  locale = 'en'
 }: {
   model: string
   modelConfig?: Model
@@ -91,6 +93,7 @@ export function createResearcher({
   currentDraft?: DraftVersion | null
   alternativesOnly?: boolean
   spaceInstructions?: string
+  locale?: Locale
 }) {
   try {
     // Date only: a second-precision timestamp sits at the head of the prompt
@@ -118,7 +121,7 @@ export function createResearcher({
         console.log(
           '[Researcher] Quick mode: maxSteps=20, tools=[search, fetch, editDraft]'
         )
-        systemPrompt = QUICK_MODE_PROMPT
+        systemPrompt = getQuickModePrompt(locale)
         activeToolsList = ['search', 'fetch', 'editDraft']
         maxSteps = 20
         searchTool = wrapSearchToolForQuickMode(originalSearchTool)
@@ -126,7 +129,7 @@ export function createResearcher({
 
       case 'adaptive':
       default:
-        systemPrompt = getAdaptiveModePrompt()
+        systemPrompt = getAdaptiveModePrompt(locale)
         activeToolsList = ['search', 'fetch', 'todoWrite', 'editDraft']
         console.log(
           `[Researcher] Adaptive mode: maxSteps=50, tools=[${activeToolsList.join(', ')}]`

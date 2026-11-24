@@ -7,6 +7,8 @@ import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
 
+import { useI18n } from '@/components/language-provider'
+
 import { Button } from './ui/button'
 
 const allowedImageTypes = ['image/png', 'image/jpeg']
@@ -20,6 +22,8 @@ export function FileUploadButton({
 }: {
   onFileSelect: (files: File[]) => void
 }) {
+  const { t } = useI18n()
+
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -33,7 +37,9 @@ export function FileUploadButton({
 
     if (rejected.length > 0) {
       toast.error(
-        'Some files were not accepted: ' + rejected.map(f => f.name).join(', ')
+        t('Some files were not accepted: {names}', {
+          names: rejected.map(f => f.name).join(', ')
+        })
       )
     }
 
@@ -61,7 +67,7 @@ export function FileUploadButton({
         'relative rounded-full',
         isDragging && 'ring-2 ring-blue-500 ring-offset-2'
       )}
-      title="Drag and drop or click to upload"
+      title={t('Drag and drop or click to upload')}
     >
       <input
         ref={inputRef}

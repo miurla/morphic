@@ -2,6 +2,8 @@
 
 import type { UIMessage } from '@/lib/types/ai'
 
+import { useI18n } from '@/components/language-provider'
+
 import {
   Tooltip,
   TooltipContent,
@@ -31,6 +33,8 @@ function getUserMessagePreview(message: UIMessage): string {
 export function MessageNavigationDots({
   sections
 }: MessageNavigationDotsProps) {
+  const { t } = useI18n()
+
   const visibleSections = sections.slice(-4)
 
   const handleClick = (sectionId: string) => {
@@ -50,7 +54,7 @@ export function MessageNavigationDots({
                   type="button"
                   className="group flex size-3 items-center justify-center"
                   onClick={() => handleClick(section.id)}
-                  aria-label={preview || 'Go to message'}
+                  aria-label={preview || t('Go to message')}
                 >
                   <span className="size-1.5 rounded-full bg-foreground/30 transition-colors group-hover:bg-foreground/60" />
                 </button>

@@ -15,6 +15,9 @@ vi.mock('@/lib/actions/chat', () => ({
   loadChat: vi.fn()
 }))
 vi.mock('@/lib/auth/get-current-user', () => ({ getCurrentUserId: vi.fn() }))
+vi.mock('@/lib/i18n/server', () => ({
+  getI18n: async () => ({ t: (message: string) => message })
+}))
 vi.mock('@/lib/auth/provider', () => ({ isAnonymousMode: () => false }))
 vi.mock('@/lib/model-selector/get-model-selector-data', () => ({
   getModelSelectorData: vi.fn(async () => undefined)

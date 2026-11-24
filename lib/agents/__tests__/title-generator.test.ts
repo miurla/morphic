@@ -60,4 +60,37 @@ describe('generateChatTitle', () => {
       'maxOutputTokens'
     )
   })
+
+  it.each([
+    ['zh-CN', 'Write an English email', 'Simplified Chinese (zh-CN)'],
+    ['en', '请解释这段代码', 'English (en)']
+  ] as const)(
+    'uses %s for the title even when the requested content uses another language',
+    async (locale, message, language) => {
+      await generateChatTitle({
+        userMessageContent: message,
+        modelId: 'openai:test',
+        locale
+      })
+      expect(generateText).toHaveBeenCalledWith(
+        expect.objectContaining({
+          instructions: expect.stringContaining(
+            `Write the title in ${language}`
+          ),
+          prompt: message
+        })
+      )
+    }
+  )
+
+  it('uses a localized fallback when title generation produces no result', async () => {
+    vi.mocked(generateText).mockResolvedValueOnce({ text: '' } as never)
+    await expect(
+      generateChatTitle({
+        userMessageContent: 'Hello',
+        modelId: 'openai:test',
+        locale: 'zh-CN'
+      })
+    ).resolves.toBe('新对话')
+  })
 })

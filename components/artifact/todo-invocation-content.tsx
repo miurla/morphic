@@ -2,6 +2,8 @@
 
 import type { ToolPart } from '@/lib/types/ai'
 
+import { useI18n } from '@/components/language-provider'
+
 import TodoListContent from '../todo-list-content'
 
 interface TodoInvocationContentProps {
@@ -9,6 +11,8 @@ interface TodoInvocationContentProps {
 }
 
 export function TodoInvocationContent({ part }: TodoInvocationContentProps) {
+  const { t } = useI18n()
+
   const todos = part.output?.todos || part.input?.todos || []
   const completedCount = part.output?.completedCount
   const totalCount = part.output?.totalCount
@@ -16,7 +20,7 @@ export function TodoInvocationContent({ part }: TodoInvocationContentProps) {
   if (part.state === 'output-error') {
     return (
       <TodoListContent
-        errorText={part.errorText || 'Failed to process todos'}
+        errorText={part.errorText || t('Failed to process todos')}
       />
     )
   }

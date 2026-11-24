@@ -21,6 +21,8 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog'
 
+import { useI18n } from '@/components/language-provider'
+
 interface VideoCarouselDialogProps {
   children: React.ReactNode
   videos: SerperSearchResultItem[]
@@ -34,6 +36,8 @@ export function VideoCarouselDialog({
   query,
   initialIndex = 0 // Default to 0
 }: VideoCarouselDialogProps) {
+  const { t } = useI18n()
+
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(initialIndex + 1)
   const videoRefs = useRef<(HTMLIFrameElement | null)[]>([])
@@ -75,7 +79,7 @@ export function VideoCarouselDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle>Search Videos</DialogTitle>
+          <DialogTitle>{t('Search Videos')}</DialogTitle>
           <DialogDescription className="text-sm">{query}</DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -113,16 +117,16 @@ export function VideoCarouselDialog({
             </CarouselContent>
             <div className="absolute inset-8 flex items-center justify-between p-4 pointer-events-none">
               <CarouselPrevious className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
-                <span className="sr-only">Previous</span>
+                <span className="sr-only">{t('Previous')}</span>
               </CarouselPrevious>
               <CarouselNext className="w-10 h-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
-                <span className="sr-only">Next</span>
+                <span className="sr-only">{t('Next')}</span>
               </CarouselNext>
             </div>
           </Carousel>
           <div className="py-2">
             <div className="text-center text-sm text-muted-foreground">
-              {current} of {videos.length}
+              {t('{current} of {total}', { current, total: videos.length })}
             </div>
           </div>
         </div>

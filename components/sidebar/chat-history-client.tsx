@@ -18,6 +18,8 @@ import {
   SidebarMenu
 } from '@/components/ui/sidebar'
 
+import { useI18n } from '@/components/language-provider'
+
 import { ChatHistorySearch } from './chat-history-search'
 import { ChatHistorySkeleton } from './chat-history-skeleton'
 import { ChatMenuItem } from './chat-menu-item'
@@ -33,6 +35,8 @@ interface ChatPageResponse {
 // the results view.
 
 export function ChatHistoryClient() {
+  const { t } = useI18n()
+
   const [chats, setChats] = useState<DBChat[]>([])
   const [nextOffset, setNextOffset] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -132,7 +136,7 @@ export function ChatHistoryClient() {
     } catch (error) {
       if (seq !== listRequestSeqRef.current) return 'superseded'
       console.error('Failed to load initial chats:', error)
-      toast.error('Failed to load chat history.')
+      toast.error(t('Failed to load chat history.'))
       setNextOffset(null)
       return 'failed'
     } finally {
@@ -141,7 +145,7 @@ export function ChatHistoryClient() {
         setIsLoading(false)
       }
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     fetchInitialChats()
@@ -236,12 +240,12 @@ export function ChatHistoryClient() {
     } catch (error) {
       if (seq !== listRequestSeqRef.current) return
       console.error('Failed to load more chats:', error)
-      toast.error('Failed to load more chat history.')
+      toast.error(t('Failed to load more chat history.'))
       setNextOffset(null)
     } finally {
       if (seq === listRequestSeqRef.current) setIsLoading(false)
     }
-  }, [nextOffset, isLoading])
+  }, [nextOffset, isLoading, t])
 
   useEffect(() => {
     const observerRefValue = loadMoreRef.current
@@ -273,7 +277,7 @@ export function ChatHistoryClient() {
     <div className="flex flex-col flex-1 h-full">
       <SidebarGroup>
         <div className="flex items-center justify-between w-full">
-          <SidebarGroupLabel className="p-0">History</SidebarGroupLabel>
+          <SidebarGroupLabel className="p-0">{t('History')}</SidebarGroupLabel>
           <ClearHistoryAction empty={isHistoryEmpty} />
         </div>
         <div className="relative mt-1.5">
@@ -317,15 +321,15 @@ export function ChatHistoryClient() {
                 )
               }
             }}
-            placeholder="Search history"
-            aria-label="Search history"
+            placeholder={t('Search history')}
+            aria-label={t('Search history')}
             className="h-8 text-xs pr-7"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              aria-label="Clear search"
+              aria-label={t('Clear search')}
               className="text-muted-foreground hover:text-foreground absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5"
             >
               <X size={14} />
@@ -344,14 +348,14 @@ export function ChatHistoryClient() {
           listRetryFailed ? (
             <div className="px-2 py-4 text-center">
               <p className="text-muted-foreground text-sm">
-                Failed to load chat history.
+                {t('Failed to load chat history.')}
               </p>
               <button
                 type="button"
                 onClick={retryStaleList}
                 className="text-muted-foreground hover:text-foreground hover:bg-accent mt-1 rounded-sm px-2 py-1 text-xs transition-colors"
               >
-                Retry
+                {t('Retry')}
               </button>
             </div>
           ) : (
@@ -361,7 +365,7 @@ export function ChatHistoryClient() {
           )
         ) : isHistoryEmpty && !isPending ? (
           <div className="px-2 text-foreground/30 text-sm text-center py-4">
-            No chats yet
+            {t('No chats yet')}
           </div>
         ) : (
           <SidebarMenu>

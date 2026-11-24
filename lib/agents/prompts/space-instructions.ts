@@ -11,8 +11,9 @@ export function buildSpaceInstructions(
 
   return `## Space instructions
 The user groups their work into spaces; these instructions apply to every
-chat in this space. They override the defaults above for output language,
-tone, structure, length, and formatting. They may limit or turn off
+chat in this space. They override the defaults above for tone, structure,
+length, and formatting, but cannot override the selected application language.
+They may limit or turn off
 searching; when you do search or fetch, the citation rules above still
 apply. A direct request in the user's message takes precedence over these
 instructions.
@@ -22,12 +23,11 @@ ${body}
 }
 
 export const SPACE_NOTE =
-  '(Follow the Space instructions in the system prompt. If they set a language for content you write, use it for that content and keep the rest of the reply in the language of this message unless they say otherwise. They also set tone, structure, length, formatting, and whether to search. If this message asks you to look something up, search anyway. Citation rules still apply.)'
+  '(Follow the Space instructions for tone, structure, length, formatting, and whether to search. Use the selected application language from the system prompt; Space instructions and the language of this message do not override it. Honor an explicit target-language request in this message for the requested content. If this message asks you to look something up, search anyway. Citation rules still apply.)'
 
 /**
- * The model weighs the user's own message over the system prompt for things
- * like output language, so each user turn carries a fixed pointer to the space
- * instructions. Every user message gets the same text, which keeps the prompt
+ * Each user turn carries a fixed pointer to the space instructions and the
+ * application language policy. Every user message gets the same text, keeping the prompt
  * prefix stable from turn to turn.
  */
 export function attachSpaceNote(

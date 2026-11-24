@@ -81,8 +81,10 @@ import { convertToModelMessages } from 'ai'
 import { loadChat } from '@/lib/actions/chat'
 import { SPACE_NOTE } from '@/lib/agents/prompts/space-instructions'
 import { researcher } from '@/lib/agents/researcher'
+import { generateChatTitle } from '@/lib/agents/title-generator'
 import { DeterministicPreparationError } from '@/lib/errors/deterministic-preparation-error'
 import { serializeToolFailure, ToolFailureError } from '@/lib/errors/tool-error'
+import type { Locale } from '@/lib/i18n/config'
 import { createChatStreamResponse } from '@/lib/streaming/create-chat-stream-response'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
 import { EMPTY_RESPONSE_STATUS_MESSAGE } from '@/lib/streaming/helpers/is-empty-response'
@@ -192,6 +194,25 @@ describe('createChatStreamResponse', () => {
         chatId: 'chat-id',
         citationLabelSeed: 1
       })
+    )
+  })
+
+  it('keeps one locale for the answer and title even if preferences change while preparing the turn', async () => {
+    const config = { ...createConfig(), locale: 'zh-CN' as Locale }
+    vi.mocked(prepareMessages).mockImplementationOnce(async () => {
+      config.locale = 'en'
+      return []
+    })
+    mocks.stream.mockResolvedValue(createFakeResult())
+
+    await createChatStreamResponse(config)
+    await mocks.finishPromise
+
+    expect(researcher).toHaveBeenCalledWith(
+      expect.objectContaining({ locale: 'zh-CN' })
+    )
+    expect(generateChatTitle).toHaveBeenCalledWith(
+      expect.objectContaining({ locale: 'zh-CN' })
     )
   })
 

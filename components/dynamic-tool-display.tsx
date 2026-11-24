@@ -3,6 +3,9 @@
 import React from 'react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
+import { localizePublicError } from '@/lib/i18n/errors'
+
+import { useI18n } from '@/components/language-provider'
 
 // This matches the structure from AI SDK v5
 type DynamicToolPart =
@@ -42,14 +45,16 @@ interface DynamicToolDisplayProps {
 }
 
 export function DynamicToolDisplay({ part }: DynamicToolDisplayProps) {
+  const { t, locale } = useI18n()
+
   // Extract tool type from name
   const getToolType = (toolName: string) => {
     if (toolName.startsWith('mcp__')) {
-      return 'MCP Tool'
+      return t('MCP Tool')
     } else if (toolName.startsWith('dynamic__')) {
-      return 'Dynamic Tool'
+      return t('Dynamic Tool')
     }
-    return 'Custom Tool'
+    return t('Custom Tool')
   }
 
   // Extract display name from tool name
@@ -66,9 +71,12 @@ export function DynamicToolDisplay({ part }: DynamicToolDisplayProps) {
   const displayName = getDisplayName(part.toolName)
   const errorMessage =
     part.state === 'output-error'
-      ? toPublicErrorPayload(part.errorText, {
-          fallbackMessage: 'Tool execution failed'
-        }).error
+      ? localizePublicError(
+          toPublicErrorPayload(part.errorText, {
+            fallbackMessage: 'Tool execution failed'
+          }),
+          locale
+        ).error
       : undefined
 
   return (
@@ -86,7 +94,9 @@ export function DynamicToolDisplay({ part }: DynamicToolDisplayProps) {
         part.state === 'output-available' ||
         part.state === 'output-error') && (
         <div className="mb-2">
-          <div className="text-xs text-muted-foreground mb-1">Input:</div>
+          <div className="text-xs text-muted-foreground mb-1">
+            {t('Input:')}
+          </div>
           <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-40">
             <code>{JSON.stringify(part.input, null, 2)}</code>
           </pre>
@@ -96,7 +106,9 @@ export function DynamicToolDisplay({ part }: DynamicToolDisplayProps) {
       {/* Output display */}
       {part.state === 'output-available' && (
         <div className="mb-2">
-          <div className="text-xs text-muted-foreground mb-1">Output:</div>
+          <div className="text-xs text-muted-foreground mb-1">
+            {t('Output:')}
+          </div>
           <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-40">
             <code>{JSON.stringify(part.output, null, 2)}</code>
           </pre>
@@ -106,7 +118,7 @@ export function DynamicToolDisplay({ part }: DynamicToolDisplayProps) {
       {/* Error display */}
       {part.state === 'output-error' && (
         <div className="mb-2">
-          <div className="text-xs text-destructive mb-1">Error:</div>
+          <div className="text-xs text-destructive mb-1">{t('Error:')}</div>
           <div className="text-xs bg-destructive/10 text-destructive p-2 rounded">
             {errorMessage}
           </div>
@@ -130,14 +142,14 @@ export function DynamicToolDisplay({ part }: DynamicToolDisplayProps) {
         />
         <span className="text-xs text-muted-foreground">
           {part.state === 'input-streaming'
-            ? 'Streaming...'
+            ? t('Streaming...')
             : part.state === 'input-available'
-              ? 'Processing...'
+              ? t('Processing...')
               : part.state === 'output-available'
-                ? 'Complete'
+                ? t('Complete')
                 : part.state === 'output-error'
-                  ? 'Failed'
-                  : 'Unknown'}
+                  ? t('Failed')
+                  : t('Unknown')}
         </span>
       </div>
     </div>

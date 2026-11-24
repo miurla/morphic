@@ -13,6 +13,7 @@ import { Button } from './ui/button'
 import { FeedbackModal } from './feedback-modal'
 // import { Button } from './ui/button' // No longer needed directly here for Sign In button
 import GuestMenu from './guest-menu' // Import the new GuestMenu component
+import { useI18n } from './language-provider'
 import UserMenu from './user-menu'
 
 interface HeaderProps {
@@ -20,6 +21,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ user }) => {
+  const { t } = useI18n()
   const { open } = useSidebar()
   const pathname = usePathname()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
@@ -44,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
               size="sm"
               onClick={() => setFeedbackOpen(true)}
             >
-              Feedback
+              {t('Feedback')}
             </Button>
           )}
           {user ? <UserMenu user={user} /> : <GuestMenu />}

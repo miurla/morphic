@@ -15,6 +15,8 @@ import {
 import { captureClient } from '@/lib/analytics/posthog-client'
 import { cn } from '@/lib/utils'
 
+import { useI18n } from '@/components/language-provider'
+
 import { Button } from './ui/button'
 
 // Constants for timing delays
@@ -105,12 +107,14 @@ export function ActionButtons({
   inputRef,
   className
 }: ActionButtonsProps) {
+  const { t } = useI18n()
+
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const handleCategoryClick = (category: ActionCategory) => {
     setActiveCategory(category.key)
-    onCategoryClick(category.label)
+    onCategoryClick(t(category.label))
     captureClient('example_category_opened', { category: category.key })
   }
 
@@ -120,7 +124,7 @@ export function ActionButtons({
       prompt
     })
     setActiveCategory(null)
-    onSelectPrompt(prompt)
+    onSelectPrompt(t(prompt))
   }
 
   const resetToButtons = () => {
@@ -206,7 +210,7 @@ export function ActionButtons({
                   onClick={() => handleCategoryClick(category)}
                 >
                   <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>{category.label}</span>
+                  <span>{t(category.label)}</span>
                 </Button>
               )
             })}
@@ -233,7 +237,7 @@ export function ActionButtons({
                 onClick={() => handlePromptClick(prompt)}
               >
                 <Search className="h-3 w-3 text-muted-foreground flex-shrink-0 group-hover:text-foreground" />
-                <span className="line-clamp-2">{prompt}</span>
+                <span className="line-clamp-2">{t(prompt)}</span>
               </button>
             ))}
         </div>

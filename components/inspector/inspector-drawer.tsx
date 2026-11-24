@@ -7,12 +7,15 @@ import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
+import { useI18n } from '@/components/language-provider'
 import { useLibrary } from '@/components/library/library-context'
 import { LibraryPanel } from '@/components/library/library-panel'
 
 import { InspectorPanel } from './inspector-panel'
 
 export function InspectorDrawer() {
+  const { t } = useI18n()
+
   const { state, close } = useArtifact()
   const { isOpen: libraryOpen, closeLibrary } = useLibrary()
   const part = state.part
@@ -21,23 +24,23 @@ export function InspectorDrawer() {
 
   // Function to get the title based on part type (mirrors ArtifactPanel logic)
   const getTitle = () => {
-    if (libraryOpen) return 'Library'
-    if (!part) return 'Artifact' // Default title
+    if (libraryOpen) return t('Library')
+    if (!part) return t('Artifact') // Default title
     switch (part.type) {
       case 'tool-search':
-        return 'search'
+        return t('search')
       case 'tool-fetch':
-        return 'fetch'
+        return t('fetch')
       case 'tool-askQuestion':
-        return 'askQuestion'
+        return t('askQuestion')
       case 'reasoning':
-        return 'Thoughts'
+        return t('Thoughts')
       case 'text':
-        return 'Text'
+        return t('Text')
       case 'draft':
-        return 'Draft'
+        return t('Draft')
       default:
-        return 'Content'
+        return t('Content')
     }
   }
 

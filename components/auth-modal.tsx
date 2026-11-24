@@ -12,12 +12,15 @@ import {
 } from '@/components/ui/dialog'
 import { IconLogo } from '@/components/ui/icons'
 
+import { useI18n } from '@/components/language-provider'
+
 interface AuthModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
 export function AuthModal({ open, onOpenChange }: AuthModalProps) {
+  const { t } = useI18n()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -26,18 +29,18 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
             <IconLogo className="size-14" />
           </div>
           <DialogTitle className="text-xl font-semibold">
-            Continue with Morphic
+            {t('Continue with Morphic')}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            To use Morphic, sign in to your account or create a new one.
+            {t('To use Morphic, sign in to your account or create a new one.')}
           </DialogDescription>
         </DialogHeader>
         <div className="mt-6 space-y-3">
           <Button asChild className="w-full" size="lg">
-            <Link href="/auth/sign-up">Sign Up</Link>
+            <Link href="/auth/sign-up">{t('Sign Up')}</Link>
           </Button>
           <Button asChild variant="outline" className="w-full" size="lg">
-            <Link href="/auth/login">Sign In</Link>
+            <Link href="/auth/login">{t('Sign In')}</Link>
           </Button>
         </div>
       </DialogContent>

@@ -5,6 +5,7 @@ import { listInvitations } from '@/lib/auth/better-auth/invitations'
 import { listMembers } from '@/lib/auth/better-auth/members'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { getAuthProvider } from '@/lib/auth/provider'
+import { getI18n } from '@/lib/i18n/server'
 
 import {
   Card,
@@ -24,6 +25,7 @@ import { ResetMemberPasswordForm } from '@/components/admin/reset-member-passwor
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPage() {
+  const { t } = await getI18n()
   const provider = getAuthProvider()
   if (provider.name !== 'better-auth') {
     redirect('/')
@@ -42,18 +44,23 @@ export default async function AdminPage() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold">Instance administration</h1>
+        <h1 className="text-2xl font-semibold">
+          {t('Instance administration')}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Manage invitations and member accounts for this Morphic instance.
+          {t(
+            'Manage invitations and member accounts for this Morphic instance.'
+          )}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Invitations</CardTitle>
+          <CardTitle>{t('Invitations')}</CardTitle>
           <CardDescription>
-            Create invitation links for sign-up when the instance runs in invite
-            mode.
+            {t(
+              'Create invitation links for sign-up when the instance runs in invite mode.'
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -63,10 +70,11 @@ export default async function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Member roles</CardTitle>
+          <CardTitle>{t('Member roles')}</CardTitle>
           <CardDescription>
-            Promote members to admin. The last remaining admin cannot delete
-            their own account until another admin exists.
+            {t(
+              'Promote members to admin. The last remaining admin cannot delete their own account until another admin exists.'
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -76,9 +84,9 @@ export default async function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Reset member password</CardTitle>
+          <CardTitle>{t('Reset member password')}</CardTitle>
           <CardDescription>
-            Set a new password for a member without email delivery.
+            {t('Set a new password for a member without email delivery.')}
           </CardDescription>
         </CardHeader>
         <CardContent>

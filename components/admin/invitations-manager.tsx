@@ -8,16 +8,20 @@ import {
   type InvitationView,
   revokeInvitationAction
 } from '@/lib/actions/admin'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+
+import { useI18n } from '@/components/language-provider'
 
 export function InvitationsManager({
   invitations: initialInvitations
 }: {
   invitations: InvitationView[]
 }) {
+  const { t, locale } = useI18n()
   const router = useRouter()
   const [invitations, setInvitations] = useState(initialInvitations)
   // Expiration is computed server-side when the list is rendered, and
@@ -95,36 +99,50 @@ export function InvitationsManager({
         <Input
           type="email"
           placeholder="invitee@example.com"
+          aria-label={t('Email')}
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
         />
         <Button type="submit" disabled={isCreating}>
-          {isCreating ? 'Creating...' : 'Create invitation'}
+          {isCreating ? t('Creating...') : t('Create invitation')}
         </Button>
       </form>
       <p className="text-xs text-muted-foreground">
-        Each invitation is single-use and can only be redeemed by this address.
+        {t(
+          'Each invitation is single-use and can only be redeemed by this address.'
+        )}
       </p>
 
       {newLink && (
         <div className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center">
-          <Input readOnly value={newLink} className="font-mono text-xs" />
+          <Input
+            aria-label={t('Invitation link')}
+            readOnly
+            value={newLink}
+            className="font-mono text-xs"
+          />
           <Button
             type="button"
             variant="outline"
             onClick={() => handleCopy(newLink)}
           >
-            {copied ? 'Copied' : 'Copy link'}
+            {copied ? t('Copied') : t('Copy link')}
           </Button>
         </div>
       )}
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-500">
+          {localizeErrorMessage(locale, error)}
+        </p>
+      )}
 
       <ul className="flex flex-col gap-2">
         {invitations.length === 0 && (
-          <li className="text-sm text-muted-foreground">No invitations yet.</li>
+          <li className="text-sm text-muted-foreground">
+            {t('No invitations yet.')}
+          </li>
         )}
         {invitations.map(invitation => (
           <li
@@ -133,21 +151,23 @@ export function InvitationsManager({
           >
             <div className="flex flex-col gap-1">
               <span className="font-medium">
-                {invitation.email ?? 'No email specified'}
+                {invitation.email ?? t('No email specified')}
               </span>
               <span className="text-xs text-muted-foreground">
-                Expires {new Date(invitation.expiresAt).toLocaleString()}
+                {t('Expires {date}', {
+                  date: new Date(invitation.expiresAt).toLocaleString(locale)
+                })}
               </span>
             </div>
             <div className="flex items-center gap-2">
               {invitation.used ? (
-                <Badge variant="secondary">Used</Badge>
+                <Badge variant="secondary">{t('Used')}</Badge>
               ) : invitation.revoked ? (
-                <Badge variant="destructive">Revoked</Badge>
+                <Badge variant="destructive">{t('Revoked')}</Badge>
               ) : isExpired(invitation) ? (
-                <Badge variant="outline">Expired</Badge>
+                <Badge variant="outline">{t('Expired')}</Badge>
               ) : (
-                <Badge>Active</Badge>
+                <Badge>{t('Active')}</Badge>
               )}
               {!invitation.revoked &&
                 !invitation.used &&
@@ -158,7 +178,7 @@ export function InvitationsManager({
                     variant="outline"
                     onClick={() => handleRevoke(invitation.id)}
                   >
-                    Revoke
+                    {t('Revoke')}
                   </Button>
                 )}
             </div>

@@ -13,12 +13,15 @@ import { toast } from 'sonner'
 
 import { saveNote } from '@/lib/actions/notes'
 import { captureClient } from '@/lib/analytics/posthog-client'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 import { stripSourceContextBlocks } from '@/lib/render/strip-source-context-blocks'
 import { stripSpecBlocks } from '@/lib/render/strip-spec-blocks'
 import type { SearchResultItem } from '@/lib/types'
 import type { UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
 import { processCitations } from '@/lib/utils/citation'
+
+import { useI18n } from '@/components/language-provider'
 
 import { useLibrary } from './library/library-context'
 import { SaveNoteAuthDialog } from './library/save-note-auth-dialog'
@@ -65,6 +68,8 @@ export function MessageActions({
   visible = true,
   citationMaps
 }: MessageActionsProps) {
+  const { t, locale } = useI18n()
+
   const [feedbackScore, setFeedbackScore] = useState<number | null>(
     initialFeedbackScore ?? null
   )
@@ -89,7 +94,7 @@ export function MessageActions({
     await navigator.clipboard.writeText(
       stripSpecBlocks(stripSourceContextBlocks(mappedMessage))
     )
-    toast.success('Message copied to clipboard')
+    toast.success(t('Message copied to clipboard'))
   }
 
   async function handleSaveNote() {
@@ -127,7 +132,13 @@ export function MessageActions({
           chatId,
           reason: result.error ?? 'unknown'
         })
-        toast.error(result.error ?? 'Failed to save note')
+        toast.error(
+          localizeErrorMessage(
+            locale,
+            result.error ?? 'Failed to save note',
+            'Failed to save note'
+          )
+        )
         return
       }
 
@@ -139,9 +150,9 @@ export function MessageActions({
         chatId,
         chars: content.length
       })
-      toast.success('Saved to library', {
+      toast.success(t('Saved to library'), {
         action: {
-          label: 'Open',
+          label: t('Open'),
           onClick: () => {
             openLibrary()
             captureClient('library_opened', { source: 'toast' })
@@ -155,7 +166,7 @@ export function MessageActions({
         chatId,
         reason: 'exception'
       })
-      toast.error('Failed to save note')
+      toast.error(t('Failed to save note'))
     } finally {
       setIsSavingNote(false)
     }
@@ -184,8 +195,8 @@ export function MessageActions({
         setFeedbackScore(score)
         toast.success(
           score === 1
-            ? 'Thanks for the feedback!'
-            : 'Thanks for letting us know!'
+            ? t('Thanks for the feedback!')
+            : t('Thanks for letting us know!')
         )
       } else {
         captureClient('feedback_failed', {
@@ -196,7 +207,7 @@ export function MessageActions({
           reason: 'response'
         })
         console.error('Failed to submit feedback')
-        toast.error('Failed to submit feedback')
+        toast.error(t('Failed to submit feedback'))
       }
     } catch (error) {
       captureClient('feedback_failed', {
@@ -206,7 +217,7 @@ export function MessageActions({
         reason: 'exception'
       })
       console.error('Error submitting feedback:', error)
-      toast.error('Failed to submit feedback')
+      toast.error(t('Failed to submit feedback'))
     } finally {
       setIsSubmittingFeedback(false)
     }
@@ -242,7 +253,7 @@ export function MessageActions({
                   onClick={() => handleFeedback(1)}
                   disabled={isSubmittingFeedback || feedbackScore === 1}
                   className="rounded-full"
-                  aria-label="Good response"
+                  aria-label={t('Good response')}
                 >
                   <ThumbsUp
                     size={14}
@@ -257,7 +268,7 @@ export function MessageActions({
                   onClick={() => handleFeedback(-1)}
                   disabled={isSubmittingFeedback || feedbackScore === -1}
                   className="rounded-full"
-                  aria-label="Bad response"
+                  aria-label={t('Bad response')}
                 >
                   <ThumbsDown
                     size={14}
@@ -277,13 +288,13 @@ export function MessageActions({
                     onClick={handleSaveNote}
                     disabled={isSavingNote}
                     className="rounded-full"
-                    aria-label="Save to library"
+                    aria-label={t('Save to library')}
                   >
                     <Bookmark size={14} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="text-xs">
-                  Save to library
+                  {t('Save to library')}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

@@ -15,8 +15,11 @@ import { TooltipButton } from '@/components/ui/tooltip-button'
 import { ArtifactContent } from '@/components/artifact/artifact-content'
 import { useArtifact } from '@/components/artifact/artifact-context'
 import { DraftPanel } from '@/components/draft/draft-panel'
+import { useI18n } from '@/components/language-provider'
 
 export function InspectorPanel() {
+  const { t } = useI18n()
+
   const { state, close } = useArtifact()
   const part = state.part
   if (!part) return null
@@ -29,27 +32,27 @@ export function InspectorPanel() {
         const toolName = part.type.replace('tool-', '')
         return {
           icon: <Search size={18} />,
-          title: toolName
+          title: t(toolName)
         }
       case 'tool-todoWrite':
         return {
           icon: <ListTodo size={18} />,
-          title: 'Todo List'
+          title: t('Todo List')
         }
       case 'reasoning':
         return {
           icon: <LightbulbIcon size={18} />,
-          title: 'Thoughts'
+          title: t('Thoughts')
         }
       case 'text':
         return {
           icon: <MessageSquare size={18} />,
-          title: 'Text'
+          title: t('Text')
         }
       default:
         return {
           icon: <MessageSquare size={18} />,
-          title: 'Content'
+          title: t('Content')
         }
     }
   }
@@ -78,8 +81,8 @@ export function InspectorPanel() {
                   variant="ghost"
                   size="icon"
                   onClick={close}
-                  aria-label="Close panel"
-                  tooltipContent="Close"
+                  aria-label={t('Close panel')}
+                  tooltipContent={t('Close')}
                 >
                   <X className="size-4" />
                 </TooltipButton>

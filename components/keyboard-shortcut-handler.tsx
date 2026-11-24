@@ -8,6 +8,8 @@ import { getCookie, setCookie } from '@/lib/utils/cookies'
 
 import { useKeyboardShortcut } from '@/hooks/use-keyboard-shortcut'
 
+import { useI18n } from '@/components/language-provider'
+
 import { useSidebar } from './ui/sidebar'
 import { KeyboardShortcutDialog } from './keyboard-shortcut-dialog'
 import { useTheme } from './theme-provider'
@@ -24,6 +26,8 @@ const SEARCH_MODE_LABELS: Record<SearchMode, string> = {
 }
 
 export function KeyboardShortcutHandler() {
+  const { t } = useI18n()
+
   const { theme, setTheme } = useTheme()
   const { toggleSidebar } = useSidebar()
 
@@ -49,7 +53,9 @@ export function KeyboardShortcutHandler() {
     const current = getCookie('searchMode') || 'quick'
     const next: SearchMode = current === 'quick' ? 'adaptive' : 'quick'
     setCookie('searchMode', next)
-    toast.info(`Search mode: ${SEARCH_MODE_LABELS[next]}`)
+    toast.info(
+      t('Switched to {mode} mode', { mode: t(SEARCH_MODE_LABELS[next]) })
+    )
   })
 
   useKeyboardShortcut(SHORTCUTS.showShortcuts, () => {

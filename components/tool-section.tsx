@@ -4,6 +4,8 @@ import { UseChatHelpers } from '@ai-sdk/react'
 
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 
+import { useI18n } from '@/components/language-provider'
+
 import FetchSection from './fetch-section'
 import { QuestionConfirmation } from './question-confirmation'
 import { SearchSection } from './search-section'
@@ -30,6 +32,8 @@ export function ToolSection({
   isFirst = false,
   isLast = false
 }: ToolSectionProps) {
+  const { t } = useI18n()
+
   // Special handling for ask_question tool
   if (tool.type === 'tool-askQuestion') {
     // When waiting for user input
@@ -48,7 +52,7 @@ export function ToolSection({
                 : {
                     declined: true,
                     skipped: response?.skipped,
-                    message: 'User declined this question'
+                    message: t('User declined this question')
                   }
             })
           }}

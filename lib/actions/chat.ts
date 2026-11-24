@@ -6,6 +6,7 @@ import { getAuthProvider, isShareEnabled } from '@/lib/auth/provider'
 import * as dbActions from '@/lib/db/actions'
 import type { Chat, Message } from '@/lib/db/schema'
 import { generateId } from '@/lib/db/schema'
+import { getI18n } from '@/lib/i18n/server'
 import {
   getUserFileObjectKeyPrefix,
   signFilePartUrlsInMessages
@@ -322,10 +323,12 @@ export async function saveChatTitle(
   modelId: string
 ) {
   if (!chat && message) {
+    const { locale } = await getI18n()
     const userContent = getTextFromParts(message.parts)
     const title = await generateChatTitle({
       userMessageContent: userContent,
-      modelId
+      modelId,
+      locale
     })
     await dbActions.updateChatTitle(chatId, title)
   }

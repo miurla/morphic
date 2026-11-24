@@ -19,6 +19,8 @@ import { registry } from '@/lib/render/registry'
 import { prepareRevisionSuggestions } from '@/lib/render/revise-suggestions'
 import type { SpecFenceResult } from '@/lib/render/spec-fence'
 
+import { useI18n } from '@/components/language-provider'
+
 function currentChatId(): string | undefined {
   if (typeof window === 'undefined') return undefined
   return chatIdFromPath(window.location.pathname)
@@ -31,6 +33,8 @@ type SpecBlockProps = {
 }
 
 export function SpecBlock({ result }: SpecBlockProps) {
+  const { t } = useI18n()
+
   const chatContext = useChatContext()
   const messageId = useContext(SpecMessageContext)
   const prepared = useMemo(
@@ -40,10 +44,10 @@ export function SpecBlock({ result }: SpecBlockProps) {
         : null,
     [result]
   )
-  const latest = useRef({ prepared, messageId, chatContext })
+  const latest = useRef({ prepared, messageId, chatContext, t })
   useLayoutEffect(() => {
-    latest.current = { prepared, messageId, chatContext }
-  }, [prepared, messageId, chatContext])
+    latest.current = { prepared, messageId, chatContext, t }
+  }, [prepared, messageId, chatContext, t])
   const shown = useRef(new Set<string>())
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -79,7 +83,7 @@ export function SpecBlock({ result }: SpecBlockProps) {
   const handlers = useMemo(
     () => ({
       submitQuery: (params: Record<string, unknown>) => {
-        const { prepared, messageId, chatContext } = latest.current
+        const { prepared, messageId, chatContext, t } = latest.current
         const query = params.query
         if (typeof query !== 'string' || !query.trim()) return
         const position = params.position
@@ -94,7 +98,7 @@ export function SpecBlock({ result }: SpecBlockProps) {
         )
           return
         if (chatContext.isStreamingRef.current) {
-          toast.info('Please wait for the current response to finish.')
+          toast.info(t('Please wait for the current response to finish.'))
           return
         }
         if (!suggestion)

@@ -15,6 +15,7 @@ import { listFiles } from '@/lib/actions/files'
 import { listNotes, searchNotes } from '@/lib/actions/notes'
 import { captureClient } from '@/lib/analytics/posthog-client'
 import type { Note } from '@/lib/db/schema'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 import type { NoteContext, UploadedFile } from '@/lib/types'
 import { stripMarkdownText } from '@/lib/utils/markdown'
 
@@ -28,6 +29,8 @@ import {
   CommandList
 } from '@/components/ui/command'
 import { Spinner } from '@/components/ui/spinner'
+
+import { useI18n } from '@/components/language-provider'
 
 import { useLibrary } from './library-context'
 
@@ -87,6 +90,7 @@ export function LibraryPickerDialog({
   onAttachNote: (note: NoteContext) => boolean
   onAttachFile: (file: UploadedFile) => boolean
 }) {
+  const { t, locale } = useI18n()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<LibraryFilter>('all')
   const [notes, setNotes] = useState<Note[]>([])
@@ -178,10 +182,22 @@ export function LibraryPickerDialog({
       setIsLoading(false)
 
       if (!notesResult.success) {
-        toast.error(notesResult.error ?? 'Failed to load notes')
+        toast.error(
+          localizeErrorMessage(
+            locale,
+            notesResult.error ?? 'Failed to load notes',
+            'Failed to load notes'
+          )
+        )
       }
       if (!filesResult.success) {
-        toast.error(filesResult.error ?? 'Failed to load files')
+        toast.error(
+          localizeErrorMessage(
+            locale,
+            filesResult.error ?? 'Failed to load files',
+            'Failed to load files'
+          )
+        )
       }
 
       if (needsNotesFetch) {
@@ -218,7 +234,8 @@ export function LibraryPickerDialog({
     query,
     replaceFilesCache,
     replaceNotesCache,
-    refreshKey
+    refreshKey,
+    locale
   ])
 
   function handleOpenChange(nextOpen: boolean) {
@@ -237,9 +254,9 @@ export function LibraryPickerDialog({
 
   const empty = notes.length === 0 && files.length === 0
   const heading = useMemo(() => {
-    if (query.trim()) return 'Search results'
-    return 'Recent library items'
-  }, [query])
+    if (query.trim()) return t('Search results')
+    return t('Recent library items')
+  }, [query, t])
 
   function handleAttachNote(note: Note) {
     const attached = onAttachNote({
@@ -274,30 +291,31 @@ export function LibraryPickerDialog({
       <div className="flex items-center gap-1 border-b px-3 py-2">
         {(['all', 'notes', 'files'] as const).map(value => (
           <Button
-            key={value}
+            key={t({ all: 'All', notes: 'Notes', files: 'Files' }[value])}
             type="button"
             size="sm"
             variant={filter === value ? 'secondary' : 'ghost'}
             className="h-7 rounded-md px-2 text-xs capitalize"
             onClick={() => setFilter(value)}
           >
-            {value}
+            {t({ all: 'All', notes: 'Notes', files: 'Files' }[value])}
           </Button>
         ))}
       </div>
       <CommandInput
         value={query}
         onValueChange={setQuery}
-        placeholder="Search notes and files..."
+        placeholder={t('Search notes and files...')}
       />
       <CommandList className="h-[420px] max-h-[calc(100vh-14rem)]">
         {isLoading && (
           <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
-            <Spinner /> Loading library
+            <Spinner />
+            {t('Loading library')}
           </div>
         )}
         {!isLoading && empty && (
-          <CommandEmpty>No library items found.</CommandEmpty>
+          <CommandEmpty>{t('No library items found.')}</CommandEmpty>
         )}
         {!isLoading && !empty && (
           <CommandGroup heading={heading}>
@@ -310,14 +328,14 @@ export function LibraryPickerDialog({
                 <FileText className="size-4 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
-                    {stripMarkdownText(note.title) || 'Untitled note'}
+                    {stripMarkdownText(note.title) || t('Untitled note')}
                   </p>
                   <p className="line-clamp-1 text-xs text-muted-foreground">
                     {stripMarkdownText(note.content)}
                   </p>
                 </div>
                 <span className="shrink-0 text-[11px] text-muted-foreground">
-                  Note
+                  {t('Note')}
                 </span>
               </CommandItem>
             ))}
@@ -339,7 +357,7 @@ export function LibraryPickerDialog({
                     </p>
                   </div>
                   <span className="shrink-0 text-[11px] text-muted-foreground">
-                    File
+                    {t('File')}
                   </span>
                 </CommandItem>
               )

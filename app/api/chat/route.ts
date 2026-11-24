@@ -12,6 +12,7 @@ import { isAnonymousMode } from '@/lib/auth/provider'
 import { rejectIfBot } from '@/lib/bot-protection'
 import { getUserMessageIds } from '@/lib/db/actions'
 import { generateId } from '@/lib/db/schema'
+import { resolveRequestLocale } from '@/lib/i18n/config'
 import { checkAndEnforceAdaptiveLimit } from '@/lib/rate-limit/adaptive-limit'
 import { checkAndEnforceOverallChatLimit } from '@/lib/rate-limit/chat-limits'
 import { checkAndEnforceGuestLimit } from '@/lib/rate-limit/guest-limit'
@@ -59,6 +60,8 @@ type UsageSettlementSlot = {
 export async function POST(req: Request) {
   const startTime = performance.now()
   const abortSignal = req.signal
+  // Snapshot once so changing the UI language cannot alter an in-flight turn.
+  const locale = resolveRequestLocale(req.headers)
   let refundUsageOnce: (() => Promise<void>) | undefined
 
   // Reset counters for new request (development only)
@@ -444,7 +447,8 @@ export async function POST(req: Request) {
         model: selectedModel,
         abortSignal,
         searchMode,
-        chatId
+        chatId,
+        locale
       })
     } else {
       try {
@@ -459,6 +463,7 @@ export async function POST(req: Request) {
           isNewChat,
           searchMode,
           spaceColor,
+          locale,
           onZeroPartError: refundUsageOnce
         })
       } catch (error) {

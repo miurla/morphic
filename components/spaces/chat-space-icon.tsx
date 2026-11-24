@@ -7,8 +7,10 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip'
 
+import { useI18n } from '@/components/language-provider'
+
 import { useChatSpace } from './chat-space-context'
-import { spaceLogoColor } from './space-colors'
+import { DEFAULT_SPACE_COLOR, spaceLogoColor } from './space-colors'
 
 /**
  * Renders an assistant logo in the chat's own space color (not the one
@@ -19,6 +21,7 @@ export function ChatSpaceIcon({
 }: {
   children: (bodyColor: string | undefined) => React.ReactElement
 }) {
+  const { t } = useI18n()
   const space = useChatSpace()
   const icon = children(space ? spaceLogoColor(space.color) : undefined)
   if (!space?.name) return icon
@@ -29,7 +32,7 @@ export function ChatSpaceIcon({
           <span className="inline-flex shrink-0">{icon}</span>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="text-xs">
-          {space.name}
+          {space.color === DEFAULT_SPACE_COLOR ? t('Default') : space.name}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

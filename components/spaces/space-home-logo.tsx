@@ -13,6 +13,8 @@ import { cn } from '@/lib/utils'
 
 import { IconBlinkingLogo } from '@/components/ui/icons'
 
+import { useI18n } from '@/components/language-provider'
+
 import {
   type SpaceColor,
   spaceColorValue,
@@ -72,6 +74,7 @@ export function SpaceHomeLogo() {
 }
 
 function SpaceSwitcher() {
+  const { t } = useI18n()
   const spaces = useSpaces()
   const reducedMotion = useReducedMotion()
   const [fanOpen, setFanOpen] = useState(false)
@@ -218,7 +221,9 @@ function SpaceSwitcher() {
             type="button"
             tabIndex={fanOpen ? 0 : -1}
             aria-label={
-              slot === 'new' ? 'New space' : `Switch to ${spaces.nameOf(slot)}`
+              slot === 'new'
+                ? t('New space')
+                : t('Switch to {name}', { name: spaces.nameOf(slot) })
             }
             onPointerEnter={() => onItemEnter(slot)}
             onPointerLeave={onItemLeave}
@@ -258,7 +263,7 @@ function SpaceSwitcher() {
 
   const badgeLabel =
     hovered === 'new'
-      ? 'New space'
+      ? t('New space')
       : hovered && hovered !== 'logo'
         ? spaces.nameOf(hovered)
         : fanOpen || hovered === 'logo'
@@ -308,7 +313,7 @@ function SpaceSwitcher() {
       <ViewTransition key={active} name={spaceTransitionName(active)}>
         <button
           type="button"
-          aria-label="Space settings"
+          aria-label={t('Space settings')}
           className="block rounded-full transition-[scale] duration-150 ease-out hover:scale-105 active:scale-95 touch-pan-y [-webkit-touch-callout:none]"
           onContextMenu={event => event.preventDefault()}
           onPointerEnter={event => {
@@ -386,7 +391,7 @@ function SpaceSwitcher() {
         visible={peek && !badgeLabel}
         className="text-muted-foreground duration-[450ms]"
       >
-        Make it yours
+        {t('Make it yours')}
       </SpaceBadge>
     </div>
   )

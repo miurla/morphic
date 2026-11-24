@@ -9,9 +9,12 @@ import {
 } from '@tabler/icons-react'
 
 import { toPublicErrorPayload } from '@/lib/errors/public-error'
+import { localizePublicError } from '@/lib/i18n/errors'
 import { SearchResults as SearchResultsType } from '@/lib/types'
 import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import { cn } from '@/lib/utils'
+
+import { useI18n } from '@/components/language-provider'
 
 import ProcessHeader from './process-header'
 
@@ -34,6 +37,8 @@ export function FetchSection({
   isFirst = false,
   isLast = false
 }: FetchSectionProps) {
+  const { t, locale } = useI18n()
+
   const url = tool.input?.url
   const isLoading = status === 'submitted' || status === 'streaming'
   const isToolLoading =
@@ -53,9 +58,12 @@ export function FetchSection({
   // Check tool state
   if (tool.state === 'output-error') {
     displayStatus = 'error'
-    error = toPublicErrorPayload(tool.errorText, {
-      fallbackMessage: 'Failed to retrieve content'
-    }).error
+    error = localizePublicError(
+      toPublicErrorPayload(tool.errorText, {
+        fallbackMessage: 'Failed to retrieve content'
+      }),
+      locale
+    ).error
   } else if (!output || isFetching) {
     displayStatus = 'fetching'
   } else if (fetchResults) {
@@ -67,14 +75,14 @@ export function FetchSection({
       contentLength = data.results[0].content?.length
     } else {
       displayStatus = 'error'
-      error = 'No content retrieved'
+      error = t('No content retrieved')
     }
   }
 
   // Get page title for display
   const getPageTitle = () => {
     if (title) return title
-    if (!url) return 'Unknown URL'
+    if (!url) return t('Unknown URL')
     try {
       const domain = new URL(url).hostname
       return domain.replace('www.', '')
@@ -118,7 +126,7 @@ export function FetchSection({
             <span>{error}</span>
           </>
         ) : isToolLoading ? (
-          <span className="animate-pulse">Retrieving...</span>
+          <span className="animate-pulse">{t('Retrieving...')}</span>
         ) : undefined
       }
       className={cn(
@@ -154,7 +162,7 @@ export function FetchSection({
               type="button"
               onClick={handleClick}
               className="shrink-0 p-1 hover:bg-accent rounded transition-colors"
-              aria-label="Open in new tab"
+              aria-label={t('Open in new tab')}
             >
               <ExternalLink className="h-4 w-4 text-muted-foreground" />
             </button>

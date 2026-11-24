@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { updatePassword } from '@/lib/actions/auth'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 import { cn } from '@/lib/utils/index'
 
 import { Button } from '@/components/ui/button'
@@ -17,11 +18,14 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+import { useI18n } from '@/components/language-provider'
+
 export function UpdatePasswordForm({
   className,
   token,
   ...props
 }: React.ComponentPropsWithoutRef<'div'> & { token?: string }) {
+  const { t, locale } = useI18n()
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -51,28 +55,32 @@ export function UpdatePasswordForm({
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Reset Your Password</CardTitle>
+          <CardTitle className="text-2xl">{t('Reset Your Password')}</CardTitle>
           <CardDescription>
-            Please enter your new password below.
+            {t('Please enter your new password below.')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleForgotPassword}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="password">New password</Label>
+                <Label htmlFor="password">{t('New password')}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="New password"
+                  placeholder={t('New password')}
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && (
+                <p className="text-sm text-red-500">
+                  {localizeErrorMessage(locale, error)}
+                </p>
+              )}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Saving...' : 'Save new password'}
+                {isLoading ? t('Saving...') : t('Save new password')}
               </Button>
             </div>
           </form>

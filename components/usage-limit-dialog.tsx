@@ -12,6 +12,7 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 
+import { useI18n } from '@/components/language-provider'
 import { formatUsageRenewal } from '@/components/usage-dialog'
 
 interface UsageLimitDialogProps {
@@ -25,6 +26,7 @@ export function UsageLimitDialog({
   onOpenChange,
   resetAt
 }: UsageLimitDialogProps) {
+  const { t, locale } = useI18n()
   const [interestRecorded, setInterestRecorded] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(false)
@@ -53,24 +55,26 @@ export function UsageLimitDialog({
   }
 
   const resetCopy = resetAt
-    ? `${formatUsageRenewal(resetAt).replace(/^Renews /, 'Your usage renews on ')}.`
-    : 'Your usage will renew at the start of your next monthly period.'
+    ? formatUsageRenewal(resetAt, locale, 'Your usage renews on {date}.')
+    : t('Your usage will renew at the start of your next monthly period.')
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{"You've reached your monthly usage limit"}</DialogTitle>
+          <DialogTitle>
+            {t("You've reached your monthly usage limit")}
+          </DialogTitle>
           <DialogDescription>{resetCopy}</DialogDescription>
         </DialogHeader>
 
         <p className="text-sm text-muted-foreground">
-          {"Additional usage isn't available yet."}
+          {t("Additional usage isn't available yet.")}
         </p>
 
         {error && (
           <p className="text-sm text-destructive" role="alert">
-            {"Couldn't record your request. Please try again."}
+            {t("Couldn't record your request. Please try again.")}
           </p>
         )}
 
@@ -80,10 +84,10 @@ export function UsageLimitDialog({
             disabled={submitting || interestRecorded}
           >
             {interestRecorded
-              ? 'Recorded'
+              ? t('Recorded')
               : submitting
-                ? 'Recording…'
-                : 'I need more usage'}
+                ? t('Recording…')
+                : t('I need more usage')}
           </Button>
         </DialogFooter>
       </DialogContent>

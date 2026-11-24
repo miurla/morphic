@@ -1,3 +1,5 @@
+import { getI18n } from '@/lib/i18n/server'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default async function Page({
@@ -5,6 +7,7 @@ export default async function Page({
 }: {
   searchParams: Promise<{ error: string }>
 }) {
+  const { t } = await getI18n()
   const params = await searchParams
 
   return (
@@ -14,17 +17,17 @@ export default async function Page({
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">
-                Sorry, something went wrong.
+                {t('Sorry, something went wrong.')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {params?.error ? (
                 <p className="text-sm text-muted-foreground">
-                  Code error: {params.error}
+                  {t('Code error: {code}', { code: params.error })}
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  An unspecified error occurred.
+                  {t('An unspecified error occurred.')}
                 </p>
               )}
             </CardContent>

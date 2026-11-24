@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 
+import { useI18n } from '@/components/language-provider'
+
 type Sentiment = 'positive' | 'neutral' | 'negative'
 
 interface FeedbackModalProps {
@@ -30,13 +32,15 @@ interface FeedbackModalProps {
 }
 
 export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
+  const { t } = useI18n()
+
   const [sentiment, setSentiment] = useState<Sentiment | null>(null)
   const [message, setMessage] = useState('')
   const [isPending, startTransition] = useTransition()
 
   const handleSubmit = () => {
     if (!sentiment || !message.trim()) {
-      toast.error('Please select your sentiment and write a message')
+      toast.error(t('Please select your sentiment and write a message'))
       return
     }
 
@@ -48,13 +52,13 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
       })
 
       if (result.success) {
-        toast.success('Thank you for your feedback!')
+        toast.success(t('Thank you for your feedback!'))
         // Reset form and close modal
         setSentiment(null)
         setMessage('')
         onOpenChange(false)
       } else {
-        toast.error('Failed to submit feedback. Please try again later.')
+        toast.error(t('Failed to submit feedback. Please try again later.'))
       }
     })
   }
@@ -69,9 +73,11 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>Give feedback</DialogTitle>
+          <DialogTitle>{t('Give feedback')}</DialogTitle>
           <DialogDescription>
-            Your feedback helps us improve Morphic. Let us know what you think!
+            {t(
+              'Your feedback helps us improve Morphic. Let us know what you think!'
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -116,7 +122,7 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
           </div>
 
           <Textarea
-            placeholder="Your feedback"
+            placeholder={t('Your feedback')}
             value={message}
             onChange={e => setMessage(e.target.value)}
             className="min-h-[150px] resize-none"
@@ -129,14 +135,14 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
               onClick={handleCancel}
               disabled={isPending}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button
               type="button"
               onClick={handleSubmit}
               disabled={isPending || !sentiment || !message.trim()}
             >
-              {isPending ? 'Submitting...' : 'Submit'}
+              {isPending ? t('Submitting...') : t('Submit')}
             </Button>
           </div>
         </div>

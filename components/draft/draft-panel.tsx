@@ -16,11 +16,14 @@ import { toast } from 'sonner'
 import { saveNote } from '@/lib/actions/notes'
 import { captureClient } from '@/lib/analytics/posthog-client'
 import { buildDraftVersions, draftDisplayTitle } from '@/lib/draft/draft'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { TooltipButton } from '@/components/ui/tooltip-button'
+
+import { useI18n } from '@/components/language-provider'
 
 import { useArtifact } from '../artifact/artifact-context'
 import { useLibrary } from '../library/library-context'
@@ -32,6 +35,8 @@ import { useDraftStore, useLiveDraftBlock } from './draft-store'
 type SelectionAnchor = { text: string; top: number; left: number }
 
 export function DraftPanel() {
+  const { t, locale } = useI18n()
+
   const {
     messages,
     quote,
@@ -108,9 +113,9 @@ export function DraftPanel() {
   if (!live && !shown) {
     return (
       <>
-        <DraftHeader title="Draft" onClose={close} />
+        <DraftHeader title={t('Draft')} onClose={close} />
         <p className="p-4 text-sm text-muted-foreground">
-          No draft in this chat yet.
+          {t('No draft in this chat yet.')}
         </p>
       </>
     )
@@ -122,9 +127,9 @@ export function DraftPanel() {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(content)
-      toast.success('Draft copied')
+      toast.success(t('Draft copied'))
     } catch {
-      toast.error('Could not copy the draft')
+      toast.error(t('Could not copy the draft'))
     }
   }
 
@@ -167,7 +172,13 @@ export function DraftPanel() {
           chatId,
           reason: result.error ?? 'unknown'
         })
-        toast.error(result.error ?? 'Failed to save note')
+        toast.error(
+          localizeErrorMessage(
+            locale,
+            result.error ?? 'Failed to save note',
+            'Failed to save note'
+          )
+        )
         return
       }
 
@@ -179,9 +190,9 @@ export function DraftPanel() {
         chatId,
         chars: content.length
       })
-      toast.success('Saved to library', {
+      toast.success(t('Saved to library'), {
         action: {
-          label: 'Open',
+          label: t('Open'),
           onClick: () => {
             openLibrary()
             captureClient('library_opened', { source: 'toast' })
@@ -195,30 +206,41 @@ export function DraftPanel() {
         chatId,
         reason: 'exception'
       })
-      toast.error('Failed to save note')
+      toast.error(t('Failed to save note'))
     } finally {
       setIsSaving(false)
     }
   }
 
   const status = live
-    ? `Writing… ${content.length.toLocaleString()} characters`
+    ? t('Writing… {count} characters', {
+        count: content.length.toLocaleString(locale)
+      })
     : shown!.interrupted
-      ? `Interrupted · ${content.length.toLocaleString()} characters`
+      ? t('Interrupted · {count} characters', {
+          count: content.length.toLocaleString(locale)
+        })
       : shown!.kind === 'edit'
-        ? `Edited · ${shown!.applied} change${shown!.applied === 1 ? '' : 's'}`
-        : `${content.length.toLocaleString()} characters`
+        ? t(
+            shown!.applied === 1
+              ? t('Edited · {count} change')
+              : t('Edited · {count} changes'),
+            { count: shown!.applied ?? 0 }
+          )
+        : t('{count} characters', {
+            count: content.length.toLocaleString(locale)
+          })
 
   return (
     <>
-      <DraftHeader title={title || 'Draft'} onClose={close}>
+      <DraftHeader title={title || t('Draft')} onClose={close}>
         {!live && versions.length > 1 && (
           <span className="flex items-center gap-0.5">
             <Button
               variant="ghost"
               size="icon"
               className="size-5"
-              aria-label="Previous version"
+              aria-label={t('Previous version')}
               disabled={position <= 0}
               onClick={() => setIndex(Math.max(0, position - 1))}
             >
@@ -231,7 +253,7 @@ export function DraftPanel() {
               variant="ghost"
               size="icon"
               className="size-5"
-              aria-label="Next version"
+              aria-label={t('Next version')}
               disabled={position >= versions.length - 1}
               onClick={() =>
                 setIndex(
@@ -247,7 +269,7 @@ export function DraftPanel() {
         {!live && (
           <span className="flex items-center gap-1">
             <Pencil className="size-3" />
-            Select text to edit it
+            {t('Select text to edit it')}
           </span>
         )}
       </DraftHeader>
@@ -270,7 +292,7 @@ export function DraftPanel() {
               }}
             >
               <Pencil className="size-3.5" />
-              Edit this
+              {t('Edit this')}
             </Button>
           )}
           <MarkdownMessage message={content} drafts={false} />
@@ -303,6 +325,8 @@ function DraftHeader({
   onClose: () => void
   children?: React.ReactNode
 }) {
+  const { t } = useI18n()
+
   return (
     <TooltipProvider>
       <div className="flex items-start gap-2 px-4 py-2">
@@ -321,8 +345,8 @@ function DraftHeader({
           variant="ghost"
           size="icon"
           onClick={onClose}
-          aria-label="Close panel"
-          tooltipContent="Close"
+          aria-label={t('Close panel')}
+          tooltipContent={t('Close')}
         >
           <X className="size-4" />
         </TooltipButton>
@@ -343,12 +367,14 @@ function DraftFooter({
   copyDisabled: boolean
   saveDisabled: boolean
 }) {
+  const { t } = useI18n()
+
   return (
     <div className="flex items-center justify-end gap-1 border-t px-4 py-2">
       <Button
         variant="ghost"
         size="icon"
-        aria-label="Copy draft"
+        aria-label={t('Copy draft')}
         disabled={copyDisabled}
         onClick={onCopy}
       >
@@ -358,7 +384,7 @@ function DraftFooter({
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Save to library"
+          aria-label={t('Save to library')}
           disabled={saveDisabled}
           onClick={onSave}
         >

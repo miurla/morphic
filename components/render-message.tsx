@@ -1,3 +1,5 @@
+'use client'
+
 import { UseChatHelpers } from '@ai-sdk/react'
 
 import type { SearchResultItem } from '@/lib/types'
@@ -9,6 +11,8 @@ import type {
   UITools
 } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
+
+import { useI18n } from '@/components/language-provider'
 
 import { DraftEditNotice } from './draft/draft-card'
 import { AnswerSection } from './answer-section'
@@ -52,6 +56,8 @@ export function RenderMessage({
   citationMaps = {},
   onQuoteContext
 }: RenderMessageProps) {
+  const { t } = useI18n()
+
   const isNonEmptyTextPart = (part: any) =>
     part?.type === 'text' &&
     typeof part.text === 'string' &&
@@ -83,7 +89,7 @@ export function RenderMessage({
           <UserFileSection
             key={`${messageId}-user-file-${index}`}
             file={{
-              name: part.filename || 'Unknown file',
+              name: part.filename || t('Unknown file'),
               url: part.url,
               contentType: part.mediaType
             }}

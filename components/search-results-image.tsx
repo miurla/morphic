@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dialog'
 
 import { ImageCreditOverlay } from '@/components/image-credit-overlay'
+import { useI18n } from '@/components/language-provider'
 
 interface SearchResultsImageSectionProps {
   images: SearchResultImage[]
@@ -243,6 +244,8 @@ const cornerClassForIndex = (actualIndex: number, isFullMode: boolean) => {
 export const SearchResultsImageSection: React.FC<
   SearchResultsImageSectionProps
 > = ({ images, query, displayMode = 'preview' }) => {
+  const { t } = useI18n()
+
   const [api, setApi] = useState<CarouselApi>()
   const [selectedIndex, setSelectedIndex] = useState(0)
 
@@ -260,7 +263,7 @@ export const SearchResultsImageSection: React.FC<
   })
 
   if (status === 'empty') {
-    return <div className="text-muted-foreground">No images found</div>
+    return <div className="text-muted-foreground">{t('No images found')}</div>
   }
 
   const handleSelect = (index: number) => {
@@ -301,7 +304,7 @@ export const SearchResultsImageSection: React.FC<
                   <div className="h-full w-full">
                     <img
                       src={image.url}
-                      alt={`Image ${actualIndex + 1}`}
+                      alt={t('Image {number}', { number: actualIndex + 1 })}
                       className={`h-full w-full object-cover shadow-sm ${cornerClasses}`}
                       onError={() => removeImage(image.id)}
                     />
@@ -319,7 +322,7 @@ export const SearchResultsImageSection: React.FC<
             </DialogTrigger>
             <DialogContent className="max-w-[90vw] sm:max-w-[90vw] max-h-[90vh] overflow-auto border border-white/10 bg-black/60 shadow-2xl backdrop-blur-md">
               <DialogHeader>
-                <DialogTitle className="sr-only">Images</DialogTitle>
+                <DialogTitle className="sr-only">{t('Images')}</DialogTitle>
                 <DialogDescription className="text-sm text-white/70">
                   {query}
                 </DialogDescription>
@@ -339,7 +342,7 @@ export const SearchResultsImageSection: React.FC<
                         <div className="relative w-full h-full flex items-center justify-center">
                           <img
                             src={img.url}
-                            alt={`Image ${idx + 1}`}
+                            alt={t('Image {number}', { number: idx + 1 })}
                             className="max-w-full max-h-[70vh] object-contain"
                             onError={() => removeImage(img.id)}
                           />
@@ -354,16 +357,16 @@ export const SearchResultsImageSection: React.FC<
                   {filteredCount > 1 && (
                     <div className="absolute inset-8 flex items-center justify-between p-4 pointer-events-none">
                       <CarouselPrevious className="size-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
-                        <span className="sr-only">Previous</span>
+                        <span className="sr-only">{t('Previous')}</span>
                       </CarouselPrevious>
                       <CarouselNext className="size-10 rounded-full shadow-sm focus:outline-hidden pointer-events-auto">
-                        <span className="sr-only">Next</span>
+                        <span className="sr-only">{t('Next')}</span>
                       </CarouselNext>
                     </div>
                   )}
                 </Carousel>
                 <div className="py-2 text-center text-sm text-white/70">
-                  {current} of {filteredCount}
+                  {t('{current} of {total}', { current, total: filteredCount })}
                 </div>
               </div>
             </DialogContent>

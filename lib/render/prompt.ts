@@ -1,4 +1,6 @@
+import { getLanguageName } from '@/lib/agents/prompts/language'
 import { REVISE_QUERY_PREFIXES } from '@/lib/draft/revise'
+import type { Locale } from '@/lib/i18n/config'
 
 /**
  * Returns the prompt section that instructs the LLM to end an answer with
@@ -8,7 +10,11 @@ import { REVISE_QUERY_PREFIXES } from '@/lib/draft/revise'
  * researched answer, changes for a draft), and they are skipped when nothing
  * useful would come next (greetings, single-fact lookups, non-answers).
  */
-export function getFollowUpSuggestionsSpecPrompt(): string {
+export function getFollowUpSuggestionsSpecPrompt(
+  locale: Locale = 'en'
+): string {
+  const relatedTitle = locale === 'zh-CN' ? '相关问题' : 'Related'
+  const reviseTitle = locale === 'zh-CN' ? '修改建议' : 'Revise'
   return `
 FOLLOW-UP SUGGESTIONS:
 After your conclusion, suggest exactly 3 next messages the user is likely to send, as buttons in a \`\`\`spec fenced code block. This is expected on every substantive answer; only the narrow skip cases below are exempt.
@@ -28,14 +34,14 @@ Suggest what this user needs next from this answer. Which kind of answer to writ
   - Deepen: go further on the single most interesting or surprising point.
   - Act/decide: the practical next step (e.g. "How do I…", "Which … for …?").
   - Broaden: a useful comparison, trade-off, or related angle.
-  Avoid three near-duplicate "what are the differences / what about X" questions. Set the Heading title to "Related" and its icon to "related". Use submitQuery for every Related button. Write each complete, self-contained question once in props.text, then copy that exact string into params.query, character for character, including punctuation. Never shorten the label or expand the query with extra context; if context is needed, put it in BOTH identical strings.
-- For a draft answer (you wrote or changed a draft, or showed draft alternatives), set Heading title to "Revise" and icon to "edit". Follow the user's latest editing intent, including earlier constraints still in force. Carry forward the exact target and protected passages; preserve word count, structure, FAQ, and other requirements. Never force a length/tone/content checklist. Avoid unrelated generic suggestions and edits already completed.
+  Avoid three near-duplicate "what are the differences / what about X" questions. Set the Heading title to "${relatedTitle}" and its icon to "related". Use submitQuery for every Related button. Write each complete, self-contained question once in props.text, then copy that exact string into params.query, character for character, including punctuation. Never shorten the label or expand the query with extra context; if context is needed, put it in BOTH identical strings.
+- For a draft answer (you wrote or changed a draft, or showed draft alternatives), set Heading title to "${reviseTitle}" and icon to "edit". Follow the user's latest editing intent, including earlier constraints still in force. Carry forward the exact target and protected passages; preserve word count, structure, FAQ, and other requirements. Never force a length/tone/content checklist. Avoid unrelated generic suggestions and edits already completed.
   Example: after "change only the ending; keep the opening paragraph", offer "末尾だけ別案を3つ見る", not hashtags, a shorter whole draft, or another opening rewrite.
   Use the existing submitQuery action for every button. Distinguish two intents in BOTH label and query:
   - alternatives: label explicitly says "see alternatives" (e.g. "末尾だけ別案を3つ見る"); start params.query with the literal prefix "${REVISE_QUERY_PREFIXES.alternatives}" followed by a newline. The query specifies the target, protected text and active constraints, asks for candidates in chat, and says not to change the draft or call editDraft. Only apply after the user selects and requests application.
   - edit: label explicitly says "rewrite" (e.g. "末尾だけ柔らかく書き換える"); start params.query with the literal prefix "${REVISE_QUERY_PREFIXES.edit}" followed by a newline. The query explicitly requests editing only that range, retaining protected text and active constraints.
   Offer three distinct useful next steps within that scope, including alternatives when useful. Do not silently broaden the scope.
-Suggestions must be concise (max 10-12 words), self-contained, and in the user's language.
+Suggestions must be concise (max 10-12 words or a similarly concise Chinese phrase), self-contained, and in ${getLanguageName(locale)}, the selected application language. This applies even when the user's message or the requested draft is in another language. Translate illustrative suggestion text below into the application language; keep action identifiers and revision prefixes unchanged.
 
 The spec block uses JSONL (one JSON object per line) with RFC 6902 JSON Patch operations.
 Always include a Heading as the first child element, with the title and icon named above.
@@ -45,7 +51,7 @@ Example output (only when suggestions are valuable; place it at the very end of 
 \`\`\`spec
 {"op":"add","path":"/root","value":"main"}
 {"op":"add","path":"/elements/main","value":{"type":"Stack","props":{"direction":"vertical","gap":"sm"},"children":["header","suggestions"]}}
-{"op":"add","path":"/elements/header","value":{"type":"Heading","props":{"title":"Related","icon":"related"},"children":[]}}
+{"op":"add","path":"/elements/header","value":{"type":"Heading","props":{"title":"${relatedTitle}","icon":"related"},"children":[]}}
 {"op":"add","path":"/elements/suggestions","value":{"type":"Stack","props":{"direction":"vertical","gap":"xs"},"children":["q1","q2","q3"]}}
 {"op":"add","path":"/elements/q1","value":{"type":"Button","props":{"text":"First suggestion here","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"First suggestion here"}}},"children":[]}}
 {"op":"add","path":"/elements/q2","value":{"type":"Button","props":{"text":"Second suggestion here","variant":"link","icon":"arrow-right"},"on":{"press":{"action":"submitQuery","params":{"query":"Second suggestion here"}}},"children":[]}}

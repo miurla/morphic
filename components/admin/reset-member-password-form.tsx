@@ -4,16 +4,20 @@ import { useState } from 'react'
 
 import { resetMemberPasswordAction } from '@/lib/actions/admin'
 import type { MemberSummary } from '@/lib/auth/better-auth/members'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
+import { useI18n } from '@/components/language-provider'
 
 export function ResetMemberPasswordForm({
   members
 }: {
   members: MemberSummary[]
 }) {
+  const { t, locale } = useI18n()
   const [userId, setUserId] = useState<string>('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -49,24 +53,24 @@ export function ResetMemberPasswordForm({
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
       <div className="grid gap-2">
-        <Label htmlFor="member">Member</Label>
+        <Label htmlFor="member">{t('Member')}</Label>
         <select
           id="member"
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
           value={userId}
           onChange={e => setUserId(e.target.value)}
         >
-          <option value="">Select a member</option>
+          <option value="">{t('Select a member')}</option>
           {members.map(member => (
             <option key={member.id} value={member.id}>
               {member.email}
-              {member.role === 'admin' ? ' (admin)' : ''}
+              {member.role === 'admin' ? t(' (admin)') : ''}
             </option>
           ))}
         </select>
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="new-password">New password</Label>
+        <Label htmlFor="new-password">{t('New password')}</Label>
         <Input
           id="new-password"
           type="password"
@@ -76,14 +80,18 @@ export function ResetMemberPasswordForm({
           onChange={e => setPassword(e.target.value)}
         />
       </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-500">
+          {localizeErrorMessage(locale, error)}
+        </p>
+      )}
       {success && (
         <p className="text-sm text-green-600 dark:text-green-500">
-          Password updated.
+          {t('Password updated.')}
         </p>
       )}
       <Button type="submit" disabled={isSubmitting || !userId}>
-        {isSubmitting ? 'Resetting...' : 'Reset password'}
+        {isSubmitting ? t('Resetting...') : t('Reset password')}
       </Button>
     </form>
   )

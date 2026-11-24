@@ -26,6 +26,7 @@ import { deleteFile, listFiles } from '@/lib/actions/files'
 import { deleteNote, listNotes } from '@/lib/actions/notes'
 import { captureClient } from '@/lib/analytics/posthog-client'
 import type { Note } from '@/lib/db/schema'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 import { stripMarkdownText } from '@/lib/utils/markdown'
 
 import {
@@ -51,6 +52,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { TooltipButton } from '@/components/ui/tooltip-button'
 
+import { useI18n } from '@/components/language-provider'
 import { MarkdownMessage } from '@/components/message'
 
 import { useLibrary } from './library-context'
@@ -67,9 +69,9 @@ type DeleteTarget =
       source: 'library_list' | 'library_detail'
     }
 
-function formatNoteDate(value: Date | string) {
+function formatNoteDate(value: Date | string, locale: string) {
   const date = value instanceof Date ? value : new Date(value)
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -81,11 +83,16 @@ function getExcerpt(content: string) {
   return stripMarkdownText(content).slice(0, 140)
 }
 
-function formatBytes(value: number | null) {
-  if (!value) return 'Unknown size'
-  if (value < 1024) return `${value} B`
-  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`
-  return `${(value / 1024 / 1024).toFixed(1)} MB`
+function formatBytes(
+  value: number | null,
+  locale: string,
+  t: (message: string) => string
+) {
+  if (!value) return t('Unknown size')
+  if (value < 1024) return `${value.toLocaleString(locale)} B`
+  if (value < 1024 * 1024)
+    return `${Math.round(value / 1024).toLocaleString(locale)} KB`
+  return `${(value / 1024 / 1024).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB`
 }
 
 function stripMarkdownTitle(value: string) {
@@ -103,6 +110,7 @@ function LibraryItemActionsMenu({
   deleteLabel: string
   onDelete: () => void
 }) {
+  const { t } = useI18n()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
@@ -114,7 +122,7 @@ function LibraryItemActionsMenu({
           size="icon"
           className="size-7 shrink-0 text-muted-foreground"
           onClick={event => event.stopPropagation()}
-          aria-label="Note actions"
+          aria-label={t('Note actions')}
         >
           <MoreHorizontal className="size-4" />
         </Button>
@@ -155,6 +163,7 @@ function LibraryLoadingSkeleton() {
 }
 
 export function LibraryPanel() {
+  const { t, locale } = useI18n()
   const {
     isOpen,
     closeLibrary,
@@ -220,7 +229,13 @@ export function LibraryPanel() {
           reason: loadReason,
           error: result.error ?? 'unknown'
         })
-        toast.error(result.error ?? 'Failed to load library')
+        toast.error(
+          localizeErrorMessage(
+            locale,
+            result.error ?? 'Failed to load library',
+            'Failed to load library'
+          )
+        )
         return
       }
 
@@ -248,7 +263,7 @@ export function LibraryPanel() {
     return () => {
       cancelled = true
     }
-  }, [isOpen, notesCache, refreshKey, replaceNotesCache])
+  }, [isOpen, notesCache, refreshKey, replaceNotesCache, locale])
 
   useEffect(() => {
     if (!isOpen) return
@@ -273,7 +288,13 @@ export function LibraryPanel() {
           reason: loadReason,
           error: result.error ?? 'unknown'
         })
-        toast.error(result.error ?? 'Failed to load files')
+        toast.error(
+          localizeErrorMessage(
+            locale,
+            result.error ?? 'Failed to load files',
+            'Failed to load files'
+          )
+        )
         return
       }
 
@@ -295,7 +316,7 @@ export function LibraryPanel() {
     return () => {
       cancelled = true
     }
-  }, [filesCache, isOpen, refreshKey, replaceFilesCache])
+  }, [filesCache, isOpen, refreshKey, replaceFilesCache, locale])
 
   const handleLoadMore = useCallback(async () => {
     if (isLoadingMore) return
@@ -325,7 +346,13 @@ export function LibraryPanel() {
                   reason: 'load_more',
                   error: result.error ?? 'unknown'
                 })
-                toast.error(result.error ?? 'Failed to load library')
+                toast.error(
+                  localizeErrorMessage(
+                    locale,
+                    result.error ?? 'Failed to load library',
+                    'Failed to load library'
+                  )
+                )
                 return
               }
 
@@ -355,7 +382,13 @@ export function LibraryPanel() {
                   reason: 'load_more',
                   error: result.error ?? 'unknown'
                 })
-                toast.error(result.error ?? 'Failed to load files')
+                toast.error(
+                  localizeErrorMessage(
+                    locale,
+                    result.error ?? 'Failed to load files',
+                    'Failed to load files'
+                  )
+                )
                 return
               }
 
@@ -384,7 +417,8 @@ export function LibraryPanel() {
     appendNotesCache,
     filesCache,
     isLoadingMore,
-    notesCache
+    notesCache,
+    locale
   ])
 
   useEffect(() => {
@@ -450,10 +484,10 @@ export function LibraryPanel() {
         : isLoading || isFilesLoading
   const emptyMessage =
     activeTab === 'notes'
-      ? 'No notes yet.'
+      ? t('No notes yet.')
       : activeTab === 'files'
-        ? 'No files yet.'
-        : 'No library items yet.'
+        ? t('No files yet.')
+        : t('No library items yet.')
   const selectedTitle = useMemo(
     () =>
       selectedNote
@@ -554,7 +588,13 @@ export function LibraryPanel() {
             reason: result.error ?? 'unknown'
           }
         )
-        toast.error(result.error ?? 'Failed to delete item')
+        toast.error(
+          localizeErrorMessage(
+            locale,
+            result.error ?? 'Failed to delete item',
+            'Failed to delete item'
+          )
+        )
         return
       }
 
@@ -563,7 +603,9 @@ export function LibraryPanel() {
         { itemId: target.item.id }
       )
       toast.success(
-        target.kind === 'note' ? 'Note deleted' : 'File removed from Library'
+        target.kind === 'note'
+          ? t('Note deleted')
+          : t('File removed from Library')
       )
       if (target.kind === 'note' && selectedNote?.id === target.item.id) {
         setSelectedNote(null)
@@ -598,21 +640,21 @@ export function LibraryPanel() {
                       setSelectedNote(null)
                       setSelectedFile(null)
                     }}
-                    aria-label="Back to library"
-                    tooltipContent="Back"
+                    aria-label={t('Back to library')}
+                    tooltipContent={t('Back')}
                   >
                     <ArrowLeft className="size-4" />
                   </TooltipButton>
                   <div className="min-w-0">
                     <h3 className="truncate text-sm font-medium">
-                      {selectedTitle || 'Untitled item'}
+                      {selectedTitle || t('Untitled item')}
                     </h3>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   {selectedNote && (
                     <LibraryItemActionsMenu
-                      deleteLabel="Delete Note"
+                      deleteLabel={t('Delete Note')}
                       onDelete={() =>
                         handleRequestDeleteNote(selectedNote, 'library_detail')
                       }
@@ -620,7 +662,7 @@ export function LibraryPanel() {
                   )}
                   {selectedFile && (
                     <LibraryItemActionsMenu
-                      deleteLabel="Remove from Library"
+                      deleteLabel={t('Remove from Library')}
                       onDelete={() =>
                         handleRequestDeleteFile(selectedFile, 'library_detail')
                       }
@@ -630,8 +672,8 @@ export function LibraryPanel() {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleCloseLibrary('detail_header')}
-                    aria-label="Close panel"
-                    tooltipContent="Close"
+                    aria-label={t('Close panel')}
+                    tooltipContent={t('Close')}
                   >
                     <X className="size-4" />
                   </TooltipButton>
@@ -643,14 +685,16 @@ export function LibraryPanel() {
                   <div className="flex items-center gap-2 rounded-md p-2">
                     <LibraryIcon size={18} />
                   </div>
-                  <span className="truncate text-sm font-medium">Library</span>
+                  <span className="truncate text-sm font-medium">
+                    {t('Library')}
+                  </span>
                 </h3>
                 <TooltipButton
                   variant="ghost"
                   size="icon"
                   onClick={() => handleCloseLibrary('panel_header')}
-                  aria-label="Close panel"
-                  tooltipContent="Close"
+                  aria-label={t('Close panel')}
+                  tooltipContent={t('Close')}
                 >
                   <X className="size-4" />
                 </TooltipButton>
@@ -668,7 +712,9 @@ export function LibraryPanel() {
                 <MarkdownMessage message={selectedNote.content} />
               </article>
               <footer className="shrink-0 border-t px-4 py-2 text-xs text-muted-foreground">
-                Saved {formatNoteDate(selectedNote.createdAt)}
+                {t('Saved {date}', {
+                  date: formatNoteDate(selectedNote.createdAt, locale)
+                })}
               </footer>
             </div>
           ) : selectedFile ? (
@@ -691,27 +737,33 @@ export function LibraryPanel() {
                 )}
                 <div className="mt-4 space-y-3 text-sm">
                   <div>
-                    <p className="text-xs text-muted-foreground">Filename</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t('Filename')}
+                    </p>
                     <p className="break-words font-medium">
                       {selectedFile.filename}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <p className="text-muted-foreground">Type</p>
+                      <p className="text-muted-foreground">{t('Type')}</p>
                       <p className="mt-0.5 break-words">
                         {selectedFile.mediaType}
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Size</p>
-                      <p className="mt-0.5">{formatBytes(selectedFile.size)}</p>
+                      <p className="text-muted-foreground">{t('Size')}</p>
+                      <p className="mt-0.5">
+                        {formatBytes(selectedFile.size, locale, t)}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
               <footer className="shrink-0 border-t px-4 py-2 text-xs text-muted-foreground">
-                Added {formatNoteDate(selectedFile.createdAt)}
+                {t('Added {date}', {
+                  date: formatNoteDate(selectedFile.createdAt, locale)
+                })}
               </footer>
             </div>
           ) : (
@@ -723,7 +775,7 @@ export function LibraryPanel() {
               <div className="mb-2 flex gap-1 px-1">
                 {(['all', 'notes', 'files'] as const).map(tab => (
                   <Button
-                    key={tab}
+                    key={t({ all: 'All', notes: 'Notes', files: 'Files' }[tab])}
                     type="button"
                     size="sm"
                     variant={activeTab === tab ? 'secondary' : 'ghost'}
@@ -733,7 +785,7 @@ export function LibraryPanel() {
                       captureClient('library_tab_selected', { tab })
                     }}
                   >
-                    {tab}
+                    {t({ all: 'All', notes: 'Notes', files: 'Files' }[tab])}
                   </Button>
                 ))}
               </div>
@@ -766,15 +818,16 @@ export function LibraryPanel() {
                               </span>
                             </div>
                             <p className="mt-1 truncate text-xs text-muted-foreground">
-                              {file.mediaType} · {formatBytes(file.size)}
+                              {file.mediaType} ·{' '}
+                              {formatBytes(file.size, locale, t)}
                             </p>
                             <p className="mt-1 text-[11px] text-muted-foreground/75">
-                              {formatNoteDate(file.updatedAt)}
+                              {formatNoteDate(file.updatedAt, locale)}
                             </p>
                           </button>
                           <div className="absolute right-1 top-1.5 opacity-100 md:opacity-0 md:transition-opacity md:group-hover/note:opacity-100">
                             <LibraryItemActionsMenu
-                              deleteLabel="Remove from Library"
+                              deleteLabel={t('Remove from Library')}
                               onDelete={() =>
                                 handleRequestDeleteFile(file, 'library_list')
                               }
@@ -786,7 +839,7 @@ export function LibraryPanel() {
 
                     const note = libraryItem.item
                     const title =
-                      stripMarkdownTitle(note.title) || 'Untitled note'
+                      stripMarkdownTitle(note.title) || t('Untitled note')
                     return (
                       <div
                         key={`note-${note.id}`}
@@ -807,12 +860,12 @@ export function LibraryPanel() {
                             {getExcerpt(note.content)}
                           </p>
                           <p className="mt-1 text-[11px] text-muted-foreground/75">
-                            {formatNoteDate(note.updatedAt)}
+                            {formatNoteDate(note.updatedAt, locale)}
                           </p>
                         </button>
                         <div className="absolute right-1 top-1.5 opacity-100 md:opacity-0 md:transition-opacity md:group-hover/note:opacity-100">
                           <LibraryItemActionsMenu
-                            deleteLabel="Delete Note"
+                            deleteLabel={t('Delete Note')}
                             onDelete={() =>
                               handleRequestDeleteNote(note, 'library_list')
                             }
@@ -848,17 +901,25 @@ export function LibraryPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {deleteTarget?.kind === 'file'
-                ? 'Remove this file from Library?'
-                : `Delete this ${deleteTarget?.kind ?? 'item'}?`}
+                ? t('Remove this file from Library?')
+                : deleteTarget?.kind === 'note'
+                  ? t('Delete this note?')
+                  : t('Delete this item?')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget?.kind === 'file'
-                ? 'This removes the file from Library. Existing chat history and stored attachments are not deleted.'
-                : 'This action cannot be undone. The saved item will be permanently removed from your library.'}
+                ? t(
+                    'This removes the file from Library. Existing chat history and stored attachments are not deleted.'
+                  )
+                : t(
+                    'This action cannot be undone. The saved item will be permanently removed from your library.'
+                  )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>
+              {t('Cancel')}
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={isDeleting}
               onClick={event => {
@@ -872,9 +933,9 @@ export function LibraryPanel() {
                   <Spinner />
                 </div>
               ) : deleteTarget?.kind === 'file' ? (
-                'Remove'
+                t('Remove')
               ) : (
-                'Delete'
+                t('Delete')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

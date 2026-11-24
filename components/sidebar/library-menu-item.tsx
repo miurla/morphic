@@ -6,9 +6,12 @@ import { captureClient } from '@/lib/analytics/posthog-client'
 
 import { SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 
+import { useI18n } from '@/components/language-provider'
 import { useLibrary } from '@/components/library/library-context'
 
 export function LibraryMenuItem() {
+  const { t } = useI18n()
+
   const { isOpen, toggleLibrary } = useLibrary()
 
   return (
@@ -22,7 +25,7 @@ export function LibraryMenuItem() {
         }}
       >
         <IconLibrary className="size-4" />
-        <span>Library</span>
+        <span>{t('Library')}</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
   )

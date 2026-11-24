@@ -10,6 +10,8 @@ import {
 import { draftDisplayTitle, parseDraftFenceBody } from '@/lib/draft/draft'
 import type { ToolPart } from '@/lib/types/ai'
 
+import { useI18n } from '@/components/language-provider'
+
 import { useArtifact } from '../artifact/artifact-context'
 
 import { useLiveDraftBlock } from './draft-store'
@@ -30,6 +32,8 @@ function CardShell({
   busy: boolean
   onOpen: () => void
 }) {
+  const { t } = useI18n()
+
   return (
     <button
       type="button"
@@ -48,7 +52,7 @@ function CardShell({
         <span className="text-xs text-muted-foreground">{detail}</span>
       </span>
       <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-        Open
+        {t('Open')}
       </span>
     </button>
   )
@@ -56,6 +60,8 @@ function CardShell({
 
 /** Stands in for a ````draft block in the answer; the content lives in the panel. */
 export function DraftFenceCard({ code }: { code: string }) {
+  const { t, locale } = useI18n()
+
   const openDraft = useOpenDraft()
   const live = useLiveDraftBlock()
   const draft = parseDraftFenceBody(code)
@@ -77,11 +83,15 @@ export function DraftFenceCard({ code }: { code: string }) {
 
   return (
     <CardShell
-      title={title || 'Draft'}
+      title={title || t('Draft')}
       detail={
         writing
-          ? `Writing… ${content.length.toLocaleString()} characters`
-          : `${content.length.toLocaleString()} characters`
+          ? t('Writing… {count} characters', {
+              count: content.length.toLocaleString(locale)
+            })
+          : t('{count} characters', {
+              count: content.length.toLocaleString(locale)
+            })
       }
       busy={writing}
       onOpen={openDraft}
@@ -93,25 +103,29 @@ type EditOutput = { applied?: number; failed?: unknown[]; message?: string }
 
 /** Shown in the answer where the model edited the draft. */
 export function DraftEditNotice({ part }: { part: ToolPart }) {
+  const { t } = useI18n()
+
   const openDraft = useOpenDraft()
   const output = part.output as EditOutput | undefined
   const busy =
     part.state === 'input-streaming' || part.state === 'input-available'
 
-  let detail = 'Editing…'
-  if (part.state === 'output-error') detail = 'The edit failed'
+  let detail = t('Editing…')
+  if (part.state === 'output-error') detail = t('The edit failed')
   else if (part.state === 'output-available') {
     const applied = output?.applied ?? 0
     const failed = output?.failed?.length ?? 0
     detail =
       applied === 0
-        ? 'No changes applied'
-        : `${applied} change${applied === 1 ? '' : 's'}${failed ? `, ${failed} skipped` : ''}`
+        ? t('No changes applied')
+        : t(applied === 1 ? t('{count} change') : t('{count} changes'), {
+            count: applied
+          }) + (failed ? t(', {count} skipped', { count: failed }) : '')
   }
 
   return (
     <CardShell
-      title="Edited the draft"
+      title={t('Edited the draft')}
       detail={detail}
       busy={busy}
       onOpen={openDraft}

@@ -11,6 +11,7 @@ import {
   useState
 } from 'react'
 
+import { useI18n } from '@/components/language-provider'
 import { UsageLimitDialog } from '@/components/usage-limit-dialog'
 
 export interface UsageBudget {
@@ -237,19 +238,20 @@ export function useUsageBudget() {
 }
 
 export function UsageBudgetWarning() {
+  const { t, locale } = useI18n()
   const { enabled, usage, isLow } = useUsageBudget()
 
   if (!enabled || !usage || !isLow) return null
 
   return (
     <p
-      className="mx-auto w-full max-w-3xl px-4 pb-2 text-sm text-destructive"
+      className="mx-auto w-full max-w-3xl px-4 pb-2 text-sm text-destructive tabular-nums"
       role="status"
       aria-live="polite"
     >
-      You&apos;re running low on monthly usage.{' '}
-      <span className="tabular-nums">{Math.max(0, usage.remaining)}</span>{' '}
-      remaining.
+      {t("You're running low on monthly usage. {count} remaining.", {
+        count: Math.max(0, usage.remaining).toLocaleString(locale)
+      })}
     </p>
   )
 }

@@ -1,6 +1,10 @@
+'use client'
+
 import { IconChevronDown as ChevronDown } from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
+
+import { useI18n } from '@/components/language-provider'
 
 import { ChatSpaceIcon } from './spaces/chat-space-icon'
 import {
@@ -43,6 +47,8 @@ export function CollapsibleMessage({
   chevronSize = 'md',
   headerClickBehavior = 'toggle'
 }: CollapsibleMessageProps) {
+  const { t } = useI18n()
+
   const content = children
 
   return (
@@ -124,7 +130,7 @@ export function CollapsibleMessage({
                       (variant === 'process' || variant === 'process-sub') &&
                         'p-0.5'
                     )}
-                    aria-label={isOpen ? 'Collapse' : 'Expand'}
+                    aria-label={isOpen ? t('Collapse') : t('Expand')}
                   >
                     <ChevronDown
                       className={cn(
@@ -140,7 +146,7 @@ export function CollapsibleMessage({
                   <button
                     type="button"
                     className="p-1 hover:bg-accent rounded-md transition-transform duration-200 group"
-                    aria-label={isOpen ? 'Collapse' : 'Expand'}
+                    aria-label={isOpen ? t('Collapse') : t('Expand')}
                   >
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </button>

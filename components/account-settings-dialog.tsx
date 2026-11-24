@@ -16,6 +16,7 @@ import { signOut } from '@/lib/actions/auth'
 import type { AppUser } from '@/lib/auth/types'
 import { chatStore } from '@/lib/chat-store'
 import { useAuthCapabilities } from '@/lib/contexts/app-user-context'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
 
 import {
   AlertDialog,
@@ -39,6 +40,8 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 
+import { useI18n } from '@/components/language-provider'
+import { LanguageSelector } from '@/components/language-selector'
 import { useTheme } from '@/components/theme-provider'
 
 interface AccountSettingsDialogProps {
@@ -58,6 +61,7 @@ export function AccountSettingsDialog({
   onOpenChange,
   user
 }: AccountSettingsDialogProps) {
+  const { t, locale } = useI18n()
   const router = useRouter()
   const { setTheme, theme } = useTheme()
   const capabilities = useAuthCapabilities()
@@ -65,7 +69,7 @@ export function AccountSettingsDialog({
   const [confirmOpen, setConfirmOpen] = useState(false)
   const activeTheme = theme ?? 'system'
 
-  const userName = user.name || 'User'
+  const userName = user.name || t('User')
 
   const handleDeleteAccount = () => {
     startDeleteTransition(async () => {
@@ -79,7 +83,7 @@ export function AccountSettingsDialog({
           console.error('Failed to clear client session:', error)
         }
 
-        toast.success('Account deleted')
+        toast.success(t('Account deleted'))
         setConfirmOpen(false)
         onOpenChange(false)
         router.push('/')
@@ -87,7 +91,13 @@ export function AccountSettingsDialog({
         return
       }
 
-      toast.error(result.error ?? 'Failed to delete account')
+      toast.error(
+        localizeErrorMessage(
+          locale,
+          result.error ?? 'Failed to delete account',
+          'Failed to delete account'
+        )
+      )
     })
   }
 
@@ -103,18 +113,18 @@ export function AccountSettingsDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Account</DialogTitle>
+          <DialogTitle>{t('Account')}</DialogTitle>
           <DialogDescription>
-            Manage your account preferences and data.
+            {t('Manage your account preferences and data.')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-6">
           <section className="grid gap-3">
             <div className="grid gap-1">
-              <h3 className="text-sm font-medium">Profile</h3>
+              <h3 className="text-sm font-medium">{t('Profile')}</h3>
               <div className="text-sm text-muted-foreground">
                 <p className="truncate">{userName}</p>
                 <p className="truncate">{user.email}</p>
@@ -126,9 +136,9 @@ export function AccountSettingsDialog({
 
           <section className="grid gap-3">
             <div className="grid gap-1">
-              <h3 className="text-sm font-medium">Theme</h3>
+              <h3 className="text-sm font-medium">{t('Theme')}</h3>
               <p className="text-sm text-muted-foreground">
-                Choose how Morphic appears on this device.
+                {t('Choose how Morphic appears on this device.')}
               </p>
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -146,12 +156,15 @@ export function AccountSettingsDialog({
                     onClick={() => setTheme(option.value)}
                   >
                     <Icon className="size-4" />
-                    <span className="text-xs">{option.label}</span>
+                    <span className="text-xs">{t(option.label)}</span>
                   </Button>
                 )
               })}
             </div>
           </section>
+
+          <Separator />
+          <LanguageSelector />
 
           {capabilities.deleteUser && (
             <>
@@ -160,11 +173,12 @@ export function AccountSettingsDialog({
               <section className="grid gap-3">
                 <div className="grid gap-1">
                   <h3 className="text-sm font-medium text-destructive">
-                    Delete account
+                    {t('Delete account')}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Permanently delete your account, chat history, and uploaded
-                    files. This action cannot be undone.
+                    {t(
+                      'Permanently delete your account, chat history, and uploaded files. This action cannot be undone.'
+                    )}
                   </p>
                 </div>
 
@@ -184,20 +198,23 @@ export function AccountSettingsDialog({
                       disabled={isDeleting}
                     >
                       <Trash2 className="size-4" />
-                      Delete account
+                      {t('Delete account')}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                      <AlertDialogTitle>
+                        {t('Delete your account?')}
+                      </AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. Your account, chat
-                        history, and uploaded files will be permanently deleted.
+                        {t(
+                          'This action cannot be undone. Your account, chat history, and uploaded files will be permanently deleted.'
+                        )}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel disabled={isDeleting}>
-                        Cancel
+                        {t('Cancel')}
                       </AlertDialogCancel>
                       <AlertDialogAction
                         disabled={isDeleting}
@@ -207,7 +224,7 @@ export function AccountSettingsDialog({
                         }}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
-                        {isDeleting ? <Spinner /> : 'Delete account'}
+                        {isDeleting ? <Spinner /> : t('Delete account')}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

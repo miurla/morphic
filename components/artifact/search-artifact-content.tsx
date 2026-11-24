@@ -3,6 +3,7 @@
 import type { SearchResults as TypeSearchResults } from '@/lib/types'
 import type { ToolPart } from '@/lib/types/ai'
 
+import { useI18n } from '@/components/language-provider'
 import { SearchResults } from '@/components/search-results'
 import { SearchResultsImageSection } from '@/components/search-results-image'
 import { Section, ToolArgsSection } from '@/components/section'
@@ -12,6 +13,8 @@ import {
 } from '@/components/video-search-results'
 
 export function SearchArtifactContent({ tool }: { tool: ToolPart<'search'> }) {
+  const { t } = useI18n()
+
   // Handle streaming output states
   const output = tool.state === 'output-available' ? tool.output : undefined
   const searchResults: TypeSearchResults | undefined =
@@ -25,7 +28,7 @@ export function SearchArtifactContent({ tool }: { tool: ToolPart<'search'> }) {
       (searchResults.images && searchResults.images.length > 0))
 
   if (!hasResults) {
-    return <div className="p-4">No search results</div>
+    return <div className="p-4">{t('No search results')}</div>
   }
 
   return (

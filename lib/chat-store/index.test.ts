@@ -43,6 +43,7 @@ describe('ChatStore', () => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+    document.documentElement.lang = 'en'
   })
 
   it('seeds once and reuses the live Chat within the verified window', async () => {
@@ -421,7 +422,16 @@ describe('ChatStore', () => {
       const detachOld = store.attachHandlers(entry, { onFinish: oldHandler })
       store.attachHandlers(entry, { onFinish: currentHandler })
       detachOld()
-      await entry.chat.sendMessage({ text: 'first' })
+      document.documentElement.lang = 'zh-CN'
+      await entry.chat.sendMessage(
+        { text: 'first' },
+        { headers: { 'x-test-header': 'preserved', 'x-morphic-locale': 'en' } }
+      )
+      const firstHeaders = new Headers(
+        vi.mocked(fetch).mock.calls[0][1]!.headers
+      )
+      expect(firstHeaders.get('x-morphic-locale')).toBe('zh-CN')
+      expect(firstHeaders.get('x-test-header')).toBe('preserved')
       const firstBody = JSON.parse(
         vi.mocked(fetch).mock.calls[0][1]!.body as string
       )
@@ -433,12 +443,25 @@ describe('ChatStore', () => {
       expect(entry.verifiedAt).toBeGreaterThan(0)
       expect(currentHandler).toHaveBeenCalledOnce()
       expect(oldHandler).not.toHaveBeenCalled()
+      document.documentElement.lang = 'en'
       await entry.chat.sendMessage({ text: 'second' })
+      expect(
+        new Headers(vi.mocked(fetch).mock.calls[1][1]!.headers).get(
+          'x-morphic-locale'
+        )
+      ).toBe('en')
       const secondBody = JSON.parse(
         vi.mocked(fetch).mock.calls[1][1]!.body as string
       )
       expect(secondBody.isNewChat).toBe(false)
       if (isGuest) expect(secondBody.messages).toHaveLength(3)
+      document.documentElement.lang = 'zh-CN'
+      await entry.chat.regenerate()
+      expect(
+        new Headers(vi.mocked(fetch).mock.calls[2][1]!.headers).get(
+          'x-morphic-locale'
+        )
+      ).toBe('zh-CN')
     }
   )
 

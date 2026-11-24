@@ -7,6 +7,7 @@ import type { ReasoningPart } from '@ai-sdk/provider-utils'
 import { cn } from '@/lib/utils'
 
 import { useArtifact } from '@/components/artifact/artifact-context'
+import { useI18n } from '@/components/language-provider'
 
 import { CollapsibleMessage } from './collapsible-message'
 import { DefaultSkeleton } from './default-skeleton'
@@ -39,6 +40,8 @@ export function ReasoningSection({
   isFirst = false,
   isLast = false
 }: ReasoningSectionProps) {
+  const { t } = useI18n()
+
   const { open } = useArtifact()
   // Show a short preview when collapsed; switch to a generic label when expanded
   const HEADER_PREVIEW_CHARS = 120
@@ -73,12 +76,12 @@ export function ReasoningSection({
   }, [content.reasoning, content.isDone])
 
   const headerLabel = isOpen
-    ? 'Thoughts'
+    ? t('Thoughts')
     : preview && preview.length > 0
       ? preview
       : !content.isDone
-        ? 'Thinking...'
-        : 'Thoughts'
+        ? t('Thinking...')
+        : t('Thoughts')
 
   const reasoningHeader = (
     <ProcessHeader

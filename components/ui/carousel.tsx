@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
 
+import { Trans } from '@/components/language-provider'
+
 type CarouselApi = UseEmblaCarouselType[1]
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
 type CarouselOptions = UseCarouselParameters[0]
@@ -222,7 +224,9 @@ const CarouselPrevious = React.forwardRef<
       {...props}
     >
       <ArrowLeft className="size-4" />
-      <span className="sr-only">Previous slide</span>
+      <span className="sr-only">
+        <Trans>Previous slide</Trans>
+      </span>
     </Button>
   )
 })
@@ -251,7 +255,9 @@ const CarouselNext = React.forwardRef<
       {...props}
     >
       <ArrowRight className="size-4" />
-      <span className="sr-only">Next slide</span>
+      <span className="sr-only">
+        <Trans>Next slide</Trans>
+      </span>
     </Button>
   )
 })

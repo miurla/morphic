@@ -32,6 +32,9 @@ import {
 vi.mock('@/lib/auth/get-current-user')
 vi.mock('@/lib/db/actions')
 vi.mock('@/lib/agents/title-generator')
+vi.mock('@/lib/i18n/server', () => ({
+  getI18n: vi.fn(async () => ({ locale: 'en' }))
+}))
 vi.mock('@/lib/auth/provider', async importOriginal => ({
   ...(await importOriginal<typeof import('@/lib/auth/provider')>()),
   // Default: a supabase-shaped provider that supports sharing;
@@ -746,7 +749,8 @@ describe('Chat Actions', () => {
 
       expect(generateChatTitle).toHaveBeenCalledWith({
         userMessageContent: 'Hello, how are you?',
-        modelId
+        modelId,
+        locale: 'en'
       })
       expect(dbActions.updateChatTitle).toHaveBeenCalledWith(
         chatId,

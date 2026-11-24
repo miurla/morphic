@@ -1,5 +1,7 @@
 import { UIMessage } from '@ai-sdk/react'
 
+import type { Locale } from '@/lib/i18n/config'
+
 import { Model } from '../types/models'
 import { SearchMode } from '../types/search'
 
@@ -13,6 +15,7 @@ export interface BaseStreamConfig {
   abortSignal?: AbortSignal
   isNewChat?: boolean
   searchMode?: SearchMode
+  locale?: Locale
   spaceColor?: string
   onZeroPartError?: () => Promise<void>
 }

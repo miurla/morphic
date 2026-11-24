@@ -13,6 +13,9 @@ import { toast } from 'sonner'
 import { deleteChat } from '@/lib/actions/chat'
 import { chatStore } from '@/lib/chat-store'
 import { Chat as DBChat } from '@/lib/db/schema'
+import type { Locale } from '@/lib/i18n/config'
+import { localizeErrorMessage } from '@/lib/i18n/errors'
+import { createTranslator } from '@/lib/i18n/translate'
 
 import {
   AlertDialog,
@@ -36,23 +39,26 @@ import {
   SidebarMenuItem
 } from '@/components/ui/sidebar'
 
+import { useI18n } from '@/components/language-provider'
+
 import { Spinner } from '../ui/spinner'
 
 interface ChatMenuItemProps {
   chat: DBChat
 }
 
-const formatDateWithTime = (date: Date | string) => {
+const formatDateWithTime = (date: Date | string, locale: Locale) => {
+  const t = createTranslator(locale)
   const parsedDate = new Date(date)
   const now = new Date()
   const yesterday = new Date()
   yesterday.setDate(yesterday.getDate() - 1)
 
   const formatTime = (date: Date) => {
-    return date.toLocaleString('en-US', {
+    return date.toLocaleString(locale, {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true
+      hour12: locale === 'en'
     })
   }
 
@@ -61,26 +67,28 @@ const formatDateWithTime = (date: Date | string) => {
     parsedDate.getMonth() === now.getMonth() &&
     parsedDate.getFullYear() === now.getFullYear()
   ) {
-    return `Today, ${formatTime(parsedDate)}`
+    return t('Today, {time}', { time: formatTime(parsedDate) })
   } else if (
     parsedDate.getDate() === yesterday.getDate() &&
     parsedDate.getMonth() === yesterday.getMonth() &&
     parsedDate.getFullYear() === yesterday.getFullYear()
   ) {
-    return `Yesterday, ${formatTime(parsedDate)}`
+    return t('Yesterday, {time}', { time: formatTime(parsedDate) })
   } else {
-    return parsedDate.toLocaleString('en-US', {
+    return parsedDate.toLocaleString(locale, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true
+      hour12: locale === 'en'
     })
   }
 }
 
 export function ChatMenuItem({ chat }: ChatMenuItemProps) {
+  const { t, locale } = useI18n()
+
   const pathname = usePathname()
   const path = `/search/${chat.id}`
   const isActive = pathname === path
@@ -100,18 +108,18 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
 
       if (result?.success) {
         chatStore.remove(chat.id)
-        toast.success('Chat deleted')
+        toast.success(t('Chat deleted'))
         if (isActive) {
           router.push('/')
         }
         window.dispatchEvent(new CustomEvent('chat-history-updated'))
       } else if (result?.error) {
-        toast.error(result.error)
+        toast.error(localizeErrorMessage(locale, result.error))
       } else {
-        toast.error('An unexpected error occurred while deleting the chat.')
+        toast.error(t('An unexpected error occurred while deleting the chat.'))
       }
     })
-  }, [chat.id, isActive, router, startTransition])
+  }, [chat.id, isActive, router, startTransition, t, locale])
   const handleMenuOpenChange = useCallback((open: boolean) => {
     setIsMenuOpen(open)
   }, [])
@@ -128,7 +136,7 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
             {chat.title}
           </div>
           <div className="text-xs text-muted-foreground w-full">
-            {formatDateWithTime(chat.createdAt)}
+            {formatDateWithTime(chat.createdAt, locale)}
           </div>
         </Link>
       </SidebarMenuButton>
@@ -137,7 +145,7 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
         <DropdownMenuTrigger asChild>
           <SidebarMenuAction className="size-7 p-1 mr-1">
             <MoreHorizontal size={16} />
-            <span className="sr-only">Chat Actions</span>
+            <span className="sr-only">{t('Chat Actions')}</span>
           </SidebarMenuAction>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start">
@@ -150,7 +158,7 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
             }}
           >
             <Trash2 size={14} />
-            Delete Chat
+            {t('Delete Chat')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -158,14 +166,17 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('Are you absolutely sure?')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete this
-              chat history.
+              {t(
+                'This action cannot be undone. This will permanently delete this chat history.'
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>
+              {t('Cancel')}
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={isPending}
               onClick={event => {
@@ -179,7 +190,7 @@ export function ChatMenuItem({ chat }: ChatMenuItemProps) {
                   <Spinner />
                 </div>
               ) : (
-                'Delete'
+                t('Delete')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -74,9 +74,6 @@ import { BaseStreamConfig } from './types'
 
 import { langfuseSpanProcessor } from '@/instrumentation'
 
-// Constants
-const DEFAULT_CHAT_TITLE = 'Untitled'
-
 export async function createChatStreamResponse(
   config: BaseStreamConfig
 ): Promise<Response> {
@@ -91,6 +88,7 @@ export async function createChatStreamResponse(
     isNewChat,
     searchMode,
     spaceColor,
+    locale = 'en',
     onZeroPartError
   } = config
 
@@ -259,6 +257,7 @@ export async function createChatStreamResponse(
         citationLabelSeed: nextCitationLabelNumber(messagesToModel),
         currentDraft,
         spaceInstructions,
+        locale,
         alternativesOnly: isReviseAlternativesTurn(
           messagesToModel.findLast(m => m.role === 'user') ?? { role: '' }
         )
@@ -341,10 +340,11 @@ export async function createChatStreamResponse(
         titlePromise = generateChatTitle({
           userMessageContent: userContent,
           modelId: context.modelId,
+          locale,
           abortSignal
         }).catch(error => {
           console.error('Error generating title:', error)
-          return DEFAULT_CHAT_TITLE
+          return locale === 'zh-CN' ? '新对话' : 'New Chat'
         })
       }
 

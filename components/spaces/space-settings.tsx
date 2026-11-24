@@ -22,6 +22,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { IconLogo } from '@/components/ui/icons'
 
+import { useI18n } from '@/components/language-provider'
+
 import {
   DEFAULT_SPACE_COLOR,
   SPACE_COLORS,
@@ -58,6 +60,7 @@ export function SpaceSettings() {
 }
 
 function SpaceSettingsView() {
+  const { t } = useI18n()
   const spaces = useSpaces()
   const color = spaces.editor!.color
   const isDefault = color === DEFAULT_SPACE_COLOR
@@ -85,7 +88,7 @@ function SpaceSettingsView() {
   return (
     <div
       role="dialog"
-      aria-label="Space settings"
+      aria-label={t('Space settings')}
       className="absolute inset-0 z-20 overflow-y-auto"
     >
       <Button
@@ -94,7 +97,7 @@ function SpaceSettingsView() {
         onClick={closeEditor}
         className="absolute top-3 right-3 text-muted-foreground"
       >
-        Close
+        {t('Close')}
         <kbd className="ml-1 hidden font-sans text-[10px] text-muted-foreground md:inline">
           Esc
         </kbd>
@@ -106,7 +109,7 @@ function SpaceSettingsView() {
 
         <div
           role="radiogroup"
-          aria-label="Spaces"
+          aria-label={t('Spaces')}
           className="flex flex-wrap items-center justify-center gap-2.5"
         >
           {SPACE_COLORS.map(option => (
@@ -123,17 +126,18 @@ function SpaceSettingsView() {
 
         {folded ? (
           <div className="flex w-full flex-col gap-3">
-            <h2 className="text-2xl font-semibold">Default</h2>
+            <h2 className="text-2xl font-semibold">{t('Default')}</h2>
             <p className="text-sm text-muted-foreground">
-              Morphic&apos;s standard behavior. Add instructions only if you
-              want them in every chat.
+              {t(
+                "Morphic's standard behavior. Add instructions only if you want them in every chat."
+              )}
             </p>
             <button
               type="button"
               onClick={() => setExpandedDefault(true)}
               className="self-start text-sm font-medium underline-offset-4 hover:underline"
             >
-              Add instructions
+              {t('Add instructions')}
             </button>
           </div>
         ) : (
@@ -141,11 +145,11 @@ function SpaceSettingsView() {
             <h2 className="text-2xl font-semibold">{spaces.nameOf(color)}</h2>
             {!isDefault && (
               <label className="flex flex-col gap-2">
-                <span className="text-sm font-medium">Name</span>
+                <span className="text-sm font-medium">{t('Name')}</span>
                 <input
                   value={fields.name}
                   maxLength={SPACE_NAME_MAX_LENGTH}
-                  placeholder={spaceColorLabel(color)}
+                  placeholder={t(spaceColorLabel(color))}
                   onChange={event =>
                     spaces.updateField('name', event.target.value)
                   }
@@ -155,7 +159,7 @@ function SpaceSettingsView() {
             )}
             <label className="flex flex-col gap-2">
               <span className="text-sm font-medium">
-                What do you work on in this space?
+                {t('What do you work on in this space?')}
               </span>
               <Textarea
                 value={fields.about}
@@ -166,7 +170,7 @@ function SpaceSettingsView() {
                 placeholder={
                   isDefault
                     ? undefined
-                    : 'Researching and writing articles for my blog'
+                    : t('Researching and writing articles for my blog')
                 }
                 onChange={event =>
                   spaces.updateField('about', event.target.value)
@@ -176,7 +180,7 @@ function SpaceSettingsView() {
             </label>
             <label className="flex flex-col gap-2">
               <span className="text-sm font-medium">
-                How should Morphic write?
+                {t('How should Morphic write?')}
               </span>
               <Textarea
                 value={fields.style}
@@ -186,7 +190,9 @@ function SpaceSettingsView() {
                 placeholder={
                   isDefault
                     ? undefined
-                    : 'Lead with the key point. Short paragraphs under H2 headings. Cite sources inline.'
+                    : t(
+                        'Lead with the key point. Short paragraphs under H2 headings. Cite sources inline.'
+                      )
                 }
                 onChange={event =>
                   spaces.updateField('style', event.target.value)
@@ -197,13 +203,15 @@ function SpaceSettingsView() {
             <div className="flex flex-col gap-1 text-xs text-muted-foreground">
               {isDefault ? (
                 <p>
-                  Applies to all chats in Default, including existing ones from
-                  their next message. Citation rules stay the same.
+                  {t(
+                    'Applies to all chats in Default, including existing ones from their next message. Citation rules stay the same.'
+                  )}
                 </p>
               ) : (
                 <p>
-                  Applies to new chats in this space. Citation rules stay the
-                  same.
+                  {t(
+                    'Applies to new chats in this space. Citation rules stay the same.'
+                  )}
                 </p>
               )}
             </div>
@@ -214,7 +222,7 @@ function SpaceSettingsView() {
                 onClick={() => setConfirmDelete(true)}
                 className="self-start text-destructive hover:text-destructive"
               >
-                Delete space
+                {t('Delete space')}
               </Button>
             )}
           </div>
@@ -224,20 +232,23 @@ function SpaceSettingsView() {
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {spaces.nameOf(color)}?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t('Delete {name}?', { name: spaces.nameOf(color) })}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Its instructions are removed. Chats in this space are kept and
-              move to Default.
+              {t(
+                'Its instructions are removed. Chats in this space are kept and move to Default.'
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 void spaces.removeSpace(color)
               }}
             >
-              Delete
+              {t('Delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -259,7 +270,10 @@ function ColorOption({
   name: string
   onSelect: () => void
 }) {
-  const label = exists ? name : `New ${spaceColorLabel(color)} space`
+  const { t } = useI18n()
+  const label = exists
+    ? name
+    : t('New {color} space', { color: t(spaceColorLabel(color)) })
   const dot = exists ? (
     <button
       type="button"

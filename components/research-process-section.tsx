@@ -13,6 +13,8 @@ import type { ToolPart, UIDataTypes, UIMessage, UITools } from '@/lib/types/ai'
 import type { DynamicToolPart } from '@/lib/types/dynamic-tools'
 import { cn } from '@/lib/utils'
 
+import { useI18n } from '@/components/language-provider'
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -288,6 +290,8 @@ export function ResearchProcessSection({
   parts: partsOverride,
   hasSubsequentText = false
 }: Props) {
+  const { t } = useI18n()
+
   const allParts = (partsOverride ?? (message.parts || [])) as MessagePart[]
 
   // Filter out empty reasoning/text parts to avoid incorrect grouping
@@ -384,7 +388,9 @@ export function ResearchProcessSection({
                 >
                   <Waypoints className="size-4 text-muted-foreground group-hover:text-muted-foreground/70" />
                   <span className="font-medium text-muted-foreground group-hover:text-muted-foreground/70">
-                    Research Process ({totalParts} steps)
+                    {t('Research Process ({count} steps)', {
+                      count: totalParts
+                    })}
                   </span>
                   <ChevronDown
                     className={cn(

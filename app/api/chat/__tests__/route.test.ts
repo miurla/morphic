@@ -61,10 +61,13 @@ const model = {
   provider: 'OpenAI'
 }
 
-function request(overrides: Record<string, unknown> = {}) {
+function request(
+  overrides: Record<string, unknown> = {},
+  headers: Record<string, string> = {}
+) {
   return new Request('http://localhost:3000/api/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify({
       message,
       messages: [message],
@@ -174,8 +177,53 @@ describe('POST /api/chat guest message validation', () => {
       model,
       abortSignal: expect.any(AbortSignal),
       searchMode: 'quick',
-      chatId: undefined
+      chatId: undefined,
+      locale: 'en'
     })
+  })
+
+  it.each([
+    [{ cookie: 'morphic-language=zh-CN', 'accept-language': 'en-US' }, 'zh-CN'],
+    [{ cookie: 'morphic-language=en', 'accept-language': 'zh-CN' }, 'en'],
+    [
+      { cookie: 'morphic-language=auto', 'accept-language': 'zh-CN,en;q=0.8' },
+      'zh-CN'
+    ]
+  ])(
+    'passes the selected interface language to guest generation',
+    async (headers, locale) => {
+      await POST(request({}, headers))
+      expect(createEphemeralChatStreamResponse).toHaveBeenCalledWith(
+        expect.objectContaining({ locale })
+      )
+    }
+  )
+
+  it('passes the selected language to authenticated generation', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      id: 'user-id',
+      email: 'test@example.com'
+    })
+    await POST(request({}, { cookie: 'morphic-language=zh-CN' }))
+    expect(createChatStreamResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ locale: 'zh-CN' })
+    )
+  })
+
+  it('uses the language visible in the sending tab when a shared cookie differs', async () => {
+    await POST(
+      request(
+        {},
+        {
+          'x-morphic-locale': 'zh-CN',
+          cookie: 'morphic-language=en',
+          'accept-language': 'en-US'
+        }
+      )
+    )
+    expect(createEphemeralChatStreamResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ locale: 'zh-CN' })
+    )
   })
 
   it('accepts custom data and tool parts without requiring message IDs', async () => {

@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { getChatMeta } from '@/lib/actions/chat'
 import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { isAnonymousMode } from '@/lib/auth/provider'
+import { getI18n } from '@/lib/i18n/server'
 import { getModelSelectorData } from '@/lib/model-selector/get-model-selector-data'
 
 import { Chat } from '@/components/chat'
@@ -16,17 +17,18 @@ const getChat = cache(getChatMeta)
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>
 }) {
+  const { t } = await getI18n()
   const { id } = await props.params
   const userId = await getCurrentUserId()
 
   const chat = await getChat(id, userId)
 
   if (!chat) {
-    return { title: 'Search' }
+    return { title: t('Search') }
   }
 
   return {
-    title: chat.title.toString().slice(0, 50) || 'Search'
+    title: chat.title.toString().slice(0, 50) || t('Search')
   }
 }
 
