@@ -95,6 +95,25 @@ describe('normalizeSearchQuery', () => {
     expect(normalizeSearchQuery('aaa!' + 'b'.repeat(200))).toBe('aaa!')
   })
 
+  it.each(['wxyza', 'wxyz'])(
+    'drops a partial word when the cap lands before or inside an astral letter (%s)',
+    fragment => {
+      const prefix = 'note '.repeat(39)
+      const letter = '\u{20000}' // a CJK letter represented by a surrogate pair
+
+      expect(normalizeSearchQuery(prefix + fragment + letter + 'tail')).toBe(
+        prefix.trim()
+      )
+    }
+  )
+
+  it('keeps a full astral letter at the end of a complete capped word', () => {
+    const wordAtCap = 'note '.repeat(39) + 'wxy\u{20000}'
+
+    expect(wordAtCap).toHaveLength(MAX_QUERY_LENGTH)
+    expect(normalizeSearchQuery(wordAtCap + ' tail')).toBe(wordAtCap)
+  })
+
   it('never leaves a lone surrogate behind when the cap splits a pair', () => {
     const result = normalizeSearchQuery('a' + '😀'.repeat(100))
 
