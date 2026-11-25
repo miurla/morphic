@@ -13,6 +13,12 @@ RUN bun install --frozen-lockfile
 
 # Copy source code and build
 COPY . .
+# Only public browser settings are allowed into the build. Secrets are supplied
+# to running containers via env_file, never copied from .env.local.
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+ENV NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
 RUN npx next telemetry disable
 ENV DATABASE_URL=postgresql://user:pass@localhost:5432/db
 ENV DATABASE_RESTRICTED_URL=postgresql://user:pass@localhost:5432/db

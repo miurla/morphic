@@ -1,153 +1,120 @@
 # Docker Guide
 
-## Quick Start
+## Tutor quick start
 
-### Using Prebuilt Image (Recommended)
-
-1. Pull the latest image:
-
-```bash
-docker pull ghcr.io/miurla/morphic:latest
-```
-
-2. Configure environment:
-
-```bash
-cp .env.local.example .env.local
-```
-
-Edit `.env.local` and set at least one AI provider API key:
-
-```bash
-OPENAI_API_KEY=your_openai_key
-```
-
-Other supported providers: Anthropic (`ANTHROPIC_API_KEY`), Google (`GOOGLE_GENERATIVE_AI_API_KEY`), Ollama (`OLLAMA_BASE_URL`), Vercel AI Gateway (`AI_GATEWAY_API_KEY`).
-
-3. Start all services:
-
-```bash
-docker compose up -d
-```
-
-4. Visit http://localhost:3000 and select your model from the model selector.
-
-### Building from Source
-
-To build locally instead of using the prebuilt image:
+Follow the [README](../README.md#quick-start) to copy
+`.env.docker.example` to `.env.local`, configure a chat provider, and run:
 
 ```bash
 docker compose up -d --build
 ```
 
-## What Docker Compose Starts
+Open [Tutor](http://localhost:3000/tutor). Compose starts the application,
+the Tutor worker, PostgreSQL with pgvector, Redis, SearXNG, and a local BGE-M3
+embedding service. Database migrations run before the application starts.
+Tutor uploads are stored in the `tutor_data` volume; no object storage account
+is required for Tutor. Uploads in the separate general chat feature still use
+[object storage](./CONFIGURATION.md).
 
-- **PostgreSQL 17** - Database with automatic migrations
-- **Redis** - SearXNG search caching
-- **SearXNG** - Self-hosted search engine (no external search API key needed)
-- **Morphic** - The application
+The embedding image downloads and verifies model weights **at build time**.
+The first build needs internet access and sufficient disk space for the runtime
+images and the approximately 1.2 GB model. Once built, embedding inference needs
+no model download or API key. The chat provider still needs network access and
+may charge for API calls.
 
-## Model Selection
+## CPU and GPU
 
-In Docker mode, Morphic dynamically detects available AI providers based on your API keys and displays a model selector in the UI. No configuration files to edit — just set your API key and pick your model.
-
-## Built-in Defaults
-
-Docker Compose automatically sets these for you:
-
-- `ENABLE_AUTH=false` (anonymous mode)
-- `SEARCH_API=searxng`
-- `SEARXNG_API_URL=http://searxng:8080`
-- `LOCAL_REDIS_URL=redis://redis:6379`
-- `MORPHIC_CLOUD_DEPLOYMENT=false`
-
-Values in `docker-compose.yaml` take precedence over `.env.local`. To override a default:
+The default configuration works without a GPU. CPU document processing can be
+slow; it uses batches of four chunks and a three-minute request timeout.
+On a host with NVIDIA GPU support configured for Docker, use:
 
 ```bash
-SEARCH_API=tavily docker compose up -d
+docker compose -f docker-compose.yaml -f compose.gpu.yaml up -d --build
 ```
 
-## File Upload
+Keep using both files for subsequent GPU deployment commands. You can tune
+`TUTOR_EMBEDDING_BATCH_SIZE` and `TUTOR_EMBEDDING_TIMEOUT_MS` in the shell or a
+Compose `.env` file. They control batching and the timeout per request, not the
+time limit for processing an entire document.
 
-File upload requires externally reachable object storage. Docker Compose does not provision storage by default.
+## Images and updates
 
-Required environment variables:
+The source deployment builds `morphic:tutor-local` and `tutor-embedding:bge-m3`.
+The Docker workflow publishes separate application and embedding images to
+`ghcr.io/pothomk/tutor` and `ghcr.io/pothomk/tutor-embedding`. A successful workflow
+and public package visibility are required before anonymous users can pull them;
+the source quick start does not depend on their availability.
 
-- `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
-- One of: `R2_ACCOUNT_ID` (Cloudflare R2) or `S3_ENDPOINT` (generic S3-compatible)
-- `R2_BUCKET_NAME`
+To use published images, put these image selections in a Compose `.env` file:
 
-If these are not set, upload is disabled.
-
-## PostgreSQL Configuration
-
-Customize database credentials in `.env.local`:
-
-```bash
-POSTGRES_USER=morphic      # Default: morphic
-POSTGRES_PASSWORD=morphic  # Default: morphic
-POSTGRES_DB=morphic        # Default: morphic
-POSTGRES_PORT=5432         # Default: 5432
+```dotenv
+MORPHIC_IMAGE=ghcr.io/pothomk/tutor:latest
+TUTOR_EMBEDDING_IMAGE=ghcr.io/pothomk/tutor-embedding:bge-m3
 ```
 
-Database data is persisted in a Docker volume. To reset:
+Then pull and start without building:
 
 ```bash
-docker compose down -v  # Deletes all data
+docker compose pull
+docker compose up -d --no-build
 ```
 
-## Enabling Authentication
+The embedding image contains pinned model weights at `/opt/tutor-models`.
+Do not mount a volume over that path: it would hide the image\'s model files.
+An older `tutor_embedding_models` volume is no longer used and is left intact.
+The embedding API is only available on the internal Compose network.
+See the [embedding image notes](../docker/embedding/README.md) for checksums,
+licensing, and build details.
 
-By default, Docker runs in anonymous mode: all users share a single anonymous user ID. This is intended for **personal, single-user local environments only**.
+## Configuration precedence
 
-### Better Auth (built-in accounts)
+`.env.local` supplies runtime credentials to the application and worker.
+Compose\'s `environment` values take precedence over that file. Built-in local
+database, storage, queue, and embedding settings require no user configuration.
+For a custom embedding provider, see [Tutor configuration](./TUTOR.md).
 
-For a multi-user instance, use the built-in Better Auth provider. Accounts live in the bundled PostgreSQL database, and it works with the prebuilt image. Add to `.env.local`:
+Compose interpolation (`${VARIABLE}`) reads the shell or a project `.env` file,
+not `.env.local`. For example, put `POSTGRES_PORT=5433` in `.env` to change the
+host database port, or set `ENABLE_AUTH=true` there to enable authentication.
+
+## Authentication
+
+The default is anonymous, personal use: everyone accessing the instance shares
+one identity and its data. Configure authentication before offering a shared
+instance. See [Better Auth](./CONFIGURATION.md#better-auth) for built-in accounts.
+Set `ENABLE_AUTH=true` in the Compose `.env` file and add the provider\'s runtime
+settings to `.env.local`.
+
+For Supabase, Next.js also needs its public browser configuration at build time.
+Runtime secret keys stay in `.env.local`; environment files are excluded from
+the image build context. Pass only public settings explicitly:
 
 ```bash
-AUTH_PROVIDER=better-auth
-BETTER_AUTH_SECRET=run-openssl-rand-hex-32-for-a-stable-value
+docker compose build \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co \
+  --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-public-key \
+  morphic tutor-worker
+docker compose up -d --no-build
 ```
 
-Then restart with `docker compose up -d`. See [Better Auth](./CONFIGURATION.md#better-auth) for sign-up modes, the first admin account, SMTP, and HTTPS.
+Keep those public settings in `.env.local` as well for server-side use, alongside
+`AUTH_PROVIDER=supabase` and `SUPABASE_SECRET_KEY`. The default published image
+does not include a project\'s Supabase browser configuration.
 
-### Supabase
-
-To use Supabase authentication instead:
-
-1. Set up a [Supabase](https://supabase.com/) project
-2. Build from source with the Supabase environment variables:
+## Useful commands
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
-SUPABASE_SECRET_KEY=your-supabase-secret-key
-ENABLE_AUTH=true
-```
-
-3. Build and start:
-
-```bash
-docker compose up -d --build
-```
-
-**Note**: The prebuilt image does not support Supabase authentication because `NEXT_PUBLIC_*` variables are embedded at build time by Next.js. You must build from source to use Supabase.
-
-## Useful Commands
-
-```bash
-# Start all containers
-docker compose up -d
-
-# Stop all containers
+# Stop services while preserving database and uploaded files
 docker compose down
 
-# Stop and remove volumes (deletes database data)
-docker compose down -v
+# Follow document processing or application logs
+docker compose logs -f tutor-worker morphic
 
-# View logs
-docker compose logs -f morphic
-
-# Rebuild the image
-docker compose build morphic
+# Rebuild after pulling source updates, then apply migrations and restart
+docker compose up -d --build
 ```
+
+Do not use `docker compose down -v` unless you intend to delete the database and
+uploaded documents. Changing the embedding model, dimensions, provider URL, or
+revision creates a different retrieval index; existing material must be uploaded
+again to build vectors for the new index. See [Tutor](./TUTOR.md) for details.

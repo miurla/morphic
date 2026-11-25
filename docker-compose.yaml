@@ -1,6 +1,23 @@
-# Docker Compose configuration for the morphic-stack development environment
+# Personal Tutor deployment. Only the chat provider needs user credentials.
 
 name: morphic-stack
+x-tutor-environment: &tutor-environment
+  DATABASE_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
+  DATABASE_RESTRICTED_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
+  DATABASE_SSL_DISABLED: 'true'
+  LOCAL_REDIS_URL: redis://redis:6379
+  TUTOR_REDIS_URL: redis://redis:6379
+  TUTOR_STORAGE_DRIVER: local
+  TUTOR_LOCAL_STORAGE_DIR: /app/tutor-data
+  TUTOR_EMBEDDING_AUTH: none
+  TUTOR_EMBEDDING_BASE_URL: http://tutor-embedding:11434/v1
+  TUTOR_EMBEDDING_MODEL: bge-m3
+  TUTOR_EMBEDDING_DIMENSIONS: '1024'
+  TUTOR_EMBEDDING_SEND_DIMENSIONS: 'false'
+  # Small batches and a longer timeout also work on machines without a GPU.
+  TUTOR_EMBEDDING_BATCH_SIZE: ${TUTOR_EMBEDDING_BATCH_SIZE:-4}
+  TUTOR_EMBEDDING_TIMEOUT_MS: ${TUTOR_EMBEDDING_TIMEOUT_MS:-180000}
+
 services:
   morphic:
     image: ${MORPHIC_IMAGE:-morphic:tutor-local}
@@ -10,10 +27,7 @@ services:
       dockerfile: Dockerfile
     env_file: .env.local # Load environment variables
     environment:
-      # Database connection for Docker Compose (override any cloud DB from .env.local)
-      DATABASE_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
-      DATABASE_RESTRICTED_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
-      DATABASE_SSL_DISABLED: 'true' # Disable SSL for local Docker PostgreSQL
+      <<: *tutor-environment
       # Authentication settings (default: disabled for personal Docker use)
       ENABLE_AUTH: ${ENABLE_AUTH:-false}
       ANONYMOUS_USER_ID: ${ANONYMOUS_USER_ID:-docker-anonymous}
@@ -26,9 +40,6 @@ services:
       # (see "Better Auth" in docs/CONFIGURATION.md).
       MORPHIC_CLOUD_DEPLOYMENT: 'false'
       # Docker-internal service URLs
-      LOCAL_REDIS_URL: ${LOCAL_REDIS_URL:-redis://redis:6379}
-      TUTOR_REDIS_URL: redis://redis:6379
-      TUTOR_LOCAL_STORAGE_DIR: /app/tutor-data
       SEARCH_API: ${SEARCH_API:-searxng}
       SEARXNG_API_URL: ${SEARXNG_API_URL:-http://searxng:8080}
       # Version footer / update check (all optional, see docs/CONFIGURATION.md)
@@ -58,6 +69,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      tutor-embedding:
+        condition: service_healthy
       searxng:
         condition: service_started
 
@@ -86,7 +99,6 @@ services:
     command: redis-server --appendonly yes --maxmemory-policy noeviction
 
   tutor-worker:
-    profiles: ['tutor']
     image: ${MORPHIC_IMAGE:-morphic:tutor-local}
     build:
       context: .
@@ -94,12 +106,7 @@ services:
     entrypoint: ['node', '--import', 'tsx', 'scripts/tutor-worker.ts']
     env_file: .env.local
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
-      DATABASE_RESTRICTED_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
-      DATABASE_SSL_DISABLED: 'true'
-      LOCAL_REDIS_URL: redis://redis:6379
-      TUTOR_REDIS_URL: redis://redis:6379
-      TUTOR_LOCAL_STORAGE_DIR: /app/tutor-data
+      <<: *tutor-environment
     volumes:
       - tutor_data:/app/tutor-data
     depends_on:
@@ -109,13 +116,32 @@ services:
         condition: service_started
       morphic:
         condition: service_healthy
+      tutor-embedding:
+        condition: service_healthy
+    restart: unless-stopped
+
+  tutor-embedding:
+    image: ${TUTOR_EMBEDDING_IMAGE:-tutor-embedding:bge-m3}
+    build:
+      context: ./docker/embedding
+    environment:
+      OLLAMA_NUM_PARALLEL: '1'
+      OLLAMA_MAX_LOADED_MODELS: '1'
+      OLLAMA_KEEP_ALIVE: '-1'
+    # Weights are inside the image at /opt/tutor-models. Do not mount a volume
+    # there: an existing volume would hide newer model layers after an upgrade.
+    healthcheck:
+      test: ['CMD', 'ollama', 'show', 'bge-m3']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
     restart: unless-stopped
 
   searxng:
     image: searxng/searxng
     ports:
       - '${SEARXNG_PORT:-8080}:8080'
-    env_file: .env.local # can remove if you want to use env variables or in settings.yml
     volumes:
       - ./searxng-limiter.toml:/etc/searxng/limiter.toml
       - ./searxng-settings.yml:/etc/searxng/settings.yml

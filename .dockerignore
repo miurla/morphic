@@ -17,9 +17,8 @@ next-env.d.ts
 # Environment / secrets
 .env
 .env.*
-# Kept: Next.js inlines NEXT_PUBLIC_* at build time, and building from source
-# is the documented way to enable authentication (docs/DOCKER.md).
-!.env.local
+# Public browser configuration is passed explicitly as build arguments.
+# Runtime API keys must never enter image layers or the build cache.
 
 # Test and coverage output
 coverage
@@ -49,5 +48,7 @@ docs
 Dockerfile
 .dockerignore
 docker-compose.yaml
+compose*.yaml
+docker
 searxng-limiter.toml
 searxng-settings.yml

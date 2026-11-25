@@ -1,7 +1,16 @@
 // @vitest-environment node
 import { randomUUID } from 'node:crypto'
 import postgres from 'postgres'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi
+} from 'vitest'
 
 import { CHUNKING_VERSION } from '../chunking'
 import { getEmbeddingIndexKey } from '../embeddings'
@@ -26,7 +35,11 @@ suite('Tutor PostgreSQL ownership, retrieval and idempotency', () => {
   let courseB: string
   const vector = [1, ...Array.from({ length: 1535 }, () => 0)]
 
+  beforeEach(() => vi.stubEnv('TUTOR_EMBEDDING_DIMENSIONS', '1536'))
+  afterEach(() => vi.unstubAllEnvs())
+
   beforeAll(async () => {
+    vi.stubEnv('TUTOR_EMBEDDING_DIMENSIONS', '1536')
     // This test deliberately requires an explicit, isolated test database.
     const url = new URL(connection!)
     if (!url.pathname.includes('tutor_test'))
@@ -306,6 +319,124 @@ suite('Tutor PostgreSQL ownership, retrieval and idempotency', () => {
     } finally {
       vi.unstubAllEnvs()
     }
+  })
+
+  it('keeps 1536 and 1024 indexes isolated without changing old evidence or assessments', async () => {
+    const original = await repository.getDocument(ownerA, documentA)
+    const originalChapter = await repository.getChapter(
+      ownerA,
+      courseA,
+      chapterId
+    )
+    const originalIndex = getEmbeddingIndexKey()
+    const originalRevision = process.env.TUTOR_EMBEDDING_REVISION
+    const smallVector = [1, ...Array.from({ length: 1023 }, () => 0)]
+    vi.stubEnv('TUTOR_EMBEDDING_DIMENSIONS', '1024')
+    expect(getEmbeddingIndexKey()).not.toBe(originalIndex)
+    const replacement = await repository.createDocument(ownerA, {
+      id: randomUUID(),
+      filename: original!.filename,
+      size: original!.size,
+      objectKey: original!.objectKey,
+      contentHash: original!.contentHash
+    })
+    expect(replacement.id).not.toBe(documentA)
+    const newChunk: TutorChunk = {
+      id: randomUUID(),
+      documentId: replacement.id,
+      parentId: randomUUID(),
+      position: 0,
+      text: '数据库索引加快查询。',
+      parentText: '数据库索引加快查询。',
+      retrievalText: '数据库 索引 查询',
+      lexicalText: '数据库 索引 查询',
+      heading: '索引',
+      regions: [{ page: 1, x: 0, y: 0, width: 1, height: 1 }],
+      tokenCount: 20,
+      embedding: smallVector
+    }
+    const indexInput = {
+      pageCount: 1,
+      embeddingModel: getEmbeddingIndexKey(),
+      parseVersion: CHUNKING_VERSION
+    }
+    await expect(
+      repository.saveDocumentChunks(ownerA, replacement.id, {
+        ...indexInput,
+        chunks: [{ ...newChunk, embedding: vector }]
+      })
+    ).rejects.toMatchObject({ code: 'INVALID_INDEX' })
+    await repository.saveDocumentChunks(ownerA, replacement.id, {
+      ...indexInput,
+      chunks: [newChunk]
+    })
+    // Even a direct repository caller with a mixed course cannot compare spaces.
+    const mixedCourse = await repository.createCourse(ownerA, {
+      documentIds: [documentA, replacement.id],
+      goal: 'Mixed index isolation',
+      level: 'beginner',
+      locale: 'en'
+    })
+    try {
+      expect(
+        (
+          await repository.searchVectorChunks(
+            ownerA,
+            mixedCourse.id,
+            smallVector,
+            20
+          )
+        ).map(chunk => chunk.id)
+      ).toEqual([newChunk.id])
+      await expect(
+        repository.searchVectorChunks(ownerA, mixedCourse.id, vector, 20)
+      ).rejects.toThrow('Invalid query embedding')
+      expect(
+        await repository.searchVectorChunks(ownerA, courseA, smallVector, 20)
+      ).toEqual([])
+      vi.stubEnv('TUTOR_EMBEDDING_REVISION', `other-${randomUUID()}`)
+      expect(
+        await repository.searchVectorChunks(
+          ownerA,
+          mixedCourse.id,
+          smallVector,
+          20
+        )
+      ).toEqual([])
+      vi.stubEnv('TUTOR_EMBEDDING_REVISION', originalRevision)
+      expect(
+        (await repository.getChunksByIds(ownerA, courseA, [chunkA])).map(
+          chunk => chunk.id
+        )
+      ).toEqual([chunkA])
+      expect(await repository.getChapter(ownerA, courseA, chapterId)).toEqual(
+        originalChapter
+      )
+      expect(await repository.getDocument(ownerA, documentA)).toEqual(original)
+      const stored = await admin`
+        select id, embedding::text as embedding from tutor_chunks
+        where id in (${chunkA}, ${newChunk.id})
+      `
+      expect(
+        JSON.parse(stored.find(row => row.id === chunkA)!.embedding)
+      ).toEqual(vector)
+      expect(
+        JSON.parse(stored.find(row => row.id === newChunk.id)!.embedding)
+      ).toEqual(smallVector)
+    } finally {
+      vi.stubEnv('TUTOR_EMBEDDING_DIMENSIONS', '1536')
+      vi.stubEnv('TUTOR_EMBEDDING_REVISION', originalRevision)
+      await repository.updateCourse(ownerA, mixedCourse.id, {
+        status: 'failed',
+        stage: 'failed'
+      })
+    }
+    expect(getEmbeddingIndexKey()).toBe(originalIndex)
+    expect(
+      (await repository.searchVectorChunks(ownerA, courseA, vector, 20)).map(
+        chunk => chunk.id
+      )
+    ).toEqual([chunkA])
   })
 
   it('keeps identical TXT and Markdown bytes in separate indexes and deduplicates Markdown aliases', async () => {

@@ -1,0 +1,21 @@
+BGE-M3 model and license provenance
+
+Model author: Beijing Academy of Artificial Intelligence (BAAI)
+Official model card: https://huggingface.co/BAAI/bge-m3
+The model card declares license: mit.
+
+Packaged weights: the F16 GGUF distributed as Ollama's bge-m3:latest
+Model metadata: https://ollama.com/library/bge-m3:latest/blobs/daec91ffb5dd
+Model SHA-256: daec91ffb5dd0c27411bd71f29932917c49cf529a641d0168496c3a501e3062c
+Model size: 1157671200 bytes
+
+LICENSE.bge-m3 is the unmodified license layer distributed with those weights:
+https://registry.ollama.ai/v2/library/bge-m3/blobs/sha256:a406579cd136771c705c521db86ca7d60a6f3de7c9b5460e6193a2df27861bde
+License SHA-256: a406579cd136771c705c521db86ca7d60a6f3de7c9b5460e6193a2df27861bde
+
+The [year] and [fullname] placeholders are present in the upstream license.
+They are preserved verbatim; this package does not invent a copyright notice.
+The same license text is included in the imported Ollama model's metadata.
+
+Ollama and the base operating system retain their own licenses in the pinned
+official ollama/ollama base image.

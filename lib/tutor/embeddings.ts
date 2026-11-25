@@ -1,28 +1,96 @@
-export const EMBEDDING_DIMENSIONS = 1536
+export const DEFAULT_EMBEDDING_DIMENSIONS = 1536
 export const EMBEDDING_BATCH_SIZE = 32
+const DEFAULT_EMBEDDING_TIMEOUT_MS = 45_000
 const MAX_RETRIES = 2
 
 export interface EmbeddingConfig {
+  auth: 'bearer' | 'none'
   apiKey: string
   baseUrl: string
   model: string
   dimensions: number
+  sendDimensions: boolean
+  batchSize: number
+  timeoutMs: number
+}
+
+function readRequestLimit(name: string, fallback: number, maximum: number) {
+  const raw = process.env[name]?.trim()
+  const value = raw ? Number(raw) : fallback
+  if (
+    (raw && !/^\d+$/.test(raw)) ||
+    !Number.isSafeInteger(value) ||
+    value < 1 ||
+    value > maximum
+  )
+    throw new EmbeddingError(
+      'EMBEDDING_INVALID_CONFIG',
+      `${name} must be an integer between 1 and ${maximum}.`
+    )
+  return value
 }
 
 export function getEmbeddingConfig(): EmbeddingConfig {
+  const auth = process.env.TUTOR_EMBEDDING_AUTH?.trim() || 'bearer'
+  if (auth !== 'bearer' && auth !== 'none')
+    throw new EmbeddingError(
+      'EMBEDDING_INVALID_CONFIG',
+      'TUTOR_EMBEDDING_AUTH must be bearer or none.'
+    )
+  const dedicatedBaseUrl = process.env.TUTOR_EMBEDDING_BASE_URL?.trim()
+  if (auth === 'none' && !dedicatedBaseUrl)
+    throw new EmbeddingError(
+      'EMBEDDING_INVALID_CONFIG',
+      'TUTOR_EMBEDDING_BASE_URL must be set when embedding authentication is disabled.'
+    )
+  const rawDimensions = process.env.TUTOR_EMBEDDING_DIMENSIONS?.trim()
+  const dimensions = rawDimensions
+    ? Number(rawDimensions)
+    : DEFAULT_EMBEDDING_DIMENSIONS
+  if (
+    (rawDimensions && !/^\d+$/.test(rawDimensions)) ||
+    !Number.isSafeInteger(dimensions) ||
+    dimensions < 1
+  )
+    throw new EmbeddingError(
+      'EMBEDDING_INVALID_CONFIG',
+      'TUTOR_EMBEDDING_DIMENSIONS must be a positive integer matching the embedding model.'
+    )
+  const sendDimensions =
+    process.env.TUTOR_EMBEDDING_SEND_DIMENSIONS?.trim() || 'true'
+  if (sendDimensions !== 'true' && sendDimensions !== 'false')
+    throw new EmbeddingError(
+      'EMBEDDING_INVALID_CONFIG',
+      'TUTOR_EMBEDDING_SEND_DIMENSIONS must be true or false.'
+    )
   return {
+    auth,
     apiKey:
-      process.env.TUTOR_EMBEDDING_API_KEY?.trim() ||
-      process.env.OPENAI_API_KEY?.trim() ||
-      '',
+      auth === 'none'
+        ? ''
+        : process.env.TUTOR_EMBEDDING_API_KEY?.trim() ||
+          process.env.OPENAI_API_KEY?.trim() ||
+          '',
     baseUrl: (
-      process.env.TUTOR_EMBEDDING_BASE_URL?.trim() ||
+      dedicatedBaseUrl ||
       process.env.OPENAI_BASE_URL?.trim() ||
       'https://api.openai.com/v1'
     ).replace(/\/+$/, ''),
     model:
       process.env.TUTOR_EMBEDDING_MODEL?.trim() || 'text-embedding-3-small',
-    dimensions: EMBEDDING_DIMENSIONS
+    dimensions,
+    sendDimensions: sendDimensions === 'true',
+    batchSize: readRequestLimit(
+      'TUTOR_EMBEDDING_BATCH_SIZE',
+      EMBEDDING_BATCH_SIZE,
+      128
+    ),
+    timeoutMs: readRequestLimit(
+      'TUTOR_EMBEDDING_TIMEOUT_MS',
+      DEFAULT_EMBEDDING_TIMEOUT_MS,
+      // Node timers overflow above this value and become near-immediate.
+      2_147_483_647
+    )
   }
 }
 
@@ -104,16 +172,18 @@ async function embedBatch(
       const response = await fetch(`${config.baseUrl}/embeddings`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${config.apiKey}`,
+          ...(config.auth === 'bearer'
+            ? { Authorization: `Bearer ${config.apiKey}` }
+            : {}),
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           model: config.model,
           input: texts,
-          dimensions: config.dimensions,
+          ...(config.sendDimensions ? { dimensions: config.dimensions } : {}),
           encoding_format: 'float'
         }),
-        signal: AbortSignal.timeout(45_000)
+        signal: AbortSignal.timeout(config.timeoutMs)
       })
       if (!response.ok) {
         // Do not expose provider bodies: they may include credentials or input.
@@ -161,16 +231,16 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
       'Cannot embed empty text.'
     )
   const config = getEmbeddingConfig()
-  if (!config.apiKey)
+  if (config.auth === 'bearer' && !config.apiKey)
     throw new EmbeddingError(
       'EMBEDDING_NOT_CONFIGURED',
       'The embedding service is not configured.'
     )
   const vectors: number[][] = []
-  for (let index = 0; index < texts.length; index += EMBEDDING_BATCH_SIZE) {
+  for (let index = 0; index < texts.length; index += config.batchSize) {
     vectors.push(
       ...(await embedBatch(
-        texts.slice(index, index + EMBEDDING_BATCH_SIZE),
+        texts.slice(index, index + config.batchSize),
         config
       ))
     )

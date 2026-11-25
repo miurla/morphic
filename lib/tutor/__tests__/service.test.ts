@@ -47,7 +47,7 @@ vi.mock('../storage', () => ({ readTutorDocument: mocks.readTutorDocument }))
 vi.mock('../embeddings', () => ({
   embedTexts: mocks.embedTexts,
   getEmbeddingIndexKey: () => 'index-key',
-  getEmbeddingConfig: () => ({ apiKey: 'test' })
+  getEmbeddingConfig: () => ({ auth: 'bearer', apiKey: 'test' })
 }))
 
 const source: RetrievedChunk = {

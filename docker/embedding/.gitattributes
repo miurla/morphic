@@ -1,0 +1,5 @@
+Dockerfile text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+LICENSE.bge-m3 -text

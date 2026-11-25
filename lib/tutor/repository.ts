@@ -15,7 +15,7 @@ import { type TxInstance, withRLS } from '@/lib/db/with-rls'
 
 import { CHUNKING_VERSION } from './chunking'
 import { buildDocumentIndexKey } from './document-index'
-import { getEmbeddingIndexKey } from './embeddings'
+import { getEmbeddingConfig, getEmbeddingIndexKey } from './embeddings'
 import { calculateChapterMastery } from './mastery'
 import type {
   CreateTutorCourseInput,
@@ -510,6 +510,7 @@ export async function saveDocumentChunks(
     warnings?: string[]
   }
 ) {
+  const dimensions = getEmbeddingConfig().dimensions
   return withRLS(userId, async tx => {
     const [document] = await tx
       .select()
@@ -554,7 +555,7 @@ export async function saveDocumentChunks(
         c =>
           c.documentId !== documentId ||
           !c.embedding ||
-          c.embedding.length !== 1536 ||
+          c.embedding.length !== dimensions ||
           c.embedding.some(n => !Number.isFinite(n))
       )
     )
@@ -888,10 +889,20 @@ export async function searchVectorChunks(
   embedding: number[],
   limit: number
 ): Promise<RetrievedChunk[]> {
-  if (embedding.length !== 1536 || embedding.some(n => !Number.isFinite(n)))
+  const dimensions = getEmbeddingConfig().dimensions
+  if (
+    embedding.length !== dimensions ||
+    embedding.some(n => !Number.isFinite(n))
+  )
     throw new Error('Invalid query embedding')
   const vector = JSON.stringify(embedding)
-  const distance = sql<number>`${tutorChunks.embedding} <=> ${vector}::vector`
+  const compatibleIndex = and(
+    eq(tutorDocuments.embeddingModel, getEmbeddingIndexKey()),
+    sql`vector_dims(${tutorChunks.embedding}) = ${dimensions}`
+  )!
+  // CASE also protects the distance operator if a query plan evaluates it
+  // before filtering rows from another immutable vector space.
+  const distance = sql<number>`case when ${compatibleIndex} then ${tutorChunks.embedding} <=> ${vector}::vector else null end`
   return withRLS(userId, async tx =>
     tx
       .select({ ...chunkFields, score: sql<number>`1 - (${distance})` })
@@ -905,7 +916,7 @@ export async function searchVectorChunks(
         tutorCourses,
         eq(tutorCourses.id, tutorCourseDocuments.courseId)
       )
-      .where(chunkScope(userId, courseId))
+      .where(and(chunkScope(userId, courseId), compatibleIndex))
       .orderBy(distance, asc(tutorChunks.id))
       .limit(Math.max(1, Math.min(limit, 100)))
   )

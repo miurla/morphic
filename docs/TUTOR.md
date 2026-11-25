@@ -11,12 +11,136 @@ Plain text and Markdown support UTF-8 or UTF-16 with a byte-order mark. A course
 can contain at most 200 PDF pages or logical text segments in total; non-PDF text
 is grouped into segments of roughly 10,000 characters for this limit.
 
-## Run locally
+## Default Docker deployment
 
-Use Node.js 22.13+ (the existing Docker image uses Node 22) and Bun for the lockfile.
+Follow the [README quick start](../README.md#quick-start): copy
+`.env.docker.example` to `.env.local`, configure the teaching/chat API, and run:
 
 ```sh
+docker compose up -d --build
+```
+
+The default stack starts the Web app, Tutor worker, local BGE-M3 embedding
+service, PostgreSQL with pgvector, Redis and SearXNG. No profiles or separate
+model-download commands are needed. Document storage and queue addresses are
+configured by Compose. Web and Worker share the database, Redis and the durable
+`tutor_data` document volume. The Web entrypoint applies migrations before the
+worker starts. The embedding endpoint is accessible only within the Compose
+network; the default stack does not publish its port on the host.
+
+The teaching model uses the first nonempty `OPENAI_COMPATIBLE_MODELS` entry when
+its API key and base URL are configured. This is implemented in
+`getTutorModelId()`; no `TUTOR_MODEL` setting is needed for the default compatible
+provider. Other teaching providers and explicit model selection are described
+under [advanced configuration](#configuration).
+
+### Bundled BGE-M3 image
+
+The embedding service has its own image, `tutor-embedding:bge-m3`, separate from
+the application's `morphic:tutor-local` image. Its Dockerfile downloads and
+verifies the approximately 1.2 GB BGE-M3 GGUF model during the first build and
+packages it in the image. That first build needs network access; container
+images and application dependencies also need to be fetched. Subsequent starts
+use the packaged model. Cached rebuilds reuse the model layer, while clearing
+the cache or changing the model version can cause another download.
+
+This removes the manual `ollama pull` step. It does not eliminate transferring
+the model: a source build downloads it during construction, and a prebuilt-image
+installation downloads it as part of the image layers.
+
+Compose supplies the following embedding settings to both Web and Worker:
+
+| Setting                                 | Docker default                    |
+| --------------------------------------- | --------------------------------- |
+| Authentication                          | `none`                            |
+| Base URL                                | `http://tutor-embedding:11434/v1` |
+| Model                                   | `bge-m3`                          |
+| Dimensions                              | `1024`                            |
+| Send the `dimensions` request parameter | `false`                           |
+| Batch size                              | `4` texts per request             |
+| Request timeout                         | `180000` milliseconds             |
+
+The local service requires no API key or placeholder. In `none` authentication
+mode Tutor ignores both embedding and OpenAI API keys and sends no
+`Authorization` header. The teaching/chat provider retains its own credentials.
+
+The model files are image content, not data that users need to populate in a
+volume. Do not mount an old model volume over the packaged model directory:
+that would hide the image's files. A `docker commit` of an old Ollama container
+does not include the contents of its mounted model volume.
+
+### CPU and optional GPU
+
+CPU inference is the default. A compatible NVIDIA GPU can be enabled with:
+
+```sh
+docker compose -f docker-compose.yaml -f compose.gpu.yaml up -d --build
+```
+
+GPU use requires a Docker Compose version supporting the GPU configuration and
+working NVIDIA GPU access from Linux containers. On Windows, use Docker Desktop
+with its WSL2 backend and compatible GPU drivers. Start with a short document
+when checking CPU latency or a newly loaded model.
+
+The default batch size and timeout favor CPU use. To tune them, set
+`TUTOR_EMBEDDING_BATCH_SIZE` and `TUTOR_EMBEDDING_TIMEOUT_MS` in your shell or
+Compose's project `.env` file, then recreate the services. Compose reads these
+interpolation values from the shell or `.env`, not `.env.local`. Smaller batches
+reduce the amount of work in each request; a longer timeout allows slower
+inference to finish. Both Web and Worker should use the same settings.
+
+### Updating and publishing images
+
+After a source update, rebuild with `docker compose up -d --build` (including
+the GPU override when used). Back up existing PostgreSQL data before applying
+migrations, and retain database and document volumes when updating.
+
+The [Docker build workflow](../.github/workflows/docker-build.yml) publishes the
+application and embedding images separately. The intended packages for this
+repository are `ghcr.io/pothomk/tutor` and
+`ghcr.io/pothomk/tutor-embedding`. A workflow definition is not proof that those
+packages have been published or made public. Verify a successful workflow run,
+package visibility and the desired tags before configuring a registry-only
+deployment. The source-build quick start does not depend on public GHCR images.
+
+See [Docker deployment](./DOCKER.md) for image and deployment options. The upstream
+Morphic image does not include this fork's Tutor code or bundled embedding model.
+
+## Run locally for development
+
+Development outside Compose needs its own service configuration. Use Node.js
+22.13+ and Bun for the lockfile:
+
+```sh
+cp .env.local.example .env.local
 bun install --frozen-lockfile
+```
+
+Configure a PostgreSQL database with pgvector, a Redis TCP/TLS endpoint, document
+storage, a teaching model and an embedding service in `.env.local`. Use the
+[configuration section](#configuration) below; `.env.docker.example` only covers
+the settings required by the managed Docker stack.
+
+To use the bundled embedding image from host-based Web and Worker processes,
+build it and run a separate development container with an explicit loopback
+port mapping:
+
+```sh
+docker compose build tutor-embedding
+docker run -d --name tutor-embedding-dev -p 127.0.0.1:11434:11434 tutor-embedding:bge-m3
+```
+
+This standalone container is for host-based development; the default Compose
+embedding service remains internal to its network. Set
+`TUTOR_EMBEDDING_BASE_URL=http://127.0.0.1:11434/v1` in `.env.local`, together with
+`TUTOR_EMBEDDING_AUTH=none`, model `bge-m3`, dimensions `1024` and
+`TUTOR_EMBEDDING_SEND_DIMENSIONS=false`. If containers access Ollama running
+directly on the Windows host instead, use `http://host.docker.internal:11434/v1`
+and ensure its listener is reachable from Docker.
+
+Apply migrations and run the Web process:
+
+```sh
 bun migrate
 bun run dev
 ```
@@ -27,95 +151,150 @@ Run the long-lived background worker in a separate terminal:
 bun run tutor:worker
 ```
 
-The worker and Web process must use the same database, Redis, document storage,
-embedding configuration and model configuration. The PDF.js browser worker is
-copied from the installed package during `dev` and `build`; it is not loaded from
-a third-party CDN.
+Web and Worker must use the same database, Redis, document storage, teaching
+model and embedding configuration. Their embedding base URLs must also match
+exactly because the URL is part of the document index identity. Setting
+`OLLAMA_BASE_URL` alone configures the chat provider, not the embedding endpoint.
+The PDF.js browser worker is copied from the installed package during `dev` and
+`build`; it is not loaded from a third-party CDN.
 
 ## Configuration
 
-Add the following settings to `.env.local` as appropriate. Do not commit secrets.
+This section covers local development and custom deployments. The default Docker
+stack already supplies its internal database, queue, storage and embedding
+settings. Compose `environment` entries take precedence over `.env.local`;
+changing those values in `.env.local` alone does not override the Docker defaults.
+
+For processes running outside Compose, configure the required services in
+`.env.local`, for example:
 
 ```dotenv
-# Existing PostgreSQL database, with permission to install the vector extension.
+# PostgreSQL with permission to install the vector extension.
 DATABASE_URL=postgresql://...
-# Use the existing restricted application role where configured.
-DATABASE_RESTRICTED_URL=postgresql://...
+# Optional restricted application role, if one is configured.
+# DATABASE_RESTRICTED_URL=postgresql://...
 
-# Existing AI SDK registry key: provider:model. The model must support JSON output.
-TUTOR_MODEL=openai:gpt-5.4-mini
-
-# Embeddings are a separate capability from chat completions.
-TUTOR_EMBEDDING_API_KEY=...
-TUTOR_EMBEDDING_BASE_URL=https://api.openai.com/v1
-TUTOR_EMBEDDING_MODEL=text-embedding-3-small
-TUTOR_EMBEDDING_REVISION=1
-
-# A Redis TCP/TLS endpoint, not an HTTP Redis REST endpoint.
-TUTOR_REDIS_URL=redis://localhost:6379
+# Redis TCP/TLS, not an HTTP Redis REST endpoint.
+TUTOR_REDIS_URL=redis://127.0.0.1:6379
 TUTOR_WORKER_CONCURRENCY=2
-# Optional: public origin when a reverse proxy changes the Host or protocol.
-# TUTOR_PUBLIC_ORIGIN=https://learn.example.com
-```
 
-`TUTOR_MODEL` can be omitted when `OPENAI_COMPATIBLE_MODELS` supplies a configured
-compatible model, or when the existing default OpenAI model is configured.
-Embedding credentials fall back to `OPENAI_API_KEY`; they do not automatically
-reuse arbitrary compatible-chat credentials. The embedding endpoint must support
-1536-dimensional vectors. Its URL, model, dimensions and explicit revision form
-the index identity. A changed identity never silently queries old vectors.
-Re-uploading the same file under new index settings creates a separate document
-version; old courses keep their original evidence. To continue generating chapters
-in an old course, restore its index configuration, or create a new course from the
-newly uploaded version.
-
-Original files use the project's existing S3/R2 settings. For an explicit local
-single-machine setup, both processes can instead use:
-
-```dotenv
 TUTOR_STORAGE_DRIVER=local
 TUTOR_LOCAL_STORAGE_DIR=.tutor-files
+
+# Local bundled BGE-M3, exposed from Docker to the host.
+TUTOR_EMBEDDING_AUTH=none
+TUTOR_EMBEDDING_BASE_URL=http://127.0.0.1:11434/v1
+TUTOR_EMBEDDING_MODEL=bge-m3
+TUTOR_EMBEDDING_DIMENSIONS=1024
+TUTOR_EMBEDDING_SEND_DIMENSIONS=false
+TUTOR_EMBEDDING_BATCH_SIZE=4
+TUTOR_EMBEDDING_TIMEOUT_MS=180000
 ```
 
-Keep this directory outside public web assets and back it up with the database.
-Local storage requires a shared durable directory if Web and Worker run in
-different containers or machines. The bundled Compose configuration mounts the
-same `tutor_data` volume at `/app/tutor-data` in both processes. Set
-`TUTOR_STORAGE_DRIVER=local` in `.env.local` to use it, or keep S3/R2 configured.
+Configure teaching credentials separately. For an OpenAI-compatible chat service,
+set `OPENAI_COMPATIBLE_API_KEY`, `OPENAI_COMPATIBLE_API_BASE_URL` and
+`OPENAI_COMPATIBLE_MODELS`. Tutor selects the first model unless `TUTOR_MODEL`
+explicitly specifies a `provider:model` pair. Other registry providers use their
+existing credentials: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
+`GOOGLE_GENERATIVE_AI_API_KEY`, `AI_GATEWAY_API_KEY`, or `OLLAMA_BASE_URL`.
+The selected teaching model must support structured JSON output. If no compatible
+model or explicit teaching model is set, Tutor can use the application's default
+OpenAI model when that provider is configured.
 
-Files can be selected or dropped even when service setup is incomplete. Missing
-configuration is reported through the normal error notification when an action
-requires that service. Configuration checks do not prove that credentials,
-provider capabilities, or network access work. The worker logs `[Tutor worker] Ready`
-when it has started; a configured queue without a running worker leaves jobs queued.
+### Cloud embedding services
 
-## Docker
+To use BGE-M3 through SiliconFlow outside Docker, add the following settings to
+`.env.local` along with the teaching model and other services:
 
-PostgreSQL uses the `pgvector/pgvector:pg17` image. Existing PostgreSQL 17 data
-remains in its named volume; no volume deletion is part of setup. Back up an
-existing database before changing deployment images or applying migrations.
+```dotenv
+TUTOR_EMBEDDING_AUTH=bearer
+TUTOR_EMBEDDING_API_KEY=your_siliconflow_key
+TUTOR_EMBEDDING_BASE_URL=https://api.siliconflow.cn/v1
+TUTOR_EMBEDDING_MODEL=BAAI/bge-m3
+TUTOR_EMBEDDING_DIMENSIONS=1024
+TUTOR_EMBEDDING_SEND_DIMENSIONS=false
+```
+
+Create the key in the [SiliconFlow console](https://cloud.siliconflow.cn/).
+BGE-M3 returns native 1024-dimensional dense vectors. This example uses those
+native dimensions and omits the optional `dimensions` request parameter. Check
+the [model specification](https://huggingface.co/BAAI/bge-m3) and current
+[provider API contract](https://api-docs.siliconflow.cn/docs/api/embeddings-post)
+when choosing another model or changing its request parameters.
+
+For the default Docker stack, also override the fixed embedding `environment`
+entries for **both** Web and Worker. For example, create
+`compose.cloud-embedding.yaml`:
+
+```yaml
+services:
+  morphic:
+    environment: &cloud-embedding
+      TUTOR_EMBEDDING_AUTH: bearer
+      TUTOR_EMBEDDING_BASE_URL: https://api.siliconflow.cn/v1
+      TUTOR_EMBEDDING_MODEL: BAAI/bge-m3
+      TUTOR_EMBEDDING_DIMENSIONS: '1024'
+      TUTOR_EMBEDDING_SEND_DIMENSIONS: 'false'
+  tutor-worker:
+    environment: *cloud-embedding
+```
+
+Keep `TUTOR_EMBEDDING_API_KEY` in `.env.local`, which both services read, and run:
 
 ```sh
-docker compose --profile tutor up -d --build
+docker compose -f docker-compose.yaml -f compose.cloud-embedding.yaml up -d --build
 ```
 
-The local image is tagged `morphic:tutor-local` (override with `MORPHIC_IMAGE`).
-To start only the main app while embedding credentials are being configured:
+This switches embedding requests to the cloud. To remove the unused local
+embedding container as well, adjust its service definition and the application
+services' dependencies in your custom Compose configuration.
 
-```sh
-docker compose up -d --build
-```
+`TUTOR_EMBEDDING_AUTH` defaults to `bearer` outside the managed Docker settings.
+Bearer mode requires `TUTOR_EMBEDDING_API_KEY` or falls back to `OPENAI_API_KEY`.
+It does not reuse arbitrary compatible-chat credentials. Its base URL falls back
+to `OPENAI_BASE_URL`, then `https://api.openai.com/v1`, and the default model is
+`text-embedding-3-small` with 1536 dimensions. Tutor appends `/embeddings` to the
+base URL. Set the model and dimensions to values supported by your provider.
 
-Once embeddings are configured, start the worker with
-`docker compose --profile tutor up -d tutor-worker`.
+For an unauthenticated endpoint, `TUTOR_EMBEDDING_AUTH=none` requires an explicit
+`TUTOR_EMBEDDING_BASE_URL`, ignores both API key variables and sends no
+`Authorization` header. Switch back to `bearer` when using a cloud API.
+Changing only the authentication mode or key does not change index identity.
 
-The Web entrypoint applies migrations, and `tutor-worker` starts the dedicated
-Node process after the Web health check succeeds. Compose explicitly points both
-processes at `redis://redis:6379`, overriding a host-local `TUTOR_REDIS_URL` in
-`.env.local`. To use an external queue, override that setting for both services.
-Redis enables AOF and `noeviction`. Configure authenticated access
-for a deployment shared by multiple users; the existing anonymous mode represents
-one shared local identity.
+### Vector dimensions and existing courses
+
+`TUTOR_EMBEDDING_DIMENSIONS` must match the vectors returned by the model.
+`TUTOR_EMBEDDING_SEND_DIMENSIONS=false` omits the optional request parameter for
+fixed-dimension models; returned vectors are still validated against the
+configured dimension. Apply migration `0023` before using dimensions other than 1536. Docker startup applies migrations automatically. Migration `0023` removes
+the column's fixed dimension without changing existing stored vectors.
+
+The endpoint URL, model, dimensions and `TUTOR_EMBEDDING_REVISION` (default: `1`)
+form the index identity. A changed identity never silently queries old vectors.
+Re-uploading the same file under new settings creates a separate document version;
+old courses retain their original lessons, citations, questions and assessments.
+To generate new chapters in an old course, restore its original index settings
+or create a new course from the newly uploaded version. This also applies when
+switching from cloud BGE-M3 to the bundled local model: the endpoint and model ID
+change even though both use BGE-M3.
+
+### Storage, queue and authentication
+
+The default Docker stack provides private local storage in the shared
+`tutor_data` volume and a Redis TCP queue. For custom deployments, Web and Worker
+need the same durable storage and queue. S3/R2 uses the existing `R2_ACCESS_KEY_ID`,
+`R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` and `S3_ENDPOINT` or `R2_ACCOUNT_ID`
+settings. Keep local document directories outside public web assets.
+
+Redis URLs must use `redis://` or `rediss://`; HTTP Redis REST credentials do not
+serve the Tutor worker queue. A configured queue without a running worker leaves
+jobs queued. The worker logs `[Tutor worker] Ready` after startup. Configuration
+checks do not prove that network access, credentials or model capabilities work.
+
+The default anonymous mode represents one personal, shared local identity. See
+[authentication configuration](./CONFIGURATION.md) before sharing a deployment.
+Files can be selected even when setup is incomplete; operations requiring a
+missing service report an error through the normal application notification.
 
 ## Learning and assessment behavior
 

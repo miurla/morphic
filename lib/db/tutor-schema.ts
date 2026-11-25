@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
+  customType,
   index,
   integer,
   jsonb,
@@ -8,8 +9,7 @@ import {
   primaryKey,
   text,
   timestamp,
-  uniqueIndex,
-  vector
+  uniqueIndex
 } from 'drizzle-orm/pg-core'
 
 import type { Locale } from '@/lib/i18n/config'
@@ -24,6 +24,13 @@ import type {
   TutorLevel,
   TutorStage
 } from '@/lib/tutor/types'
+
+// Preserve immutable indexes with different embedding dimensions in one table.
+const embeddingVector = customType<{ data: number[]; driverData: string }>({
+  dataType: () => 'vector',
+  toDriver: value => JSON.stringify(value),
+  fromDriver: value => JSON.parse(value) as number[]
+})
 
 const ownerPolicy = (name: string) =>
   pgPolicy(name, {
@@ -130,7 +137,7 @@ export const tutorChunks = pgTable(
     heading: text('heading').notNull(),
     regions: jsonb('regions').$type<SourceRegion[]>().notNull(),
     tokenCount: integer('token_count').notNull(),
-    embedding: vector('embedding', { dimensions: 1536 }).notNull()
+    embedding: embeddingVector('embedding').notNull()
   },
   table => [
     ownerPolicy('tutor_chunks_owner'),

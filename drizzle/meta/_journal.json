@@ -162,6 +162,13 @@
       "when": 1795545737519,
       "tag": "0022_tutor",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795583792927,
+      "tag": "0023_tutor_embedding_dimensions",
+      "breakpoints": true
     }
   ]
 }

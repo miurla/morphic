@@ -2,7 +2,7 @@ import { DEFAULT_MODEL } from '@/lib/config/default-model'
 import { isObjectStorageConfigured } from '@/lib/storage/r2-client'
 import { isProviderEnabled } from '@/lib/utils/registry'
 
-import { getEmbeddingConfig } from './embeddings'
+import { EmbeddingError, getEmbeddingConfig } from './embeddings'
 import { TutorError } from './errors'
 import type { TutorCapabilities } from './types'
 
@@ -53,8 +53,14 @@ export async function getTutorCapabilities(): Promise<TutorCapabilities> {
     process.env.TUTOR_STORAGE_DRIVER !== 'local'
   )
     missing.push('File storage is not configured.')
-  if (!getEmbeddingConfig().apiKey)
-    missing.push('The embedding service is not configured.')
+  try {
+    const embedding = getEmbeddingConfig()
+    if (embedding.auth === 'bearer' && !embedding.apiKey)
+      missing.push('The embedding service is not configured.')
+  } catch (error) {
+    if (!(error instanceof EmbeddingError)) throw error
+    missing.push(error.message)
+  }
   if (
     !(
       process.env.TUTOR_REDIS_URL?.trim() ||

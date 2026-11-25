@@ -1,0 +1,4 @@
+# Optional NVIDIA GPU support. Requires Docker GPU access on the host.
+services:
+  tutor-embedding:
+    gpus: all
