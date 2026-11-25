@@ -109,11 +109,59 @@ Tutor worker. Tutor requires a teaching model and an embedding service. They may
 share one API key when the provider supports both capabilities; configuring a
 chat model alone does not establish embedding support.
 
-| API                                                  | Required?               | Configuration                                                                                                                                                                                                                                                                                                                                                                                        |
-| ---------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Teaching model: course planning, lessons and grading | Yes                     | Set `TUTOR_MODEL=provider:model` and the selected provider's credentials. OpenAI uses `OPENAI_API_KEY`; Anthropic uses `ANTHROPIC_API_KEY`; Google uses `GOOGLE_GENERATIVE_AI_API_KEY`; Vercel AI Gateway uses `AI_GATEWAY_API_KEY`. OpenAI-compatible endpoints use `OPENAI_COMPATIBLE_API_KEY` and `OPENAI_COMPATIBLE_API_BASE_URL`. The model must support structured JSON output.                |
-| Embeddings: document indexing and retrieval          | Yes                     | Set `TUTOR_EMBEDDING_API_KEY`, `TUTOR_EMBEDDING_BASE_URL` and `TUTOR_EMBEDDING_MODEL` for an OpenAI-compatible `/embeddings` endpoint. The key falls back to `OPENAI_API_KEY`; the URL falls back to `OPENAI_BASE_URL`, then `https://api.openai.com/v1`. The default model is `text-embedding-3-small`. The service must accept the `dimensions` parameter and return **1536-dimensional** vectors. |
-| Reranking: optional retrieval refinement             | No; disabled by default | To enable it, set `TUTOR_RERANK_ENABLED=true`, `TUTOR_RERANK_BASE_URL`, `TUTOR_RERANK_API_KEY` and `TUTOR_RERANK_MODEL`. The endpoint must support the `/rerank` contract described in [Tutor setup](./docs/TUTOR.md#rag-strategy).                                                                                                                                                                  |
+#### Teaching model (required)
+
+The teaching model plans courses, generates lessons and grades answers. It must
+support structured JSON output.
+
+Set `TUTOR_MODEL` to a provider and model ID, such as `openai:gpt-5.4-mini`.
+Configure the credentials for your chosen provider:
+
+- OpenAI: `OPENAI_API_KEY`.
+- Anthropic: `ANTHROPIC_API_KEY`.
+- Google: `GOOGLE_GENERATIVE_AI_API_KEY`.
+- Vercel AI Gateway: `AI_GATEWAY_API_KEY`.
+- OpenAI-compatible providers: `OPENAI_COMPATIBLE_API_KEY` and
+  `OPENAI_COMPATIBLE_API_BASE_URL`.
+- Ollama: `OLLAMA_BASE_URL`. No teaching API key is needed for a local Ollama
+  service, but Tutor still requires an embedding service.
+
+If `TUTOR_MODEL` is omitted, Tutor first uses the first nonempty model in
+`OPENAI_COMPATIBLE_MODELS` when that provider is configured. Otherwise, it uses
+the application's default OpenAI model when OpenAI is configured. Set
+`TUTOR_MODEL` explicitly for other providers.
+
+#### Embedding service (required)
+
+The embedding service indexes documents and retrieves relevant source material.
+It must provide an OpenAI-compatible embeddings endpoint, accept the dimensions
+parameter and return **1536-dimensional** vectors.
+
+- API key: `TUTOR_EMBEDDING_API_KEY`. Falls back to `OPENAI_API_KEY`.
+- Base URL: `TUTOR_EMBEDDING_BASE_URL`. Falls back to `OPENAI_BASE_URL`, then
+  `https://api.openai.com/v1`. Tutor appends `/embeddings` to this base URL.
+- Model: `TUTOR_EMBEDDING_MODEL`. Defaults to `text-embedding-3-small`.
+
+Embedding settings do **not** inherit the OpenAI-compatible teaching provider's
+key or base URL. Configure them explicitly for the embedding service.
+
+Changing the embedding endpoint or model requires reindexing documents. See
+[Tutor configuration](./docs/TUTOR.md#configuration).
+
+#### Reranking service (optional)
+
+Reranking refines the order of retrieved sources. It is disabled by default.
+To enable it, configure all four settings:
+
+- Enable reranking: set `TUTOR_RERANK_ENABLED` to `true`.
+- Base URL: `TUTOR_RERANK_BASE_URL`.
+- API key: `TUTOR_RERANK_API_KEY`.
+- Model: `TUTOR_RERANK_MODEL`.
+
+Tutor appends `/rerank` to the base URL. The service must support the request and
+response contract described in [Tutor setup](./docs/TUTOR.md#rag-strategy).
+
+#### Example configuration
 
 For example, to use an OpenAI-compatible teaching provider and a separate
 embedding service:
@@ -133,24 +181,21 @@ TUTOR_STORAGE_DRIVER=local
 ```
 
 Replace the example endpoints and model names with those supported by your
-providers. Embeddings do **not** inherit `OPENAI_COMPATIBLE_API_KEY` or
-`OPENAI_COMPATIBLE_API_BASE_URL`; configure them explicitly for that service.
-Changing the embedding endpoint or model requires reindexing documents; see
-[Tutor configuration](./docs/TUTOR.md#configuration).
+providers. Keep keys in `.env.local`; do not commit them.
 
-If `TUTOR_MODEL` is omitted, Tutor first uses the first nonempty
-`OPENAI_COMPATIBLE_MODELS` entry when that provider is configured, then the
-application's default OpenAI model when OpenAI is configured. Set `TUTOR_MODEL`
-explicitly for other providers. Ollama uses `OLLAMA_BASE_URL` instead of an API
-key for the teaching model, but Tutor still requires the embedding service.
+#### Database, queue and file storage
 
 Tutor also needs PostgreSQL with pgvector, a Redis TCP/TLS queue and private
 document storage. The Compose setup supplies PostgreSQL and Redis; setting
 `TUTOR_STORAGE_DRIVER=local` uses its shared document volume without storage API
 keys. For S3/R2, configure `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
-`R2_BUCKET_NAME`, and either `S3_ENDPOINT` or `R2_ACCOUNT_ID` instead. Keep keys in
-`.env.local`; do not commit them. After changing configuration, recreate the Web
-app and worker with `docker compose --profile tutor up -d`.
+`R2_BUCKET_NAME`, and either `S3_ENDPOINT` or `R2_ACCOUNT_ID` instead.
+
+After changing configuration, recreate the Web app and worker:
+
+```bash
+docker compose --profile tutor up -d
+```
 
 ### Local Development
 
