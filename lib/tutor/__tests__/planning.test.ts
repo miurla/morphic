@@ -69,6 +69,40 @@ beforeEach(() => {
 })
 
 describe('bounded planning compaction', () => {
+  it.each(['before', 'during'])(
+    'stops when the course is deleted %s compaction without saving a checkpoint',
+    async when => {
+      let deleted = when === 'before'
+      const cancelled = new Error('Course deleted')
+      const ensureActive = vi.fn(async () => {
+        if (deleted) throw cancelled
+      })
+      mocks.generateTutorObject.mockImplementation(
+        (options: GenerationOptions) => {
+          const result = mergeGroups(options)
+          deleted = true
+          return result
+        }
+      )
+      const checkpoint = {}
+      const saveCheckpoint = vi.fn()
+      await expect(
+        compactPlanningNotes({
+          notes: notes(81),
+          locale: 'en',
+          checkpoint,
+          saveCheckpoint,
+          ensureActive
+        })
+      ).rejects.toBe(cancelled)
+      expect(mocks.generateTutorObject).toHaveBeenCalledTimes(
+        when === 'before' ? 0 : 1
+      )
+      expect(saveCheckpoint).not.toHaveBeenCalled()
+      expect(checkpoint).toEqual({})
+    }
+  )
+
   it('keeps a small index unchanged without a model call or checkpoint write', async () => {
     const input = notes(8)
     const saveCheckpoint = vi.fn()

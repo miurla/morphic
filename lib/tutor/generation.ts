@@ -106,6 +106,7 @@ export async function generateTutorObject<T>(options: {
   prompt: string
   data: unknown
   validate?: (value: T) => void
+  ensureActive?: () => Promise<void>
 }): Promise<T> {
   const modelId = getTutorModelId()
   const abortSignal = AbortSignal.timeout(
@@ -120,6 +121,8 @@ ${JSON.stringify(z.toJSONSchema(options.schema, { target: 'draft-07' }))}
 </output_schema>`
   let correction = ''
   for (let attempt = 0; attempt < 2; attempt++) {
+    await options.ensureActive?.()
+    let value: T
     try {
       const result = await generateText({
         model: getModel(modelId),
@@ -127,7 +130,9 @@ ${JSON.stringify(z.toJSONSchema(options.schema, { target: 'draft-07' }))}
         prompt: JSON.stringify(options.data),
         output: Output.object({ schema: options.schema }),
         maxOutputTokens: 14000,
-        maxRetries: 1,
+        // Guarded jobs retry here, where deletion can be checked. An SDK retry
+        // would send another request without consulting the course state.
+        maxRetries: options.ensureActive ? 0 : 1,
         abortSignal,
         runtimeContext: { modelId, agentType: `tutor-${options.task}` },
         telemetry: {
@@ -135,10 +140,11 @@ ${JSON.stringify(z.toJSONSchema(options.schema, { target: 'draft-07' }))}
           functionId: `tutor-${options.task}`
         }
       })
-      const value = options.schema.parse(result.output)
+      value = options.schema.parse(result.output)
       options.validate?.(value)
-      return value
     } catch (error) {
+      // Cancellation is deliberately outside the retrying try block.
+      await options.ensureActive?.()
       // Do not log the provider error or raw prompt; they may contain user files.
       console.warn('[Tutor] Generation attempt failed', {
         task: options.task,
@@ -155,7 +161,10 @@ ${JSON.stringify(z.toJSONSchema(options.schema, { target: 'draft-07' }))}
         )
       correction =
         'The previous result failed validation. Recheck coverage, IDs, required sections, and rubric totals. Use only IDs supplied in the input.'
+      continue
     }
+    await options.ensureActive?.()
+    return value
   }
   throw new TutorError(
     'The teaching model could not produce a valid result. Please retry.',

@@ -5,10 +5,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   user: vi.fn(),
   createCourse: vi.fn(),
+  deleteCourse: vi.fn(),
   listCourses: vi.fn(),
   updateCourse: vi.fn(),
   getCourse: vi.fn(),
+  getStoredCourse: vi.fn(),
+  getChapter: vi.fn(),
+  updateChapter: vi.fn(),
+  prepareCourseRetry: vi.fn(),
   enqueue: vi.fn(),
+  enqueueChapter: vi.fn(),
+  removeCourseJobs: vi.fn(),
   capabilities: vi.fn(),
   grade: vi.fn(),
   store: vi.fn(),
@@ -27,9 +34,14 @@ vi.mock('@/lib/tutor/config', () => ({
 }))
 vi.mock('@/lib/tutor/repository', () => ({
   createCourse: mocks.createCourse,
+  deleteCourse: mocks.deleteCourse,
   listCourses: mocks.listCourses,
   updateCourse: mocks.updateCourse,
   getCourse: mocks.getCourse,
+  getStoredCourse: mocks.getStoredCourse,
+  getChapter: mocks.getChapter,
+  updateChapter: mocks.updateChapter,
+  prepareCourseRetry: mocks.prepareCourseRetry,
   getDocument: mocks.getDocument,
   TutorRepositoryError: class extends Error {
     constructor(
@@ -41,15 +53,26 @@ vi.mock('@/lib/tutor/repository', () => ({
     }
   }
 }))
-vi.mock('@/lib/tutor/queue', () => ({ enqueueCourse: mocks.enqueue }))
+vi.mock('@/lib/tutor/queue', () => ({
+  enqueueCourse: mocks.enqueue,
+  enqueueChapter: mocks.enqueueChapter,
+  removeCourseJobs: mocks.removeCourseJobs
+}))
 vi.mock('@/lib/tutor/service', () => ({ gradeAnswer: mocks.grade }))
 vi.mock('@/lib/tutor/storage', () => ({
   storeTutorDocument: mocks.store,
   readTutorDocument: mocks.readDocument
 }))
 
+import { TutorRepositoryError } from '@/lib/tutor/repository'
+
 import { POST as answer } from '../courses/[courseId]/chapters/[chapterId]/answers/route'
-import { GET as getCourse } from '../courses/[courseId]/route'
+import { POST as generateChapter } from '../courses/[courseId]/chapters/[chapterId]/generate/route'
+import { POST as retryCourse } from '../courses/[courseId]/retry/route'
+import {
+  DELETE as deleteCourse,
+  GET as getCourse
+} from '../courses/[courseId]/route'
 import { GET as listCourses, POST as createCourse } from '../courses/route'
 import { GET as download } from '../documents/[documentId]/file/route'
 import { POST as upload } from '../documents/route'
@@ -78,9 +101,119 @@ beforeEach(() => {
   mocks.createCourse.mockResolvedValue(course)
   mocks.listCourses.mockResolvedValue([])
   mocks.enqueue.mockResolvedValue('job-a')
+  mocks.deleteCourse.mockResolvedValue(['chapter-a'])
+  mocks.removeCourseJobs.mockResolvedValue(undefined)
 })
 
 describe('Tutor API boundaries', () => {
+  it.each(['generating', 'ready'])(
+    'returns 404 if a chapter disappears after admission with status %s',
+    async status => {
+      mocks.getStoredCourse.mockResolvedValue({ ...course, status: 'ready' })
+      mocks.getChapter
+        .mockResolvedValueOnce({ id: 'chapter-a', status: 'pending' })
+        .mockResolvedValueOnce(null)
+      mocks.updateChapter.mockResolvedValue({ id: 'chapter-a', status })
+      const response = await generateChapter(
+        json('/api/tutor/courses/course-a/chapters/chapter-a/generate', {}),
+        {
+          params: Promise.resolve({
+            courseId: 'course-a',
+            chapterId: 'chapter-a'
+          })
+        }
+      )
+      expect(response.status).toBe(404)
+      expect(await response.json()).toMatchObject({ code: 'NOT_FOUND' })
+      expect(mocks.enqueueChapter).toHaveBeenCalledTimes(
+        status === 'ready' ? 0 : 1
+      )
+    }
+  )
+
+  it.each(['queued', 'ready'])(
+    'returns 404 if a retried course disappears after admission with status %s',
+    async status => {
+      mocks.getCourse
+        .mockResolvedValueOnce({ ...course, status: 'failed' })
+        .mockResolvedValueOnce(null)
+      mocks.prepareCourseRetry.mockResolvedValue({ ...course, status })
+      const response = await retryCourse(
+        json('/api/tutor/courses/course-a/retry', {}),
+        { params: Promise.resolve({ courseId: 'course-a' }) }
+      )
+      expect(response.status).toBe(404)
+      expect(await response.json()).toMatchObject({ code: 'NOT_FOUND' })
+      expect(mocks.enqueue).toHaveBeenCalledTimes(status === 'ready' ? 0 : 1)
+    }
+  )
+
+  it('deletes using session ownership before cleaning queued jobs, without requiring AI configuration', async () => {
+    mocks.capabilities.mockResolvedValue({ ready: false })
+    const response = await deleteCourse(
+      new NextRequest('http://localhost:3000/api/tutor/courses/course-a', {
+        method: 'DELETE'
+      }),
+      { params: Promise.resolve({ courseId: 'course-a' }) }
+    )
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({
+      deleted: true,
+      courseId: 'course-a'
+    })
+    expect(response.headers.get('cache-control')).toBe('private, no-store')
+    expect(mocks.deleteCourse).toHaveBeenCalledWith('user-a', 'course-a')
+    expect(mocks.removeCourseJobs).toHaveBeenCalledWith({
+      courseId: 'course-a',
+      chapterIds: ['chapter-a']
+    })
+    expect(mocks.deleteCourse.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.removeCourseJobs.mock.invocationCallOrder[0]
+    )
+    expect(mocks.capabilities).not.toHaveBeenCalled()
+  })
+
+  it('requires authentication before deleting', async () => {
+    mocks.user.mockResolvedValue(null)
+    const response = await deleteCourse(
+      new NextRequest('http://localhost:3000/api/tutor/courses/course-a', {
+        method: 'DELETE'
+      }),
+      { params: Promise.resolve({ courseId: 'course-a' }) }
+    )
+    expect(response.status).toBe(401)
+    expect(mocks.deleteCourse).not.toHaveBeenCalled()
+    expect(mocks.removeCourseJobs).not.toHaveBeenCalled()
+  })
+
+  it('rejects cross-origin deletion before touching data or the queue', async () => {
+    const response = await deleteCourse(
+      new NextRequest('http://localhost:3000/api/tutor/courses/course-a', {
+        method: 'DELETE',
+        headers: { origin: 'https://untrusted.example' }
+      }),
+      { params: Promise.resolve({ courseId: 'course-a' }) }
+    )
+    expect(response.status).toBe(403)
+    expect(mocks.deleteCourse).not.toHaveBeenCalled()
+    expect(mocks.removeCourseJobs).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 for missing or unowned deletion without cleaning any jobs', async () => {
+    mocks.deleteCourse.mockRejectedValue(
+      new TutorRepositoryError('The requested learning resource was not found.')
+    )
+    const response = await deleteCourse(
+      new NextRequest('http://localhost:3000/api/tutor/courses/other', {
+        method: 'DELETE'
+      }),
+      { params: Promise.resolve({ courseId: 'other' }) }
+    )
+    expect(response.status).toBe(404)
+    expect(mocks.deleteCourse).toHaveBeenCalledWith('user-a', 'other')
+    expect(mocks.removeCourseJobs).not.toHaveBeenCalled()
+  })
+
   it.each(['pdf', 'txt', 'md', 'markdown', 'docx'])(
     'passes a %s upload to content validation with session ownership',
     async extension => {

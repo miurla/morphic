@@ -79,3 +79,52 @@ export const enqueueChapter = (input: {
   courseId: string
   chapterId: string
 }) => enqueue('chapter', input)
+
+/** Database deletion is authoritative; cleanup must never make it fail. */
+export async function removeCourseJobs(input: {
+  courseId: string
+  chapterIds: string[]
+}): Promise<void> {
+  let cleanupQueue: Queue<TutorJob> | undefined
+  let timeout: ReturnType<typeof setTimeout> | undefined
+  try {
+    // A separate connection can be disconnected on timeout without interrupting
+    // other requests using the shared producer.
+    cleanupQueue = new Queue<TutorJob>(TUTOR_QUEUE_NAME, {
+      connection: {
+        ...getTutorQueueConnection(),
+        connectTimeout: 1000,
+        commandTimeout: 1000,
+        maxRetriesPerRequest: 0,
+        retryStrategy: () => null
+      }
+    })
+    cleanupQueue.on('error', () => {})
+    const activeQueue = cleanupQueue
+    const cleanup = async () => {
+      await activeQueue.waitUntilReady()
+      const ids = [
+        `course-${input.courseId}`,
+        ...new Set(input.chapterIds.map(id => `chapter-${id}`))
+      ]
+      // remove returns 0 for locked jobs. Active workers check the database and
+      // stop when their course/chapters no longer exist.
+      const results = await Promise.allSettled(
+        ids.map(id => activeQueue.remove(id))
+      )
+      if (results.some(result => result.status === 'rejected'))
+        console.warn('[Tutor queue] Deleted course cleanup incomplete')
+    }
+    await Promise.race([
+      cleanup(),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('Cleanup timed out')), 2000)
+      })
+    ])
+  } catch {
+    console.warn('[Tutor queue] Deleted course cleanup unavailable')
+  } finally {
+    if (timeout) clearTimeout(timeout)
+    if (cleanupQueue) void cleanupQueue.disconnect().catch(() => {})
+  }
+}

@@ -29,8 +29,14 @@ import { Button } from '@/components/ui/button'
 
 import { useI18n } from '@/components/language-provider'
 
-import { errorMessage, isAbortError, tutorRequest } from './api'
+import {
+  errorMessage,
+  isAbortError,
+  tutorRequest,
+  TutorRequestError
+} from './api'
 import { ChapterLesson } from './chapter-lesson'
+import { CourseActions } from './course-actions'
 import { TutorDocumentList } from './document-list'
 import { NewCourseForm } from './new-course-form'
 import { ProgressMeter } from './progress-meter'
@@ -71,11 +77,57 @@ export function TutorWorkspace({
   const [listRefresh, setListRefresh] = useState(0)
   const [courseRefresh, setCourseRefresh] = useState(0)
   const selectedRef = useRef(selectedId)
+  const deletedIds = useRef(new Set<string>())
+  const titleRef = useRef<HTMLSpanElement>(null)
   selectedRef.current = selectedId
 
   useEffect(() => {
+    if (initialCourseId && deletedIds.current.has(initialCourseId)) {
+      router.replace('/tutor', { scroll: false })
+      return
+    }
     setSelectedId(initialCourseId)
-  }, [initialCourseId])
+  }, [initialCourseId, router])
+
+  const removeCourse = useCallback(
+    (id: string) => {
+      // Invalidate responses synchronously, before React tears down polling/lessons.
+      deletedIds.current.add(id)
+      setCourses(current => current.filter(item => item.id !== id))
+      try {
+        const prefix = `tutor-draft:${userId}:${id}:`
+        for (let index = sessionStorage.length - 1; index >= 0; index--) {
+          const key = sessionStorage.key(index)
+          if (key?.startsWith(prefix)) sessionStorage.removeItem(key)
+        }
+      } catch {
+        // Storage access is optional, as it is when saving answer drafts.
+      }
+      if (selectedRef.current === id) {
+        selectedRef.current = undefined
+        setSelectedId(undefined)
+        setCourse(null)
+        setChapterId(null)
+        setSource(null)
+        setCourseError('')
+        setLoadingCourse(false)
+        router.replace('/tutor', { scroll: false })
+      }
+      requestAnimationFrame(() => titleRef.current?.focus())
+    },
+    [router, userId]
+  )
+
+  // A completed course does not poll. Reconcile deletions from other tabs on return.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === 'hidden') return
+      setListRefresh(value => value + 1)
+      setCourseRefresh(value => value + 1)
+    }
+    window.addEventListener('focus', refresh)
+    return () => window.removeEventListener('focus', refresh)
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -86,7 +138,10 @@ export function TutorWorkspace({
       capabilities: TutorCapabilities
     }>('/api/tutor/courses', locale, { signal: controller.signal })
       .then(result => {
-        setCourses(result.courses)
+        if (controller.signal.aborted) return
+        setCourses(
+          result.courses.filter(item => !deletedIds.current.has(item.id))
+        )
         setCapabilities(result.capabilities)
       })
       .catch(cause => {
@@ -99,7 +154,8 @@ export function TutorWorkspace({
   }, [locale, listRefresh])
 
   const receiveCourse = useCallback((next: TutorCourse) => {
-    if (selectedRef.current !== next.id) return
+    if (selectedRef.current !== next.id || deletedIds.current.has(next.id))
+      return
     setCourse(next)
     setChapterId(current =>
       next.chapters.some(chapter => chapter.id === current)
@@ -128,15 +184,21 @@ export function TutorWorkspace({
       locale,
       { signal: controller.signal }
     )
-      .then(result => receiveCourse(result.course))
+      .then(result => {
+        if (!controller.signal.aborted) receiveCourse(result.course)
+      })
       .catch(cause => {
-        if (!isAbortError(cause)) setCourseError(errorMessage(cause))
+        if (controller.signal.aborted || selectedRef.current !== selectedId)
+          return
+        if (cause instanceof TutorRequestError && cause.status === 404) {
+          removeCourse(selectedId)
+        } else if (!isAbortError(cause)) setCourseError(errorMessage(cause))
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoadingCourse(false)
       })
     return () => controller.abort()
-  }, [selectedId, locale, receiveCourse, courseRefresh])
+  }, [selectedId, locale, receiveCourse, courseRefresh, removeCourse])
 
   const processing = Boolean(
     course &&
@@ -151,7 +213,7 @@ export function TutorWorkspace({
     let inFlight = false
     const controller = new AbortController()
     async function poll() {
-      if (disposed || inFlight) return
+      if (disposed || inFlight || deletedIds.current.has(selectedId!)) return
       if (document.visibilityState === 'hidden') {
         timer = setTimeout(poll, 3000)
         return
@@ -163,13 +225,16 @@ export function TutorWorkspace({
           locale,
           { signal: controller.signal }
         )
-        if (!disposed) {
+        if (!disposed && selectedRef.current === selectedId) {
           receiveCourse(result.course)
           setCourseError('')
         }
       } catch (cause) {
-        if (!disposed && !isAbortError(cause))
-          setCourseError(errorMessage(cause))
+        if (!disposed && selectedRef.current === selectedId) {
+          if (cause instanceof TutorRequestError && cause.status === 404) {
+            removeCourse(selectedId!)
+          } else if (!isAbortError(cause)) setCourseError(errorMessage(cause))
+        }
       } finally {
         inFlight = false
         if (!disposed) timer = setTimeout(poll, 3000)
@@ -189,9 +254,10 @@ export function TutorWorkspace({
       controller.abort()
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [selectedId, processing, locale, receiveCourse])
+  }, [selectedId, processing, locale, receiveCourse, removeCourse])
 
   function navigate(id?: string) {
+    selectedRef.current = id
     setSelectedId(id)
     setCourse(null)
     setChapterId(null)
@@ -203,9 +269,15 @@ export function TutorWorkspace({
     })
   }
 
-  function updateChapter(next: TutorChapter) {
+  function updateChapter(courseId: string, next: TutorChapter | null) {
+    if (
+      !next ||
+      selectedRef.current !== courseId ||
+      deletedIds.current.has(courseId)
+    )
+      return
     setCourse(current =>
-      current
+      current?.id === courseId
         ? {
             ...current,
             chapters: current.chapters.map(chapter =>
@@ -228,7 +300,11 @@ export function TutorWorkspace({
       )
       receiveCourse(result.course)
     } catch (cause) {
-      setCourseError(errorMessage(cause))
+      if (selectedRef.current === course.id) {
+        if (cause instanceof TutorRequestError && cause.status === 404) {
+          removeCourse(course.id)
+        } else setCourseError(errorMessage(cause))
+      }
     } finally {
       setRetrying(false)
     }
@@ -237,6 +313,7 @@ export function TutorWorkspace({
   const activeChapter = course?.chapters.find(
     chapter => chapter.id === chapterId
   )
+  const selectedSummary = course ?? courses.find(item => item.id === selectedId)
 
   return (
     <div className="h-full min-h-0 w-full overflow-y-auto bg-background pt-14">
@@ -244,7 +321,9 @@ export function TutorWorkspace({
         <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b py-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <IconSchool className="size-5" aria-hidden />
-            <span>{t('Tutor')}</span>
+            <span ref={titleRef} tabIndex={-1}>
+              {t('Tutor')}
+            </span>
             {course && (
               <>
                 <IconChevronRight
@@ -257,7 +336,7 @@ export function TutorWorkspace({
               </>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {courses.length > 0 && (
               <select
                 aria-label={t('Your courses')}
@@ -287,6 +366,13 @@ export function TutorWorkspace({
                 <IconPlus className="size-4" aria-hidden />
                 {t('New course')}
               </Button>
+            )}
+            {selectedSummary && (
+              <CourseActions
+                key={selectedSummary.id}
+                course={selectedSummary}
+                onDeleted={removeCourse}
+              />
             )}
           </div>
         </header>
@@ -365,29 +451,37 @@ export function TutorWorkspace({
                 </h2>
                 <div className="space-y-2">
                   {courses.map(item => (
-                    <button
+                    <div
                       key={item.id}
-                      onClick={() => navigate(item.id)}
-                      className="flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="flex w-full items-center gap-1 rounded-xl border pr-2"
                     >
-                      <IconBook2
-                        className="size-5 shrink-0 text-muted-foreground"
-                        aria-hidden
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {item.title}
-                        </p>
-                        <p className="mt-1 truncate text-xs text-muted-foreground">
-                          {t(stageLabels[item.stage])} ·{' '}
-                          {new Date(item.createdAt).toLocaleDateString(locale)}
-                        </p>
-                      </div>
-                      <IconChevronRight
-                        className="size-4 shrink-0 text-muted-foreground"
-                        aria-hidden
-                      />
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(item.id)}
+                        className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <IconBook2
+                          className="size-5 shrink-0 text-muted-foreground"
+                          aria-hidden
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {item.title}
+                          </p>
+                          <p className="mt-1 truncate text-xs text-muted-foreground">
+                            {t(stageLabels[item.stage])} ·{' '}
+                            {new Date(item.createdAt).toLocaleDateString(
+                              locale
+                            )}
+                          </p>
+                        </div>
+                        <IconChevronRight
+                          className="size-4 shrink-0 text-muted-foreground"
+                          aria-hidden
+                        />
+                      </button>
+                      <CourseActions course={item} onDeleted={removeCourse} />
+                    </div>
                   ))}
                 </div>
               </section>
@@ -590,7 +684,7 @@ export function TutorWorkspace({
                     userId={userId}
                     courseId={course.id}
                     chapter={activeChapter}
-                    onChapter={updateChapter}
+                    onChapter={next => updateChapter(course.id, next)}
                     onSource={setSource}
                   />
                 ) : (

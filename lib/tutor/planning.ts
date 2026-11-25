@@ -132,13 +132,16 @@ export async function compactPlanningNotes({
   notes,
   locale,
   checkpoint,
-  saveCheckpoint
+  saveCheckpoint,
+  ensureActive
 }: {
   notes: PlanningNote[]
   locale: string
   checkpoint: Record<string, PlanningNote[]>
   saveCheckpoint: (map: Record<string, PlanningNote[]>) => Promise<void>
+  ensureActive?: () => Promise<void>
 }): Promise<PlanningNote[]> {
+  await ensureActive?.()
   if (
     new Set(notes.map(note => note.id)).size !== notes.length ||
     notes.some(
@@ -156,6 +159,7 @@ export async function compactPlanningNotes({
   for (let layer = 0; layer < MAX_COMPACTION_LAYERS; layer++) {
     const next: PlanningNote[] = []
     for (const batch of batchesFor(current)) {
+      await ensureActive?.()
       // Contents and provenance are included as well as IDs: reusing an ID
       // after a model/prompt change must not reuse a different summary.
       const digest = createHash('sha256')
@@ -173,6 +177,7 @@ export async function compactPlanningNotes({
         const inputIds = new Set(batch.map(note => note.id))
         const output = await generateTutorObject({
           schema: compactTopicsSchema,
+          ensureActive,
           task: 'compact-plan',
           locale,
           prompt:
@@ -192,6 +197,7 @@ export async function compactPlanningNotes({
             }
           }
         })
+        await ensureActive?.()
         const byId = new Map(batch.map(note => [note.id, note]))
         const compacted: PlanningNote[] = output.topics.map((topic, index) => ({
           id: `${key}-${index}`,

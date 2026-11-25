@@ -24,6 +24,7 @@ It does not modify `.env` files. Leave it running while, in another terminal:
 ```sh
 node scripts/tutor-smoke/api.mjs
 node scripts/tutor-smoke/browser.mjs
+node scripts/tutor-smoke/deletion.mjs
 ```
 
 API assertions include real PDF upload, generation, citation bounds, private
@@ -31,6 +32,13 @@ answer exclusion, deterministic grading, idempotent retries, latest-attempt
 mastery, and durable reload. Browser assertions use real app requests in English
 and Chinese at desktop and 375px widths, including upload, study, PDF highlights,
 draft recovery, and feedback. Unrelated external browser requests are blocked.
+
+The deletion check creates its own courses and deletes only those fixtures. It
+checks English/Chinese confirmation, keyboard focus, 375px/desktop layouts,
+pending/retry behavior, durable deletion, and preservation of shared materials.
+Deletion uses the real API; permission/network failures and partial/empty lists
+are explicitly injected in the browser. Screenshots and the check report are
+saved in `.tmp/tutor-deletion/`. Existing test courses are preserved.
 
 Results, fixture PDF, screenshots, and service logs are written to
 `.tmp/tutor-smoke/`; uploaded test files stay in `.tmp/tutor-smoke-files/`.

@@ -137,6 +137,32 @@ export async function getStoredCourse(userId: string, courseId: string) {
   )
 }
 
+export async function deleteCourse(userId: string, courseId: string) {
+  return withRLS(userId, async tx => {
+    // Match saveCoursePlan's row lock so no chapters can be published between
+    // collecting job IDs and cascading the deletion.
+    const [course] = await tx
+      .select({ id: tutorCourses.id })
+      .from(tutorCourses)
+      .where(owned(userId, courseId))
+      .for('update')
+    if (!course) throw missing()
+    const chapters = await tx
+      .select({ id: tutorChapters.id })
+      .from(tutorChapters)
+      .where(
+        and(
+          eq(tutorChapters.userId, userId),
+          eq(tutorChapters.courseId, courseId)
+        )
+      )
+    // Foreign keys remove chapters, attempts and course-document links. Source
+    // documents and their indexes are shared and deliberately remain intact.
+    await tx.delete(tutorCourses).where(owned(userId, courseId))
+    return chapters.map(chapter => chapter.id)
+  })
+}
+
 export async function getStoredChapter(
   userId: string,
   courseId: string,

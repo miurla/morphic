@@ -37,29 +37,32 @@ export async function POST(
       status: 'generating',
       error: null
     })
-    if (admitted.status === 'ready')
-      return NextResponse.json({
-        chapter: await getChapter(userId, courseId, chapterId)
-      })
-    try {
-      await enqueueChapter({ userId, courseId, chapterId })
-    } catch {
-      await updateChapter(userId, courseId, chapterId, {
-        status: 'failed',
-        error:
-          locale === 'zh-CN'
-            ? '任务队列暂时不可用，请重试。'
-            : 'The task queue is unavailable. Please retry.'
-      })
-      throw new TutorRepositoryError(
-        'The task queue is unavailable. Please retry.',
-        'QUEUE_UNAVAILABLE',
-        503
-      )
+    if (admitted.status !== 'ready') {
+      try {
+        await enqueueChapter({ userId, courseId, chapterId })
+      } catch {
+        await updateChapter(userId, courseId, chapterId, {
+          status: 'failed',
+          error:
+            locale === 'zh-CN'
+              ? '任务队列暂时不可用，请重试。'
+              : 'The task queue is unavailable. Please retry.'
+        })
+        throw new TutorRepositoryError(
+          'The task queue is unavailable. Please retry.',
+          'QUEUE_UNAVAILABLE',
+          503
+        )
+      }
     }
+    const refreshed = await getChapter(userId, courseId, chapterId)
+    if (!refreshed)
+      throw new TutorRepositoryError(
+        'The requested learning resource was not found.'
+      )
     return NextResponse.json(
-      { chapter: await getChapter(userId, courseId, chapterId) },
-      { status: 202 }
+      { chapter: refreshed },
+      { status: admitted.status === 'ready' ? 200 : 202 }
     )
   })
 }

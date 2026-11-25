@@ -1,5 +1,12 @@
 export const tutorMessages: Record<string, string> = {
   Tutor: 'Tutor',
+  'Actions for {title}': '“{title}”的操作',
+  'Delete learning path': '删除学习路线',
+  'Delete “{title}”?': '删除“{title}”？',
+  'This permanently deletes the chapters, exercises, answers, and learning progress for this path. This cannot be undone. Your uploaded original materials will be kept.':
+    '该路线的章节、练习、答题记录和学习进度将永久删除，无法恢复。上传的原始资料会保留。',
+  'Deleting…': '删除中…',
+  'Learning path deleted': '学习路线已删除',
   'Turn saved knowledge into action! Upload your files.':
     '从收藏到行动！现在上传文件。',
   'A learning path built from your materials, with explanations, examples, and practice.':

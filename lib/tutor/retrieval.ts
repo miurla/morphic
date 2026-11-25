@@ -17,6 +17,7 @@ export interface RetrievalOptions {
   mode?: 'hybrid' | 'vector'
   rerank?: boolean
   contextTokenBudget?: number
+  ensureActive?: () => Promise<void>
 }
 
 export interface RetrievalTrace {
@@ -226,7 +227,8 @@ export async function retrieveEvidenceWithTrace(
   // Lazy import keeps deterministic retrieval helpers usable in offline evals.
   const repository = await import('./repository')
   assertIndexVersions(await repository.getCourseDocuments(userId, courseId))
-  const embedding = await embedQuery(query)
+  const embedding = await embedQuery(query, options.ensureActive)
+  await options.ensureActive?.()
   const lexicalQuery = buildLexicalQuery(query)
   const [vector, lexical, anchors] = await Promise.all([
     repository.searchVectorChunks(userId, courseId, embedding, CANDIDATE_LIMIT),
@@ -254,6 +256,7 @@ export async function retrieveEvidenceWithTrace(
   const useRerank =
     options.rerank ?? process.env.TUTOR_RERANK_ENABLED === 'true'
   if (useRerank && ranked.length) {
+    await options.ensureActive?.()
     try {
       ranked = await rerank(query, ranked)
       trace.rerank = 'applied'
@@ -263,6 +266,7 @@ export async function retrieveEvidenceWithTrace(
       console.warn('[Tutor] Reranking failed; using fused retrieval results.')
     }
   }
+  await options.ensureActive?.()
   trace.rankedIds = ranked.map(chunk => chunk.id)
   const limit = Math.max(
     1,

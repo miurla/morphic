@@ -543,6 +543,145 @@ suite('Tutor PostgreSQL ownership, retrieval and idempotency', () => {
     ).toHaveLength(1)
   })
 
+  it("does not allow deleting another owner's course or a missing course", async () => {
+    await expect(
+      repository.deleteCourse(ownerB, courseA)
+    ).rejects.toMatchObject({
+      status: 404,
+      code: 'NOT_FOUND'
+    })
+    await expect(
+      repository.deleteCourse(ownerA, randomUUID())
+    ).rejects.toMatchObject({
+      status: 404,
+      code: 'NOT_FOUND'
+    })
+    expect(await repository.getCourse(ownerA, courseA)).not.toBeNull()
+  })
+
+  it.each(['queued', 'processing', 'failed'] as const)(
+    'deletes a %s course and rejects repeated deletion',
+    async status => {
+      const course = await repository.createCourse(ownerA, {
+        documentIds: [documentA],
+        goal: 'Discard this route',
+        level: 'beginner',
+        locale: 'en'
+      })
+      await repository.updateCourse(ownerA, course.id, { status })
+      expect(await repository.deleteCourse(ownerA, course.id)).toEqual([])
+      expect(await repository.getCourse(ownerA, course.id)).toBeNull()
+      await expect(
+        repository.deleteCourse(ownerA, course.id)
+      ).rejects.toMatchObject({
+        status: 404
+      })
+    }
+  )
+
+  it('cascades chapters and attempts while preserving shared documents, indexes and other routes', async () => {
+    const course = await repository.createCourse(ownerA, {
+      documentIds: [documentA],
+      goal: 'Delete a studied route',
+      level: 'beginner',
+      locale: 'en'
+    })
+    const deletedChapterId = randomUUID()
+    const original = (await repository.getStoredChapter(
+      ownerA,
+      courseA,
+      chapterId
+    ))!
+    await repository.saveCoursePlan(ownerA, course.id, {
+      title: 'Disposable route',
+      chapters: [
+        {
+          id: deletedChapterId,
+          position: 0,
+          title: original.title,
+          summary: original.summary,
+          objectives: original.objectives,
+          knowledgePoints: original.knowledgePoints
+        }
+      ]
+    })
+    await repository.updateChapter(ownerA, course.id, deletedChapterId, {
+      status: 'ready',
+      questions: original.questions
+    })
+    const attemptId = randomUUID()
+    await repository.recordAssessment(ownerA, course.id, deletedChapterId, {
+      id: attemptId,
+      questionId,
+      knowledgePointId: 'kp-a',
+      answer: '加快查询',
+      score: 80,
+      feedback: '正确',
+      strengths: [],
+      improvements: [],
+      criteria: [],
+      sourceIds: [chunkA],
+      createdAt: new Date().toISOString()
+    })
+    expect(await repository.deleteCourse(ownerA, course.id)).toEqual([
+      deletedChapterId
+    ])
+    expect(await repository.getCourse(ownerA, course.id)).toBeNull()
+    expect(
+      await repository.getStoredChapter(ownerA, course.id, deletedChapterId)
+    ).toBeNull()
+    expect(await repository.getAssessment(ownerA, attemptId)).toBeNull()
+    expect(
+      await admin`select * from tutor_course_documents where course_id = ${course.id}`
+    ).toHaveLength(0)
+    expect((await repository.getDocument(ownerA, documentA))?.status).toBe(
+      'ready'
+    )
+    expect(await repository.getCourse(ownerA, courseA)).not.toBeNull()
+    expect(await repository.getCourse(ownerB, courseB)).not.toBeNull()
+    expect(
+      await repository.getChunksByIds(ownerA, courseA, [chunkA])
+    ).toHaveLength(1)
+  })
+
+  it('never leaves a plan behind when publication races deletion', async () => {
+    const course = await repository.createCourse(ownerA, {
+      documentIds: [documentA],
+      goal: 'Concurrent deletion',
+      level: 'beginner',
+      locale: 'en'
+    })
+    const plannedChapterId = randomUUID()
+    const [published, deleted] = await Promise.allSettled([
+      repository.saveCoursePlan(ownerA, course.id, {
+        title: 'Racing route',
+        chapters: [
+          {
+            id: plannedChapterId,
+            position: 0,
+            title: 'Indexing',
+            summary: 'Indexing',
+            objectives: ['Explain indexes'],
+            knowledgePoints: [
+              { id: 'kp-race', title: 'Indexing', sourceIds: [chunkA] }
+            ]
+          }
+        ]
+      }),
+      repository.deleteCourse(ownerA, course.id)
+    ])
+    expect(deleted.status).toBe('fulfilled')
+    if (published.status === 'rejected') {
+      expect(published.reason).toMatchObject({ status: 404 })
+    } else if (deleted.status === 'fulfilled') {
+      expect(deleted.value).toEqual([plannedChapterId])
+    }
+    expect(await repository.getCourse(ownerA, course.id)).toBeNull()
+    expect(
+      await repository.getStoredChapter(ownerA, course.id, plannedChapterId)
+    ).toBeNull()
+  })
+
   it('serializes concurrent course admission and applies the same quota to retries', async () => {
     const retryTarget = await repository.createCourse(ownerA, {
       documentIds: [documentA],

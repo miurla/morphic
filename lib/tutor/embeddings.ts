@@ -165,9 +165,12 @@ export function validateEmbeddingResponse(
 
 async function embedBatch(
   texts: string[],
-  config: EmbeddingConfig
+  config: EmbeddingConfig,
+  ensureActive?: () => Promise<void>
 ): Promise<number[][]> {
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    // Keep cancellation outside the network retry handler.
+    await ensureActive?.()
     try {
       const response = await fetch(`${config.baseUrl}/embeddings`, {
         method: 'POST',
@@ -223,7 +226,10 @@ async function embedBatch(
   )
 }
 
-export async function embedTexts(texts: string[]): Promise<number[][]> {
+export async function embedTexts(
+  texts: string[],
+  ensureActive?: () => Promise<void>
+): Promise<number[][]> {
   if (!texts.length) return []
   if (texts.some(text => !text.trim()))
     throw new EmbeddingError(
@@ -238,17 +244,21 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
     )
   const vectors: number[][] = []
   for (let index = 0; index < texts.length; index += config.batchSize) {
-    vectors.push(
-      ...(await embedBatch(
-        texts.slice(index, index + config.batchSize),
-        config
-      ))
+    const batch = await embedBatch(
+      texts.slice(index, index + config.batchSize),
+      config,
+      ensureActive
     )
+    await ensureActive?.()
+    vectors.push(...batch)
   }
   return vectors
 }
 
-export async function embedQuery(text: string): Promise<number[]> {
-  return (await embedTexts([text]))[0]
+export async function embedQuery(
+  text: string,
+  ensureActive?: () => Promise<void>
+): Promise<number[]> {
+  return (await embedTexts([text], ensureActive))[0]
 }
 import { createHash } from 'node:crypto'

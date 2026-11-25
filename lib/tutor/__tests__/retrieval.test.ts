@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CHUNKING_VERSION } from '../chunking'
 import { retrieveEvidenceWithTrace } from '../retrieval'
@@ -50,7 +50,45 @@ beforeEach(() => {
   mocks.getChunksByParentIds.mockResolvedValue([evidence])
 })
 
+afterEach(() => vi.unstubAllGlobals())
+
 describe('Tutor retrieval scope and index versions', () => {
+  it.each(['embedding', 'search'])(
+    'stops before reranking when deletion occurs during %s',
+    async phase => {
+      let deleted = false
+      const cancelled = new Error('Course deleted')
+      const ensureActive = async () => {
+        if (deleted) throw cancelled
+      }
+      if (phase === 'embedding') {
+        mocks.embedQuery.mockImplementationOnce(async () => {
+          deleted = true
+          return [1, 0]
+        })
+      } else {
+        mocks.searchVectorChunks.mockImplementationOnce(async () => {
+          deleted = true
+          return [evidence]
+        })
+      }
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+      await expect(
+        retrieveEvidenceWithTrace({
+          userId: 'alice',
+          courseId: 'course-a',
+          query: 'atomicity',
+          rerank: true,
+          ensureActive
+        })
+      ).rejects.toBe(cancelled)
+      expect(mocks.embedQuery).toHaveBeenCalledWith('atomicity', ensureActive)
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(mocks.getChunksByParentIds).not.toHaveBeenCalled()
+    }
+  )
+
   it('passes the authenticated scope into every lookup including parent expansion', async () => {
     const result = await retrieveEvidenceWithTrace({
       userId: 'alice',

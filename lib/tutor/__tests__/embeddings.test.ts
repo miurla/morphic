@@ -23,6 +23,30 @@ afterEach(() => {
 })
 
 describe('Tutor embeddings', () => {
+  it.each(['next-batch', 'http-retry', 'network-retry'])(
+    'stops %s when a course is deleted without treating cancellation as a provider error',
+    async phase => {
+      vi.stubEnv('TUTOR_EMBEDDING_API_KEY', 'unit-test-key')
+      vi.stubEnv('TUTOR_EMBEDDING_BATCH_SIZE', '1')
+      vi.stubEnv('TUTOR_EMBEDDING_DIMENSIONS', '2')
+      let deleted = false
+      const cancelled = new Error('Course deleted')
+      const fetchMock = vi.fn(async () => {
+        deleted = true
+        if (phase === 'network-retry') throw new Error('Network failed')
+        if (phase === 'http-retry') return new Response(null, { status: 503 })
+        return Response.json({ data: [{ index: 0, embedding: [1, 0] }] })
+      })
+      vi.stubGlobal('fetch', fetchMock)
+      await expect(
+        embedTexts(['First', 'Second'], async () => {
+          if (deleted) throw cancelled
+        })
+      ).rejects.toBe(cancelled)
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+    }
+  )
+
   it.each(['', 'stale-cloud-key'])(
     'supports keyless local requests without forwarding credentials (%s)',
     async dedicatedKey => {

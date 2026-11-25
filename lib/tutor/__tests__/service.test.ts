@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CHUNKING_VERSION } from '../chunking'
+import { TutorError } from '../errors'
 import { gradeAnswer, processChapter, processCourse } from '../service'
 import type { RetrievedChunk, StoredQuestion } from '../types'
 
@@ -91,7 +92,7 @@ const grade = {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks()
+  vi.resetAllMocks()
   vi.spyOn(console, 'info').mockImplementation(() => {})
   mocks.getStoredCourse.mockResolvedValue({
     id: 'course-a',
@@ -220,6 +221,30 @@ describe('Tutor answer evaluation service', () => {
     })
     expect(mocks.recordAssessment).not.toHaveBeenCalled()
   })
+
+  it.each(['completed', 'failed'])(
+    'returns 404 when the course is deleted during a %s model request',
+    async outcome => {
+      mocks.generateTutorObject.mockImplementation(async () => {
+        mocks.getStoredCourse.mockResolvedValue(null)
+        if (outcome === 'failed') throw new Error('Provider unavailable')
+        return grade
+      })
+      await expect(gradeAnswer(input)).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+        status: 404
+      })
+      expect(mocks.recordAssessment).not.toHaveBeenCalled()
+    }
+  )
+
+  it('does not return a successful assessment with a deleted chapter', async () => {
+    mocks.getChapter.mockResolvedValue(null)
+    await expect(gradeAnswer(input)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      status: 404
+    })
+  })
 })
 
 describe('Tutor course planning and checkpoint recovery', () => {
@@ -253,9 +278,10 @@ describe('Tutor course planning and checkpoint recovery', () => {
       processCourse({ userId: 'alice', courseId: 'course-a' })
     ).rejects.toThrow()
     expect(mocks.parseTutorDocument).toHaveBeenCalledWith(bytes, 'notes.md')
-    expect(mocks.embedTexts).toHaveBeenCalledWith([
-      expect.stringContaining('Atomicity matters.')
-    ])
+    expect(mocks.embedTexts).toHaveBeenCalledWith(
+      [expect.stringContaining('Atomicity matters.')],
+      expect.any(Function)
+    )
   })
   it('reuses a persisted extraction checkpoint when final route generation fails', async () => {
     const course = {
@@ -425,5 +451,187 @@ describe('Tutor chapter generation', () => {
         ([, , , patch]) => patch.status === 'ready'
       )
     ).toBe(false)
+  })
+})
+
+describe('Tutor jobs cancelled by course deletion', () => {
+  const job = { userId: 'alice', courseId: 'course-a' }
+  const chapterJob = { ...job, chapterId: 'chapter-a' }
+
+  async function queuedCourse() {
+    const course = await mocks.getStoredCourse()
+    mocks.getStoredCourse.mockResolvedValue({ ...course, status: 'queued' })
+  }
+
+  async function pendingChapter() {
+    const chapter = await mocks.getStoredChapter()
+    mocks.getStoredChapter.mockResolvedValue({ ...chapter, status: 'pending' })
+  }
+
+  function uploadedDocument() {
+    mocks.getCourseDocuments.mockResolvedValue([
+      {
+        id: 'doc-a',
+        filename: 'notes.md',
+        status: 'uploaded',
+        indexKey: 'document-index-key'
+      }
+    ])
+    mocks.readTutorDocument.mockResolvedValue(new Uint8Array([1]))
+    mocks.parseTutorDocument.mockResolvedValue({
+      blocks: [
+        {
+          text: 'Atomicity makes changes succeed or fail together.',
+          region: { page: 1, x: 0, y: 0, width: 1, height: 1 }
+        }
+      ],
+      pageCount: 1,
+      warnings: []
+    })
+  }
+
+  it('discards queued course and chapter jobs whose course was deleted', async () => {
+    mocks.getStoredCourse.mockResolvedValue(null)
+    await expect(processCourse(job)).resolves.toBeUndefined()
+    await expect(processChapter(chapterJob)).resolves.toBeUndefined()
+    expect(mocks.generateTutorObject).not.toHaveBeenCalled()
+    expect(mocks.updateCourse).not.toHaveBeenCalled()
+    expect(mocks.updateChapter).not.toHaveBeenCalled()
+  })
+
+  it.each(['parse', 'embed'])(
+    'stops after deletion during %s without failing shared documents',
+    async phase => {
+      await queuedCourse()
+      uploadedDocument()
+      if (phase === 'parse') {
+        mocks.parseTutorDocument.mockImplementation(async () => {
+          mocks.getStoredCourse.mockResolvedValue(null)
+          throw new Error('Parser stopped')
+        })
+      } else {
+        mocks.embedTexts.mockImplementation(async () => {
+          mocks.getStoredCourse.mockResolvedValue(null)
+          return [[1, 0]]
+        })
+      }
+      await expect(processCourse(job)).resolves.toBeUndefined()
+      expect(mocks.updateDocument).not.toHaveBeenCalled()
+      expect(mocks.saveDocumentChunks).not.toHaveBeenCalled()
+      expect(mocks.generateTutorObject).not.toHaveBeenCalled()
+      expect(
+        mocks.updateCourse.mock.calls.some(
+          ([, , patch]) => patch.status === 'failed'
+        )
+      ).toBe(false)
+    }
+  )
+
+  it('discards extraction results and does not start planning after deletion', async () => {
+    await queuedCourse()
+    mocks.generateTutorObject.mockImplementation(async () => {
+      mocks.getStoredCourse.mockResolvedValue(null)
+      return { topics: [] }
+    })
+    await expect(processCourse(job)).resolves.toBeUndefined()
+    expect(mocks.generateTutorObject).toHaveBeenCalledTimes(1)
+    expect(mocks.saveCoursePlan).not.toHaveBeenCalled()
+    expect(
+      mocks.updateCourse.mock.calls.some(
+        ([, , patch]) => 'planningNotes' in patch || patch.status === 'failed'
+      )
+    ).toBe(false)
+  })
+
+  it('handles deletion after the last course check but before plan persistence', async () => {
+    await queuedCourse()
+    mocks.generateTutorObject.mockImplementation(async options =>
+      options.task === 'extract'
+        ? {
+            topics: [
+              {
+                title: 'Atomicity',
+                summary: 'All or nothing.',
+                unitIds: options.data.units.map(
+                  (unit: { id: string }) => unit.id
+                )
+              }
+            ]
+          }
+        : { title: 'Transactions', chapters: [] }
+    )
+    mocks.saveCoursePlan.mockImplementation(async () => {
+      mocks.getStoredCourse.mockResolvedValue(null)
+      throw new TutorError(
+        'The requested learning resource was not found.',
+        'NOT_FOUND',
+        404
+      )
+    })
+    await expect(processCourse(job)).resolves.toBeUndefined()
+    expect(mocks.saveCoursePlan).toHaveBeenCalledTimes(1)
+    expect(
+      mocks.updateCourse.mock.calls.some(
+        ([, , patch]) => patch.status === 'failed'
+      )
+    ).toBe(false)
+  })
+
+  it('does not swallow a missing resource error while the course still exists', async () => {
+    await queuedCourse()
+    const error = new TutorError('Missing source', 'NOT_FOUND', 404)
+    mocks.getAllCourseChunks.mockRejectedValue(error)
+    await expect(processCourse(job)).rejects.toBe(error)
+    expect(mocks.updateCourse).toHaveBeenLastCalledWith(
+      'alice',
+      'course-a',
+      expect.objectContaining({ status: 'failed' })
+    )
+  })
+
+  it.each(['course', 'chapter'])(
+    'handles deletion between the failure check and the %s failure update',
+    async kind => {
+      const error = new Error('Provider unavailable')
+      mocks.generateTutorObject.mockRejectedValue(error)
+      if (kind === 'course') {
+        await queuedCourse()
+        mocks.updateCourse.mockImplementation(async (_user, _course, patch) => {
+          if (patch.status === 'failed') {
+            mocks.getStoredCourse.mockResolvedValue(null)
+            throw new TutorError('Deleted', 'NOT_FOUND', 404)
+          }
+        })
+      } else {
+        await pendingChapter()
+        mocks.updateChapter.mockImplementation(
+          async (_user, _course, _chapter, patch) => {
+            if (patch.status === 'failed') {
+              mocks.getStoredCourse.mockResolvedValue(null)
+              throw new TutorError('Deleted', 'NOT_FOUND', 404)
+            }
+          }
+        )
+      }
+      await expect(
+        kind === 'course' ? processCourse(job) : processChapter(chapterJob)
+      ).resolves.toBeUndefined()
+    }
+  )
+
+  it('discards a late lesson without writing a ready or failed chapter', async () => {
+    await pendingChapter()
+    mocks.generateTutorObject.mockImplementation(async () => {
+      mocks.getStoredCourse.mockResolvedValue(null)
+      return {}
+    })
+    await expect(processChapter(chapterJob)).resolves.toBeUndefined()
+    expect(mocks.updateChapter).toHaveBeenCalledTimes(1)
+    expect(mocks.updateChapter).toHaveBeenLastCalledWith(
+      'alice',
+      'course-a',
+      'chapter-a',
+      { status: 'generating', error: null }
+    )
   })
 })

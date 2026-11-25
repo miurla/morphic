@@ -48,6 +48,43 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('portable Tutor structured generation', () => {
+  it.each(['success', 'invalid', 'failure'])(
+    'does not send another request after course deletion during %s',
+    async outcome => {
+      let deleted = false
+      const cancelled = new TutorError('Course deleted', 'NOT_FOUND', 404)
+      mocks.generateText.mockImplementation(async () => {
+        deleted = true
+        if (outcome === 'failure') throw new Error('Provider unavailable')
+        return { output: outcome === 'invalid' ? {} : valid }
+      })
+      await expect(
+        generateTutorObject({
+          ...options,
+          ensureActive: async () => {
+            if (deleted) throw cancelled
+          }
+        })
+      ).rejects.toBe(cancelled)
+      expect(mocks.generateText).toHaveBeenCalledTimes(1)
+      expect(mocks.generateText.mock.calls[0][0].maxRetries).toBe(0)
+      expect(console.warn).not.toHaveBeenCalled()
+    }
+  )
+
+  it('does not call the provider when the course was already deleted', async () => {
+    const cancelled = new Error('Course deleted')
+    await expect(
+      generateTutorObject({
+        ...options,
+        ensureActive: async () => {
+          throw cancelled
+        }
+      })
+    ).rejects.toBe(cancelled)
+    expect(mocks.generateText).not.toHaveBeenCalled()
+  })
+
   it('includes the complete trusted schema in instructions while retaining SDK structured output', async () => {
     mocks.generateText.mockResolvedValueOnce({ output: valid })
     expect(await generateTutorObject({ ...options, locale: 'zh-CN' })).toEqual(

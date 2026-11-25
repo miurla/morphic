@@ -29,6 +29,33 @@ import { evaluateCriteria, validateLesson, validateRoute } from './validation'
 type CourseJob = { userId: string; courseId: string }
 type ChapterJob = CourseJob & { chapterId: string }
 
+async function requireExistingCourse(userId: string, courseId: string) {
+  if (!(await repository.getStoredCourse(userId, courseId)))
+    throw new TutorError(
+      'The requested learning resource was not found.',
+      'NOT_FOUND',
+      404
+    )
+}
+
+// A deleted course cancels its jobs. Other failures still reach the queue so
+// transient problems can retry, including missing evidence in an existing course.
+async function reportJobFailure(
+  { userId, courseId }: CourseJob,
+  error: unknown,
+  saveFailure: () => Promise<unknown>
+) {
+  if (!(await repository.getStoredCourse(userId, courseId))) return
+  try {
+    await saveFailure()
+  } catch (writeError) {
+    // Deletion can win after the check above but before the failure update.
+    if (!(await repository.getStoredCourse(userId, courseId))) return
+    throw writeError
+  }
+  throw error
+}
+
 function makeUnits(chunks: RetrievedChunk[]) {
   const grouped = new Map<string, RetrievedChunk[]>()
   for (const chunk of chunks) {
@@ -62,6 +89,7 @@ export async function processCourse({ userId, courseId }: CourseJob) {
       )
     let pages = 0
     for (const [index, document] of documents.entries()) {
+      await requireExistingCourse(userId, courseId)
       const embeddingModel = getEmbeddingIndexKey()
       if (
         document.indexKey !== repository.getDocumentIndexKey(document.filename)
@@ -94,10 +122,10 @@ export async function processCourse({ userId, courseId }: CourseJob) {
           stage: 'parsing',
           processingProgress: 5 + Math.round((index / documents.length) * 50)
         })
-        const parsed = await parseTutorDocument(
-          await readTutorDocument(userId, document.id),
-          document.filename
-        )
+        const bytes = await readTutorDocument(userId, document.id)
+        await requireExistingCourse(userId, courseId)
+        const parsed = await parseTutorDocument(bytes, document.filename)
+        await requireExistingCourse(userId, courseId)
         pages += parsed.pageCount
         if (pages > TUTOR_LIMITS.maxPages)
           throw new TutorError(
@@ -119,8 +147,10 @@ export async function processCourse({ userId, courseId }: CourseJob) {
           processingProgress: 10 + Math.round((index / documents.length) * 50)
         })
         const embeddings = await embedTexts(
-          chunks.map(chunk => chunk.retrievalText)
+          chunks.map(chunk => chunk.retrievalText),
+          () => requireExistingCourse(userId, courseId)
         )
+        await requireExistingCourse(userId, courseId)
         const indexed = chunks.map((chunk, i) => ({
           ...chunk,
           embedding: embeddings[i]
@@ -133,6 +163,8 @@ export async function processCourse({ userId, courseId }: CourseJob) {
           parseVersion: CHUNKING_VERSION
         })
       } catch (error) {
+        // Course deletion is not a failure of this potentially shared document.
+        if (!(await repository.getStoredCourse(userId, courseId))) return
         await repository.updateDocument(userId, document.id, {
           status: 'failed',
           error: safeTutorError(error)
@@ -165,6 +197,7 @@ export async function processCourse({ userId, courseId }: CourseJob) {
     }
     const notes: PlanningNote[] = []
     for (const [index, group] of batches.entries()) {
+      await requireExistingCourse(userId, courseId)
       const batchId = createHash('sha256')
         .update(
           JSON.stringify(group.map(unit => unit.id)) +
@@ -175,6 +208,7 @@ export async function processCourse({ userId, courseId }: CourseJob) {
       if (!checkpoint[batchId]) {
         const extracted = await generateTutorObject({
           schema: topicBatchSchema,
+          ensureActive: () => requireExistingCourse(userId, courseId),
           task: 'extract',
           locale: course.locale,
           prompt:
@@ -192,6 +226,7 @@ export async function processCourse({ userId, courseId }: CourseJob) {
               throw new Error('Incomplete source unit coverage')
           }
         })
+        await requireExistingCourse(userId, courseId)
         checkpoint[batchId] = extracted.topics.map((topic, i) => ({
           id: `${batchId.slice(0, 16)}-${i}`,
           title: topic.title,
@@ -222,12 +257,15 @@ export async function processCourse({ userId, courseId }: CourseJob) {
       notes,
       locale: course.locale,
       checkpoint,
+      ensureActive: () => requireExistingCourse(userId, courseId),
       saveCheckpoint: async planningNotes => {
         await repository.updateCourse(userId, courseId, { planningNotes })
       }
     })
+    await requireExistingCourse(userId, courseId)
     const plan = await generateTutorObject({
       schema: routeSchema,
+      ensureActive: () => requireExistingCourse(userId, courseId),
       task: 'plan',
       locale: course.locale,
       prompt:
@@ -243,6 +281,7 @@ export async function processCourse({ userId, courseId }: CourseJob) {
           planningNotes.map(note => note.id)
         )
     })
+    await requireExistingCourse(userId, courseId)
     const byId = new Map(planningNotes.map(note => [note.id, note]))
     await repository.saveCoursePlan(userId, courseId, {
       title: plan.title,
@@ -262,12 +301,13 @@ export async function processCourse({ userId, courseId }: CourseJob) {
       }))
     })
   } catch (error) {
-    await repository.updateCourse(userId, courseId, {
-      status: 'failed',
-      stage: 'failed',
-      error: safeTutorError(error)
-    })
-    throw error
+    return reportJobFailure({ userId, courseId }, error, () =>
+      repository.updateCourse(userId, courseId, {
+        status: 'failed',
+        stage: 'failed',
+        error: safeTutorError(error)
+      })
+    )
   }
 }
 
@@ -294,9 +334,11 @@ export async function processChapter({
     })
     const evidence = new Map<string, RetrievedChunk>()
     for (const point of chapter.knowledgePoints) {
+      await requireExistingCourse(userId, courseId)
       const result = await retrieveEvidenceWithTrace({
         userId,
         courseId,
+        ensureActive: () => requireExistingCourse(userId, courseId),
         query: `${chapter.title} ${point.title}`,
         anchorIds: point.sourceIds.slice(0, 2),
         limit: 4,
@@ -320,8 +362,10 @@ export async function processChapter({
       })
     }
     const sources = [...evidence.values()]
+    await requireExistingCourse(userId, courseId)
     const lesson = await generateTutorObject({
       schema: lessonSchema,
+      ensureActive: () => requireExistingCourse(userId, courseId),
       task: 'lesson',
       locale: course.locale,
       prompt:
@@ -345,6 +389,7 @@ export async function processChapter({
           sources
         )
     })
+    await requireExistingCourse(userId, courseId)
     const sourceIds = new Set(
       [...lesson.concepts, ...lesson.examples, ...lesson.questions].flatMap(
         item => item.sourceIds
@@ -371,11 +416,12 @@ export async function processChapter({
       questions
     })
   } catch (error) {
-    await repository.updateChapter(userId, courseId, chapterId, {
-      status: 'failed',
-      error: safeTutorError(error)
-    })
-    throw error
+    return reportJobFailure({ userId, courseId }, error, () =>
+      repository.updateChapter(userId, courseId, chapterId, {
+        status: 'failed',
+        error: safeTutorError(error)
+      })
+    )
   }
 }
 
@@ -387,9 +433,25 @@ type GradeInput = ChapterJob & {
 }
 
 export async function gradeAnswer(input: GradeInput) {
-  return withAssessmentLock(input.userId, input.questionId, () =>
-    gradeAnswerOnce(input)
-  )
+  return withAssessmentLock(input.userId, input.questionId, async () => {
+    try {
+      await requireExistingCourse(input.userId, input.courseId)
+      const result = await gradeAnswerOnce(input)
+      await requireExistingCourse(input.userId, input.courseId)
+      if (!result.chapter)
+        throw new TutorError(
+          'The requested learning resource was not found.',
+          'NOT_FOUND',
+          404
+        )
+      return result
+    } catch (error) {
+      // If deletion wins while retrieving evidence or calling the model, the
+      // caller receives a missing resource rather than an unrelated failure.
+      await requireExistingCourse(input.userId, input.courseId)
+      throw error
+    }
+  })
 }
 
 async function gradeAnswerOnce(input: GradeInput) {
@@ -426,6 +488,7 @@ async function gradeAnswerOnce(input: GradeInput) {
     courseId,
     question.sourceIds
   )
+  await requireExistingCourse(userId, courseId)
   if (evidence.length !== new Set(question.sourceIds).size)
     throw new TutorError(
       'The original question evidence is unavailable. Your mastery has not changed.',
@@ -434,6 +497,7 @@ async function gradeAnswerOnce(input: GradeInput) {
     )
   const result = await generateTutorObject({
     schema: assessmentSchema,
+    ensureActive: () => requireExistingCourse(userId, courseId),
     task: 'grade',
     locale: input.locale,
     prompt:
@@ -449,6 +513,7 @@ async function gradeAnswerOnce(input: GradeInput) {
       evaluateCriteria(value, question)
     }
   })
+  await requireExistingCourse(userId, courseId)
   const evaluated = evaluateCriteria(result, question)
   const assessment: TutorAssessment = {
     id: attemptId,
