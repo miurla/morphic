@@ -1,0 +1,20 @@
+name: morphic-tutor-test
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: tutor_test
+      POSTGRES_PASSWORD: tutor_test_local
+      POSTGRES_DB: tutor_test
+    ports:
+      - '127.0.0.1:15433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U tutor_test -d tutor_test']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    ports:
+      - '127.0.0.1:16380:6379'

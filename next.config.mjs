@@ -8,6 +8,7 @@ const botIdEnabled = process.env.VERCEL === '1'
 const nextConfig = {
   env: { BOTID_ENABLED: botIdEnabled ? 'true' : 'false' },
   skipTrailingSlashRedirect: true,
+  serverExternalPackages: ['pdfjs-dist', '@napi-rs/canvas', 'bullmq'],
   experimental: {
     staleTimes: { dynamic: 300 }
   },

@@ -35,6 +35,8 @@ evals
 .idea
 .vercel
 .tmp
+.local
+.tutor-files
 _local
 .mcp.json
 .DS_Store

@@ -51,6 +51,9 @@ type ErrorSnapshot = {
 const DEFAULT_PUBLIC_ERROR_MESSAGE =
   'We could not generate a response. Please try again.'
 
+export const AI_SERVICE_CONFIGURATION_ERROR =
+  'The AI service is not configured correctly. Please try again later.'
+
 const MALFORMED_REQUEST_MESSAGE =
   'This conversation could not be sent to the model. Please start a new chat.'
 
@@ -308,8 +311,7 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
     return {
       code: 'provider_auth' as const,
       type: 'general' as const,
-      error:
-        'The AI service is not configured correctly. Please try again later.',
+      error: AI_SERVICE_CONFIGURATION_ERROR,
       retryable: false
     }
   }

@@ -19,6 +19,7 @@ import { ChatHistorySkeleton } from './sidebar/chat-history-skeleton'
 import { HomeLink } from './sidebar/home-link'
 import { LibraryMenuItem } from './sidebar/library-menu-item'
 import { NewChatMenuItem } from './sidebar/new-chat-menu-item'
+import { TutorMenuItem } from './sidebar/tutor-menu-item'
 import { VersionFooter } from './sidebar/version-footer'
 import { VersionFooterSkeleton } from './sidebar/version-footer-skeleton'
 import { IconLogo } from './ui/icons'
@@ -41,6 +42,7 @@ export default function AppSidebar({ user }: { user?: AppUser | null }) {
       <SidebarContent className="flex flex-col px-2 py-4 h-full">
         <SidebarMenu>
           <NewChatMenuItem />
+          <TutorMenuItem />
           {libraryAvailable && <LibraryMenuItem />}
         </SidebarMenu>
         <div className="flex-1 overflow-y-auto">

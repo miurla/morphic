@@ -1,5 +1,6 @@
 import { chatMessages } from './messages/chat'
 import { commonMessages } from './messages/common'
+import { tutorMessages } from './messages/tutor'
 import { workspaceMessages } from './messages/workspace'
 import type { Locale } from './config'
 
@@ -9,7 +10,8 @@ export type Translator = (message: string, values?: TranslationValues) => string
 export const chineseMessages: Readonly<Record<string, string>> = {
   ...commonMessages,
   ...chatMessages,
-  ...workspaceMessages
+  ...workspaceMessages,
+  ...tutorMessages
 }
 
 /** English source text is also the fallback, so missing entries never show keys. */

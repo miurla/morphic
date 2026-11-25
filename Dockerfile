@@ -1,30 +1,32 @@
 # Build stage - Use Node for Next.js 16 compatibility (Bun lacks worker_threads support on arm64)
-FROM node:22-slim AS builder
+ARG NODE_IMAGE=node:22-slim
+FROM ${NODE_IMAGE} AS builder
 
 WORKDIR /app
 
 # Install bun for dependency management
-RUN npm install -g bun
+RUN if ! command -v bun >/dev/null 2>&1; then npm install -g bun; fi
 
 # Install dependencies (separated for better cache utilization)
 COPY package.json bun.lock ./
-RUN bun install
+RUN bun install --frozen-lockfile
 
 # Copy source code and build
 COPY . .
 RUN npx next telemetry disable
 ENV DATABASE_URL=postgresql://user:pass@localhost:5432/db
+ENV DATABASE_RESTRICTED_URL=postgresql://user:pass@localhost:5432/db
 RUN npm run build
 
 # Runtime stage
-FROM node:22-slim AS runner
+FROM ${NODE_IMAGE} AS runner
 WORKDIR /app
 
 # Install method shown in the sidebar version footer
 ENV MORPHIC_INSTALL_METHOD=docker
 
 # Install bun for dependency management (used for migrations)
-RUN npm install -g bun
+RUN if ! command -v bun >/dev/null 2>&1; then npm install -g bun; fi
 
 # Copy only necessary files from builder
 COPY --from=builder /app/.next ./.next
@@ -35,12 +37,14 @@ COPY --from=builder /app/node_modules ./node_modules
 
 # Copy migration files and scripts
 COPY --from=builder /app/drizzle ./drizzle
-COPY --from=builder /app/lib/db ./lib/db
+COPY --from=builder /app/lib ./lib
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 
 # Copy entrypoint script for database migration
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh
 
 # Start production server with migration
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

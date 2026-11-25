@@ -38,3 +38,9 @@ temp/
 
 # Database
 lib/db/migrations/
+
+# Generated PDF.js asset and local Tutor documents
+public/pdf.worker.min.mjs
+.local/
+.tutor-files/
+.tmp/

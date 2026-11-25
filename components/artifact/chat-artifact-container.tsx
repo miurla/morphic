@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 import { useHasUser } from '@/lib/contexts/user-context'
 import { cn } from '@/lib/utils'
@@ -45,6 +46,8 @@ export function ChatArtifactContainer({
   children: React.ReactNode
 }) {
   const { state } = useArtifact()
+  const pathname = usePathname()
+  const isTutor = pathname === '/tutor' || pathname?.startsWith('/tutor/')
   const [containerElement, setContainerElement] =
     useState<HTMLDivElement | null>(null)
   const hasAppliedSavedWidthRef = useRef(false)
@@ -135,6 +138,25 @@ export function ChatArtifactContainer({
       document.removeEventListener('mouseup', handleMouseUp)
     }
   }, [containerElement, isResizing])
+
+  // Tutor has stateful upload and answer forms. Mount a single responsive
+  // instance so crossing a breakpoint cannot duplicate uploads or lose drafts.
+  if (isTutor) {
+    return (
+      <div className="flex h-full min-h-0 min-w-0 flex-1">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+        {libraryOpen && (
+          <div className="hidden h-full w-[min(420px,40vw)] shrink-0 border-l md:block">
+            <LibraryPanel />
+          </div>
+        )}
+        <InspectorDrawer />
+        <div className="absolute left-0 top-0 z-50 p-4">
+          {hasUser && (!open || isMobileSidebar) && <SidebarTrigger />}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 min-h-0 min-w-0 h-full flex">

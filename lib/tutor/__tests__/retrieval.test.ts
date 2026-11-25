@@ -1,0 +1,135 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { CHUNKING_VERSION } from '../chunking'
+import { retrieveEvidenceWithTrace } from '../retrieval'
+import type { RetrievedChunk } from '../types'
+
+const mocks = vi.hoisted(() => ({
+  embedQuery: vi.fn(),
+  getCourseDocuments: vi.fn(),
+  searchVectorChunks: vi.fn(),
+  searchLexicalChunks: vi.fn(),
+  getChunksByIds: vi.fn(),
+  getChunksByParentIds: vi.fn()
+}))
+vi.mock('../repository', () => mocks)
+vi.mock('../embeddings', () => ({
+  embedQuery: mocks.embedQuery,
+  getEmbeddingIndexKey: () => 'test-embedding'
+}))
+
+const evidence: RetrievedChunk = {
+  id: 'source-a',
+  documentId: 'document-a',
+  parentId: 'parent-a',
+  filename: 'a.pdf',
+  text: 'Atomicity is all or nothing.',
+  parentText: 'Atomicity is all or nothing.',
+  retrievalText: 'Transactions: Atomicity is all or nothing.',
+  lexicalText: 'atomicity',
+  heading: 'Transactions',
+  position: 0,
+  tokenCount: 8,
+  score: 0.9,
+  regions: [{ page: 1, x: 0, y: 0, width: 1, height: 0.1 }]
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  mocks.embedQuery.mockResolvedValue([1, 0])
+  mocks.getCourseDocuments.mockResolvedValue([
+    {
+      status: 'ready',
+      embeddingModel: 'test-embedding',
+      parseVersion: CHUNKING_VERSION
+    }
+  ])
+  mocks.searchVectorChunks.mockResolvedValue([evidence])
+  mocks.searchLexicalChunks.mockResolvedValue([evidence])
+  mocks.getChunksByIds.mockResolvedValue([evidence])
+  mocks.getChunksByParentIds.mockResolvedValue([evidence])
+})
+
+describe('Tutor retrieval scope and index versions', () => {
+  it('passes the authenticated scope into every lookup including parent expansion', async () => {
+    const result = await retrieveEvidenceWithTrace({
+      userId: 'alice',
+      courseId: 'course-a',
+      query: '原子性 atomicity',
+      anchorIds: ['source-a'],
+      rerank: false
+    })
+    expect(mocks.getCourseDocuments).toHaveBeenCalledWith('alice', 'course-a')
+    expect(mocks.searchVectorChunks).toHaveBeenCalledWith(
+      'alice',
+      'course-a',
+      [1, 0],
+      20
+    )
+    expect(mocks.searchLexicalChunks).toHaveBeenCalledWith(
+      'alice',
+      'course-a',
+      expect.stringContaining('atomicity'),
+      20
+    )
+    expect(mocks.getChunksByIds).toHaveBeenCalledWith('alice', 'course-a', [
+      'source-a'
+    ])
+    expect(mocks.getChunksByParentIds).toHaveBeenCalledWith(
+      'alice',
+      'course-a',
+      ['parent-a']
+    )
+    expect(result.chunks).toHaveLength(1)
+    expect(result.trace).toMatchObject({
+      mode: 'hybrid',
+      evidenceIds: ['source-a'],
+      rerank: 'disabled'
+    })
+  })
+
+  it('rejects indexes built by a different embedding or parser before a paid request', async () => {
+    for (const overrides of [
+      { embeddingModel: 'different' },
+      { parseVersion: 'old-parser' },
+      { status: 'uploaded' }
+    ]) {
+      mocks.getCourseDocuments.mockResolvedValue([
+        {
+          status: 'ready',
+          embeddingModel: 'test-embedding',
+          parseVersion: CHUNKING_VERSION,
+          ...overrides
+        }
+      ])
+      await expect(
+        retrieveEvidenceWithTrace({
+          userId: 'alice',
+          courseId: 'course-a',
+          query: 'atomicity'
+        })
+      ).rejects.toMatchObject({ code: 'INDEX_VERSION_MISMATCH' })
+    }
+    expect(mocks.embedQuery).not.toHaveBeenCalled()
+    expect(mocks.searchVectorChunks).not.toHaveBeenCalled()
+  })
+
+  it('keeps a vector-only baseline and does no work on an empty query', async () => {
+    await retrieveEvidenceWithTrace({
+      userId: 'alice',
+      courseId: 'course-a',
+      query: 'atomicity',
+      mode: 'vector',
+      rerank: false
+    })
+    expect(mocks.searchLexicalChunks).not.toHaveBeenCalled()
+    vi.clearAllMocks()
+    const result = await retrieveEvidenceWithTrace({
+      userId: 'alice',
+      courseId: 'course-a',
+      query: ' '
+    })
+    expect(result.chunks).toEqual([])
+    expect(mocks.embedQuery).not.toHaveBeenCalled()
+  })
+})

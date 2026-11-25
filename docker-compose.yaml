@@ -3,14 +3,11 @@
 name: morphic-stack
 services:
   morphic:
-    image: ghcr.io/${GITHUB_REPOSITORY:-your-username/morphic}:latest
+    image: ${MORPHIC_IMAGE:-morphic:tutor-local}
     command: npx next start -H 0.0.0.0
     build:
       context: .
       dockerfile: Dockerfile
-      cache_from:
-        - morphic:builder
-        - morphic:latest
     env_file: .env.local # Load environment variables
     environment:
       # Database connection for Docker Compose (override any cloud DB from .env.local)
@@ -30,6 +27,8 @@ services:
       MORPHIC_CLOUD_DEPLOYMENT: 'false'
       # Docker-internal service URLs
       LOCAL_REDIS_URL: ${LOCAL_REDIS_URL:-redis://redis:6379}
+      TUTOR_REDIS_URL: redis://redis:6379
+      TUTOR_LOCAL_STORAGE_DIR: /app/tutor-data
       SEARCH_API: ${SEARCH_API:-searxng}
       SEARXNG_API_URL: ${SEARXNG_API_URL:-http://searxng:8080}
       # Version footer / update check (all optional, see docs/CONFIGURATION.md)
@@ -40,6 +39,20 @@ services:
       # MORPHIC_ADMIN_EMAILS: 'ops@example.com' # Extra admin emails for the update link (providers without roles)
     ports:
       - '3000:3000' # Maps port 3000 on the host to port 3000 in the container.
+    volumes:
+      - tutor_data:/app/tutor-data
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 120s
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,7 +62,7 @@ services:
         condition: service_started
 
   postgres:
-    image: postgres:17-alpine
+    image: pgvector/pgvector:pg17
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-morphic}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-morphic}
@@ -70,7 +83,33 @@ services:
       - '6379:6379'
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+
+  tutor-worker:
+    profiles: ['tutor']
+    image: ${MORPHIC_IMAGE:-morphic:tutor-local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: ['node', '--import', 'tsx', 'scripts/tutor-worker.ts']
+    env_file: .env.local
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
+      DATABASE_RESTRICTED_URL: postgresql://${POSTGRES_USER:-morphic}:${POSTGRES_PASSWORD:-morphic}@postgres:5432/${POSTGRES_DB:-morphic}
+      DATABASE_SSL_DISABLED: 'true'
+      LOCAL_REDIS_URL: redis://redis:6379
+      TUTOR_REDIS_URL: redis://redis:6379
+      TUTOR_LOCAL_STORAGE_DIR: /app/tutor-data
+    volumes:
+      - tutor_data:/app/tutor-data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      morphic:
+        condition: service_healthy
+    restart: unless-stopped
 
   searxng:
     image: searxng/searxng
@@ -86,3 +125,4 @@ volumes:
   postgres_data:
   redis_data:
   searxng_data:
+  tutor_data:

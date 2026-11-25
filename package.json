@@ -4,8 +4,8 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/copy-pdf-worker.mjs && next dev",
+    "build": "node scripts/copy-pdf-worker.mjs && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -19,7 +19,10 @@
     "eval:draft-edits": "bun run evals/run-draft-edits.ts",
     "eval:related-questions": "bun run evals/run-related-questions.ts",
     "eval:source-cards": "bun run evals/run-source-cards.ts",
-    "eval:space-instructions": "bun run evals/run-space-instructions.ts"
+    "eval:space-instructions": "bun run evals/run-space-instructions.ts",
+    "tutor:worker": "tsx scripts/tutor-worker.ts",
+    "eval:tutor": "tsx evals/tutor/run-retrieval.ts",
+    "test:tutor": "vitest run lib/tutor app/api/tutor components/tutor"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.87",
@@ -75,6 +78,7 @@
     "ai-sdk-ollama": "^4.5.1",
     "better-auth": "^1.7.16",
     "botid": "^1.5.12",
+    "bullmq": "5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
     "cmdk": "1.0.0",
@@ -89,6 +93,7 @@
     "next": "^16.2.6",
     "node-html-parser": "^6.1.13",
     "nodemailer": "^10.0.15",
+    "pdfjs-dist": "5",
     "postgres": "^3.4.5",
     "posthog-js": "^1.382.0",
     "posthog-node": "^5.36.4",
@@ -102,9 +107,11 @@
     "tailwindcss-animate": "^1.0.7",
     "undici": "^7",
     "vaul": "^1.1.2",
+    "yauzl": "^3.4.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/postcss": "^4.1.11",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -112,6 +119,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/yauzl": "^3.4.0",
     "@vitejs/plugin-react": "^4.4.1",
     "eslint": "^9",
     "eslint-config-next": "^16.2.3",
@@ -119,6 +127,7 @@
     "postcss": "^8",
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.11",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^4.1.0"
   },

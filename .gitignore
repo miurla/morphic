@@ -42,3 +42,8 @@ _local/
 
 # claude code local state (settings, launch config, worktrees)
 .claude/
+
+# Generated PDF.js worker and optional local Tutor files
+/public/pdf.worker.min.mjs
+/.local/tutor/
+/.tutor-files/
