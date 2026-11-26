@@ -2,3 +2,11 @@
 services:
   tutor-embedding:
     gpus: all
+  tutor-reranker:
+    image: tutor-reranker:bge-v2-m3-q8-cuda
+    build:
+      args:
+        RERANK_SERVER_IMAGE: ghcr.io/ggml-org/llama.cpp:server-cuda@sha256:2855fd7d0f5781e289a8108c3abd0744d19621314641b97421c038be836ed373
+    environment:
+      LLAMA_ARG_N_GPU_LAYERS: '99'
+    gpus: all

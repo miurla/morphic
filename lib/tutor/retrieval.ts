@@ -176,14 +176,15 @@ async function rerank(
   candidates: RetrievedChunk[]
 ): Promise<RetrievedChunk[]> {
   const baseUrl = process.env.TUTOR_RERANK_BASE_URL?.replace(/\/+$/, '')
-  const apiKey = process.env.TUTOR_RERANK_API_KEY
+  const useBearerAuth = process.env.TUTOR_RERANK_AUTH !== 'none'
+  const apiKey = useBearerAuth ? process.env.TUTOR_RERANK_API_KEY : undefined
   const model = process.env.TUTOR_RERANK_MODEL
-  if (!baseUrl || !apiKey || !model)
+  if (!baseUrl || !model || (useBearerAuth && !apiKey))
     throw new Error('Reranking is not configured.')
   const response = await fetch(`${baseUrl}/rerank`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
@@ -192,7 +193,7 @@ async function rerank(
       documents: candidates.map(chunk => chunk.retrievalText),
       top_n: candidates.length
     }),
-    signal: AbortSignal.timeout(10_000)
+    signal: AbortSignal.timeout(useBearerAuth ? 10_000 : 30_000)
   })
   if (!response.ok) {
     await response.body?.cancel()

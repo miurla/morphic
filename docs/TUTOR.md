@@ -20,8 +20,8 @@ Follow the [README quick start](../README.md#quick-start): copy
 docker compose up -d --build
 ```
 
-The default stack starts the Web app, Tutor worker, local BGE-M3 embedding
-service, PostgreSQL with pgvector, Redis and SearXNG. No profiles or separate
+The default stack starts the Web app, Tutor worker, local BGE-M3 embedding and
+reranking services, PostgreSQL with pgvector, Redis and SearXNG. No profiles or separate
 model-download commands are needed. Document storage and queue addresses are
 configured by Compose. Web and Worker share the database, Redis and the durable
 `tutor_data` document volume. The Web entrypoint applies migrations before the
@@ -351,7 +351,17 @@ to text outside a chunk. Context packing is token-bounded.
 PostgreSQL's built-in rank function is not BM25. HNSW, GraphRAG, embedding fine
 tuning and automatic multi-query agents are not required for this first version.
 
-Optional reranking is disabled by default:
+Docker Compose enables `BAAI/bge-reranker-v2-m3` after rank fusion for both
+Web and Worker. The llama.cpp image bundles the Q8_0 GGUF weights, which are
+downloaded and checked against their SHA-256 on the first image build. The
+`compose.gpu.yaml` override enables NVIDIA acceleration for both model services.
+The `/rerank` endpoint stays on the Compose network. To disable rerank requests,
+set `TUTOR_RERANK_ENABLED=false` in the shell or Compose project's `.env` file.
+
+For Tutor running directly on the host, reranking is opt-in. Configure a
+reachable service that accepts the `/rerank` request and response format used
+by llama.cpp. Set `TUTOR_RERANK_AUTH=none` for a trusted local endpoint that
+accepts requests without a bearer token. By default Tutor uses bearer auth:
 
 ```dotenv
 TUTOR_RERANK_ENABLED=true
@@ -360,9 +370,9 @@ TUTOR_RERANK_API_KEY=...
 TUTOR_RERANK_MODEL=...
 ```
 
-The provider must accept the `/rerank` request/response contract implemented in
-`lib/tutor/retrieval.ts`. A reranker failure falls back to RRF and is recorded in
-the retrieval trace. Enabling reranking is an experiment, not a claim that quality
+If the reranker is unavailable or returns an error, retrieval keeps the
+original order and records `rerank: failed` in the retrieval trace.
+Enabling reranking is an experiment, not a claim that quality
 has improved.
 
 ## Validation and evaluation

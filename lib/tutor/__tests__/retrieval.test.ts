@@ -50,7 +50,10 @@ beforeEach(() => {
   mocks.getChunksByParentIds.mockResolvedValue([evidence])
 })
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
+})
 
 describe('Tutor retrieval scope and index versions', () => {
   it.each(['embedding', 'search'])(
@@ -169,5 +172,54 @@ describe('Tutor retrieval scope and index versions', () => {
     })
     expect(result.chunks).toEqual([])
     expect(mocks.embedQuery).not.toHaveBeenCalled()
+  })
+
+  it('reranks the fused candidates with the local service when enabled', async () => {
+    const otherEvidence = {
+      ...evidence,
+      id: 'source-b',
+      retrievalText:
+        'Atomicity means an entire transaction succeeds or rolls back.'
+    }
+    mocks.searchVectorChunks.mockResolvedValue([evidence, otherEvidence])
+    vi.stubEnv('TUTOR_RERANK_ENABLED', 'true')
+    vi.stubEnv('TUTOR_RERANK_AUTH', 'none')
+    vi.stubEnv('TUTOR_RERANK_BASE_URL', 'http://tutor-reranker:8080/v1')
+    vi.stubEnv('TUTOR_RERANK_MODEL', 'BAAI/bge-reranker-v2-m3')
+    vi.stubEnv('TUTOR_RERANK_API_KEY', 'should-not-be-forwarded')
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        results: [
+          { index: 0, relevance_score: -1 },
+          { index: 1, relevance_score: 3 }
+        ]
+      })
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { trace } = await retrieveEvidenceWithTrace({
+      userId: 'alice',
+      courseId: 'course-a',
+      query: 'atomicity'
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://tutor-reranker:8080/v1/rerank',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'BAAI/bge-reranker-v2-m3',
+          query: 'atomicity',
+          documents: [evidence.retrievalText, otherEvidence.retrievalText],
+          top_n: 2
+        })
+      })
+    )
+    expect(trace).toMatchObject({
+      fusedIds: ['source-a', 'source-b'],
+      rankedIds: ['source-b', 'source-a'],
+      rerank: 'applied'
+    })
   })
 })

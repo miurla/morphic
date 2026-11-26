@@ -17,6 +17,10 @@ x-tutor-environment: &tutor-environment
   # Small batches and a longer timeout also work on machines without a GPU.
   TUTOR_EMBEDDING_BATCH_SIZE: ${TUTOR_EMBEDDING_BATCH_SIZE:-4}
   TUTOR_EMBEDDING_TIMEOUT_MS: ${TUTOR_EMBEDDING_TIMEOUT_MS:-180000}
+  TUTOR_RERANK_ENABLED: ${TUTOR_RERANK_ENABLED:-true}
+  TUTOR_RERANK_AUTH: none
+  TUTOR_RERANK_BASE_URL: http://tutor-reranker:8080/v1
+  TUTOR_RERANK_MODEL: BAAI/bge-reranker-v2-m3
 
 services:
   morphic:
@@ -71,6 +75,8 @@ services:
         condition: service_started
       tutor-embedding:
         condition: service_healthy
+      tutor-reranker:
+        condition: service_started
       searxng:
         condition: service_started
 
@@ -118,6 +124,8 @@ services:
         condition: service_healthy
       tutor-embedding:
         condition: service_healthy
+      tutor-reranker:
+        condition: service_started
     restart: unless-stopped
 
   tutor-embedding:
@@ -132,6 +140,38 @@ services:
     # there: an existing volume would hide newer model layers after an upgrade.
     healthcheck:
       test: ['CMD', 'ollama', 'show', 'bge-m3']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    restart: unless-stopped
+
+  tutor-reranker:
+    image: tutor-reranker:bge-v2-m3-q8
+    build:
+      context: ./docker/reranker
+    command:
+      - --model
+      - /models/bge-reranker-v2-m3-Q8_0.gguf
+      - --alias
+      - BAAI/bge-reranker-v2-m3
+      - --host
+      - '0.0.0.0'
+      - --port
+      - '8080'
+      - --reranking
+      - --ctx-size
+      - '4096'
+      - --batch-size
+      - '4096'
+      - --ubatch-size
+      - '4096'
+      - --parallel
+      - '1'
+      - --threads
+      - '${TUTOR_RERANK_THREADS:-8}'
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:8080/health']
       interval: 10s
       timeout: 5s
       retries: 6
