@@ -1,7 +1,8 @@
+import { TUTOR_LIMITS } from './server-limits'
 import type { ParsedPdf, ParsedPdfBlock, SourceRegion } from './types'
 
-export const MAX_PDF_PAGES = 200
-export const MAX_PDF_TEXT_CHARACTERS = 2_000_000
+export const MAX_PDF_PAGES = TUTOR_LIMITS.maxPdfPages
+export const MAX_PDF_TEXT_CHARACTERS = TUTOR_LIMITS.maxTextCharacters
 
 export class PdfExtractionError extends Error {
   constructor(
@@ -164,10 +165,10 @@ export async function parsePdf(data: Uint8Array): Promise<ParsedPdf> {
   })
   try {
     const document = await task.promise
-    if (document.numPages > MAX_PDF_PAGES) {
+    if (document.numPages > TUTOR_LIMITS.maxPdfPages) {
       throw new PdfExtractionError(
         'PDF_PAGE_LIMIT',
-        `PDFs may contain at most ${MAX_PDF_PAGES} pages.`
+        'This PDF exceeds the page limit. Split it into smaller files.'
       )
     }
     const allBlocks: ParsedPdfBlock[] = []
@@ -222,7 +223,7 @@ export async function parsePdf(data: Uint8Array): Promise<ParsedPdf> {
       const length = blocks.reduce((sum, block) => sum + block.text.length, 0)
       if (length < 20) emptyPages.push(number)
       characterCount += length
-      if (characterCount > MAX_PDF_TEXT_CHARACTERS) {
+      if (characterCount > TUTOR_LIMITS.maxTextCharacters) {
         throw new PdfExtractionError(
           'PDF_TEXT_LIMIT',
           'This PDF contains too much text. Split it into smaller files.'

@@ -6,7 +6,9 @@ const mocks = vi.hoisted(() => ({
   remove: vi.fn(),
   disconnect: vi.fn(),
   on: vi.fn(),
-  options: vi.fn()
+  options: vi.fn(),
+  getJob: vi.fn(),
+  add: vi.fn()
 }))
 
 vi.mock('bullmq', () => ({
@@ -18,10 +20,16 @@ vi.mock('bullmq', () => ({
     remove = mocks.remove
     disconnect = mocks.disconnect
     on = mocks.on
+    getJob = mocks.getJob
+    add = mocks.add
   }
 }))
 
-import { removeCourseJobs } from '../queue'
+import {
+  enqueueDocumentParse,
+  getDocumentParseState,
+  removeCourseJobs
+} from '../queue'
 
 beforeEach(() => {
   vi.resetAllMocks()
@@ -29,6 +37,8 @@ beforeEach(() => {
   mocks.ready.mockResolvedValue(undefined)
   mocks.remove.mockResolvedValue(1)
   mocks.disconnect.mockResolvedValue(undefined)
+  mocks.getJob.mockResolvedValue(null)
+  mocks.add.mockResolvedValue({ id: 'parse-d' })
   vi.spyOn(console, 'warn').mockImplementation(() => {})
 })
 
@@ -36,6 +46,55 @@ afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllEnvs()
   vi.restoreAllMocks()
+})
+
+describe('document preparation queue', () => {
+  it('exposes a terminal job only for its owning document and user', async () => {
+    mocks.getJob.mockResolvedValue({
+      name: 'parse',
+      data: { userId: 'u', documentId: 'd' },
+      getState: async () => 'failed'
+    })
+    expect(await getDocumentParseState({ userId: 'u', documentId: 'd' })).toBe(
+      'failed'
+    )
+    expect(
+      await getDocumentParseState({ userId: 'other', documentId: 'd' })
+    ).toBe('missing')
+    expect(
+      await getDocumentParseState({ userId: 'u', documentId: 'other' })
+    ).toBe('missing')
+    mocks.getJob.mockResolvedValue(null)
+    expect(await getDocumentParseState({ userId: 'u', documentId: 'd' })).toBe(
+      'missing'
+    )
+  })
+  it('uses a stable document job ID and one attempt for invalid files', async () => {
+    await enqueueDocumentParse({ userId: 'u', documentId: 'd' })
+    expect(mocks.add).toHaveBeenCalledWith(
+      'parse',
+      { userId: 'u', documentId: 'd' },
+      { jobId: 'parse-d', attempts: 1 }
+    )
+  })
+  it('reuses active jobs and explicitly retries failed jobs', async () => {
+    const retry = vi.fn()
+    mocks.getJob.mockResolvedValue({
+      id: 'parse-d',
+      getState: async () => 'active',
+      retry
+    })
+    await enqueueDocumentParse({ userId: 'u', documentId: 'd' })
+    expect(mocks.add).not.toHaveBeenCalled()
+    expect(retry).not.toHaveBeenCalled()
+    mocks.getJob.mockResolvedValue({
+      id: 'parse-d',
+      getState: async () => 'failed',
+      retry
+    })
+    await enqueueDocumentParse({ userId: 'u', documentId: 'd' })
+    expect(retry).toHaveBeenCalledOnce()
+  })
 })
 
 describe('deleted Tutor course job cleanup', () => {

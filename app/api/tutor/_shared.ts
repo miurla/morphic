@@ -6,6 +6,7 @@ import { getCurrentUserId } from '@/lib/auth/get-current-user'
 import { AI_SERVICE_CONFIGURATION_ERROR } from '@/lib/errors/public-error'
 import { type Locale, resolveRequestLocale } from '@/lib/i18n/config'
 import { translate } from '@/lib/i18n/translate'
+import { isMaintenanceMode, maintenanceResponse } from '@/lib/maintenance'
 import { TutorError } from '@/lib/tutor/errors'
 import { TutorRepositoryError } from '@/lib/tutor/repository'
 
@@ -49,6 +50,9 @@ export async function tutorRoute(
   request: NextRequest,
   handler: (userId: string, locale: Locale) => Promise<Response>
 ) {
+  // Streaming uploads bypass Proxy's request-body clone, so enforce its
+  // maintenance gate here as well. Ownership and origin checks stay below.
+  if (isMaintenanceMode()) return maintenanceResponse(request.nextUrl.pathname)
   const locale = resolveRequestLocale(request.headers)
   try {
     if (request.method !== 'GET') {

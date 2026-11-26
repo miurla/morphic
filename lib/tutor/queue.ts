@@ -1,7 +1,12 @@
 import { Queue } from 'bullmq'
 
 export const TUTOR_QUEUE_NAME = 'morphic-tutor'
-export type TutorJob = { userId: string; courseId: string; chapterId?: string }
+export type TutorJob = {
+  userId: string
+  courseId?: string
+  chapterId?: string
+  documentId?: string
+}
 
 export function getTutorQueueConnection() {
   const raw =
@@ -46,10 +51,10 @@ export function getTutorQueue() {
   return queue
 }
 
-async function enqueue(name: 'course' | 'chapter', data: TutorJob) {
+async function enqueue(name: 'course' | 'chapter' | 'parse', data: TutorJob) {
   const activeQueue = getTutorQueue()
   try {
-    const jobId = `${name}-${data.chapterId ?? data.courseId}`
+    const jobId = `${name}-${data.documentId ?? data.chapterId ?? data.courseId}`
     await activeQueue.waitUntilReady()
     const existing = await activeQueue.getJob(jobId)
     if (existing) {
@@ -61,7 +66,10 @@ async function enqueue(name: 'course' | 'chapter', data: TutorJob) {
       if (state !== 'completed') return existing.id!
       await existing.remove()
     }
-    const job = await activeQueue.add(name, data, { jobId })
+    const job = await activeQueue.add(name, data, {
+      jobId,
+      ...(name === 'parse' ? { attempts: 1 } : {})
+    })
     return job.id!
   } catch (error) {
     // A producer that exhausted its initial connection retries is recreated on
@@ -74,6 +82,31 @@ async function enqueue(name: 'course' | 'chapter', data: TutorJob) {
 
 export const enqueueCourse = (input: { userId: string; courseId: string }) =>
   enqueue('course', input)
+export const enqueueDocumentParse = (input: {
+  userId: string
+  documentId: string
+}) => enqueue('parse', input)
+
+/** Recovery for a worker crash before it could persist the terminal status.
+ * Only expose state for the owned payload; Redis error details never escape.
+ */
+export async function getDocumentParseState(input: {
+  userId: string
+  documentId: string
+}): Promise<'missing' | 'failed' | 'pending' | 'completed'> {
+  const activeQueue = getTutorQueue()
+  await activeQueue.waitUntilReady()
+  const job = await activeQueue.getJob(`parse-${input.documentId}`)
+  if (
+    !job ||
+    job.name !== 'parse' ||
+    job.data?.userId !== input.userId ||
+    job.data?.documentId !== input.documentId
+  )
+    return 'missing'
+  const state = await job.getState()
+  return state === 'failed' || state === 'completed' ? state : 'pending'
+}
 export const enqueueChapter = (input: {
   userId: string
   courseId: string

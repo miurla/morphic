@@ -22,7 +22,10 @@ ENV NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
 RUN npx next telemetry disable
 ENV DATABASE_URL=postgresql://user:pass@localhost:5432/db
 ENV DATABASE_RESTRICTED_URL=postgresql://user:pass@localhost:5432/db
-RUN npm run build
+# Bound the build's Node heap when sharing Docker Desktop with running services.
+# This affects compilation/type checking only, not the runtime app or parser.
+ARG NODE_BUILD_OPTIONS=--max-old-space-size=1536
+RUN NODE_OPTIONS="${NODE_BUILD_OPTIONS}" npm run build
 
 # Runtime stage
 FROM ${NODE_IMAGE} AS runner

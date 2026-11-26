@@ -9,16 +9,19 @@ import {
   tutorChunks,
   tutorCourseDocuments,
   tutorCourses,
+  tutorDocumentParses,
   tutorDocuments
 } from '@/lib/db/tutor-schema'
 import { type TxInstance, withRLS } from '@/lib/db/with-rls'
 
 import { CHUNKING_VERSION } from './chunking'
+import { assertCourseDocumentBudget } from './document-budget'
 import { buildDocumentIndexKey } from './document-index'
 import { getEmbeddingConfig, getEmbeddingIndexKey } from './embeddings'
 import { calculateChapterMastery } from './mastery'
 import type {
   CreateTutorCourseInput,
+  ParsedPdf,
   RetrievedChunk,
   TutorAssessment,
   TutorChapter,
@@ -57,6 +60,8 @@ export const publicDocument = (
   size: document.size,
   status: document.status,
   pageCount: document.pageCount,
+  tokenCount: document.tokenCount,
+  chunkCount: document.chunkCount,
   error: document.error
 })
 const summary = (course: StoredCourse): TutorCourseSummary => ({
@@ -198,6 +203,178 @@ export async function getDocument(userId: string, documentId: string) {
           .limit(1)
       )[0] ?? null
   )
+}
+
+export async function getDocumentParse(
+  userId: string,
+  documentId: string,
+  contentHash: string,
+  parserVersion: string
+) {
+  return withRLS(
+    userId,
+    async tx =>
+      (
+        await tx
+          .select()
+          .from(tutorDocumentParses)
+          .where(
+            and(
+              eq(tutorDocumentParses.userId, userId),
+              eq(tutorDocumentParses.documentId, documentId),
+              eq(tutorDocumentParses.contentHash, contentHash),
+              eq(tutorDocumentParses.parserVersion, parserVersion)
+            )
+          )
+          .limit(1)
+      )[0]?.parsed ?? null
+  )
+}
+
+export async function saveDocumentParse(
+  userId: string,
+  documentId: string,
+  input: {
+    contentHash: string
+    parserVersion: string
+    parsed: ParsedPdf
+    chunks: TutorChunk[]
+    tokenCount: number
+    chunkCount: number
+  }
+) {
+  return withRLS(userId, async tx => {
+    const [document] = await tx
+      .select()
+      .from(tutorDocuments)
+      .where(
+        and(
+          eq(tutorDocuments.userId, userId),
+          eq(tutorDocuments.id, documentId)
+        )
+      )
+      .for('update')
+    if (!document || document.contentHash !== input.contentHash) throw missing()
+    if (document.status === 'ready') return
+    await tx
+      .insert(tutorDocumentParses)
+      .values({
+        userId,
+        documentId,
+        contentHash: input.contentHash,
+        parserVersion: input.parserVersion,
+        parsed: { ...input.parsed, chunks: input.chunks }
+      })
+      .onConflictDoUpdate({
+        target: tutorDocumentParses.documentId,
+        set: {
+          contentHash: input.contentHash,
+          parserVersion: input.parserVersion,
+          parsed: { ...input.parsed, chunks: input.chunks }
+        }
+      })
+    await tx
+      .update(tutorDocuments)
+      .set({
+        status: 'parsed',
+        pageCount: input.parsed.pageCount,
+        warnings: input.parsed.warnings,
+        tokenCount: input.tokenCount,
+        chunkCount: input.chunkCount,
+        error: null
+      })
+      .where(
+        and(
+          eq(tutorDocuments.userId, userId),
+          eq(tutorDocuments.id, documentId)
+        )
+      )
+  })
+}
+
+export async function getDocumentMetrics(userId: string, documentId: string) {
+  return withRLS(
+    userId,
+    async tx =>
+      (
+        await tx
+          .select({
+            tokenCount: sql<number>`coalesce(sum(${tutorChunks.tokenCount}), 0)::integer`,
+            chunkCount: sql<number>`count(*)::integer`
+          })
+          .from(tutorChunks)
+          .where(
+            and(
+              eq(tutorChunks.userId, userId),
+              eq(tutorChunks.documentId, documentId)
+            )
+          )
+      )[0]
+  )
+}
+
+export async function resetDocumentPreparation(
+  userId: string,
+  documentId: string
+) {
+  await withRLS(userId, async tx => {
+    await tx
+      .update(tutorDocuments)
+      .set({ status: 'uploaded', error: null })
+      .where(
+        and(
+          eq(tutorDocuments.userId, userId),
+          eq(tutorDocuments.id, documentId),
+          eq(tutorDocuments.status, 'failed')
+        )
+      )
+  })
+  return getDocument(userId, documentId)
+}
+
+/** Invalidate only a missing or obsolete preparation while holding the owner row.
+ * Generic failure/status writes must never downgrade a completed preparation.
+ */
+export async function startDocumentPreparation(
+  userId: string,
+  documentId: string,
+  parserVersion: string
+) {
+  await withRLS(userId, async tx => {
+    const [document] = await tx
+      .select()
+      .from(tutorDocuments)
+      .where(
+        and(
+          eq(tutorDocuments.userId, userId),
+          eq(tutorDocuments.id, documentId)
+        )
+      )
+      .for('update')
+    if (!document) throw missing()
+    if (document.status === 'ready') return
+    const [cache] = await tx
+      .select()
+      .from(tutorDocumentParses)
+      .where(
+        and(
+          eq(tutorDocumentParses.userId, userId),
+          eq(tutorDocumentParses.documentId, documentId),
+          eq(tutorDocumentParses.parserVersion, parserVersion),
+          eq(tutorDocumentParses.contentHash, document.contentHash)
+        )
+      )
+    if (document.status === 'parsed' && cache?.parsed.chunks) return
+    await tx
+      .update(tutorDocuments)
+      .set({ status: 'parsing', error: null })
+      .where(
+        and(
+          eq(tutorDocuments.userId, userId),
+          eq(tutorDocuments.id, documentId)
+        )
+      )
+  })
 }
 
 export function getDocumentIndexKey(filename?: string) {
@@ -400,6 +577,47 @@ export async function createCourse(
         and(eq(tutorDocuments.userId, userId), inArray(tutorDocuments.id, ids))
       )
     if (docs.length !== ids.length) throw missing()
+    if (
+      !docs.length ||
+      docs.some(document => !['parsed', 'ready'].includes(document.status))
+    )
+      throw new TutorRepositoryError(
+        'Wait for your materials to finish parsing, or retry failed files.',
+        'DOCUMENT_NOT_PREPARED',
+        409
+      )
+    // Indexes created before preparation metrics existed remain usable.
+    for (const document of docs) {
+      if (
+        document.status === 'ready' &&
+        (document.tokenCount === null || document.chunkCount === null)
+      ) {
+        const [metrics] = await tx
+          .select({
+            tokenCount: sql<number>`coalesce(sum(${tutorChunks.tokenCount}), 0)::integer`,
+            chunkCount: sql<number>`count(*)::integer`
+          })
+          .from(tutorChunks)
+          .where(
+            and(
+              eq(tutorChunks.userId, userId),
+              eq(tutorChunks.documentId, document.id)
+            )
+          )
+        Object.assign(document, metrics)
+      }
+      if (
+        document.pageCount === null ||
+        document.tokenCount === null ||
+        document.chunkCount === null
+      )
+        throw new TutorRepositoryError(
+          'Wait for your materials to finish parsing, or retry failed files.',
+          'DOCUMENT_NOT_PREPARED',
+          409
+        )
+    }
+    assertCourseDocumentBudget(docs)
     await tx.insert(tutorCourses).values({
       id,
       userId,
@@ -506,7 +724,10 @@ export async function updateDocument(
   userId: string,
   documentId: string,
   values: Partial<
-    Pick<typeof tutorDocuments.$inferSelect, 'status' | 'error' | 'pageCount'>
+    Pick<
+      typeof tutorDocuments.$inferSelect,
+      'status' | 'error' | 'pageCount' | 'tokenCount' | 'chunkCount'
+    >
   >
 ) {
   return withRLS(userId, async tx => {
@@ -517,8 +738,8 @@ export async function updateDocument(
         and(
           eq(tutorDocuments.userId, userId),
           eq(tutorDocuments.id, documentId),
-          values.status === 'failed'
-            ? ne(tutorDocuments.status, 'ready')
+          values.status === 'failed' || values.status === 'parsing'
+            ? inArray(tutorDocuments.status, ['uploaded', 'parsing', 'failed'])
             : undefined
         )
       )
@@ -614,6 +835,11 @@ export async function saveDocumentChunks(
         status: 'ready',
         error: null,
         pageCount: input.pageCount,
+        tokenCount: input.chunks.reduce(
+          (total, chunk) => total + chunk.tokenCount,
+          0
+        ),
+        chunkCount: input.chunks.length,
         embeddingModel: input.embeddingModel,
         parseVersion: input.parseVersion,
         warnings: input.warnings ?? []

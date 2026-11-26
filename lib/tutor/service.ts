@@ -1,10 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto'
 
 import { withAssessmentLock } from './assessment-lock'
-import { chunkDocument, CHUNKING_VERSION, countTokens } from './chunking'
+import { CHUNKING_VERSION, countTokens } from './chunking'
 import { toSourceCitation } from './citations'
 import { TUTOR_LIMITS } from './config'
-import { parseTutorDocument } from './documents'
+import { assertCourseDocumentBudget } from './document-budget'
 import { embedTexts, getEmbeddingIndexKey } from './embeddings'
 import { safeTutorError, TutorError } from './errors'
 import {
@@ -15,9 +15,9 @@ import {
   topicBatchSchema
 } from './generation'
 import { compactPlanningNotes, type PlanningNote } from './planning'
+import { prepareDocument } from './preparation'
 import * as repository from './repository'
 import { retrieveEvidenceWithTrace } from './retrieval'
-import { readTutorDocument } from './storage'
 import type {
   KnowledgePoint,
   RetrievedChunk,
@@ -87,12 +87,17 @@ export async function processCourse({ userId, courseId }: CourseJob) {
         'Add a document before creating a learning route.',
         'NO_DOCUMENTS'
       )
-    let pages = 0
-    for (const [index, document] of documents.entries()) {
+    // Preflight every document before spending any embedding work. Cached parsed
+    // content is fetched one document at a time rather than retained for a course.
+    assertCourseDocumentBudget(documents)
+    for (const document of documents) {
       await requireExistingCourse(userId, courseId)
-      const embeddingModel = getEmbeddingIndexKey()
       if (
-        document.indexKey !== repository.getDocumentIndexKey(document.filename)
+        document.indexKey !==
+          repository.getDocumentIndexKey(document.filename) ||
+        (document.status === 'ready' &&
+          (document.embeddingModel !== getEmbeddingIndexKey() ||
+            document.parseVersion !== CHUNKING_VERSION))
       )
         throw new TutorError(
           'Upload the document again to create a new course with the current index settings.',
@@ -100,77 +105,58 @@ export async function processCourse({ userId, courseId }: CourseJob) {
           409
         )
       if (document.status === 'ready') {
-        if (
-          document.embeddingModel !== embeddingModel ||
-          document.parseVersion !== CHUNKING_VERSION
-        )
-          throw new TutorError(
-            'Upload the document again to create a new course with the current index settings.',
-            'INDEX_VERSION_MISMATCH',
-            409
+        if (document.tokenCount == null || document.chunkCount == null)
+          Object.assign(
+            document,
+            await repository.getDocumentMetrics(userId, document.id)
           )
-        pages += document.pageCount ?? 0
-        if (pages > TUTOR_LIMITS.maxPages)
-          throw new TutorError(
-            'A course can contain at most 200 pages or text segments.',
-            'COURSE_PAGE_LIMIT'
+      } else {
+        const prepared = await prepareDocument(userId, document.id)
+        if (prepared)
+          Object.assign(document, {
+            pageCount: prepared.parsed.pageCount,
+            tokenCount: prepared.tokenCount,
+            chunkCount: prepared.chunkCount
+          })
+        else
+          Object.assign(
+            document,
+            await repository.getDocument(userId, document.id)
           )
-        continue
       }
-      try {
-        await repository.updateCourse(userId, courseId, {
-          stage: 'parsing',
-          processingProgress: 5 + Math.round((index / documents.length) * 50)
-        })
-        const bytes = await readTutorDocument(userId, document.id)
-        await requireExistingCourse(userId, courseId)
-        const parsed = await parseTutorDocument(bytes, document.filename)
-        await requireExistingCourse(userId, courseId)
-        pages += parsed.pageCount
-        if (pages > TUTOR_LIMITS.maxPages)
-          throw new TutorError(
-            'A course can contain at most 200 pages or text segments.',
-            'COURSE_PAGE_LIMIT'
-          )
-        const chunks = chunkDocument({
-          documentId: document.id,
-          filename: document.filename,
-          parsed
-        })
-        if (!chunks.length)
-          throw new TutorError(
-            'No readable text was found in this document.',
-            'NO_TEXT'
-          )
-        await repository.updateCourse(userId, courseId, {
-          stage: 'indexing',
-          processingProgress: 10 + Math.round((index / documents.length) * 50)
-        })
-        const embeddings = await embedTexts(
-          chunks.map(chunk => chunk.retrievalText),
-          () => requireExistingCourse(userId, courseId)
+      assertCourseDocumentBudget(documents)
+    }
+    for (const [index, document] of documents.entries()) {
+      await requireExistingCourse(userId, courseId)
+      if (document.status === 'ready') continue
+      const prepared = await prepareDocument(userId, document.id)
+      if (!prepared) continue // Another course has already published this index.
+      const parsed = prepared.parsed
+      const chunks = prepared.chunks
+      if (!chunks.length)
+        throw new TutorError(
+          'No readable text was found in this document.',
+          'NO_TEXT'
         )
-        await requireExistingCourse(userId, courseId)
-        const indexed = chunks.map((chunk, i) => ({
+      await repository.updateCourse(userId, courseId, {
+        stage: 'indexing',
+        processingProgress: 10 + Math.round((index / documents.length) * 50)
+      })
+      const embeddings = await embedTexts(
+        chunks.map(chunk => chunk.retrievalText),
+        () => requireExistingCourse(userId, courseId)
+      )
+      await requireExistingCourse(userId, courseId)
+      await repository.saveDocumentChunks(userId, document.id, {
+        chunks: chunks.map((chunk, i) => ({
           ...chunk,
           embedding: embeddings[i]
-        }))
-        await repository.saveDocumentChunks(userId, document.id, {
-          chunks: indexed,
-          pageCount: parsed.pageCount,
-          warnings: parsed.warnings,
-          embeddingModel,
-          parseVersion: CHUNKING_VERSION
-        })
-      } catch (error) {
-        // Course deletion is not a failure of this potentially shared document.
-        if (!(await repository.getStoredCourse(userId, courseId))) return
-        await repository.updateDocument(userId, document.id, {
-          status: 'failed',
-          error: safeTutorError(error)
-        })
-        throw error
-      }
+        })),
+        pageCount: parsed.pageCount,
+        warnings: parsed.warnings,
+        embeddingModel: getEmbeddingIndexKey(),
+        parseVersion: CHUNKING_VERSION
+      })
     }
     await repository.updateCourse(userId, courseId, {
       stage: 'planning',

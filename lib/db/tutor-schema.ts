@@ -18,9 +18,11 @@ import type {
   ChapterStatus,
   CourseStatus,
   KnowledgePoint,
+  ParsedPdf,
   SourceRegion,
   StoredQuestion,
   TutorAssessment,
+  TutorChunk,
   TutorLevel,
   TutorStage
 } from '@/lib/tutor/types'
@@ -52,10 +54,12 @@ export const tutorDocuments = pgTable(
     contentHash: text('content_hash').notNull(),
     indexKey: text('index_key').notNull(),
     status: text('status')
-      .$type<'uploaded' | 'ready' | 'failed'>()
+      .$type<'uploaded' | 'parsing' | 'parsed' | 'ready' | 'failed'>()
       .notNull()
       .default('uploaded'),
     pageCount: integer('page_count'),
+    tokenCount: integer('token_count'),
+    chunkCount: integer('chunk_count'),
     error: text('error'),
     embeddingModel: text('embedding_model'),
     parseVersion: text('parse_version'),
@@ -70,6 +74,23 @@ export const tutorDocuments = pgTable(
       table.indexKey
     )
   ]
+).enableRLS()
+
+// Large parsed content is kept outside document metadata and public responses.
+export const tutorDocumentParses = pgTable(
+  'tutor_document_parses',
+  {
+    documentId: text('document_id')
+      .primaryKey()
+      .references(() => tutorDocuments.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull(),
+    contentHash: text('content_hash').notNull(),
+    parserVersion: text('parser_version').notNull(),
+    parsed: jsonb('parsed')
+      .$type<ParsedPdf & { chunks?: TutorChunk[] }>()
+      .notNull()
+  },
+  () => [ownerPolicy('tutor_document_parses_owner')]
 ).enableRLS()
 
 export const tutorCourses = pgTable(

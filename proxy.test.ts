@@ -1,3 +1,4 @@
+import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -5,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { betterAuthProvider } from '@/lib/auth/providers/better-auth'
 import { updateSession } from '@/lib/supabase/middleware'
 
-import { proxy } from './proxy'
+import { config, proxy } from './proxy'
 
 vi.mock('@/lib/supabase/middleware', () => ({
   updateSession: vi.fn()
@@ -19,6 +20,24 @@ const AUTH_ENV_KEYS = [
 ] as const
 
 describe('proxy', () => {
+  it('leaves streamed Tutor uploads to route authentication without cloning the body', () => {
+    for (const url of [
+      '/api/tutor/documents',
+      '/api/tutor/documents/',
+      '/api/tutor/documents?retry=1'
+    ]) {
+      expect(unstable_doesMiddlewareMatch({ config, url })).toBe(false)
+    }
+    for (const url of [
+      '/tutor',
+      '/api/tutor/documents/doc-a',
+      '/api/tutor/courses',
+      '/api/tutor/documents/doc-a/file'
+    ]) {
+      expect(unstable_doesMiddlewareMatch({ config, url })).toBe(true)
+    }
+  })
+
   const originalEnv: Record<string, string | undefined> = {}
 
   beforeEach(() => {

@@ -15,12 +15,14 @@ const mocks = vi.hoisted(() => ({
   prepareCourseRetry: vi.fn(),
   enqueue: vi.fn(),
   enqueueChapter: vi.fn(),
+  enqueueDocumentParse: vi.fn(),
   removeCourseJobs: vi.fn(),
   capabilities: vi.fn(),
   grade: vi.fn(),
   store: vi.fn(),
   readDocument: vi.fn(),
-  getDocument: vi.fn()
+  getDocument: vi.fn(),
+  resetDocumentPreparation: vi.fn()
 }))
 vi.mock('@/lib/auth/get-current-user', () => ({ getCurrentUserId: mocks.user }))
 vi.mock('@/lib/tutor/config', () => ({
@@ -43,6 +45,8 @@ vi.mock('@/lib/tutor/repository', () => ({
   updateChapter: mocks.updateChapter,
   prepareCourseRetry: mocks.prepareCourseRetry,
   getDocument: mocks.getDocument,
+  resetDocumentPreparation: mocks.resetDocumentPreparation,
+  publicDocument: (document: unknown) => document,
   TutorRepositoryError: class extends Error {
     constructor(
       message: string,
@@ -56,11 +60,12 @@ vi.mock('@/lib/tutor/repository', () => ({
 vi.mock('@/lib/tutor/queue', () => ({
   enqueueCourse: mocks.enqueue,
   enqueueChapter: mocks.enqueueChapter,
+  enqueueDocumentParse: mocks.enqueueDocumentParse,
   removeCourseJobs: mocks.removeCourseJobs
 }))
 vi.mock('@/lib/tutor/service', () => ({ gradeAnswer: mocks.grade }))
 vi.mock('@/lib/tutor/storage', () => ({
-  storeTutorDocument: mocks.store,
+  storeTutorDocumentStream: mocks.store,
   readTutorDocument: mocks.readDocument
 }))
 
@@ -217,23 +222,34 @@ describe('Tutor API boundaries', () => {
   it.each(['pdf', 'txt', 'md', 'markdown', 'docx'])(
     'passes a %s upload to content validation with session ownership',
     async extension => {
-      const data = new FormData()
-      data.set('file', new File(['document content'], `notes.${extension}`))
       mocks.store.mockResolvedValue({
         id: 'doc-a',
-        filename: `notes.${extension}`
+        filename: `学习.${extension}`,
+        status: 'uploaded'
       })
       const response = await upload(
         new NextRequest('http://localhost:3000/api/tutor/documents', {
           method: 'POST',
-          body: data
+          headers: {
+            'content-type': 'application/octet-stream',
+            'x-tutor-filename': encodeURIComponent(`学习.${extension}`)
+          },
+          body: 'document content'
         })
       )
       expect(response.status).toBe(201)
       expect(mocks.store).toHaveBeenCalledWith(
         'user-a',
-        expect.objectContaining({ name: `notes.${extension}` })
+        expect.objectContaining({
+          name: `学习.${extension}`,
+          stream: expect.any(ReadableStream),
+          signal: expect.any(AbortSignal)
+        })
       )
+      expect(mocks.enqueueDocumentParse).toHaveBeenCalledWith({
+        userId: 'user-a',
+        documentId: 'doc-a'
+      })
     }
   )
 
@@ -503,7 +519,8 @@ describe('Tutor API boundaries', () => {
       {
         method: 'POST',
         headers: {
-          'content-type': 'multipart/form-data; boundary=test',
+          'content-type': 'application/octet-stream',
+          'x-tutor-filename': 'notes.txt',
           'content-length': String(8 * 1024 * 1024)
         },
         body: 'small'
@@ -512,6 +529,171 @@ describe('Tutor API boundaries', () => {
     const response = await upload(request)
     expect(response.status).toBe(413)
     expect(mocks.store).not.toHaveBeenCalled()
+  })
+
+  it('passes the original body stream through without buffering', async () => {
+    mocks.store.mockResolvedValue({ id: 'doc-a', status: 'uploaded' })
+    const request = new NextRequest(
+      'http://localhost:3000/api/tutor/documents',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/octet-stream',
+          'x-tutor-filename': 'notes.txt',
+          'content-length': '5'
+        },
+        body: 'small'
+      }
+    )
+    const buffer = vi.spyOn(request, 'arrayBuffer')
+    const multipart = vi.spyOn(request, 'formData')
+    expect((await upload(request)).status).toBe(201)
+    expect(mocks.store.mock.calls[0][1]).toMatchObject({
+      stream: request.body,
+      size: 5,
+      signal: request.signal
+    })
+    expect(buffer).not.toHaveBeenCalled()
+    expect(multipart).not.toHaveBeenCalled()
+  })
+
+  it.each(['parsed', 'ready'])(
+    'does not requeue an already %s document',
+    async status => {
+      mocks.store.mockResolvedValue({ id: 'doc-a', status })
+      const response = await upload(
+        new NextRequest('http://localhost:3000/api/tutor/documents', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/octet-stream',
+            'x-tutor-filename': 'notes.txt'
+          },
+          body: 'small'
+        })
+      )
+      expect(response.status).toBe(201)
+      expect(mocks.enqueueDocumentParse).not.toHaveBeenCalled()
+    }
+  )
+
+  it('reports a retryable parse queue failure after upload without exposing internals', async () => {
+    mocks.store.mockResolvedValue({ id: 'doc-a', status: 'uploaded' })
+    mocks.enqueueDocumentParse.mockRejectedValue(
+      new Error('redis://secret@host')
+    )
+    const response = await upload(
+      new NextRequest('http://localhost:3000/api/tutor/documents', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/octet-stream',
+          'x-tutor-filename': 'notes.txt'
+        },
+        body: 'small'
+      })
+    )
+    expect(response.status).toBe(503)
+    const payload = await response.json()
+    expect(payload.code).toBe('QUEUE_UNAVAILABLE')
+    expect(payload.error).not.toContain('secret')
+  })
+
+  it('returns a pending status after retrying a failed duplicate upload', async () => {
+    mocks.store.mockResolvedValue({
+      id: 'doc-a',
+      status: 'failed',
+      error: 'Old failure'
+    })
+    mocks.resetDocumentPreparation.mockResolvedValue({
+      id: 'doc-a',
+      status: 'uploaded',
+      error: null
+    })
+    const response = await upload(
+      new NextRequest('http://localhost:3000/api/tutor/documents', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/octet-stream',
+          'x-tutor-filename': 'notes.txt'
+        },
+        body: 'small'
+      })
+    )
+    expect(response.status).toBe(201)
+    expect(await response.json()).toEqual({
+      document: { id: 'doc-a', status: 'uploaded', error: null }
+    })
+    expect(mocks.resetDocumentPreparation).toHaveBeenCalledWith(
+      'user-a',
+      'doc-a'
+    )
+    expect(mocks.enqueueDocumentParse).toHaveBeenCalledWith({
+      userId: 'user-a',
+      documentId: 'doc-a'
+    })
+  })
+
+  it.each([
+    {
+      'content-type': 'multipart/form-data; boundary=test',
+      'x-tutor-filename': 'notes.txt',
+      'content-length': '5'
+    },
+    {
+      'content-type': 'application/octet-stream',
+      'x-tutor-filename': '%invalid',
+      'content-length': '5'
+    },
+    {
+      'content-type': 'application/octet-stream',
+      'x-tutor-filename': 'notes.txt',
+      'content-length': '-1'
+    }
+  ])('rejects invalid raw upload metadata before storage', async headers => {
+    const response = await upload(
+      new NextRequest('http://localhost:3000/api/tutor/documents', {
+        method: 'POST',
+        headers,
+        body: 'small'
+      })
+    )
+    expect(response.status).toBe(400)
+    expect(mocks.store).not.toHaveBeenCalled()
+  })
+
+  it('authenticates and checks origin before receiving raw uploads', async () => {
+    mocks.user.mockResolvedValue(null)
+    expect(
+      (
+        await upload(
+          new NextRequest('http://localhost:3000/api/tutor/documents', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/octet-stream',
+              'x-tutor-filename': 'notes.txt'
+            },
+            body: 'small'
+          })
+        )
+      ).status
+    ).toBe(401)
+    mocks.user.mockResolvedValue('user-a')
+    expect(
+      (
+        await upload(
+          new NextRequest('http://localhost:3000/api/tutor/documents', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/octet-stream',
+              'x-tutor-filename': 'notes.txt',
+              origin: 'https://untrusted.example'
+            },
+            body: 'small'
+          })
+        )
+      ).status
+    ).toBe(403)
+    expect(mocks.store).not.toHaveBeenCalled()
+    expect(mocks.enqueueDocumentParse).not.toHaveBeenCalled()
   })
 
   it('hides raw database or provider failures', async () => {

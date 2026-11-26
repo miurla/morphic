@@ -1,6 +1,8 @@
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { createHash, randomUUID } from 'node:crypto'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { createReadStream } from 'node:fs'
+import { mkdir, mkdtemp, open, rename, rmdir, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 
 import {
@@ -12,9 +14,9 @@ import {
 import { TUTOR_LIMITS } from './config'
 import {
   getTutorDocumentFormat,
-  getTutorDocumentMimeType
+  getTutorDocumentMimeType,
+  type TutorDocumentFormat
 } from './document-formats'
-import { parseTutorDocument } from './documents'
 import {
   createDocument,
   findDocumentByHash,
@@ -24,93 +26,140 @@ import {
   TutorRepositoryError
 } from './repository'
 
-export function validateTutorPdf(
-  file: { size: number; name: string },
-  bytes: Uint8Array
-) {
-  if (
-    file.size === 0 ||
-    file.size > TUTOR_LIMITS.maxFileSize ||
-    bytes.byteLength !== file.size
+// Lowering admission limits must not make previously accepted files unreadable.
+const MAX_STORED_DOCUMENT_BYTES = 100 * 1024 * 1024
+
+function invalidSize() {
+  return new TutorRepositoryError(
+    'The document must be non-empty and within the upload size limit.',
+    'INVALID_FILE_SIZE',
+    413
   )
-    throw new TutorRepositoryError(
-      'Upload a non-empty document no larger than 5 MB.',
-      'INVALID_FILE_SIZE',
-      400
-    )
-  if (!Buffer.from(bytes.subarray(0, 1024)).includes(Buffer.from('%PDF-')))
-    throw new TutorRepositoryError(
-      'Only PDF files are supported.',
-      'INVALID_PDF',
-      400
-    )
-  if (!file.name.trim() || file.name.length > 255)
-    throw new TutorRepositoryError(
-      'The filename is invalid.',
-      'INVALID_FILENAME',
-      400
-    )
 }
 
-export async function validateTutorDocument(
-  file: { size: number; name: string },
-  bytes: Uint8Array
-) {
+function validateFilename(name: string): TutorDocumentFormat {
   if (
-    !file.name.trim() ||
-    file.name.length > 255 ||
-    /[\u0000-\u001f\u007f]/.test(file.name)
+    !name.trim() ||
+    name.length > 255 ||
+    /[\u0000-\u001f\u007f/\\]/.test(name)
   )
     throw new TutorRepositoryError(
       'The filename is invalid.',
       'INVALID_FILENAME',
       400
     )
-  if (
-    !file.size ||
-    file.size > TUTOR_LIMITS.maxFileSize ||
-    bytes.byteLength !== file.size
-  )
-    throw new TutorRepositoryError(
-      'Upload a non-empty document no larger than 5 MB.',
-      'INVALID_FILE_SIZE',
-      400
-    )
-  const format = getTutorDocumentFormat(file.name)
+  const format = getTutorDocumentFormat(name)
   if (!format)
     throw new TutorRepositoryError(
       'Upload a PDF, TXT, Markdown, or DOCX document.',
       'UNSUPPORTED_FILE_TYPE',
       400
     )
-  if (format === 'pdf') validateTutorPdf(file, bytes)
-  else await parseTutorDocument(bytes, file.name)
   return format
+}
+
+/** Cheap reception checks only; the background parser establishes validity. */
+function validateSignature(format: TutorDocumentFormat, prefix: Uint8Array) {
+  if (format === 'pdf' && !Buffer.from(prefix).includes(Buffer.from('%PDF-')))
+    throw new TutorRepositoryError(
+      'Only PDF files are supported.',
+      'INVALID_PDF',
+      400
+    )
+  if (
+    format === 'docx' &&
+    !Buffer.from(prefix.subarray(0, 4)).equals(Buffer.from([0x50, 0x4b, 3, 4]))
+  )
+    throw new TutorRepositoryError(
+      'The file is not a valid DOCX document.',
+      'INVALID_DOCX',
+      400
+    )
+  if (format === 'txt' || format === 'md') {
+    const utf16 =
+      (prefix[0] === 0xff && prefix[1] === 0xfe) ||
+      (prefix[0] === 0xfe && prefix[1] === 0xff)
+    if (
+      !utf16 &&
+      prefix.some(
+        byte => byte <= 8 || byte === 11 || (byte >= 14 && byte <= 31)
+      )
+    )
+      throw new TutorRepositoryError(
+        'The document is not readable text. Save it as UTF-8 or UTF-16 and try again.',
+        'INVALID_TEXT',
+        400
+      )
+  }
+}
+
+export function validateTutorPdf(
+  file: { size: number; name: string },
+  bytes: Uint8Array
+) {
+  validateFilename(file.name)
+  if (
+    !file.size ||
+    file.size > TUTOR_LIMITS.maxFileSize ||
+    bytes.length !== file.size
+  )
+    throw invalidSize()
+  validateSignature('pdf', bytes.subarray(0, 1024))
+}
+
+export async function validateTutorDocument(
+  file: { size: number; name: string },
+  bytes: Uint8Array
+) {
+  const format = validateFilename(file.name)
+  if (
+    !file.size ||
+    file.size > TUTOR_LIMITS.maxFileSize ||
+    bytes.length !== file.size
+  )
+    throw invalidSize()
+  validateSignature(format, bytes.subarray(0, 1024))
+  return format
+}
+
+function localStorageRoot() {
+  return path.resolve(
+    /* turbopackIgnore: true */
+    process.env.TUTOR_LOCAL_STORAGE_DIR ||
+      path.join(process.cwd(), '.tutor-files')
+  )
 }
 
 export function localTutorPath(objectKey: string) {
   if (!/^tutor\/[a-f0-9]{32}\/[a-f0-9]{64}\.(pdf|txt|md|docx)$/.test(objectKey))
     throw new Error('Invalid tutor object key')
-  const root = path.resolve(
-    /* turbopackIgnore: true */
-    process.env.TUTOR_LOCAL_STORAGE_DIR ||
-      path.join(process.cwd(), '.tutor-files')
-  )
+  const root = localStorageRoot()
   const target = path.resolve(root, ...objectKey.split('/'))
   if (!target.startsWith(root + path.sep))
     throw new Error('Invalid tutor storage path')
   return target
 }
 
-export async function storeTutorDocument(userId: string, file: File) {
-  if (file.size > TUTOR_LIMITS.maxFileSize)
-    throw new TutorRepositoryError(
-      'Upload a non-empty document no larger than 5 MB.',
-      'INVALID_FILE_SIZE',
-      400
-    )
-  const bytes = new Uint8Array(await file.arrayBuffer())
-  const format = await validateTutorDocument(file, bytes)
+interface TutorUpload {
+  name: string
+  stream: ReadableStream<Uint8Array>
+  size?: number
+  signal?: AbortSignal
+}
+
+export async function storeTutorDocumentStream(
+  userId: string,
+  input: TutorUpload
+) {
+  const format = validateFilename(input.name)
+  if (
+    input.size !== undefined &&
+    (!Number.isSafeInteger(input.size) ||
+      input.size <= 0 ||
+      input.size > TUTOR_LIMITS.maxFileSize)
+  )
+    throw invalidSize()
+  input.signal?.throwIfAborted()
   if (
     (!process.env.DATABASE_URL?.trim() &&
       !process.env.DATABASE_RESTRICTED_URL?.trim()) ||
@@ -122,51 +171,138 @@ export async function storeTutorDocument(userId: string, file: File) {
       'TUTOR_NOT_CONFIGURED',
       503
     )
-  const contentHash = createHash('sha256').update(bytes).digest('hex')
-  const existing = await findDocumentByHash(
-    userId,
-    contentHash,
-    getDocumentIndexKey(file.name)
-  )
-  if (existing) return publicDocument(existing)
-  const previousVersion = await findDocumentByHash(userId, contentHash, null)
-  const ownerKey = createHash('sha256')
-    .update(userId)
-    .digest('hex')
-    .slice(0, 32)
-  // Reuse the original key across index versions, including identical TXT/MD
-  // content uploaded with a different extension.
-  const objectKey =
-    previousVersion?.objectKey ?? `tutor/${ownerKey}/${contentHash}.${format}`
-  if (!previousVersion && process.env.TUTOR_STORAGE_DRIVER === 'local') {
-    const filename = localTutorPath(objectKey)
-    await mkdir(path.dirname(filename), { recursive: true })
-    await writeFile(filename, bytes, { flag: 'w', mode: 0o600 })
-  } else if (!previousVersion) {
-    if (!isObjectStorageConfigured())
-      throw new TutorRepositoryError(
-        'File storage is not configured.',
-        'STORAGE_UNAVAILABLE',
-        503
-      )
-    await getR2Client().send(
-      new PutObjectCommand({
-        Bucket: R2_BUCKET_NAME,
-        Key: objectKey,
-        Body: bytes,
-        ContentType: getTutorDocumentMimeType(file.name)
-      })
+
+  // Same-volume temporary files allow atomic publication for local storage.
+  const temporaryRoot =
+    process.env.TUTOR_STORAGE_DRIVER === 'local'
+      ? path.join(localStorageRoot(), '.incoming')
+      : tmpdir()
+  await mkdir(temporaryRoot, { recursive: true, mode: 0o700 })
+  const directory = await mkdtemp(path.join(temporaryRoot, 'tutor-'))
+  const temporaryPath = path.join(directory, 'upload')
+  let temporaryExists = false
+  try {
+    const handle = await open(temporaryPath, 'wx', 0o600)
+    temporaryExists = true
+    let reader: ReadableStreamDefaultReader<Uint8Array>
+    try {
+      reader = input.stream.getReader()
+    } catch (error) {
+      await handle.close()
+      throw error
+    }
+    const abort = () => {
+      void reader.cancel(input.signal?.reason).catch(() => {})
+    }
+    input.signal?.addEventListener('abort', abort, { once: true })
+    let size = 0
+    const hash = createHash('sha256')
+    const prefix = new Uint8Array(1024)
+    let prefixLength = 0
+    try {
+      while (true) {
+        input.signal?.throwIfAborted()
+        const { value, done } = await reader.read()
+        input.signal?.throwIfAborted()
+        if (done) break
+        size += value.byteLength
+        if (
+          size > TUTOR_LIMITS.maxFileSize ||
+          (input.size !== undefined && size > input.size)
+        )
+          throw invalidSize()
+        const amount = Math.min(value.length, prefix.length - prefixLength)
+        prefix.set(value.subarray(0, amount), prefixLength)
+        prefixLength += amount
+        hash.update(value)
+        // Await writes to apply backpressure, including platforms with short writes.
+        let offset = 0
+        while (offset < value.length) {
+          input.signal?.throwIfAborted()
+          const result = await handle.write(
+            value,
+            offset,
+            value.length - offset
+          )
+          if (!result.bytesWritten) throw new Error('Could not write document')
+          offset += result.bytesWritten
+        }
+      }
+      if (!size || (input.size !== undefined && size !== input.size))
+        throw invalidSize()
+      validateSignature(format, prefix.subarray(0, prefixLength))
+    } finally {
+      input.signal?.removeEventListener('abort', abort)
+      await reader.cancel().catch(() => {})
+      reader.releaseLock()
+      await handle.close()
+    }
+
+    const contentHash = hash.digest('hex')
+    const existing = await findDocumentByHash(
+      userId,
+      contentHash,
+      getDocumentIndexKey(input.name)
     )
+    input.signal?.throwIfAborted()
+    if (existing) return publicDocument(existing)
+    const previousVersion = await findDocumentByHash(userId, contentHash, null)
+    input.signal?.throwIfAborted()
+    const ownerKey = createHash('sha256')
+      .update(userId)
+      .digest('hex')
+      .slice(0, 32)
+    const objectKey =
+      previousVersion?.objectKey ?? `tutor/${ownerKey}/${contentHash}.${format}`
+    if (!previousVersion && process.env.TUTOR_STORAGE_DRIVER === 'local') {
+      const filename = localTutorPath(objectKey)
+      await mkdir(path.dirname(filename), { recursive: true, mode: 0o700 })
+      input.signal?.throwIfAborted()
+      await rename(temporaryPath, filename)
+      temporaryExists = false
+    } else if (!previousVersion) {
+      const body = createReadStream(temporaryPath)
+      try {
+        await getR2Client().send(
+          new PutObjectCommand({
+            Bucket: R2_BUCKET_NAME,
+            Key: objectKey,
+            Body: body,
+            ContentLength: size,
+            ContentType: getTutorDocumentMimeType(input.name)
+          }),
+          { abortSignal: input.signal }
+        )
+      } finally {
+        body.destroy()
+        // Windows cannot unlink a file until its stream descriptor closes.
+        if (!body.closed)
+          await new Promise<void>(resolve => body.once('close', resolve))
+      }
+    }
+    // Once published, finish metadata even if the client disconnects so retries
+    // can reuse it. Deleting the object could damage another concurrent request.
+    const document = await createDocument(userId, {
+      id: randomUUID(),
+      filename: input.name,
+      size,
+      objectKey,
+      contentHash
+    })
+    if (!document) throw new Error('Could not save document metadata')
+    return publicDocument(document)
+  } finally {
+    if (temporaryExists) await unlink(temporaryPath)
+    await rmdir(directory)
   }
-  const document = await createDocument(userId, {
-    id: randomUUID(),
-    filename: file.name,
-    size: bytes.byteLength,
-    objectKey,
-    contentHash
+}
+
+export async function storeTutorDocument(userId: string, file: File) {
+  return storeTutorDocumentStream(userId, {
+    name: file.name,
+    size: file.size,
+    stream: file.stream()
   })
-  if (!document) throw new Error('Could not save document metadata')
-  return publicDocument(document)
 }
 
 export async function readTutorDocument(
@@ -190,27 +326,69 @@ export async function readTutorDocument(
     )
   )
     throw new Error('Invalid tutor document storage reference')
+  if (
+    !Number.isSafeInteger(document.size) ||
+    document.size <= 0 ||
+    document.size > MAX_STORED_DOCUMENT_BYTES
+  )
+    throw new Error('Stored document is too large')
   let bytes: Uint8Array
   if (process.env.TUTOR_STORAGE_DRIVER === 'local') {
-    // Uploaded documents are runtime data on a durable volume, never build assets.
-    bytes = new Uint8Array(
-      await readFile(
-        /* turbopackIgnore: true */ localTutorPath(document.objectKey)
-      )
+    const handle = await open(
+      /* turbopackIgnore: true */ localTutorPath(document.objectKey),
+      'r'
     )
+    try {
+      if ((await handle.stat()).size !== document.size)
+        throw new Error('Document integrity check failed')
+      bytes = new Uint8Array(document.size)
+      let offset = 0
+      while (offset < bytes.length) {
+        const result = await handle.read(
+          bytes,
+          offset,
+          bytes.length - offset,
+          offset
+        )
+        if (!result.bytesRead)
+          throw new Error('Document integrity check failed')
+        offset += result.bytesRead
+      }
+      if ((await handle.read(new Uint8Array(1), 0, 1, offset)).bytesRead)
+        throw new Error('Document integrity check failed')
+    } finally {
+      await handle.close()
+    }
   } else {
     const result = await getR2Client().send(
       new GetObjectCommand({ Bucket: R2_BUCKET_NAME, Key: document.objectKey })
     )
     if (!result.Body) throw new Error('Missing document content')
-    if ((result.ContentLength ?? 0) > TUTOR_LIMITS.maxFileSize)
-      throw new Error('Stored document is too large')
-    bytes = await result.Body.transformToByteArray()
+    const reader = result.Body.transformToWebStream().getReader()
+    try {
+      if (
+        result.ContentLength !== undefined &&
+        result.ContentLength !== document.size
+      )
+        throw new Error('Document integrity check failed')
+      bytes = new Uint8Array(document.size)
+      let offset = 0
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        if (offset + value.byteLength > bytes.length)
+          throw new Error('Document integrity check failed')
+        bytes.set(value, offset)
+        offset += value.byteLength
+      }
+      if (offset !== bytes.length)
+        throw new Error('Document integrity check failed')
+    } finally {
+      await reader.cancel().catch(() => {})
+      reader.releaseLock()
+    }
   }
-  if (
-    bytes.byteLength > TUTOR_LIMITS.maxFileSize ||
-    createHash('sha256').update(bytes).digest('hex') !== document.contentHash
-  )
+  if (createHash('sha256').update(bytes).digest('hex') !== document.contentHash)
     throw new Error('Document integrity check failed')
   return bytes
 }

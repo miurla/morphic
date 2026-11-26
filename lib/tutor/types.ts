@@ -33,7 +33,9 @@ export interface TutorDocument {
   filename: string
   size: number
   pageCount: number | null
-  status: 'uploaded' | 'ready' | 'failed'
+  status: 'uploaded' | 'parsing' | 'parsed' | 'ready' | 'failed'
+  tokenCount?: number | null
+  chunkCount?: number | null
   error: string | null
   warnings?: string[]
 }
@@ -137,6 +139,14 @@ export interface TutorCapabilities {
   missing: string[]
   maxFileSize: number
   maxFiles: number
+  maxCourseSize?: number
+  maxPdfPages?: number
+  maxPages?: number
+  maxDocumentTokens?: number
+  maxCourseTokens?: number
+  maxDocumentChunks?: number
+  maxCourseChunks?: number
+  uploadConcurrency?: number
 }
 
 export interface TutorChunk {

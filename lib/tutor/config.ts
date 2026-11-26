@@ -4,15 +4,10 @@ import { isProviderEnabled } from '@/lib/utils/registry'
 
 import { EmbeddingError, getEmbeddingConfig } from './embeddings'
 import { TutorError } from './errors'
+import { TUTOR_LIMITS } from './server-limits'
 import type { TutorCapabilities } from './types'
 
-export const TUTOR_LIMITS = {
-  maxFileSize: 5 * 1024 * 1024,
-  maxFiles: 5,
-  maxPages: 200,
-  maxAnswerLength: 12_000,
-  maxGoalLength: 2_000
-} as const
+export { TUTOR_LIMITS } from './server-limits'
 
 export function getTutorModelId(): string {
   const configured = process.env.TUTOR_MODEL?.trim()
@@ -78,7 +73,15 @@ export async function getTutorCapabilities(): Promise<TutorCapabilities> {
     ready: missing.length === 0,
     missing,
     maxFileSize: TUTOR_LIMITS.maxFileSize,
-    maxFiles: TUTOR_LIMITS.maxFiles
+    maxFiles: TUTOR_LIMITS.maxFiles,
+    maxCourseSize: TUTOR_LIMITS.maxCourseSize,
+    maxPdfPages: TUTOR_LIMITS.maxPdfPages,
+    maxPages: TUTOR_LIMITS.maxPages,
+    maxDocumentTokens: TUTOR_LIMITS.maxDocumentTokens,
+    maxCourseTokens: TUTOR_LIMITS.maxCourseTokens,
+    maxDocumentChunks: TUTOR_LIMITS.maxDocumentChunks,
+    maxCourseChunks: TUTOR_LIMITS.maxCourseChunks,
+    uploadConcurrency: TUTOR_LIMITS.uploadConcurrency
   }
 }
 

@@ -1,4 +1,17 @@
 export const tutorMessages: Record<string, string> = {
+  'Document preparation was cancelled.': '文件解析已取消。',
+  'Document preparation timed out. Split the file into smaller files and retry.':
+    '文件解析超时，请拆分文件后重试。',
+  'Document preparation is unavailable. Please retry.':
+    '暂时无法解析文件，请重试。',
+  'Document preparation exceeded its resources or stopped. Split the file into smaller files and retry.':
+    '文件解析超出资源限制或已停止，请拆分文件后重试。',
+  'Document preparation could not be queued. Please retry.':
+    '文件解析未能加入队列，请重试。',
+  'This PDF exceeds the page limit. Split it into smaller files.':
+    '这份 PDF 超出页数限制，请拆分后上传。',
+  'Document preparation stopped. Retry to continue.':
+    '文件解析已停止，请重试以继续处理。',
   Tutor: 'Tutor',
   'Actions for {title}': '“{title}”的操作',
   'Delete learning path': '删除学习路线',
@@ -24,6 +37,49 @@ export const tutorMessages: Record<string, string> = {
   'Each file must be non-empty and no larger than {size} MB.':
     '每份文件不能为空，且大小不得超过 {size} MB。',
   'Uploading…': '正在上传…',
+  'Waiting to upload': '等待上传',
+  'Uploaded · waiting to process': '上传完成 · 等待解析',
+  'Processing…': '正在解析…',
+  'Ready to use': '可用于建课',
+  'Upload cancelled': '已取消上传',
+  'Cancel upload': '取消上传',
+  'Cancel upload of {name}': '取消上传 {name}',
+  'Upload progress for {name}': '{name} 的上传进度',
+  '{count} text segments': '{count} 个文本分段',
+  '{count} tokens': '{count} tokens',
+  'Course files exceed {size} MB. Remove files or split them into separate courses.':
+    '课程文件总量超过 {size} MB，请移除部分文件或拆成多门课程。',
+  'These materials exceed the course processing budget. Remove files or split them into separate courses.':
+    '资料超出单门课程的处理额度，请移除部分文件或拆成多门课程。',
+  'Course limit: {size} MB total · {pages} pages or text segments · {tokens} tokens':
+    '单门课程上限：总计 {size} MB · {pages} 页或文本分段 · {tokens} tokens',
+  'Each PDF can contain up to {pages} pages.': '每份 PDF 最多 {pages} 页。',
+  '{count} files · {size} MB · {pages} pages or text segments processed · {tokens} tokens':
+    '{count} 份文件 · {size} MB · 已解析 {pages} 页或文本分段 · {tokens} tokens',
+  'Wait for your files to finish processing.':
+    '文件正在解析，请完成后再生成学习路线。',
+  'File processing failed. Please retry.': '文件解析失败，请重试。',
+  'Unable to check file processing. Retry to continue.':
+    '暂时无法获取解析进度，请重试以继续查看。',
+  'Upload failed. Check your connection and retry.':
+    '上传失败，请检查网络连接后重试。',
+  'The upload timed out. Please retry.': '上传超时，请重试。',
+  'The materials exceed the course file count limit. Select fewer materials or split them into separate courses.':
+    '资料数量超出单门课程上限，请减少文件或拆成多门课程。',
+  'The materials exceed the course total file size limit. Select fewer materials or split them into separate courses.':
+    '资料总大小超出单门课程上限，请减少文件或拆成多门课程。',
+  'The materials exceed the course page or text segment limit. Select fewer materials or split them into separate courses.':
+    '资料页数或文本分段数超出单门课程上限，请减少文件或拆成多门课程。',
+  'The materials exceed the course text token limit. Select fewer materials or split them into separate courses.':
+    '资料文本量超出单门课程处理上限，请减少文件或拆成多门课程。',
+  'The materials exceed the course text chunk limit. Select fewer materials or split them into separate courses.':
+    '资料内容过多，超出单门课程处理上限，请减少文件或拆成多门课程。',
+  'Wait for your materials to finish parsing, or retry failed files.':
+    '请等待资料解析完成，或重试解析失败的文件。',
+  'The document must be non-empty and within the upload size limit.':
+    '文件不能为空，且大小不得超过上传限制。',
+  'The document was uploaded but could not be queued for parsing. Please retry.':
+    '文件已上传，但未能加入解析队列，请重试。',
   Uploaded: '已上传',
   'Upload failed': '上传失败',
   'Remove {name}': '移除 {name}',

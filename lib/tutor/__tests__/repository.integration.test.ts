@@ -50,7 +50,7 @@ suite('Tutor PostgreSQL ownership, retrieval and idempotency', () => {
     )
     await admin.unsafe('GRANT USAGE ON SCHEMA public TO tutor_test_app_user')
     await admin.unsafe(
-      'GRANT SELECT, INSERT, UPDATE, DELETE ON tutor_documents, tutor_courses, tutor_course_documents, tutor_chunks, tutor_chapters, tutor_attempts TO tutor_test_app_user'
+      'GRANT SELECT, INSERT, UPDATE, DELETE ON tutor_document_parses, tutor_documents, tutor_courses, tutor_course_documents, tutor_chunks, tutor_chapters, tutor_attempts TO tutor_test_app_user'
     )
     url.username = 'tutor_test_app_user'
     url.password = 'tutor_test_restricted'
@@ -69,6 +69,12 @@ suite('Tutor PostgreSQL ownership, retrieval and idempotency', () => {
         size: 100,
         objectKey: `test/${id}`,
         contentHash: id
+      })
+      await repository.updateDocument(userId, id, {
+        status: 'parsed',
+        pageCount: 1,
+        tokenCount: 12,
+        chunkCount: 1
       })
     }
     const a = await repository.createCourse(ownerA, {
@@ -148,6 +154,100 @@ suite('Tutor PostgreSQL ownership, retrieval and idempotency', () => {
       await admin.end()
     }
     if (restricted) await restricted.end()
+  })
+
+  it('stores parsed content privately and prevents late failure from downgrading it', async () => {
+    const id = randomUUID()
+    await repository.createDocument(ownerA, {
+      id,
+      filename: 'prepared.txt',
+      size: 100,
+      objectKey: `test/${id}`,
+      contentHash: id
+    })
+    const parsed = {
+      pageCount: 1,
+      blocks: [
+        {
+          text: 'Private prepared text',
+          region: { page: 1, x: 0, y: 0, width: 1, height: 1 }
+        }
+      ],
+      warnings: []
+    }
+    await repository.saveDocumentParse(ownerA, id, {
+      parsed,
+      tokenCount: 5,
+      chunkCount: 1,
+      contentHash: id,
+      parserVersion: 'test-v1',
+      chunks: []
+    })
+    expect(
+      await repository.getDocumentParse(ownerA, id, id, 'test-v1')
+    ).toEqual({ ...parsed, chunks: [] })
+    expect(
+      await repository.getDocumentParse(ownerB, id, id, 'test-v1')
+    ).toBeNull()
+    expect(
+      await repository.getDocumentParse(ownerA, id, id, 'test-v2')
+    ).toBeNull()
+    expect(
+      await restricted`select document_id from tutor_document_parses`
+    ).toHaveLength(0)
+    await repository.updateDocument(ownerA, id, {
+      status: 'failed',
+      error: 'late error'
+    })
+    expect((await repository.getDocument(ownerA, id))?.status).toBe('parsed')
+    const course = await repository.createCourse(ownerA, {
+      documentIds: [id],
+      goal: 'test',
+      level: 'beginner',
+      locale: 'en'
+    })
+    expect(JSON.stringify(course)).not.toContain('Private prepared text')
+    expect(course.documents[0].tokenCount).toBe(5)
+    await repository.deleteCourse(ownerA, course.id)
+    await repository.startDocumentPreparation(ownerA, id, 'test-v1')
+    expect((await repository.getDocument(ownerA, id))?.status).toBe('parsed')
+    await repository.startDocumentPreparation(ownerA, id, 'test-v2')
+    expect((await repository.getDocument(ownerA, id))?.status).toBe('parsing')
+    await repository.updateDocument(ownerA, id, {
+      status: 'failed',
+      error: 'new parser failed'
+    })
+    expect((await repository.getDocument(ownerA, id))?.status).toBe('failed')
+  })
+
+  it('rejects unprepared and over-budget documents before admitting a course', async () => {
+    const id = randomUUID()
+    await repository.createDocument(ownerA, {
+      id,
+      filename: 'pending.txt',
+      size: 100,
+      objectKey: `test/${id}`,
+      contentHash: id
+    })
+    const input = {
+      documentIds: [id],
+      goal: 'test',
+      level: 'beginner' as const,
+      locale: 'en' as const
+    }
+    await expect(repository.createCourse(ownerA, input)).rejects.toMatchObject({
+      code: 'DOCUMENT_NOT_PREPARED'
+    })
+    await repository.updateDocument(ownerA, id, {
+      status: 'parsed',
+      pageCount: 1,
+      tokenCount: 5,
+      chunkCount: 1
+    })
+    vi.stubEnv('TUTOR_MAX_COURSE_TOKENS', '4')
+    await expect(repository.createCourse(ownerA, input)).rejects.toMatchObject({
+      code: 'COURSE_TOKEN_LIMIT'
+    })
   })
 
   it('enforces RLS using an actual non-owner SQL role', async () => {
@@ -288,6 +388,12 @@ suite('Tutor PostgreSQL ownership, retrieval and idempotency', () => {
           })
         ).id
       ).toBe(replacement.id)
+      await repository.updateDocument(ownerA, replacement!.id, {
+        status: 'parsed',
+        pageCount: 1,
+        tokenCount: 12,
+        chunkCount: 1
+      })
       const newCourse = await repository.createCourse(ownerA, {
         documentIds: [replacement.id],
         goal: 'New version',

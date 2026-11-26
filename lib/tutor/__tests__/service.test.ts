@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { CHUNKING_VERSION } from '../chunking'
+import { chunkDocument, CHUNKING_VERSION } from '../chunking'
 import { TutorError } from '../errors'
 import { gradeAnswer, processChapter, processCourse } from '../service'
 import type { RetrievedChunk, StoredQuestion } from '../types'
@@ -22,6 +22,8 @@ const mocks = vi.hoisted(() => ({
   getChapter: vi.fn(),
   generateTutorObject: vi.fn(),
   retrieveEvidenceWithTrace: vi.fn(),
+  prepareDocument: vi.fn(),
+  getDocumentMetrics: vi.fn(),
   parseTutorDocument: vi.fn(),
   readTutorDocument: vi.fn(),
   embedTexts: vi.fn()
@@ -41,6 +43,7 @@ vi.mock('../generation', async importOriginal => ({
 vi.mock('../retrieval', () => ({
   retrieveEvidenceWithTrace: mocks.retrieveEvidenceWithTrace
 }))
+vi.mock('../preparation', () => ({ prepareDocument: mocks.prepareDocument }))
 vi.mock('../documents', () => ({
   parseTutorDocument: mocks.parseTutorDocument
 }))
@@ -112,6 +115,20 @@ beforeEach(() => {
       parseVersion: CHUNKING_VERSION
     }
   ])
+  mocks.getDocumentMetrics.mockResolvedValue({ tokenCount: 12, chunkCount: 1 })
+  mocks.prepareDocument.mockImplementation(async () => {
+    const parsed = await mocks.parseTutorDocument()
+    return {
+      parsed,
+      chunks: chunkDocument({
+        documentId: 'doc-a',
+        filename: 'notes.md',
+        parsed
+      }),
+      tokenCount: 12,
+      chunkCount: 1
+    }
+  })
   mocks.getAllCourseChunks.mockResolvedValue([source])
   mocks.getStoredChapter.mockResolvedValue({
     id: 'chapter-a',
@@ -248,7 +265,38 @@ describe('Tutor answer evaluation service', () => {
 })
 
 describe('Tutor course planning and checkpoint recovery', () => {
-  it('passes the document filename to the format-aware parser before indexing', async () => {
+  it('preflights every legacy document before embedding any document', async () => {
+    vi.stubEnv('TUTOR_MAX_COURSE_TOKENS', '100')
+    try {
+      mocks.getStoredCourse.mockResolvedValue({
+        id: 'course-a',
+        status: 'queued'
+      })
+      mocks.getCourseDocuments.mockResolvedValue(
+        ['a', 'b'].map(id => ({
+          id,
+          filename: `${id}.txt`,
+          size: 100,
+          status: 'uploaded',
+          indexKey: 'document-index-key'
+        }))
+      )
+      mocks.prepareDocument.mockResolvedValue({
+        parsed: { pageCount: 1, blocks: [], warnings: [] },
+        tokenCount: 60,
+        chunkCount: 1
+      })
+      await expect(
+        processCourse({ userId: 'alice', courseId: 'course-a' })
+      ).rejects.toMatchObject({ code: 'COURSE_TOKEN_LIMIT' })
+      expect(mocks.prepareDocument).toHaveBeenCalledTimes(2)
+      expect(mocks.embedTexts).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
+  it('reuses preflight parsing before indexing a legacy uploaded document', async () => {
     mocks.getStoredCourse.mockResolvedValue({
       id: 'course-a',
       status: 'queued'
@@ -277,7 +325,8 @@ describe('Tutor course planning and checkpoint recovery', () => {
     await expect(
       processCourse({ userId: 'alice', courseId: 'course-a' })
     ).rejects.toThrow()
-    expect(mocks.parseTutorDocument).toHaveBeenCalledWith(bytes, 'notes.md')
+    expect(mocks.prepareDocument).toHaveBeenCalledWith('alice', 'doc-a')
+    expect(mocks.readTutorDocument).not.toHaveBeenCalled()
     expect(mocks.embedTexts).toHaveBeenCalledWith(
       [expect.stringContaining('Atomicity matters.')],
       expect.any(Function)

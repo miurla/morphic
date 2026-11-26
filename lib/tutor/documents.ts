@@ -3,7 +3,8 @@ import { fromBuffer } from 'yauzl'
 
 import { getTutorDocumentFormat } from './document-formats'
 import { TutorError } from './errors'
-import { MAX_PDF_TEXT_CHARACTERS, parsePdf } from './pdf'
+import { parsePdf } from './pdf'
+import { TUTOR_LIMITS } from './server-limits'
 import type { ParsedPdf, ParsedPdfBlock } from './types'
 
 const MAX_DOCX_XML_BYTES = 8 * 1024 * 1024
@@ -229,7 +230,7 @@ function textBlocksToDocument(blocks: TextBlock[]): ParsedPdf {
     )
   if (
     content.reduce((sum, block) => sum + block.text.length, 0) >
-    MAX_PDF_TEXT_CHARACTERS
+    TUTOR_LIMITS.maxTextCharacters
   )
     throw new TutorError(
       'This document contains too much text. Split it into smaller files.',

@@ -10,12 +10,15 @@ async function start() {
     '../lib/tutor/queue'
   )
   const { processCourse, processChapter } = await import('../lib/tutor/service')
+  const { processDocumentParse } = await import('../lib/tutor/preparation')
   await requireTutorReady()
   const worker = new Worker(
     TUTOR_QUEUE_NAME,
     async job => {
-      if (!job.data?.userId || !job.data?.courseId)
-        throw new Error('Invalid Tutor job')
+      if (!job.data?.userId) throw new Error('Invalid Tutor job')
+      if (job.name === 'parse' && job.data.documentId)
+        return processDocumentParse(job.data)
+      if (!job.data.courseId) throw new Error('Invalid Tutor job')
       if (job.name === 'course') return processCourse(job.data)
       if (job.name === 'chapter' && job.data.chapterId)
         return processChapter(job.data)

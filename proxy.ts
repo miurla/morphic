@@ -76,8 +76,10 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - api/favicon (source favicon images, which need no session)
+     * - api/tutor/documents (streamed uploads authenticate in tutorRoute;
+     *   passing through Proxy would clone/buffer and truncate large bodies)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'
+    '/((?!_next/static|_next/image|favicon.ico|api/favicon|api/tutor/documents/?$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'
   ]
 }

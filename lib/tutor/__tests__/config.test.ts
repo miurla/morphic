@@ -24,6 +24,23 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs())
 
 describe('Tutor embedding readiness', () => {
+  it('exposes the same runtime admission budgets used by the server', async () => {
+    vi.stubEnv('TUTOR_MAX_FILES', '20')
+    vi.stubEnv('TUTOR_MAX_FILE_SIZE_MB', '20')
+    vi.stubEnv('TUTOR_MAX_COURSE_SIZE_MB', '200')
+    vi.stubEnv('TUTOR_MAX_PDF_PAGES', '500')
+    vi.stubEnv('TUTOR_MAX_COURSE_PAGES', '1000')
+    vi.stubEnv('TUTOR_UPLOAD_CONCURRENCY', '3')
+    expect(await getTutorCapabilities()).toMatchObject({
+      maxFiles: 20,
+      maxFileSize: 20 * 1024 * 1024,
+      maxCourseSize: 200 * 1024 * 1024,
+      maxPdfPages: 500,
+      maxPages: 1000,
+      uploadConcurrency: 3
+    })
+  })
+
   it('allows an explicitly keyless embedding service', async () => {
     vi.stubEnv('TUTOR_EMBEDDING_AUTH', 'none')
     vi.stubEnv('TUTOR_EMBEDDING_BASE_URL', 'http://tutor-embedding:11434/v1')

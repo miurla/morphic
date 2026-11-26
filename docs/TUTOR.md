@@ -2,14 +2,67 @@
 
 Tutor is a document-grounded learning workspace at `/tutor`. It uses the existing
 Morphic theme, authentication and English / Simplified Chinese language settings.
-It accepts up to five PDF, plain text (`.txt`), Markdown (`.md`, `.markdown`), or
-Word (`.docx`) files, 5 MB per file. Scanned PDFs need a text layer; pages with
+It accepts up to 20 PDF, plain text (`.txt`), Markdown (`.md`, `.markdown`), or
+Word (`.docx`) files, 20 MiB per file and 200 MiB per course by default. Scanned PDFs need a text layer; pages with
 little extracted text are reported to the learner instead of silently being
 treated as fully understood. PDF citations retain page previews and highlights;
 other documents show the cited text and a download link to the original file.
 Plain text and Markdown support UTF-8 or UTF-16 with a byte-order mark. A course
-can contain at most 200 PDF pages or logical text segments in total; non-PDF text
-is grouped into segments of roughly 10,000 characters for this limit.
+can contain at most 1,000 PDF pages or logical text segments in total; each PDF
+can have at most 500 pages. Non-PDF text is grouped into segments of roughly
+10,000 characters for this limit. Text, token and chunk budgets apply separately:
+a file fitting the byte limit is not necessarily small enough to process.
+
+### Upload and parsing budgets
+
+The form uploads up to three files concurrently, reports transfer progress, and
+allows individual files to be removed/cancelled or retried. Invalid selections
+are reported individually while valid files continue. Originals are streamed to
+private temporary files while checking their byte count and SHA-256; completed
+files are stored locally or streamed to the configured object store.
+
+An uploaded file is not yet ready for learning. The existing Tutor worker first
+parses it in an isolated process, saves the reusable parse and reports page/text
+segment, token and chunk counts. Course creation waits for parsing and checks the
+combined budget before embedding or calling the teaching model. A failed parse
+can be retried without uploading the original again. Scans still require OCR
+outside Tutor; encrypted or damaged files report a parsing error.
+
+Configure the following values identically on Web and Worker. The default Docker
+stack reads these optional settings from `.env.local` for both services. Restart
+both processes after changing them. Limits are admission policy; lowering the
+upload size does not make existing stored originals unreadable.
+
+Apply migration `0024_tutor_document_preparation` before deploying this version,
+and update/restart Web and Worker together. The new UI sends raw binary uploads
+with an encoded `x-tutor-filename` header; the upload route performs authentication,
+origin and maintenance checks itself and bypasses Proxy request-body cloning.
+Parsing failures are manually retryable; course and chapter jobs retain their
+existing automatic retry policy. This release does not add OCR or embedding-batch
+checkpoints.
+
+| Environment variable        | Default | Meaning                                           |
+| --------------------------- | ------: | ------------------------------------------------- |
+| `TUTOR_MAX_FILES`           |      20 | Unique documents per course                       |
+| `TUTOR_MAX_FILE_SIZE_MB`    |      20 | MiB per newly uploaded file                       |
+| `TUTOR_MAX_COURSE_SIZE_MB`  |     200 | Combined original MiB per course                  |
+| `TUTOR_UPLOAD_CONCURRENCY`  |       3 | Browser upload concurrency (1–4)                  |
+| `TUTOR_MAX_PDF_PAGES`       |     500 | Pages per PDF                                     |
+| `TUTOR_MAX_COURSE_PAGES`    |    1000 | Total PDF pages/logical text segments             |
+| `TUTOR_MAX_TEXT_CHARACTERS` | 2000000 | Extracted characters per document                 |
+| `TUTOR_MAX_DOCUMENT_TOKENS` |  200000 | Processing tokens per document                    |
+| `TUTOR_MAX_COURSE_TOKENS`   |  500000 | Processing tokens per course                      |
+| `TUTOR_MAX_DOCUMENT_CHUNKS` |    2000 | Chunks per document                               |
+| `TUTOR_MAX_COURSE_CHUNKS`   |    5000 | Chunks per course                                 |
+| `TUTOR_PARSE_TIMEOUT_MS`    |  120000 | Parser process execution deadline                 |
+| `TUTOR_PARSE_MEMORY_MB`     |     512 | Parser V8 heap limit; not a total OS memory limit |
+
+Only bounded positive integers are accepted; invalid settings use their defaults.
+DOCX archive expansion protection remains independent of the upload byte limit.
+These defaults are resource ceilings, not a processing-time guarantee. Measure
+peak memory, parsing/indexing duration and learning coverage on the deployment's
+actual hardware before increasing them. Larger collections may need separate
+courses because course-planning and lesson-context budgets remain bounded.
 
 ## Default Docker deployment
 
