@@ -12,33 +12,13 @@ import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { getRequestOrigin } from '@/lib/auth/request'
 import type { AppUser } from '@/lib/auth/types'
+import { isValidEmail } from '@/lib/utils/email'
 
 export type { InvitationView } from '@/lib/actions/admin-views'
 
 export interface AdminActionResult {
   success: boolean
   error?: string
-}
-
-/** RFC 5321 limit on a forward-path (address) length. */
-const MAX_EMAIL_LENGTH = 254
-
-/**
- * Pragmatic format check; better-auth enforces deliverable emails at sign-up.
- *
- * Accepts exactly what /^[^\s@]+@[^\s@]+\.[^\s@]+$/ accepts (no whitespace, a
- * single "@" with a non-empty local part, and a domain with a "." that has a
- * character on each side), but in linear time: that regex backtracks
- * quadratically on input such as "a@" + "." * n + "@". Anything over
- * MAX_EMAIL_LENGTH is rejected before any scanning.
- */
-function isValidEmail(email: string): boolean {
-  if (email.length > MAX_EMAIL_LENGTH) return false
-  const at = email.indexOf('@')
-  if (at < 1 || email.indexOf('@', at + 1) !== -1) return false
-  if (/\s/.test(email)) return false
-  const dot = email.indexOf('.', at + 2)
-  return dot !== -1 && dot < email.length - 1
 }
 
 function escapeHtml(value: string): string {

@@ -229,19 +229,17 @@ describe('admin actions', () => {
       expect(createInvitation).not.toHaveBeenCalled()
     })
 
-    it('rejects a pathological address in linear time', async () => {
+    it('rejects a pathological address through the action', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
 
-      // "a@" + dots + "@" survives trim() and took ~1.4 s (quadratic
-      // backtracking) in the previous regex at this size.
-      const start = performance.now()
+      // Over MAX_EMAIL_LENGTH, so this exits at the length guard. How the
+      // format scan scales is covered in lib/utils/__tests__/email.test.ts.
       await expect(
         createInvitationAction({ email: `a@${'.'.repeat(50_000)}@` })
       ).resolves.toMatchObject({
         success: false,
         error: 'A valid email address is required.'
       })
-      expect(performance.now() - start).toBeLessThan(250)
       expect(createInvitation).not.toHaveBeenCalled()
     })
 
