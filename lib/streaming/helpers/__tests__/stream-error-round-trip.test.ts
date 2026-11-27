@@ -44,6 +44,10 @@ describe('stream error round trip through the UI message stream', () => {
 
     expect(seen).toHaveLength(2)
     expect(seen[0]).toBe(CONTEXT_WINDOW_ERROR)
+    expect(seen[1]).toBeInstanceOf(Error)
+    expect((seen[1] as Error).message).toBe(
+      serializePublicError(CONTEXT_WINDOW_ERROR)
+    )
     expect(describeStreamError(seen[1])).toBe(
       'context_length: This conversation is too long for the selected model. Start a new chat or shorten your message.'
     )
