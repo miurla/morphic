@@ -166,6 +166,85 @@ describe('admin actions', () => {
       expect(createInvitation).not.toHaveBeenCalled()
     })
 
+    it.each([
+      'friend@example.com',
+      'first.last+tag@sub.example.co.uk',
+      'a@b.c',
+      'ünï@exämple.de',
+      'a@.b.c',
+      'a@b..c'
+    ])('accepts the well-formed address %s', async email => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
+      vi.mocked(createInvitation).mockResolvedValue({
+        invitation: invitationRecord,
+        token: 'tok123'
+      })
+
+      await expect(createInvitationAction({ email })).resolves.toMatchObject({
+        success: true
+      })
+    })
+
+    it.each([
+      '@example.com',
+      'a@',
+      'a@b',
+      'a@b.',
+      'a@.b',
+      'a b@example.com',
+      'a@exa mple.com',
+      'a@@b.c',
+      'a@b@c.d',
+      'a@b.c\u00a0x@d.e'
+    ])('rejects the malformed address %j', async email => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
+
+      await expect(createInvitationAction({ email })).resolves.toMatchObject({
+        success: false,
+        error: 'A valid email address is required.'
+      })
+      expect(createInvitation).not.toHaveBeenCalled()
+    })
+
+    it('rejects addresses longer than 254 characters', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
+
+      const atLimit = `${'a'.repeat(254 - '@example.com'.length)}@example.com`
+      expect(atLimit).toHaveLength(254)
+      vi.mocked(createInvitation).mockResolvedValue({
+        invitation: invitationRecord,
+        token: 'tok123'
+      })
+      await expect(
+        createInvitationAction({ email: atLimit })
+      ).resolves.toMatchObject({ success: true })
+
+      vi.mocked(createInvitation).mockClear()
+      await expect(
+        createInvitationAction({ email: `a${atLimit}` })
+      ).resolves.toMatchObject({
+        success: false,
+        error: 'A valid email address is required.'
+      })
+      expect(createInvitation).not.toHaveBeenCalled()
+    })
+
+    it('rejects a pathological address in linear time', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser)
+
+      // "a@" + dots + "@" survives trim() and took ~1.4 s (quadratic
+      // backtracking) in the previous regex at this size.
+      const start = performance.now()
+      await expect(
+        createInvitationAction({ email: `a@${'.'.repeat(50_000)}@` })
+      ).resolves.toMatchObject({
+        success: false,
+        error: 'A valid email address is required.'
+      })
+      expect(performance.now() - start).toBeLessThan(250)
+      expect(createInvitation).not.toHaveBeenCalled()
+    })
+
     it('emails the invitation when SMTP is configured', async () => {
       process.env.SMTP_HOST = 'smtp.example.com'
       process.env.SMTP_USER = 'user'

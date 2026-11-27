@@ -20,8 +20,26 @@ export interface AdminActionResult {
   error?: string
 }
 
-/** Pragmatic format check; better-auth enforces deliverable emails at sign-up. */
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+/** RFC 5321 limit on a forward-path (address) length. */
+const MAX_EMAIL_LENGTH = 254
+
+/**
+ * Pragmatic format check; better-auth enforces deliverable emails at sign-up.
+ *
+ * Accepts exactly what /^[^\s@]+@[^\s@]+\.[^\s@]+$/ accepts (no whitespace, a
+ * single "@" with a non-empty local part, and a domain with a "." that has a
+ * character on each side), but in linear time: that regex backtracks
+ * quadratically on input such as "a@" + "." * n + "@". Anything over
+ * MAX_EMAIL_LENGTH is rejected before any scanning.
+ */
+function isValidEmail(email: string): boolean {
+  if (email.length > MAX_EMAIL_LENGTH) return false
+  const at = email.indexOf('@')
+  if (at < 1 || email.indexOf('@', at + 1) !== -1) return false
+  if (/\s/.test(email)) return false
+  const dot = email.indexOf('.', at + 2)
+  return dot !== -1 && dot < email.length - 1
+}
 
 function escapeHtml(value: string): string {
   return value
@@ -75,7 +93,7 @@ export async function createInvitationAction(params: {
   // link would just be open sign-up behind an obscure URL, and open sign-up
   // is already an explicit choice via AUTH_SIGNUP_MODE=open.
   const email = params.email?.trim()
-  if (!email || !EMAIL_REGEX.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return { success: false, error: 'A valid email address is required.' }
   }
 
