@@ -57,6 +57,37 @@ const MALFORMED_REQUEST_MESSAGE =
 const MALFORMED_REQUEST_DETAILS =
   'Retrying this message will fail the same way.'
 
+const FORBIDDEN_MESSAGE = 'You do not have permission to access this resource.'
+const PROVIDER_AUTH_MESSAGE =
+  'The AI service is not configured correctly. Please try again later.'
+const AUTH_REQUIRED_MESSAGE = 'Please sign in to continue.'
+const PROVIDER_BILLING_MESSAGE = 'The AI service is currently unavailable.'
+const DAILY_LIMIT_MESSAGE =
+  'You have reached your daily chat limit. Please try again tomorrow.'
+const PROVIDER_RATE_LIMIT_MESSAGE =
+  'The AI service is receiving too many requests. Please try again shortly.'
+const CONTEXT_LENGTH_MESSAGE =
+  'This conversation is too long for the selected model. Start a new chat or shorten your message.'
+const MODEL_UNAVAILABLE_MESSAGE =
+  'The selected model is unavailable. Please choose another model.'
+const BAD_REQUEST_MESSAGE = 'The request could not be processed.'
+
+// The fixed copy classifyError writes for each code. A payload carrying one of
+// these is this module's own output, so a second pass keeps it.
+const OWN_PUBLIC_MESSAGES: Partial<Record<PublicErrorCode, string>> = {
+  forbidden: FORBIDDEN_MESSAGE,
+  provider_auth: PROVIDER_AUTH_MESSAGE,
+  auth_required: AUTH_REQUIRED_MESSAGE,
+  provider_billing: PROVIDER_BILLING_MESSAGE,
+  provider_quota: PROVIDER_BILLING_MESSAGE,
+  rate_limit: DAILY_LIMIT_MESSAGE,
+  provider_rate_limit: PROVIDER_RATE_LIMIT_MESSAGE,
+  context_length: CONTEXT_LENGTH_MESSAGE,
+  model_unavailable: MODEL_UNAVAILABLE_MESSAGE,
+  malformed_request: MALFORMED_REQUEST_MESSAGE,
+  bad_request: BAD_REQUEST_MESSAGE
+}
+
 const PUBLIC_ERROR_CODES: ReadonlySet<string> = new Set([
   'auth_required',
   'bad_request',
@@ -299,7 +330,7 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
     return {
       code: 'forbidden' as const,
       type: 'forbidden' as const,
-      error: 'You do not have permission to access this resource.',
+      error: FORBIDDEN_MESSAGE,
       retryable: false
     }
   }
@@ -308,8 +339,7 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
     return {
       code: 'provider_auth' as const,
       type: 'general' as const,
-      error:
-        'The AI service is not configured correctly. Please try again later.',
+      error: PROVIDER_AUTH_MESSAGE,
       retryable: false
     }
   }
@@ -318,7 +348,7 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
     return {
       code: 'auth_required' as const,
       type: 'auth' as const,
-      error: 'Please sign in to continue.',
+      error: AUTH_REQUIRED_MESSAGE,
       retryable: false,
       authRequired: true
     }
@@ -330,7 +360,7 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
         ? ('provider_quota' as const)
         : ('provider_billing' as const),
       type: 'general' as const,
-      error: 'The AI service is currently unavailable.',
+      error: PROVIDER_BILLING_MESSAGE,
       retryable: false
     }
   }
@@ -342,9 +372,7 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
         ? ('rate_limit' as const)
         : ('provider_rate_limit' as const),
       type: 'rate-limit' as const,
-      error: isDailyLimit
-        ? 'You have reached your daily chat limit. Please try again tomorrow.'
-        : 'The AI service is receiving too many requests. Please try again shortly.',
+      error: isDailyLimit ? DAILY_LIMIT_MESSAGE : PROVIDER_RATE_LIMIT_MESSAGE,
       details: isDailyLimit
         ? 'The limit resets at midnight UTC.'
         : 'Please wait a moment before trying again.',
@@ -356,8 +384,7 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
     return {
       code: 'context_length' as const,
       type: 'general' as const,
-      error:
-        'This conversation is too long for the selected model. Start a new chat or shorten your message.',
+      error: CONTEXT_LENGTH_MESSAGE,
       retryable: false
     }
   }
@@ -366,7 +393,7 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
     return {
       code: 'model_unavailable' as const,
       type: 'general' as const,
-      error: 'The selected model is unavailable. Please choose another model.',
+      error: MODEL_UNAVAILABLE_MESSAGE,
       retryable: false
     }
   }
@@ -385,7 +412,7 @@ function classifyError(snapshot: ErrorSnapshot, fallbackMessage?: string) {
     return {
       code: 'bad_request' as const,
       type: 'general' as const,
-      error: fallbackMessage ?? 'The request could not be processed.',
+      error: fallbackMessage ?? BAD_REQUEST_MESSAGE,
       retryable: false
     }
   }
@@ -425,15 +452,12 @@ function isToolFailurePayload(message: string, code: PublicErrorCode): boolean {
 /**
  * The client re-parses the serialized payload, and that second pass carries
  * neither the provider status nor its signature, so the copy would fall back to
- * the generic retry message while the details still said retrying is futile.
- * Only this module's own copy is honoured, for the same provenance reason as
- * `isToolFailurePayload`.
+ * the generic retry message while retryable and details still described the
+ * original failure. Only this module's own copy is honoured, for the same
+ * provenance reason as `isToolFailurePayload`.
  */
-function isMalformedRequestPayload(
-  message: string,
-  code: PublicErrorCode
-): boolean {
-  return code === 'malformed_request' && message === MALFORMED_REQUEST_MESSAGE
+function isOwnPublicPayload(message: string, code: PublicErrorCode): boolean {
+  return OWN_PUBLIC_MESSAGES[code] === message
 }
 
 function isIntentionalPublicPayload(
@@ -470,7 +494,7 @@ function fromParsedPayload(
   const preserveMessage =
     isIntentionalPublicPayload(value, code) ||
     isToolFailurePayload(message, code) ||
-    isMalformedRequestPayload(message, code)
+    isOwnPublicPayload(message, code)
 
   return {
     error: preserveMessage ? message : classification.error,

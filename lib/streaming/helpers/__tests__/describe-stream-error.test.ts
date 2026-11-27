@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { serializePublicError } from '@/lib/errors/public-error'
 import { describeStreamError } from '@/lib/streaming/helpers/describe-stream-error'
 
 describe('describeStreamError', () => {
@@ -65,5 +66,17 @@ describe('describeStreamError', () => {
       true
     )
     expect(description).not.toContain('TAIL-MARKER')
+  })
+
+  it('keeps the specific copy of an already serialized payload', () => {
+    const serialized = serializePublicError(
+      new Error(
+        'Your input exceeds the context window of this model. Please adjust your input and try again.'
+      )
+    )
+
+    expect(describeStreamError(new Error(serialized))).toBe(
+      'context_length: This conversation is too long for the selected model. Start a new chat or shorten your message.'
+    )
   })
 })

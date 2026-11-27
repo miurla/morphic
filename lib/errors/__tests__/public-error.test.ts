@@ -424,3 +424,64 @@ describe('public error mapping', () => {
     )
   })
 })
+
+describe('public error round trip', () => {
+  const statusError = (message: string, statusCode: number) =>
+    Object.assign(new Error(message), { statusCode })
+
+  const cases: Array<[string, unknown]> = [
+    ['forbidden', statusError('Forbidden', 403)],
+    ['provider_auth', new Error('Incorrect API key provided')],
+    ['auth_required', statusError('Unauthorized', 401)],
+    ['provider_billing', new Error('Billing hard limit has been reached')],
+    ['provider_quota', new Error('insufficient_quota')],
+    ['rate_limit', statusError('daily limit reached', 429)],
+    ['provider_rate_limit', statusError('Rate limit exceeded', 429)],
+    [
+      'context_length',
+      new Error(
+        'Your input exceeds the context window of this model. Please adjust your input and try again.'
+      )
+    ],
+    [
+      'malformed_request',
+      statusError('Invalid body: failed to parse JSON value', 400)
+    ],
+    ['bad_request', statusError('Request failed', 400)],
+    ['provider_unavailable', statusError('Upstream failed', 503)],
+    ['unknown', new Error('Unexpected failure')]
+  ]
+
+  it.each(cases)(
+    'keeps the %s copy when the serialized payload is parsed again',
+    (code, error) => {
+      const first = toPublicErrorPayload(error)
+      expect(first.code).toBe(code)
+
+      const serialized = serializePublicError(error)
+      for (const again of [
+        toPublicErrorPayload(serialized),
+        toPublicErrorPayload(new Error(serialized))
+      ]) {
+        expect(again.code).toBe(first.code)
+        expect(again.error).toBe(first.error)
+        expect(again.retryable).toBe(first.retryable)
+        expect(again.details).toBe(first.details)
+      }
+    }
+  )
+
+  it('still hides a payload that only borrows a public code', () => {
+    const payload = toPublicErrorPayload(
+      new Error(
+        JSON.stringify({
+          error: 'Upstream detail for account secret-123',
+          code: 'context_length'
+        })
+      )
+    )
+
+    expect(payload.code).toBe('context_length')
+    expect(payload.error).not.toContain('secret-123')
+  })
+})
