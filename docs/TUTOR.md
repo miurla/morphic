@@ -50,7 +50,7 @@ checkpoints.
 | `TUTOR_MAX_PDF_PAGES`       |     500 | Pages per PDF                                     |
 | `TUTOR_MAX_COURSE_PAGES`    |    1000 | Total PDF pages/logical text segments             |
 | `TUTOR_MAX_TEXT_CHARACTERS` | 2000000 | Extracted characters per document                 |
-| `TUTOR_MAX_DOCUMENT_TOKENS` |  200000 | Processing tokens per document                    |
+| `TUTOR_MAX_DOCUMENT_TOKENS` |  500000 | Processing tokens per document                    |
 | `TUTOR_MAX_COURSE_TOKENS`   |  500000 | Processing tokens per course                      |
 | `TUTOR_MAX_DOCUMENT_CHUNKS` |    2000 | Chunks per document                               |
 | `TUTOR_MAX_COURSE_CHUNKS`   |    5000 | Chunks per course                                 |
