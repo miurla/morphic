@@ -12,6 +12,7 @@ import { sendSmtpMail } from '@/lib/auth/better-auth/mailer'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { getRequestOrigin } from '@/lib/auth/request'
 import type { AppUser } from '@/lib/auth/types'
+import { isValidEmail } from '@/lib/utils/email'
 
 export type { InvitationView } from '@/lib/actions/admin-views'
 
@@ -19,9 +20,6 @@ export interface AdminActionResult {
   success: boolean
   error?: string
 }
-
-/** Pragmatic format check; better-auth enforces deliverable emails at sign-up. */
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function escapeHtml(value: string): string {
   return value
@@ -75,7 +73,7 @@ export async function createInvitationAction(params: {
   // link would just be open sign-up behind an obscure URL, and open sign-up
   // is already an explicit choice via AUTH_SIGNUP_MODE=open.
   const email = params.email?.trim()
-  if (!email || !EMAIL_REGEX.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return { success: false, error: 'A valid email address is required.' }
   }
 
