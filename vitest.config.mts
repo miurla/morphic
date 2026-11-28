@@ -6,6 +6,9 @@ import { defineConfig } from 'vitest/config'
 process.env.DATABASE_URL =
   process.env.DATABASE_URL ?? 'postgres://user:pass@localhost:5432/testdb'
 
+// Date formatting in tests must not depend on the machine's time zone
+process.env.TZ = 'UTC'
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
