@@ -63,8 +63,9 @@ docker compose -f docker-compose.yaml -f compose.gpu.yaml up -d --build
 
 ## Try a lesson
 
-1. Open Tutor and upload a document you know well. Each file can be up to 5 MB;
-   a course accepts up to five files.
+1. Open Tutor and upload a document you know well. Each file can be up to
+   20 MiB. A course accepts up to 20 files and 500,000 processing tokens in
+   total by default. See the [upload and parsing limits](./docs/TUTOR.md#upload-and-parsing-budgets).
 2. Enter a learning goal and choose your starting level.
 3. Study a chapter, check its citations, and answer its practice questions.
 4. Review the feedback against the original material.

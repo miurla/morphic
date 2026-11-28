@@ -6,7 +6,7 @@ export const DEFAULT_TUTOR_LIMITS = {
   maxPdfPages: 500,
   maxPages: 1000,
   maxTextCharacters: 2_000_000,
-  maxDocumentTokens: 200_000,
+  maxDocumentTokens: 500_000,
   maxCourseTokens: 500_000,
   maxDocumentChunks: 2000,
   maxCourseChunks: 5000,
