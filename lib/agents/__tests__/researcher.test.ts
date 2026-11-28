@@ -117,6 +117,23 @@ describe('createResearcher', () => {
     })
   })
 
+  it('enables automatic prompt caching for Anthropic models', () => {
+    createResearcher({
+      model: 'anthropic:model-id',
+      modelConfig: createModel('anthropic', {
+        anthropic: { sendReasoning: true }
+      }),
+      chatId: 'chat-id'
+    })
+
+    expect(mocks.agentOptions?.providerOptions).toEqual({
+      anthropic: {
+        sendReasoning: true,
+        cacheControl: { type: 'ephemeral' }
+      }
+    })
+  })
+
   it('shares a seeded citation label allocator between search and fetch', () => {
     createResearcher({
       model: 'openai:model-id',
