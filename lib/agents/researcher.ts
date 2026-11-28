@@ -154,7 +154,15 @@ export function createResearcher({
               promptCacheKey: chatId
             }
           }
-        : modelConfig?.providerOptions
+        : modelConfig?.providerId === 'anthropic'
+          ? {
+              ...modelConfig.providerOptions,
+              anthropic: {
+                ...modelConfig.providerOptions?.anthropic,
+                cacheControl: { type: 'ephemeral' }
+              }
+            }
+          : modelConfig?.providerOptions
 
     // Create ToolLoopAgent with all configuration
     const agent = new ToolLoopAgent({
